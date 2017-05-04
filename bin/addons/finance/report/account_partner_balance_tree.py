@@ -52,6 +52,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             # data
             'get_partners': self._get_partners,
             'get_partner_account_move_lines': self._get_partner_account_move_lines,
+            'get_lines_per_currency': self._get_lines_per_currency,
             'get_partners_total_debit_credit_balance_by_account_type': self._get_partners_total_debit_credit_balance_by_account_type,
 
             # currency
@@ -117,6 +118,9 @@ class account_partner_balance_tree(report_sxw.rml_parse):
 
     def _get_partner_account_move_lines(self, account_type, partner_id, data):
         return self.apbt_obj.get_partner_account_move_lines_data(self.cr, self.uid, account_type, partner_id, data)
+
+    def _get_lines_per_currency(self, account_type, partner_id, data, account_code):
+        return self.apbt_obj.get_lines_per_currency(self.cr, self.uid, account_type, partner_id, data, account_code)
 
     def _get_partners_total_debit_credit_balance_by_account_type(self, account_type, data):
         return self.apbt_obj.get_partners_total_debit_credit_balance_by_account_type(self.cr, self.uid, account_type, data)

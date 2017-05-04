@@ -52,6 +52,7 @@ class account_partner_balance_tree(osv.osv):
     def __init__(self, pool, cr):
         super(account_partner_balance_tree, self).__init__(pool, cr)
         self.total_debit_credit_balance = {}
+        self.move_line_ids = {}
 
     def _get_initial_balance(self, cr):
         """
@@ -247,40 +248,47 @@ class account_partner_balance_tree(osv.osv):
         return res2, self.account_type, move_state
 
     def _execute_query_selected_partner_move_line_ids(self, cr, uid, account_type, partner_id, data):
-        obj_move = self.pool.get('account.move.line')
-        where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
+        # if this method is re-called with the same arguments don't recompute the result
+        if not self.move_line_ids or account_type != self.move_line_ids['account_type'] \
+                or partner_id != self.move_line_ids['partner_id'] or data != self.move_line_ids['data']:
+            obj_move = self.pool.get('account.move.line')
+            where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
 
-        move_state = "('draft','posted')"
-        if data['form'].get('target_move', 'all') == 'posted':
-            move_state = "('posted')"
+            move_state = "('draft','posted')"
+            if data['form'].get('target_move', 'all') == 'posted':
+                move_state = "('posted')"
 
-        query = "SELECT l.id FROM account_move_line l" \
-            " JOIN account_account ac ON (l.account_id = ac.id)" \
-            " JOIN account_move am ON (am.id = l.move_id)" \
-            " JOIN account_account_type at ON (ac.user_type = at.id) WHERE "
-        if partner_id:
-            query += "l.partner_id = " + str(partner_id) + "" \
-                " AND ac.type = '" + account_type + "'" \
-                " AND am.state IN " + move_state + ""
-        else:
-            query += "ac.type = '" + account_type + "'" \
-                " AND am.state IN " + move_state + ""
-        # UFTP-312: Filtering regarding tax account (if user asked it)
-        if data['form'].get('tax', False):
-            query += " AND at.code != 'tax' "
-        query += " %s " % self.RECONCILE_REQUEST
-        if where:
-            query += " AND " + where + ""
+            query = "SELECT l.id FROM account_move_line l" \
+                " JOIN account_account ac ON (l.account_id = ac.id)" \
+                " JOIN account_move am ON (am.id = l.move_id)" \
+                " JOIN account_account_type at ON (ac.user_type = at.id) WHERE "
+            if partner_id:
+                query += "l.partner_id = " + str(partner_id) + "" \
+                    " AND ac.type = '" + account_type + "'" \
+                    " AND am.state IN " + move_state + ""
+            else:
+                query += "ac.type = '" + account_type + "'" \
+                    " AND am.state IN " + move_state + ""
+            # UFTP-312: Filtering regarding tax account (if user asked it)
+            if data['form'].get('tax', False):
+                query += " AND at.code != 'tax' "
+            query += " %s " % self.RECONCILE_REQUEST
+            if where:
+                query += " AND " + where + ""
 
-        cr.execute(query)
-        res = cr.fetchall()
-        if res:
-            res2 = []
-            for r in res:
-                res2.append(r[0])
-            return res2
-        else:
-            return False
+            cr.execute(query)
+            res = cr.fetchall()
+            if res:
+                res2 = []
+                for r in res:
+                    res2.append(r[0])
+                self.move_line_ids['res'] = res2
+            else:
+                self.move_line_ids['res'] = False
+            self.move_line_ids['account_type'] = account_type
+            self.move_line_ids['partner_id'] = partner_id
+            self.move_line_ids['data'] = data
+        return self.move_line_ids['res']
 
     def _delete_previous_data(self, cr, uid, context=None):
         """ delete older user request than 15 days"""
@@ -456,6 +464,30 @@ class account_partner_balance_tree(osv.osv):
             res = cr.dictfetchall()
             return res
         return []
+
+    def get_lines_per_currency(self, cr, uid, account_type, partner_id, data, account_code):
+        """
+        Returns a list of dicts, each containing the subtotal per currency for the given partner and account
+        """
+        res = []
+        if account_type and partner_id and data and account_code:
+            # the subtotal lines for the selected partner must be limited to the ids corresponding to
+            # the criteria selected in the wizard
+            ids = self._execute_query_selected_partner_move_line_ids(cr, uid, account_type, partner_id, data)
+            if ids:
+                sql = """SELECT c.name as currency_booking,
+                        SUM(aml.debit_currency) as debit_booking, SUM(aml.credit_currency) as credit_booking, 
+                        SUM(debit_currency) - SUM(credit_currency) as total_booking
+                        FROM account_move_line AS aml
+                        INNER JOIN account_account AS a ON aml.account_id = a.id
+                        INNER JOIN res_currency AS c ON aml.currency_id = c.id
+                        WHERE aml.id in %s
+                        AND a.code = %s
+                        GROUP BY a.code, c.name
+                        ORDER BY c.name;"""
+                cr.execute(sql, (tuple(ids), account_code))
+                res = cr.dictfetchall()
+        return res
 
     def get_partners_total_debit_credit_balance_by_account_type(self, cr, uid, account_type, data):
         """Compute all partners total debit/credit from self data

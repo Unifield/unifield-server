@@ -148,6 +148,26 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssAccountLineItalicRight">
+<Alignment ss:Vertical="Top" ss:Horizontal="Right" ss:WrapText="1"/>
+<Font ss:Size="8" ss:Italic="1"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
+<Style ss:ID="ssAccountLineItalicLeft">
+<Alignment ss:Vertical="Top" ss:Horizontal="Left" ss:WrapText="1"/>
+<Font ss:Size="8" ss:Italic="1"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
 <Style ss:ID="ssAccountLineWrap">
    <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -164,6 +184,17 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Style ss:ID="ssAccountLineNumber">
 <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
 <Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
+<Style ss:ID="ssAccountLineNumberItalic">
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Font ss:Size="8" ss:Italic="1"/>
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -374,6 +405,33 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="Number">${aml.get('total') or 0}</Data>
 </Cell>
 </Row>
+
+<!-- SUBTOTALS per currency -->
+% for detail_line in get_lines_per_currency(p_entries[0].account_type, p_obj.partner_id.id, data, aml.get('account', '')):
+<Row>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineItalicRight">
+    <Data ss:Type="String">Subtotal</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineNumberItalic">
+    <Data ss:Type="Number">${detail_line.get('debit_booking') or 0}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineNumberItalic">
+    <Data ss:Type="Number">${detail_line.get('credit_booking') or 0}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineNumberItalic">
+    <Data ss:Type="Number">${detail_line.get('total_booking') or 0}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineItalicLeft">
+    <Data ss:Type="String">${detail_line.get('currency_booking') or ''|x}</Data>
+</Cell>
+</Row>
+% endfor
 % endfor
 % endfor
 <Row>
