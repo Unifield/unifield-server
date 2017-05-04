@@ -188,6 +188,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="Accounts">
 <Table x:FullColumns="1" x:FullRows="1">
+<Column ss:AutoFitWidth="1" ss:Width="140" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="60" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
 <!-- LIST OF SELECTED FILTERS -->
 <%
 selected_filter = get_filter(data) or ''
@@ -259,10 +269,10 @@ else:
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">Ref</Data>
 </Cell>
-<Cell ss:StyleID="ssHeaderRight">
+<Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">Account</Data>
 </Cell>
-<Cell ss:StyleID="ssHeaderRight">
+<Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">Entry Label</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
