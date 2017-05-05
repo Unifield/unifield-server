@@ -203,15 +203,15 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 selected_filter = get_filter(data) or ''
 %>
 <Row>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Chart of Account</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Fiscal Year</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Journal</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Filters By ${(selected_filter != _('No Filter') and selected_filter or '')|x}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Partner's</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Accounts</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Target Moves</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Currency</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Chart of Account')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Fiscal Year')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Journal')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filters By'), (selected_filter != _('No Filter') and selected_filter or ''))|x}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_("Partner's")}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Accounts')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Target Moves')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Currency')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Proprietary Instances')}</Data></Cell>
 </Row>
 <%
 if selected_filter == _('Date'):

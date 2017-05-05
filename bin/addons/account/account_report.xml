@@ -14,7 +14,7 @@
             header="False"
             model="account.account"
             name="account.third_party_ledger_xls"
-            file="addons/account/report/account_partner_ledger.mako"
+            file="account/report/account_partner_ledger.mako"
             report_type="webkit"
             target_filename="Partner Ledger_%(instance_code)s_%(year)s%(month)s%(day)s"
             string="Partner Ledger xls"/>
