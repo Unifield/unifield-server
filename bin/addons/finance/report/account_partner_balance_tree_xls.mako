@@ -363,13 +363,13 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${p_obj.debit or 0.}</Data>
+    <Data ss:Type="Number">${formatLang(p_obj.debit or 0.)}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${p_obj.credit or 0.}</Data>
+    <Data ss:Type="Number">${formatLang(p_obj.credit or 0.)}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${p_obj.balance or 0.}</Data>
+    <Data ss:Type="Number">${formatLang(p_obj.balance or 0.)}</Data>
 </Cell>
 </Row>
 
@@ -386,13 +386,13 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String">Initial Balance</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${p_obj.ib_debit or 0.}</Data>
+    <Data ss:Type="Number">${formatLang(p_obj.ib_debit or 0.)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${p_obj.ib_credit or 0.}</Data>
+    <Data ss:Type="Number">${formatLang(p_obj.ib_credit or 0.)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${p_obj.ib_balance or 0.}</Data>
+    <Data ss:Type="Number">${formatLang(p_obj.ib_balance or 0.)}</Data>
 </Cell>
 </Row>
 % endif
@@ -407,16 +407,16 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineAccountCodeBold">
-    <Data ss:Type="Number">${aml.get('account', '')|x}</Data>
+    <Data ss:Type="String">${aml.get('account', '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberBold">
-    <Data ss:Type="Number">${aml.get('deb') or 0}</Data>
+    <Data ss:Type="Number">${formatLang(aml.get('deb') or 0.)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberBold">
-    <Data ss:Type="Number">${aml.get('cred') or 0}</Data>
+    <Data ss:Type="Number">${formatLang(aml.get('cred') or 0.)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberBold">
-    <Data ss:Type="Number">${aml.get('total') or 0}</Data>
+    <Data ss:Type="Number">${formatLang(aml.get('total') or 0.)}</Data>
 </Cell>
 </Row>
 
@@ -430,16 +430,16 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineItalicRight">
-    <Data ss:Type="String">${'Subtotal %s' % detail_line.get('currency_booking') or ''|x}</Data>
+    <Data ss:Type="String">${'Subtotal %s' % detail_line.get('currency_booking', '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberItalic">
-    <Data ss:Type="Number">${detail_line.get('debit_booking') or 0}</Data>
+    <Data ss:Type="Number">${formatLang(detail_line.get('debit_booking') or 0.)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberItalic">
-    <Data ss:Type="Number">${detail_line.get('credit_booking') or 0}</Data>
+    <Data ss:Type="Number">${formatLang(detail_line.get('credit_booking') or 0.)}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberItalic">
-    <Data ss:Type="Number">${detail_line.get('total_booking') or 0}</Data>
+    <Data ss:Type="Number">${formatLang(detail_line.get('total_booking') or 0.)}</Data>
 </Cell>
 </Row>
 % endfor
@@ -463,17 +463,18 @@ balance = currency_conv(balance, False)
     <Data ss:Type="String">TOTAL</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="Number">${debit}</Data>
+    <Data ss:Type="Number">${formatLang(debit or 0.)}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="Number">${credit}</Data>
+    <Data ss:Type="Number">${formatLang(credit or 0.)}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="Number">${balance}</Data>
+    <Data ss:Type="Number">${formatLang(balance or 0.)}</Data>
 </Cell>
 </Row>
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <FitToPage/>
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
     <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14Partner Balance"/>

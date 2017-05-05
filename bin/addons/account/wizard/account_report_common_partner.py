@@ -41,7 +41,7 @@ class account_common_partner_report(osv.osv_memory):
 
     def onchange_result_selection_or_tax(self, cr, uid, ids, result_selection, exclude_tax, context=None):
         """
-        Adapt the domain of the account according to the selections made by the user
+        Adapts the domain of the account according to the selections made by the user
         Note: directly changing the domain on the many2many field "account_ids" doesn't work in that case so we use the
         invisible field "account_domain" to store the domain and use it in the view...
         """

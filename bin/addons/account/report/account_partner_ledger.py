@@ -419,14 +419,15 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         instance_ids = instance_ids or data.get('form', False) and data['form'].get('instance_ids', False)
         return super(third_party_ledger, self)._get_journal(data, instance_ids)
 
+# PDF report with one partner per page
 report_sxw.report_sxw('report.account.third_party_ledger', 'res.partner',
         'addons/account/report/account_partner_ledger.rml',parser=third_party_ledger,
         header='internal landscape')
-
+# PDF report with partners displayed one after another
 report_sxw.report_sxw('report.account.third_party_ledger_other', 'res.partner',
         'addons/account/report/account_partner_ledger_other.rml',parser=third_party_ledger,
         header='internal landscape')
-
+# XLS report
 SpreadsheetReport('report.account.third_party_ledger_xls', 'res.partner',
         'addons/account/report/account_partner_ledger.mako', parser=third_party_ledger)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

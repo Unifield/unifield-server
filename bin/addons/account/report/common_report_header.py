@@ -122,7 +122,7 @@ class common_report_header(object):
 
     def _get_accounts(self, data):
         """
-        Return:
+        Returns:
         - "All Accounts" if no specific account is selected
         - or the codes of all accounts selected
         """
@@ -135,8 +135,8 @@ class common_report_header(object):
 
     def _get_instances_from_data(self, data):
         """
-        Return:
-        - "All Instances" if no specific instance have been selected in the form
+        Returns:
+        - "All Instances" if no specific instance has been selected in the form
         - or the codes of all instances selected
         :param data: dictionary of values coming from the form
         """

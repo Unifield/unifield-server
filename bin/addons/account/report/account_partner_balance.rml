@@ -268,21 +268,24 @@
             </tr>
             <tr>
               [[ repeatIn(get_partner_account_move_lines(p_entries[0].account_type, p_obj.partner_id.id, data), 'aml') ]]
+              <!-- For each account: display one line with the total in functional currency,
+                   and one line per booking currency used -->
               <td>
                 <blockTable colWidths="159.0,94.0,91.0,93.0,94.0">
                  <tr>
                    <td><para style="P4Bold"></para></td>
                    <td><para style="P4Bold">[[ aml.get('account', '') ]]</para></td>
-                   <td><para style="P4Bold">[[ formatLang(aml.get('deb') or 0) ]]</para></td>
-                   <td><para style="P4Bold">[[ formatLang(aml.get('cred') or 0) ]]</para></td>
-                   <td><para style="P4Bold">[[ formatLang(aml.get('total') or 0) ]]</para></td>
+                   <td><para style="P4Bold">[[ formatLang(aml.get('deb') or 0.0) ]]</para></td>
+                   <td><para style="P4Bold">[[ formatLang(aml.get('cred') or 0.0) ]]</para></td>
+                   <td><para style="P4Bold">[[ formatLang(aml.get('total') or 0.0) ]]</para></td>
                  </tr>
-                 <tr> [[ repeatIn(get_lines_per_currency(p_entries[0].account_type, p_obj.partner_id.id, data, aml.get('account')), 'detail_line') ]]
+                 <tr>
+                   [[ repeatIn(get_lines_per_currency(p_entries[0].account_type, p_obj.partner_id.id, data, aml.get('account')), 'detail_line') ]]
                    <td><para style="P4Italic"></para></td>
                    <td><para style="P4Italic">[[ 'Subtotal %s' % detail_line.get('currency_booking', '') ]]</para></td>
-                   <td><para style="P4Italic">[[ formatLang(detail_line.get('debit_booking') or 0) ]]</para></td>
-                   <td><para style="P4Italic">[[ formatLang(detail_line.get('credit_booking') or 0) ]]</para></td>
-                   <td><para style="P4Italic">[[ formatLang(detail_line.get('total_booking') or 0) ]]</para></td>
+                   <td><para style="P4Italic">[[ formatLang(detail_line.get('debit_booking') or 0.0) ]]</para></td>
+                   <td><para style="P4Italic">[[ formatLang(detail_line.get('credit_booking') or 0.0) ]]</para></td>
+                   <td><para style="P4Italic">[[ formatLang(detail_line.get('total_booking') or 0.0) ]]</para></td>
                  </tr>
                </blockTable>
              </td>
@@ -293,9 +296,9 @@
       <tr>
         <td><para style="P7">Total:</para></td>
         <td><para style="P8"></para></td>
-        <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[0], False)) ]]</u></para></td>
-        <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[1], False)) ]]</u></para></td>
-        <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[2], False)) ]]</u></para></td>
+        <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[0], False) or 0.0) ]]</u></para></td>
+        <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[1], False) or 0.0) ]]</u></para></td>
+        <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[2], False) or 0.0) ]]</u></para></td>
       </tr>
     </blockTable>
   </story>

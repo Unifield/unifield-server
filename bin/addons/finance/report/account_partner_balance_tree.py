@@ -185,7 +185,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
 
     def _get_accounts(self, data):
         """
-        Return:
+        Returns:
         - "All Accounts" if no specific account is selected
         - or the codes of all accounts selected
         """
