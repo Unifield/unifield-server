@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Created on 9 juil. 2012
+
+-->
+<openerp>
+    <data> 
+
+        <record id="sync_client_upgrade_form" model="ir.ui.view">
+            <field name="name">sync_client.upgrade.form</field>
+            <field name="model">sync_client.upgrade</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <field name="state" invisible="1" colspan="4"/> 
+                    <field name="message" nolabel="1" colspan="4"/> 
+                    <label string="" colspan="1"/>
+                    <field name="error" nolabel="1" colspan="4" attrs="{'invisible':[('error', '=', '')]}"/>
+                    <field name="patch" nolabel="1" attrs="{'invisible':[('state','!=','need-provide-manually')]}" />
+                    <html>
+                    <script language="javascript">
+                    var error = $('#error');
+                    if (error.val()) {
+                        error.css('color', 'red').css('font-weight', 'bold');
+                    }
+                    </script>
+                    </html>
+                    <button type="object" string="Download" name="download" icon="gtk-save" states="need-download"/>
+                    <button type="object" string="Import" name="import_patch" icon="gtk-save" states="need-provide-manually"/>
+                    <button type="object" string="Upgrade" name="do_upgrade" icon="gtk-execute" states="need-install"/>
+                    <button type="object" string="Restart" name="restart" icon="gtk-refresh" states="need-restart"/>
+                    <button special="cancel" string="Okay" icon="gtk-close" states="up-to-date"/>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="upgrade_action">
+            <field name="name">Upgrade</field>
+            <field name="res_model">sync_client.upgrade</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="patch_menu" name="Patch Synchronization" parent="sync_client.main_menu"/>
+
+        <menuitem id="upgrade_menu" name="Upgrade" parent="patch_menu" action="upgrade_action"/>
+
+    </data>
+</openerp>
+
+<!--
+    vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+-->
+

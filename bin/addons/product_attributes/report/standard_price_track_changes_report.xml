@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <!-- Product Cost Price Track Changes -->
+        <report
+            id="report_product_cost_track_changes_xls"
+            string="Track changes - Product prices"
+            model="product.product"
+            name="product.cost.track.changes.xls"
+            file="product_attributes/report/standard_price_track_changes.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+
+    </data>
+</openerp>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+  <data>
+
+    <record model="ir.ui.view" id="log_sale_purchase_form_view">
+      <field name="name">log_sale_purchase_form_view</field>
+      <field name="model">sync.client.log_sale_purchase</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form string="PO/FO/Shipment Logs"  hide_duplicate_button="1" hide_delete_button="1" hide_new_button="1" >
+          <separator string="Synchronisation Information" colspan="4"/>
+          <group colspan="2" col="4">
+            <field name="synchro_id"/>
+            <field name="action_type"/>
+            <field name="document" readonly="1"/>
+            <field name="action_datetime" readonly="1"/>
+          </group>
+          <separator string="Field Changes Information" colspan="4"/>
+          <group colspan="2" col="6">
+            <field name="is_product_added"/>
+            <field name="is_product_removed"/>
+            <field name="is_quantity_modified"/>
+            <field name="is_product_price_modified"/>
+            <field name="is_date_modified"/>
+            <field name="is_status_modified"/>
+          </group>
+        </form>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="log_sale_purchase_search_view">
+      <field name="name">log_sale_purchase_search_view</field>
+      <field name="model">sync.client.log_sale_purchase</field>
+      <field name="type">search</field>
+      <field name="arch" type="xml">
+        <search>
+          <filter string="Creation" icon="terp-partner"
+                  domain="[('action_type','=','creation')]"/>
+          <filter string="Modification" icon="terp-partner"
+                  domain="[('action_type','=','modification')]"/>
+          <field name="model_id"/>
+          <field name="action_datetime"/>
+        </search>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="log_sale_purchase_tree_view">
+      <field name="name">log_sale_purchase_tree_view</field>
+      <field name="model">sync.client.log_sale_purchase</field>
+      <field name="type">tree</field>
+      <field name="arch" type="xml">
+        <tree  string="PO/FO/Shipment Logs" hide_new_button="1" hide_delete_button="1" noteditable="1" >
+          <field name="synchro_id"/>
+          <field name="action_datetime"/>
+          <field name="action_type"/>
+          <field name="model_id"/>
+          <field name="document"/>
+          <field name="is_product_added"/>
+          <field name="is_product_removed"/>
+          <field name="is_quantity_modified"/>
+          <field name="is_product_price_modified"/>
+          <field name="is_date_modified"/>
+          <field name="is_status_modified"/>
+        </tree>
+      </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="log_sale_purchase_action">
+      <field name="name">PO/FO/Shipment Logs</field>
+      <field name="res_model">sync.client.log_sale_purchase</field>
+      <field name="view_type">form</field>
+      <field name="view_mode">tree,form</field>
+      <field name="context">{'group_by':['synchro_id','action_type']}</field>
+    </record>
+
+    <menuitem id="log_sale_purchase_menu"
+              name="PO/FO/Shipment Logs"
+              parent="mon_menu" action="log_sale_purchase_action"/>
+
+  </data>
+</openerp>
+<!--
+     vim:ts=2:sw=2:sts=2:expandtab:wrap:linebreak:
+  -->

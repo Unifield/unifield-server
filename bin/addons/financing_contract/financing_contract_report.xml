@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <report id="allocated_expenses_2"
+        string="Allocated Expenses"
+        model="financing.contract.contract"
+        name="financing.allocated.expenses.2"
+        target_filename="Allocated Expenses_${code}_%(year)s%(month)s%(day)s"
+        file="financing_contract/report/project_expenses_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="False"/>
+        
+        <report id="project_expenses_2"
+        string="Project Expenses"
+        model="financing.contract.contract"
+        name="financing.project.expenses.2"
+        target_filename="Project Expenses_${code}_%(year)s%(month)s%(day)s"
+        file="financing_contract/report/project_expenses_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"/>
+        
+        <report id="contract"
+        string="Export Contract info - pdf"
+        model="financing.contract.contract"
+        name="financing.contract"
+        target_filename="Contract Info_${code}_%(year)s%(month)s%(day)s"
+        rml="financing_contract/report/financing_contract.rml"
+        auto="False"
+        menu="True"
+        header="False"/>
+        
+        <report id="contract_list"
+        string="Financing Contract List - pdf"
+        model="financing.contract.contract"
+        name="financing.contract.list"
+        target_filename="Contract List_%(instance_code)s_%(year)s%(month)s%(day)s"
+        rml="financing_contract/report/contract_list.rml"
+        auto="False"
+        menu="True"
+        header="False"/>
+
+        <report id="contract_list_xls"
+        string="Financing Contract List"
+        model="financing.contract.contract"
+        name="financing.contract.list_xls"
+        target_filename="Contract List_%(instance_code)s_%(year)s%(month)s%(day)s"
+        file="financing_contract/report/contract_list.mako"
+        report_type="webkit"
+        auto="False"
+        menu="True"
+        header="False"/>
+
+        <report id="financing_interactive_2"
+        string="Financing interactive"
+        model="financing.contract.contract"
+        name="financing.interactive.2"
+        target_filename="Financing Contract Budget vs Actuals_%(instance_code)s_%(year)s%(month)s%(day)s"
+        file="financing_contract/report/financing_interactive_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="False"/>
+
+    </data>
+</openerp>
+

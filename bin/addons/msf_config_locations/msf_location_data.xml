@@ -1,0 +1,433 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+    
+	<record model="product.nomenclature" id="nomen_med">
+		<field name="code">01</field>
+		<field name="name">MED</field>
+		<field name="type">mandatory</field>
+		<field name="level">0</field>
+		<field name="msfid">MED</field>
+	</record>
+
+	<record model="product.nomenclature" id="nomen_log">
+		<field name="code">02</field>
+		<field name="name">LOG</field>
+		<field name="type">mandatory</field>
+		<field name="level">0</field>
+		<field name="msfid">LOG</field>
+	</record>
+
+
+    <record id="stock.stock_location_locations" model="stock.location">
+        <field name="name">Instance Full View</field>
+        <field name="location_category">other</field>
+        <field name="usage">view</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="posz">1</field>
+    </record>
+
+    <record id="stock.stock_location_company" model="stock.location">
+        <field name="name">Warehouse</field>
+        <field name="location_category">other</field>
+        <field name="usage">view</field>
+        <field name="location_id" ref="stock.stock_location_locations" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="posz">1</field>
+    </record>
+    
+    <record id="stock.stock_location_locations_virtual" model="stock.location">
+    	<field name="name">Virtual Locations</field>
+    	<field name="location_category">other</field>
+    	<field name="usage">view</field>
+    	<!-- UF-697 : 2012, April 26th Magali's comment -->
+    	<!-- <field name="location_id" ref="stock.stock_location_locations" /> -->
+    	<field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="posz">5</field>
+    </record>
+    
+    <record id="stock.stock_location_locations_partner" model="stock.location">
+    	<field name="name">Partners Locations</field>
+    	<field name="location_category">other</field>
+    	<field name="usage">view</field>
+    	<field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="posz">4</field>
+    </record>
+
+    <record id="msf_cross_docking.stock_location_input" model="stock.location">
+        <field name="name">Input</field>
+        <field name="location_category">transition</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock.stock_location_company" />
+        <field name="chained_location_type">fixed</field>
+        <field name="chained_location_id" ref="stock.stock_location_stock" />
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="posz">1</field>
+    </record>
+    
+    <record id="stock_location_view_all_stock" model="stock.location">
+    	<field name="name">All Stocks</field>
+    	<field name="location_category">other</field>
+    	<field name="usage">view</field>
+    	<field name="location_id" ref="stock.stock_location_company" />
+    	<field name="posz">2</field>
+    </record>
+
+    <record id="stock.stock_location_stock" model="stock.location">
+        <field name="name">Stock</field>
+        <field name="location_category">stock</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock_location_view_all_stock" />
+        <field name="chained_location_type">nomenclature</field>
+        <field name="chained_auto_packing">transparent</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="posz">1</field>
+    </record>
+
+    <record id="stock_location_medical" model="stock.location">
+        <field name="name">MED</field>
+        <field name="location_category">stock</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock.stock_location_stock" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="posz">1</field>
+    </record>
+    
+    <record id="stock_location_unalloc_medical" model="stock.location">
+        <field name="name">Unallocated MED</field>
+        <field name="location_category">stock</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock.stock_location_stock" />
+        <field name="central_location_ok" eval="True" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="posz">11</field>
+    </record>
+
+    <record id="stock_override.stock_location_logistic" model="stock.location">
+        <field name="name">LOG</field>
+        <field name="location_category">stock</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock.stock_location_stock" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="posz">2</field>
+    </record>
+    
+    <record id="stock_location_unalloc_logistic" model="stock.location">
+        <field name="name">Unallocated LOG</field>
+        <field name="location_category">stock</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock.stock_location_stock" />
+        <field name="central_location_ok" eval="True" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="posz">12</field>
+    </record>
+
+    <record id="stock_location_stock_chained_option_med" model="stock.location.chained.options">
+        <field name="location_id" ref="stock.stock_location_stock" />
+        <field name="nomen_id" ref="nomen_med" />
+        <field name="dest_location_id" ref="stock_location_medical" />
+    </record>
+
+    <record id="stock_location_stock_chained_option_log" model="stock.location.chained.options">
+        <field name="location_id" ref="stock.stock_location_stock" />
+        <field name="nomen_id" ref="nomen_log" />
+        <field name="dest_location_id" ref="stock_override.stock_location_logistic" />
+    </record>
+    
+    <record id="msf_cross_docking.stock_location_cross_docking" model="stock.location">
+        <field name="name">Cross docking</field>
+        <field name="location_id" ref="stock.stock_location_company"/>
+        <field name="usage">internal</field>
+        <field name="location_category">transition</field>
+        <field name="posz">3</field>
+    </record>
+
+    <record id="stock.stock_location_output" model="stock.location">
+        <field name="name">Output</field>
+        <field name="location_category">transition</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock.stock_location_company" />
+        <field name="chained_location_type">customer</field>
+        <field name="chained_auto_packing">transparent</field>
+        <field name="chained_picking_type">out</field>
+	<field name="chained_journal_id" eval="False" />
+        <field name="posz">4</field>
+    </record>
+
+    <record id="msf_outgoing.stock_location_packing" model="stock.location">
+        <field name="name">Packing</field>
+        <field name="location_category">transition</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock.stock_location_output" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="posz">1</field>
+    </record>
+
+    <record id="msf_outgoing.stock_location_dispatch" model="stock.location">
+        <field name="name">Shipment</field>
+        <field name="location_category">transition</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock.stock_location_output" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="posz">2</field>
+    </record>
+
+    <record id="msf_outgoing.stock_location_distribution" model="stock.location">
+        <field name="name">Distribution</field>
+        <field name="location_category">transition</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock.stock_location_output" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="posz">3</field>
+    </record>
+
+    <record id="stock_location_quarantine_view" model="stock.location">
+        <field name="name">Quarantine</field>
+        <field name="location_category">other</field>
+        <field name="usage">view</field>
+        <field name="location_id" ref="stock.stock_location_locations" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="quarantine_location">True</field>
+        <field name="posz">3</field>
+    </record>
+
+    <record id="stock_override.stock_location_quarantine_analyze" model="stock.location">
+        <field name="name">Quarantine (analyze)</field>
+        <field name="location_category">transition</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock_location_quarantine_view" />
+        <field name="chained_location_type">none</field>
+        <!-- <field name="chained_location_id" ref="stock.stock_location_stock" /> -->
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="quarantine_location">True</field>
+    </record>
+
+    <record id="stock_override.stock_location_quarantine_scrap" model="stock.location">
+        <field name="name">Quarantine (before scrap)</field>
+        <field name="location_category">transition</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock_location_quarantine_view" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="quarantine_location">True</field>
+    </record>
+
+    <record id="stock.location_inventory" model="stock.location">
+        <field name="name">Inventory (loss &amp; profit)</field>
+        <field name="location_id" ref="stock.stock_location_locations_virtual" />
+        <field name="location_category">other</field>
+        <field name="usage">inventory</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+    </record>
+
+    <record id="stock.stock_location_scrapped" model="stock.location">
+        <field name="name">Destruction</field>
+        <field name="location_category">other</field>
+        <field name="usage">inventory</field>
+        <field name="location_id" ref="stock.location_inventory" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="destruction_location">True</field>
+    </record>
+
+    <record id="stock.location_production" model="stock.location">
+        <field name="name">Kitting</field>
+        <field name="location_id" ref="stock.stock_location_locations_virtual" />
+        <field name="location_category">other</field>
+        <field name="usage">production</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+    </record>
+
+    <record id="stock.location_procurement" model="stock.location">
+        <field name="name">Procurement</field>
+        <field name="location_id" ref="stock.stock_location_locations_virtual" />
+        <field name="location_category">other</field>
+        <field name="usage">procurement</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+    </record>
+    
+    <record id="stock_override.stock_location_non_stockable" model="stock.location">
+        <field name="name">Non stockable</field>
+        <field name="location_id" ref="stock.stock_location_locations_virtual" />
+        <field name="location_category">other</field>
+        <field name="usage">inventory</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="virtual_location">True</field>
+        <field name="non_stockable_ok">True</field>
+    </record>
+
+    <record id="stock_location_service" model="stock.location">
+        <field name="name">Service</field>
+        <field name="location_id" ref="stock.stock_location_locations_virtual" />
+        <field name="location_category">other</field>
+        <field name="usage">inventory</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="service_location" eval="True" />
+    </record>
+
+    <record id="stock_location_internal_client_view" model="stock.location">
+        <field name="name">Configurable locations</field>
+        <field name="location_category">other</field>
+        <field name="usage">view</field>
+        <field name="location_id" ref="stock.stock_location_locations" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="active" eval="False" />
+        <field name="optional_loc" eval="True" />
+        <field name="posz">2</field>
+    </record>
+
+    <record id="stock_location_intermediate_client_view" model="stock.location">
+        <field name="name">Intermediate Stocks</field>
+        <field name="location_category">other</field>
+        <field name="usage">view</field>
+        <field name="location_id" ref="stock_location_internal_client_view" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="active" eval="False" />
+        <field name="optional_loc" eval="True" />
+        <field name="posz">1</field>
+    </record>
+    
+<!--     <record id="stock_location_eprep" model="stock.location">
+        <field name="name">EPREP</field>
+        <field name="location_category">eprep</field>
+        <field name="usage">internal</field>
+        <field name="location_id" ref="stock_location_intermediate_client_view" />
+        <field name="chained_location_type">fixed</field>
+        <field name="chained_location_id" ref="stock.stock_location_stock" />
+        <field name="chained_auto_packing">manual</field>
+        <field name="active" eval="False" />
+        <field name="optional_loc" eval="True" />
+        <field name="chained_picking_type">internal</field>
+    </record> -->
+
+    <record id="stock_location_consumption_units_view" model="stock.location">
+        <field name="name">Internal Consumption Units</field>
+        <field name="location_category">other</field>
+        <field name="location_id" ref="stock_location_internal_client_view" />
+        <field name="usage">view</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">internal</field>
+        <field name="active" eval="False" />
+        <field name="optional_loc" eval="True" />
+        <field name="posz">2</field>
+    </record>
+    
+    <record id="stock.stock_location_internal_suppliers_view" model="stock.location">
+        <field name="name">Supplier</field>
+        <field name="location_id" ref="stock.stock_location_locations_partner" />
+        <field name="location_category">other</field>
+        <field name="usage">view</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">out</field>
+        <field name="posz">1</field>
+    </record>
+
+    <record id="stock.stock_location_suppliers" model="stock.location">
+        <field name="name">Other Supplier</field>
+        <field name="location_id" ref="stock.stock_location_internal_suppliers_view" />
+        <field name="location_category">other</field>
+        <field name="usage">supplier</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">in</field>
+        <field name="posz">2</field>
+    </record>
+
+    <record id="stock.stock_location_internal_suppliers" model="stock.location">
+        <field name="name">MSF Supplier</field>
+        <field name="location_id" ref="stock.stock_location_internal_suppliers_view" />
+        <field name="location_category">other</field>
+        <field name="usage">supplier</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">in</field>
+        <field name="posz">1</field>
+    </record>
+
+    <record id="stock_location_internal_customers_view" model="stock.location">
+        <field name="name">Customer</field>
+        <field name="location_id" ref="stock.stock_location_locations_partner" />
+        <field name="location_category">other</field>
+        <field name="usage">view</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">out</field>
+        <field name="posz">2</field>
+    </record>
+    
+    <record id="stock.stock_location_customers" model="stock.location">
+        <field name="name">Other Customer</field>
+        <field name="location_id" ref="stock_location_internal_customers_view" />
+        <field name="location_category">other</field>
+        <field name="usage">customer</field>
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">out</field>
+        <field name="posz">2</field>
+    </record>
+
+    <record id="stock.stock_location_internal_customers" model="stock.location">
+        <field name="name">MSF Customer</field>
+        <field name="location_category">other</field>
+        <field name="usage">customer</field>
+        <field name="location_id" ref="stock_location_internal_customers_view" />
+        <field name="chained_location_type">none</field>
+        <field name="chained_auto_packing">manual</field>
+        <field name="chained_picking_type">out</field>
+        <field name="posz">1</field>
+    </record>
+
+    <record id="stock.warehouse0" model="stock.warehouse">
+        <field name="name">MSF</field>
+        <field name="lot_input_id" ref="msf_cross_docking.stock_location_input"/>
+        <field name="lot_stock_id" ref="stock.stock_location_stock"/>
+        <field name="lot_output_id" ref="stock.stock_location_output"/>
+    </record>
+    
+    
+    <!-- -->
+    
+    <record id="base.main_partner" model="res.partner">
+        <field name="property_stock_customer" ref="stock.stock_location_internal_customers" />
+        <field name="property_stock_supplier" ref="stock.stock_location_internal_suppliers" />
+    </record>
+
+    </data>
+</openerp>

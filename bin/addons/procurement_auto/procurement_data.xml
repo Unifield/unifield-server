@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data noupdate="1">
+    
+        <record id="sequence_mrp_as_type" model="ir.sequence.type">
+            <field name="name">Stock Automatic Supply</field>
+            <field name="code">stock.automatic.supply</field>
+        </record>
+    
+        <record id="sequence_mrp_as" model="ir.sequence">
+            <field name="name">Stock Automatic Supply</field>
+            <field name="code">stock.automatic.supply</field>
+            <field name="prefix">AS/</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+    
+    </data>
+</openerp>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <!-- Sequences for procurement.list -->
+        <record id="seq_type_consumption_report" model="ir.sequence.type">
+            <field name="name">Consumption Report Sequence Order</field>
+            <field name="code">consumption.report</field>
+        </record>
+
+        <record id="seq_consumption_report" model="ir.sequence">
+            <field name="name">Consumption Report</field>
+            <field name="code">consumption.report</field>
+            <field name="prefix">CONSO/</field>
+            <field name="padding">5</field>
+        </record>
+    </data>
+</openerp>

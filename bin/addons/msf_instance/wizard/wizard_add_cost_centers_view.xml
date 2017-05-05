@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="wizard_add_cost_centers_view" model="ir.ui.view">
+            <field name="name">wizard.add.cost.centers.form</field>
+            <field name="model">wizard.add.cost.centers</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Add Cost Centers">
+                    <field name="cost_center_ids"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                        <button name="add_cost_centers" string="Add Cost Centers" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>
+        

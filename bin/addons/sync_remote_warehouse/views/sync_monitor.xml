@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<openerp>
+    <data>
+    
+		<!-- ################## SYNC MONITOR ################## -->
+    	<!-- form -->
+        <record model="ir.ui.view" id="remote_warehouse_sync_client_sync_monitor_form">
+            <field name="name">sync_client_sync_monitor_form_rw</field>
+      		<field name="type">form</field>
+            <field name="model">sync.monitor</field>
+            <field name="inherit_id" ref="sync_client.sync_monitor_form" />
+            <field name="arch" type="xml">
+            	<field name="status" position="after">
+            		<field name="usb"></field>
+            	</field>   
+            </field>
+        </record>
+        
+        <!-- tree -->
+        <record model="ir.ui.view" id="remote_warehouse_sync_client_sync_monitor_tree">
+            <field name="name">sync_client_sync_monitor_tree_rw</field>
+            <field name="model">sync.monitor</field>
+            <field name="inherit_id" ref="sync_client.sync_monitor_tree" />
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            	<field name="sequence_number" position="after">
+            		<field name="usb"></field>
+            	</field>
+           	</field>
+        </record>
+        
+        <!-- search -->
+         <record model="ir.ui.view" id="remote_warehouse_sync_client_sync_monitor_search">
+            <field name="name">sync_client_sync_monitor_search_rw</field>
+            <field name="model">sync.monitor</field>
+            <field name="inherit_id" ref="sync_client.sync_monitor_search" />
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+	            <filter string="Msg Push Ok" position="after">
+                    <filter string="USB" domain="[('USB','=',True)]"/>
+            	</filter>
+            </field>
+        </record>
+       
+    </data> 
+</openerp>

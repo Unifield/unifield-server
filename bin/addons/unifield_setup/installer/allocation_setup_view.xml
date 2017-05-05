@@ -1,0 +1,62 @@
+<openerp>
+  <data>
+    <record id="view_allocation_stock_setup" model="ir.ui.view">
+      <field name="name">Allocated Stock Configuration</field>
+      <field name="model">allocation.stock.setup</field>
+      <field name="type">form</field>
+      <field name="inherit_id" ref="base.res_config_view_base"/>
+      <field name="arch" type="xml">
+        <data>
+          <form position="attributes">
+            <attribute name="string">Allocation Stock Configuration</attribute>
+          </form>
+          <xpath expr="//label[@string='description']" position="attributes">
+                <attribute name="string">Determines if the stock is allocated or not or both.</attribute>
+          </xpath>
+          <xpath expr='//separator[@string="title"]' position='attributes'>
+                    <attribute name='string'>Configure Your Allocated Stock</attribute>
+          </xpath>
+          <xpath expr='//separator[@string="vsep"]' position='attributes'>
+                    <attribute name='rowspan'>25</attribute>
+                    <attribute name='string'></attribute>
+          </xpath>
+          <group string="res_config_contents" position="replace">
+              <group colspan="5">
+              	<field name="allocation_setup" on_change="allocation_on_change(allocation_setup)" />
+              	<field name="unallocated_ok" readonly="1" />
+              	<group colspan="5" col="4" attrs="{'invisible': [('error_ok', '=', False)]}">
+	              	<separator colspan="4" string="Error" />
+	              	<field name="error_ok" invisible="1" />
+	              	<field name="error_po_ok" invisible="1" />
+	              	<field name="error_cross_ok" invisible="1" />
+	              	<field name="error_central_ok" invisible="1" />
+	              	<field name="error_location_ok" invisible="1" />
+	              	<field name="error_msg" attrs="{'invisible': [('error_ok', '=', False)]}" nolabel="1" colspan="4" />
+	              	<button name="go_to_po" attrs="{'invisible': [('error_po_ok', '=', False)]}" string="Display PO" type="object" />
+	              	<button name="go_to_cross" attrs="{'invisible': [('error_cross_ok', '=', False)]}" string="Display Picking (Cross-docking)" type="object" />
+	              	<button name="go_to_central" attrs="{'invisible': [('error_central_ok', '=', False)]}" string="Display Picking (Central stock)" type="object" />
+              		<button name="go_to_location" attrs="{'invisible': [('error_location_ok', '=', False)]}" string="Display Locations" type="object" />
+              	</group>
+              </group>
+           </group>
+        </data>
+      </field>
+    </record>
+
+    <record id="action_allocation_stock_setup" model="ir.actions.act_window">
+      <field name="name">Allocated Setup Configuration</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">allocation.stock.setup</field>
+      <field name="view_id" ref="view_allocation_stock_setup"/>
+      <field name="view_type">form</field>
+      <field name="view_mode">form</field>
+      <field name="target">new</field>
+    </record>
+
+    <record id="allocation_stock_setup_todo" model="ir.actions.todo">
+        <field name="action_id" ref="action_allocation_stock_setup"/>
+        <field name="sequence">21</field>
+        <field name="restart">always</field>
+    </record>
+  </data>
+</openerp>

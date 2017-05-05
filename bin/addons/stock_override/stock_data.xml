@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+<!-- will be overwritten by msf_config_locations, declared here to be used by .yml test -->
+    <record id="stock_location_quarantine_analyze" model="stock.location">
+        <field name="name">Quarantine (analyze)</field>
+        <field name="location_category">transition</field>
+        <field name="usage">internal</field>
+        <field name="quarantine_location">True</field>
+    </record>
+
+    <record id="stock_location_quarantine_scrap" model="stock.location">
+        <field name="name">Quarantine (before scrap)</field>
+        <field name="location_category">transition</field>
+        <field name="usage">internal</field>
+        <field name="quarantine_location">True</field>
+    </record>
+    
+    <record id="stock_location_logistic" model="stock.location">
+        <field name="name">LOG</field>
+        <field name="location_category">stock</field>
+        <field name="usage">internal</field>
+    </record>
+    
+    <!-- Just define some stock locations to avoid errors on unit tests -->
+    <record id="stock_location_non_stockable" model="stock.location">
+        <field name="name">Non stockable</field>
+        <field name="location_category">other</field>
+        <field name="usage">inventory</field>
+    </record>
+
+    </data>
+</openerp>

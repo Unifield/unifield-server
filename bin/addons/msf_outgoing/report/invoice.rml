@@ -1,0 +1,300 @@
+<?xml version="1.0"?>
+<document filename="test.pdf">
+
+    <template pageSize="(842.0,595.0)" title="Shipment Proforma Invoice" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="0.0" y1="0.0" width="842" height="560" />
+
+            <pageGraphics>
+                <setFont name="Helvetica-Bold" size="13.0"/>
+                <drawString x="28.0" y="555.0">PROFORMA INVOICE</drawString>
+                <fill color="blue"/>
+                <image x="720.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+                <setFont name="Helvetica" size="8" />
+                <fill color="black" />
+                <drawString x="12.0" y="523.0">Page : <pageNumber /> / </drawString>
+                <drawString x="54.0" y="523.0"><pageCount /></drawString>
+            </pageGraphics>
+        </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <blockTableStyle id="HeaderInfos">
+            <blockAlignment value="LEFT" />
+            <blockValign value="TOP" />
+        </blockTableStyle>
+
+        <blockTableStyle id="HeaderInfos_2">
+            <blockAlignment value="LEFT" />
+            <blockValign value="TOP" />
+            <blockSpan start="2,0" stop="2,6"/>
+            <blockSpan start="3,0" stop="3,6"/>
+            <blockSpan start="4,0" stop="4,6"/>
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsInfos">
+            <blockAlignment value="LEFT" />
+            <blockValign value="TOP" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsHeaderGrey">
+            <blockAlignment value="LEFT" />
+            <blockValign value="MIDDLE" />
+            <blockBackground colorName="#c0c0c0" />
+            <lineStyle kind="LINEABOVE" colorName="black" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsLineHeader">
+            <blockAlignment value="LEFT" />
+            <blockValign value="MIDDLE" />
+            <lineStyle kind="LINEBELOW" colorName="black" start="0,0" stop="-1,0" />
+            <lineStyle kind="LINEBELOW" colorName="#c0c0c0" start="0,1" stop="-1,-1" />
+        </blockTableStyle>
+
+        <blockTableStyle id="Totals">
+            <blockAlignment value="LEFT" />
+            <blockValign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="grey" start="1,0" stop="-2,-1" />
+        </blockTableStyle>
+
+        <paraStyle name="Title" fontName="Helvetica-Bold" fontSize="13" textColor="blue" />
+
+        <paraStyle name="HeaderInfosTitle" leading="8.0" fontName="Helvetica" fontSize="8.0" />
+        <paraStyle name="HeaderInfosTitleRight" fontName="Helvetica" fontSize="8.0"  alignment="right" />
+        <paraStyle name="HeaderInfosValue" leading="10.0" fontName="Helvetica" fontSize="8.0" textColor="blue" />
+
+        <paraStyle name="ItemsInfos" fontName="Helvetica" fontSize="8.0" leading="7.0" />
+        <paraStyle name="ItemsInfosRight" fontName="Helvetica" fontSize="8.0" leading="7.0" alignment="right" />
+        <paraStyle name="ItemsLineTitle" fontName="Helvetica-Oblique" fontSize="6.0" leading="5.0" />
+        <paraStyle name="ItemsLineTitleRight" fontName="Helvetica-Oblique" fontSize="6.0" leading="5.0" alignment="right" />
+        <paraStyle name="ItemsLineValue" fontName="Helvetica" fontSize="6.0" leading="5.0" textColor="blue" />
+        <paraStyle name="ItemsLineValueRight" fontName="Helvetica" fontSize="6.0" leading="5.0" textColor="blue" alignment="right" />
+
+        <paraStyle name="TotalInfos" fontName="Helvetica" fontSize="8.0" leading="7.0" />
+        <paraStyle name="TotalInfosRight" fontName="Helvetica" fontSize="8.0" leading="7.0" />
+    </stylesheet>
+
+  <story>
+    <para style="HeaderInfosTitle">[[ repeatIn(getInvoice(objects[0]), 'pl') ]]</para>
+    <pto>
+    <!-- header: title -->
+    <pto_header>
+        <blockTable colWidths="150.0,650.0" style="HeaderInfos">
+            <tr>
+                <td>
+                    <para style="Title">[[ 'PINV/' + getInvoiceRef(pl) ]]</para>
+                </td>
+                <td></td>
+            </tr>
+        </blockTable>
+        <para style="HeaderInfosTitle">
+            <font color="white"> </font>
+        </para>
+    </pto_header>
+    <blockTable colWidths="150.0,650.0" style="HeaderInfos">
+        <tr>
+            <td>
+                <para style="Title">[[ 'PINV/' + getInvoiceRef(pl) ]]</para>
+            </td>
+            <td></td>
+        </tr>
+    </blockTable>
+    <para style="HeaderInfosTitle">
+        <font color="white"> </font>
+    </para>
+
+    <!-- header: ref fields -->
+    <blockTable colWidths="100.0,220.0,170,170,172" style="HeaderInfos_2">
+        <tr>
+            <td><para style="HeaderInfosTitle">Our ref:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.name or '-' ]]</parawrap></td>
+            <td>
+                <para style="HeaderInfosTitle">Shipper:</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.shipper_name or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.shipper_contact or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.shipper_address or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.shipper_phone or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.shipper_other or removeParentNode('para') ]]</para>
+            </td>
+            <td>
+                <para style="HeaderInfosTitle">Final destination of goods:</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.consignee_name or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.consignee_address or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.consignee_phone or removeParentNode('para') ]]</para>
+                <para style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.consignee_other or removeParentNode('para') ]]</para>
+            </td>
+            <td>
+                <para style="ItemsInfos"><font color="white"> </font></para>
+            </td>
+        </tr>
+        <tr>
+            <td><para style="HeaderInfosTitle">FO Date:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.date_order and formatLang(pl.ppl_id.sale_id.date_order, date=True) or '-' ]]</parawrap></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><para style="HeaderInfosTitle">Your Ref:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.sale_id and pl.ppl_id.sale_id.client_order_ref or '-' ]]</parawrap></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><para style="HeaderInfosTitle">Ship ref:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.shipment_id and pl.shipment_id.name or '-' ]]</parawrap></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><para style="HeaderInfosTitle">Packing ref:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.name or '-' ]]</parawrap></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><para style="HeaderInfosTitle">Invoice date:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.ppl_id and pl.ppl_id.previous_step_id and pl.ppl_id.previous_step_id.date and len(pl.ppl_id.previous_step_id.date) >= 10 and formatLang(pl.ppl_id.previous_step_id.date[:10], date=True) or '-' ]]</parawrap></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><para style="HeaderInfosTitle">Transport mode:</para></td>
+            <td><parawrap style="HeaderInfosValue">[[ pl.shipment_id and getSel(pl.shipment_id, 'transport_type') or '-' ]]</parawrap></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+
+    </blockTable>
+
+    <!-- items: stock moves -->
+    <para style="HeaderInfosTitle">
+        <font color="white"> </font>
+    </para>
+    <section>
+    <blockTable colWidths="42.0,140.0,240.0,100.0,70.0,60.0,70.0,100.0"  keepWithNext="1" style="ItemsHeaderGrey">
+        <tr>
+          <td>
+            <para style="ItemsInfos">Items</para>
+          </td>
+          <td>
+            <para style="ItemsInfos"><font color="white"> </font></para>
+          </td>
+          <td>
+            <para style="ItemsInfos"><font color="white"> </font></para>
+          </td>
+          <td>
+            <para style="ItemsInfos"><font color="white"> </font></para>
+          </td>
+          <td>
+            <para style="ItemsInfos"><font color="white"> </font></para>
+          </td>
+          <td>
+            <para style="ItemsInfos"><font color="white"> </font></para>
+          </td>
+          <td>
+            <para style="ItemsInfos"><font color="white"> </font></para>
+          </td>
+          <td>
+            <para style="ItemsInfos"><font color="white"> </font></para>
+          </td>
+        </tr>
+    </blockTable>
+    <blockTable colWidths="42.0,140.0,240.0,100.0,70.0,60.0,70.0,100.0" repeatRows="1" style="ItemsLineHeader">
+        <tr>
+          <td>
+            <para style="ItemsLineTitleRight">Item</para>
+          </td>
+          <td>
+            <para style="ItemsLineTitle">Code</para>
+          </td>
+          <td>
+            <para style="ItemsLineTitle">Description</para>
+          </td>
+          <td>
+            <para style="ItemsLineTitle">Comment</para>
+          </td>
+          <td>
+            <para style="ItemsLineTitleRight">Quantity</para>
+          </td>
+          <td>
+            <para style="ItemsLineTitle">Unit of Measure</para>
+          </td>
+          <td>
+            <para style="ItemsLineTitleRight">Unit Price</para>
+          </td>
+          <td>
+            <para style="ItemsLineTitleRight">Total Price</para>
+          </td>
+        </tr>
+        <tr>
+            [[ repeatIn(pl.moves, 'move') ]]
+            <td>
+              <para style="ItemsLineValueRight">[[ move[1].sale_line_id and move[1].sale_line_id.line_number or move[1].line_number ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValue">[[ move[1].product_id.code or '' ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValue">[[ move[1].product_id.name or '' ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValue">[[ move[1].comment or '' ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValueRight">[[ formatLang(move[1].product_qty or 0.) ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValue">[[ move[1].product_uom and move[1].product_uom.name or '' ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValueRight">[[ formatLang((move[1].sale_line_id and move[1].sale_line_id.price_unit) or 0.) ]]</para>
+            </td>
+            <td>
+              <para style="ItemsLineValueRight">[[ formatLang(move[1].total_amount or 0., digits=3) ]]</para>
+            </td>
+        </tr>
+    </blockTable>
+    </section>
+    </pto>
+
+    <!-- total -->
+    <para style="HeaderInfosTitle">
+      <font color="white"> </font>
+    </para>
+    <blockTable colWidths="42.0,140.0,240.0,100.0,70.0,60.0,70.0,100.0" style="ItemsInfos">
+      <tr>
+        <td>
+          <para style="ItemsLineValueRight"><font color="white"> </font></para>
+        </td>
+        <td>
+          <para style="ItemsLineValue"><font color="white"> </font></para>
+        </td>
+        <td>
+          <para style="ItemsLineValue"><font color="white"> </font></para>
+        </td>
+        <td>
+          <para style="ItemsLineValue"><font color="white"> </font></para>
+        </td>
+        <td>
+          <para style="ItemsLineValue"><font color="white"> </font></para>
+        </td>
+        <td>
+          <para style="HeaderInfosTitleRight">TOTAL:</para>
+        </td>
+        <td>
+          <para style="HeaderInfosTitleRight">[[ getCurrency(objects[0], True) ]]</para>
+        </td>
+        <td>
+          <para style="HeaderInfosTitleRight">[[ formatLang(pl.total, digits=3) ]]</para>
+        </td>
+      </tr>
+    </blockTable>
+
+  </story>
+</document>

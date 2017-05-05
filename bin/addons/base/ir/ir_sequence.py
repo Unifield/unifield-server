@@ -144,6 +144,8 @@ class ir_sequence(osv.osv):
         return True
 
     def write(self, cr, uid, ids, values, context=None):
+        if not ids:
+            return True
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
         new_implementation = values.get('implementation')

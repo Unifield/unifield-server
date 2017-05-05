@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="wizard_view_account_year_end_closing" model="ir.ui.view">
+            <field name="name">wizard.account.year.end.closing</field>
+            <field name="model">wizard.account.year.end.closing</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Close the Fiscal Year">
+                    <field name="instance_level" invisible="1" />
+                    <field name="fy_id" />
+                    <group colspan="4" col="4"
+                        attrs="{'invisible': [('instance_level', '=', 'section')]}">
+                        <field name="has_move_regular_bs_to_0" />
+                        <newline />
+                        <field name="has_book_pl_results" />
+                        <newline />
+                    </group>
+                    <separator string="" colspan="4"/>
+                    <group colspan="4" col="4">
+                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                        <button icon="terp-check" string="Close FY" name="btn_close_fy" type="object"
+                            confirm="Are you sure to close the selected fiscal year ? If yes do you confirm selected options ?" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_account_year_end_closing" model="ir.actions.act_window">
+            <field name="name">Close the fiscal year</field>
+            <field name="res_model">wizard.account.year.end.closing</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="wizard_view_account_year_end_closing"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="menu_account_yearly_closure" name="Yearly closure"
+            parent="account.menu_account_end_year_treatments" />
+
+        <menuitem id="menu_action_year_end_closing" name="Close the fiscal year"
+            parent="menu_account_yearly_closure" action="action_account_year_end_closing" />
+
+    </data>
+</openerp>

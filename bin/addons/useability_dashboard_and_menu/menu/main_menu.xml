@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <menuitem id="product_attributes.menu_main_product" 
+                  name="Products" 
+                  web_icon_hover="images/products.png"
+                  web_icon="images/products-hover.png" 
+                  action="product.product_normal_action"
+                  sequence="1" 
+                />
+       <menuitem id="base.menu_purchase_root" 
+                 name="Purchases"
+                 icon="terp-purchase"
+                 web_icon="images/purchases.png"
+                 web_icon_hover="images/purchases-hover.png"
+                 sequence="2"/>
+                 
+        <menuitem id="base.menu_base_partner" 
+                  name="Orders"
+                  icon="terp-partner"
+                  web_icon="images/sales.png"
+                  web_icon_hover="images/sales-hover.png"
+                  sequence="3" />
+
+        <menuitem id="menu_partner" 
+                  name="Partners" 
+                  web_icon="images/partner.jpg"
+                  web_icon_hover="images/partner_hover.jpg"
+                  sequence="4" 
+                />
+                  
+        <menuitem id="stock.menu_stock_root" 
+                  name="Warehouse"
+                  icon="terp-stock"
+                  web_icon="images/warehouse.png"
+                  web_icon_hover="images/warehouse-hover.png"
+                  sequence="5"/>
+         
+    
+        <menuitem id="object_query.main_menu_preferences" 
+                  name="Tools" 
+                  web_icon="images/prefs.png"
+                  web_icon_hover="images/prefs-hover.png" 
+                  action="object_query.action_object_query"
+                  sequence="6"
+                  />
+                  
+        <menuitem id="menu_supply_config" 
+                  name="Supply Configuration" 
+                  web_icon="images/supply.png"
+                  web_icon_hover="images/supply_hover.png"
+                  action="product_nomenclature.product_nomenclature_action_form"
+                  sequence="7"
+                  />
+                  
+        <menuitem id="base.menu_administration"
+                  name="Administration" 
+                  icon="terp-administration"
+                  web_icon="images/administration.png"
+                  web_icon_hover="images/administration-hover.png"
+                  sequence="8"/>
+                  
+        <menuitem id="account.menu_finance" name="Accounting"
+                  icon="terp-account" 
+                  web_icon="images/accounting.png"
+                  web_icon_hover="images/accounting-hover.png"
+                  sequence="9"/>
+                  
+        <menuitem id="hr.menu_hr_root" 
+                  name="Human Resources" 
+                  icon="terp-hr" 
+                  web_icon="images/hr.png"
+                  web_icon_hover="images/hr-hover.png"
+                  action="hr.open_view_employee_list_my"
+                  sequence="10"/>
+                  
+    </data>
+</openerp>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+    <!-- PO Follow Up Report -->
+        <report
+            id="report_po_follow_up_xls"
+            string="PO Follow Up Report"
+            model="purchase.order"
+            name="po.follow.up_xls"
+            file="msf_supply_doc_export/report/report_po_follow_up_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+         
+         <report
+         	auto="False"
+            id="report_po_follow_up_rml"
+            string="PO Follow Up Report"
+            model="purchase.order"
+            name="po.follow.up_rml"
+            rml="msf_supply_doc_export/report/report_po_follow_up.rml"
+            report_type="pdf"
+         />
+
+         
+       
+         
+
+    </data>
+</openerp>

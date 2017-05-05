@@ -128,7 +128,7 @@ def init_db(cr):
         id = cr.fetchone()[0]
         cr.execute('INSERT INTO ir_model_data \
             (name,model,module, res_id, noupdate) VALUES (%s,%s,%s,%s,%s)', (
-                'module_meta_information', 'ir.module.module', i, id, True))
+            'module_meta_information', 'ir.module.module', i, id, True))
         dependencies = info.get('depends', [])
         for d in dependencies:
             cr.execute('INSERT INTO ir_module_module_dependency \
@@ -141,6 +141,42 @@ def find_in_path(name):
     except IOError:
         return None
 
+def _set_env_pg(remove=False):
+    if config['db_password']:
+        if not remove and not os.environ.get('PGPASSWORD', ''):
+            os.environ['PGPASSWORD'] = config['db_password']
+        if remove and os.environ.get('PGPASSWORD'):
+            os.environ['PGPASSWORD'] = ''
+
+def pg_dump(db_name, outfile=False):
+    try:
+        _logger.info('Dump %s to %s' % (db_name, outfile or 'memory'))
+        _set_env_pg()
+        cmd = ['pg_dump', '--format=c', '--no-owner']
+        if outfile:
+            cmd += ['-f', outfile]
+        if config['db_user']:
+            cmd.append('--username=' + config['db_user'])
+        if config['db_host']:
+            cmd.append('--host=' + config['db_host'])
+        if config['db_port']:
+            cmd.append('--port=' + str(config['db_port']))
+        cmd.append(db_name)
+        if outfile:
+            res = exec_pg_command(*tuple(cmd))
+        else:
+            stdin, stdout = exec_pg_command_pipe(*tuple(cmd))
+            stdin.close()
+            data = stdout.read()
+            error = stdout.close()
+            res = (data, error)
+
+        _set_env_pg(remove=True)
+        return res
+    except Exception:
+        _logger.error('Dump', exc_info=1)
+        raise
+
 def find_pg_tool(name):
     path = None
     if config['pg_path'] and config['pg_path'] != 'None':
@@ -150,12 +186,13 @@ def find_pg_tool(name):
     except IOError:
         return None
 
+
 def exec_pg_command(name, *args):
     prog = find_pg_tool(name)
     if not prog:
         raise Exception('Couldn\'t find %s' % name)
     args2 = (prog,) + args
-    
+
     return subprocess.call(args2)
 
 def exec_pg_command_pipe(name, *args):
@@ -165,8 +202,8 @@ def exec_pg_command_pipe(name, *args):
     # on win32, passing close_fds=True is not compatible
     # with redirecting std[in/err/out]
     pop = subprocess.Popen((prog,) + args, bufsize= -1,
-          stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-          close_fds=(os.name=="posix"))
+                           stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                           close_fds=(os.name=="posix"))
     return (pop.stdin, pop.stdout)
 
 def exec_command_pipe(name, *args):
@@ -176,8 +213,8 @@ def exec_command_pipe(name, *args):
     # on win32, passing close_fds=True is not compatible
     # with redirecting std[in/err/out]
     pop = subprocess.Popen((prog,) + args, bufsize= -1,
-          stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-          close_fds=(os.name=="posix"))
+                           stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                           close_fds=(os.name=="posix"))
     return (pop.stdin, pop.stdout)
 
 #----------------------------------------------------------
@@ -342,12 +379,12 @@ command_re = re.compile("^Set-([a-z]+) *: *(.+)$", re.I + re.UNICODE)
 reference_re = re.compile("<.*-openobject-(\\d+)@(.*)>", re.UNICODE)
 
 priorities = {
-        '1': '1 (Highest)',
-        '2': '2 (High)',
-        '3': '3 (Normal)',
-        '4': '4 (Low)',
-        '5': '5 (Lowest)',
-    }
+    '1': '1 (Highest)',
+    '2': '2 (High)',
+    '3': '3 (Normal)',
+    '4': '4 (Low)',
+    '5': '5 (Lowest)',
+}
 
 def html2plaintext(html, body_id=None, encoding='utf-8'):
     ## (c) Fry-IT, www.fry-it.com, 2007
@@ -713,6 +750,37 @@ def is_hashable(h):
     except TypeError:
         return False
 
+def _generate_keys(multi, dbname, kwargs2, reset_fields=None):
+    """
+    Generate keys depending of the arguments and the mutli value
+    """
+
+    if reset_fields is None:
+        reset_fields = []
+    def to_tuple(d):
+        pairs = d.items()
+        pairs.sort(key=lambda (k,v): k)
+        for i, (k, v) in enumerate(pairs):
+            if isinstance(v, dict):
+                pairs[i] = (k, to_tuple(v))
+            if isinstance(v, (list, set)):
+                pairs[i] = (k, tuple(v))
+            elif not is_hashable(v):
+                pairs[i] = (k, repr(v))
+        return tuple(pairs)
+
+    if not multi:
+        key = (('dbname', dbname),) + to_tuple(kwargs2)
+        yield key, None
+    else:
+        multis = kwargs2[multi][:]
+        for id in multis:
+            kwargs2[multi] = (id,)
+            for reset_field in reset_fields:
+                kwargs2[reset_field] = None
+            key = (('dbname', dbname),) + to_tuple(kwargs2)
+            yield key, id
+
 class cache(object):
     """
     Use it as a decorator of the function you plan to cache
@@ -734,34 +802,6 @@ class cache(object):
         self.fun = None
         cache.__caches.append(self)
 
-
-    def _generate_keys(self, dbname, kwargs2):
-        """
-        Generate keys depending of the arguments and the self.mutli value
-        """
-
-        def to_tuple(d):
-            pairs = d.items()
-            pairs.sort(key=lambda (k,v): k)
-            for i, (k, v) in enumerate(pairs):
-                if isinstance(v, dict):
-                    pairs[i] = (k, to_tuple(v))
-                if isinstance(v, (list, set)):
-                    pairs[i] = (k, tuple(v))
-                elif not is_hashable(v):
-                    pairs[i] = (k, repr(v))
-            return tuple(pairs)
-
-        if not self.multi:
-            key = (('dbname', dbname),) + to_tuple(kwargs2)
-            yield key, None
-        else:
-            multis = kwargs2[self.multi][:]
-            for id in multis:
-                kwargs2[self.multi] = (id,)
-                key = (('dbname', dbname),) + to_tuple(kwargs2)
-                yield key, id
-
     def _unify_args(self, *args, **kwargs):
         # Update named arguments with positional argument values (without self and cr)
         kwargs2 = self.fun_default_values.copy()
@@ -774,13 +814,11 @@ class cache(object):
             if *args and **kwargs are both empty, clear all the keys related to this database
         """
         if not args and not kwargs:
-            keys_to_del = [key for key in self.cache.keys() if key[0][1] == dbname]
+            self.cache.del_map(lambda key: key[0][1] == dbname)
         else:
             kwargs2 = self._unify_args(*args, **kwargs)
-            keys_to_del = [key for key, _ in self._generate_keys(dbname, kwargs2) if key in self.cache.keys()]
-
-        for key in keys_to_del:
-            self.cache.pop(key)
+            generated_keys = [x for x, y in _generate_keys(self.multi, dbname, kwargs2)]
+            self.cache.del_map(lambda key: key in generated_keys)
 
     @classmethod
     def clean_caches_for_db(cls, dbname):
@@ -802,17 +840,16 @@ class cache(object):
             if time.time()-int(self.timeout) > self.lasttime:
                 self.lasttime = time.time()
                 t = time.time()-int(self.timeout)
-                old_keys = [key for key in self.cache.keys() if self.cache[key][1] < t]
-                for key in old_keys:
-                    self.cache.pop(key)
+                self.cache.del_map(lambda key: self.cache[key][1] < t)
 
             kwargs2 = self._unify_args(*args, **kwargs)
 
             result = {}
             notincache = {}
-            for key, id in self._generate_keys(cr.dbname, kwargs2):
-                if key in self.cache:
-                    result[id] = self.cache[key][0]
+            for key, id in _generate_keys(self.multi, cr.dbname, kwargs2):
+                cache_value = self.cache.get(key)
+                if cache_value is not None:
+                    result[id] = cache_value[0]
                 else:
                     notincache[id] = key
 
@@ -834,6 +871,221 @@ class cache(object):
             if not self.multi:
                 return result[None]
             return result
+
+        cached_result.clear_cache = self.clear
+        return cached_result
+
+class read_cache(object):
+    """
+    Use it as a decorator of the function you plan to cache
+    Timeout: 0 = no timeout, otherwise in seconds
+    """
+
+    __caches = []
+
+    def __init__(self, prefetch=None, context=None, timeout=None, size=8192):
+        if prefetch is None:
+            prefetch = []
+        if context is None:
+            context = []
+        if timeout is None:
+            self.timeout = config['cache_timeout']
+        else:
+            self.timeout = timeout
+        self.lasttime = time.time()
+        self.cache = LRU(size)
+        self.fun = None
+        self._context = context
+        read_cache.__caches.append(self)
+
+    @classmethod
+    def clean_caches_for_db(cls, dbname):
+        for c in cls.__caches:
+            c.clear(dbname)
+
+    def _unify_args(self, *args, **kwargs):
+        # Update named arguments with positional argument values (without self and cr)
+        kwargs2 = self.fun_default_values.copy()
+        kwargs2.update(kwargs)
+        kwargs2.update(dict(zip(self.fun_arg_names, args)))
+        return kwargs2
+
+    def clear(self, dbname):
+
+        """clear the cache for database dbname
+        """
+        self.cache.del_map(lambda key: key[0][1] == dbname)
+
+    def split_order_by_clause(self, order_by):
+        # we have to take into account the order whenever we fetch data
+        #  otherwise we won't be able to sort the result set
+        order_by = (order_by or '').strip()
+        if not order_by:
+            return []
+        else:
+            ret = []
+            fields = order_by.split(',')
+            for field in fields:
+                field = field.strip().split()
+                if len(field) == 1 or (len(field) == 2 and field[1].lower() == 'asc'):
+                    ret.append((True, field[0]))
+                elif len(field) == 2 and field[1].lower() == 'desc':
+                    ret.append((False, field[0]))
+            return ret
+
+    def sort_orderby(self, clause, rows):
+        def key_compare(row1, row2):
+            for asc, field in clause:
+                f1 = row1[field]
+                f2 = row2[field]
+                ret = cmp(f1, f2)
+                if ret != 0:
+                    return ret if asc else -ret
+            return 0
+        return sorted(rows, cmp=key_compare)
+
+    def filter_dict(self, keys_to_remove, rowset):
+        ret = []
+
+        for row in rowset:
+            new_row = dict(**row)
+            for field in keys_to_remove:
+                if field in new_row and field != 'id':
+                    new_row.pop(field)
+            ret.append(new_row)
+
+        return ret
+
+    def __call__(self, fn):
+        if self.fun is not None:
+            raise Exception("Can not use a cache instance on more than one function")
+        self.fun = fn
+
+        argspec = inspect.getargspec(fn)
+        # get rid of self and the database cursor
+        self.fun_arg_names = argspec[0][2:]
+        self.fun_default_values = {}
+        if argspec[3]:
+            self.fun_default_values = dict(zip(self.fun_arg_names[-len(argspec[3]):], argspec[3]))
+
+        self._sort = None
+
+        def cached_result(self2, cr, *args, **kwargs):
+            if time.time()-int(self.timeout) > self.lasttime:
+                self.lasttime = time.time()
+                t = time.time()-int(self.timeout)
+                self.cache.del_map(lambda key: self.cache[key][1] < t)
+
+            if self._sort is None:
+                order_by = self2._parent_order or self2._order
+                self._sort = order_by_clauses = self.split_order_by_clause(order_by)
+            else:
+                order_by_clauses = self._sort
+
+            kwargs2 = self._unify_args(*args, **kwargs)
+
+            # we have to keep in mind the fields that have to be returned
+            #  they will be erased when generating the key in the cache
+            if kwargs2['fields_to_read']:
+                fields_to_read = kwargs2['fields_to_read']
+            else:
+                fields_to_read = self2._columns.keys()
+
+            # if no field is required => we return all the fields
+            fields_pre = [f for f in fields_to_read if
+                          f == self2.CONCURRENCY_CHECK_FIELD
+                          or (f in self2._columns and getattr(self2._columns[f], '_classic_write'))
+                          ] + self2._inherits.values()
+
+            include_sort = False
+            fields_to_query = set(fields_to_read)
+            # we have to keep track of the fields that are used for sorting but
+            #  are not asked by the caller. We'll have to remove them in the returned
+            #  resultset.
+            fields_to_remove = set([])
+            if fields_pre:
+                include_sort = True
+
+                fields_to_add = map(lambda x : x[1], order_by_clauses)
+
+                for field_to_add in fields_to_add:
+                    if field_to_add not in fields_to_query:
+                        fields_to_remove.add(field_to_add)
+                        fields_to_query.add(field_to_add)
+            else:
+                ordered_ids = {}
+                for position, given_id in enumerate(kwargs2['ids']):
+                    ordered_ids[given_id] = position
+
+            previous_context = kwargs2['context']
+
+            # we have to check if we discard some values from the context
+            simplified_context = {}
+            for key, value in previous_context.iteritems():
+                if key in self._context:
+                    simplified_context[key] = value
+
+            # we have to remove from the context what doesn't impact the results
+            kwargs2['context'] = simplified_context
+
+            result = []
+            notincache = {}
+            for key, id in _generate_keys('ids', cr.dbname, kwargs2, ['fields_to_read']):
+                cache_value = self.cache.get(key)
+                if cache_value is not None:
+                    # we have to find if we have all the required fields in the cache
+                    fields_already_in_the_cache = cache_value[0].keys()
+                    if set(fields_to_query).issubset(set(fields_already_in_the_cache)):
+                        # all the values are already in the cache, we don't
+                        #  have to ask the DB for more information
+                        row = {'id': int(id)}
+                        for field in fields_to_query:
+                            row[field] = cache_value[0][field]
+                        result.append(row)
+                    else:
+                        # we have to look for the new values
+                        #  we fetch all of them (not optimal since some fields
+                        #  could already exist)
+                        notincache[int(id)] = key
+                else:
+                    notincache[int(id)] = key
+
+            if notincache:
+                kwargs2['ids'] = notincache.keys()
+
+                kwargs2['fields_to_read'] = fields_to_query
+                kwargs2['context'] = previous_context
+
+                result2 = fn(self2, cr, **kwargs2)
+
+                # we have to add the new rows in the resultset
+                for id, value in map(lambda x : (x['id'], x), result2):
+                    key = notincache[int(id)]
+                    cache_value = self.cache.get(key)
+                    if cache_value is not None:
+                        value_in_cache, t = cache_value
+                    else:
+                        value_in_cache, t = {}, time.time()
+
+                    for field in fields_to_query:
+                        # sometimes we don't get the column we ask to fetch...
+                        #  (it happens with inherit_id for ir_action_window)
+                        if field in value:
+                            value_in_cache[field] = value[field]
+                    value_in_cache['id'] = int(id)
+
+                    self.cache[key] = (value_in_cache, t)
+
+                    result.append(value)
+
+            if include_sort:
+                return self.filter_dict(fields_to_remove, self.sort_orderby(order_by_clauses, result))
+            else:
+                # id we don't sort, we have to use the same order as the given IDs, otherwise
+                #  the search won't be sorted in the right order (they use only IDs at some points)
+                result.sort(key=lambda x : ordered_ids[x['id']])
+
+                return result
 
         cached_result.clear_cache = self.clear
         return cached_result
@@ -1060,21 +1312,24 @@ def mod10r(number):
             report = codec[ (int(digit) + report) % 10 ]
     return result + str((10 - report) % 10)
 
-
-def human_size(sz):
+def human_size(data):
     """
     Return the size in a human readable format
     """
-    if not sz:
-        return False
-    units = ('bytes', 'Kb', 'Mb', 'Gb')
-    if isinstance(sz,basestring):
-        sz=len(sz)
-    s, i = float(sz), 0
-    while s >= 1024 and i < len(units)-1:
-        s = s / 1024
-        i = i + 1
-    return "%0.2f %s" % (s, units[i])
+    units = ('Bytes', 'KB', 'MB', 'GB', 'TB')
+    if isinstance(data, basestring):
+        size = float(len(data))
+    elif isinstance(data, (int, long)):
+        size = float(data)
+    elif isinstance(data, float):
+        size = data
+    else:
+        return '0 Bytes'
+    unit_index = 0
+    while size >= 1024 and unit_index < len(units) - 1:
+        size = size / 1024
+        unit_index += 1
+    return "%0.2f %s" % (size, units[unit_index])
 
 def logged(f):
     from tools.func import wraps
@@ -1143,7 +1398,7 @@ def debug(what):
 
     """
     warnings.warn("The tools.debug() method is deprecated, please use logging.",
-                      DeprecationWarning, stacklevel=2)
+                  DeprecationWarning, stacklevel=2)
     from inspect import stack
     from pprint import pformat
     st = stack()[1]
@@ -1156,42 +1411,42 @@ def debug(what):
 
 
 __icons_list = ['STOCK_ABOUT', 'STOCK_ADD', 'STOCK_APPLY', 'STOCK_BOLD',
-'STOCK_CANCEL', 'STOCK_CDROM', 'STOCK_CLEAR', 'STOCK_CLOSE', 'STOCK_COLOR_PICKER',
-'STOCK_CONNECT', 'STOCK_CONVERT', 'STOCK_COPY', 'STOCK_CUT', 'STOCK_DELETE',
-'STOCK_DIALOG_AUTHENTICATION', 'STOCK_DIALOG_ERROR', 'STOCK_DIALOG_INFO',
-'STOCK_DIALOG_QUESTION', 'STOCK_DIALOG_WARNING', 'STOCK_DIRECTORY', 'STOCK_DISCONNECT',
-'STOCK_DND', 'STOCK_DND_MULTIPLE', 'STOCK_EDIT', 'STOCK_EXECUTE', 'STOCK_FILE',
-'STOCK_FIND', 'STOCK_FIND_AND_REPLACE', 'STOCK_FLOPPY', 'STOCK_GOTO_BOTTOM',
-'STOCK_GOTO_FIRST', 'STOCK_GOTO_LAST', 'STOCK_GOTO_TOP', 'STOCK_GO_BACK',
-'STOCK_GO_DOWN', 'STOCK_GO_FORWARD', 'STOCK_GO_UP', 'STOCK_HARDDISK',
-'STOCK_HELP', 'STOCK_HOME', 'STOCK_INDENT', 'STOCK_INDEX', 'STOCK_ITALIC',
-'STOCK_JUMP_TO', 'STOCK_JUSTIFY_CENTER', 'STOCK_JUSTIFY_FILL',
-'STOCK_JUSTIFY_LEFT', 'STOCK_JUSTIFY_RIGHT', 'STOCK_MEDIA_FORWARD',
-'STOCK_MEDIA_NEXT', 'STOCK_MEDIA_PAUSE', 'STOCK_MEDIA_PLAY',
-'STOCK_MEDIA_PREVIOUS', 'STOCK_MEDIA_RECORD', 'STOCK_MEDIA_REWIND',
-'STOCK_MEDIA_STOP', 'STOCK_MISSING_IMAGE', 'STOCK_NETWORK', 'STOCK_NEW',
-'STOCK_NO', 'STOCK_OK', 'STOCK_OPEN', 'STOCK_PASTE', 'STOCK_PREFERENCES',
-'STOCK_PRINT', 'STOCK_PRINT_PREVIEW', 'STOCK_PROPERTIES', 'STOCK_QUIT',
-'STOCK_REDO', 'STOCK_REFRESH', 'STOCK_REMOVE', 'STOCK_REVERT_TO_SAVED',
-'STOCK_SAVE', 'STOCK_SAVE_AS', 'STOCK_SELECT_COLOR', 'STOCK_SELECT_FONT',
-'STOCK_SORT_ASCENDING', 'STOCK_SORT_DESCENDING', 'STOCK_SPELL_CHECK',
-'STOCK_STOP', 'STOCK_STRIKETHROUGH', 'STOCK_UNDELETE', 'STOCK_UNDERLINE',
-'STOCK_UNDO', 'STOCK_UNINDENT', 'STOCK_YES', 'STOCK_ZOOM_100',
-'STOCK_ZOOM_FIT', 'STOCK_ZOOM_IN', 'STOCK_ZOOM_OUT',
-'terp-account', 'terp-crm', 'terp-mrp', 'terp-product', 'terp-purchase',
-'terp-sale', 'terp-tools', 'terp-administration', 'terp-hr', 'terp-partner',
-'terp-project', 'terp-report', 'terp-stock', 'terp-calendar', 'terp-graph',
-'terp-check','terp-go-month','terp-go-year','terp-go-today','terp-document-new','terp-camera_test',
-'terp-emblem-important','terp-gtk-media-pause','terp-gtk-stop','terp-gnome-cpu-frequency-applet+',
-'terp-dialog-close','terp-gtk-jump-to-rtl','terp-gtk-jump-to-ltr','terp-accessories-archiver',
-'terp-stock_align_left_24','terp-stock_effects-object-colorize','terp-go-home','terp-gtk-go-back-rtl',
-'terp-gtk-go-back-ltr','terp-personal','terp-personal-','terp-personal+','terp-accessories-archiver-minus',
-'terp-accessories-archiver+','terp-stock_symbol-selection','terp-call-start','terp-dolar',
-'terp-face-plain','terp-folder-blue','terp-folder-green','terp-folder-orange','terp-folder-yellow',
-'terp-gdu-smart-failing','terp-go-week','terp-gtk-select-all','terp-locked','terp-mail-forward',
-'terp-mail-message-new','terp-mail-replied','terp-rating-rated','terp-stage','terp-stock_format-scientific',
-'terp-dolar_ok!','terp-idea','terp-stock_format-default','terp-mail-','terp-mail_delete'
-]
+                'STOCK_CANCEL', 'STOCK_CDROM', 'STOCK_CLEAR', 'STOCK_CLOSE', 'STOCK_COLOR_PICKER',
+                'STOCK_CONNECT', 'STOCK_CONVERT', 'STOCK_COPY', 'STOCK_CUT', 'STOCK_DELETE',
+                'STOCK_DIALOG_AUTHENTICATION', 'STOCK_DIALOG_ERROR', 'STOCK_DIALOG_INFO',
+                'STOCK_DIALOG_QUESTION', 'STOCK_DIALOG_WARNING', 'STOCK_DIRECTORY', 'STOCK_DISCONNECT',
+                'STOCK_DND', 'STOCK_DND_MULTIPLE', 'STOCK_EDIT', 'STOCK_EXECUTE', 'STOCK_FILE',
+                'STOCK_FIND', 'STOCK_FIND_AND_REPLACE', 'STOCK_FLOPPY', 'STOCK_GOTO_BOTTOM',
+                'STOCK_GOTO_FIRST', 'STOCK_GOTO_LAST', 'STOCK_GOTO_TOP', 'STOCK_GO_BACK',
+                'STOCK_GO_DOWN', 'STOCK_GO_FORWARD', 'STOCK_GO_UP', 'STOCK_HARDDISK',
+                'STOCK_HELP', 'STOCK_HOME', 'STOCK_INDENT', 'STOCK_INDEX', 'STOCK_ITALIC',
+                'STOCK_JUMP_TO', 'STOCK_JUSTIFY_CENTER', 'STOCK_JUSTIFY_FILL',
+                'STOCK_JUSTIFY_LEFT', 'STOCK_JUSTIFY_RIGHT', 'STOCK_MEDIA_FORWARD',
+                'STOCK_MEDIA_NEXT', 'STOCK_MEDIA_PAUSE', 'STOCK_MEDIA_PLAY',
+                'STOCK_MEDIA_PREVIOUS', 'STOCK_MEDIA_RECORD', 'STOCK_MEDIA_REWIND',
+                'STOCK_MEDIA_STOP', 'STOCK_MISSING_IMAGE', 'STOCK_NETWORK', 'STOCK_NEW',
+                'STOCK_NO', 'STOCK_OK', 'STOCK_OPEN', 'STOCK_PASTE', 'STOCK_PREFERENCES',
+                'STOCK_PRINT', 'STOCK_PRINT_PREVIEW', 'STOCK_PROPERTIES', 'STOCK_QUIT',
+                'STOCK_REDO', 'STOCK_REFRESH', 'STOCK_REMOVE', 'STOCK_REVERT_TO_SAVED',
+                'STOCK_SAVE', 'STOCK_SAVE_AS', 'STOCK_SELECT_COLOR', 'STOCK_SELECT_FONT',
+                'STOCK_SORT_ASCENDING', 'STOCK_SORT_DESCENDING', 'STOCK_SPELL_CHECK',
+                'STOCK_STOP', 'STOCK_STRIKETHROUGH', 'STOCK_UNDELETE', 'STOCK_UNDERLINE',
+                'STOCK_UNDO', 'STOCK_UNINDENT', 'STOCK_YES', 'STOCK_ZOOM_100',
+                'STOCK_ZOOM_FIT', 'STOCK_ZOOM_IN', 'STOCK_ZOOM_OUT',
+                'terp-account', 'terp-crm', 'terp-mrp', 'terp-product', 'terp-purchase',
+                'terp-sale', 'terp-tools', 'terp-administration', 'terp-hr', 'terp-partner',
+                'terp-project', 'terp-report', 'terp-stock', 'terp-calendar', 'terp-graph',
+                'terp-check','terp-go-month','terp-go-year','terp-go-today','terp-document-new','terp-camera_test',
+                'terp-emblem-important','terp-gtk-media-pause','terp-gtk-stop','terp-gnome-cpu-frequency-applet+',
+                'terp-dialog-close','terp-gtk-jump-to-rtl','terp-gtk-jump-to-ltr','terp-accessories-archiver',
+                'terp-stock_align_left_24','terp-stock_effects-object-colorize','terp-go-home','terp-gtk-go-back-rtl',
+                'terp-gtk-go-back-ltr','terp-personal','terp-personal-','terp-personal+','terp-accessories-archiver-minus',
+                'terp-accessories-archiver+','terp-stock_symbol-selection','terp-call-start','terp-dolar',
+                'terp-face-plain','terp-folder-blue','terp-folder-green','terp-folder-orange','terp-folder-yellow',
+                'terp-gdu-smart-failing','terp-go-week','terp-gtk-select-all','terp-locked','terp-mail-forward',
+                'terp-mail-message-new','terp-mail-replied','terp-rating-rated','terp-stage','terp-stock_format-scientific',
+                'terp-dolar_ok!','terp-idea','terp-stock_format-default','terp-mail-','terp-mail_delete'
+                ]
 
 def icons(*a, **kw):
     global __icons_list
@@ -1301,7 +1556,7 @@ def detect_server_timezone():
         import pytz
     except Exception:
         netsvc.Logger().notifyChannel("detect_server_timezone", netsvc.LOG_WARNING,
-            "Python pytz module is not available. Timezone will be set to UTC by default.")
+                                      "Python pytz module is not available. Timezone will be set to UTC by default.")
         return 'UTC'
 
     # Option 1: the configuration option (did not exist before, so no backwards compatibility issue)
@@ -1335,14 +1590,14 @@ def detect_server_timezone():
             try:
                 tz = pytz.timezone(value)
                 netsvc.Logger().notifyChannel("detect_server_timezone", netsvc.LOG_INFO,
-                    "Using timezone %s obtained from %s." % (tz.zone,source))
+                                              "Using timezone %s obtained from %s." % (tz.zone,source))
                 return value
             except pytz.UnknownTimeZoneError:
                 netsvc.Logger().notifyChannel("detect_server_timezone", netsvc.LOG_WARNING,
-                    "The timezone specified in %s (%s) is invalid, ignoring it." % (source,value))
+                                              "The timezone specified in %s (%s) is invalid, ignoring it." % (source,value))
 
     netsvc.Logger().notifyChannel("detect_server_timezone", netsvc.LOG_WARNING,
-        "No valid timezone could be detected, using default UTC timezone. You can specify it explicitly with option 'timezone' in the server configuration.")
+                                  "No valid timezone could be detected, using default UTC timezone. You can specify it explicitly with option 'timezone' in the server configuration.")
     return 'UTC'
 
 def get_server_timezone():
@@ -1364,47 +1619,47 @@ DEFAULT_SERVER_DATETIME_FORMAT = "%s %s" % (
 # the C standard (1989 version), always available on platforms
 # with a C standard implementation.
 DATETIME_FORMATS_MAP = {
-        '%C': '', # century
-        '%D': '%m/%d/%Y', # modified %y->%Y
-        '%e': '%d',
-        '%E': '', # special modifier
-        '%F': '%Y-%m-%d',
-        '%g': '%Y', # modified %y->%Y
-        '%G': '%Y',
-        '%h': '%b',
-        '%k': '%H',
-        '%l': '%I',
-        '%n': '\n',
-        '%O': '', # special modifier
-        '%P': '%p',
-        '%R': '%H:%M',
-        '%r': '%I:%M:%S %p',
-        '%s': '', #num of seconds since epoch
-        '%T': '%H:%M:%S',
-        '%t': ' ', # tab
-        '%u': ' %w',
-        '%V': '%W',
-        '%y': '%Y', # Even if %y works, it's ambiguous, so we should use %Y
-        '%+': '%Y-%m-%d %H:%M:%S',
+    '%C': '', # century
+    '%D': '%m/%d/%Y', # modified %y->%Y
+    '%e': '%d',
+    '%E': '', # special modifier
+    '%F': '%Y-%m-%d',
+    '%g': '%Y', # modified %y->%Y
+    '%G': '%Y',
+    '%h': '%b',
+    '%k': '%H',
+    '%l': '%I',
+    '%n': '\n',
+    '%O': '', # special modifier
+    '%P': '%p',
+    '%R': '%H:%M',
+    '%r': '%I:%M:%S %p',
+    '%s': '', #num of seconds since epoch
+    '%T': '%H:%M:%S',
+    '%t': ' ', # tab
+    '%u': ' %w',
+    '%V': '%W',
+    '%y': '%Y', # Even if %y works, it's ambiguous, so we should use %Y
+    '%+': '%Y-%m-%d %H:%M:%S',
 
-        # %Z is a special case that causes 2 problems at least:
-        #  - the timezone names we use (in res_user.context_tz) come
-        #    from pytz, but not all these names are recognized by
-        #    strptime(), so we cannot convert in both directions
-        #    when such a timezone is selected and %Z is in the format
-        #  - %Z is replaced by an empty string in strftime() when
-        #    there is not tzinfo in a datetime value (e.g when the user
-        #    did not pick a context_tz). The resulting string does not
-        #    parse back if the format requires %Z.
-        # As a consequence, we strip it completely from format strings.
-        # The user can always have a look at the context_tz in
-        # preferences to check the timezone.
-        '%z': '',
-        '%Z': '',
+    # %Z is a special case that causes 2 problems at least:
+    #  - the timezone names we use (in res_user.context_tz) come
+    #    from pytz, but not all these names are recognized by
+    #    strptime(), so we cannot convert in both directions
+    #    when such a timezone is selected and %Z is in the format
+    #  - %Z is replaced by an empty string in strftime() when
+    #    there is not tzinfo in a datetime value (e.g when the user
+    #    did not pick a context_tz). The resulting string does not
+    #    parse back if the format requires %Z.
+    # As a consequence, we strip it completely from format strings.
+    # The user can always have a look at the context_tz in
+    # preferences to check the timezone.
+    '%z': '',
+    '%Z': '',
 }
 
 def server_to_local_timestamp(src_tstamp_str, src_format, dst_format, dst_tz_name,
-        tz_offset=True, ignore_unparsable_time=True):
+                              tz_offset=True, ignore_unparsable_time=True):
     """
     Convert a source timestamp string into a destination timestamp string, attempting to apply the
     correct offset if both the server and local timezone are recognized, or no
@@ -1502,6 +1757,11 @@ def attrgetter(*items):
         def g(obj):
             return tuple(resolve_attr(obj, attr) for attr in items)
     return g
+
+class Path():
+    def __init__(self, path, delete=True):
+        self.path = path
+        self.delete = delete
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

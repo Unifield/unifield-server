@@ -1,0 +1,30 @@
+=== modified file 'openobject/commands.py'
+--- openobject/commands.py	2011-03-03 16:36:17 +0000
++++ openobject/commands.py	2011-08-22 15:00:29 +0000
+@@ -50,6 +50,9 @@
+                       help="configuration file", default=get_config_file())
+     parser.add_option("-a", "--address", help="host address, overrides server.socket_host")
+     parser.add_option("-p", "--port", help="port number, overrides server.socket_port")
++    parser.add_option("--openerp-host", dest="openerp_host", help="overrides openerp.server.host")
++    parser.add_option("--openerp-port", dest="openerp_port", help="overrides openerp.server.port")
++    parser.add_option("--openerp-protocol", dest="openerp_protocol", help="overrides openerp.server.protocol")
+     parser.add_option("--no-static", dest="static",
+                       action="store_false", default=True,
+                       help="Disables serving static files through CherryPy")
+@@ -72,6 +75,15 @@
+             cherrypy.config['server.socket_port'] = int(options.port)
+         except:
+             pass
++    if options.openerp_host:
++        cherrypy.config['openerp.server.host'] = options.openerp_host
++    if options.openerp_port:
++        try:
++            cherrypy.config['openerp.server.port'] = int(options.openerp_port)
++        except:
++            pass
++    if options.openerp_protocol in ['http', 'https', 'socket']:
++        cherrypy.config['openerp.server.protocol'] = options.openerp_protocol
+ 
+     configure_babel()
+ 
+

@@ -23,7 +23,6 @@ import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import netsvc
-import tools
 from tools.safe_eval import safe_eval as eval
 import pooler
 from osv import fields, osv
@@ -52,7 +51,7 @@ class ir_cron(osv.osv, netsvc.Agent):
         'active': fields.boolean('Active'),
         'interval_number': fields.integer('Interval Number',help="Repeat every x."),
         'interval_type': fields.selection( [('minutes', 'Minutes'),
-            ('hours', 'Hours'), ('work_days','Work Days'), ('days', 'Days'),('weeks', 'Weeks'), ('months', 'Months')], 'Interval Unit'),
+                                            ('hours', 'Hours'), ('work_days','Work Days'), ('days', 'Days'),('weeks', 'Weeks'), ('months', 'Months')], 'Interval Unit'),
         'numbercall': fields.integer('Number of Calls', help='Number of time the function is called,\na negative number indicates no limit'),
         'doall' : fields.boolean('Repeat Missed', help="Enable this if you want to execute missed occurences as soon as the server restarts."),
         'nextcall' : fields.datetime('Next Execution Date', required=True, help="Next planned execution date for this scheduler"),
@@ -70,7 +69,7 @@ class ir_cron(osv.osv, netsvc.Agent):
         'interval_type' : lambda *a: 'months',
         'numbercall' : lambda *a: 1,
         'active' : lambda *a: 1,
-        'doall' : lambda *a: 1
+        'doall' : lambda *a: 0
     }
 
     def _check_args(self, cr, uid, ids, context=None):
@@ -95,7 +94,16 @@ class ir_cron(osv.osv, netsvc.Agent):
             except Exception, e:
                 cr.rollback()
                 self._logger.exception("Job call of self.pool.get('%s').%s(cr, uid, *%r) failed" % (model, func, args))
-
+                try:
+                    import sys, traceback
+                    tb = getattr(e, 'traceback', sys.exc_info())
+                    tb_s = "".join(traceback.format_exception(*tb))
+                    oe = self.pool.get('operations.event')
+                    oe.create(cr, uid, { 'kind': 'traceback', 'data': tb_s })
+                except:
+                    # best effort write to operations.event, do not
+                    # throw any exceptions if things go wrong
+                    pass
 
     def _poolJobs(self, db_name, check=False):
         try:
@@ -137,7 +145,7 @@ class ir_cron(osv.osv, netsvc.Agent):
             if not check:
                 self.setAlarm(self._poolJobs, next_call, db_name, db_name)
 
-        except Exception, ex:
+        except Exception:
             self._logger.warning('Exception in cron:', exc_info=True)
 
         finally:
@@ -167,6 +175,8 @@ class ir_cron(osv.osv, netsvc.Agent):
         return res
 
     def write(self, cr, user, ids, vals, context=None):
+        if not ids:
+            return True
         res = super(ir_cron, self).write(cr, user, ids, vals, context=context)
         self.update_running_cron(cr)
         return res

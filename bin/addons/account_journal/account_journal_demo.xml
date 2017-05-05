@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+        <record id="engagement_journal" model="account.analytic.journal">
+            <field name="name">Engagement Journal</field>
+            <field name="code">ENG</field>
+            <field name="type">engagement</field>
+        </record>
+
+    </data>
+</openerp>

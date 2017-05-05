@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="return_pack_shipment_processor_form_view" model="ir.ui.view">
+            <field name="name">return.pack.shipment.processor.form.view</field>
+            <field name="model">return.pack.shipment.processor</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Process Document">
+                    <!-- Invisible fields -->
+                    <field name="date" invisible="1" />
+
+                    <button name="select_all" string="Copy all" colspan="2" type="object" icon="gtk-jump-to" />
+                    <button name="deselect_all" string="Clear all" colspan="2" type="object" icon="gtk-undo" />
+                    <separator colspan="4" string="Products" />
+                    <field name="family_ids" nolabel="1" colspan="4" mode="tree" />
+                    <separator colspan="4" string="Actions" />
+                    <label colspan="2"> </label>
+                    <button special="cancel" icon="gtk-cancel" string="Cancel" colspan="1" />
+                    <button name="do_return_pack_from_shipment" type="object" string="Return Packs from Shipment" icon="gtk-go-forward" colspan="1" />
+               </form>
+           </field>
+        </record>
+
+        <record id="return_pack_shipment_family_processor_tree_view" model="ir.ui.view">
+            <field name="name">return.pack.shipment.family.processor.tree.view</field>
+            <field name="model">return.pack.shipment.family.processor</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree
+                    editable="bottom"
+                    hide_new_button="1"
+                    hide_delete_button="1"
+                    string="Pack Families"
+                    colors="red:integrity_status not in ('ok', 'empty')"
+                    >
+                    <field name="sale_order_id" readonly="1" />
+                    <field name="ppl_id" readonly="1" />
+                    <field name="from_pack" readonly="1" />
+                    <field name="to_pack" readonly="1" />
+                    <field name="pack_type" readonly="1" />
+                    <field name="weight" readonly="1" />
+                    <field name="return_from" />
+                    <field name="return_to" />
+                    <field name="selected_weight" string="Weight to Return [kg]" readonly="1" />
+                    <field name="integrity_status" />
+                </tree>
+            </field>
+        </record>
+
+    </data>
+</openerp>

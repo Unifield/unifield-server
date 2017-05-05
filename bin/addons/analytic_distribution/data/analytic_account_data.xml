@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+    <!-- WARNING: These IDs are used in analytic_distribution module, in analytic_account.py in order to disallow there deletion. -->
+        <record id="analytic_account_project" model="account.analytic.account">
+            <field name="name">OC</field>
+            <field name="code">OC</field>
+            <field name="type">view</field>
+            <field name="active">True</field>
+            <field name="category">OC</field>
+        </record>
+        
+        <record id="analytic_account_project_intermission" model="account.analytic.account">
+            <field name="name">Intermission</field>
+            <field name="code">cc-intermission</field>
+            <field name="type">normal</field>
+            <field name="active">True</field>
+            <field name="category">OC</field>
+            <field name="parent_id" ref="analytic_account_project" />
+        </record>
+        
+        <record id="analytic_account_funding_pool" model="account.analytic.account">
+            <field name="name">Funding Pool</field>
+            <field name="code">FUNDING</field>
+            <field name="type">view</field>
+            <field name="active">True</field>
+            <field name="category">FUNDING</field>
+        </record>
+        
+        <record id="analytic_account_free_1" model="account.analytic.account">
+            <field name="name">Free 1</field>
+            <field name="code">FREE1</field>
+            <field name="type">view</field>
+            <field name="active">True</field>
+            <field name="category">FREE1</field>
+        </record>
+        
+        <record id="analytic_account_free_2" model="account.analytic.account">
+            <field name="name">Free 2</field>
+            <field name="code">FREE2</field>
+            <field name="type">view</field>
+            <field name="active">True</field>
+            <field name="category">FREE2</field>
+        </record>
+        
+        <record id="analytic_account_msf_private_funds" model="account.analytic.account">
+            <field name="name">MSF Private Funds</field>
+            <field name="code">PF</field>
+            <field name="type">normal</field>
+            <field name="active">True</field>
+            <field name="category">FUNDING</field>
+            <field name="parent_id" ref="analytic_distribution.analytic_account_funding_pool"/>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
+        </record>
+        
+        <record id="analytic_account_destination" model="account.analytic.account">
+            <field name="name">Destination</field>
+            <field name="code">DEST</field>
+            <field name="type">view</field>
+            <field name="active">True</field>
+            <field name="category">DEST</field>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
+        </record>
+        
+        <record id="analytic_account_destination_operation" model="account.analytic.account">
+            <field name="name">Operations</field>
+            <field name="code">OPS</field>
+            <field name="type">normal</field>
+            <field name="active">True</field>
+            <field name="category">DEST</field>
+            <field name="parent_id" ref="analytic_account_destination"/>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
+        </record>
+        
+        <record id="analytic_account_destination_support" model="account.analytic.account">
+            <field name="name">Support</field>
+            <field name="code">SUP</field>
+            <field name="type">normal</field>
+            <field name="active">True</field>
+            <field name="category">DEST</field>
+            <field name="parent_id" ref="analytic_account_destination"/>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
+        </record>
+        
+        <record id="analytic_account_destination_national_staff" model="account.analytic.account">
+            <field name="name">National Staff</field>
+            <field name="code">NAT</field>
+            <field name="type">normal</field>
+            <field name="active">True</field>
+            <field name="category">DEST</field>
+            <field name="parent_id" ref="analytic_account_destination"/>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
+        </record>
+        
+        <record id="analytic_account_destination_expatriates" model="account.analytic.account">
+            <field name="name">Expatriates</field>
+            <field name="code">EXP</field>
+            <field name="type">normal</field>
+            <field name="active">True</field>
+            <field name="category">DEST</field>
+            <field name="parent_id" ref="analytic_account_destination"/>
+            <field name="date_start" eval="time.strftime('%Y-01-01')"/>
+        </record>
+    <!-- END OF WARNING -->
+
+    </data>
+</openerp>

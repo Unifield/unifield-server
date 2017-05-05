@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        
+        <menuitem 
+        id="menu_supplier" 
+        name="Suppliers"
+        parent="menu_partner" 
+        sequence="10"
+        />
+        
+        <!-- we move the menu 'Suppliers' from the purchase menu to the partner menu' -->
+        <menuitem 
+            id="base.menu_procurement_management_supplier_name" 
+            name="Suppliers"
+            action="base.action_partner_supplier_form" 
+            parent="menu_supplier" 
+            sequence="10" />
+
+        <!-- we move the menu 'Supplier Catalogue' from the purchase menu config to the partner menu' -->
+        <menuitem 
+        id="supplier_catalogue.menu_supplier_catalogue" 
+        name="Supplier catalogues"
+        parent="menu_supplier" 
+        sequence="11"
+        />
+
+        <menuitem 
+        id="menu_customer" 
+        name="Customers"
+        parent="menu_partner" 
+        sequence="10"
+        />
+
+        <!-- we move the menu 'Customers' from the sale menu to the partner menu' -->
+        <menuitem 
+        id="base.menu_partner_form" 
+        name="Customers"
+        parent="menu_customer" 
+        sequence="12"
+        />
+        
+        <menuitem 
+        id="menu_other" 
+        name="Other/Manufacturer"
+        parent="menu_partner" 
+        sequence="10"
+        />
+        
+        <record id="action_other_form" model="ir.actions.act_window">
+            <field name="name">Other/Manufacturer</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.partner</field>
+            <field name="view_type">form</field>
+            <field name="search_view_id" ref="base.view_res_partner_filter"/>
+            <field name="context">{"search_default_manufacturer":1, 'show_button_show_inactive':1}</field>
+            <field name="help">You see here Other/Manufacturer who can be both Customer and Supplier.</field>
+        </record>
+        
+        <menuitem 
+        id="menu_other_manufacturer" 
+        action="action_other_form"
+        name="Other/Manufacturer"
+        parent="menu_other" 
+        sequence="13"
+        />
+
+        <!-- The 3 records below enable the user to see the button "Show inactive" -->
+        <record id="base.action_partner_supplier_form" model="ir.actions.act_window">
+            <field name="context">{'default_customer':0, 'search_default_supplier': 1, 'default_supplier':1, 'show_button_show_inactive':1}</field>
+        </record>
+
+        <record id="base.action_partner_customer_form" model="ir.actions.act_window">
+            <field name="context">{'default_customer':1, 'search_default_customer':1, 'show_button_show_inactive':1}</field>
+        </record>
+
+        <record id="base.action_partner_form" model="ir.actions.act_window">
+            <field name="context">{"search_default_customer":1, 'show_button_show_inactive':1}</field>
+        </record>
+
+    </data>
+</openerp>

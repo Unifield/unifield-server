@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+
+        <report
+            id="report_inconsistencies_xls"
+            string="Inconsistencies with HQ"
+            model="export.report.inconsistencies"
+            name="inconsistencies.xls"
+            file="msf_tools/report/report_inconsistencies_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
+
+
+    </data>
+</openerp>

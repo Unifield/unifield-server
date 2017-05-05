@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="weekly_forecast_report_waiting_view" model="ir.ui.view">
+            <field name="name">weekly.forecast.report.waiting.view</field>
+            <field name="model">weekly.forecast.report</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Status of the report" hide_new_button="1" hide_delete_button="1">
+                    <label> </label>
+                    <group colspan="2" col="2">
+                        <html>
+                            <div style="align: center">
+                                <p style="font-size:14px;align:center">
+                                    Your demand of periodical forecast report will be treated quickly.<br />
+                                </p>
+                                <p style="font-size:14px;align:center">
+                                    Due to the volume of data, your demand cannot be shown immediatly.<br />
+                                </p>
+                                <p style="font-size:14px;align:center">
+                                    When the report will be ready, you can access to it by the menu Warehouse / Reporting / Periodical forecast report.<br />
+                                </p>
+                            </div>
+                        </html>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="weekly_forecast_report_search_view" model="ir.ui.view">
+            <field name="name">weekly.forecast.report.search.view</field>
+            <field name="model">weekly.forecast.report</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Periodical forecast reports">
+                    <field name="requestor_id" />
+                    <filter domain="[('requestor_id', '=', uid)]" icon="terp-personal" help="My requests" />
+                    <field name="requestor_date" />
+                </search>
+            </field>
+        </record>
+
+        <record id="weekly_forecast_report_tree_view" model="ir.ui.view">
+            <field name="name">weekly.forecast.report.tree.view</field>
+            <field name="model">weekly.forecast.report</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Periodical forecast reports">
+                    <field name="requestor_date" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="requestor_id" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="consumption_type" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="interval" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="interval_type" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="location_id" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="progress" widget="progressbar" />
+                    <button name="in_progress" type="object" icon="gtk-refresh" string="In Progress" attrs="{'invisible': [('status', '!=', 'in_progress')]}" />
+                    <button name="print_report" type="object" icon="gtk-print" string="Print report" attrs="{'invisible': [('status', '!=', 'ready')]}" />
+                    <field name="status" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="weekly_forecast_report_form_view" model="ir.ui.view">
+            <field name="name">weekly.forecast.report.form.view</field>
+            <field name="model">weekly.forecast.report</field>
+            <field name="priority" eval="16" />
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Periodical forecast report">
+                    <separator colspan="4" string="Period of calculation" />
+                    <field name="interval" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="interval_type" colspan="2" nolabel="1" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <separator colspan="4" string="Consumption parameters" />
+                    <field name="consumption_type" colspan="4" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <field name="consumption_from" attrs="{'invisible': [('consumption_type', 'not in', ('amc', 'rac'))], 'required': [('consumption_type', 'in', ('amc', 'rac'))], 'readonly': [('status', '!=', 'draft')]}" on_change="period_change(consumption_from, consumption_to, consumption_type)" />
+                    <field name="consumption_to" attrs="{'invisible': [('consumption_type', 'not in', ('amc', 'rac'))], 'required': [('consumption_type', 'in', ('amc', 'rac'))], 'readonly': [('status', '!=', 'draft')]}" on_change="period_change(consumption_from, consumption_to, consumption_type)" />
+                    <separator colspan="4" string="Location" />
+                    <field name="location_id" domain="[('usage', '=', 'internal')]" attrs="{'readonly': [('status', '!=', 'draft')]}" />
+                    <separator colspan="4" string="Product parameters" />
+                    <field name="sublist_id" attrs="{'readonly': ['|', ('nomen_manda_0', '!=', False), ('status', '!=', 'draft')]}" />
+                    <group colspan="2" col="4">
+                        <field name="nomen_manda_0"
+                               domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                               widget="selection"
+                               on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                               attrs="{'readonly': [('status', '!=', 'draft')]}"
+                               />
+                        <field name="nomen_manda_1"
+                               domain="[('id','=', 0)]"
+                               widget="selection"
+                               get_selection="get_nomen"
+                               on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                               attrs="{'readonly': [('status', '!=', 'draft')]}"
+                               />
+                        <field name="nomen_manda_2"
+                               domain="[('id','=', 0)]"
+                               widget="selection"
+                               get_selection="get_nomen"
+                               on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                               attrs="{'readonly': [('status', '!=', 'draft')]}"
+                               />
+                        <field name="nomen_manda_3"
+                               domain="[('id','=', 0)]"
+                               widget="selection"
+                               get_selection="get_nomen"
+                               on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                               attrs="{'readonly': [('status', '!=', 'draft')]}"
+                               />
+                    </group>
+                    <separator colspan="4" string="Actions" />
+                    <button name="process_lines" string="View report" type="object" colspan="4" icon="gtk-execute" attrs="{'invisible': [('status', '=', 'in_progress')]}" />
+                    <button name="process_lines" string="Update" type="object" colspan="4" icon="gtk-execute" attrs="{'invisible': [('status', '!=', 'in_progress')]}" />
+                    <label string="" /><label string="" />
+                    <group colspan="4" col="4" attrs="{'invisible': [('status', '=', 'draft')]}">
+                        <separator string="Status" colspan="4" />
+                        <field name="progress_comment" colspan="4" nolabel="True" attrs="{'invisible': [('status', 'not in', ('in_progress', 'error'))]}" />
+                        <field name="status" />
+                        <field name="progress" widget="progressbar" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_weekly_forecast_report" model="ir.actions.act_window">
+            <field name="name">Periodical forecast report</field>
+            <field name="res_model">weekly.forecast.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem id="menu_weekly_forecast_report"
+                  action="action_weekly_forecast_report"
+                  sequence="-1"
+                  parent="stock.next_id_61" />
+
+    </data>
+</openerp>

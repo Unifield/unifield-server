@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_import_analytic_lines_form" model="ir.ui.view">
+            <field name="name">Import Analytic Lines</field>
+            <field name="model">data_finance.import_lines</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Datas">
+                    <group col="8">
+                        <group colspan="3">
+                            <field name="config_logo" widget="image" width="220" height="130" nolabel="1" colspan="1"/>
+                            <newline/>
+                            <label colspan="4" width="220" string="Supported file formats: *.csv (Comma-separated values)"/>
+                            <label colspan="4" width="220" string="Please double-check that the file encoding is set to UTF-8 (sometimes called Unicode) when the translator exports it."/>
+                            <label colspan="4" width="220" string="Columns: Amount, Currency, CC, FP, Account, Register, Date, Description"/>
+                            <label colspan="4" width="220"/>
+                        </group>
+                        <separator orientation="vertical" rowspan="15"/>
+                        <group colspan="4" col="4">
+                            <separator string="Import Datas" colspan="4"/>
+                            <newline/>
+                            <field name="state" width="200"/>
+                            <field name="date_format"/>
+                            <field name="relative" />
+                            <field name="file" colspan="4"/>
+                        </group>
+                        <group colspan="8" col="8">
+                            <separator string="" colspan="8"/>
+                            <label colspan="6" width="220"/>
+                                <button special="cancel" string="_Close" icon="gtk-cancel" />
+                                <button name="import_csv" string="_Import" type="object" icon="gtk-ok"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <act_window name="Import Analytic Lines"
+            res_model="data_finance.import_lines"
+            src_model="data_finance.import_lines"
+            view_mode="form"
+            target="new"
+            key2="client_action_multi"
+            id="action_data_finance_import_lines"/>
+
+        <menuitem
+        action="action_data_finance_import_lines"
+        id="menu_data_finance_import_lines"
+        parent="base.menu_custom"/>
+
+        <record id="view_import_analytic_lines_result_form" model="ir.ui.view">
+            <field name="name">Import Analytic Lines Result</field>
+            <field name="model">data_finance.import_lines.result</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Datas">
+                    <group col="8">
+                        <group colspan="3">
+                            <field name="config_logo" widget="image" width="220" height="130" nolabel="1" colspan="1"/>
+                            <newline/>
+                            <label colspan="4" width="220"/>
+                        </group>
+                        <separator orientation="vertical" rowspan="15"/>
+                        <group colspan="4" col="4">
+                            <separator string="Import Datas" colspan="4"/>
+                            <newline/>
+                            <label string="You will receive a request with the import result." colspan="4"/>
+                        </group>
+                        <group colspan="8" col="8">
+                            <separator string="" colspan="8"/>
+                            <label colspan="6" width="220"/>
+                                <button special="cancel" string="_Close" icon="gtk-cancel" />
+                                <button name="ok" string="_Ok" type="object" icon="gtk-ok"/>
+                        </group>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

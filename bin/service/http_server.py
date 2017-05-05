@@ -30,7 +30,8 @@
 
 
 """
-from websrv_lib import *
+import websrv_lib
+import base64
 import netsvc
 import errno
 import threading
@@ -42,6 +43,7 @@ import select
 import socket
 import xmlrpclib
 import logging
+import pooler
 
 import SimpleXMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
@@ -57,7 +59,7 @@ try:
 except ImportError:
     class SSLError(Exception): pass
 
-class ThreadedHTTPServer(ConnThreadingMixIn, SimpleXMLRPCDispatcher, HTTPServer):
+class ThreadedHTTPServer(websrv_lib.ConnThreadingMixIn, SimpleXMLRPCDispatcher, websrv_lib.HTTPServer):
     """ A threaded httpd server, with all the necessary functionality for us.
 
         It also inherits the xml-rpc dispatcher, so that some xml-rpc functions
@@ -74,8 +76,8 @@ class ThreadedHTTPServer(ConnThreadingMixIn, SimpleXMLRPCDispatcher, HTTPServer)
         self.logRequests = logRequests
 
         SimpleXMLRPCDispatcher.__init__(self, allow_none, encoding)
-        HTTPServer.__init__(self, addr, requestHandler)
-        
+        websrv_lib.HTTPServer.__init__(self, addr, requestHandler)
+
         self.numThreads = 0
         self.proto = proto
         self.__threadno = 0
@@ -91,7 +93,7 @@ class ThreadedHTTPServer(ConnThreadingMixIn, SimpleXMLRPCDispatcher, HTTPServer)
     def handle_error(self, request, client_address):
         """ Override the error handler
         """
-        
+
         logging.getLogger("init").exception("Server error in request from %s:" % (client_address,))
 
     def _mark_start(self, thread):
@@ -109,25 +111,25 @@ class HttpLogHandler:
     Please define self._logger at each class that is derived from this
     """
     _logger = None
-    
+
     def log_message(self, format, *args):
         self._logger.debug(format % args) # todo: perhaps other level
 
     def log_error(self, format, *args):
         self._logger.error(format % args)
-        
+
     def log_exception(self, format, *args):
         self._logger.exception(format, *args)
 
     def log_request(self, code='-', size='-'):
         self._logger.log(netsvc.logging.DEBUG_RPC, '"%s" %s %s',
-                        self.requestline, str(code), str(size))
-    
-class MultiHandler2(HttpLogHandler, MultiHTTPHandler):
+                         self.requestline, str(code), str(size))
+
+class MultiHandler2(HttpLogHandler, websrv_lib.MultiHTTPHandler):
     _logger = logging.getLogger('http')
 
 
-class SecureMultiHandler2(HttpLogHandler, SecureMultiHTTPHandler):
+class SecureMultiHandler2(HttpLogHandler, websrv_lib.SecureMultiHTTPHandler):
     _logger = logging.getLogger('https')
 
     def getcert_fnames(self):
@@ -151,10 +153,10 @@ class BaseHttpDaemon(threading.Thread, netsvc.Server):
             self.server.logRequests = True
             self.server.timeout = self._busywait_timeout
             logging.getLogger("web-services").info(
-                        "starting %s service at %s port %d" %
-                        (self._RealProto, interface or '0.0.0.0', port,))
-        except Exception, e:
-            logging.getLogger("httpd").exception("Error occured when starting the server daemon.")
+                "starting %s service at %s port %d" %
+                (self._RealProto, interface or '0.0.0.0', port,))
+        except Exception:
+            logging.getLogger("httpd").exception("Error occurred when starting the server daemon.")
             raise
 
     @property
@@ -185,9 +187,9 @@ class BaseHttpDaemon(threading.Thread, netsvc.Server):
         return res
 
     def append_svc(self, service):
-        if not isinstance(service, HTTPDir):
+        if not isinstance(service, websrv_lib.HTTPDir):
             raise Exception("Wrong class for http service")
-        
+
         pos = len(self.server.vdirs)
         lastpos = pos
         while pos > 0:
@@ -203,9 +205,9 @@ class BaseHttpDaemon(threading.Thread, netsvc.Server):
         ret = []
         for svc in self.server.vdirs:
             ret.append( ( svc.path, str(svc.handler)) )
-        
+
         return ret
-    
+
 
 class HttpDaemon(BaseHttpDaemon):
     _RealProto = 'HTTP'
@@ -219,9 +221,9 @@ class HttpSDaemon(BaseHttpDaemon):
         try:
             super(HttpSDaemon, self).__init__(interface, port,
                                               handler=SecureMultiHandler2)
-        except SSLError, e:
+        except SSLError:
             logging.getLogger('httpsd').exception( \
-                        "Can not load the certificate and/or the private key files")
+                "Can not load the certificate and/or the private key files")
             raise
 
 httpd = None
@@ -262,10 +264,43 @@ def list_http_services(protocol=None):
     else:
         raise Exception("Incorrect protocol or no http services")
 
-class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
+class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,websrv_lib.FixSendError,HttpLogHandler,SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     rpc_paths = []
     protocol_version = 'HTTP/1.1'
+
     _logger = logging.getLogger('xmlrpc')
+
+    xmlrpc_uid_cache = {}
+
+    def get_uid_list2log(self, db_name):
+        '''
+        return a list of user id for which the xmlrpc requests should be logged
+        This list come from the cache if any (not None) else it is read from
+        the database
+        '''
+        if self.xmlrpc_uid_cache.get(db_name, None) is None:
+            self.xmlrpc_uid_cache[db_name] = None
+            db = None
+            cr = None
+            try:
+                db, pool = pooler.get_db_and_pool(db_name, if_open=True)
+                if db is not None and pool is not None:
+                    # look for the user id having log_xmlrpc = True
+                    cr = db.cursor()
+                    res_users_obj = pool.get('res.users')
+                    ids_to_log = res_users_obj.search(cr, 1,
+                                                      [('log_xmlrpc', '=', True)])
+                    res_user_read = res_users_obj.read(cr, 1, ids_to_log, ['login'])
+                    user_dict = dict((x['id'], x['login']) for x in res_user_read)
+
+                    if user_dict:
+                        self.xmlrpc_uid_cache[db_name] = user_dict
+                    else:
+                        self.xmlrpc_uid_cache[db_name] = {}
+            finally:
+                if cr is not None:
+                    cr.close()
+        return self.xmlrpc_uid_cache[db_name]
 
     def _dispatch(self, method, params):
         try:
@@ -281,10 +316,11 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,
         pass
 
     def setup(self):
-        self.connection = dummyconn()
+        self.connection = websrv_lib.dummyconn()
         self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
 
-class GzipXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler, gzip_xmlrpclib.GzipXMLRPCRequestHandler):
+
+class GzipXMLRPCRequestHandler(netsvc.OpenERPDispatcher,websrv_lib.FixSendError,HttpLogHandler, gzip_xmlrpclib.GzipXMLRPCRequestHandler):
     rpc_paths = []
     protocol_version = 'HTTP/1.1'
     _logger = logging.getLogger('xmlrpc')
@@ -303,34 +339,34 @@ class GzipXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHand
         pass
 
     def setup(self):
-        self.connection = dummyconn()
+        self.connection = websrv_lib.dummyconn()
         self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
 
 def init_xmlrpc():
     if tools.config.get('xmlrpc', False):
         # Example of http file serving:
         # reg_http_service(HTTPDir('/test/',HTTPHandler))
-        reg_http_service(HTTPDir('/xmlrpc/', XMLRPCRequestHandler))
+        reg_http_service(websrv_lib.HTTPDir('/xmlrpc/', XMLRPCRequestHandler))
         logging.getLogger("web-services").info("Registered XML-RPC over HTTP")
 
     if tools.config.get('gzipxmlrpc', False):
         # Example of http file serving:
         # reg_http_service(HTTPDir('/test/',HTTPHandler))
-        reg_http_service(HTTPDir('/xmlrpc/', GzipXMLRPCRequestHandler))
+        reg_http_service(websrv_lib.HTTPDir('/xmlrpc/', GzipXMLRPCRequestHandler))
         logging.getLogger("web-services").info("Registered gzipped XML-RPC over HTTP")
 
     if (tools.config.get('xmlrpcs', False) or tools.config.get('gzipxmlrpcs', False) ) \
             and not tools.config.get('xmlrpc', False):
         # only register at the secure server
-        reg_http_service(HTTPDir('/xmlrpc/', GzipXMLRPCRequestHandler), True)
+        reg_http_service(websrv_lib.HTTPDir('/xmlrpc/', GzipXMLRPCRequestHandler), True)
         logging.getLogger("web-services").info("Registered XML-RPC over HTTPS only")
 
-class StaticHTTPHandler(HttpLogHandler, FixSendError, HttpOptions, HTTPHandler):
+class StaticHTTPHandler(HttpLogHandler, websrv_lib.FixSendError, websrv_lib.HttpOptions, websrv_lib.HTTPHandler):
     _logger = logging.getLogger('httpd')
     _HTTP_OPTIONS = { 'Allow': ['OPTIONS', 'GET', 'HEAD'] }
 
     def __init__(self,request, client_address, server):
-        HTTPHandler.__init__(self,request,client_address,server)
+        websrv_lib.HTTPHandler.__init__(self,request,client_address,server)
         document_root = tools.config.get('static_http_document_root', False)
         assert document_root, "Please specify static_http_document_root in configuration, or disable static-httpd!"
         self.__basepath = document_root
@@ -358,25 +394,25 @@ class StaticHTTPHandler(HttpLogHandler, FixSendError, HttpOptions, HTTPHandler):
 def init_static_http():
     if not tools.config.get('static_http_enable', False):
         return
-    
+
     document_root = tools.config.get('static_http_document_root', False)
     assert document_root, "Document root must be specified explicitly to enable static HTTP service (option --static-http-document-root)"
-    
-    base_path = tools.config.get('static_http_url_prefix', '/')
-    
-    reg_http_service(HTTPDir(base_path,StaticHTTPHandler))
-    
-    logging.getLogger("web-services").info("Registered HTTP dir %s for %s" % \
-                        (document_root, base_path))
 
-class OerpAuthProxy(AuthProxy):
+    base_path = tools.config.get('static_http_url_prefix', '/')
+
+    reg_http_service(websrv_lib.HTTPDir(base_path,StaticHTTPHandler))
+
+    logging.getLogger("web-services").info("Registered HTTP dir %s for %s" % \
+                                           (document_root, base_path))
+
+class OerpAuthProxy(websrv_lib.AuthProxy):
     """ Require basic authentication..
 
         This is a copy of the BasicAuthProxy, which however checks/caches the db
         as well.
     """
     def __init__(self,provider):
-        AuthProxy.__init__(self,provider)
+        websrv_lib.AuthProxy.__init__(self,provider)
         self.auth_creds = {}
         self.auth_tries = 0
         self.last_auth = None
@@ -395,7 +431,7 @@ class OerpAuthProxy(AuthProxy):
             else:
                 #FIXME!
                 self.provider.log("Wrong path: %s, failing auth" %path)
-                raise AuthRejectedExc("Authorization failed. Wrong sub-path.") 
+                raise websrv_lib.AuthRejectedExc2("Authorization failed. Wrong sub-path.") 
         if self.auth_creds.get(db):
             return True 
         if auth_str and auth_str.startswith('Basic '):
@@ -409,12 +445,12 @@ class OerpAuthProxy(AuthProxy):
                 return True
         if self.auth_tries > 5:
             self.provider.log("Failing authorization after 5 requests w/o password")
-            raise AuthRejectedExc("Authorization failed.")
+            raise websrv_lib.AuthRejectedExc("Authorization failed.")
         self.auth_tries += 1
-        raise AuthRequiredExc(atype='Basic', realm=self.provider.realm)
+        raise websrv_lib.AuthRequiredExc(atype='Basic', realm=self.provider.realm)
 
 import security
-class OpenERPAuthProvider(AuthProvider):
+class OpenERPAuthProvider(websrv_lib.AuthProvider):
     def __init__(self,realm='OpenERP User'):
         self.realm = realm
 

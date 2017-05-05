@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<record id="catalogue_export_lines_form_view" model="ir.ui.view">
+			<field name="name">catalogue.export.lines.form.view</field>
+			<field name="model">catalogue.export.lines</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Export lines from a catalogue">
+					<separator colspan="4" string="Data" />
+					<field name="catalogue_id" readonly="1" colspan="4" />
+					<field name="file_to_export" colspan="4" />
+					<separator colspan="4" string="Actions" />
+					<label colspan="2" />
+					<button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+				</form>
+			</field>
+        </record>
+
+        <record id="action_server_export_catalogue_lines" model="ir.actions.server">
+            <field name="name">Export lines (csv)</field>
+            <field name="model_id" ref="model_catalogue_export_lines" />
+            <field name="state">code</field>
+            <field name="code">action = obj.export_file(context=context)</field>
+        </record>
+
+        <record id="ir_export_catalogue_lines" model="ir.values">
+            <field name="key2">client_print_multi</field>
+            <field name="model">supplier.catalogue</field>
+            <field name="name">Export lines (Excel)</field>
+            <field eval="'ir.actions.server,%d'%action_server_export_catalogue_lines" name="value" />
+            <field eval="True" name="object" />
+        </record>
+		
+	</data>
+</openerp>

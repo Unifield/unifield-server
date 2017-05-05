@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_confirm_form_wizard" model="ir.ui.view">
+            <field name="name">view.confirm.form.wizard</field>
+            <field name="model">confirm</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Confirmation">
+                <field name="question" nolabel="True" invisible="True" colspan="4" />
+                <group colspan="2" />
+                <field name="display_close_confirm" invisible="True" />
+                <field name="display_back_confirm" invisible="True" />
+                <group colspan="2">
+	                <button icon='gtk-cancel' special="cancel"
+	                    string="_Close" attrs="{'invisible': [('display_close_confirm', '=', False)]}" />
+	                <button icon='gtk-go-back' name="back_step" type="object"
+	                    string="_Back" attrs="{'invisible': [('display_back_confirm', '=', False)]}" />
+	                <button name="do_action" string="Ok"
+	                    type="object" icon="gtk-ok" />
+                </group>
+            </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

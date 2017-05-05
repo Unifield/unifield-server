@@ -31,8 +31,6 @@ import os
 from os.path import join, isfile, basename
 import glob
 
-from pprint import pprint as pp
-
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 from distutils.sysconfig import get_python_lib
@@ -46,7 +44,7 @@ if os.name == 'nt':
     py2exe_keywords['console'] = [
         { "script": join("bin", "openerp-server.py"),
           "icon_resources": [(1, join("pixmaps","openerp-icon.ico"))]
-        }]
+          }]
     py2exe_keywords['options'] = {
         "py2exe": {
             "compressed": 0,
@@ -65,7 +63,7 @@ if os.name == 'nt':
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml", "DAV",
                 "uuid", "commands", "mx.DateTime", "json",
-                "pylzma"
+                "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
             ],
             "excludes" : ["Tkconstants","Tkinter","tcl"],
         }
@@ -140,7 +138,9 @@ def data_files():
     '''Build list of data files to be installed'''
     files = []
     if os.name == 'nt':
+        files.append(('.', [join('bin', 'histogram.py')]))
         files.append(('.', [join('bin', 'unifield-version.txt')]))
+        files.append(('tools', [join('bin', 'tools', 'import_po.dtd')]))
         os.chdir('bin')
         for (dp, dn, names) in os.walk('addons'):
             files.append((dp, map(lambda x: join('bin', dp, x), names)))
@@ -240,22 +240,22 @@ setup(name             = name,
       },
       package_dir      = find_package_dirs(),
       install_requires = [
-          'lxml',
-          'mako',
-          'python-dateutil',
-          'psycopg2',
-          'pychart',
-          'pydot',
-          'pytz',
-          'reportlab',
-          'caldav',
-          'pyyaml',
-          'pywebdav',
-          'feedparser',
+          'lxml==3.7.3',
+          'mako==0.2.5',
+          'python-dateutil==2.5.3',
+          'psycopg2==2.0.13',
+          'pydot==1.0.2',
+          'pytz==2010b0',
+          'reportlab==2.4',
+          'pyyaml==3.12',
+          'egenix-mx-base==3.2.9',
+          'passlib==1.6.5',
+          'bcrypt==3.1.1',
+          'xlwt==1.1.2',
       ],
       extras_require={
           'SSL' : ['pyopenssl'],
       },
       **py2exe_keywords
-)
+      )
 

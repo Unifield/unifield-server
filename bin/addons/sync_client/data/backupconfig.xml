@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data noupdate="1">
+		<record id="backup_config_default" model="backup.config">
+			<field name="name">c:\backup\</field>
+			<field eval="True" name="beforemanualsync"/>
+			<field eval="True" name="beforeautomaticsync"/>
+			<field eval="True" name="aftermanualsync"/>
+			<field eval="True" name="afterautomaticsync"/>
+            <field eval="True" name="scheduledbackup"/>
+		</record>
+	</data>
+</openerp>

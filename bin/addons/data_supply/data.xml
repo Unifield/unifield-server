@@ -1,0 +1,667 @@
+<openerp>
+    <data noupdate="1">
+        <!--model: purchase.order, id: 4-->
+        <record model="purchase.order" id="purchase_order_po00008_4">
+            <field name="transport_mode">road</field>
+            <field name="transport_type" eval="False" />
+            <field name="from_yml_test" eval="0"/>
+            <field name="date_order" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-8*86400))" />
+            <field name="transport_cost">60.0</field>
+            <field name="order_type">regular</field>
+            <field name="priority">normal</field>
+            <field name="categ">log</field>
+            <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+5*86400))" />
+            <field name="invoice_method">order</field>
+            <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'ZEDCO RADIATOR LTD'), ('partner_id.ref', '=', 'ZRL')]"/>
+            <field name="location_id" ref="msf_cross_docking.stock_location_input"/>
+            <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'ZEDCO RADIATOR LTD'), ('ref', '=', 'ZRL')]"/>
+            <field name="pricelist_id" ref="purchase.list0"/>
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="transport_currency_id" ref="base.EUR"/>
+            <field name="display_intl_transport_ok" eval="1" />
+        </record>
+
+        <!--model: purchase.order, id: 3-->
+        <record model="purchase.order" id="purchase_order_po00006_3">
+            <field name="from_yml_test" eval="0"/>
+            <field name="date_order"  eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-10*86400))" />
+            <field name="order_type">regular</field>
+            <field name="priority">normal</field>
+            <field name="categ">other</field>
+            <field name="delivery_requested_date"  eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+12*86400))"/>
+            <field name="invoice_method">picking</field>
+            <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'AFRO INDUSTRIES AGENCIES'), ('partner_id.ref', '=', 'AIA')]"/>
+            <field name="location_id" ref="msf_cross_docking.stock_location_input"/>
+            <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'AFRO INDUSTRIES AGENCIES'), ('ref', '=', 'AIA')]"/>
+            <field name="pricelist_id" ref="purchase.list0"/>
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+        </record>
+
+        <!--model: purchase.order, id: 2-->
+        <record model="purchase.order" id="purchase_order_po00004_2">
+            <field name="from_yml_test" eval="0"/>
+            <field name="date_order" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-5*86400))" />
+            <field name="order_type">regular</field>
+            <field name="priority">normal</field>
+            <field name="categ">transport</field>
+            <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+8*86400))" />
+            <field name="invoice_method">picking</field>
+            <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'TNT EXPRESS'), ('partner_id.ref', '=', 'TNTE')]"/>
+            <field name="location_id" ref="msf_cross_docking.stock_location_input"/>
+            <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'TNT EXPRESS'), ('ref', '=', 'TNTE')]"/>
+            <field name="pricelist_id" ref="purchase.list0"/>
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+        </record>
+
+        <!--model: purchase.order, id: 1-->
+        <record model="purchase.order" id="purchase_order_po00002_1">
+            <field name="from_yml_test" eval="0"/>
+            <field name="date_order" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-10*86400))" />
+            <field name="order_type">regular</field>
+            <field name="priority">normal</field>
+            <field name="categ">medical</field>
+            <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="invoice_method">picking</field>
+            <field name="partner_address_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'METRO Pharmaceuticals Ltd'), ('partner_id.ref', '=', 'MPL')]"/>
+            <field name="location_id" ref="msf_cross_docking.stock_location_input"/>
+            <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'METRO Pharmaceuticals Ltd'), ('ref', '=', 'MPL')]"/>
+            <field name="pricelist_id" ref="purchase.list0"/>
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+        </record>
+
+        <!--model: purchase.order.line, id: 7-->
+        <record model="purchase.order.line" id="purchase_order_line_large_copier_canon_ir2020_2_toner_cartrid_7">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+12*86400))"/>
+            <field name="price_unit">12.0</field>
+            <field name="product_qty">2.0</field>
+            <field name="name">(large copier Canon IR2020) 2 TONER CARTRIDGES, CEXV14T</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'AOFFPHOTLCT'), ('name', '=', '(large copier Canon IR2020) 2 TONER CARTRIDGES, CEXV14T')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="purchase_order_po00006_3"/>
+        </record>
+
+        <!--model: purchase.order.line, id: 6-->
+        <record model="purchase.order.line" id="purchase_order_line_transpot_express_6">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+8*86400))" />
+            <field name="price_unit">110.0</field>
+            <field name="product_qty">1.0</field>
+            <field name="name">Transpot Express</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'XTRA0004---'), ('name', '=', 'Transpot Express')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="purchase_order_po00004_2"/>
+        </record>
+
+        <!--model: purchase.order.line, id: 1-->
+        <record model="purchase.order.line" id="purchase_order_line_balloon__anaesthesia___22_mm__1_l_1">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="price_unit">15.8</field>
+            <field name="product_qty">2.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="name">BALLOON, ANAESTHESIA, &#216; 22 mm, 1 l</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'EANEBALA1--'), ('name', '=', u'BALLOON, ANAESTHESIA, \xd8 22 mm, 1 l')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="purchase_order_po00002_1"/>
+        </record>
+
+        <!--model: purchase.order.line, id: 9-->
+        <record model="purchase.order.line" id="purchase_order_line_chair__office__adjustable_height__wheeled_9">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+5*86400))" />
+            <field name="price_unit">14.8</field>
+            <field name="product_qty">8.0</field>
+            <field name="name">CHAIR, office, adjustable height, wheeled</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'AFURCHAIRO-'), ('name', '=', 'CHAIR, office, adjustable height, wheeled')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="purchase_order_po00008_4"/>
+        </record>
+
+        <!--model: purchase.order.line, id: 10-->
+        <record model="purchase.order.line" id="purchase_order_line_cupboard__wooden__2_doors__w:_150___d:_4_10">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+5*86400))" />
+            <field name="price_unit">33.5</field>
+            <field name="product_qty">2.0</field>
+            <field name="name">CUPBOARD, WOODEN, 2 doors, w: 150 , d: 40, h: 100 cm</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'AFURCUPB1W4'), ('name', '=', 'CUPBOARD, WOODEN, 2 doors, w: 150 , d: 40, h: 100 cm')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="purchase_order_po00008_4"/>
+        </record>
+
+        <!--model: purchase.order.line, id: 2-->
+        <record model="purchase.order.line" id="purchase_order_line_mask_laryngeal__reusable_size_2_2">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="price_unit">4.2</field>
+            <field name="product_qty">8.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="name">MASK LARYNGEAL, reusable size 2</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'EANEMALA02-'), ('name', '=', 'MASK LARYNGEAL, reusable size 2')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="purchase_order_po00002_1"/>
+        </record>
+
+        <!--model: purchase.order.line, id: 8-->
+        <record model="purchase.order.line" id="purchase_order_line_repair_service_8">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+12*86400))"/>
+            <field name="price_unit">30.0</field>
+            <field name="product_qty">1.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="name">REPAIR (service)</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'XREPAAAA---'), ('name', '=', 'REPAIR (service)')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="purchase_order_po00006_3"/>
+        </record>
+
+        <!--model: purchase.order.line, id: 11-->
+        <record model="purchase.order.line" id="purchase_order_line_bin_rubbish__stainless_steel__12_litres_11">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+5*86400))" />
+            <field name="price_unit">4.3</field>
+            <field name="product_qty">4.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="name">BIN RUBBISH, stainless steel, 12 litres</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ALIFBINR12S'), ('name', '=', 'BIN RUBBISH, stainless steel, 12 litres')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="purchase_order_po00008_4"/>
+        </record>
+
+        <!--model: purchase.order.line, id: 3-->
+        <record model="purchase.order.line" id="purchase_order_line_fluconazole__100_mg__caps__3">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="price_unit">2.3</field>
+            <field name="product_qty">150.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="name">FLUCONAZOLE, 100 mg, caps.</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAFLUC1C-'), ('name', '=', 'FLUCONAZOLE, 100 mg, caps.')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="purchase_order_po00002_1"/>
+        </record>
+
+        <!--model: purchase.order.line, id: 4-->
+        <record model="purchase.order.line" id="purchase_order_line_protamine_sulfate__10_mg_ml__5_ml__amp__4">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="price_unit">3.1</field>
+            <field name="product_qty">120.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="name">PROTAMINE sulfate, 10 mg/ml, 5 ml, amp.</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJPROT5A-'), ('name', '=', 'PROTAMINE sulfate, 10 mg/ml, 5 ml, amp.')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="purchase_order_po00002_1"/>
+        </record>
+
+        <!--model: purchase.order.line, id: 5-->
+        <record model="purchase.order.line" id="purchase_order_line_test__trypano_catt__reagent__whole_blood__5">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="price_unit">9.2</field>
+            <field name="product_qty">12.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="name">TEST, TRYPANO (CATT), reagent, whole blood, 1 test</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DDGTTRYT2RT'), ('name', '=', 'TEST, TRYPANO (CATT), reagent, whole blood, 1 test')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="purchase_order_po00002_1"/>
+        </record>
+
+        <!--model: tender, id: 1-->
+        <record model="tender" id="tender_t_00001_1">
+            <field name="categ">log</field>
+            <field name="supplier_ids" search="['|', '&amp;', ('name', '=', 'AFRO INDUSTRIES AGENCIES'), ('ref', '=', 'AIA'), '&amp;', ('name', '=', 'BLUE CHIP TECHNOLOGIES LTD'), ('ref', '=', 'BCTL')]"/>
+            <field name="warehouse_id" ref="stock.warehouse0"/>
+            <field name="requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-10*86400))" />
+            <field name="location_id" ref="msf_cross_docking.stock_location_input"/>
+        </record>
+
+        <!--model: tender.line, id: 1-->
+        <record model="tender.line" id="tender_line_heater__fuel__for_domestic_use__300_m3__10_kw_1">
+            <field name="qty">5.0</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'CSHEHEAF3D-'), ('name', '=', 'HEATER, FUEL, for domestic use, 300 m3, 10 Kw')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="tender_id" ref="tender_t_00001_1"/>
+        </record>
+
+        <!--model: tender.line, id: 2-->
+        <record model="tender.line" id="tender_line_space_heater__220_v__diesel__mobile__37_kw_2">
+            <field name="qty">2.0</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'CSHEHEAS3--'), ('name', '=', 'SPACE HEATER, 220 V, diesel, mobile, 37 kW')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="tender_id" ref="tender_t_00001_1"/>
+        </record>
+
+        <!--model: sale.order, id: 1-->
+        <record model="sale.order" id="sale_order_so001_1">
+            <field name="categ">log</field>
+            <field name="order_type">regular</field>
+            <field name="procurement_request" eval="0"/>
+            <field name="picking_policy">direct</field>
+            <field name="ready_to_ship_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+12*86400))" />
+            <field name="from_yml_test" eval="0"/>
+            <field name="priority">normal</field>
+            <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+15*86400))" />
+            <field name="partner_shipping_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'Project P1'), ('partner_id.ref', '=', 'P1')]"/>
+            <field name="partner_order_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'Project P1'), ('partner_id.ref', '=', 'P1')]"/>
+            <field name="partner_invoice_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'Project P1'), ('partner_id.ref', '=', 'P1')]"/>
+            <field name="pricelist_id" ref="product.list0"/>
+            <field name="partner_id" model="res.partner" search="['&amp;', ('name', '=', 'Project P1'), ('ref', '=', 'P1')]"/>
+        </record>
+
+        <!--model: sale.order, id: 2-->
+        <record model="sale.order" id="sale_order_isr_00001_2">
+            <field name="categ">other</field>
+            <field name="order_type">regular</field>
+            <field name="procurement_request" eval="1"/>
+            <field name="picking_policy">direct</field>
+            <field name="ready_to_ship_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="from_yml_test" eval="0"/>
+            <field name="priority">normal</field>
+            <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="partner_shipping_id" ref="base.main_address"/>
+            <field name="partner_order_id" ref="base.main_address"/>
+            <field name="partner_invoice_id" ref="base.main_address"/>
+            <field name="pricelist_id" ref="product.list0"/>
+            <field name="partner_id" ref="base.main_partner"/>
+        </record>
+
+        <!--model: sale.order.line, id: 1-->
+        <record model="sale.order.line" id="sale_order_line_computer_cable__serial_interface_pc_mini-m__f_1">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+15*86400))" />
+            <field name="type">make_to_order</field>
+            <field name="price_unit">1.0</field>
+            <field name="product_uom_qty">2.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ADAPCABL2S-'), ('name', '=', '(computer) CABLE, SERIAL interface PC/Mini-M, female/male')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="sale_order_so001_1"/>
+        </record>
+
+        <!--model: sale.order.line, id: 4-->
+        <record model="sale.order.line" id="sale_order_line_shelves__wooden__5_plates__200_x_150_x_50_cm__4">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="type">make_to_stock</field>
+            <field name="product_uom_qty">3.0</field>
+            <field name="confirmed_delivery_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'AFURSHELW5-'), ('name', '=', 'SHELVES, wooden, 5 plates, 200 x 150 x 50 cm (HxWxD)')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="sale_order_isr_00001_2"/>
+        </record>
+
+        <!--model: sale.order.line, id: 2-->
+        <record model="sale.order.line" id="sale_order_line_motor_pump_diesel_lister_aa1__24_m3_h__max__3_2">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+15*86400))" />
+            <field name="type">make_to_order</field>
+            <field name="price_unit">1.0</field>
+            <field name="product_uom_qty">1.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'CWATPUMD024'), ('name', '=', &quot;MOTOR PUMP DIESEL Lister AA1, 24 m3/h. max. 30 m max., 2'&quot;)]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="sale_order_so001_1"/>
+        </record>
+
+        <!--model: sale.order.line, id: 5-->
+        <record model="sale.order.line" id="sale_order_line_printer_laserwriter__cartridge_inking_5">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="type">make_to_stock</field>
+            <field name="product_uom_qty">1.0</field>
+            <field name="confirmed_delivery_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ADAPCART02-'), ('name', '=', '(printer Laserwriter ) CARTRIDGE INKING')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="sale_order_isr_00001_2"/>
+        </record>
+
+        <!--model: sale.order.line, id: 3-->
+        <record model="sale.order.line" id="sale_order_line_modem__external_u_s_robotics_56k__ccitt_stand_3">
+            <field name="date_planned" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+15*86400))" />
+            <field name="type">make_to_stock</field>
+            <field name="price_unit">59.0</field>
+            <field name="product_uom_qty">1.0</field>
+            <field name="confirmed_delivery_date" eval="False" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ADAPMODE56-'), ('name', '=', 'MODEM, external (U.S.Robotics 56K), CCITT standard')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="order_id" ref="sale_order_so001_1"/>
+        </record>
+
+        <!--model: stock.production.lot, id: 1-->
+        <record model="stock.production.lot" id="stock_production_lot_lot0001_1">
+            <field name="life_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-7*86400))" />
+            <field name="type">standard</field>
+            <field name="name">LOT0001</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMIK5V-'), ('name', '=', 'AMIKACIN, 500 mg, powder, vial')]"/>
+        </record>
+
+        <!--model: stock.production.lot, id: 2-->
+        <record model="stock.production.lot" id="stock_production_lot_lot0002_2">
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=1)).strftime('%Y-%m-%d')" />
+            <field name="type">standard</field>
+            <field name="name">LOT0002</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMIK5V-'), ('name', '=', 'AMIKACIN, 500 mg, powder, vial')]"/>
+        </record>
+
+        <!--model: stock.production.lot, id: 3-->
+        <record model="stock.production.lot" id="stock_production_lot_lot0003_3">
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=2)).strftime('%Y-%m-%d')" />
+            <field name="type">standard</field>
+            <field name="name">LOT0003</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMPI1V-'), ('name', '=', 'AMPICILLIN, 1 g, powder, vial')]"/>
+        </record>
+
+        <!--model: stock.production.lot, id: 4-->
+        <record model="stock.production.lot" id="stock_production_lot_lot0004_4">
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=3)).strftime('%Y-%m-%d')" />
+            <field name="type">standard</field>
+            <field name="name">LOT0004</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMPI1V-'), ('name', '=', 'AMPICILLIN, 1 g, powder, vial')]"/>
+        </record>
+
+        <!--model: stock.production.lot, id: 5-->
+        <record model="stock.production.lot" id="stock_production_lot_lot0005_5">
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=4)).strftime('%Y-%m-%d')" />
+            <field name="type">standard</field>
+            <field name="name">LOT0005</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJCHLO1V-'), ('name', '=', 'CHLORAMPHENICOL, 1 g powder, vial')]"/>
+        </record>
+
+        <!--model: stock.production.lot, id: 6-->
+        <record model="stock.production.lot" id="stock_production_lot_msfbn_000001_6">
+            <field name="life_date" eval="(DateTime.now()-relativedelta.relativedelta(days=7)).strftime('%Y-%m-%d')" />
+            <field name="type">internal</field>
+            <field name="name">MSFBN/000001</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>
+        </record>
+
+        <!--model: stock.production.lot, id: 7-->
+        <record model="stock.production.lot" id="stock_production_lot_msfbn_000002_7">
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=1)).strftime('%Y-%m-%d')" />
+            <field name="type">internal</field>
+            <field name="name">MSFBN/000002</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>
+        </record>
+
+        <!--model: stock.production.lot, id: 8-->
+        <record model="stock.production.lot" id="stock_production_lot_msfbn_000003_8">
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=2)).strftime('%Y-%m-%d')" />
+            <field name="type">internal</field>
+            <field name="name">MSFBN/000003</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAALBF06D'), ('name', '=', 'ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 disp.tab')]"/>
+        </record>
+
+        <!--model: stock.production.lot, id: 9-->
+        <record model="stock.production.lot" id="stock_production_lot_msfbn_000004_9">
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=3)).strftime('%Y-%m-%d')" />
+            <field name="type">internal</field>
+            <field name="name">MSFBN/000004</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAALBF06D'), ('name', '=', 'ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 disp.tab')]"/>
+        </record>
+
+        <!--model: stock.production.lot, id: 10-->
+        <record model="stock.production.lot" id="stock_production_lot_msfbn_000005_10">
+            <field name="life_date" eval="(DateTime.now()+relativedelta.relativedelta(months=4)).strftime('%Y-%m-%d')" />
+            <field name="type">internal</field>
+            <field name="name">MSFBN/000005</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAASPB1TC'), ('name', '=', 'ARTESUNATE 3x50mg + SULFADOX/PYRIM 500/25mg, 1-6 y coblister')]"/>
+        </record>
+
+        <!--model: stock.inventory, id: 1-->
+        <record model="stock.inventory" id="stock_inventory_stock_initialisation_1">
+            <field name="name">Stock initialisation</field>
+        </record>
+
+        <!--model: stock.inventory, id: 2-->
+        <record model="stock.inventory" id="stock_inventory_stock_initialisation_2_2">
+            <field name="name">Stock initialisation 2</field>
+        </record>
+
+        <!--model: stock.inventory.line, id: 1-->
+        <record model="stock.inventory.line" id="stock_inventory_line_1_1">
+            <field name="type_check">in</field>
+            <field name="hidden_batch_management_mandatory" eval="1"/>
+            <field name="hidden_perishable_mandatory" eval="0"/>
+            <field name="product_qty">210.0</field>
+            <field name="expiry_date">2012-05-05</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJCHLO1V-'), ('name', '=', 'CHLORAMPHENICOL, 1 g powder, vial')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="prod_lot_id" ref="stock_production_lot_lot0005_5"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
+        </record>
+
+        <!--model: stock.inventory.line, id: 2-->
+        <record model="stock.inventory.line" id="stock_inventory_line_2_2">
+            <field name="type_check">in</field>
+            <field name="hidden_batch_management_mandatory" eval="1"/>
+            <field name="hidden_perishable_mandatory" eval="0"/>
+            <field name="product_qty">40.0</field>
+            <field name="expiry_date">2012-03-05</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMPI1V-'), ('name', '=', 'AMPICILLIN, 1 g, powder, vial')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="prod_lot_id" ref="stock_production_lot_lot0004_4"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
+        </record>
+
+        <!--model: stock.inventory.line, id: 3-->
+        <record model="stock.inventory.line" id="stock_inventory_line_3_3">
+            <field name="type_check">in</field>
+            <field name="hidden_batch_management_mandatory" eval="1"/>
+            <field name="hidden_perishable_mandatory" eval="0"/>
+            <field name="product_qty">80.0</field>
+            <field name="expiry_date">2012-06-15</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMPI1V-'), ('name', '=', 'AMPICILLIN, 1 g, powder, vial')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="prod_lot_id" ref="stock_production_lot_lot0003_3"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
+        </record>
+
+        <!--model: stock.inventory.line, id: 4-->
+        <record model="stock.inventory.line" id="stock_inventory_line_4_4">
+            <field name="type_check">in</field>
+            <field name="hidden_batch_management_mandatory" eval="1"/>
+            <field name="hidden_perishable_mandatory" eval="0"/>
+            <field name="product_qty">60.0</field>
+            <field name="expiry_date">2012-08-20</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMIK5V-'), ('name', '=', 'AMIKACIN, 500 mg, powder, vial')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="prod_lot_id" ref="stock_production_lot_lot0002_2"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
+        </record>
+
+        <!--model: stock.inventory.line, id: 5-->
+        <record model="stock.inventory.line" id="stock_inventory_line_5_5">
+            <field name="type_check">in</field>
+            <field name="hidden_batch_management_mandatory" eval="1"/>
+            <field name="hidden_perishable_mandatory" eval="0"/>
+            <field name="product_qty">40.0</field>
+            <field name="expiry_date">2012-04-01</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DINJAMIK5V-'), ('name', '=', 'AMIKACIN, 500 mg, powder, vial')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="prod_lot_id" ref="stock_production_lot_lot0001_1"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_1"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
+            <field name="location_id" ref="msf_config_locations.stock_location_medical"/>
+        </record>
+
+        <!--model: stock.inventory.line, id: 6-->
+        <record model="stock.inventory.line" id="stock_inventory_line_6_6">
+            <field name="type_check">in</field>
+            <field name="hidden_batch_management_mandatory" eval="0"/>
+            <field name="hidden_perishable_mandatory" eval="0"/>
+            <field name="product_qty">5.0</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ADAPCABL1S-'), ('name', '=', '(computer) CABLE, SERIAL interface for two PC (fem/fem)')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
+        </record>
+
+        <!--model: stock.inventory.line, id: 7-->
+        <record model="stock.inventory.line" id="stock_inventory_line_7_7">
+            <field name="type_check">in</field>
+            <field name="hidden_batch_management_mandatory" eval="0"/>
+            <field name="hidden_perishable_mandatory" eval="0"/>
+            <field name="product_qty">10.0</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ADAPCABL2S-'), ('name', '=', '(computer) CABLE, SERIAL interface PC/Mini-M, female/male')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
+        </record>
+
+        <!--model: stock.inventory.line, id: 8-->
+        <record model="stock.inventory.line" id="stock_inventory_line_8_8">
+            <field name="type_check">in</field>
+            <field name="hidden_batch_management_mandatory" eval="0"/>
+            <field name="hidden_perishable_mandatory" eval="0"/>
+            <field name="product_qty">3.0</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ADAPCART02-'), ('name', '=', '(printer Laserwriter ) CARTRIDGE INKING')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
+        </record>
+
+        <!--model: stock.inventory.line, id: 9-->
+        <record model="stock.inventory.line" id="stock_inventory_line_9_9">
+            <field name="type_check">in</field>
+            <field name="hidden_batch_management_mandatory" eval="0"/>
+            <field name="hidden_perishable_mandatory" eval="0"/>
+            <field name="product_qty">7.0</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'ALIFVEST3LL'), ('name', '=', 'VEST, polyester/cotton, polyester lined, size L')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
+        </record>
+
+        <!--model: stock.inventory.line, id: 10-->
+        <record model="stock.inventory.line" id="stock_inventory_line_10_10">
+            <field name="type_check">in</field>
+            <field name="hidden_batch_management_mandatory" eval="0"/>
+            <field name="hidden_perishable_mandatory" eval="0"/>
+            <field name="product_qty">20.0</field>
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'CWATBEAK1P-'), ('name', '=', 'BEAKER, plastic, 1 litre, graduated')]"/>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="inventory_id" ref="stock_inventory_stock_initialisation_2_2"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_other"/>
+            <field name="location_id" ref="stock_override.stock_location_logistic"/>
+        </record>
+
+        <!--model: stock.picking, id: 2-->
+        <record model="stock.picking" id="stock_picking_in_00002_2">
+            <field name="state">done</field>
+            <field name="from_yml_test" eval="0"/>
+            <field name="type">in</field>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
+        </record>
+
+        <!--model: stock.move, id: 3-->
+        <record model="stock.move" id="stock_move_doradida15t:_suppliers_&gt;_medical_stock_3">
+            <field name="name">[DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab</field>
+            <field name="state">done</field>
+            <field name="expired_date">2012-07-07</field>
+            <field name="product_qty">250.0</field>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="prodlot_id" ref="stock_production_lot_msfbn_000002_7"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_medical"/>
+            <field name="location_id" ref="stock.stock_location_suppliers"/>
+            <field name="picking_id" ref="stock_picking_in_00002_2" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>
+        </record>
+
+        <!--model: stock.move, id: 4-->
+        <record model="stock.move" id="stock_move_doraalbf06d:_msf_supplier_&gt;_medical_stock_4">
+            <field name="name">[DORAALBF06D] ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 </field>
+            <field name="state">done</field>
+            <field name="expired_date">2012-01-30</field>
+            <field name="product_qty">120.0</field>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="prodlot_id" ref="stock_production_lot_msfbn_000003_8"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_medical"/>
+            <field name="location_id" ref="stock.stock_location_suppliers"/>
+            <field name="picking_id" ref="stock_picking_in_00002_2" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAALBF06D'), ('name', '=', 'ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 disp.tab')]"/>
+        </record>
+
+        <!--model: stock.move, id: 5-->
+        <record model="stock.move" id="stock_move_doraalbf06d:_msf_supplier_&gt;_medical_stock_5">
+            <field name="name">[DORAALBF06D] ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 </field>
+            <field name="state">done</field>
+            <field name="expired_date">2012-06-04</field>
+            <field name="product_qty">280.0</field>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="prodlot_id" ref="stock_production_lot_msfbn_000004_9"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_medical"/>
+            <field name="location_id" ref="stock.stock_location_suppliers"/>
+            <field name="picking_id" ref="stock_picking_in_00002_2" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAALBF06D'), ('name', '=', 'ARTEMETHER 20mg / LUMEFANTRINE 120mg, blist inf 6 disp.tab')]"/>
+        </record>
+
+        <!--model: stock.move, id: 6-->
+        <record model="stock.move" id="stock_move_doraaspb1tc:_input_&gt;_medical_stock_6">
+            <field name="name">[DORAASPB1TC] ARTESUNATE 3x50mg + SULFADOX/PYRIM 500/25mg, 1-6 y</field>
+            <field name="state">done</field>
+            <field name="expired_date">2012-08-03</field>
+            <field name="product_qty">150.0</field>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="prodlot_id" ref="stock_production_lot_msfbn_000005_10"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
+            <field name="location_dest_id" ref="msf_config_locations.stock_location_medical"/>
+            <field name="location_id" ref="stock.stock_location_suppliers"/>
+            <field name="picking_id" ref="stock_picking_in_00002_2" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORAASPB1TC'), ('name', '=', 'ARTESUNATE 3x50mg + SULFADOX/PYRIM 500/25mg, 1-6 y coblister')]"/>
+        </record>
+
+        <!--model: stock.picking, id: 1-->
+        <record model="stock.picking" id="stock_picking_in_00001_1">
+            <field name="origin">Initialization</field>
+            <field name="state">done</field>
+            <field name="from_yml_test" eval="0"/>
+            <field name="type">in</field>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
+        </record>
+
+        <!--model: stock.move, id: 1-->
+        <record model="stock.move" id="stock_move_doradida15t:_msf_supplier_&gt;_input_1">
+            <field name="name">[DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab</field>
+            <field name="state">done</field>
+            <field name="expired_date">2012-12-21</field>
+            <field name="product_qty">60.0</field>
+            <field name="product_uom" ref="product.product_uom_unit"/>
+            <field name="prodlot_id" ref="stock_production_lot_msfbn_000001_6"/>
+            <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
+            <field name="location_dest_id" ref="msf_cross_docking.stock_location_input"/>
+            <field name="location_id" ref="stock.stock_location_suppliers"/>
+            <field name="picking_id" ref="stock_picking_in_00001_1" />
+            <field name="product_id" model="product.product" search="['&amp;', ('default_code', '=', 'DORADIDA15T'), ('name', '=', 'DIDANOSINE (ddI), 150 mg, chewable dispersable tab.')]"/>
+        </record>
+
+        <function model="stock.inventory" name="action_confirm">
+            <function model="stock.inventory" name="search" eval="[[('id', '=', ref('stock_inventory_stock_initialisation_1'))]]"/>
+        </function>
+        <function model="stock.inventory" name="action_done">
+            <function model="stock.inventory" name="search" eval="[[('id', '=', ref('stock_inventory_stock_initialisation_1'))]]"/>
+        </function>
+        <function model="stock.inventory" name="action_confirm">
+            <function model="stock.inventory" name="search" eval="[[('id', '=', ref('stock_inventory_stock_initialisation_2_2'))]]"/>
+        </function>
+        <function model="stock.inventory" name="action_done">
+            <function model="stock.inventory" name="search" eval="[[('id', '=', ref('stock_inventory_stock_initialisation_2_2'))]]"/>
+        </function>
+
+        <record id="specific_rules.sequence_production_lots" model="ir.sequence">
+            <field name="name">Batch Numbers</field>
+            <field name="code">stock.lot.serial</field>
+            <field name="prefix">MSFBN/</field>
+            <field name="padding">6</field>
+            <field name="number_next">6</field>
+            <field name="number_increment">1</field>
+        </record>
+
+    </data>
+</openerp>

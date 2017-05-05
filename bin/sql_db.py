@@ -31,6 +31,8 @@ from psycopg2.pool import PoolError
 import psycopg2.extensions
 import warnings
 import pooler
+from tools import cache
+import time
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 
@@ -89,11 +91,16 @@ class Cursor(object):
 
         self.sql_log_count = 0
         self.__closed = True    # avoid the call of close() (by __del__) if an exception
-                                # is raised by any of the following initialisations
+        # is raised by any of the following initialisations
         self._pool = pool
         self.dbname = dbname
         self._serialized = serialized
         self._cnx = pool.borrow(dsn(dbname))
+        self._oc = None
+        p = pooler.pool_dic.get(self.dbname, None)
+        if p is not None:
+            self._oc = p.get('operations.count')
+            self._oe = p.get('operations.event')
         self._obj = self._cnx.cursor(cursor_factory=psycopg1cursor)
         self.__closed = False   # real initialisation value
         self.autocommit(False)
@@ -148,7 +155,14 @@ class Cursor(object):
         try:
             params = params or None
             params = self.recursiveCastUid(params)
+            before = time.time()
             res = self._obj.execute(query, params)
+            after = time.time()
+            if self._oc:
+                delta = after-before
+                self._oc.histogram['sql'].add(delta)
+                if self._oe and delta > self._oe.SLOW_QUERY:
+                    self._oe.remember_slow_query(query, delta)
         except psycopg2.ProgrammingError, pe:
             if log_exceptions:
                 self.__logger.error("Programming error: %s, in query %s", pe, query)
@@ -160,12 +174,22 @@ class Cursor(object):
                     for key in osv_pool._sql_error.keys():
                         if key in ie[0]:
                             self.__logger.warn("Normal Constraint Error: %s : %s", self._obj.query or query, ie[0])
+                            #US-88: if error occurred for account analytic then just clear the cache
+                            if 'account_analytic_account_parent_id_fkey' in ie[0]:
+                                cache.clean_caches_for_db(self.dbname)
                             raise
                 self.__logger.exception("Unknown Constraint Error: %s", self._obj.query or query)
+
+            #US-88: if error occurred for account analytic then just clear the cache
+            if 'account_analytic_account_parent_id_fkey' in ie[0]:
+                cache.clean_caches_for_db(self.dbname)
             raise
-        except Exception, e:
+        except Exception:
             if log_exceptions:
-                self.__logger.exception("bad query: %s", self._obj.query or query)
+                query = self._obj.query or query
+                if len(query) > 500000:
+                    query = ''.join((query[:500000], '... the query has been truncated because it is too big (%s characters)' % len(query)))
+                self.__logger.exception("bad query: %s", query)
             raise
 
         if self.sql_log:
@@ -208,12 +232,12 @@ class Cursor(object):
                 for r in sqllogitems:
                     delay = timedelta(microseconds=r[1][1])
                     self.__logger.log(logging.DEBUG_SQL, "table: %s: %s/%s",
-                                        r[0], delay, r[1][0])
+                                      r[0], delay, r[1][0])
                     sum+= r[1][1]
                 sqllogs[type].clear()
             sum = timedelta(microseconds=sum)
             self.__logger.log(logging.DEBUG_SQL, "SUM %s:%s/%d [%d]",
-                                type, sum, self.sql_log_count, sql_counter)
+                              type, sum, self.sql_log_count, sql_counter)
             sqllogs[type].clear()
         process('from')
         process('into')
@@ -221,10 +245,10 @@ class Cursor(object):
         self.sql_log = False
 
     @check
-    def close(self):
-        return self._close(False)
+    def close(self, drop=False):
+        return self._close(False, drop=drop)
 
-    def _close(self, leak=False):
+    def _close(self, leak=False, drop=False):
         if not self._obj:
             return
 
@@ -247,7 +271,7 @@ class Cursor(object):
             self._cnx.leaked = True
         else:
             keep_in_pool = self.dbname not in ('template1', 'template0', 'postgres')
-            self._pool.give_back(self._cnx, keep_in_pool=keep_in_pool)
+            self._pool.give_back(self._cnx, keep_in_pool=keep_in_pool and not drop)
 
     @check
     def autocommit(self, on):
@@ -291,7 +315,7 @@ class ConnectionPool(object):
         self._lock = threading.Lock()
 
     def __repr__(self):
-        used = len([1 for c, u in self._connections[:] if u])
+        used = len([1 for c, u, t in self._connections[:] if u])
         count = len(self._connections)
         return "ConnectionPool(used=%d/count=%d/max=%d)" % (used, count, self._maxconn)
 
@@ -303,26 +327,36 @@ class ConnectionPool(object):
         self._debug('Borrow connection to %r', dsn)
 
         # free leaked connections
-        for i, (cnx, _) in tools.reverse_enumerate(self._connections):
+        for i, (cnx, _, t) in tools.reverse_enumerate(self._connections):
             if getattr(cnx, 'leaked', False):
                 delattr(cnx, 'leaked')
                 self._connections.pop(i)
-                self._connections.append((cnx, False))
+                self._connections.append((cnx, False, t))
                 self.__logger.warn('%r: Free leaked connection to %r', self, cnx.dsn)
 
-        for i, (cnx, used) in enumerate(self._connections):
+        for i, (cnx, used, t) in enumerate(self._connections):
             if not used and dsn_are_equals(cnx.dsn, dsn):
                 self._connections.pop(i)
-                self._connections.append((cnx, True))
+                if time.time() - t > 3600:
+                    cnx.close()
+                    try:
+                        cnx = psycopg2.connect(dsn=dsn, connection_factory=PsycoConnection)
+                        t = time.time()
+                    except psycopg2.Error:
+                        self.__logger.exception('Connection to the database failed')
+                        raise
+                self._connections.append((cnx, True, t))
                 self._debug('Existing connection found at index %d', i)
 
                 return cnx
 
         if len(self._connections) >= self._maxconn:
             # try to remove the oldest connection not used
-            for i, (cnx, used) in enumerate(self._connections):
+            for i, (cnx, used, t) in enumerate(self._connections):
                 if not used:
                     self._connections.pop(i)
+                    if not cnx.closed:
+                        cnx.close()
                     self._debug('Removing old connection at index %d: %r', i, cnx.dsn)
                     break
             else:
@@ -331,24 +365,25 @@ class ConnectionPool(object):
 
         try:
             result = psycopg2.connect(dsn=dsn, connection_factory=PsycoConnection)
-        except psycopg2.Error, e:
+        except psycopg2.Error:
             self.__logger.exception('Connection to the database failed')
             raise
-        self._connections.append((result, True))
+        self._connections.append((result, True, time.time()))
         self._debug('Create new connection')
         return result
 
     @locked
     def give_back(self, connection, keep_in_pool=True):
         self._debug('Give back connection to %r', connection.dsn)
-        for i, (cnx, used) in enumerate(self._connections):
+        for i, (cnx, used, t) in enumerate(self._connections):
             if cnx is connection:
                 self._connections.pop(i)
                 if keep_in_pool:
-                    self._connections.append((cnx, False))
+                    self._connections.append((cnx, False, t))
                     self._debug('Put connection to %r in pool', cnx.dsn)
                 else:
                     self._debug('Forgot connection to %r', cnx.dsn)
+                    cnx.close()
                 break
         else:
             raise PoolError('This connection does not below to the pool')
@@ -356,7 +391,7 @@ class ConnectionPool(object):
     @locked
     def close_all(self, dsn):
         self.__logger.info('%r: Close all connections', self)
-        for i, (cnx, used) in tools.reverse_enumerate(self._connections):
+        for i, (cnx, used, t) in tools.reverse_enumerate(self._connections):
             if dsn_are_equals(cnx.dsn, dsn):
                 cnx.close()
                 self._connections.pop(i)
@@ -381,7 +416,7 @@ class Connection(object):
         """Check if connection is possible"""
         try:
             warnings.warn("You use an expensive function to test a connection.",
-                      DeprecationWarning, stacklevel=1)
+                          DeprecationWarning, stacklevel=1)
             cr = self.cursor()
             cr.close()
             return True
@@ -409,7 +444,8 @@ def dsn_are_equals(first, second):
 _Pool = ConnectionPool(int(tools.config['db_maxconn']))
 
 def db_connect(db_name):
-    currentThread().dbname = db_name
+    if db_name not in ('template1', 'template0', 'postgres'):
+        currentThread().dbname = db_name
     return Connection(_Pool, db_name)
 
 def close_db(db_name):

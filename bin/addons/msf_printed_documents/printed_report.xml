@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report auto="False" id="sale.report_sale_order" model="sale.order" name="msf.sale.order" rml="msf_printed_documents/report/sale_order.rml" string="Field Order"/>
+
+        <report auto="False" id="sale.report_reception_in" model="stock.picking" name="msf.report_reception_in" rml="msf_printed_documents/report/report_reception.rml" string="Reception" />
+
+        <report auto="False" id="sale.consumption_report" model="real.average.consumption" name="msf.consumption_report" rml="msf_printed_documents/report/consumption_report.rml" string="Consumption Report" />
+
+        <report auto="False" id="sale.product_list_report" model="product.list" name="msf.product_list" rml="msf_printed_documents/report/product_list.rml" string="Product List / Sub-List" />
+
+        <report auto="False" id="sale.report_freight_manifest" model="shipment" name="msf.freight_manifest" rml="msf_printed_documents/report/freight_manifest.rml" string="Freight Manifest" />
+    </data>
+</openerp>

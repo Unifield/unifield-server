@@ -130,6 +130,8 @@ class ir_property(osv.osv):
 
 
     def write(self, cr, uid, ids, values, context=None):
+        if not ids:
+            return True
         return super(ir_property, self).write(cr, uid, ids, self._update_values(cr, uid, ids, values), context=context)
 
     def create(self, cr, uid, values, context=None):

@@ -34,7 +34,6 @@ import tools
 import zipfile
 import common
 from osv.fields import float as float_class, function as function_class
-from osv.orm import browse_record
 
 DT_FORMAT = '%Y-%m-%d'
 DHM_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -60,12 +59,24 @@ html_parents = {
     'tr' : 1,
     'body' : 0,
     'div' : 0
-    }
+}
 sxw_tag = "p"
 
 rml2sxw = {
     'para': 'p',
 }
+
+def isDate(date, date_format=False):
+    '''
+    return False if the value stored in field is not a date, True else.
+    '''
+    if not date_format:
+        date_format = '%Y-%m-%d'
+    try:
+        datetime.strptime(date, date_format)
+    except ValueError:
+        return False
+    return True
 
 class _format(object):
     def set_value(self, cr, uid, name, object, field, lang_obj):
@@ -84,11 +95,11 @@ class _float_format(float, _format):
         computation = False
         if hasattr(self,'_field') and getattr(self._field, 'digits', None):
             digits = self._field.digits[1]
-        
+
         # custom fields - decimal_precision computation
         if hasattr(self,'_field') and getattr(self._field, 'computation', None):
             computation = self._field.computation
-            
+
         if hasattr(self, 'lang_obj'):
             # dynamic number of digits if computation - do not interfer with number formatting according to locale
             if computation:
@@ -103,10 +114,10 @@ class _float_format(float, _format):
                     digits = min_digits
                 else:
                     digits = len(decimals)
-            
+
             result = self.lang_obj.format('%.' + str(digits) + 'f', self.name, True)
             return result
-        
+
         return self.val
 
 class _int_format(int, _format):
@@ -139,8 +150,8 @@ class _dttime_format(str, _format):
     def __str__(self):
         if self.val and getattr(self,'name', None):
             return datetime.strptime(self.name, DHM_FORMAT)\
-                   .strftime("%s %s"%(str(self.lang_obj.date_format),
-                                      str(self.lang_obj.time_format)))
+                .strftime("%s %s"%(str(self.lang_obj.date_format),
+                                   str(self.lang_obj.time_format)))
         return self.val
 
 
@@ -189,6 +200,9 @@ class rml_parse(object):
             'strip_name' : self._strip_name,
             'time' : time,
             'getSel': self.getSel,
+            'isDate': self.isDate,
+            'isDateTime': self.isDateTime,
+            'isTime': self.isTime,
             'getSelValue': self.getSelValue,
             # more context members are setup in setCompany() below:
             #  - company_id
@@ -206,6 +220,27 @@ class rml_parse(object):
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
 
+    def isDate(self, date, date_format=DT_FORMAT):
+        '''
+        return False if the date is not a datetime matching date_format, True else.
+        '''
+        try:
+            datetime.strptime(date, date_format)
+        except:
+            return False
+        return True
+
+    def isDateTime(self, date, date_format=DHM_FORMAT):
+        '''
+        return False if the date is not a datetime matching date_format, True else.
+        '''
+        return self.isDate(date, date_format=date_format)
+
+    def isTime(self, time, time_format=HM_FORMAT):
+        '''
+        return False if the time is not a datetime matching time_format, True else.
+        '''
+        return self.isDate(time, date_format=time_format)
 
     def getSel(self, o, field):
         """
@@ -296,7 +331,7 @@ class rml_parse(object):
         elif (hasattr(obj, '_field') and\
                 isinstance(obj._field, (float_class, function_class)) and\
                 obj._field.digits):
-                d = obj._field.digits[1] or DEFAULT_DIGITS
+            d = obj._field.digits[1] or DEFAULT_DIGITS
         return d
 
     def formatLang(self, value, digits=None, date=False, date_time=False, grouping=True, monetary=False, dp=False):
@@ -308,12 +343,11 @@ class rml_parse(object):
                 formatLang(value, digits=5, dp='Account') -> digits=5
         """
         #digits = 2
-        computation = False
         # could be a clue for proper use of digit and computation directly from field object - I leave this code as a start for further dev later on
         if hasattr(value,'_field'):
             #print digits
             pass
-            
+
         if digits is None:
             if dp:
                 digits = self.get_digits(dp=dp)
@@ -402,7 +436,7 @@ class rml_parse(object):
         # WARNING: the object[0].exists() call below is slow but necessary because
         # some broken reporting wizards pass incorrect IDs (e.g. ir.ui.menu ids)
         if objects and isinstance(objects, list) and len(objects) == 1 and \
-            objects[0].exists() and 'company_id' in objects[0] and objects[0].company_id:
+                objects[0].exists() and 'company_id' in objects[0] and objects[0].company_id:
             # When we print only one record, we can auto-set the correct
             # company in the localcontext. For other cases the report
             # will have to call setCompany() inside the main repeatIn loop.
@@ -429,7 +463,7 @@ class report_sxw(report_rml, preprocess.report):
         pool = pooler.get_pool(cr.dbname)
         ir_obj = pool.get('ir.actions.report.xml')
         report_xml_ids = ir_obj.search(cr, uid,
-                [('report_name', '=', self.name[7:])], context=context)
+                                       [('report_name', '=', self.name[7:])], context=context)
         if report_xml_ids:
             report_xml = ir_obj.browse(cr, uid, report_xml_ids[0], context=context)
         else:
@@ -504,7 +538,7 @@ class report_sxw(report_rml, preprocess.report):
                             'datas_fname': name,
                             'res_model': self.table,
                             'res_id': obj.id,
-                            }, context=context
+                        }, context=context
                         )
                     except Exception:
                         #TODO: should probably raise a proper osv_except instead, shouldn't we? see LP bug #325632
@@ -689,3 +723,33 @@ class report_sxw(report_rml, preprocess.report):
         html = create_doc(mako_html,html_parser.localcontext)
         return (html,'html')
 
+    def shared_update_percent(self, cr, uid, pool, bg_id_list, percent=None, share=None,
+                              finished=False, already_done=0):
+        '''When there is multiple for loop or multiple operation that should
+        update the percentage of the report, this method permit to say the
+        importance of the share of the total percentage.
+        For example, on the local for loop, 500 element ou of 1000 have been
+        done, percent=0.5. But if this local for loop is only 30% of the total
+        treatment, then share=0.3 and finaly, the percentage updated will be
+        0.5*0.3 = 0.15 -> 15%
+        :param bg_id_list: list of memory.background.report ids that will be updated
+        :param percent: float, it is the percentage of the local loop
+        :param share: float, it represent the importance of the local loop in
+        the whole process
+        :param finished: when True, no matter what percent is, the percentage
+        of the background id will be updated with share
+        '''
+        if not bg_id_list: 
+            return
+        if bg_id_list[0] is None:
+            return
+        if not finished and not percent:
+            return
+
+        bg_report_obj = pool.get('memory.background.report')
+        if finished == True:
+            bg_report_obj.update_percent(cr, uid, bg_id_list,
+                                         share+already_done)
+        else:
+            bg_report_obj.update_percent(cr, uid, bg_id_list,
+                                         percent*share+already_done)

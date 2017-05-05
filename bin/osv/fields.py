@@ -32,13 +32,10 @@
 #   size
 #
 import datetime as DT
-import string
-import sys
 import warnings
 import xmlrpclib
 from psycopg2 import Binary
 
-import netsvc
 import tools
 from tools.translate import _
 
@@ -63,7 +60,11 @@ class _column(object):
     _symbol_set = (_symbol_c, _symbol_f)
     _symbol_get = None
 
-    def __init__(self, string='unknown', required=False, readonly=False, domain=None, context=None, states=None, priority=0, change_default=False, size=None, ondelete="set null", translate=False, select=False, manual=False, **args):
+    def __init__(self, string='unknown', required=False, readonly=False,
+                 domain=None, context=None, states=None, priority=0,
+                 change_default=False, size=None, ondelete="set null",
+                 translate=False, select=False, manual=False, internal=False,
+                 hide_default_menu=False, **args):
         """
 
         The 'manual' keyword argument specifies if the field is a custom one.
@@ -92,7 +93,10 @@ class _column(object):
         self.select = select
         self.manual = manual
         self.selectable = True
+        self.internal = internal
+        self.hide_default_menu = hide_default_menu
         self.group_operator = args.get('group_operator', False)
+        self.m2o_order = args.get('m2o_order', False)
         for a in args:
             if args[a]:
                 setattr(self, a, args[a])
@@ -191,7 +195,7 @@ class float(_column):
         _column.__init__(self, string=string, **args)
         self.digits = digits
         self.digits_compute = digits_compute
-        
+
         # custom fields
         self.computation = args.get('computation', False)
 
@@ -200,7 +204,7 @@ class float(_column):
             t = self.digits_compute(cr)
             self._symbol_set=('%s', lambda x: ('%.'+str(t[1])+'f') % (__builtin__.float(x or 0.0),))
             self.digits = t
-            
+
             # new customized fields
             computation = self.digits_compute(cr, computation=True)
             self.computation = computation
@@ -277,8 +281,15 @@ class binary(_column):
             # content if it's needed at some point.
             # TODO: after 6.0 we should consider returning a dict with size and content instead of
             #       having an implicit convention for the value
-            if val and context.get('bin_size_%s' % name, context.get('bin_size')):
-                res[i] = tools.human_size(long(val))
+            if val and context.get('bin_size_%s' % name,
+                                   context.get('bin_size')):
+                size = val
+                if not isinstance(size, long):
+                    if isinstance(size, str):
+                        size = long(__builtin__.float(val))
+                    elif isinstance(size, (int, __builtin__.float)):
+                        size = long(size)
+                res[i] = tools.human_size(size)
             else:
                 res[i] = val
         return res
@@ -549,7 +560,7 @@ class many2many(_column):
         self._obj = obj
         if '.' in rel:
             raise Exception(_('The second argument of the many2many field %s must be a SQL table !'\
-                'You used %s, which is not a valid SQL table name.')% (string,rel))
+                              'You used %s, which is not a valid SQL table name.')% (string,rel))
         self._rel = rel
         self._id1 = id1
         self._id2 = id2
@@ -567,7 +578,7 @@ class many2many(_column):
             res[id] = []
         if offset:
             warnings.warn("Specifying offset at a many2many.get() may produce unpredictable results.",
-                      DeprecationWarning, stacklevel=2)
+                          DeprecationWarning, stacklevel=2)
         obj = obj.pool.get(self._obj)
 
         # static domains are lists, and are evaluated both here and on client-side, while string
@@ -607,7 +618,7 @@ class many2many(_column):
                'limit': limit_str,
                'order_by': order_by,
                'offset': offset,
-              }
+               }
         cr.execute(query, [tuple(ids),] + where_params)
         for r in cr.fetchall():
             res[r[1]].append(r[0])
@@ -751,9 +762,14 @@ class function(_column):
 
         self.digits = args.get('digits', (16,2))
         self.digits_compute = args.get('digits_compute', None)
-        
+
         # custom fields
         self.computation = args.get('computation', False)
+
+        if args.get('_fnct_migrate', False):
+            self._fnct_migrate = args['_fnct_migrate']
+        else:
+            self._fnct_migrate = False
 
         self._fnct_inv_arg = fnct_inv_arg
         if not fnct_inv:
@@ -778,12 +794,12 @@ class function(_column):
             self._symbol_f = float._symbol_f
             self._symbol_set = float._symbol_set
 
-        if type == 'boolean':
+        elif type == 'boolean':
             self._symbol_c = boolean._symbol_c
             self._symbol_f = boolean._symbol_f
             self._symbol_set = boolean._symbol_set
 
-        if type in ['integer','integer_big']:
+        elif type in ['integer','integer_big']:
             self._symbol_c = integer._symbol_c
             self._symbol_f = integer._symbol_f
             self._symbol_set = integer._symbol_set
@@ -793,11 +809,19 @@ class function(_column):
             t = self.digits_compute(cr)
             self._symbol_set=('%s', lambda x: ('%.'+str(t[1])+'f') % (__builtin__.float(x or 0.0),))
             self.digits = t
-            
+
             # new customized fields
             computation = self.digits_compute(cr, computation=True)
             self.computation = computation
 
+    def migrate(self, cr, ids):
+        """
+        Run migration of functional field the first time it is created
+        """
+        if not self._fnct_migrate:
+            return False
+        else:
+            return self._fnct_migrate(self._obj, cr, ids)
 
     def search(self, cr, uid, obj, name, args, context=None):
         if not self._fnct_search:
@@ -827,14 +851,14 @@ class function(_column):
                     if res[r] and res[r] in dict_names:
                         res[r] = (res[r], dict_names[res[r]])
 
-        if self._type == 'binary':
+        elif self._type == 'binary':
             if context.get('bin_size', False):
                 # client requests only the size of binary fields
                 res = dict(map(get_nice_size, res.items()))
             else:
                 res = dict(map(sanitize_binary_value, res.items()))
 
-        if self._type == "integer":
+        elif self._type == "integer":
             for r in res.keys():
                 # Converting value into string so that it does not affect XML-RPC Limits
                 if isinstance(res[r],dict): # To treat integer values with _multi attribute
@@ -905,21 +929,19 @@ class related(function):
     def _fnct_read(self, obj, cr, uid, ids, field_name, args, context=None):
         self._field_get2(cr, uid, obj, context)
         if not ids: return {}
-        relation = obj._name
         if self._type in ('one2many', 'many2many'):
             res = dict([(i, []) for i in ids])
         else:
             res = {}.fromkeys(ids, False)
 
-        objlst = obj.browse(cr, 1, ids, context=context)
+        objlst = obj.browse(cr, 1, ids, context=context,
+                            fields_to_fetch=self.arg)
         for data in objlst:
             if not data:
                 continue
             t_data = data
-            relation = obj._name
             for i in range(len(self.arg)):
                 field_detail = self._relations[i]
-                relation = field_detail['object']
                 try:
                     if not t_data[self.arg[i]]:
                         t_data = False
@@ -951,7 +973,11 @@ class related(function):
     def __init__(self, *arg, **args):
         self.arg = arg
         self._relations = []
-        super(related, self).__init__(self._fnct_read, arg, self._fnct_write, fnct_inv_arg=arg, method=True, fnct_search=self._fnct_search, **args)
+        write_fnct = self._fnct_write
+        if not args.get('write_relate', True):
+            write_fnct = None
+
+        super(related, self).__init__(self._fnct_read, arg, write_fnct, fnct_inv_arg=arg, method=True, fnct_search=self._fnct_search, **args)
         if self.store is True:
             # TODO: improve here to change self.store = {...} according to related objects
             pass
@@ -1051,11 +1077,11 @@ class property(function):
             company = obj.pool.get('res.company')
             cid = company._company_default_get(cr, uid, obj._name, def_id,
                                                context=context)
-            propdef = obj.pool.get('ir.model.fields').browse(cr, uid, def_id,
-                                                             context=context)
+            propdef = obj.pool.get('ir.model.fields').read(cr, uid, def_id,
+                                                           ['name'], context=context)
             prop = obj.pool.get('ir.property')
             return prop.create(cr, uid, {
-                'name': propdef.name,
+                'name': propdef['name'],
                 'value': id_val,
                 'res_id': obj._name+','+str(id),
                 'company_id': cid,

@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+		<record id="wizard_view_usb_synchronisation" model="ir.ui.view">
+            <field name="name">USB Synchronisation Wizard</field>
+            <field name="model">usb_synchronisation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="USB Synchronisation">
+                	<field name="usb_sync_step" invisible="1" />
+                	<field name="push_file_name" invisible="1"/>
+                	<field name="push_file_visible" invisible="1"/>
+                	<field name="patch_file_name" invisible="1"/>
+                	<field name="patch_file_visible" invisible="1"/>
+                	
+                	<separator colspan="4" string="Push" />
+                	<button type="object" name="push" string="Download the Data to Push" attrs="{'readonly': [('usb_sync_step','!=','first_sync'), ('usb_sync_step','!=','pull_performed')]}" colspan="4" />
+                	<field name="push_result" colspan="4" />
+                	<field name="push_file" colspan="2" filename="push_file_name" attrs="{'invisible': [('push_file_visible','!=',True)]}" />
+                	<field name="patch_file" colspan="2" filename="patch_file_name" attrs="{'invisible': [('patch_file_visible','!=',True)]}" />
+                	
+                	<separator colspan="4" string="Pull" />
+                	<field name="pull_data" colspan="4" attrs="{'invisible': [('usb_sync_step','!=','first_sync'), ('usb_sync_step','!=','push_performed')], 'required': [('usb_sync_step','=','push_performed')]}" />
+                	<button type="object" colspan="4" name="pull" attrs="{'readonly': [('usb_sync_step','!=','first_sync'), ('usb_sync_step','!=','push_performed')]}" string="Upload and Import the Data" />
+                	<field name="pull_result" colspan="4" />
+                </form>
+            </field>
+        </record> 
+        <record id="wizard_view_usb_synchronisation_background" model="ir.ui.view">
+            <field name="name">USB Synchronisation Wizard</field>
+            <field name="model">usb_synchronisation</field>
+            <field name="type">form</field>
+            <field name="priority" eval="255" />
+            <field name="arch" type="xml">
+                <form string="USB Synchronisation">
+                    <separator colspan="4" string="Process switched in background ..." />
+                    <group colspan="4" col="2">
+                    <html>
+                    <p style="font-size:14px;">
+                    The pull process takes more than 10 minutes, it will continue in background.
+                    </p>
+                    </html>
+                    </group>
+                    <button special="cancel" icon="gtk-cancel" string="Close" colspan="4" />
+                </form>
+            </field>
+        </record> 
+    </data>
+</openerp>

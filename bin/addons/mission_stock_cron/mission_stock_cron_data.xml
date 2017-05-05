@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="mission_stock.ir_cron_stock_mission_update_action" model="ir.cron">
+            <field eval="False" name="active"/>
+        </record>
+
+    </data>
+</openerp>

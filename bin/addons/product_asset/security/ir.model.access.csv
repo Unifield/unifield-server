@@ -1,0 +1,5 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_product_asset_type_user","product.asset.type user","model_product_asset_type",,1,1,1,1
+"access_product_asset_event","product.asset.event user","model_product_asset_event",,1,1,1,1
+"access_product_asset","product.asset user","model_product_asset",,1,1,1,1
+"access_product_template","product.template user","model_product_template",,1,1,1,1

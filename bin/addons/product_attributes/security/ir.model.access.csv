@@ -1,0 +1,6 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_product_section_code_all","product.section.code.all","model_product_section_code",,1,1,1,1
+"access_product_justification_code_all","product.justification.code.all","model_product_justification_code",,1,1,1,1
+"access_product_supply_source_all","product.supply.source.all","model_product_supply_source",,1,1,1,1
+"access_res_country_restriction_all","res.country.restriction.all","model_res_country_restriction",,1,1,1,1
+"access_standrad_price_track_changes_all","standard.price.track.changes.all","model_standard_price_track_changes",,1,1,1,1

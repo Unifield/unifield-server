@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <record id="stock_pirnt_certificate_form_view" model="ir.ui.view">
+            <field name="name">stock.print.certificate.form.view</field>
+            <field name="model">stock.print.certificate</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Print a certificate">
+                    <separator colspan="4" string="Choose type" />
+                    <field name="type" />
+                    <separator colspan="4" string="Product valuation" />
+                    <field name="valuation_ids" nolabel="1" colspan="4" />
+                    <separator colspan="4" />
+                    <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" />
+                </form>
+            </field>
+        </record>
+        
+        <record id="stock_product_valuation_tree_view" model="ir.ui.view">
+            <field name="name">stock.product.valuation.tree.view</field>
+            <field name="model">stock.certificate.valuation</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Product valuation" editable="top">
+                    <field name="product_id" readonly="1" />
+                    <field name="prodlot_id" readonly="1" />
+                    <field name="qty" readonly="1" />
+                    <field name="unit_price" />
+                </tree>
+            </field>
+        </record>
+    
+    </data>
+</openerp>

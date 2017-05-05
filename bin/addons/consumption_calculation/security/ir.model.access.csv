@@ -1,0 +1,5 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_real_average_all","real.average.consumption","model_real_average_consumption","",1,1,1,1
+"access_monthly_review_all","monthly.review.consumption","model_monthly_review_consumption","",1,1,1,1
+"access_real_average_line_all","real.average.consumption.line","model_real_average_consumption_line","",1,1,1,1
+"access_monthly_review_line_all","monthly.review.consumption.line","model_monthly_review_consumption_line","",1,1,1,1

@@ -362,6 +362,7 @@ class expression(object):
                              '    FROM ir_translation'  \
                              '   WHERE name = %s'       \
                              '     AND lang = %s'       \
+                             '     AND res_id IS NOT NULL' \
                              '     AND type = %s'
                     instr = ' %s'
                     #Covering in,not in operators with operands (%s,%s) ,etc.
@@ -371,19 +372,24 @@ class expression(object):
                              ') UNION ('                \
                              '  SELECT id'              \
                              '    FROM "' + working_table._table + '"'       \
-                             '   WHERE "' + left + '" ' + operator + ' ' +" (" + instr + "))"
+                             '   WHERE "' + left + '" ' + operator + ' ' +" (" + instr + ")" \
+                             '     AND id NOT IN ' + query1 + "))"
                     else:
                         query1 += '     AND value ' + operator + instr +   \
                              ') UNION ('                \
                              '  SELECT id'              \
                              '    FROM "' + working_table._table + '"'       \
-                             '   WHERE "' + left + '" ' + operator + instr + ")"
+                             '   WHERE "' + left + '" ' + operator + instr + "" \
+                             '     AND id NOT IN ' + query1 + '))'
 
                     query2 = [working_table._name + ',' + left,
                               context.get('lang', False) or 'en_US',
                               'model',
                               right,
                               right,
+                              working_table._name + ',' + left,
+                              context.get('lang', False) or 'en_US',
+                              'model',
                              ]
 
                     self.__exp[i] = ('id', 'inselect', (query1, query2))

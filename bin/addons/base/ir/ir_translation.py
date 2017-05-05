@@ -45,10 +45,10 @@ class ir_translation(osv.osv):
 
     def _get_language(self, cr, uid, context):
         lang_obj = self.pool.get('res.lang')
-        lang_ids = lang_obj.search(cr, uid, [('translatable', '=', True)],
+        lang_ids = lang_obj.search(cr, uid, [],
                 context=context)
-        langs = lang_obj.browse(cr, uid, lang_ids, context=context)
-        res = [(lang.code, lang.name) for lang in langs]
+        langs = lang_obj.read(cr, uid, lang_ids, ['code', 'name'], context=context)
+        res = [(lang['code'], lang['name']) for lang in langs]
         for lang_dict in tools.scan_languages():
             if lang_dict not in res:
                 res.append(lang_dict)
@@ -70,7 +70,7 @@ class ir_translation(osv.osv):
     def _auto_init(self, cr, context={}):
         super(ir_translation, self)._auto_init(cr, context)
 
-        # FIXME: there is a size limit on btree indexed values so we can't index src column with normal btree. 
+        # FIXME: there is a size limit on btree indexed values so we can't index src column with normal btree.
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_ltns',))
         if cr.fetchone():
             #temporarily removed: cr.execute('CREATE INDEX ir_translation_ltns ON ir_translation (name, lang, type, src)')
@@ -96,9 +96,9 @@ class ir_translation(osv.osv):
     def _get_ids(self, cr, uid, name, tt, lang, ids):
         translations = dict.fromkeys(ids, False)
         if ids:
-            cr.execute('select res_id,value ' \
-                    'from ir_translation ' \
-                    'where lang=%s ' \
+            cr.execute('SELECT res_id,value ' \
+                    'FROM ir_translation ' \
+                    'WHERE lang=%s ' \
                         'and type=%s ' \
                         'and name=%s ' \
                         'and res_id IN %s',
@@ -107,30 +107,58 @@ class ir_translation(osv.osv):
                 translations[res_id] = value
         return translations
 
-    def _set_ids(self, cr, uid, name, tt, lang, ids, value, src=None):
-        # clear the caches
-        tr = self._get_ids(cr, uid, name, tt, lang, ids)
-        for res_id in tr:
-            if tr[res_id]:
-                self._get_source.clear_cache(cr.dbname, uid, name, tt, lang, tr[res_id])
-        self._get_source.clear_cache(cr.dbname, uid, name, tt, lang)
-        self._get_ids.clear_cache(cr.dbname, uid, name, tt, lang, ids)
+    @tools.cache(skiparg=3, multi='ids')
+    def _get_ids_dict(self, cr, uid, name, tt, lang, ids):
+        translation_dict = dict.fromkeys(ids, None)
+        if ids:
+            cr.execute('SELECT id, res_id,value ' \
+                    'FROM ir_translation ' \
+                    'WHERE lang=%s ' \
+                        'and type=%s ' \
+                        'and name=%s ' \
+                        'and res_id IN %s',
+                    (lang,tt,name,tuple(ids)))
+            for ir_trans_id, res_id, value in cr.fetchall():
+                translation_dict[res_id] = {'ir_trans_id':ir_trans_id, 'value':value}
+        return translation_dict
 
-        cr.execute('delete from ir_translation ' \
-                'where lang=%s ' \
-                    'and type=%s ' \
-                    'and name=%s ' \
-                    'and res_id IN %s',
-                (lang,tt,name,tuple(ids),))
-        for id in ids:
-            self.create(cr, uid, {
-                'lang':lang,
-                'type':tt,
-                'name':name,
-                'res_id':id,
-                'value':value,
-                'src':src,
-                })
+    def _set_ids(self, cr, uid, name, tt, lang, ids, value, src=None, clear=True, context=None):
+        if context is None:
+            context = {}
+        translation_dict = self._get_ids_dict(cr, uid, name, tt, lang, ids)
+        if clear:
+            # clear the caches
+            for res_id in ids:
+                if translation_dict[res_id]:
+                    self._get_source.clear_cache(cr.dbname, uid, name, tt,
+                            lang, translation_dict[res_id]['value'])
+            self._get_source.clear_cache(cr.dbname, uid, name, tt, lang)
+            self._get_ids.clear_cache(cr.dbname, uid, name, tt, lang, ids)
+            self._get_ids_dict.clear_cache(cr.dbname, uid, name, tt, lang, ids)
+
+        # BKLG-52 Change delete/create for Update
+        for obj_id in ids:
+            if translation_dict[obj_id] is not None:
+                if not value or value==src or lang=='en_US':
+                    self.unlink(cr, uid,
+                            translation_dict[obj_id]['ir_trans_id'],
+                            clear=clear, context=context)
+                else:
+                    values = {'value': value, 'src': src}
+                    self.write(cr, uid,
+                            translation_dict[obj_id]['ir_trans_id'],
+                            values, clear=clear, context=context)
+            elif value!=src:
+                self.create(cr, uid, {
+                    'lang': lang,
+                    'type': tt,
+                    'name': name,
+                    'res_id': obj_id,
+                    'value': value,
+                    'src': src,
+                    },
+                    clear=clear,
+                    context=context)
         return len(ids)
 
     @tools.cache(skiparg=3)
@@ -154,11 +182,12 @@ class ir_translation(osv.osv):
             return u''
         if isinstance(types, basestring):
             types = (types,)
+
         if source:
-            query = """SELECT value 
-                       FROM ir_translation 
-                       WHERE lang=%s 
-                        AND type in %s 
+            query = """SELECT value
+                       FROM ir_translation
+                       WHERE lang=%s
+                        AND type in %s
                         AND src=%s"""
             params = (lang or '', types, tools.ustr(source))
             if name:
@@ -180,38 +209,110 @@ class ir_translation(osv.osv):
             return tools.ustr(source)
         return trad
 
-    def create(self, cursor, user, vals, context=None):
-        if not context:
+    def _truncate_value_size(self, cursor, user, vals, id=None, context=None):
+        # SP-193 / US-145 : translation must limited to object limitation
+        if not 'value' in vals:
+            return  # nothing to truncate
+
+        other_vals = {}  # other vals than 'value' required to check limitation
+        wanted_other_vals = ('name', 'type', )
+        for wv in wanted_other_vals:
+            if wv in vals:
+                other_vals[wv] = vals[wv]
+
+        if id is not None:
+            # from a write: read potential missing vals
+            fields_to_load = [
+                wv for wv in wanted_other_vals if not wv in vals ]
+            if fields_to_load:
+                r = self.read(cursor, user, [id], fields_to_load,
+                    context=context)[0]
+                for ftl in fields_to_load:
+                    other_vals[ftl] = r[ftl]
+
+        # truncate value if required
+        if ',' in other_vals['name'] and other_vals.get('type') == 'model' \
+            and vals.get('value'):
+                model_name = other_vals['name'].split(",")[0]
+                field = other_vals['name'].split(",")[1]
+                if field:
+                    model_obj = self.pool.get(model_name)
+                    if hasattr(model_obj, 'fields_get'):
+                        field_obj = model_obj.fields_get(cursor, user, context=context)
+                        if 'size' in field_obj.get(field, {}):
+                            size = field_obj[field]['size']
+                            vals['value'] = tools.ustr(vals['value'])[:size]
+
+    def create(self, cursor, user, vals, clear=True, context=None):
+        if context is None:
             context = {}
+
+        # SP-193 : translation must limited to object limitation
+        # (no need to check when syncing as already checked for regular create)
+        if not context.get('sync_update_execution'):
+            self._truncate_value_size(cursor, user, vals, id=None, context=context)
+
         ids = super(ir_translation, self).create(cursor, user, vals, context=context)
-        for trans_obj in self.read(cursor, user, [ids], ['name','type','res_id','src','lang'], context=context):
-            self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
-            self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
+        if clear:
+            for trans_obj in self.read(cursor, user, [ids], ['name','type','res_id','src','lang'], context=context):
+                self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
+                self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
+                self._get_ids_dict.clear_cache(cursor.dbname, user,
+                        trans_obj['name'], trans_obj['type'],
+                        trans_obj['lang'], [trans_obj['res_id']])
         return ids
 
-    def write(self, cursor, user, ids, vals, context=None):
-        if not context:
+    def write(self, cursor, user, ids, vals, clear=True, context=None):
+        if not ids:
+            return True
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        result = super(ir_translation, self).write(cursor, user, ids, vals, context=context)
-        for trans_obj in self.read(cursor, user, ids, ['name','type','res_id','src','lang'], context=context):
-            self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
-            self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
+
+        # US-145 : translation must limited to object limitation
+        # (no need to check when syncing as already checked for regular write)
+        if context.get('sync_update_execution'):
+            result = super(ir_translation, self).write(cursor, user, ids, vals, context=context)
+        else:
+            if not 'name' in vals or not 'type' in vals:
+                # in case of missing vals needed for limitation check,
+                # need to read them record per record
+                result = True
+                for id in ids:
+                    self._truncate_value_size(cursor, user, vals, id=id, context=context)
+                    res = super(ir_translation, self).write(cursor, user, [id], vals, context=context)
+                    if not res:
+                        result = False
+            else:
+                # no missing vals for limitation check: do check per transaction
+                self._truncate_value_size(cursor, user, vals, id=None, context=context)
+                result = super(ir_translation, self).write(cursor, user, ids, vals, context=context)
+
+        if clear:
+            for trans_obj in self.read(cursor, user, ids, ['name','type','res_id','src','lang'], context=context):
+                self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
+                self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
+                self._get_ids_dict.clear_cache(cursor.dbname, user,
+                        trans_obj['name'], trans_obj['type'],
+                        trans_obj['lang'], [trans_obj['res_id']])
         return result
 
-    def unlink(self, cursor, user, ids, context=None):
-        if not context:
+    def unlink(self, cursor, user, ids, clear=True, context=None):
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for trans_obj in self.read(cursor, user, ids, ['name','type','res_id','src','lang'], context=context):
-            self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
-            self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
+        if clear:
+            for trans_obj in self.read(cursor, user, ids, ['name','type','res_id','src','lang'], context=context):
+                self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
+                self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
+                self._get_ids_dict.clear_cache(cursor.dbname, user,
+                        trans_obj['name'], trans_obj['type'],
+                        trans_obj['lang'], [trans_obj['res_id']])
         result = super(ir_translation, self).unlink(cursor, user, ids, context=context)
         return result
 
 ir_translation()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

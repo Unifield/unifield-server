@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="action_budget_criteria_export_menu" model="ir.actions.act_window">
+            <field name="name">Budget vs. Actual</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.budget.criteria.export</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.values" id="action_budget_criteria_export_values">
+            <field name="model_id" ref="msf_budget.model_msf_budget" />
+            <field name="object" eval="1" />
+            <field name="name">Budget vs. Actual</field>
+            <field name="key2">client_print_multi</field>
+            <field name="value" eval="'ir.actions.act_window,' +str(ref('action_budget_criteria_export_menu'))" />
+            <field name="key">action</field>
+            <field name="model">msf.budget</field>
+        </record>
+
+        <record id="wizard_budget_criteria_export_view" model="ir.ui.view">
+            <field name="name">Budget vs. Actuals Export</field>
+            <field name="model">wizard.budget.criteria.export</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Budget vs. Actuals Export">
+                    <field name="currency_table_id" domain="[('state','=','valid')]" />
+                    <field name="period_id"/>
+                    <field name="commitment"/>
+                    <field name="breakdown"/>
+                    <field name="granularity"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                        <button name="button_create_budget_2" string="Create report" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

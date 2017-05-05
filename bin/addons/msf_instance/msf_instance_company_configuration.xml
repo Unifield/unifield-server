@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        <record id="view_company_inherit_2_form" model="ir.ui.view">
+            <field name="name">res.company.form.instance.inherit</field>
+            <field name="priority">2</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="model">res.company</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <data>
+                    <!-- UF-1631, 1632: not allow to duplicate, delete or add new company -->
+                    <xpath expr="/form" position="attributes">
+                        <attribute name="hide_delete_button">1</attribute>
+                        <attribute name="hide_duplicate_button">1</attribute>
+                        <attribute name="hide_new_button">1</attribute>
+                    </xpath>
+
+                    <page position="inside" string="Configuration">
+                        <!-- Proprietary instance -->
+                        <group col="2" colspan="2">
+                            <separator colspan="2" string="Proprietary Instance"/>
+                            <field colspan="2"
+                                domain="[('state', '=', 'draft')]"
+                                name="instance_id" required="1"/>
+                        </group>
+
+                        <!-- Default accounts configuration for HQ Entries -->
+                        <group col="2" colspan="2">
+                            <separator string="HQ Entries" colspan="2"/>
+                            <field name="counterpart_hq_entries_default_account" domain="[('type', '!=', 'view')]" colspan="2"/>
+                        </group>
+
+                        <!-- Reserve And Profit/Loss Account -->
+                        <group col="2" colspan="2">
+                            <separator string="Reserve And Profit/Loss Account" colspan="2"/>
+                            <field name="property_reserve_and_surplus_account" colspan="2"/>
+                        </group>
+
+                        <!-- Salaries default account configuration -->
+                        <group col="2" colspan="2">
+                            <separator string="Salaries default account for Payroll entries" colspan="2"/>
+                            <field name="salaries_default_account" domain="[('type', '!=', 'view'), ('reconcile', '=', True)]" colspan="2"/>
+                        </group>
+
+                        <!--
+                            Debit note default account configuration
+
+                            Re-billing Inter-section account
+                            Intermission configuration
+                            Income accounts specific configuration
+                            Revaluation account
+                        -->
+                        <group col="2" colspan="2">
+                            <separator string="Re-billing Inter-section account" colspan="2"/>
+                            <field name="import_invoice_default_account" colspan="2"
+                            domain="['|','|', '&amp;',('type','=','receivable'),('user_type_code','=','receivables'),'&amp;',('type','=','receivable'), ('user_type_code','=','cash'),'&amp;', ('type','=','other'),('user_type_code','=','cash')]"/>
+                        </group>
+                        <group col="2" colspan="2">
+                            <separator string="Intermission configuration" colspan="2"/>
+                            <field name="intermission_default_counterpart" domain="[('type', '!=', 'view')]" colspan="2"/>
+                        </group>
+                        <group col="2" colspan="2">
+                            <separator string="Income accounts specific configuration" colspan="2"/>
+                            <field name="additional_allocation" colspan="2"/>
+                        </group>
+                        <group col="2" colspan="2">
+                            <separator string="Revaluation account" colspan="2"/>
+                            <field name="revaluation_default_account" colspan="2"
+                            domain="[('type', '!=', 'view'),('user_type_code', '=', 'expense')]"/>
+                        </group>
+
+                        <!--
+                            B/S Move to 0 accounts
+                            P&L result accounts
+                        -->
+                        <separator colspan="4" string="B/S Move to 0 accounts"/>
+                        <field name="ye_pl_cp_for_bs_debit_bal_account" />
+                        <field name="ye_pl_cp_for_bs_credit_bal_account" />
+                        <separator colspan="4" string="P&amp;L result accounts"/>
+                        <field name="ye_pl_pos_credit_account" />
+                        <field name="ye_pl_ne_credit_account" />
+                        <field name="ye_pl_pos_debit_account" />
+                        <field name="ye_pl_ne_debit_account" />
+                    </page>
+
+                    <xpath expr="/form//field[@name='currency_id']" position="replace">
+                        <field name="currency_id" readonly="1" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+    </data>
+</openerp>

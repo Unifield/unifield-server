@@ -1,0 +1,176 @@
+<document filename="report_stock_mission.pdf">
+  <template pageSize="(842.0,595.0)" title="Stock mission report" author="Unifield" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="15.0" y1="42.0" width="758" height="539"/>
+    </pageTemplate>
+  </template>
+  <stylesheet>
+    <blockTableStyle id="reportLines">
+      <blockAlignment value="CENTER"/>
+      <blockValign value="MIDDLE"/>
+      <lineStyle kind="GRID" colorName="#000000" start="0,0" stop="-1,0"/>
+      <lineStyle kind="LINEBEFORE" colorName="#aaaaaa" start="0,1" stop="-1,-1"/>
+      <lineStyle kind="LINEAFTER" colorName="#aaaaaa" start="0,1" stop="-1,-1" />
+      <lineStyle kind="LINEABOVE" colorName="#aaaaaa" start="0,3" stop="-1,-1" />
+      <lineStyle kind="LINEBELOW" colorName="#aaaaaa" start="0,1" stop="-1,-1" />
+      <lineStyle kind="OUTLINE" colorName="#000000" />
+    </blockTableStyle>
+    <blockTableStyle id="tabHeader">
+      <blockAlignment value="CENTER"/>
+      <blockValign value="MIDDLE"/>
+      <lineStyle kind="OUTLINE" colorName="#000000" start="1,0" stop="1,0" />
+    </blockTableStyle>
+    <initialize>
+      <paraStyle name="all" alignment="justify"/>
+    </initialize>
+    <paraStyle name="P1" fontName="Helvetica" fontSize="12.0" leading="15" alignment="CENTER"/>
+    <paraStyle name="lines" fontName="Helvetica" fontSize="6.0" alignment="CENTER" />
+    <paraStyle name="linesHead" fontName="Helvetica-Bold" fontSize="6.0" alignment="CENTER" />
+
+    <images/>
+  </stylesheet>
+  
+  <story>
+  
+    <blockTable colWidths="125.0,453.0,125.0" style="tabHeader">
+        <tr>
+            <td />
+            <td>
+                <para style="P1">Mission stock report : [[ objects[0].mission_report_id.name ]]</para>
+            </td>
+            <td />
+        </tr>
+	</blockTable>
+	
+	<para style="P1"><font color="white"> </font></para>
+  
+  	<blockTable colWidths="98.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0,55.0" style="reportLines">
+  		<tr>
+  			<td>
+  				<para style="linesHead">
+  					Product
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					UoM
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					Internal Qty.
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					In Pipe Qty.
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					In Pipe Qty. From Coord.
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					Stock Qty.
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					Central Stock Qty.
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					Cross-docking Qty.
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					Secondary Stock Qty.
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					Consumption Unit Qty.
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					AMC
+  				</para>
+  			</td>
+  			<td>
+  				<para style="linesHead">
+  					FMC
+  				</para>
+  			</td>
+  		</tr>
+  		<tr>
+  		[[repeatIn(objects,'o')]]
+  			<td>
+  				<para style="lines">
+  					[[ '[%s] %s' % (o.product_id.default_code, o.product_id.name) ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.product_id.uom_id.name ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.internal_qty != 0.00 and o.internal_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.in_pipe_qty != 0.00 and o.in_pipe_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.in_pipe_coor_qty != 0.00 and o.in_pipe_coor_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.stock_qty != 0.00 and o.stock_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.central_qty != 0.00 and o.central_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.cross_qty != 0.00 and o.cross_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.secondary_qty != 0.00 and o.secondary_qty or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.cu_qty != 0.00 or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.product_id.product_amc != 0.00 and o.product_id.product_amc or '0.00' ]]
+  				</para>
+  			</td>
+  			<td>
+  				<para style="lines">
+  					[[ o.product_id.reviewed_consumption != 0.00 and o.product_id.reviewed_consumption or '0.00' ]]
+  				</para>
+  			</td>
+  		</tr>
+  	</blockTable>
+    
+  </story>
+</document>

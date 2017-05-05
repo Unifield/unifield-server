@@ -1,0 +1,292 @@
+-
+  I create a Receivable Account Type.
+-
+  !record {model: account.account.type, id: account_account_type_receivable0}:
+    close_method: balance
+    code: receivable
+    name: Receivable
+    sign: 1
+-
+  I create a Payable Account Type.
+-
+  !record {model: account.account.type, id: account_account_type_payable0}:
+    close_method: balance
+    code: payable
+    name: Payable
+    sign: 1
+-
+  I create an Expense Account Type.
+-
+  !record {model: account.account.type, id: account_account_type_expense0}:
+    close_method: unreconciled
+    code: expense
+    name: Expense
+    sign: 1
+-
+  I create a transfer account type
+-
+  !record {model: account.account.type, id: account_account_type_transfer0}:
+    close_method: balance
+    code: transfer
+    name: Transfer
+    sign: 1
+    report_type: asset
+-
+  I create a cash account type
+-
+  !record {model: account.account.type, id: account_account_type_cash0}:
+    close_method: balance
+    code: cash
+    name: Cash
+    sign: 1
+    report_type: asset
+-
+  I create a transfer account
+-
+  !record {model: account.account, id: account_account_transfer0}:
+    name: Internal Transfer
+    code: '5815-bank-and-cash-transfer-test'
+    type: liquidity
+    user_type: account_account_type_transfer0
+    type_for_register: transfer
+    company_id: base.main_company
+    currency_mode: current
+    activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
+-
+  I create a Down Payment account
+-
+  !record {model: account.account, id: account_account_down_payment0}:
+    name: Advance for suppliers
+    code: '4203-down-payment-test'
+    type: receivable
+    user_type: account_account_type_receivable0
+    type_for_register: down_payment
+    company_id: base.main_company
+    currency_mode: current
+    activation_date: !eval time.strftime('%Y-01-01')
+    reconcile: 1
+    parent_id: 1
+-
+  I create Supplier 401 Payable Account.
+-
+  !record {model: account.account, id: account_account_payable_supplier0}:
+    code: '401-supplier-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Supplier Payable
+    type: payable
+    user_type: account_account_type_payable0
+    reconcile: 1
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
+-
+  I create Supplier 1300 Receivable Account.
+-
+  !record {model: account.account, id: account_account_receivable_supplier0}:
+    code: '1300-supplier-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Supplier Receivable
+    type: receivable
+    user_type: account_account_type_receivable0
+    reconcile: 1
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
+-
+  I create a 6101 Expense Account.
+-
+  !record {model: account.account, id: account_account_6101}:
+    code: '6101-expense-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Expense 6101 Account
+    type: other
+    user_type: account_account_type_expense0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
+    parent_id: 1
+-
+  I set the destination
+-
+  !record {model: account.account, id: account_account_6101}:
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
+-
+  I create a 6270 Expense Account.
+-
+  !record {model: account.account, id: account_account_6270}:
+    code: '6270-expense-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Expense 6270 Account
+    type: other
+    user_type: account_account_type_expense0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
+    parent_id: 1
+-
+  I set the destination
+-
+  !record {model: account.account, id: account_account_6270}:
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
+-
+  I create a 6301 Expense Account.
+-
+  !record {model: account.account, id: account_account_6301}:
+    code: '6301-expense-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Expense 6301 Account
+    type: other
+    user_type: account_account_type_expense0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
+    parent_id: 1
+-
+  I set the destination
+-
+  !record {model: account.account, id: account_account_6301}:
+    destination_ids: [analytic_distribution.analytic_account_destination_operation, analytic_distribution.analytic_account_destination_support]
+-
+  I create Cash Advance 4204 Account.
+-
+  !record {model: account.account, id: account_account_advance0}:
+    code: '4204-cash-advance-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Cash Advance Account
+    type: other
+    user_type: account_account_type_expense0
+    type_for_register: advance
+    reconcile: 1
+    activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_national_staff
+    parent_id: 1
+-
+  I set the destination
+-
+  !record {model: account.account, id: account_account_advance0}:
+    destination_ids: [analytic_distribution.analytic_account_destination_national_staff]
+-
+  I create an adjustement account
+-
+  !record {model: account.account, id: account_account_adjustement0}:
+    code: '6308-adjustement-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Exchange rate differences
+    type: other
+    reconcile: False
+    user_type: account_account_type_expense0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    default_destination_id: analytic_distribution.analytic_account_destination_operation
+    parent_id: 1
+-
+  I set the destination
+-
+  !record {model: account.account, id: account_account_adjustement0}:
+    destination_ids: [analytic_distribution.analytic_account_destination_support, analytic_distribution.analytic_account_destination_operation]
+-
+  I create a 10100 Cash Account.
+-
+  !record {model: account.account, id: account_account_cash0}:
+    code: '10100-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Cash (test)
+    type: liquidity
+    reconcile: False
+    user_type : account_account_type_cash0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
+-
+  I create a 10120-CHF Cash CHF Account.
+-
+  !record {model: account.account, id: account_account_cash1}:
+    code: '10120-chf-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Cash in CHF (test)
+    type: liquidity
+    reconcile: False
+    user_type : account_account_type_cash0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
+-
+  I create a 10130-USD Cash USD Account.
+-
+  !record {model: account.account, id: account_account_cash2}:
+    code: '10130-usd-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Cash in USD (test)
+    type: liquidity
+    reconcile: False
+    user_type : account_account_type_cash0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
+-
+  I create a 10200 Bank Account.
+-
+  !record {model: account.account, id: account_account_bank0}:
+    code: '10200-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Bank (test)
+    type: liquidity
+    reconcile: False
+    user_type : account_account_type_cash0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
+-
+  I create a 10230-US Bank USD Account.
+-
+  !record {model: account.account, id: account_account_bank1}:
+    code: '10230-usd-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Bank in USD (test)
+    type: liquidity
+    reconcile: False
+    user_type : account_account_type_cash0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    parent_id: 1
+-
+  I create a 10300 Cheque Account
+-
+  !record {model: account.account, id: account_account_cheque0}:
+    code: '10300-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Cheque (test)
+    type: liquidity
+    user_type : account_account_type_cash0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    reconcile: True
+    parent_id: 1
+-
+  I create a 10330-US Cheque USD Account
+-
+  !record {model: account.account, id: account_account_cheque1}:
+    code: '10330-usd-test'
+    company_id: base.main_company
+    currency_mode: current
+    name: Cheque in USD (test)
+    type: liquidity
+    user_type : account_account_type_cash0
+    type_for_register: none
+    activation_date: !eval time.strftime('%Y-01-01')
+    reconcile: True
+    parent_id: 1

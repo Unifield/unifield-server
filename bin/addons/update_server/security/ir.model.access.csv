@@ -1,0 +1,3 @@
+"id","name","model_id","perm_read","perm_write","perm_create","perm_unlink","group_id/id"
+"sync_read_version_id","sync_read_version","sync_server.version","True","","","","sync_common.sync_read_group"
+

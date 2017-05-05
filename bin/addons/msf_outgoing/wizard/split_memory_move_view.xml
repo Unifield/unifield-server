@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_split_memory_move_form_wizard" model="ir.ui.view">
+            <field name="name">Split move</field>
+            <field name="model">split.memory.move</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Split Memory Move">
+                <separator string="Quantity for the new move" colspan="4"/>
+                <field name="uom_id" invisible="1" />
+                <field name="quantity" on_change="change_uom(uom_id, quantity)" />
+                <button name="cancel" string="_Cancel"
+                	type="object" icon='gtk-cancel' />
+                <button name="split" string="Ok"
+                    type="object" icon="gtk-ok" />
+            </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

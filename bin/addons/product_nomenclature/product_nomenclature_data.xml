@@ -1,0 +1,1459 @@
+<openerp>
+	<data noupdate="1">
+		<!-- MANDATORY -->
+		<!--FIRST LEVEL -->
+		<record model="product.nomenclature" id="nomen_med">
+			<field name="name">MED PN</field>
+			<field name="type">mandatory</field>
+			<field name="level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log">
+			<field name="name">LOG PN</field>
+			<field name="type">mandatory</field>
+			<field name="level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_mix">
+			<field name="name">MIX</field>
+			<field name="type">mandatory</field>
+			<field name="level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_service">
+			<field name="name">SERVICE</field>
+			<field name="type">mandatory</field>
+			<field name="level">0</field>
+		</record>
+
+
+		<!-- SECOND LEVEL -->
+		<!-- MED -->
+		<record model="product.nomenclature" id="nomen_med_drugs">
+			<field name="name">Drugs</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_medicalequipment">
+			<field name="name">Medical Equipment</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_kits">
+			<field name="name">Kits</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup">
+			<field name="name">Medical renewable sup.</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+		</record>
+
+		<!-- LOG -->
+		<record model="product.nomenclature" id="nomen_log_administration">
+			<field name="name">Administration</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_camps">
+			<field name="name">Camps</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_kits">
+			<field name="name">Kits</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_library">
+			<field name="name">Library</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_programsupport">
+			<field name="name">Program support</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_transport">
+			<field name="name">Transport</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+		</record>
+
+		<!-- MIX -->
+		<record model="product.nomenclature" id="nomen_mix_kits">
+			<field name="name">Kits</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_mix" />
+			<field name="level">1</field>
+		</record>
+
+		<!-- SERVICE -->
+		<record model="product.nomenclature" id="nomen_service_administration">
+			<field name="name">Administration</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service" />
+			<field name="level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_service_transport">
+			<field name="name">Transport</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service" />
+			<field name="level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_service_camps">
+			<field name="name">Camps</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service" />
+			<field name="level">1</field>
+		</record>
+
+		<!-- THIRD LEVEL -->
+		<!-- MED - DRUGS -->
+		<record model="product.nomenclature" id="nomen_med_drugs_infusions">
+			<field name="name">Infusions</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_drugs_oraldrugs">
+			<field name="name">Oral Drugs</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_drugs_vaccines">
+			<field name="name">Vaccines</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_drugs_injectabledrugs">
+			<field name="name">Injectable drugs</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- MED - MEDICAL EQUIPMENT -->
+		<record model="product.nomenclature"
+			id="nomen_med_medicalequipment_surgicalinstforextfix">
+			<field name="name">Surgical instruments for external fixator</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalequipment" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_medicalequipment_trainingmannequins">
+			<field name="name">Training mannequins</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalequipment" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_medicalequipment_trainingposters">
+			<field name="name">Training posters</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalequipment" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- MED - KITS -->
+		<record model="product.nomenclature" id="nomen_med_kits_medicalkits">
+			<field name="name">Medical kits</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_kits" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_kits_dentalinstbox">
+			<field name="name">Dental instrument box</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_kits" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_kits_ophtalmicinstbox">
+			<field name="name">Ophtalmic instrument box</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_kits" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- MED - MEDICAL RENEWABLE SUP -->
+		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_surgicalinstsets">
+			<field name="name">Surgical instruments sets</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalrenewablesup" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature"
+			id="nomen_med_medicalrenewablesup_smallmedicalsupplies">
+			<field name="name">Small medical supplies</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalrenewablesup" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_medicalstationery">
+			<field name="name">Medical stationery</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalrenewablesup" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- LOG - ADMINISTRATION -->
+		<record model="product.nomenclature" id="nomen_log_administration_furnitures">
+			<field name="name">Furnitures</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_administration" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_administration_teamlife">
+			<field name="name">Team life</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_administration" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_administration_stationery">
+			<field name="name">Stationery</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_administration" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- LOG - CAMPS -->
+		<record model="product.nomenclature" id="nomen_log_camps_shelters">
+			<field name="name">Shelters</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_camps" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_camps_semipermshelter">
+			<field name="name">Semipermanent shelter</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_camps" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_camps_watersanitation">
+			<field name="name">Water and sanitation</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_camps" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- LOG - KITS -->
+		<record model="product.nomenclature" id="nomen_log_kits_progsuppkits">
+			<field name="name">Programme support kits</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_kits" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_kits_adminkits">
+			<field name="name">Administration kits</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_kits" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_kits_watersanitationkits">
+			<field name="name">Water and sanitation kits</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_kits" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- LOG - LIBRARY -->
+		<record model="product.nomenclature" id="nomen_log_library_languages">
+			<field name="name">Languages</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_library" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_library_nutrition">
+			<field name="name">Nutrition</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_library" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_library_humaniassist">
+			<field name="name">Humanitarian assistance</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_library" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- LOG - PROGRAM SUPPORT -->
+		<record model="product.nomenclature" id="nomen_log_programsupport_identi">
+			<field name="name">Identification</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_programsupport" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_programsupport_coldchain">
+			<field name="name">Cold chain</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_programsupport" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_programsupport_lighting">
+			<field name="name">Lighting</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_programsupport" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- LOG - TRANSPORT -->
+		<record model="product.nomenclature" id="nomen_log_transport_sparepartstoyota">
+			<field name="name">Spare parts Toyota</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_transport" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_transport_sparepartsyamaha">
+			<field name="name">Spare parts Yamaha</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_transport" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_transport_boats">
+			<field name="name">Boats</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_transport" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- MIX - KITS -->
+		<record model="product.nomenclature" id="nomen_mix_kits_emergencykits">
+			<field name="name">Emergency kits</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_mix_kits" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_mix_kits_explokits">
+			<field name="name">Exploration kits</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_mix_kits" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- SERVICE - ADMINISTRATION -->
+		<record model="product.nomenclature" id="nomen_service_administration_tempworkers">
+			<field name="name">Temporary workers</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_administration" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_service_administration_officesupport">
+			<field name="name">Office support</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_administration" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- SERVICE - TRANSPORT -->
+		<record model="product.nomenclature" id="nomen_service_transport_clearingagent">
+			<field name="name">Clearing agent</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_transport" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_service_transport_transpbyroad">
+			<field name="name">Transport by road</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_transport" />
+			<field name="level">2</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_service_transport_other">
+			<field name="code">OTH</field>
+			<field name="name">Other</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_transport" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- SERVICE - CAMPS -->
+		<record model="product.nomenclature" id="nomen_service_camps_reparing">
+			<field name="name">Reparing</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_camps" />
+			<field name="level">2</field>
+		</record>
+
+		<!-- FOURTH LEVEL -->
+		<!-- MED - DRUGS - INFUSIONS -->
+		<record model="product.nomenclature" id="nomen_med_drugs_infusions_dex">
+			<field name="name">Dextrose</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs_infusions" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_drugs_infusions_halfstrdarr">
+			<field name="name">Half strength darrows</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs_infusions" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_drugs_infusions_mannitol">
+			<field name="name">Mannitol</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs_infusions" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MED - DRUGS - ORAL DRUGS -->
+		<record model="product.nomenclature" id="nomen_med_drugs_oraldrugs_albe">
+			<field name="name">Albendazole</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs_oraldrugs" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_drugs_oraldrugs_gris">
+			<field name="name">Griseovulvine</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs_oraldrugs" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_drugs_oraldrugs_halo">
+			<field name="name">Halofantrine</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs_oraldrugs" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MED - DRUGS - VACCINES -->
+		<record model="product.nomenclature" id="nomen_med_drugs_vaccines_typh">
+			<field name="name">Vaccine Typhoid</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs_vaccines" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_drugs_vaccines_yellowfev">
+			<field name="name">Vaccine Yellow Fever</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs_vaccines" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MED - DRUGS - INJECTABLE DRUGS -->
+		<record model="product.nomenclature" id="nomen_med_drugs_injectabledrugs_oxy">
+			<field name="name">Oxytocine</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs_injectabledrugs" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_drugs_injectabledrugs_paracet">
+			<field name="name">Paracetamol</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_drugs_injectabledrugs" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MED - MEDICAL EQUIPMENT - SURGICAL INSTRUMENTS FOR EXTERNAL FIXATOR -->
+		<record model="product.nomenclature" id="nomen_med_medicalequipment_surgicalinstforextfix_perf">
+			<field name="name">Perforator</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalequipment_surgicalinstforextfix" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_medicalequipment_surgicalinstforextfix_pin">
+			<field name="name">PIN</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalequipment_surgicalinstforextfix" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MED - MEDICAL EQUIPMENT - TRAINING MANNEQUINS -->
+		<record model="product.nomenclature" id="nomen_med_medicalequipment_trainingmannequins_newborn">
+			<field name="name">Newborn rescucitation</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalequipment_trainingmannequins" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MED - MEDICAL EQUIPMENT - TRAINING POSTERS -->
+		<record model="product.nomenclature" id="nomen_med_medicalequipment_trainingposters_mencycle">
+			<field name="name">Menstruation cycle</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalequipment_trainingposters" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MED - KITS - MEDICAL KITS -->
+		<record model="product.nomenclature" id="nomen_med_kits_medicalkits_basis">
+			<field name="name">Basis kit</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_kits_medicalkits" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_kits_medicalkits_cholera">
+			<field name="name">Cholera kit</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_kits_medicalkits" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MED - KITS - DENTAL INSTRUMENT BOX -->
+		<record model="product.nomenclature" id="nomen_med_kits_dentalinstbox_dental">
+			<field name="name">Box Dental</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_kits_dentalinstbox" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MED - KITS - OPHTALMIC INSTRUMENT BOX -->
+		<record model="product.nomenclature" id="nomen_med_kits_ophtalmicinstbox_anae">
+			<field name="name">Box Anaesthesia Ophtalmic</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_kits_ophtalmicinstbox" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_kits_ophtalmicinstbox_cata">
+			<field name="name">Box Cataract</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_kits_ophtalmicinstbox" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MED - MEDICAL RENEWABLE SUP - SURGICAL INSTRUMENTS SETS -->
+		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_surgicalinstsets_XXX">
+			<field name="name">XXX</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalrenewablesup_surgicalinstsets" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MED - MEDICAL RENEWABLE SUP - SMALL MEDICAL SUPPLIES -->
+		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_smallmedicalsupplies_gloexa">
+			<field name="name">Gloves examination nitrile</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_smallmedicalsupplies_cleaglov">
+			<field name="name">Cleaning gloves</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_smallmedicalsupplies_dispglo">
+			<field name="name">Disp. gloves</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalrenewablesup_smallmedicalsupplies" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MED - MEDICAL RENEWABLE SUP - MEDICAL STATIONERY -->
+		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_medicalstationery_gloprotec">
+			<field name="name">Gloves protection</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalrenewablesup_medicalstationery" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_med_medicalrenewablesup_medicalstationery_guide">
+			<field name="name">Guide</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_med_medicalrenewablesup_medicalstationery" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - ADMINISTRATION - FURNITURES -->
+		<record model="product.nomenclature" id="nomen_log_administration_furnitures_desk">
+			<field name="name">Desk</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_administration_furnitures" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_administration_furnitures_shelv">
+			<field name="name">Shelve</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_administration_furnitures" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_administration_furnitures_table">
+			<field name="name">Table</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_administration_furnitures" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - ADMINISTRATION - TEAM LIFE -->
+		<record model="product.nomenclature" id="nomen_log_administration_teamlife_ear">
+			<field name="name">Ear protector</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_administration_teamlife" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_administration_teamlife_godust">
+			<field name="name">Googles dust protection</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_administration_teamlife" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_administration_teamlife_glo">
+			<field name="name">Gloves</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_administration_teamlife" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - ADMINISTRATION - STATIONERY -->
+		<record model="product.nomenclature" id="nomen_log_administration_stationery_paper">
+			<field name="name">Paper</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_administration_stationery" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_administration_stationery_pencil">
+			<field name="name">Pencil</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_administration_stationery" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - CAMPS - SHELTERS -->
+		<record model="product.nomenclature" id="nomen_log_camps_shelters_heater">
+			<field name="name">Heater</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_camps_shelters" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_camps_shelters_net">
+			<field name="name">Net</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_camps_shelters" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - CAMPS - SEMIPERMANENT SHELTER -->
+		<record model="product.nomenclature" id="nomen_log_camps_semipermshelter_contai">
+			<field name="name">Container</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_camps_semipermshelter" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - CAMPS - WATER AND SANITATION -->
+		<record model="product.nomenclature" id="nomen_log_camps_watersanitation_stainer">
+			<field name="name">Stainer</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_camps_watersanitation" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_camps_watersanitation_tank">
+			<field name="name">Tank</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_camps_watersanitation" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - KITS - PROGRAMME SUPPORT KITS -->
+		<record model="product.nomenclature" id="nomen_log_kits_progsuppkits_hard">
+			<field name="name">Module hardware</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_kits_progsuppkits" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_kits_progsuppkits_ident">
+			<field name="name">Module identification</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_kits_progsuppkits" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - KITS - ADMINISTRATION KITS -->
+		<record model="product.nomenclature" id="nomen_log_kits_adminkits_furni">
+			<field name="name">Module furniture</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_kits_adminkits" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_kits_adminkits_life">
+			<field name="name">Module life</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_kits_adminkits" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - KITS - WATER AND SANITATION KITS -->
+		<record model="product.nomenclature" id="nomen_log_kits_watersanitationkits_wtank">
+			<field name="name">Module watertank</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_kits_watersanitationkits" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_kits_watersanitationkits_tools">
+			<field name="name">Module tools</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_kits_watersanitationkits" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - LIBRARY - LANGUAGES -->
+		<record model="product.nomenclature" id="nomen_log_library_languages_book">
+			<field name="name">Dictionary book</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_library_languages" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_library_languages_guide">
+			<field name="name">Dictionary guide</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_library_languages" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - LIBRARY - NUTRITION -->
+		<record model="product.nomenclature" id="nomen_log_library_nutrition_video">
+			<field name="name">Nutrition video</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_library_nutrition" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_library_nutrition_paed">
+			<field name="name">Paediatric</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_library_nutrition" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - LIBRARY - HUMANITARIAN ASSISTANCE -->
+		<record model="product.nomenclature" id="nomen_log_library_humaniassist_book">
+			<field name="name">Medecine Humanitary Book</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_library_humaniassist" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - PROGRAM SUPPORT - IDENTIFICATION -->
+		<record model="product.nomenclature" id="nomen_log_programsupport_identi_stick">
+			<field name="name">Sticker MSF</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_programsupport_identi" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_programsupport_identi_supp">
+			<field name="name">Support</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_programsupport_identi" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_programsupport_identi_tshirt">
+			<field name="name">Tee shirt</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_programsupport_identi" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - PROGRAM SUPPORT - COLD CHAIN -->
+		<record model="product.nomenclature" id="nomen_log_programsupport_coldchain_box">
+			<field name="name">Box Cold Box Ice Box</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_programsupport_coldchain_contr">
+			<field name="name">Control</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - PROGRAM SUPPORT - LIGHTING -->
+		<record model="product.nomenclature" id="nomen_log_programsupport_lighting_fluo">
+			<field name="name">Fluo lamp compacte</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_programsupport_lighting" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_programsupport_lighting_white">
+			<field name="name">White</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_programsupport_lighting" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_programsupport_lighting_holder">
+			<field name="name">Holder</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_programsupport_lighting" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_programsupport_lighting_panel">
+			<field name="name">Panel</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_programsupport_lighting" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - TRANSPORT - SPARE PARTS TOYOTA -->
+		<record model="product.nomenclature" id="nomen_log_transport_sparepartstoyota_filter">
+			<field name="name">Filter</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_transport_sparepartstoyota" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_transport_sparepartstoyota_fuse">
+			<field name="name">Fuse</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_transport_sparepartstoyota" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_transport_sparepartstoyota_lspring">
+			<field name="name">Leaf spring</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_transport_sparepartstoyota" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - TRANSPORT - SPARE PARTS YAMAHA -->
+		<record model="product.nomenclature" id="nomen_log_transport_sparepartsyamaha_carbu">
+			<field name="name">Carburator</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_transport_sparepartsyamaha" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_transport_sparepartsyamaha_pumpturb">
+			<field name="name">Water pump turbine</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_transport_sparepartsyamaha" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_transport_sparepartsyamaha_spring">
+			<field name="name">Spring</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_transport_sparepartsyamaha" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- LOG - TRANSPORT - BOATS -->
+		<record model="product.nomenclature" id="nomen_log_transport_boats_engidie">
+			<field name="name">Diesel engine</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_transport_boats" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_transport_boats_jacket">
+			<field name="name">Jacket</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_transport_boats" />
+			<field name="level">3</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomen_log_transport_boats_overcra">
+			<field name="name">Overcraft</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_log_transport_boats" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MIX - KITS - EMERGENCY KITS -->
+		<record model="product.nomenclature" id="nomen_mix_kits_emergencykits_XXX">
+			<field name="name">XXX</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_mix_kits_emergencykits" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- MIX - KITS - EXPLORATION KITS -->
+		<record model="product.nomenclature" id="nomen_mix_kits_explokits_XXX">
+			<field name="name">XXX</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_mix_kits_explokits" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- SERVICE - ADMINISTRATION - TEMPORARY WORKERS -->
+		<record model="product.nomenclature" id="nomen_service_administration_tempworkers_XXX">
+			<field name="name">XXX</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_administration_tempworkers" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- SERVICE - ADMINISTRATION - OFFICE SUPPORT -->
+		<record model="product.nomenclature" id="nomen_service_administration_officesupport_XXX">
+			<field name="name">XXX</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_administration_officesupport" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- SERVICE - TRANSPORT - CLEARING AGENT -->
+		<record model="product.nomenclature" id="nomen_service_transport_clearingagent_XXX">
+			<field name="name">XXX</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_transport_clearingagent" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- SERVICE - TRANSPORT - TRANSPORT BY ROAD -->
+		<record model="product.nomenclature" id="nomen_service_transport_transpbyroad_XXX">
+			<field name="name">XXX</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_transport_transpbyroad" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- SERVICE - TRANSPORT - OTHER -->
+		<record model="product.nomenclature" id="nomen_service_transport_other_XXX">
+			<field name="code">XXX</field>
+			<field name="name">XXX</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_transport_other" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- SERVICE - CAMPS - REPARING -->
+		<record model="product.nomenclature" id="nomen_service_camps_reparing_XXX">
+			<field name="name">XXX</field>
+			<field name="type">mandatory</field>
+			<field name="parent_id" ref="nomen_service_camps_reparing" />
+			<field name="level">3</field>
+		</record>
+
+		<!-- OPTIONAL LEVEL 5 -->
+		<!-- MED -->
+		<!-- 
+		<record model="product.nomenclature" id="nomeno0_med_blank">
+			<field name="name"> </field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+		 -->
+
+		<record model="product.nomenclature" id="nomeno0_med_200">
+			<field name="name">200mg</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_med_400">
+			<field name="name">400mg</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_med_c">
+			<field name="name">C</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_med_d">
+			<field name="name">D</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_med_module">
+			<field name="name">Module</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_med_su">
+			<field name="name">S.U.</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_med_g">
+			<field name="name">G</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_med_H">
+			<field name="name">H</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_med_I">
+			<field name="name">I</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<!-- LOG -->
+		<!-- 
+		<record model="product.nomenclature" id="nomeno0_log_blank">
+			<field name="name"> </field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+		 -->
+
+		<record model="product.nomenclature" id="nomeno0_log_flexi">
+			<field name="name">Flexible</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_module">
+			<field name="name">Module</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_ac">
+			<field name="name">AC</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_leatpro">
+			<field name="name">Leather prot</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_2">
+			<field name="name">2&apos;&apos;</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_4">
+			<field name="name">4&apos;&apos;</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_ag">
+			<field name="name">AG</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<!-- LOG - P - COL -->
+		<!-- 
+		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_blank">
+			<field name="name"> </field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">0</field>
+		</record>
+		 -->
+
+		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_electro">
+			<field name="name">Electrolux</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAB">
+			<field name="name">AAB</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAC">
+			<field name="name">AAC</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAD">
+			<field name="name">AAD</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAE">
+			<field name="name">AAE</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAF">
+			<field name="name">AAF</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAG">
+			<field name="name">AAG</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAH">
+			<field name="name">AAH</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno0_log_programsupport_coldchain_AAI">
+			<field name="name">AAI</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">0</field>
+		</record>
+
+		<!-- LEVEL 6 -->
+		<!-- MED -->
+		<!-- 
+		<record model="product.nomenclature" id="nomeno1_med_blank">
+			<field name="name"> </field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+		 -->
+
+		<record model="product.nomenclature" id="nomeno1_med_noinf">
+			<field name="name">No infusion</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_med_nonster">
+			<field name="name">Non sterile</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_med_13">
+			<field name="name">13</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_med_14">
+			<field name="name">14</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_med_15">
+			<field name="name">15</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_med_16">
+			<field name="name">16</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_med_17">
+			<field name="name">17</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_med_18">
+			<field name="name">18</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_med_19">
+			<field name="name">19</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_med" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<!-- LOG -->
+		<!-- 
+		<record model="product.nomenclature" id="nomeno1_log_blank">
+			<field name="name"> </field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+		 -->
+
+		<record model="product.nomenclature" id="nomeno1_log_20">
+			<field name="name">20</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_21">
+			<field name="name">21</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_22">
+			<field name="name">22</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_23">
+			<field name="name">23</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_24">
+			<field name="name">24</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_25">
+			<field name="name">25</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_26">
+			<field name="name">26</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_27">
+			<field name="name">27</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_28">
+			<field name="name">28</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_29">
+			<field name="name">29</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log" />
+			<field name="level">1</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<!-- LOG - P - COL -->
+		<!-- 
+		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_blank">
+			<field name="name"> </field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">1</field>
+		</record>
+		 -->
+
+		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_30">
+			<field name="name">30</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_31">
+			<field name="name">31</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_32">
+			<field name="name">32</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_33">
+			<field name="name">33</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_34">
+			<field name="name">34</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">1</field>
+		</record>
+
+		<record model="product.nomenclature" id="nomeno1_log_programsupport_coldchain_35">
+			<field name="name">35</field>
+			<field name="type">optional</field>
+			<field name="parent_id" ref="nomen_log_programsupport_coldchain" />
+			<field name="level">3</field>
+			<field name="sub_level">1</field>
+		</record>
+
+	</data>
+</openerp>

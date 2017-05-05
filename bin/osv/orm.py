@@ -48,6 +48,7 @@ import re
 import time
 import traceback
 import types
+import csv
 
 import netsvc
 from lxml import etree
@@ -60,7 +61,7 @@ import tools
 from tools.safe_eval import safe_eval as eval
 
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
-from tools import SKIPPED_ELEMENT_TYPES
+from tools import SKIPPED_ELEMENT_TYPES, cache
 
 regex_order = re.compile('^(([a-z0-9_]+|"[a-z0-9_]+")( *desc| *asc)?( *, *|))+$', re.I)
 
@@ -79,6 +80,7 @@ def last_day_of_current_month():
 
 def intersect(la, lb):
     return filter(lambda x: x in lb, la)
+    #return list(set(la).intersection(lb)) # this is less compatible, see US-867
 
 class except_orm(Exception):
     def __init__(self, name, value):
@@ -120,16 +122,15 @@ class browse_null(object):
 class browse_record_list(list):
 
     def __init__(self, lst, context=None):
-        if not context:
+        if context is None:
             context = {}
         super(browse_record_list, self).__init__(lst)
         self.context = context
 
-
 class browse_record(object):
     logger = netsvc.Logger()
-
-    def __init__(self, cr, uid, id, table, cache, context=None, list_class=None, fields_process=None):
+    def __init__(self, cr, uid, id, table, cache, context=None,
+                 list_class=None, fields_process=None, fields_to_fetch=None):
         '''
         table : the object (inherited from orm)
         context : dictionary with an optional context
@@ -148,6 +149,7 @@ class browse_record(object):
             'osv.browse_record.' + self._table_name)
         self._context = context
         self._fields_process = fields_process
+        self._fields_to_fetch = fields_to_fetch
 
         cache.setdefault(table._name, {})
         self._data = cache[table._name]
@@ -183,8 +185,8 @@ class browse_record(object):
                     return attr
             else:
                 self.logger.notifyChannel("browse_record", netsvc.LOG_WARNING,
-                    "Field '%s' does not exist in object '%s': \n%s" % (
-                        name, self, ''.join(traceback.format_exc())))
+                                          "Field '%s' does not exist in object '%s': \n%s" % (
+                                              name, self, ''.join(traceback.format_exc())))
                 raise KeyError("Field '%s' does not exist in object '%s'" % (
                     name, self))
 
@@ -201,23 +203,32 @@ class browse_record(object):
                 fields_to_fetch = [(name, col)]
             ids = filter(lambda id: name not in self._data[id], self._data.keys())
             # read the results
-            field_names = map(lambda x: x[0], fields_to_fetch)
+            if self._fields_to_fetch:
+                if name not in self._fields_to_fetch:
+                    self.__logger.warn("fields_to_fetch has been defined in "
+                                       "browse() for object %s, but field %s is not member "
+                                       "of it" % (self, name))
+                    self._fields_to_fetch.append(name)
+                fields_to_fetch = [x for x in fields_to_fetch if x[0] in
+                                   self._fields_to_fetch]
+            field_names = [x[0] for x in fields_to_fetch]
             field_values = self._table.read(self._cr, self._uid, ids, field_names, context=self._context, load="_classic_write")
 
             # TODO: improve this, very slow for reports
             if self._fields_process:
                 lang = self._context.get('lang', 'en_US') or 'en_US'
-                lang_obj_ids = self.pool.get('res.lang').search(self._cr, self._uid, [('code', '=', lang)])
-                if not lang_obj_ids:
-                    raise Exception(_('Language with code "%s" is not defined in your system !\nDefine it through the Administration menu.') % (lang,))
-                lang_obj = self.pool.get('res.lang').browse(self._cr, self._uid, lang_obj_ids[0])
+                if lang != 'en_US':
+                    lang_obj_ids = self.pool.get('res.lang').search(self._cr, self._uid, [('code', '=', lang)])
+                    if not lang_obj_ids:
+                        raise Exception(_('Language with code "%s" is not defined in your system !\nDefine it through the Administration menu.') % (lang,))
+                    lang_obj = self.pool.get('res.lang').browse(self._cr, self._uid, lang_obj_ids[0])
 
-                for field_name, field_column in fields_to_fetch:
-                    if field_column._type in self._fields_process:
-                        for result_line in field_values:
-                            result_line[field_name] = self._fields_process[field_column._type](result_line[field_name])
-                            if result_line[field_name]:
-                                result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj)
+                    for field_name, field_column in fields_to_fetch:
+                        if field_column._type in self._fields_process:
+                            for result_line in field_values:
+                                result_line[field_name] = self._fields_process[field_column._type](result_line[field_name])
+                                if result_line[field_name]:
+                                    result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj)
 
             if not field_values:
                 # Where did those ids come from? Perhaps old entries in ir_model_dat?
@@ -248,10 +259,10 @@ class browse_record(object):
                                         # the target is not loaded yet.
                                         continue
                                     new_data[field_name] = browse_record(self._cr,
-                                        self._uid, value, obj, self._cache,
-                                        context=self._context,
-                                        list_class=self._list_class,
-                                        fields_process=self._fields_process)
+                                                                         self._uid, value, obj, self._cache,
+                                                                         context=self._context,
+                                                                         list_class=self._list_class,
+                                                                         fields_process=self._fields_process)
                                 else:
                                     new_data[field_name] = value
                             else:
@@ -259,7 +270,12 @@ class browse_record(object):
                         else:
                             new_data[field_name] = browse_null()
                     elif field_column._type in ('one2many', 'many2many') and len(result_line[field_name]):
-                        new_data[field_name] = self._list_class([browse_record(self._cr, self._uid, id, self._table.pool.get(field_column._obj), self._cache, context=self._context, list_class=self._list_class, fields_process=self._fields_process) for id in result_line[field_name]], self._context)
+                        new_data[field_name] = self._list_class([browse_record(self._cr, self._uid,
+                                                                               obj_id, self._table.pool.get(field_column._obj),
+                                                                               self._cache, context=self._context,
+                                                                               list_class=self._list_class,
+                                                                               fields_process=self._fields_process) for obj_id in\
+                                                                 result_line[field_name]], self._context)
                     elif field_column._type in ('reference'):
                         if result_line[field_name]:
                             if isinstance(result_line[field_name], browse_record):
@@ -275,7 +291,11 @@ class browse_record(object):
                                 ref_id = long(ref_id)
                                 if ref_id:
                                     obj = self._table.pool.get(ref_obj)
-                                    new_data[field_name] = browse_record(self._cr, self._uid, ref_id, obj, self._cache, context=self._context, list_class=self._list_class, fields_process=self._fields_process)
+                                    new_data[field_name] = browse_record(self._cr, self._uid, ref_id,
+                                                                         obj, self._cache,
+                                                                         context=self._context,
+                                                                         list_class=self._list_class,
+                                                                         fields_process=self._fields_process)
                                 else:
                                     new_data[field_name] = browse_null()
                         else:
@@ -287,9 +307,9 @@ class browse_record(object):
         if not name in self._data[self._id]:
             # How did this happen? Could be a missing model due to custom fields used too soon, see above.
             self.logger.notifyChannel("browse_record", netsvc.LOG_ERROR,
-                    "Fields to fetch: %s, Field values: %s"%(field_names, field_values))
+                                      "Fields to fetch: %s, Field values: %s"%(field_names, field_values))
             self.logger.notifyChannel("browse_record", netsvc.LOG_ERROR,
-                    "Cached: %s, Table: %s"%(self._data[self._id], self._table))
+                                      "Cached: %s, Table: %s"%(self._data[self._id], self._table))
             raise KeyError(_('Unknown attribute %s in %s ') % (name, self))
         return self._data[self._id][name]
 
@@ -339,16 +359,16 @@ def get_pg_type(f):
     '''
 
     type_dict = {
-            fields.boolean: 'bool',
-            fields.integer: 'int4',
-            fields.integer_big: 'int8',
-            fields.text: 'text',
-            fields.date: 'date',
-            fields.time: 'time',
-            fields.datetime: 'timestamp',
-            fields.binary: 'bytea',
-            fields.many2one: 'int4',
-            }
+        fields.boolean: 'bool',
+        fields.integer: 'int4',
+        fields.integer_big: 'int8',
+        fields.text: 'text',
+        fields.date: 'date',
+        fields.time: 'time',
+        fields.datetime: 'timestamp',
+        fields.binary: 'bytea',
+        fields.many2one: 'int4',
+    }
     if type(f) in type_dict:
         f_type = (type_dict[type(f)], type_dict[type(f)])
     elif isinstance(f, fields.float):
@@ -407,18 +427,25 @@ class orm_template(object):
     _table = None
     _invalids = set()
     _log_create = False
+    # Dict with fields to replace as key and replacing fields as value like this
+    # {'product_id': [
+    #         (['product_code', 'Product Code'], 10),
+    #         (['product_name', 'Product Name'], 20),
+    #     ]
+    # }
+    _replace_exported_fields = {}
 
     CONCURRENCY_CHECK_FIELD = '__last_update'
     def log(self, cr, uid, id, message, secondary=False, context=None):
         return self.pool.get('res.log').create(cr, uid,
-                {
-                    'name': message,
-                    'res_model': self._name,
-                    'secondary': secondary,
-                    'res_id': id,
-                },
-                context=context
-        )
+                                               {
+                                                   'name': message,
+                                                   'res_model': self._name,
+                                                   'secondary': secondary,
+                                                   'res_id': id,
+                                               },
+                                               context=context
+                                               )
 
     def view_init(self, cr, uid, fields_list, context=None):
         """Override this method to do specific things when a view on the object is opened."""
@@ -442,8 +469,8 @@ class orm_template(object):
             cr.execute('select * from ir_model_data where name=%s and module=%s', (name_id, context['module']))
             if not cr.rowcount:
                 cr.execute("INSERT INTO ir_model_data (name,date_init,date_update,module,model,res_id) VALUES (%s, now(), now(), %s, %s, %s)", \
-                    (name_id, context['module'], 'ir.model', model_id)
-                )
+                           (name_id, context['module'], 'ir.model', model_id)
+                           )
 
         cr.commit()
 
@@ -459,14 +486,15 @@ class orm_template(object):
                 'name': k,
                 'field_description': f.string.replace("'", " "),
                 'ttype': f._type,
-                'relation': f._obj or '',
-                'view_load': (f.view_load and 1) or 0,
+                'relation': f._obj or u'',
+                'view_load': (f.view_load and True) or False,
                 'select_level': tools.ustr(f.select or 0),
-                'readonly': (f.readonly and 1) or 0,
-                'required': (f.required and 1) or 0,
-                'selectable': (f.selectable and 1) or 0,
-                'translate': (f.translate and 1) or 0,
+                'readonly': (f.readonly and True) or False,
+                'required': (f.required and True) or False,
+                'selectable': (f.selectable and True) or False,
+                'translate': (f.translate and True) or False,
                 'relation_field': (f._type=='one2many' and isinstance(f, fields.one2many)) and f._fields_id or '',
+                'state': 'base',
             }
 
             # When its a custom field,it does not contain f.select
@@ -488,7 +516,7 @@ class orm_template(object):
                     %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s
                 )""", (
                     id, vals['model_id'], vals['model'], vals['name'], vals['field_description'], vals['ttype'],
-                     vals['relation'], bool(vals['view_load']), 'base',
+                    vals['relation'], bool(vals['view_load']), 'base',
                     vals['select_level'], vals['relation_field'], bool(vals['translate'])
                 ))
                 if 'module' in context:
@@ -497,22 +525,20 @@ class orm_template(object):
                     if cr.fetchone():
                         name1 = name1 + "_" + str(id)
                     cr.execute("INSERT INTO ir_model_data (name,date_init,date_update,module,model,res_id) VALUES (%s, now(), now(), %s, %s, %s)", \
-                        (name1, context['module'], 'ir.model.fields', id)
-                    )
+                               (name1, context['module'], 'ir.model.fields', id)
+                               )
             else:
                 for key, val in vals.items():
                     if cols[k][key] != vals[key]:
-                        cr.execute('update ir_model_fields set field_description=%s where model=%s and name=%s', (vals['field_description'], vals['model'], vals['name']))
-                        cr.commit()
                         cr.execute("""UPDATE ir_model_fields SET
                             model_id=%s, field_description=%s, ttype=%s, relation=%s,
-                            view_load=%s, select_level=%s, readonly=%s ,required=%s, selectable=%s, relation_field=%s, translate=%s
+                            view_load=%s, select_level=%s, readonly=%s ,required=%s, selectable=%s, relation_field=%s, translate=%s, state='base'
                         WHERE
                             model=%s AND name=%s""", (
-                                vals['model_id'], vals['field_description'], vals['ttype'],
-                                vals['relation'], bool(vals['view_load']),
-                                vals['select_level'], bool(vals['readonly']), bool(vals['required']), bool(vals['selectable']), vals['relation_field'], bool(vals['translate']), vals['model'], vals['name']
-                            ))
+                            vals['model_id'], vals['field_description'], vals['ttype'],
+                            vals['relation'], bool(vals['view_load']),
+                            vals['select_level'], bool(vals['readonly']), bool(vals['required']), bool(vals['selectable']), vals['relation_field'], bool(vals['translate']), vals['model'], vals['name']
+                        ))
                         break
         cr.commit()
 
@@ -533,7 +559,8 @@ class orm_template(object):
         if not self._table:
             self._table = self._name.replace('.', '_')
 
-    def browse(self, cr, uid, select, context=None, list_class=None, fields_process=None):
+    def browse(self, cr, uid, select, context=None, list_class=None,
+               fields_process=None, fields_to_fetch=None):
         """Fetch records as objects allowing to use dot notation to browse fields and relations
 
         :param cr: database cursor
@@ -544,13 +571,17 @@ class orm_template(object):
 
         """
         self._list_class = list_class or browse_record_list
-        cache = {}
+        bcache = {}
         # need to accepts ints and longs because ids coming from a method
         # launched by button in the interface have a type long...
         if isinstance(select, (int, long)):
-            return browse_record(cr, uid, select, self, cache, context=context, list_class=self._list_class, fields_process=fields_process)
+            return browse_record(cr, uid, select, self, bcache, context=context,
+                                 list_class=self._list_class, fields_process=fields_process,
+                                 fields_to_fetch=fields_to_fetch)
         elif isinstance(select, list):
-            return self._list_class([browse_record(cr, uid, id, self, cache, context=context, list_class=self._list_class, fields_process=fields_process) for id in select], context=context)
+            return self._list_class([browse_record(cr, uid, id, self, bcache,
+                                                   context=context, list_class=self._list_class,
+                                                   fields_process=fields_process, fields_to_fetch=fields_to_fetch) for id in select], context=context)
         else:
             return browse_null()
 
@@ -577,7 +608,7 @@ class orm_template(object):
                 selection_field(col_obj._inherits)
             else:
                 return False
-            
+
         def _get_xml_id(self, cr, uid, r):
             model_data = self.pool.get('ir.model.data')
             data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
@@ -591,7 +622,8 @@ class orm_template(object):
                 postfix = 0
                 while True:
                     n = self._table+'_'+str(r['id']) + (postfix and ('_'+str(postfix)) or '' )
-                    if not model_data.search(cr, uid, [('name', '=', n)]):
+                    if not model_data.search(cr, uid, [('name', '=', n)],
+                                             limit=1, order='NO_ORDER'):
                         break
                     postfix += 1
                 model_data.create(cr, uid, {
@@ -606,7 +638,7 @@ class orm_template(object):
         lines = []
         data = map(lambda x: '', range(len(fields)))
         done = []
-        for fpos in range(len(fields)):
+        for fpos in xrange(len(fields)):
             f = fields[fpos]
             if f:
                 r = row
@@ -616,8 +648,10 @@ class orm_template(object):
                         r = r['id']
                     elif f[i] == 'id':
                         model_data = self.pool.get('ir.model.data')
-                        data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
-                        data_ids = map(lambda ref_id: ref_id.id, filter(lambda ref: ref.module == 'sd', model_data.browse(cr, uid, data_ids))) or data_ids
+                        dom_search = [('model', '=', r._table_name), ('res_id', '=', r['id'])]
+                        data_ids = model_data.search(cr, uid, dom_search+[('module', '=', 'sd')])
+                        if not data_ids:
+                            data_ids = model_data.search(cr, uid, dom_search)
                         if len(data_ids):
                             d = model_data.read(cr, uid, data_ids[0], ['name', 'module'])
                             if d['module']:
@@ -649,19 +683,19 @@ class orm_template(object):
                     if isinstance(r, (browse_record_list, list)):
                         first = True
                         fields2 = map(lambda x: (x[:i+1]==f[:i+1] and x[i+1:]) \
-                                or [], fields)
+                                      or [], fields)
                         if fields2 in done:
                             if [x for x in fields2 if x]:
                                 break
                         done.append(fields2)
-                        
+
                         if sync_context and cols and cols._type=='many2many' and len(fields[fpos])>(i+1) and (fields[fpos][i+1]=='id'):
                             data[fpos] = ','.join([_get_xml_id(self, cr, uid, x) for x in r])
                             break
-                        
+
                         for row2 in r:
                             lines2 = self.__export_row(cr, uid, row2, fields2,
-                                    context)
+                                                       context)
                             if first:
                                 # Make a check to see if there is data in at least one column
                                 # because before this test, only the first line is exported
@@ -671,7 +705,7 @@ class orm_template(object):
                                     if lines2 and lines2[0][fpos2]:
                                         no_data = False
                                         data[fpos2] = lines2[0][fpos2]
-                                    
+
                                 if no_data:
                                     dt = ''
                                     for rr in r:
@@ -691,7 +725,7 @@ class orm_template(object):
                     i += 1
                 if i == len(f):
                     if isinstance(r, browse_record):
-                        
+
                         # add support for reference fields
                         if cols and cols._type == 'reference' and (sync_context or context.get('import_comp')):
                             row_id = r.id
@@ -701,11 +735,11 @@ class orm_template(object):
                             if xml_id:
                                 module, xml_id = xml_id[0].split('.',1)
                             r = module and model and xml_id and (module, model, xml_id) or ''
-                            
+
                         else:
                             r = self.pool.get(r._table_name).name_get(cr, uid, [r.id], context=context)
                             r = r and r[0] and r[0][1] or ''
-                            
+
                     data[fpos] = tools.ustr(r or '')
         return [data] + lines
 
@@ -731,14 +765,54 @@ class orm_template(object):
         def fsplit(x):
             if x=='.id': return [x]
             return x.replace(':id','/id').replace('.id','/.id').split('/')
-        fields_to_export = map(fsplit, fields_to_export)
-        fields_export = fields_to_export + []
-        warning = ''
-        warning_fields = []
+        fields_to_export = [fsplit(x) for x in fields_to_export]
         datas = []
-        for row in self.browse(cr, uid, ids, context):
+        for row in self.browse(cr, uid, ids, context,
+                               fields_to_fetch=[x[0] for x in fields_to_export]):
             datas += self.__export_row(cr, uid, row, fields_to_export, context)
         return {'datas': datas}
+
+    def import_data_with_wizard(self, cr, uid, csv_file, quotechar="'", delimiter=","):
+        import base64
+
+        import_obj = self.pool.get('import_data')
+        import_id = import_obj.create(cr, uid, {
+            'ignore': 1,
+            'file': base64.encodestring(open(csv_file, 'r').read()),
+            'object': self._name,
+            'import_mode': 'create',
+        })
+        processed, rejected, headers = import_obj._import(cr, uid, import_id, use_new_cursor=False, auto_import=True)
+        return processed, rejected, headers
+
+    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=','):
+        headers = []
+        list_data = []
+        with open(csv_file, 'r') as fcsv:
+            reader = csv.reader(fcsv, quotechar=quotechar, delimiter=delimiter)
+            for row in reader:
+                if not headers:
+                    headers = row
+                else:
+                    list_data.append(row)
+
+        rejected = []
+        processed = []
+        i = 1
+        for d in list_data:
+            i += 1
+            try:
+                res = self.import_data(cr, uid, headers, [d])
+                if res[0] == -1:
+                    rejected.append((i, d, res[2]))
+                else:
+                    processed.append((i, d))
+                cr.commit()
+            except Exception as e:
+                rejected.append((i, d, str(e)))
+                cr.commit()
+
+        return processed, rejected, headers
 
     def import_data(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None, filename=None):
         """
@@ -768,7 +842,7 @@ class orm_template(object):
             order_line/product_uom_qty,
             order_line/product_uom/id    (=xml_id)
         """
-        if not context:
+        if context is None:
             context = {}
         def _replace_field(x):
             x = re.sub('([a-z0-9A-Z_])\\.id$', '\\1/.id', x)
@@ -778,12 +852,13 @@ class orm_template(object):
         ir_model_data_obj = self.pool.get('ir.model.data')
 
         # mode: id (XML id) or .id (database id) or False for name_get
-        def _get_id(model_name, id, current_module=False, mode='id'):
+        def _get_id(model_name, id, current_module=False, mode='id', context=None):
             if mode=='.id':
                 id = int(id)
                 obj_model = self.pool.get(model_name)
-                ids = obj_model.search(cr, uid, [('id', '=', int(id))])
-                if not len(ids):
+                ids = obj_model.search(cr, uid, [('id', '=', int(id))],
+                                       limit=1, order='NO_ORDER')
+                if not ids:
                     raise Exception(_("Database ID doesn't exist: %s : %s") %(model_name, id))
             elif mode=='id':
                 if '.' in id:
@@ -797,7 +872,7 @@ class orm_template(object):
                 id = ir_model_data[0]['res_id']
             else:
                 obj_model = self.pool.get(model_name)
-                ids = obj_model.name_search(cr, uid, id, operator='=')
+                ids = obj_model.name_search(cr, uid, id, operator='=', context=context)
                 if not ids:
                     raise ValueError('No record found for %s' % (id,))
                 id = ids[0][0]
@@ -819,37 +894,43 @@ class orm_template(object):
             data_res_id = False
             xml_id = False
             nbrmax = position+1
-
             done = {}
-            for i in range(len(fields)):
+
+            for i in xrange(len(fields)):
+                value = line[i]
                 res = False
-                if not line[i]:
-                    continue
+                #if not value:
+                #    continue
                 if i >= len(line):
                     raise Exception(_('Please check that all your lines have %d columns.') % (len(fields),))
 
                 field = fields[i]
                 if field[:len(prefix)] <> prefix:
-                    if line[i] and skip:
+                    if value and skip:
                         return False
                     continue
 
                 # ID of the record using a XML ID
                 if field[len(prefix)]=='id':
                     try:
-                        data_res_id = _get_id(model_name, line[i], current_module, 'id')
-                    except ValueError, e:
+                        data_res_id = value and _get_id(model_name, value, current_module, 'id')
+                    except ValueError:
                         pass
-                    xml_id = line[i]
+                    xml_id = value
                     continue
 
                 # ID of the record using a database ID
                 elif field[len(prefix)]=='.id':
-                    data_res_id = _get_id(model_name, line[i], current_module, '.id')
+                    data_res_id = value and _get_id(model_name, value, current_module, '.id')
                     continue
 
                 # recursive call for getting children and returning [(0,0,{})] or [(1,ID,{})]
-                if fields_def[field[len(prefix)]]['type']=='one2many':
+                field_type = fields_def[field[len(prefix)]]['type']
+                if field_type not in ('one2many', 'many2one', 'many2many',
+                                      'integer', 'boolean', 'float', 'selection',
+                                      'reference'):
+                    res = value
+                elif field_type == 'one2many':
                     if field[len(prefix)] in done:
                         continue
                     done[field[len(prefix)]] = True
@@ -870,15 +951,15 @@ class orm_template(object):
                             break
                         res.append( (data_res_id2 and 1 or 0, data_res_id2 or 0, newrow) )
 
-                elif fields_def[field[len(prefix)]]['type']=='many2one':
+                elif field_type=='many2one':
                     relation = fields_def[field[len(prefix)]]['relation']
                     if len(field) == len(prefix)+1:
                         mode = False
                     else:
                         mode = field[len(prefix)+1]
-                    res = _get_id(relation, line[i], current_module, mode)
+                    res = value and _get_id(relation, value, current_module, mode, context=context)
 
-                elif fields_def[field[len(prefix)]]['type']=='many2many':
+                elif field_type=='many2many':
                     relation = fields_def[field[len(prefix)]]['relation']
                     if len(field) == len(prefix)+1:
                         mode = False
@@ -887,52 +968,55 @@ class orm_template(object):
 
                     # TODO: improve this by using csv.csv_reader
                     res = []
-                    for db_id in line[i].split(config.get('csv_internal_sep')):
-                        res.append( _get_id(relation, db_id, current_module, mode) )
+                    if value:
+                        for db_id in value.split(config.get('csv_internal_sep')) or []:
+                            res.append( _get_id(relation, db_id, current_module, mode, context=context) )
                     res = [(6,0,res)]
 
-                elif fields_def[field[len(prefix)]]['type'] == 'integer':
-                    res = line[i] and int(line[i]) or 0
-                elif fields_def[field[len(prefix)]]['type'] == 'boolean':
-                    res = line[i].lower() not in ('0', 'false', 'off')
-                elif fields_def[field[len(prefix)]]['type'] == 'float':
-                    res = line[i] and float(line[i].replace(',','.')) or 0.0
-                elif fields_def[field[len(prefix)]]['type'] == 'selection':
+                elif field_type == 'integer':
+                    res = value and int(value) or 0
+                elif field_type == 'boolean':
+                    res = value and value.lower() not in ('0', 'false', 'off') or False
+                elif field_type == 'float':
+                    res = value and float(value.replace(',','.')) or 0.0
+                elif field_type == 'selection':
                     for key, val in fields_def[field[len(prefix)]]['selection']:
-                        if line[i] in [tools.ustr(key), tools.ustr(val)]:
+                        if value in [tools.ustr(key), tools.ustr(val)] or \
+                           tools.ustr(value) in [tools.ustr(key), tools.ustr(val)]:
                             res = key
                             break
-                    if line[i] and not res:
+                    if not value:
+                        res = False
+                    if value and not res:
                         model_obj = self.pool.get(model_name)
                         if model_obj:
                             # get the selection from the field.selection definition
                             sel_list = getattr(getattr(model_obj._all_columns.get(field[len(prefix)], object), 'column', object), 'selection', False)
                             if isinstance(sel_list, list):
                                 for key, val in sel_list:
-                                    if line[i] == val:
+                                    if value == val:
                                         res = key
                                         break
-                    if line[i] and not res:
+                    if value and not res:
                         logger.notifyChannel("import", netsvc.LOG_WARNING,
-                                _("key '%s' not found in selection field '%s'") % \
-                                        (line[i], field[len(prefix)]))
-                        warning += [_("Key/value '%s' not found in selection field '%s'") % (line[i], field[len(prefix)])]
-                elif fields_def[field[len(prefix)]]['type'] == 'reference':
+                                             _("key '%s' not found in selection field '%s'") % \
+                                             (value, field[len(prefix)]))
+                        warning += [_("Key/value '%s' not found in selection field '%s'") % (value, field[len(prefix)])]
+                elif field_type == 'reference':
                     # support importing of reference fields
-                    field_value = eval(line[i])
+                    field_value = value and eval(value)
                     if isinstance(field_value, tuple):
                         (module, model, ref_xml_id) = (field_value[0], field_value[1], field_value[2])
                         ir_model_data_obj = self.pool.get('ir.model.data')
                         try:
                             ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id)
-                            ref_db_id = ir_model_data_obj.browse(cr, uid, ir_model_data_id).res_id
+                            ref_db_id = ir_model_data_obj.read(cr, uid,
+                                                               ir_model_data_id, ['res_id'])
                         except:
                             ref_db_id = None
-                        res = model and ref_db_id and str(model) + "," + str(ref_db_id) or ''
+                        res = model and ref_db_id and '%s,%s' % (str(model), str(ref_db_id['res_id'])) or ''
                     else:
                         res = 0
-                else:
-                    res = line[i]
 
                 row[field[len(prefix)]] = res or False
 
@@ -941,29 +1025,29 @@ class orm_template(object):
 
         fields_def = self.fields_get(cr, uid, context=context)
 
-        if config.get('import_partial', False) and filename:
-            data = pickle.load(file(config.get('import_partial')))
-            original_value = data.get(filename, 0)
-
         from osv import except_osv
         position = 0
         while position<len(datas):
             res = {}
 
             (res, position, warning, res_id, xml_id) = \
-                    process_liness(self, datas, [], current_module, self._name, fields_def, position=position)
+                process_liness(self, datas, [], current_module, self._name, fields_def, position=position)
             if len(warning):
                 cr.rollback()
                 return (-1, res, 'Line ' + str(position) +' : ' + '!\n'.join(warning), '')
 
             try:
-                id = ir_model_data_obj._update(cr, uid, self._name,
-                     current_module, res, mode=mode, xml_id=xml_id,
-                     noupdate=noupdate, res_id=res_id, context=context)
+                ir_model_data_obj._update(cr, uid, self._name,
+                                          current_module, res, mode=mode, xml_id=xml_id,
+                                          noupdate=noupdate, res_id=res_id, context=context)
             except except_osv, e:
+                cr.rollback()
                 return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
             except Exception, e:
-                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e), '')
+                #US-88: If this from an import account analytic, and there is sql error, AND not sync context, then just clear the cache
+                if 'account.analytic.account' in self._name and not context.get('sync_update_execution', False):
+                    cache.clean_caches_for_db(cr.dbname)
+                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
 
             if config.get('import_partial', False) and filename and (not (position%100)):
                 data = pickle.load(file(config.get('import_partial')))
@@ -1006,7 +1090,7 @@ class orm_template(object):
 
     def _validate(self, cr, uid, ids, context=None):
         context = context or {}
-        lng = context.get('lang', False) or 'en_US'
+        lng = context and context.get('lang', False) or 'en_US'
         trans = self.pool.get('ir.translation')
         error_msgs = []
         for constraint in self._constraints:
@@ -1024,7 +1108,7 @@ class orm_template(object):
                 else:
                     translated_msg = trans._get_source(cr, uid, self._name, 'constraint', lng, source=msg) or msg
                 error_msgs.append(
-                        _("Error occurred while validating the field(s) %s: %s") % (','.join(fields), translated_msg)
+                    _("Error at data validation: %s") % translated_msg
                 )
                 self._invalids.update(fields)
         if error_msgs:
@@ -1053,14 +1137,14 @@ class orm_template(object):
         # trigger view init hook
         self.view_init(cr, uid, fields_list, context)
 
-        if not context:
+        if context is None:
             context = {}
         defaults = {}
 
         # get the default values for the inherited fields
         for t in self._inherits.keys():
             defaults.update(self.pool.get(t).default_get(cr, uid, fields_list,
-                context))
+                                                         context))
 
         # get the default values defined in the object
         for f in fields_list:
@@ -1071,8 +1155,8 @@ class orm_template(object):
                     defaults[f] = self._defaults[f]
 
             fld_def = ((f in self._columns) and self._columns[f]) \
-                    or ((f in self._inherit_fields) and self._inherit_fields[f][2]) \
-                    or False
+                or ((f in self._inherit_fields) and self._inherit_fields[f][2]) \
+                or False
 
             if isinstance(fld_def, fields.property):
                 property_obj = self.pool.get('ir.property')
@@ -1089,20 +1173,21 @@ class orm_template(object):
         # get the default values set by the user and override the default
         # values defined in the object
         ir_values_obj = self.pool.get('ir.values')
-        res = ir_values_obj.get(cr, uid, 'default', False, [self._name])
+        res = ir_values_obj.get(cr, uid, 'default', False, [self._name], context=context)
         for id, field, field_value in res:
             if field in fields_list:
                 fld_def = (field in self._columns) and self._columns[field] or self._inherit_fields[field][2]
                 if fld_def._type in ('many2one', 'one2one'):
                     obj = self.pool.get(fld_def._obj)
-                    if not obj.search(cr, uid, [('id', '=', field_value or False)]):
+                    if not obj.search(cr, uid, [('id', '=', field_value or
+                                                 False)], limit=1, order='NO_ORDER'):
                         continue
                 if fld_def._type in ('many2many'):
                     obj = self.pool.get(fld_def._obj)
                     field_value2 = []
                     for i in range(len(field_value)):
                         if not obj.search(cr, uid, [('id', '=',
-                            field_value[i])]):
+                                                     field_value[i])], limit=1, order='NO_ORDER'):
                             continue
                         field_value2.append(field_value[i])
                     field_value = field_value2
@@ -1115,12 +1200,14 @@ class orm_template(object):
                             if field2 in obj._columns.keys() and obj._columns[field2]._type in ('many2one', 'one2one'):
                                 obj2 = self.pool.get(obj._columns[field2]._obj)
                                 if not obj2.search(cr, uid,
-                                        [('id', '=', field_value[i][field2])]):
+                                                   [('id', '=', field_value[i][field2])],
+                                                   limit=1, order='NO_ORDER'):
                                     continue
                             elif field2 in obj._inherit_fields.keys() and obj._inherit_fields[field2][2]._type in ('many2one', 'one2one'):
                                 obj2 = self.pool.get(obj._inherit_fields[field2][2]._obj)
                                 if not obj2.search(cr, uid,
-                                        [('id', '=', field_value[i][field2])]):
+                                                   [('id', '=', field_value[i][field2])],
+                                                   limit=1, order='NO_ORDER'):
                                     continue
                             # TODO add test for many2many and one2many
                             field_value2[i][field2] = field_value[i][field2]
@@ -1185,7 +1272,8 @@ class orm_template(object):
                     res[f]['related_columns'] = list((field_col._id1, field_col._id2))
                     res[f]['third_table'] = field_col._rel
                 for arg in ('string', 'readonly', 'states', 'size', 'required', 'group_operator',
-                        'change_default', 'translate', 'help', 'select', 'selectable'):
+                            'change_default', 'translate', 'help', 'select',
+                            'selectable', 'internal', 'hide_default_menu'):
                     if getattr(field_col, arg):
                         res[f][arg] = getattr(field_col, arg)
                 if not write_access:
@@ -1196,12 +1284,15 @@ class orm_template(object):
                     if getattr(field_col, arg, None):
                         res[f][arg] = getattr(field_col, arg)
 
-                if field_col.string:
-                    res_trans = translation_obj._get_source(cr, user, self._name + ',' + f, 'field', context.get('lang', False) or 'en_US')
+                context_lang = context and context.get('lang', False) or 'en_US'
+                if field_col.string and context_lang != 'en_US':
+                    res_trans = translation_obj._get_source(cr, user,
+                                                            self._name + ',' + f, 'field', context_lang)
                     if res_trans:
                         res[f]['string'] = res_trans
-                if field_col.help:
-                    help_trans = translation_obj._get_source(cr, user, self._name + ',' + f, 'help', context.get('lang', False) or 'en_US')
+                if field_col.help and context_lang != 'en_US':
+                    help_trans = translation_obj._get_source(cr, user,
+                                                             self._name + ',' + f, 'help', context_lang)
                     if help_trans:
                         res[f]['help'] = help_trans
 
@@ -1213,12 +1304,16 @@ class orm_template(object):
                         sel = field_col.selection(self, cr, user, context)
                     # translate each selection option
                     sel2 = []
-                    for (key, val) in sel:
-                        val2 = None
-                        if val:
-                            val2 = translation_obj._get_source(cr, user, self._name + ',' + f, 'selection', context.get('lang', False) or 'en_US', val)
-                        sel2.append((key, val2 or val))
-                    sel = sel2
+                    sel2_append = sel2.append
+                    if context_lang != 'en_US':
+                        for (key, val) in sel:
+                            val2 = None
+                            if val:
+                                val2 = translation_obj._get_source(cr, user,
+                                                                   self._name + ',' + f, 'selection',
+                                                                   context_lang, val)
+                            sel2_append((key, val2 or val))
+                    sel = sel2 or sel
                     res[f]['selection'] = sel
                 if res[f]['type'] in ('one2many', 'many2many', 'many2one', 'one2one'):
                     res[f]['relation'] = field_col._obj
@@ -1242,7 +1337,7 @@ class orm_template(object):
         return False
 
     def __view_look_dom(self, cr, user, node, view_id, context=None):
-        if not context:
+        if context is None:
             context = {}
         result = False
         fields = {}
@@ -1313,7 +1408,7 @@ class orm_template(object):
                                 'fields': xfields
                             }
                     attrs = {'views': views}
-                    if node.get('widget') and node.get('widget') == 'selection':
+                    if node.get('widget') and node.get('widget') == 'selection' and not node.get('get_selection'):
                         # Prepare the cached selection list for the client. This needs to be
                         # done even when the field is invisible to the current user, because
                         # other events could need to change its value to any of the selectable ones
@@ -1350,25 +1445,39 @@ class orm_template(object):
 
         # translate view
         if ('lang' in context) and not result:
+            translation_obj = self.pool.get('ir.translation')
+            if node.get('sum'):
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('sum'))
+                if trans:
+                    node.set('sum', trans)
+            if node.get('confirm'):
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('confirm'))
+                if trans:
+                    node.set('confirm', trans)
+            if node.get('help'):
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('help'))
+                if trans:
+                    node.set('help', trans)
             if node.get('string'):
-                trans = self.pool.get('ir.translation')._get_source(cr, user, self._name, 'view', context['lang'], node.get('string'))
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('string'))
                 if trans == node.get('string') and ('base_model_name' in context):
                     # If translation is same as source, perhaps we'd have more luck with the alternative model name
                     # (in case we are in a mixed situation, such as an inherited view where parent_view.model != model
-                    trans = self.pool.get('ir.translation')._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
+                    trans = translation_obj._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
                 if trans:
                     node.set('string', trans)
-            if node.get('confirm'):
-                trans = self.pool.get('ir.translation')._get_source(cr, user, self._name, 'view', context['lang'], node.get('confirm'))
-                if trans:
-                    node.set('confirm', trans)
-            if node.get('sum'):
-                trans = self.pool.get('ir.translation')._get_source(cr, user, self._name, 'view', context['lang'], node.get('sum'))
-                if trans:
-                    node.set('sum', trans)
+            if node.tag == 'translate':
+                parent = node.getparent()
+                source = node.text
+                for child in node.getchildren():
+                    source += etree.tostring(child)
+                trans = translation_obj._get_source(cr, user, self._name,
+                                                    'view', context['lang'], source)
+                parent.remove(node)
+                parent.text = parent.text and parent.text + trans or trans
 
         for f in node:
-            if children or (node.tag == 'field' and f.tag in ('filter','separator')):
+            if children or (node.tag == 'field' and f.tag in ('filter', 'separator')):
                 fields.update(self.__view_look_dom(cr, user, f, view_id, context))
 
         return fields
@@ -1522,7 +1631,7 @@ class orm_template(object):
         :raise Invalid ArchitectureError: if there is view type other than form, tree, calendar, search etc defined on the structure
 
         """
-        if not context:
+        if context is None:
             context = {}
 
         def encode(s):
@@ -1627,11 +1736,11 @@ class orm_template(object):
 
         result = {'type': view_type, 'model': self._name}
 
-        ok = True
         model = True
+        is_inherited_view = True
         sql_res = False
         parent_view_model = None
-        while ok:
+        while is_inherited_view:
             view_ref = context.get(view_type + '_view_ref', False)
             if view_ref and not view_id:
                 if '.' in view_ref:
@@ -1658,14 +1767,12 @@ class orm_template(object):
                         type=%s AND
                         inherit_id IS NULL
                     ORDER BY priority''', (self._name, view_type))
-
             sql_res = cr.fetchone()
-
             if not sql_res:
                 break
 
-            ok = sql_res[5]
-            view_id = ok or sql_res[3]
+            is_inherited_view = sql_res[5]
+            view_id = is_inherited_view or sql_res[3]
             model = False
             parent_view_model = sql_res[6]
 
@@ -1691,12 +1798,11 @@ class orm_template(object):
             result['name'] = sql_res[1]
             result['field_parent'] = sql_res[2] or False
         else:
-
             # otherwise, build some kind of default view
             if view_type == 'form':
                 res = self.fields_get(cr, user, context=context)
                 xml = '<?xml version="1.0" encoding="utf-8"?> ' \
-                     '<form string="%s">' % (self._description,)
+                    '<form string="%s">' % (self._description,)
                 for x in res:
                     if res[x]['type'] not in ('one2many', 'many2many'):
                         xml += '<field name="%s"/>' % (x,)
@@ -1709,8 +1815,8 @@ class orm_template(object):
                 if _rec_name not in self._columns:
                     _rec_name = self._columns.keys()[0]
                 xml = '<?xml version="1.0" encoding="utf-8"?>' \
-                       '<tree string="%s"><field name="%s"/></tree>' \
-                       % (self._description, self._rec_name)
+                    '<tree string="%s"><field name="%s"/></tree>' \
+                    % (self._description, self._rec_name)
 
             elif view_type == 'calendar':
                 xml = self.__get_default_calendar_view()
@@ -1747,22 +1853,22 @@ class orm_template(object):
             def clean(x):
                 x = x[2]
                 for key in ('report_sxw_content', 'report_rml_content',
-                        'report_sxw', 'report_rml',
-                        'report_sxw_content_data', 'report_rml_content_data'):
+                            'report_sxw', 'report_rml',
+                            'report_sxw_content_data', 'report_rml_content_data'):
                     if key in x:
                         del x[key]
                 return x
             ir_values_obj = self.pool.get('ir.values')
             resprint = ir_values_obj.get(cr, user, 'action',
-                    'client_print_multi', [(self._name, False)], False,
-                    context)
+                                         'client_print_multi', [(self._name, False)], False,
+                                         context)
             resaction = ir_values_obj.get(cr, user, 'action',
-                    'client_action_multi', [(self._name, False)], False,
-                    context)
+                                          'client_action_multi', [(self._name, False)], False,
+                                          context)
 
             resrelate = ir_values_obj.get(cr, user, 'action',
-                    'client_action_relate', [(self._name, False)], False,
-                    context)
+                                          'client_action_relate', [(self._name, False)], False,
+                                          context)
             resprint = map(clean, resprint)
             resaction = map(clean, resaction)
             resaction = filter(lambda x: not x.get('multi', False), resaction)
@@ -1781,13 +1887,90 @@ class orm_template(object):
 
     _view_look_dom_arch = __view_look_dom_arch
 
+    def approximate_search_count(self, cr, user, args, context=None):
+        """
+        search_count can be very slow on big tables as it need to parse all
+        elements one by one. This method is very fast but not very accurate.
+        In case there is less than 100000 elements, the exact result will be
+        returned (search_count), else an aproximate one.
+        In addition a boolean is also returned to know if the result is exact
+        or approximate.
+        :return: (count, boolean) boolean is True in case of approximation
+        """
+        if not args:
+            cr.execute("""
+                SELECT reltuples::BIGINT AS approximate_row_count
+                FROM pg_class WHERE relname = '%s'
+            """ % self._table)
+            approximative_result = cr.fetchall()
+            approximative_result = approximative_result and approximative_result[0][0] or 0
+            # check if approximative is big
+            if approximative_result > 100000:
+                return int(approximative_result), True
+        return self.search_count(cr, user, args, context=context), False
+
+
     def search_count(self, cr, user, args, context=None):
-        if not context:
+        if context is None:
             context = {}
         res = self.search(cr, user, args, context=context, count=True)
         if isinstance(res, list):
             return len(res)
         return res
+
+    def has_index(self,cr, column_name):
+        '''
+            check if column_name have an index in the database
+        '''
+        indexname = '%s_%s_index' % (self._table, column_name)
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, self._table))
+        res = cr.dictfetchall()
+        if res:
+            return True
+        return False
+
+    def exact_search_web(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
+        '''
+            If the domain exists, check that it contains at least one exact search.
+            And exact search contain at least one '=' in its subdomain
+            and this subdomain have a corresponding index in the databse
+        '''
+        if args:
+            exact_search = False
+            exact_search_with_no_index = []
+            for sub_domain in args:
+                if len(sub_domain) > 1 and sub_domain[1] in ('=', '<=', '>='):
+                    # check this column have an index, if not this doesn't
+                    # count as an exact search
+                    if self.has_index(cr, sub_domain[0]):
+                        exact_search = True
+                        break
+                    exact_search_with_no_index.append(_(self._columns[sub_domain[0]].string))
+
+            if not exact_search:
+                if exact_search_with_no_index:
+                    raise except_orm(_("Error!"), _("Sorry, the field(s) '%s' can not be searched alone with '='. Use '=' with others search fields.") % ', '.join(exact_search_with_no_index))
+                raise except_orm(_("Error!"), _("You can't search on this object without using at least one exact search term (precede your search with the character '=')."))
+
+        return self.search(cr, uid, args, offset, limit,
+                           order, context=context, count=count)
+
+    def search_web(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
+        '''
+        by default search_web do the same thing than search. If you need a
+        special treatment, you need to redifine it in the class you wan't
+        (in which you can call exact_search_web() for example if you want to
+        force for exact search
+        '''
+        return self.search(cr, user, args, offset, limit, order, context, count)
+
+    def search_exist(self, cr, user, args, context=None):
+        """
+        return True if there is at least one element matching the criterions,
+        False otherwise.
+        """
+        return bool(self.search(cr, user, args, context=context,
+                                limit=1, order='NO_ORDER'))
 
     def search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
         """
@@ -1856,14 +2039,14 @@ class orm_template(object):
         :return: tuples with the text representation of requested objects for to-many relationships
 
         """
-        if not context:
+        if context is None:
             context = {}
         if not ids:
             return []
         if isinstance(ids, (int, long)):
             ids = [ids]
         return [(r['id'], tools.ustr(r[self._rec_name])) for r in self.read(cr, user, ids,
-            [self._rec_name], context, load='_classic_write')]
+                                                                            [self._rec_name], context, load='_classic_write')]
 
     def name_search(self, cr, user, name='', args=None, operator='ilike', context=None, limit=100):
         """
@@ -1896,7 +2079,8 @@ class orm_template(object):
         if name:
             args += [(self._rec_name, operator, name)]
         access_rights_uid = name_get_uid or user
-        ids = self._search(cr, user, args, limit=limit, context=context, access_rights_uid=access_rights_uid)
+        ids = self._search(cr, user, args, limit=limit, context=context,
+                           access_rights_uid=access_rights_uid)
         res = self.name_get(cr, access_rights_uid, ids, context)
         return res
 
@@ -1936,6 +2120,8 @@ class orm_template(object):
         self.pool.get('ir.model.access').check(cr, uid, 'ir.translation', 'write', context=context)
         #FIXME: try to only call the translation in one SQL
         for lang in langs:
+            if lang == 'en_US':
+                continue
             for field in vals:
                 if field in self._columns:
                     src = self._columns[field].string
@@ -1967,16 +2153,71 @@ class orm_template(object):
             defaults = self.default_get(cr, uid, missing_defaults, context)
             for dv in defaults:
                 if ((dv in self._columns and self._columns[dv]._type == 'many2many') \
-                     or (dv in self._inherit_fields and self._inherit_fields[dv][2]._type == 'many2many')) \
+                        or (dv in self._inherit_fields and self._inherit_fields[dv][2]._type == 'many2many')) \
                         and defaults[dv] and isinstance(defaults[dv][0], (int, long)):
                     defaults[dv] = [(6, 0, defaults[dv])]
-                if (dv in self._columns and self._columns[dv]._type == 'one2many' \
-                    or (dv in self._inherit_fields and self._inherit_fields[dv][2]._type == 'one2many')) \
-                        and isinstance(defaults[dv], (list, tuple)) and defaults[dv] and isinstance(defaults[dv][0], dict):
+                elif (dv in self._columns and self._columns[dv]._type == 'one2many' \
+                        or (dv in self._inherit_fields and self._inherit_fields[dv][2]._type == 'one2many')) \
+                        and isinstance(defaults[dv], (list, tuple)) and\
+                        defaults[dv] and isinstance(defaults[dv][0], dict):
                     defaults[dv] = [(0, 0, x) for x in defaults[dv]]
             defaults.update(values)
             values = defaults
         return values
+
+    def update_exported_fields(self, cr, uid, fields):
+        """
+        Override this method if you would like to change the exported
+        fields on the object.
+        """
+        for fld, rpl_flds in self._replace_exported_fields.iteritems():
+            fld_index = None
+            fld_val = None
+            fld_to_rm = []
+            for f in fields:
+                if f[0] == fld:
+                    fld_index = fields.index(f)
+                    fld_val = f
+                else:
+                    for rpl_fld in rpl_flds:
+                        if f[0] == rpl_fld[0][0]:
+                            fld_to_rm.append(f)
+
+            if fld_index is not None:
+                for frm in fld_to_rm:
+                    if frm[0] not in self._replace_exported_fields.keys():
+                        fields.remove(frm)
+
+                sorted_rpl_flds = reversed(sorted(rpl_flds, key=lambda x: x[1]))
+                for rpl_fld in sorted_rpl_flds:
+                    fields.insert(fld_index, rpl_fld[0])
+
+                fields.remove(fld_val)
+
+        return fields
+
+    def filter_export_data_result(self, cr, uid, result, fields):
+        """
+        Override this method if you would like to filter the result of
+        export_data method of the object.
+        """
+        fld_indexes = []
+
+        for fld in self._replace_exported_fields.keys():
+            if fld in fields:
+                fld_indexes.append(fields.index(fld))
+
+        if fld_indexes:
+            fld_indexes.sort(reverse=True)
+            for r in result:
+                for fld_index in fld_indexes:
+                    del r[fld_index]
+
+            for fld_index in fld_indexes:
+                del fields[fld_index]
+
+        return result, fields
+
 
 class orm_memory(orm_template):
 
@@ -2026,7 +2267,7 @@ class orm_memory(orm_template):
         return True
 
     def read(self, cr, user, ids, fields_to_read=None, context=None, load='_classic_read'):
-        if not context:
+        if context is None:
             context = {}
         if not fields_to_read:
             fields_to_read = self._columns.keys()
@@ -2053,10 +2294,10 @@ class orm_memory(orm_template):
                 result.append(r)
                 if id in self.datas:
                     self.datas[id]['internal.date_access'] = time.time()
-            
+
             # all non inherited fields for which the attribute whose name is in load is False
             fields_post = filter(lambda x: x in self._columns and not getattr(self._columns[x], load), fields_to_read)
-    
+
             # Compute POST fields
             todo = {}
             for f in fields_post:
@@ -2079,17 +2320,19 @@ class orm_memory(orm_template):
                                 record[f] = res2[record['id']]
                             else:
                                 record[f] = []
-                    
+
             if isinstance(ids_orig, (int, long)):
                 return result[0]
         return result
-    
+
     def copy_translations(self, cr, uid, old_id, new_id, context=None):
         pass
 
     def write(self, cr, user, ids, vals, context=None):
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         vals2 = {}
         upd_todo = []
         for field in vals:
@@ -2099,7 +2342,12 @@ class orm_memory(orm_template):
                 upd_todo.append(field)
         for object_id in ids:
             self._check_access(user, object_id, mode='write')
-            self.datas[object_id].update(vals2)
+            try:
+                self.datas[object_id].update(vals2)
+            except KeyError:
+                error_message = _('Object id \'%s\' not found in \'%s\'. You may try to access a deleted temporary object (ie. wizard)')
+                error_message = error_message % (object_id, self._name)
+                raise except_orm(_('Error'), error_message)
             self.datas[object_id]['internal.date_access'] = time.time()
             for field in upd_todo:
                 self._columns[field].set_memory(cr, self, object_id, field, vals[field], user, context)
@@ -2140,7 +2388,7 @@ class orm_memory(orm_template):
         return id_new
 
     def _where_calc(self, cr, user, args, active_test=True, context=None):
-        if not context:
+        if context is None:
             context = {}
         args = args[:]
         res = []
@@ -2200,7 +2448,7 @@ class orm_memory(orm_template):
                         # explicitly skip function field (stored or not) as for osv_memory we do not have raw data
                         # in 'self.datas' available for sorting
                         continue
-                    
+
                     if order_column._classic_read:
                         getter = lambda d, i: len(d) > 1 and d[1].get(order_field) or False
                     elif order_column._type == 'many2one':
@@ -2240,8 +2488,11 @@ class orm_memory(orm_template):
         return data
 
     def _search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False, access_rights_uid=None):
-        if not context:
+        if context is None:
             context = {}
+
+        if order == 'NO_ORDER':
+            order = ''
 
         # implicit filter on current user except for superuser
         if user != 1:
@@ -2286,16 +2537,16 @@ class orm_memory(orm_template):
 
         if count:
             return len(res)
-    
+
         if offset:
             off = 0
             while off < offset:
                 res.pop(0)
                 off += 1
-        
+
         if limit and len(res) > limit:
             return res[:limit]
-        
+
         return res or []
 
     def unlink(self, cr, uid, ids, context=None):
@@ -2404,8 +2655,8 @@ class orm(orm_template):
 
 
         fields_pre = [f for f in float_int_fields if
-                   f == self.CONCURRENCY_CHECK_FIELD
-                or (f in self._columns and getattr(self._columns[f], '_classic_write'))]
+                      f == self.CONCURRENCY_CHECK_FIELD
+                      or (f in self._columns and getattr(self._columns[f], '_classic_write'))]
         for f in fields_pre:
             if f not in ['id', 'sequence']:
                 group_operator = fget[f].get('group_operator', 'sum')
@@ -2498,7 +2749,7 @@ class orm(orm_template):
         logger = netsvc.Logger()
         logger.notifyChannel('data', netsvc.LOG_INFO, 'Computing parent left and right for table %s...' % (self._table, ))
         def browse_rec(root, pos=0):
-# TODO: set order
+            # TODO: set order
             where = self._parent_name+'='+str(root)
             if not root:
                 where = self._parent_name+' IS NULL'
@@ -2508,11 +2759,13 @@ class orm(orm_template):
             pos2 = pos + 1
             for id in cr.fetchall():
                 pos2 = browse_rec(id[0], pos2)
-            cr.execute('update '+self._table+' set parent_left=%s, parent_right=%s where id=%s', (pos, pos2, root))
+            query = ''.join(('UPDATE ', self._table, ' SET parent_left=%s, parent_right=%s WHERE id=%s'))
+            cr.execute(query, (pos, pos2, root))
             return pos2 + 1
-        query = 'SELECT id FROM '+self._table+' WHERE '+self._parent_name+' IS NULL'
+        query = ''.join(('SELECT id FROM ', self._table, ' WHERE ',
+                         self._parent_name, ' IS NULL'))
         if self._parent_order:
-            query += ' order by ' + self._parent_order
+            query = ''.join((query, ' ORDER BY ', self._parent_order))
         pos = 0
         cr.execute(query)
         for (root,) in cr.fetchall():
@@ -2524,9 +2777,14 @@ class orm(orm_template):
         logger.notifyChannel('data', netsvc.LOG_INFO, "storing computed values of fields.function '%s'" % (k,))
         ss = self._columns[k]._symbol_set
         update_query = 'UPDATE "%s" SET "%s"=%s WHERE id=%%s' % (self._table, k, ss[0])
-        cr.execute('select id from '+self._table)
+        cr.execute('SELECT id FROM '+self._table)
         ids_lst = map(lambda x: x[0], cr.fetchall())
-        while ids_lst:
+
+        migrate = False
+        if self._columns[k]._fnct_migrate:
+            migrate = self._columns[k].migrate(cr, ids_lst)
+
+        while ids_lst and migrate == False:
             iids = ids_lst[:40]
             ids_lst = ids_lst[40:]
             res = f.get(cr, self, iids, k, 1, {})
@@ -2584,6 +2842,27 @@ class orm(orm_template):
                 self.__schema.debug("Table '%s': column '%s': dropped NOT NULL constraint",
                                     self._table, column['attname'])
 
+    def execute_migration(self, cr, moved_column, new_column):
+        """
+        On change type of column, make a migration of data. The old values
+        are moved to a new column suffixed by _movedX.
+        This method must be overriden on needed objects.
+        :param cr: Cursor to the database
+        :param moved_column: The renamed old column
+        :param new_column: The column with the new type
+        :return: Nothing
+        """
+        pass
+
+    def _clean_cache(self, dbname):
+        '''
+        This method is called everytime a cache based on
+         this object has to be cleaned because data has been updated.
+
+        The default behaviour is to do nothing.
+        '''
+        pass
+
     def _auto_init(self, cr, context=None):
         if context is None:
             context = {}
@@ -2591,6 +2870,7 @@ class orm(orm_template):
         create = False
         todo_end = []
         self._field_create(cr, context=context)
+        to_migrate = []
         if getattr(self, '_auto', True):
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             if not cr.rowcount:
@@ -2657,10 +2937,10 @@ class orm(orm_template):
             update_custom_fields = context.get('update_custom_fields', False)
 
             cr.execute("SELECT c.relname,a.attname,a.attlen,a.atttypmod,a.attnotnull,a.atthasdef,t.typname,CASE WHEN a.attlen=-1 THEN a.atttypmod-4 ELSE a.attlen END as size " \
-               "FROM pg_class c,pg_attribute a,pg_type t " \
-               "WHERE c.relname=%s " \
-               "AND c.oid=a.attrelid " \
-               "AND a.atttypid=t.oid", (self._table,))
+                       "FROM pg_class c,pg_attribute a,pg_type t " \
+                       "WHERE c.relname=%s " \
+                       "AND c.oid=a.attrelid " \
+                       "AND a.atttypid=t.oid", (self._table,))
             col_data = dict(map(lambda x: (x['attname'], x),cr.dictfetchall()))
 
 
@@ -2687,7 +2967,7 @@ class orm(orm_template):
                         if not res:
                             cr.execute('ALTER TABLE "%s" ADD FOREIGN KEY (%s) REFERENCES "%s" ON DELETE SET NULL' % (self._obj, f._fields_id, f._table))
                             self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE SET NULL",
-                                self._obj, f._fields_id, f._table)
+                                                self._obj, f._fields_id, f._table)
                 elif isinstance(f, fields.many2many):
                     cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
                     if not cr.dictfetchall():
@@ -2707,11 +2987,11 @@ class orm(orm_template):
                     res = res and [res] or []
                     if not res and hasattr(f, 'oldname'):
                         cr.execute("SELECT c.relname,a.attname,a.attlen,a.atttypmod,a.attnotnull,a.atthasdef,t.typname,CASE WHEN a.attlen=-1 THEN a.atttypmod-4 ELSE a.attlen END as size " \
-                            "FROM pg_class c,pg_attribute a,pg_type t " \
-                            "WHERE c.relname=%s " \
-                            "AND a.attname=%s " \
-                            "AND c.oid=a.attrelid " \
-                            "AND a.atttypid=t.oid", (self._table, f.oldname))
+                                   "FROM pg_class c,pg_attribute a,pg_type t " \
+                                   "WHERE c.relname=%s " \
+                                   "AND a.attname=%s " \
+                                   "AND c.oid=a.attrelid " \
+                                   "AND a.atttypid=t.oid", (self._table, f.oldname))
                         res_old = cr.dictfetchall()
                         if res_old and len(res_old) == 1:
                             cr.execute('ALTER TABLE "%s" RENAME "%s" TO "%s"' % (self._table, f.oldname, k))
@@ -2732,7 +3012,7 @@ class orm(orm_template):
                             cr.execute('ALTER TABLE "%s" DROP COLUMN "%s" CASCADE' % (self._table, k))
                             cr.commit()
                             self.__schema.debug("Table '%s': dropped column '%s' with cascade",
-                                                 self._table, k)
+                                                self._table, k)
                             f_obj_type = None
                         else:
                             f_obj_type = get_pg_type(f) and get_pg_type(f)[0]
@@ -2755,7 +3035,7 @@ class orm(orm_template):
                                 cr.execute('ALTER TABLE "%s" DROP COLUMN temp_change_size CASCADE' % (self._table,))
                                 cr.commit()
                                 self.__schema.debug("Table '%s': column '%s' (type varchar) changed size from %s to %s",
-                                    self._table, k, f_pg_size, f.size)
+                                                    self._table, k, f_pg_size, f.size)
                             for c in casts:
                                 if (f_pg_type==c[0]) and (f._type==c[1]):
                                     if f_pg_type != f_obj_type:
@@ -2766,7 +3046,7 @@ class orm(orm_template):
                                         cr.execute('ALTER TABLE "%s" DROP COLUMN temp_change_size CASCADE' % (self._table,))
                                         cr.commit()
                                         self.__schema.debug("Table '%s': column '%s' changed type from %s to %s",
-                                            self._table, k, c[0], c[1])
+                                                            self._table, k, c[0], c[1])
                                     break
 
                             if f_pg_type != f_obj_type:
@@ -2775,9 +3055,9 @@ class orm(orm_template):
                                     while True:
                                         newname = k + '_moved' + str(i)
                                         cr.execute("SELECT count(1) FROM pg_class c,pg_attribute a " \
-                                            "WHERE c.relname=%s " \
-                                            "AND a.attname=%s " \
-                                            "AND c.oid=a.attrelid ", (self._table, newname))
+                                                   "WHERE c.relname=%s " \
+                                                   "AND a.attname=%s " \
+                                                   "AND c.oid=a.attrelid ", (self._table, newname))
                                         if not cr.fetchone()[0]:
                                             break
                                         i += 1
@@ -2787,7 +3067,8 @@ class orm(orm_template):
                                     cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, get_pg_type(f)[1]))
                                     cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))
                                     self.__schema.debug("Table '%s': column '%s' has changed type (DB=%s, def=%s), data moved to column %s !",
-                                        self._table, k, f_pg_type, f._type, newname)
+                                                        self._table, k, f_pg_type, f._type, newname)
+                                    to_migrate.append((newname, k))
 
                             # if the field is required and hasn't got a NOT NULL constraint
                             if f.required and f_pg_notnull == 0:
@@ -2798,7 +3079,7 @@ class orm(orm_template):
                                     else:
                                         default = self._defaults[k]
 
-                                    if (default is not None):
+                                    if default is not None:
                                         ss = self._columns[k]._symbol_set
                                         query = 'UPDATE "%s" SET "%s"=%s WHERE "%s" is NULL' % (self._table, k, ss[0], k)
                                         cr.execute(query, (ss[1](default),))
@@ -2844,20 +3125,20 @@ class orm(orm_template):
                                 ref = self.pool.get(f._obj)._table
                                 if ref != 'ir_actions':
                                     cr.execute('SELECT confdeltype, conname FROM pg_constraint as con, pg_class as cl1, pg_class as cl2, '
-                                                'pg_attribute as att1, pg_attribute as att2 '
-                                            'WHERE con.conrelid = cl1.oid '
-                                                'AND cl1.relname = %s '
-                                                'AND con.confrelid = cl2.oid '
-                                                'AND cl2.relname = %s '
-                                                'AND array_lower(con.conkey, 1) = 1 '
-                                                'AND con.conkey[1] = att1.attnum '
-                                                'AND att1.attrelid = cl1.oid '
-                                                'AND att1.attname = %s '
-                                                'AND array_lower(con.confkey, 1) = 1 '
-                                                'AND con.confkey[1] = att2.attnum '
-                                                'AND att2.attrelid = cl2.oid '
-                                                'AND att2.attname = %s '
-                                                "AND con.contype = 'f'", (self._table, ref, k, 'id'))
+                                               'pg_attribute as att1, pg_attribute as att2 '
+                                               'WHERE con.conrelid = cl1.oid '
+                                               'AND cl1.relname = %s '
+                                               'AND con.confrelid = cl2.oid '
+                                               'AND cl2.relname = %s '
+                                               'AND array_lower(con.conkey, 1) = 1 '
+                                               'AND con.conkey[1] = att1.attnum '
+                                               'AND att1.attrelid = cl1.oid '
+                                               'AND att1.attname = %s '
+                                               'AND array_lower(con.confkey, 1) = 1 '
+                                               'AND con.confkey[1] = att2.attnum '
+                                               'AND att2.attrelid = cl2.oid '
+                                               'AND att2.attname = %s '
+                                               "AND con.contype = 'f'", (self._table, ref, k, 'id'))
                                     res2 = cr.dictfetchall()
                                     if res2:
                                         if res2[0]['confdeltype'] != POSTGRES_CONFDELTYPES.get(f.ondelete.upper(), 'a'):
@@ -2865,16 +3146,16 @@ class orm(orm_template):
                                             cr.execute('ALTER TABLE "' + self._table + '" ADD FOREIGN KEY ("' + k + '") REFERENCES "' + ref + '" ON DELETE ' + f.ondelete)
                                             cr.commit()
                                             self.__schema.debug("Table '%s': column '%s': XXX",
-                                                self._table, k)
+                                                                self._table, k)
                     elif len(res) > 1:
                         netsvc.Logger().notifyChannel('orm', netsvc.LOG_ERROR, "Programming error, column %s->%s has multiple instances !" % (self._table, k))
-                    if not res:
+                    else:
                         if not isinstance(f, fields.function) or f.store:
                             # add the missing field
                             cr.execute('ALTER TABLE "%s" ADD COLUMN "%s" %s' % (self._table, k, get_pg_type(f)[1]))
                             cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))
                             self.__schema.debug("Table '%s': added column '%s' with definition=%s",
-                                self._table, k, get_pg_type(f)[1])
+                                                self._table, k, get_pg_type(f)[1])
 
                             # initialize it
                             if not create and k in self._defaults:
@@ -2896,7 +3177,7 @@ class orm(orm_template):
                                 todo_update_store.append((order, f, k))
 
                             # and add constraints if needed
-                            if isinstance(f, fields.many2one):
+                            elif isinstance(f, fields.many2one):
                                 if not self.pool.get(f._obj):
                                     raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
                                 ref = self.pool.get(f._obj)._table
@@ -2905,7 +3186,7 @@ class orm(orm_template):
                                 if ref != 'ir_actions':
                                     cr.execute('ALTER TABLE "%s" ADD FOREIGN KEY ("%s") REFERENCES "%s" ON DELETE %s' % (self._table, k, ref, f.ondelete))
                                     self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE %s",
-                                        self._table, k, ref, f.ondelete)
+                                                        self._table, k, ref, f.ondelete)
                             if f.select:
                                 cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (self._table, k, self._table, k))
                             if f.required:
@@ -2913,7 +3194,7 @@ class orm(orm_template):
                                     cr.commit()
                                     cr.execute('ALTER TABLE "%s" ALTER COLUMN "%s" SET NOT NULL' % (self._table, k), log_exceptions=False)
                                     self.__schema.debug("Table '%s': column '%s': added a NOT NULL constraint",
-                                        self._table, k)
+                                                        self._table, k)
                                 except Exception:
                                     msg = "WARNING: unable to set column %s of table %s not null !\n"\
                                         "Try to re-run: openerp-server.py --update=module\n"\
@@ -2921,16 +3202,20 @@ class orm(orm_template):
                                         "ALTER TABLE %s ALTER COLUMN %s SET NOT NULL"
                                     self.__logger.warn(msg, k, self._table, self._table, k)
                             cr.commit()
+            todo_end_append = todo_end.append
             for order, f, k in todo_update_store:
-                todo_end.append((order, self._update_store, (f, k)))
+                todo_end_append((order, self._update_store, (f, k)))
 
         else:
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             create = not bool(cr.fetchone())
 
+        for t in to_migrate:
+            self.execute_migration(cr, t[0], t[1])
+
         cr.commit()     # start a new transaction
 
-        for (key, con, _) in self._sql_constraints:
+        for (key, con, null) in self._sql_constraints:
             conname = '%s_%s' % (self._table, key)
 
             cr.execute("SELECT conname, pg_catalog.pg_get_constraintdef(oid, true) as condef FROM pg_constraint where conname=%s", (conname,))
@@ -3018,18 +3303,19 @@ class orm(orm_template):
                     length = None
                 else:
                     raise except_orm('Error',
-                        ('Invalid function definition %s in object %s !\nYou must use the definition: store={object:(fnct, fields, priority, time length)}.' % (store_field, self._name)))
+                                     ('Invalid function definition %s in object %s !\nYou must use the definition: store={object:(fnct, fields, priority, time length)}.' % (store_field, self._name)))
                 self.pool._store_function.setdefault(object, [])
                 ok = True
                 for x, y, z, e, f, l in self.pool._store_function[object]:
                     if (x==self._name) and (y==store_field) and (e==fields2):
                         if f == order:
                             ok = False
+                            break
                 if ok:
                     self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
                     self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
 
-        for (key, _, msg) in self._sql_constraints:
+        for (key, null, msg) in self._sql_constraints:
             self.pool._sql_error[self._table+'_'+key] = msg
 
         # Load manual fields
@@ -3113,7 +3399,7 @@ class orm(orm_template):
             if field_name not in self._columns:
                 logging.getLogger('init').info('Missing many2one field definition for _inherits reference "%s" in "%s", using default one.' % (field_name, self._name))
                 self._columns[field_name] = fields.many2one(table, string="Automatically created field to link to parent %s" % table,
-                                                             required=True, ondelete="cascade")
+                                                            required=True, ondelete="cascade")
             elif not self._columns[field_name].required or self._columns[field_name].ondelete.lower() != "cascade":
                 logging.getLogger('init').warning('Field definition for _inherits reference "%s" in "%s" must be marked as "required" with ondelete="cascade", forcing it.' % (field_name, self._name))
                 self._columns[field_name].required = True
@@ -3159,11 +3445,13 @@ class orm(orm_template):
         """
         ira = self.pool.get('ir.model.access')
         write_access = ira.check(cr, user, self._name, 'write', raise_exception=False, context=context) or \
-                       ira.check(cr, user, self._name, 'create', raise_exception=False, context=context)
+            ira.check(cr, user, self._name, 'create', raise_exception=False, context=context)
         return super(orm, self).fields_get(cr, user, fields, context, write_access)
 
     def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
-        if not context:
+        if not ids:
+            return []
+        if context is None:
             context = {}
         self.pool.get('ir.model.access').check(cr, user, self._name, 'read', context=context)
         if not fields:
@@ -3172,7 +3460,7 @@ class orm(orm_template):
             select = [ids]
         else:
             select = ids
-        select = map(lambda x: isinstance(x, dict) and x['id'] or x, select)
+        select = [isinstance(x, dict) and x['id'] or x for x in select]
         result = self._read_flat(cr, user, select, fields, context, load)
 
         for r in result:
@@ -3185,10 +3473,10 @@ class orm(orm_template):
         return result
 
     def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
-        if not context:
-            context = {}
         if not ids:
             return []
+        if context is None:
+            context = {}
         if fields_to_read == None:
             fields_to_read = self._columns.keys()
 
@@ -3199,12 +3487,12 @@ class orm(orm_template):
 
         # all inherited fields + all non inherited fields for which the attribute whose name is in load is True
         fields_pre = [f for f in fields_to_read if
-                           f == self.CONCURRENCY_CHECK_FIELD
-                        or (f in self._columns and getattr(self._columns[f], '_classic_write'))
-                     ] + self._inherits.values()
+                      f == self.CONCURRENCY_CHECK_FIELD
+                      or (f in self._columns and getattr(self._columns[f], '_classic_write'))
+                      ] + self._inherits.values()
 
         res = []
-        if len(fields_pre):
+        if fields_pre:
             def convert_field(f):
                 f_qual = "%s.%s" % (self._table, f) # need fully-qualified references in case len(tables) > 1
                 if f in ('create_date', 'write_date'):
@@ -3214,44 +3502,59 @@ class orm(orm_template):
                         return "COALESCE(%s.write_date, %s.create_date, now())::timestamp AS %s" % (self._table, self._table, f,)
                     return "now()::timestamp AS %s" % (f,)
                 if isinstance(self._columns[f], fields.binary) and context.get('bin_size', False):
+                    if self._name == 'ir.attachment' and 'size' in self._columns:
+                        return 'size as "%s"' % f
                     return 'length(%s) as "%s"' % (f_qual, f)
                 return f_qual
 
             fields_pre2 = map(convert_field, fields_pre)
             order_by = self._parent_order or self._order
             select_fields = ','.join(fields_pre2 + [self._table + '.id'])
-            query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields, ','.join(tables), self._table)
+            query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields,
+                                                              ','.join(tables), self._table)
             if rule_clause:
-                query += " AND " + (' OR '.join(rule_clause))
-            query += " ORDER BY " + order_by
-            for sub_ids in cr.split_for_in_conditions(ids):
+                query = ''.join((query, ' AND ', ' OR '.join(rule_clause)))
+
+            def execute_request(res, query, rule_clause, local_ids):
                 if rule_clause:
-                    cr.execute(query, [tuple(sub_ids)] + rule_params)
-                    if cr.rowcount != len(sub_ids):
+                    cr.execute(query, [tuple(local_ids)] + rule_params)
+                    if cr.rowcount != len(local_ids):
                         raise except_orm(_('AccessError'),
                                          _('Operation prohibited by access rules, or performed on an already deleted document (Operation: read, Document type: %s).')
                                          % (self._description,))
                 else:
-                    cr.execute(query, (tuple(sub_ids),))
+                    cr.execute(query, (tuple(local_ids),))
                 res.extend(cr.dictfetchall())
-        else:
-            res = map(lambda x: {'id': x}, ids)
 
-        for f in fields_pre:
-            if f == self.CONCURRENCY_CHECK_FIELD:
-                continue
-            if self._columns[f].translate:
-                ids = [x['id'] for x in res]
-                #TODO: optimize out of this loop
-                res_trans = self.pool.get('ir.translation')._get_ids(cr, user, self._name+','+f, 'model', context.get('lang', False) or 'en_US', ids)
-                for r in res:
-                    r[f] = res_trans.get(r['id'], False) or r[f]
+            if len(ids) == 1:
+                # ~ 70% of the requests are done with only one id (20/05/2016)
+                execute_request(res, query, rule_clause, ids)
+            else:
+                # order only when there is more than one id in ids
+                query = ''.join((query, ' ORDER BY ', order_by))
+                for sub_ids in cr.split_for_in_conditions(ids):
+                    execute_request(res, query, rule_clause, sub_ids)
+
+            context_lang = context and context.get('lang', False) or 'en_US'
+            if context_lang != 'en_US':
+                translation_obj = self.pool.get('ir.translation')
+                for f in fields_pre:
+                    if f == self.CONCURRENCY_CHECK_FIELD:
+                        continue
+                    if self._columns[f].translate:
+                        ids = [x['id'] for x in res]
+                        res_trans = translation_obj._get_ids(cr,
+                                                             user, self._name+','+f, 'model', context_lang, ids)
+                        for r in res:
+                            r[f] = res_trans.get(r['id'], False) or r[f]
+        else:
+            res = [{'id':x} for x in ids]
 
         for table in self._inherits:
-            col = self._inherits[table]
             cols = [x for x in intersect(self._inherit_fields.keys(), fields_to_read) if x not in self._columns.keys()]
             if not cols:
                 continue
+            col = self._inherits[table]
             res2 = self.pool.get(table).read(cr, user, [x[col] for x in res], cols, context, load)
 
             res3 = {}
@@ -3296,7 +3599,11 @@ class orm(orm_template):
                     res2 = self._columns[f].get(cr, self, ids, f, user, context=context, values=res)
                     for record in res:
                         if res2:
-                            record[f] = res2[record['id']]
+                            try:
+                                record[f] = res2[record['id']]
+                            except:
+                                self.__logger.error('Read %s field %s, record not found' % (self._name, f), exc_info=True)
+                                raise
                         else:
                             record[f] = []
         readonly = None
@@ -3351,7 +3658,7 @@ class orm(orm_template):
                     * write_date: date of the last change to the record
                     * xmlid: XML ID to use to refer to this record (if there is one), in format ``module.name``
         """
-        if not context:
+        if context is None:
             context = {}
         if not ids:
             return []
@@ -3415,11 +3722,12 @@ class orm(orm_template):
         """
         where_clause, where_params, tables = self.pool.get('ir.rule').domain_get(cr, uid, self._name, operation, context=context)
         if where_clause:
-            where_clause = ' and ' + ' and '.join(where_clause)
+            where_clause = ''.join((' AND ', ' AND '.join(where_clause)))
             for sub_ids in cr.split_for_in_conditions(ids):
-                cr.execute('SELECT ' + self._table + '.id FROM ' + ','.join(tables) +
-                           ' WHERE ' + self._table + '.id IN %s' + where_clause,
-                           [sub_ids] + where_params)
+                query = ''.join(('SELECT ', self._table, '.id FROM ',
+                                 ','.join(tables), ' WHERE ', self._table, '.id IN %s',
+                                 where_clause))
+                cr.execute(query, [sub_ids] + where_params)
                 if cr.rowcount != len(sub_ids):
                     raise except_orm(_('AccessError'),
                                      _('Operation prohibited by access rules, or performed on an already deleted document (Operation: %s, Document type: %s).')
@@ -3453,8 +3761,9 @@ class orm(orm_template):
         properties = self.pool.get('ir.property')
         domain = [('res_id', '=', False),
                   ('value_reference', 'in', ['%s,%s' % (self._name, i) for i in ids]),
-                 ]
-        if properties.search(cr, uid, domain, context=context):
+                  ]
+        if properties.search(cr, uid, domain, limit=1, order='NO_ORDER',
+                             context=context):
             raise except_orm(_('Error'), _('Unable to delete this document because it is used as a default property'))
 
         wf_service = netsvc.LocalService("workflow")
@@ -3466,31 +3775,41 @@ class orm(orm_template):
         pool_model_data = self.pool.get('ir.model.data')
         pool_ir_values = self.pool.get('ir.values')
         for sub_ids in cr.split_for_in_conditions(ids):
-            cr.execute('delete from ' + self._table + ' ' \
-                       'where id IN %s', (sub_ids,))
+            # delete the related attachements
+            cr.execute('DELETE FROM ir_attachment WHERE res_id IN %s AND res_model = %s',
+                       (sub_ids, self._name))
+
+            cr.execute('DELETE FROM ' + self._table + ' ' \
+                       'WHERE id IN %s', (sub_ids,))
 
             # Removing the ir_model_data reference if the record being deleted is a record created by xml/csv file,
             # as these are not connected with real database foreign keys, and would be dangling references.
             # Step 1. Calling unlink of ir_model_data only for the affected IDS.
-            referenced_ids = pool_model_data.search(cr, uid, [('res_id','in',list(sub_ids)),('model','=',self._name)], context=context)
+            referenced_ids = pool_model_data.search(cr, uid,
+                                                    [('res_id','in',list(sub_ids)),('model','=',self._name)],
+                                                    order='NO_ORDER', context=context)
             # Step 2. Marching towards the real deletion of referenced records
             pool_model_data.unlink(cr, uid, referenced_ids, context=context)
 
+            if context.get('avoid_sdref_deletion') and hasattr(self, '_unlink_sdref') and self._unlink_sdref:
+                cr.execute("DELETE FROM ir_model_data WHERE model=%s AND res_id in %s AND module='sd'", (self._name, sub_ids))
+
             # For the same reason, removing the record relevant to ir_values
             ir_value_ids = pool_ir_values.search(cr, uid,
-                    ['|',('value','in',['%s,%s' % (self._name, sid) for sid in sub_ids]),'&',('res_id','in',list(sub_ids)),('model','=',self._name)],
-                    context=context)
+                                                 ['|',('value','in',['%s,%s' % (self._name, sid) for sid in sub_ids]),'&',('res_id','in',list(sub_ids)),('model','=',self._name)],
+                                                 order='NO_ORDER', context=context)
             if ir_value_ids:
                 pool_ir_values.unlink(cr, uid, ir_value_ids, context=context)
 
-        for order, object, store_ids, fields in result_store:
-            if object != self._name:
-                obj = self.pool.get(object)
-                cr.execute('select id from '+obj._table+' where id IN %s', (tuple(store_ids),))
+        for order, current_obj, store_ids, field_list in result_store:
+            if current_obj != self._name:
+                obj = self.pool.get(current_obj)
+                cr.execute('SELECT id from '+obj._table+' WHERE id IN %s', (tuple(store_ids),))
                 rids = map(lambda x: x[0], cr.fetchall())
                 if rids:
-                    obj._store_set_values(cr, uid, rids, fields, context)
+                    obj._store_set_values(cr, uid, rids, field_list, context)
 
+        self._clean_cache(cr.dbname)
         return True
 
     #
@@ -3544,6 +3863,8 @@ class orm(orm_template):
             + For a reference field, use a string with the model name, a comma, and the target object id (example: ``'product.product, 5'``)
 
         """
+        if not ids:
+            return True
         readonly = None
         for field in vals.copy():
             fobj = None
@@ -3574,10 +3895,8 @@ class orm(orm_template):
                 if not edit:
                     vals.pop(field)
 
-        if not context:
+        if context is None:
             context = {}
-        if not ids:
-            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -3599,83 +3918,107 @@ class orm(orm_template):
             parent_val = vals[self._parent_name]
             if parent_val:
                 query = "SELECT id FROM %s WHERE id IN %%s AND (%s != %%s OR %s IS NULL)" % \
-                                (self._table, self._parent_name, self._parent_name)
+                    (self._table, self._parent_name, self._parent_name)
                 cr.execute(query, (tuple(ids), parent_val))
             else:
                 query = "SELECT id FROM %s WHERE id IN %%s AND (%s IS NOT NULL)" % \
-                                (self._table, self._parent_name)
+                    (self._table, self._parent_name)
                 cr.execute(query, (tuple(ids),))
             parents_changed = map(operator.itemgetter(0), cr.fetchall())
 
         upd0 = []
+        upd0_append = upd0.append
         upd1 = []
+        upd1_append = upd1.append
         upd_todo = []
+        upd_todo_append = upd_todo.append
         updend = []
+        updend_append = updend.append
         direct = []
-        totranslate = context.get('lang', False) and (context['lang'] != 'en_US')
+        direct_append = direct.append
+        to_translate = context and context.get('lang', False) and (context['lang'] != 'en_US')
         for field in vals:
             if field in self._columns:
                 if self._columns[field]._classic_write and not (hasattr(self._columns[field], '_fnct_inv')):
-                    if (not totranslate) or not self._columns[field].translate:
-                        upd0.append('"'+field+'"='+self._columns[field]._symbol_set[0])
-                        upd1.append(self._columns[field]._symbol_set[1](vals[field]))
-                    direct.append(field)
+                    if (not to_translate) or not self._columns[field].translate:
+                        upd0_append('"'+field+'"='+self._columns[field]._symbol_set[0])
+                        upd1_append(self._columns[field]._symbol_set[1](vals[field]))
+                    direct_append(field)
                 else:
-                    upd_todo.append(field)
+                    upd_todo_append(field)
             else:
-                updend.append(field)
+                updend_append(field)
             if field in self._columns \
                     and hasattr(self._columns[field], 'selection') \
                     and vals[field]:
                 self._check_selection_field_value(cr, user, field, vals[field], context=context)
 
         if self._log_access:
-            upd0.append('write_uid=%s')
-            upd0.append('write_date=now()')
-            
+            upd0_append('write_uid=%s')
+            upd0_append('write_date=now()')
+
             # if user is fakeUid object, use realId, otherwise use user
-            upd1.append(hasattr(user, 'realUid') and user.realUid or user)
+            upd1_append(hasattr(user, 'realUid') and user.realUid or user)
 
         if len(upd0):
             self.check_access_rule(cr, user, ids, 'write', context=context)
             for sub_ids in cr.split_for_in_conditions(ids):
-                cr.execute('update ' + self._table + ' set ' + ','.join(upd0) + ' ' \
-                           'where id IN %s', upd1 + [sub_ids])
+                query = ''.join(('UPDATE ', self._table, ' SET ',
+                                 ','.join(upd0), ' WHERE id IN %s'))
+                cr.execute(query, upd1 + [sub_ids])
                 if cr.rowcount != len(sub_ids):
                     raise except_orm(_('AccessError'),
                                      _('One of the records you are trying to modify has already been deleted (Document type: %s).') % self._description)
+            if to_translate:
+                sync_context = context.get('sync_type', False)
+                # do not clear cache in case of synchronization. It will be
+                # done at the end of the sync in _get_reset_cache_at_sync().
+                clear_cache = not sync_context
+                fields_to_translate = [f for f in direct if\
+                                       self._columns[f].translate]
+                if fields_to_translate:
+                    field_translated_dict = dict([(key, vals[key]) for key in
+                                                  fields_to_translate])
+                    original_values = self.read(cr, user, ids, fields_to_translate, context=context)[0]
 
-            if totranslate:
-                # TODO: optimize
-                for f in direct:
-                    if self._columns[f].translate:
-                        src_trans = self.pool.get(self._name).read(cr, user, ids, [f])[0][f]
-                        if not src_trans:
-                            src_trans = vals[f]
-                            # Inserting value to DB
-                            self.write(cr, user, ids, {f: vals[f]})
-                        self.pool.get('ir.translation')._set_ids(cr, user, self._name+','+f, 'model', context['lang'], ids, vals[f], src_trans)
+                    # remove elements which have the same value than the
+                    # orginal one
+                    field_translated_dict = dict((key, value) for key, value in\
+                                                 field_translated_dict.items() if field_translated_dict[key]!=original_values[key])
+                    field_to_write_dict = {}
+
+                    for field_name, new_value in field_translated_dict.items():
+                        src_trans = original_values.get(field_name, None)
+                        if not src_trans or not vals.get(field_name, None):
+                            src_trans = vals.get(field_name, None)
+                            field_to_write_dict[field_name]=vals[field_name]
+                        self.pool.get('ir.translation')._set_ids(cr, user,
+                                                                 self._name+','+field_name, 'model', context['lang'],
+                                                                 ids, new_value, src=src_trans, clear=clear_cache, context=context)
+                    if field_to_write_dict:
+                        self.write(cr, user, ids, field_to_write_dict)
 
 
-        # call the 'set' method of fields which are not classic_write
-        upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
+        if upd_todo:
+            upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
+            # default element in context must be removed when call a one2many or many2many
+            rel_context = context.copy()
+            for c in context.items():
+                if c[0].startswith('default_'):
+                    del rel_context[c[0]]
 
-        # default element in context must be removed when call a one2many or many2many
-        rel_context = context.copy()
-        for c in context.items():
-            if c[0].startswith('default_'):
-                del rel_context[c[0]]
-
-        for field in upd_todo:
-            for id in ids:
-                result += self._columns[field].set(cr, self, id, field, vals[field], user, context=rel_context) or []
+            for field in upd_todo:
+                for current_id in ids:
+                    # call the 'set' method of fields which are not classic_write
+                    result += self._columns[field].set(cr, self, current_id, field, vals[field], user, context=rel_context) or []
 
         for table in self._inherits:
             col = self._inherits[table]
             nids = []
             for sub_ids in cr.split_for_in_conditions(ids):
-                cr.execute('select distinct "'+col+'" from "'+self._table+'" ' \
-                           'where id IN %s', (sub_ids,))
+                query = ''.join(('SELECT DISTINCT "', col, '" FROM "',
+                                 self._table, '" WHERE id IN %s'))
+                cr.execute(query, (sub_ids,))
                 nids.extend([x[0] for x in cr.fetchall()])
 
             v = {}
@@ -3702,8 +4045,8 @@ class orm(orm_template):
                 else:
                     clause, params = '%s IS NULL' % (self._parent_name,), ()
 
-                for id in parents_changed:
-                    cr.execute('SELECT parent_left, parent_right FROM %s WHERE id=%%s' % (self._table,), (id,))
+                for current_id in parents_changed:
+                    cr.execute('SELECT parent_left, parent_right FROM %s WHERE id=%%s' % (self._table,), (current_id,))
                     pleft, pright = cr.fetchone()
                     distance = pright - pleft + 1
 
@@ -3717,7 +4060,7 @@ class orm(orm_template):
                     # Find Position of the element
                     position = None
                     for (parent_pright, parent_id) in parents:
-                        if parent_id == id:
+                        if parent_id == current_id:
                             break
                         position = parent_pright + 1
 
@@ -3726,28 +4069,37 @@ class orm(orm_template):
                         if not parent_val:
                             position = 1
                         else:
-                            cr.execute('select parent_left from '+self._table+' where id=%s', (parent_val,))
+                            query = ''.join(('SELECT parent_left FROM ',
+                                             self._table, ' WHERE id=%s'))
+                            cr.execute(query, (parent_val,))
                             position = cr.fetchone()[0] + 1
 
                     if pleft < position <= pright:
                         raise except_orm(_('UserError'), _('Recursivity Detected.'))
 
+                    query = ''.join(('UPDATE ', self._table,
+                                     ' SET parent_left=parent_left+%s WHERE parent_left>=%s',))
+                    cr.execute(query, (distance, position))
+                    query = ''.join(('UPDATE ', self._table,
+                                     ' SET parent_right=parent_right+%s WHERE parent_right>=%s',))
+                    cr.execute(query, (distance, position))
                     if pleft < position:
-                        cr.execute('update '+self._table+' set parent_left=parent_left+%s where parent_left>=%s', (distance, position))
-                        cr.execute('update '+self._table+' set parent_right=parent_right+%s where parent_right>=%s', (distance, position))
-                        cr.execute('update '+self._table+' set parent_left=parent_left+%s, parent_right=parent_right+%s where parent_left>=%s and parent_left<%s', (position-pleft, position-pleft, pleft, pright))
+                        query = ''.join(('UPDATE ', self._table,
+                                         ' SET parent_left=parent_left+%s, parent_right=parent_right+%s WHERE parent_left>=%s AND parent_left<%s'))
+                        cr.execute(query, (position-pleft, position-pleft, pleft, pright))
                     else:
-                        cr.execute('update '+self._table+' set parent_left=parent_left+%s where parent_left>=%s', (distance, position))
-                        cr.execute('update '+self._table+' set parent_right=parent_right+%s where parent_right>=%s', (distance, position))
-                        cr.execute('update '+self._table+' set parent_left=parent_left-%s, parent_right=parent_right-%s where parent_left>=%s and parent_left<%s', (pleft-position+distance, pleft-position+distance, pleft+distance, pright+distance))
+                        query = ''.join(('UPDATE ', self._table,
+                                         ' SET parent_left=parent_left-%s, parent_right=parent_right-%s WHERE parent_left>=%s AND parent_left<%s'))
+                        cr.execute(query, (pleft-position+distance, pleft-position+distance, pleft+distance, pright+distance))
 
 
         if not context.get('no_store_function', False) or isinstance(context['no_store_function'], list) and self._name not in context['no_store_function']:
             self._call_store_function(cr, user, ids, keys=vals.keys(), result=result, context=context)
 
         wf_service = netsvc.LocalService("workflow")
-        for id in ids:
-            wf_service.trg_write(user, self._name, id, cr)
+        for current_id in ids:
+            wf_service.trg_write(user, self._name, current_id, cr)
+        self._clean_cache(cr.dbname)
         return True
 
     def _call_store_function(self, cr, uid, ids, keys=None, result=None, bypass=True, context=None):
@@ -3760,6 +4112,7 @@ class orm(orm_template):
             ids = [ids]
 
         done = []
+        done_append = done.append
 
         result += self._store_get_values(cr, uid, ids, keys, context)
         result.sort()
@@ -3768,7 +4121,7 @@ class orm(orm_template):
                 continue
             if not (object, ids, fields2) in done:
                 self.pool.get(object)._store_set_values(cr, uid, ids, fields2, context)
-                done.append((object, ids, fields2))
+                done_append((object, ids, fields2))
         return True
     #
     # TODO: Should set perm to user.xxx
@@ -3795,7 +4148,7 @@ class orm(orm_template):
         to specify them.
 
         """
-        if not context:
+        if context is None:
             context = {}
         self.pool.get('ir.model.access').check(cr, user, self._name, 'create', context=context)
 
@@ -3809,22 +4162,23 @@ class orm(orm_template):
                 tocreate[v] = {'id': vals[self._inherits[v]]}
         (upd0, upd1, upd2) = ('', '', [])
         upd_todo = []
+        upd2_append = upd2.append
+        upd_todo_append = upd_todo.append
         for v in vals.keys():
             if v in self._inherit_fields:
                 (table, col, col_detail, original_parent) = self._inherit_fields[v]
                 tocreate[table][v] = vals[v]
                 del vals[v]
-            else:
-                if (v not in self._inherit_fields) and (v not in self._columns):
-                    del vals[v]
+            elif v not in self._columns:
+                del vals[v]
 
-        # Try-except added to filter the creation of those records whose filds are readonly.
+        # Try-except added to filter the creation of those records whose fields are readonly.
         # Example : any dashboard which has all the fields readonly.(due to Views(database views))
         try:
             cr.execute("SELECT nextval('"+self._sequence+"')")
         except:
             raise except_orm(_('UserError'),
-                        _('You cannot perform this operation. New Record Creation is not allowed for this object as this object is for reporting purpose.'))
+                             _('You cannot perform this operation. New Record Creation is not allowed for this object as this object is for reporting purpose.'))
 
         id_new = cr.fetchone()[0]
         for table in tocreate:
@@ -3840,7 +4194,7 @@ class orm(orm_template):
 
             upd0 += ',' + self._inherits[table]
             upd1 += ',%s'
-            upd2.append(record_id)
+            upd2_append(record_id)
 
         #Start : Set bool fields to be False if they are not touched(to make search more powerful)
         bool_fields = [x for x in self._columns.keys() if self._columns[x]._type=='boolean']
@@ -3869,21 +4223,16 @@ class orm(orm_template):
                     if readonly[0][0] >= 1:
                         edit = True
                         break
-                    elif readonly[0][0] == 0:
-                        edit = False
-                    else:
-                        edit = False
-
                 if not edit:
                     vals.pop(field)
         for field in vals:
             if self._columns[field]._classic_write:
                 upd0 = upd0 + ',"' + field + '"'
                 upd1 = upd1 + ',' + self._columns[field]._symbol_set[0]
-                upd2.append(self._columns[field]._symbol_set[1](vals[field]))
+                upd2_append(self._columns[field]._symbol_set[1](vals[field]))
             else:
                 if not isinstance(self._columns[field], fields.related):
-                    upd_todo.append(field)
+                    upd_todo_append(field)
             if field in self._columns \
                     and hasattr(self._columns[field], 'selection') \
                     and vals[field]:
@@ -3892,10 +4241,11 @@ class orm(orm_template):
             upd0 += ',create_uid,create_date'
             upd1 += ',%s,now()'
             # if user is fakeUid object, use realId, otherwise use user
-            upd2.append(hasattr(user, 'realUid') and user.realUid or user)
-        cr.execute('insert into "'+self._table+'" (id'+upd0+") values ("+str(id_new)+upd1+')', tuple(upd2))
+            upd2_append(hasattr(user, 'realUid') and user.realUid or user)
+
+        query = ''.join(('INSERT INTO "', self._table, '" (id', upd0,') values (', str(id_new), upd1, ')'))
+        cr.execute(query, tuple(upd2))
         self.check_access_rule(cr, user, [id_new], 'create', context=context)
-        upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
 
         if self._parent_store and not context.get('defer_parent_store_computation'):
             if self.pool._init:
@@ -3903,7 +4253,10 @@ class orm(orm_template):
             else:
                 parent = vals.get(self._parent_name, False)
                 if parent:
-                    cr.execute('select parent_right from '+self._table+' where '+self._parent_name+'=%s order by '+(self._parent_order or self._order), (parent,))
+                    query = ''.join(('SELECT parent_right from ', self._table,
+                                     ' WHERE ', self._parent_name, '=%s ORDER BY ',
+                                     (self._parent_order or self._order)))
+                    cr.execute(query, (parent,))
                     pleft_old = None
                     result_p = cr.fetchall()
                     for (pleft,) in result_p:
@@ -3922,14 +4275,16 @@ class orm(orm_template):
                 cr.execute('update '+self._table+' set parent_left=%s,parent_right=%s where id=%s', (pleft+1, pleft+2, id_new))
 
         # default element in context must be remove when call a one2many or many2many
-        rel_context = context.copy()
-        for c in context.items():
-            if c[0].startswith('default_'):
-                del rel_context[c[0]]
-
         result = []
-        for field in upd_todo:
-            result += self._columns[field].set(cr, self, id_new, field, vals[field], user, rel_context) or []
+        if upd_todo:
+            upd_todo.sort(lambda x, y: self._columns[x].priority-self._columns[y].priority)
+            rel_context = context.copy()
+            for c in context.items():
+                if c[0].startswith('default_'):
+                    del rel_context[c[0]]
+
+            for field in upd_todo:
+                result += self._columns[field].set(cr, self, id_new, field, vals[field], user, rel_context) or []
         self._validate(cr, user, [id_new], context)
 
         if not context.get('no_store_function', False) or isinstance(context['no_store_function'], list) and self._name not in context['no_store_function']:
@@ -3943,9 +4298,10 @@ class orm(orm_template):
             self.log(cr, user, id_new, message, True, context=context)
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_create(user, self._name, id_new, cr)
+        self._clean_cache(cr.dbname)
         return id_new
 
-    def _store_get_values(self, cr, uid, ids, fields, context):
+    def _store_get_values(self, cr, uid, ids, fields, context=None):
         """Returns an ordered list of fields.functions to call due to
            an update operation on ``fields`` of records with ``ids``,
            obtained by calling the 'store' functions of these fields,
@@ -3953,6 +4309,8 @@ class orm(orm_template):
 
            :return: [(priority, model_name, [record_ids,], [function_fields,])]
         """
+        if context is None:
+            context = {}
         # FIXME: rewrite, cleanup, use real variable names
         # e.g.: http://pastie.org/1222060
         result = {}
@@ -3973,24 +4331,24 @@ class orm(orm_template):
             result.setdefault(fncts[fnct][0], {})
 
             # uid == 1 for accessing objects having rules defined on store fields
-            ids2 = fncts[fnct][2](self, cr, 1, ids, context)
+            ids2 = list(set((fncts[fnct][2](self, cr, 1, ids, context))))
             for id in filter(None, ids2):
                 result[fncts[fnct][0]].setdefault(id, [])
                 result[fncts[fnct][0]][id].append(fnct)
-        dict = {}
+        function_dict = {}
         for object in result:
             k2 = {}
             for id, fnct in result[object].items():
                 k2.setdefault(tuple(fnct), [])
                 k2[tuple(fnct)].append(id)
             for fnct, id in k2.items():
-                dict.setdefault(fncts[fnct[0]][4], [])
-                dict[fncts[fnct[0]][4]].append((fncts[fnct[0]][4], object, id, map(lambda x: fncts[x][1], fnct)))
+                function_dict.setdefault(fncts[fnct[0]][4], [])
+                function_dict[fncts[fnct[0]][4]].append((fncts[fnct[0]][4], object, id, map(lambda x: fncts[x][1], fnct)))
         result2 = []
-        tmp = dict.keys()
+        tmp = function_dict.keys()
         tmp.sort()
         for k in tmp:
-            result2 += dict[k]
+            result2 += function_dict[k]
         return result2
 
     def _store_set_values(self, cr, uid, ids, fields, context):
@@ -4018,16 +4376,29 @@ class orm(orm_template):
                                         field_flag = True
         todo = {}
         keys = []
+        keys_append = keys.append
         for f in fields:
-            if self._columns[f]._multi not in keys:
-                keys.append(self._columns[f]._multi)
-            todo.setdefault(self._columns[f]._multi, [])
-            todo[self._columns[f]._multi].append(f)
+            key = self._columns[f]._multi
+            if key not in keys:
+                keys_append(key)
+        todo = dict((k, []) for k in keys)
+        for f in fields:
+            key = self._columns[f]._multi
+            todo[key].append(f)
+
         for key in keys:
             val = todo[key]
             if key:
                 # uid == 1 for accessing objects having rules defined on store fields
+                if hasattr(uid, 'realUid'):
+                    context['computed_for_uid'] = uid.realUid
+                else:
+                    context['computed_for_uid'] = uid
                 result = self._columns[val[0]].get(cr, self, ids, val, 1, context=context)
+                try:
+                    del context['computed_for_uid']
+                except KeyError:
+                    pass
                 for id, value in result.items():
                     if field_flag:
                         for f in value.keys():
@@ -4047,26 +4418,43 @@ class orm(orm_template):
                         upd1.append(self._columns[v]._symbol_set[1](value[v]))
                     upd1.append(id)
                     if upd0 and upd1:
-                        cr.execute('update "' + self._table + '" set ' + \
-                            ','.join(upd0) + ' where id = %s', upd1)
+                        query = ''.join(('UPDATE "', self._table, '" SET ',
+                                         ','.join(upd0), ' WHERE id = %s'))
+                        cr.execute(query, upd1)
 
             else:
+                id_param_dict = {}
                 for f in val:
                     # uid == 1 for accessing objects having rules defined on store fields
                     result = self._columns[f].get(cr, self, ids, f, 1, context=context)
-                    for r in result.keys():
-                        if field_flag:
+                    if field_flag:
+                        for r in result.keys():
                             if r in field_dict.keys():
                                 if f in field_dict[r]:
                                     result.pop(r)
-                    for id, value in result.items():
-                        if self._columns[f]._type in ('many2one', 'one2one'):
-                            try:
-                                value = value[0]
-                            except:
-                                pass
-                        cr.execute('update "' + self._table + '" set ' + \
-                            '"'+f+'"='+self._columns[f]._symbol_set[0] + ' where id = %s', (self._columns[f]._symbol_set[1](value), id))
+                    if result:
+                        current_value = '"%s"=%s' % (f, self._columns[f]._symbol_set[0])
+                        column_type = self._columns[f]._type
+                        for id, value in result.items():
+                            if column_type in ('many2one', 'one2one'):
+                                try:
+                                    value = value[0]
+                                except:
+                                    pass
+                            id_param_dict.setdefault(id, {})
+                            param_list = id_param_dict[id].setdefault('param_list', [])
+                            param_list.append((self._columns[f]._symbol_set[1](value)))
+                            update_list = id_param_dict[id].setdefault('update_list', [])
+                            update_list.append(current_value)
+
+                # do only one update request per object
+                for id, param_dict in id_param_dict.items():
+                    current_query = ['UPDATE "%s" SET' % self._table]
+                    current_query.append(', '.join(param_dict['update_list']))
+                    current_query.append('WHERE id = %s')
+                    param_dict['param_list'].append(id)
+                    final_query = ' '.join(current_query)
+                    cr.execute(final_query, tuple(param_dict['param_list']))
         return True
 
     #
@@ -4085,7 +4473,7 @@ class orm(orm_template):
         :return: the query expressing the given domain as provided in domain
         :rtype: osv.query.Query
         """
-        if not context:
+        if context is None:
             context = {}
         domain = domain[:]
         # if the object has a field named 'active', filter out all inactive
@@ -4172,7 +4560,10 @@ class orm(orm_template):
 
         # figure out the applicable order_by for the m2o
         dest_model = self.pool.get(order_field_column._obj)
-        m2o_order = dest_model._order
+        if order_field_column.m2o_order:
+            m2o_order = order_field_column.m2o_order
+        else:
+            m2o_order = dest_model._order
         if not regex_order.match(m2o_order):
             # _order is complex, can't use it here, so we default to _rec_name
             m2o_order = dest_model._rec_name
@@ -4291,19 +4682,27 @@ class orm(orm_template):
         query = self._where_calc(cr, user, args, context=context)
         self._apply_ir_rules(cr, user, query, 'read', context=context)
         order_by, from_order_clause = self._generate_order_by(order, query, context=context)
-        from_clause, where_clause, where_clause_params = query.get_sql()
+        if order == 'NO_ORDER':
+            order_by=''
+        else:
+            order_by = self._generate_order_by(order, query)
 
+        from_clause, where_clause, where_clause_params = query.get_sql()
         from_clause = from_clause + ' '.join(from_order_clause)
 
-        limit_str = limit and ' limit %d' % limit or ''
-        offset_str = offset and ' offset %d' % offset or ''
+        limit_str = limit and ' LIMIT %d' % limit or ''
+        offset_str = offset and ' OFFSET %d' % offset or ''
         where_str = where_clause and (" WHERE %s" % where_clause) or ''
 
         if count:
-            cr.execute('SELECT count("%s".id) FROM ' % self._table + from_clause + where_str + limit_str + offset_str, where_clause_params)
+            count_query = ''.join(('SELECT COUNT("%s".id) FROM ' % self._table,
+                                   from_clause, where_str, limit_str, offset_str))
+            cr.execute(count_query, where_clause_params)
             res = cr.fetchall()
             return res[0][0]
-        cr.execute('SELECT "%s".id FROM ' % self._table + from_clause + where_str + order_by + limit_str + offset_str, where_clause_params)
+        select_query = ''.join(('SELECT "%s".id FROM ' % self._table,
+                                from_clause, where_str, order_by,limit_str, offset_str))
+        cr.execute(select_query, where_clause_params)
         res = cr.fetchall()
         return [x[0] for x in res]
 
@@ -4450,13 +4849,14 @@ class orm(orm_template):
                     trans_name = self._inherit_fields[field_name][0] + "," + field_name
                 if trans_name:
                     trans_ids = trans_obj.search(cr, uid, [
-                            ('name', '=', trans_name),
-                            ('res_id', '=', old_id)
-                    ])
+                        ('name', '=', trans_name),
+                        ('res_id', '=', old_id)
+                    ], order='NO_ORDER')
                     translation_records.extend(trans_obj.read(cr, uid, trans_ids, context=context))
 
         for record in translation_records:
             del record['id']
+            del record['xml_id']
             record['res_id'] = new_id
             trans_obj.create(cr, uid, record, context=context)
 
@@ -4492,9 +4892,9 @@ class orm(orm_template):
 
     def check_recursion(self, cr, uid, ids, context=None, parent=None):
         warnings.warn("You are using deprecated %s.check_recursion(). Please use the '_check_recursion()' instead!" % \
-                        self._name, DeprecationWarning, stacklevel=3)
+                      self._name, DeprecationWarning, stacklevel=3)
         assert parent is None or parent in self._columns or parent in self._inherit_fields,\
-                    "The 'parent' parameter passed to check_recursion() must be None or a valid field name"
+            "The 'parent' parameter passed to check_recursion() must be None or a valid field name"
         return self._check_recursion(cr, uid, ids, context, parent)
 
     def _check_recursion(self, cr, uid, ids, context=None, parent=None):
@@ -4570,6 +4970,35 @@ class orm(orm_template):
             else:
                 results[k] = ''
         return results
+
+    def is_linked(self, cr, uid, ids):
+        if not ids:
+            return False
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # get fk constaint names that point to self._table
+        cr.execute("""
+            SELECT ccu.constraint_name
+            FROM information_schema.constraint_column_usage ccu
+            WHERE ccu.table_name = %s AND ccu.table_catalog = %s""", (self._table, cr.dbname))
+        constraints = cr.fetchall()
+
+        # get table and column names
+        cr.execute("""
+            SELECT kcu.column_name, kcu.table_name
+            FROM information_schema.key_column_usage kcu
+            WHERE kcu.table_catalog = %s AND kcu.constraint_name IN %s""", (cr.dbname, tuple([x[0] for x in constraints])))
+        for column, table in cr.fetchall():
+            if table == self._table:
+                continue
+            cr.execute("""SELECT count(id) FROM %s WHERE %s IN %%s""" % (table, column), (tuple(ids),))
+            res = cr.fetchall()
+            if res[0][0]:
+                return True
+
+        return False
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

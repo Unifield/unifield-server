@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="cheque_from_registers_tree" model="ir.ui.view">
+            <field name="name">account.move.line.from.cheque.lines.tree</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="17" />
+            <field name="arch" type="xml">
+                <tree string="Account Entry Lines" noteditable="1" editable="top">
+                    <field name="cheque_number"/>
+                    <field name="invoice"/>
+                    <field name="name"/>
+                    <field name="supplier_invoice_ref"/>
+                    <field name="account_id"/>
+                    <field name="partner_txt"/>
+                    <field name="date"/>
+                    <field name="date_maturity"/>
+                    <field name="amount_to_pay"/>
+                    <field name="amount_currency"/>
+                    <field name="currency_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="import_cheque_on_registers_lines" model="ir.ui.view">
+            <field name="name">import.cheque.on.registers.lines.form</field>
+            <field name="model">wizard.import.cheque</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Entries">
+                    <group colspan="4" expand="1">
+                        <separator string="Payable and Receivables" colspan="4"/>
+                        <field name="line_ids"
+                            domain="[('journal_id', '=', journal_id),
+                            ('currency_id', '=', currency_id), ('reconcile_id', '=', False), ('is_cheque', '=', True),
+                            ('from_import_cheque_id', '=', False), ('move_id.state', '=', 'posted')]"
+                            context="{'from': 'wizard_import_cheque'}" nolabel="1" colspan="4"/>
+                        <newline/>
+                    </group>
+                    <group colspan="4" col="6">
+                        <field name="document_date"/>
+                        <field name="date"/>
+                        <button icon="gtk-execute" string="Import" name="action_import" type="object" states="draft,open"/>
+                    </group>
+                    <separator string="" colspan="6"/>
+                    <field name="imported_lines_ids" colspan="4" nolabel="1"
+                        attrs="{'required': [('state', '=', 'open')], 'readonly': [('state', '=', 'draft')]}">
+                        <tree editable="bottom" hide_new_button="1">
+                            <field name="cheque_number"/>
+                            <field name="ref"/>
+                            <field name="supplier_ref"/>
+                            <field name="account_id"/>
+                            <field name="partner_txt"/>
+                            <field name="document_date"/>
+                            <field name="date"/>
+                            <field name="date_maturity"/>
+                            <field name="amount_to_pay"/>
+                            <field name="amount_currency"/>
+                            <field name="currency_id"/>
+                        </tree>
+                    </field>
+                    <group colspan="4" col="6">
+                        <label string ="" colspan="2"/>
+                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                        <button icon="gtk-ok" string="Ok" name="action_confirm" type="object" attrs="{'readonly': [('state', '=', 'draft')]}"/>
+                   </group>
+                   <field name="currency_id" invisible="1"/>
+                   <field name="period_id" invisible="1"/>
+                   <field name="journal_id" invisible="1"/>
+                   <field name="state" invisible="1"/>
+               </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

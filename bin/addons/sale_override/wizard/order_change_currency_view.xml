@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        
+        <record id="sale_order_change_currency_view" model="ir.ui.view">
+            <field name="name">sale.order.change.currency.view</field>
+            <field name="model">sale.order.change.currency</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Change currency of the order">
+                    <field name="order_id" invisible="1" />
+                    <field name="partner_id" invisible="1" />
+                    <field name="partner_type" invisible="1" />
+                    <field name="old_pricelist_id" readonly="1" />
+                    <field name="currency_rate" readonly="1" />
+                    <field name="new_pricelist_id" required="1"
+                            domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" 
+                            on_change="currency_change(old_pricelist_id, new_pricelist_id)" />
+                    <separator colspan="4" />
+                    <button special="cancel" string="Close" icon="gtk-cancel" colspan="1" />
+                    <button name="apply_to_lines" string="Apply to lines" icon="gtk-execute" type="object" colspan="3" />
+                </form>
+            </field>
+        </record>
+        
+    </data>
+</openerp>

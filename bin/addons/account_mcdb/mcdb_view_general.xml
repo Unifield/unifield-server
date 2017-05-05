@@ -1,0 +1,34 @@
+                    <separator string="General" colspan="4"/>
+                    <field name="description" colspan="4"/>
+                    <field name="analytic_axis" attrs="{'invisible': [('model', '=', 'account.move.line')], 'required': [('model', '=', 'account.analytic.line')]}" colspan="4" on_change="onchange_analytic_axis(analytic_axis)"/>
+                    <separator string="Instances" colspan="3"/>
+                    <field name="display_instance" colspan="1" nolabel="1"/>
+                    <group col="4" colspan="4" attrs="{'invisible': [('display_instance', '=', False)]}">
+                            <group col="4" colspan="4">
+                                <button name="button_instance_clear" type="object" string="Remove all Instances" icon="gtk-clear" colspan="2"/>
+                                <button name="button_instance_add" type="object" string="Add all Instances" icon="gtk-add" colspan="2"/>
+                            </group>
+                            <field name="rev_instance_ids" colspan="4"/>
+                            <field name="instance_ids" colspan="4" nolabel="1" domain="[('instance_to_display_ids','=',True)]">
+                                <tree string="Proprietary Instances">
+                                    <field name="code"/>
+                                    <field name="name"/>
+                                </tree>
+                            </field>
+                    </group>
+                    <group colspan="2" col="2">
+                        <html>
+                            <br />
+                        </html>
+                    </group>
+                    <separator string="" colspan="4"/>
+                    <group colspan="2" col="2">
+                        <field name="document_date_from" string="Document date"/>
+                        <field name="posting_date_from" string="Posting date"/>
+                        <field name="document_code"/>
+                    </group>
+                    <group colspan="2" col="2">
+                        <field name="document_date_to" string="to"/>
+                        <field name="posting_date_to" string="to"/>
+                        <field name="document_state" colspan="1" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
+                    </group>

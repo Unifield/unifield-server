@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="spreadsheet_xml_examples.simple_template_xls"
+            string="Simple Report"
+            model="product.product"
+            name="spreadsheet.simple_template_xls"
+            report_type="webkit"
+            menu="True"
+            />
+
+        <report
+            id="spreadsheet_xml_examples.custom_xls"
+            string="Custom Report"
+            model="product.product"
+            name="spreadsheet.custom_xls"
+            report_type="webkit"
+            file="spreadsheet_xml_examples/report/custom.mako"
+            menu="True"
+            />
+
+    </data>
+</openerp>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="sync_server_message_rule_form_view_rw">
+            <field name="name">message_rule.form.rw</field>
+            <field name="model">sync_server.message_rule</field>
+            <field name="inherit_id" ref="sync_server.message_rule_form_view" />
+            <field name="arch" type="xml">
+            
+            	<field name="destination_name" position="replace">
+                	<field name="destination_name" attrs="{'invisible': [('type_id.name', '=', 'USB')]}" />
+                	<field name="direction_usb" attrs="{'invisible': [('type_id.name', '!=', 'USB')]}" />
+                </field>
+            
+            </field>
+        </record>
+        
+    </data>
+</openerp>
+

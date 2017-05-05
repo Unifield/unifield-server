@@ -48,6 +48,16 @@ class ir_ui_menu(osv.osv):
         # radical but this doesn't frequently happen
         self._cache = {}
 
+    @tools.read_cache(prefetch=[], context=['lang', 'client', 'tz', 'department_id', 'active_model', '_terp_view_name', 'active_ids', 'active_id'], timeout=8000, size=2000)
+    def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
+        ret = super(ir_ui_menu, self)._read_flat(cr, user, ids, fields_to_read, context, load)
+        return ret
+
+    def _clean_cache(self, dbname):
+        super(ir_ui_menu, self)._clean_cache(dbname)
+        # radical but this doesn't frequently happen
+        self._read_flat.clear_cache(dbname)
+
     def _filter_visible_menus(self, cr, uid, ids, context=None):
         """Filters the give menu ids to only keep the menu items that should be
            visible in the menu hierarchy of the current user.
@@ -84,7 +94,7 @@ class ir_ui_menu(osv.osv):
                                     'ir.actions.report.xml':    'model',
                                     'ir.actions.wizard':        'model',
                                     'ir.actions.server':        'model_id',
-                                  }
+                                    }
 
                     field = model_field.get(menu.action._name)
                     if field and data[field]:
@@ -106,7 +116,7 @@ class ir_ui_menu(osv.osv):
             context = {}
 
         ids = super(ir_ui_menu, self).search(cr, uid, args, offset=0,
-            limit=None, order=order, context=context, count=False)
+                                             limit=None, order=order, context=context, count=False)
 
         if not ids:
             if count:
@@ -170,7 +180,7 @@ class ir_ui_menu(osv.osv):
         ids = ir_values_obj.search(cr, uid, [
             ('model', '=', 'ir.ui.menu'),
             ('res_id', '=', id),
-            ])
+        ])
         for iv in ir_values_obj.browse(cr, uid, ids):
             ir_values_obj.copy(cr, uid, iv.id, default={'res_id': res},
                                context=context)
@@ -203,7 +213,7 @@ class ir_ui_menu(osv.osv):
             context=context)
         if values_ids:
             values_obj.write(cursor, user, values_ids, {'value': value},
-                    context=ctx)
+                             context=ctx)
         else:
             values_obj.create(cursor, user, {
                 'name': 'Menuitem',
@@ -213,7 +223,7 @@ class ir_ui_menu(osv.osv):
                 'key': 'action',
                 'key2': 'tree_but_open',
                 'res_id': menu_id,
-                }, context=ctx)
+            }, context=ctx)
 
     def _get_icon_pict(self, cr, uid, ids, name, args, context):
         res = {}
@@ -254,14 +264,15 @@ class ir_ui_menu(osv.osv):
 
     _columns = {
         'name': fields.char('Menu', size=64, required=True, translate=True),
+        'active': fields.boolean(string='Active'),
         'sequence': fields.integer('Sequence'),
         'child_id' : fields.one2many('ir.ui.menu', 'parent_id','Child IDs'),
         'parent_id': fields.many2one('ir.ui.menu', 'Parent Menu', select=True),
         'groups_id': fields.many2many('res.groups', 'ir_ui_menu_group_rel',
-            'menu_id', 'gid', 'Groups', help="If you have groups, the visibility of this menu will be based on these groups. "\
-                "If this field is empty, OpenERP will compute visibility based on the related object's read access."),
+                                      'menu_id', 'gid', 'Groups', help="If you have groups, the visibility of this menu will be based on these groups. "\
+                                      "If this field is empty, OpenERP will compute visibility based on the related object's read access."),
         'complete_name': fields.function(_get_full_name, method=True,
-            string='Complete Name', type='char', size=128),
+                                         string='Complete Name', type='char', size=128),
         'icon': fields.selection(tools.icons, 'Icon', size=64),
         'icon_pict': fields.function(_get_icon_pict, method=True, type='char', size=32),
         'web_icon': fields.char('Web Icon File', size=128),
@@ -269,14 +280,14 @@ class ir_ui_menu(osv.osv):
         'web_icon_data': fields.function(_get_image_icon, string='Web Icon Image', type='binary', method=True, readonly=True, store=True, multi='icon'),
         'web_icon_hover_data':fields.function(_get_image_icon, string='Web Icon Image (hover)', type='binary', method=True, readonly=True, store=True, multi='icon'),
         'action': fields.function(_action, fnct_inv=_action_inv,
-            method=True, type='reference', string='Action',
-            selection=[
-                ('ir.actions.report.xml', 'ir.actions.report.xml'),
-                ('ir.actions.act_window', 'ir.actions.act_window'),
-                ('ir.actions.wizard', 'ir.actions.wizard'),
-                ('ir.actions.url', 'ir.actions.url'),
-                ('ir.actions.server', 'ir.actions.server'),
-            ]),
+                                  method=True, type='reference', string='Action',
+                                  selection=[
+                                      ('ir.actions.report.xml', 'ir.actions.report.xml'),
+                                      ('ir.actions.act_window', 'ir.actions.act_window'),
+                                      ('ir.actions.wizard', 'ir.actions.wizard'),
+                                      ('ir.actions.url', 'ir.actions.url'),
+                                      ('ir.actions.server', 'ir.actions.server'),
+                                  ]),
     }
 
     def _rec_message(self, cr, uid, ids, context=None):
@@ -289,6 +300,7 @@ class ir_ui_menu(osv.osv):
         'icon' : 'STOCK_OPEN',
         'icon_pict': ('stock', ('STOCK_OPEN','ICON_SIZE_MENU')),
         'sequence' : 10,
+        'active': lambda *a: True,
     }
     _order = "sequence,id"
 ir_ui_menu()

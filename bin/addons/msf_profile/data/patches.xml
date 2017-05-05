@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="remove_not_synchronized_data" model="patch.scripts">
+            <field name="method">remove_not_synchronized_data</field>
+        </record>
+
+        <record id="us_2110_patch" model="patch.scripts">
+            <field name="method">us_2110_patch</field>
+        </record>
+
+        <record id="setup_security_on_sync_server" model="patch.scripts">
+            <field name="method">setup_security_on_sync_server</field>
+        </record>
+
+        <record id="us_1613" model="patch.scripts">
+            <field name="method">us_1613_remove_all_track_changes_action</field>
+        </record>
+
+        <record id="us_2068" model="patch.scripts">
+            <field name="method">us_2068_remove_updated_linked_to_activate_instance</field>
+        </record>
+
+        <record id="us_1482" model="patch.scripts">
+            <field name="method">us_1482_fix_default_code_on_msf_lines</field>
+        </record>
+
+        <record id="us_1381" model="patch.scripts">
+            <field name="method">us_1381_encrypt_passwords</field>
+        </record>
+
+        <record id="us_1610" model="patch.scripts">
+            <field name="method">us_1610_set_oc_on_all_groups</field>
+        </record>
+
+        <record id="us_1725" model="patch.scripts">
+            <field name="method">us_1725_force_sync_on_hr_employee</field>
+        </record>
+
+        <record id="us_1388" model="patch.scripts">
+            <field name="method">us_1388_change_sequence_implementation</field>
+        </record>
+
+        <record id="us_963" model="patch.scripts">
+            <field name="method">update_us_963_negative_rule_seq</field>
+        </record>
+
+        <record id="another_translation_fix" model="patch.scripts">
+            <field name="method">another_translation_fix</field>
+        </record>
+
+        <record id="another_other_translation_fix" model="patch.scripts">
+            <field name="method">another_other_translation_fix</field>
+        </record>
+
+        <record id="another_other_translation_fix_bis" model="patch.scripts">
+            <field name="method">another_other_translation_fix_bis</field>
+        </record>
+
+        <record id="us_993_patch" model="patch.scripts">
+            <field name="method">us_993_patch</field>
+        </record>
+
+        <record id="us_918_patch" model="patch.scripts">
+            <field name="method">us_918_patch</field>
+        </record>
+
+        <record id="us_1030_create_pricelist_patch" model="patch.scripts">
+            <field name="method">us_1030_create_pricelist_patch</field>
+        </record>
+
+        <record id="us_750_patch" model="patch.scripts">
+            <field name="method">us_750_patch</field>
+        </record>
+
+        <record id="uftp_144_patch" model="patch.scripts">
+            <field name="method">uftp_144_patch</field>
+        </record>
+
+        <record id="update_volume_patch" model="patch.scripts">
+            <field name="method">update_volume_patch</field>
+        </record>
+
+        <record id="clean_far_updates" model="patch.scripts">
+            <field name="method">clean_far_updates</field>
+        </record>
+
+        <record id="us_1185_patch" model="patch.scripts">
+            <field name="method">us_1185_patch</field>
+        </record>
+
+        <record id="us_1263_patch" model="patch.scripts">
+            <field name="method">us_1263_patch</field>
+        </record>
+
+        <record id="us-1273_patch" model="patch.scripts">
+            <field name="method">us_1273_patch</field>
+        </record>
+
+        <record id="us_838_patch" model="patch.scripts">
+            <field name="method">us_838_migrate_dup_batch</field>
+            <field name="model">stock.production.lot</field>
+        </record>
+
+        <record id="us_1024_send_bar_patch" model="patch.scripts">
+            <field name="method">us_1024_send_bar_patch</field>
+        </record>
+
+        <record id="us_1297_patch" model="patch.scripts">
+            <field name="method">us_1297_patch</field>
+        </record>
+
+        <record id="us_1427_patch" model="patch.scripts">
+            <field name="method">us_1427_patch</field>
+        </record>
+
+        <record id="us_1452_patch" model="patch.scripts">
+            <field name="method">us_1452_patch</field>
+        </record>
+
+        <record id="us_1469_patch" model="patch.scripts">
+            <field name="method">us_1469_restore_deleted_batch</field>
+            <field name="model">stock.production.lot</field>
+        </record>
+
+        <record id="us_1430_patch" model="patch.scripts">
+            <field name="method">us_1430_patch</field>
+        </record>
+
+        <record id="sync_down_msfid" model="patch.scripts">
+            <field name="method">sync_down_msfid</field>
+        </record>
+
+        <record id="us_1421_lower_login" model="patch.scripts">
+            <field name="method">us_1421_lower_login</field>
+        </record>
+
+        <record id="us_1558_trans_admin_fr" model="patch.scripts">
+            <field name="method">us_trans_admin_fr</field>
+        </record>
+
+        <record id="us_1732_sync_state_ud" model="patch.scripts">
+            <field name="method">us_1732_sync_state_ud</field>
+        </record>
+
+        <record id="us_1766_fix_fxa_aji_curr" model="patch.scripts">
+            <field name="method">us_1766_fix_fxa_aji_curr</field>
+        </record>
+
+        <record id="us_635_dest_partner_ids" model="patch.scripts">
+            <field name="method">us_635_dest_partner_ids</field>
+        </record>
+
+        <record id="us_1671_stopped_products" model="patch.scripts">
+            <field name="method">us_1671_stopped_products</field>
+        </record>
+
+        <record id="us_1167_status_inconsistencies" model="patch.scripts">
+            <field name="method">us_1167_status_inconsistencies</field>
+        </record>
+
+        <record id="us_2075_partner_locally_created" model="patch.scripts">
+            <field name="method">us_2075_partner_locally_created</field>
+        </record>
+
+        <record id="us_1721_dates_on_products" model="patch.scripts">
+            <field name="method">us_1721_dates_on_products</field>
+        </record>
+
+        <record id="us_1359_update_move_shipment" model="patch.scripts">
+            <field name="method">us_1359_update_move_shipment</field>
+        </record>
+
+        <record id="us_2815_remove_null_in_comment" model="patch.scripts">
+            <field name="method">us_2815_remove_null_in_comment</field>
+        </record>
+    </data>
+</openerp>

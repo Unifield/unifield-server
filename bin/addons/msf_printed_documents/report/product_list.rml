@@ -1,0 +1,295 @@
+<?xml version="1.0" ?>
+<document filename="product_list.pdf">
+
+    <template pageSize="(842.0,595.0)" title="Product List / Sub-List" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="30.0" y1="0.0" width="772" height="530" />
+
+        <pageGraphics>
+            <image x="17" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <setFont name="Helvetica" size="8"/>
+            <fill color="black"/>
+        </pageGraphics>
+
+    </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <blockTableStyle id="OrderInformations">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="0,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="4,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="6,0" stop="6,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="8,0" stop="8,-1" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle0">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="2.0" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="2.0" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="2.0" />
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="2.0" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle2">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="2.0" />
+        </blockTableStyle>
+
+
+        <blockTableStyle id="ItemsTitle3">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="1.0" />
+        </blockTableStyle>
+
+
+
+
+        <blockTableStyle id="LinesTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="black" start="0,0" stop="0,0" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" start="-1,0" stop="-1,0" thickness="0.5" />
+        </blockTableStyle>
+        <blockTableStyle id="LinesTableEnd">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="0,0" stop="-1,-1" thickness="0.5" />
+        </blockTableStyle>
+        <blockTableStyle id="RemarkTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+        <blockTableStyle id="StatusTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="GRID" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+        <initialize>
+            <paraStyle name="all" alignment="justify"/>
+        </initialize>
+
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+        
+		<!-- Header font style -->
+        <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
+        <paraStyle name="Header_9" fontName="Helvetica-Bold" fontSize="8.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
+        <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
+		<!-- Information font style -->
+
+        <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation2" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" textColor="blue"/>
+
+        <paraStyle name="TextInformation3" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation3gras" fontName="Helvetica-Bold" fontSize="8.0" alignment="LEFT" leading="10.0" spaceBefore="1.0" spaceAfter="1.0" />
+
+        <!-- Lines font style -->
+        <paraStyle name="Lines" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" />
+
+        <paraStyle name="GrosTitre" fontName="Helvetica-Bold" fontSize="12.0" leading="15.0" alignement="CENTER" />
+    </stylesheet>
+
+    <story>
+
+        <para style="Standard">[[ getInstanceAdress(company) ]]</para>
+
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+
+
+        <blockTable colWidths="800.0" style="ItemsTitle">
+            <tr>
+                <td>
+                    <para style="GrosTitre" alignment="CENTER"><b>PRODUCT LIST / SUB-LIST</b></para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="800.0" style="ItemsTitle2">
+            <tr><td><para style="GrosTitre" alignment="CENTER"></para></td></tr>
+        </blockTable>
+
+
+
+        <blockTable colWidths="100.0,180.0,130.0,390.0" style="ItemsTitle0">
+            <tr>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+
+            </tr>
+
+            <tr>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"><b>List Type :</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT">[[  getType(objects[0]) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"><b>Created on :</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT">[[ getDateCrea(objects[0]) ]]</para>
+                </td>
+
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"><b>Name :</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT">[[ objects[0].name or False ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"><b>Last modified on :</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT">[[ getDateModif(objects[0]) ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"><b>Reference :</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT">[[ objects[0].ref or False ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"><b>Warehouse :</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT">[[ objects[0].warehouse_id and objects[0].warehouse_id.name or False ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"><b>Parent List :</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT">[[ objects[0].parent_id and objects[0].parent_id.name or False]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"><b>Location :</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT">[[ objects[0].location_id and objects[0].location_id.name or False ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+        <blockTable colWidths="800.0" style="ItemsTitle0">
+            <tr><td><para style="GrosTitre" alignment="CENTER"></para></td></tr>
+        </blockTable>
+        <blockTable colWidths="800.0" style="ItemsTitle0">
+            <tr><td><para style="GrosTitre" alignment="CENTER"></para></td></tr>
+        </blockTable>
+        <blockTable colWidths="800.0" style="ItemsTitle0">
+            <tr><td><para style="GrosTitre" alignment="CENTER"></para></td></tr>
+        </blockTable>
+
+
+        <blockTable colWidths="800.0" style="ItemsTitle3">
+            <tr>
+                <td>
+                    <para style="TextInformation3gras" alignment="LEFT">Products</para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+        <section>
+        <blockTable colWidths="100.0,350.0,350.0" style="ItemsTitle0" repeatRows="1">
+
+            <tr>
+                <td>
+                    <para style="TextInformation3gras" alignment="LEFT">Ref.</para>
+                </td>
+                <td>
+                    <para style="TextInformation3gras" alignment="LEFT">Name</para>
+                </td>
+                <td>
+                    <para style="TextInformation3gras" alignment="LEFT">Comment</para>
+                </td>
+            </tr>
+
+
+            <tr>
+           [[ repeatIn(get_lines(objects[0]), 'line') ]]
+                <td>
+                    <para style="TextInformation3" alignment="LEFT">[[ line.name and line.name.default_code or False ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation3" alignment="LEFT">[[ line.name and line.name.name or False ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation3" alignment="LEFT">[[ line.comment or False ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+        </section>
+
+
+
+
+
+    </story>
+</document>

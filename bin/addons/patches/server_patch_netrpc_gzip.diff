@@ -1,0 +1,156 @@
+=== modified file 'bin/service/netrpc_server.py'
+--- bin/service/netrpc_server.py	2011-01-18 23:50:33 +0000
++++ bin/service/netrpc_server.py	2011-09-08 22:58:33 +0000
+@@ -35,7 +35,7 @@
+ import tools
+ 
+ class TinySocketClientThread(threading.Thread, netsvc.OpenERPDispatcher):
+-    def __init__(self, sock, threads):
++    def __init__(self, sock, threads, is_gzip):
+         spn = sock and sock.getpeername()
+         spn = 'netrpc-client-%s:%s' % spn[0:2]
+         threading.Thread.__init__(self, name=spn)
+@@ -44,6 +44,7 @@
+         # clients connection when they're idle for 20min.
+         self.sock.settimeout(1200)
+         self.threads = threads
++        self.is_gzip = is_gzip
+ 
+     def __del__(self):
+         if self.sock:
+@@ -58,7 +59,7 @@
+     def run(self):
+         self.running = True
+         try:
+-            ts = tiny_socket.mysocket(self.sock)
++            ts = tiny_socket.mysocket(self.sock, self.is_gzip)
+         except Exception:
+             self.threads.remove(self)
+             self.running = False
+@@ -101,7 +102,7 @@
+ 
+ 
+ class TinySocketServerThread(threading.Thread,netsvc.Server):
+-    def __init__(self, interface, port, secure=False):
++    def __init__(self, interface, port, secure=False, is_gzip=False):
+         threading.Thread.__init__(self, name="NetRPCDaemon-%d"%port)
+         netsvc.Server.__init__(self)
+         self.__port = port
+@@ -113,6 +114,7 @@
+         self.threads = []
+         netsvc.Logger().notifyChannel("web-services", netsvc.LOG_INFO, 
+                          "starting NET-RPC service at %s port %d" % (interface or '0.0.0.0', port,))
++        self.is_gzip = is_gzip
+ 
+     def run(self):
+         try:
+@@ -122,7 +124,7 @@
+                 if not fd_sets[0]:
+                     continue
+                 (clientsocket, address) = self.socket.accept()
+-                ct = TinySocketClientThread(clientsocket, self.threads)
++                ct = TinySocketClientThread(clientsocket, self.threads, self.is_gzip)
+                 clientsocket = None
+                 self.threads.append(ct)
+                 ct.start()
+@@ -162,7 +164,9 @@
+ 
+ def init_servers():
+     global netrpcd
+-    if tools.config.get('netrpc', False):
++    if tools.config.get('netrpc', False) or tools.config.get('netrpc_gzip', False):
+         netrpcd = TinySocketServerThread(
+             tools.config.get('netrpc_interface', ''), 
+-            int(tools.config.get('netrpc_port', 8070)))
++            int(tools.config.get('netrpc_port', 8070)),
++            is_gzip=tools.config.get('netrpc_gzip'),
++        )
+
+=== modified file 'bin/tiny_socket.py'
+--- bin/tiny_socket.py	2011-01-18 23:52:38 +0000
++++ bin/tiny_socket.py	2011-09-08 23:10:19 +0000
+@@ -22,7 +22,9 @@
+ import socket
+ import cPickle
+ import cStringIO
+-import marshal
++
++import zlib
++GZIP_MAGIC = '\x78\xda' # magic when max compression used
+ 
+ class Myexception(Exception):
+     """
+@@ -39,7 +41,7 @@
+ 
+ class mysocket:
+ 
+-    def __init__(self, sock=None):
++    def __init__(self, sock=None, is_gzip=False):
+         if sock is None:
+             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+         else:
+@@ -48,6 +50,7 @@
+         # prepare this socket for long operations: it may block for infinite
+         # time, but should exit as soon as the net is down
+         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
++        self.is_gzip = is_gzip
+         
+     def connect(self, host, port=False):
+         if not port:
+@@ -61,6 +64,8 @@
+         
+     def mysend(self, msg, exception=False, traceback=None):
+         msg = cPickle.dumps([msg,traceback])
++        if self.is_gzip:
++            msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
+         self.sock.sendall('%8d%s%s' % (len(msg), exception and "1" or "0", msg))
+             
+     def myreceive(self):
+@@ -82,6 +87,8 @@
+             if not chunk:
+                 raise socket.timeout
+             msg = msg + chunk
++        if msg.startswith(GZIP_MAGIC):
++            msg = zlib.decompress(msg)
+         msgio = cStringIO.StringIO(msg)
+         unpickler = cPickle.Unpickler(msgio)
+         unpickler.find_global = None
+
+=== modified file 'bin/tools/config.py'
+--- bin/tools/config.py	2011-05-17 05:54:43 +0000
++++ bin/tools/config.py	2011-09-08 22:17:09 +0000
+@@ -54,7 +54,8 @@
+             'db_maxconn': 64,
+             'reportgz': False,
+             'netrpc': True,
++            'netrpc_gzip': False,
+             'xmlrpc': True,
+             'xmlrpcs': True,
+             'translate_in': None,
+             'translate_out': None,
+@@ -138,6 +141,7 @@
+         group.add_option("--netrpc-interface", dest="netrpc_interface", help="specify the TCP IP address for the NETRPC protocol")
+         group.add_option("--netrpc-port", dest="netrpc_port", help="specify the TCP port for the NETRPC protocol", type="int")
+         group.add_option("--no-netrpc", dest="netrpc", action="store_false", help="disable the NETRPC protocol")
++        group.add_option("--netrpc-gzip", dest="netrpc_gzip", action="store_true", help="enable gzipping the NETRPC protocol")
+         parser.add_option_group(group)
+ 
+         # Static HTTP
+@@ -290,11 +294,15 @@
+         if self.options['pidfile'] in ('None', 'False'):
+             self.options['pidfile'] = False
+ 
++        if opt.netrpc_gzip:
++            # gzip prevails over standard
++            opt.netrpc = False
++
+         keys = ['xmlrpc_interface', 'xmlrpc_port', 'db_name', 'db_user', 'db_password', 'db_host',
+                 'db_port', 'logfile', 'pidfile', 'smtp_port', 'cache_timeout',
+                 'email_from', 'smtp_server', 'smtp_user', 'smtp_password',
+                 'netrpc_interface', 'netrpc_port', 'db_maxconn', 'import_partial', 'addons_path',
+-                'netrpc', 'xmlrpc', 'syslog', 'without_demo', 'timezone',
++                'netrpc', 'netrpc_gzip', 'xmlrpc', 'syslog', 'without_demo', 'timezone',
+                 'xmlrpcs_interface', 'xmlrpcs_port', 'xmlrpcs',
+                 'secure_cert_file', 'secure_pkey_file',
+                 'static_http_enable', 'static_http_document_root', 'static_http_url_prefix'
+

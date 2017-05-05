@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!--<record id="unconsistent_stock_report_tree_view" model="ir.ui.view">-->
+            <!--<field name="name">unconsistent.stock.report.tree.view</field>-->
+            <!--<field name="model">unconsistent.stock.report</field>-->
+            <!--<field name="type">tree</field>-->
+            <!--<field name="arch" type="xml">-->
+                <!--<tree string="Stock reports">-->
+                    <!--<field name="name" />-->
+                <!--</tree>-->
+            <!--</field>-->
+        <!--</record>-->
+
+        <record id="unconsistent_stock_report_form_view" model="ir.ui.view">
+            <field name="name">unconsistent.stock.report.form.view</field>
+            <field name="model">unconsistent.stock.report</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Product Inconsistencies Report generation">
+                    <field name="name" invisible="1" />
+                    <button name="generate_report" string="Generate report" icon="gtk-execute" type="object" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <record id="action_unconsistent_stock_report" model="ir.actions.act_window">
+            <field name="name">Product Inconsistencies Report</field>
+            <field name="res_model">unconsistent.stock.report</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem
+            id="menu_unconsistent_stock_report"
+            parent="object_query.menu_preferences"
+            sequence="50"
+            action="action_unconsistent_stock_report" />
+
+        <!-- Make a cron to remove lines from old reports -->
+        <record forcecreate="True" id="ir_cron_remove_unconsistent_line" model="ir.cron">
+            <field name="name">Delete Unconsistent report lines</field>
+            <field name="active" eval="True" />
+            <field name="user_id" ref="base.user_root" />
+            <field name="interval_number">12</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False" />
+            <field name="model" eval="'unconsistent.stock.report'" />
+            <field name="function" eval="'delete_unused_lines'" />
+            <field name="args" eval="'(False,)'" />
+        </record>
+
+    </data>
+</openerp>

@@ -1,0 +1,4 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_account_bank_statement_line","account.bank.statement.line","model_account_bank_statement_line",,1,1,1,1
+"access_wizard_account_invoice_all","wizard.account.invoice","model_wizard_account_invoice",,1,1,1,1
+"access_wizard_account_invoice_line_all","wizard.account.invoice.line","model_wizard_account_invoice_line",,1,1,1,1

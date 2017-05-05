@@ -80,10 +80,11 @@ def _get_opcodes(codeobj):
     """
     i = 0
     opcodes = []
+    opcodes_append = opcodes.append
     byte_codes = codeobj.co_code
     while i < len(byte_codes):
         code = ord(byte_codes[i])
-        opcodes.append(code)
+        opcodes_append(code)
         if code >= HAVE_ARGUMENT:
             i += 3
         else:

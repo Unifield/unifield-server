@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+  <data>
+    <record model="ir.ui.view" id="syncback_config_tree_view">
+      <field name="name">sync.backup.config.tree</field>
+      <field name="model">backup.config</field>
+      <field name="type">tree</field>
+      <field name="arch" type="xml">
+        <tree string="Backup Tree" hide_new_button="1" hide_delete_button="1" >
+          <field name="name"/>
+          <field name="beforemanualsync"/>
+          <field name="beforeautomaticsync"/>
+          <field name="aftermanualsync"/>
+          <field name="afterautomaticsync"/>
+          <field name="beforepatching"/>
+          <field name="scheduledbackup"/>
+        </tree>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="syncback_config_form_view">
+      <field name="name">sync.backup.config.form</field>
+      <field name="model">backup.config</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form string="Backup configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+            <group col="6" colspan="6">
+            <field name="name"/>
+            </group>
+            <group col="4">
+            <field name="beforemanualsync"/>
+            <field name="beforeautomaticsync"/>
+            <field name="aftermanualsync"/>
+            <field name="afterautomaticsync"/>
+            <field name="beforepatching"/>
+            <field name="scheduledbackup"/>
+            </group>
+            <button type="object" string="Backup" name="button_exp_dump" />
+        </form>
+      </field>
+    </record>
+
+        <record id="ir_actions_server_openbackupconfig" model="ir.actions.server">
+            <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'backup_config_default')
+action = {
+'res_model' : 'backup.config',
+'view_type' : 'form',
+'view_mode' : 'form,tree',
+'type': 'ir.actions.act_window',
+'res_id' : res[1],
+}</field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_backup_config"/>
+            <field name="condition">True</field>
+            <field name="name">Open Backup config</field>
+        </record>
+
+
+        <record id="ir_ui_menu_backupconfig" model="ir.ui.menu">
+            <field name="name">Backup config</field>
+            <field name="parent_id" ref="syncback_menu"/>
+            <field name="sequence">25</field>
+        </record>
+
+        <record id="ir_values_menuitem_backupconfig" model="ir.values">
+            <field name="name">Menuitem backup config</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('sync_client.ir_actions_server_openbackupconfig')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('ir_ui_menu_backupconfig')" name="res_id"/>
+        </record>
+
+
+
+        <record id="ir_actions_server_opensyncbackup" model="ir.actions.server">
+            <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'ir_cron_automaticsyncbackup')
+action = {
+'res_model' : 'ir.cron',
+'view_type' : 'form',
+'view_mode' : 'form',
+'type': 'ir.actions.act_window',
+'res_id' : res[1],
+}</field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="base.model_ir_cron"/>
+            <field name="condition">True</field>
+            <field name="name">Open Backup cron</field>
+        </record>
+
+
+        <record id="ir_ui_menu_cron_synchrobackup" model="ir.ui.menu">
+            <field name="name">Automatic</field>
+            <field name="parent_id" ref="syncback_menu"/>
+            <field name="sequence">30</field>
+        </record>
+
+        <record id="ir_values_menuitem_cronbackup" model="ir.values">
+            <field name="name">Menuitem IR CRON</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('ir_actions_server_opensyncbackup')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('ir_ui_menu_cron_synchrobackup')" name="res_id"/>
+        </record>
+
+    <record id="backup_download_tree" model="ir.ui.view">
+      <field name="name">backup.download.tree</field>
+      <field name="model">backup.download</field>
+      <field name="type">tree</field>
+      <field name="arch" type="xml">
+        <tree string="Select a file to download" hide_new_button="1" hide_delete_button="1" hide_edit_button="1">
+          <field name="name"/>
+          <field name="mtime"/>
+          <button type="object" name="get_content" string="Get Content" icon="gtk-go-forward"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="backup_download_form" model="ir.ui.view">
+      <field name="name">backup.download.form</field>
+      <field name="model">backup.download</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form string="Select a file to download" editable="top" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+          <group colspan="4" col="6">
+              <field name="name"/>
+              <field name="mtime"/>
+              <button type="object" name="get_content" string="Get Content" icon="gtk-go-forward"/>
+         </group>
+        </form>
+      </field>
+    </record>
+
+    <record id="backup_download_search" model="ir.ui.view">
+      <field name="name">backup.download.search</field>
+      <field name="model">backup.download</field>
+      <field name="type">search</field>
+      <field name="arch" type="xml">
+        <search>
+          <field name="name"/>
+          <field name="mtime"/>
+        </search>
+      </field>
+    </record>
+
+    <record id="backup_download_open_wiz" model="ir.actions.server">
+        <field name="name">Get dump</field>
+        <field name="model_id" ref="model_backup_download"/>
+        <field name="state">code</field>
+        <field name="code">action = obj.open_wiz()</field>
+    </record>
+
+    <record id="backup_download_menu" model="ir.ui.menu">
+        <field name="name">Get backup files</field>
+        <field name="sequence" eval="50"/>
+        <field name="parent_id" ref="syncback_menu"/>
+        <field name="action" ref="backup_download_open_wiz"/>
+    </record>
+    </data>
+</openerp>

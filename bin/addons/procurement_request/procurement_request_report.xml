@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report 
+            auto="False"
+            id="procurement_request_report"
+            model="sale.order"
+            name="procurement.request.report"
+            rml="addons/procurement_request/report/procurement_request_report.rml"
+            string="Internal Request" />
+
+    </data>
+</openerp>

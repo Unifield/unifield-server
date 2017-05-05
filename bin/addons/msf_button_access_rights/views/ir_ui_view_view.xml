@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!-- ir.ui.view inherit form -->
+        <record model="ir.ui.view" id="base_view_partner_form_msf">
+		    <field name="name">ir.ui.view.form.msf</field>
+		    <field name="model">ir.ui.view</field>
+		    <field name="inherit_id" ref="base.view_view_form"/>
+		    <field name="arch" type="xml">
+		    	<data>
+			        <notebook position="inside">
+			            <page string="Button Access Rules">
+			                <field name="button_access_rules_ref" colspan="4" nolabel="1"/>
+			            </page>
+			        </notebook>
+		        </data>
+		    </field>
+		</record>
+
+    </data>
+</openerp>

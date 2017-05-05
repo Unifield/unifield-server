@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Commitment -->
+        <record model="ir.ui.view" id="account_commitment_form">
+            <field name="name">account.commitment.form</field>
+            <field name="model">account.commitment</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Commitment Voucher" hide_duplicate_button="1">
+                    <group col="6" colspan="4">
+                        <field name="journal_id" domain="[('is_current_instance','=',True)]"/>
+                        <field name="partner_id" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" attrs="{'readonly': ['|', ('type', '!=', 'manual'), ('state', '!=', 'draft')]}"/>
+                        <newline/>
+                        <field name="name"/>
+                        <newline/>
+                        <field name="date" on_change="onchange_date(date, period_id)"/>
+                        <field name="period_id"/>
+                        <newline/>
+                        <field name="currency_id" attrs="{'readonly': ['|', ('type', '!=', 'manual'), ('state', '!=', 'draft')]}"/>
+                        <field name="type"/>
+                    </group>
+                    <group colspan="8" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
+                          <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                            <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
+                        </group>
+                        <group colspan="8" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                            <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
+                    </group>
+                    <field name="analytic_distribution_id" invisible="1"/>
+                    <notebook colspan="4">
+                        <page string="Commitment voucher lines">
+                            <field name="line_ids" nolabel="1" colspan="4" attrs="{'readonly': ['|', ('state', '=', 'done'), ('type', '=', 'external')]}"/>
+                        </page>
+                    </notebook>
+                    <field name="notes" colspan="4"/>
+                    <group col="6" colspan="4">
+                        <button name="button_compute" string="Compute total" icon="gtk-execute" colspan="2"/>
+                        <button name="commitment_open" string="Validate" icon="terp-camera_test" states="draft" colspan="2"/>
+                        <button name="commitment_validate" string="Done" icon="terp-gtk-go-back-rtl" states="open" colspan="2" attrs="{'readonly': [('type', '=', 'external')]}"/>
+                    </group>
+                    <field name="state"/>
+                    <field name="total"/>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="account_commitment_tree">
+            <field name="name">account.commitment.tree</field>
+            <field name="model">account.commitment</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Commitment Voucher" colors="blue:state == 'draft';grey:state == 'done';black:state == 'open'">
+                    <field name="date"/>
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="currency_id"/>
+                    <field name="total" digits="(16,2)"/>
+                    <field name="type"/>
+                    <field name="state"/>
+                    <button name="commitment_open" string="Validate" icon="terp-camera_test" states="draft"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Commitment Lines -->
+        <record model="ir.ui.view" id="account_commitment_line_tree">
+            <field name="name">account.commitment.line.tree</field>
+            <field name="model">account.commitment.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Commitment Voucher Lines" editable="top" colors="red:analytic_distribution_state == 'invalid'">
+                    <field name="account_id" domain="[('restricted_area', '=', 'commitment_lines')]"/>
+                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context"/>
+                    <field name="analytic_distribution_state"/>
+                    <field name="have_analytic_distribution_from_header"/>
+                    <field name="first" invisible="1"/>
+                    <field name="initial_amount" on_change="onchange_initial_amount(first, initial_amount)"/>
+                    <field name="amount" attrs="{'readonly': [('first', '=', True)]}"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Commitment Search view -->
+        <record id="account_commitment_search" model="ir.ui.view">
+            <field name="name">Commitment Voucher</field>
+            <field name="model">account.commitment</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Commitment Voucher">
+                    <group col='6' colspan='4'>
+                        <filter icon="terp-tools" string="Manual" domain="[('type','=','manual')]" help="Manual Commitment Voucher"/>
+                        <filter icon="gtk-quit" string="External" domain="[('type','=','external')]" help="External Commitment Voucher"/>
+                        <filter icon="terp-partner" string="ESC" domain="[('type','=','esc')]" help="ESC Commitment Voucher"/>
+                        <separator orientation="vertical"/>
+                        <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Commitment Voucher in Draft state" name="draft"/>
+                        <filter icon="terp-camera_test" string="Validated" domain="[('state','=','open')]" help="Commitment Voucher in Validated state" name="validated"/>
+                        <filter icon="terp-dialog-close" string="Done" domain="[('state','=','done')]" help="Commitment Voucher in Done state" name="done"/>
+                        <filter icon="terp-emblem-important" string="Except Done" domain="[('state','!=','done')]" help="Commitment Voucher not in Done state" name="exceptdone"/>
+                        <newline/>
+                        <field name="currency_id" select="1"/>
+                        <field name="date" select='1'/>
+                        <field name="partner_id" select='1'/>
+                    </group>
+                    <newline/>
+                </search>
+            </field>
+        </record>
+
+        <!-- Commitment Import view -->
+        <record id="import_commitment_wizard_view" model="ir.ui.view">
+            <field name="name">Import Intl Commitments</field>
+            <field name="model">import.commitment.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Intl Commitments">
+                    <label string="Select a .CSV file to import." align="0.0" colspan="3"/>
+                    <field name="import_file"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                        <button name="import_csv_commitment_lines" string="Import" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!-- Commitment Clear view -->
+        <record id="intl_commitment_clear_wizard_view" model="ir.ui.view">
+            <field name="name">Clear Intl Commitments</field>
+            <field name="model">int.commitment.clear.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Clear Intl Commitments">
+                    <label string="Are you sure to delete ALL international commitments entries ?" colspan="4"/>
+                    <newline/>
+                    <field name="entries_count"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                        <button name="mass_delete" type="object" icon="gtk-ok"
+                                string="Delete ALL"
+                                confirm="Please confirm again to delete ALL international commitments entries. Continue ?"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!-- Commitment Export view -->
+        <record id="intl_commitment_export_wizard_view" model="ir.ui.view">
+            <field name="name">Export Intl Commitments</field>
+            <field name="model">int.commitment.export.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export Intl Commitments as CSV">
+                    <group col="4" colspan="4" states="choose">
+                        <field name="state" invisible="1" />
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="1"/>
+                        <button name="button_export" type="object" string="Export" icon="gtk-ok" colspan="1"/>
+                    </group>
+                    <group col="3" fill="0" states="get">
+                        <separator colspan="3" string="Export done"/>
+                        <field name="name" invisible="1" />
+                        <field name="data" nolabel="1" readonly="1" fieldname="name"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!-- Commitment Realloc view -->
+        <record id="intl_commitment_realloc_wizard_view" model="ir.ui.view">
+            <field name="name">Intl Commitments Analytic Reallocation</field>
+            <field name="model">int.commitment.realloc.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Intl Commitments Analytic Reallocation">
+                    <group  colspan="6" col="6">
+                        <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="cost_center_id" required="0" on_change="onchange_cost_center(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    </group>
+                    <newline/>
+                    <group colspan="6" col="4">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    <!-- Commitment Voucher Actions -->
+        <record model="ir.actions.act_window" id="action_account_commitment_tree">
+            <field name="res_model">account.commitment</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="account_commitment_tree"/>
+            <field name="search_view_id" ref="account_commitment_search"/>
+            <field name="context">{'search_default_exceptdone': 1, 'target_filename_prefix': 'Commitment Vouchers'}</field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_engagement_line_tree">
+            <field name="res_model">account.analytic.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('account_id.category', '=', 'FUNDING')]</field>
+            <field name="context">{'search_default_engagements': 1, 'display_fp': True, 'target_filename_prefix': 'Commitment Lines', 'engagement_line_tree': True}</field>
+        </record>
+
+        <record id="action_commitment_voucher_engagement_lines_search" model="ir.actions.server">
+            <field name="name">Analytic Lines (FP)</field>
+            <field name="model_id" ref="model_account_commitment"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_engagement_lines(context=context)</field>
+        </record>
+
+        <record id="ir_open_commitment_engagement_lines_search" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.commitment</field>
+            <field name="name">Analytic Lines (FP)</field>
+            <field eval="'ir.actions.server,%d'%action_commitment_voucher_engagement_lines_search" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <record id="action_import_commitment_wizard" model="ir.actions.act_window">
+            <field name="name">Import Intl Commitments</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">import.commitment.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="import_commitment_wizard_view"/>
+            <field name="target">new</field>
+        </record>
+
+    <!-- Menu -->
+        <menuitem id="menu_commitment" name="Commitments" parent="account.menu_finance" sequence="4"/>
+        <menuitem name="Commitment Voucher" action="action_account_commitment_tree" id="menu_commitment_entries" parent="menu_commitment" sequence="1"/>
+        <menuitem name="Commitment Lines" action="action_engagement_line_tree" id="menu_engagement_lines" parent="menu_commitment" sequence="2"/>
+        <menuitem name="Import Intl Commitments" action="action_import_commitment_wizard" id="menu_import_commitment" parent="menu_commitment" sequence="3"/>
+
+    </data>
+
+    <data noupdate="1">
+        <!-- 3 actions above not updatable: managed via configurator -->
+        <act_window id="action_intl_commitment_realloc_wizard"
+            name="Intl Commitments Analytic Reallocation"
+            res_model="int.commitment.realloc.wizard"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            context="context"
+            target="new"
+            />
+
+        <act_window id="action_intl_commitment_clear_wizard"
+            name="Clear intl commitments"
+            res_model="int.commitment.clear.wizard"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            context="context"
+            target="new"
+            />
+
+        <act_window id="action_intl_commitment_export_wizard"
+            name="Export intl commitments"
+            res_model="int.commitment.export.wizard"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            context="context"
+            target="new"
+            />
+    </data>
+</openerp>

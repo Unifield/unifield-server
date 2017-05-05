@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <report 
+            auto="False"
+            id="purchase_allocation_report.po_line_allocation_report"
+            model="purchase.order" 
+            name="po.line.allocation.report" 
+            target_filename="Allocation Report_${name}_%(year)s%(month)s%(day)s"
+            rml="purchase_allocation_report/report/po_line_allocation_report.rml"
+            header="False" 
+            string="Allocation report" />
+            
+        <report 
+            auto="False"
+            id="purchase_allocation_report.purchase_order_allocation_report"
+            model="purchase.order.line.allocation.report" 
+            name="purchase.order.allocation.report"
+            rml="purchase_allocation_report/report/order_line_allocation.rml"
+            header="False" 
+            string="Allocation report" />
+    
+    </data>
+</openerp>
