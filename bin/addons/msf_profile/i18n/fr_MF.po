@@ -98401,3 +98401,33 @@ msgstr "Les Bons Intermission liés à un BC ne peuvent être supprimés qu'à l
 #, python-format
 msgid "Import template not recognized, please use the same as exports"
 msgstr "Le template d'import n'est pas reconnu, merci d'utiliser le même que les exports."
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_fmc.py:41
+#, python-format
+msgid "\n"
+"        IMPORTANT : The four first lines will be ignored by the system.\n"
+"        \n"
+"        The file should be in Excel xml 2003 format.\n"
+"        The columns should be in this order :\n"
+"          * Product Code\n"
+"          * Product Description\n"
+"          * UoM (not imported)\n"
+"          * AMC\n"
+"          * FMC\n"
+"          * Safety Stock (qty) - (not imported)\n"
+"          * Valid Until (DD-MMM-YYYY)\n"
+"        "
+msgstr "\n"
+"        IMPORTANT : Les 4 premières lignes seront ignorées.\n"
+"        \n"
+"        Le fichier doit être au format Excel xml 2003.\n"
+"        Les colonnes doivent être respectivement:\n"
+"          * Product Code\n"
+"          * Product Description\n"
+"          * UoM (not imported)\n"
+"          * AMC\n"
+"          * FMC\n"
+"          * Safety Stock (qty) - (not imported)\n"
+"          * Valid Until (DD-MMM-YYYY)\n"
+"        "

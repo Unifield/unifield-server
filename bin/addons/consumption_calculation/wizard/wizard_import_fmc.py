@@ -39,7 +39,7 @@ class wizard_import_fmc(osv.osv_memory):
     
     _defaults = {
         'message': lambda *a : _("""
-        IMPORTANT : The fourth first lines will be ignored by the system.
+        IMPORTANT : The four first lines will be ignored by the system.
         
         The file should be in Excel xml 2003 format.
         The columns should be in this order :
