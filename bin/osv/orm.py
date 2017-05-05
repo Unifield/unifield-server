@@ -4642,7 +4642,7 @@ class orm(orm_template):
                         end_inner_clause.append('%s."value"' % trans_name)
                         left_join_clause = 'LEFT JOIN "ir_translation" %s' % trans_name
                         on_clause = 'ON %s.res_id = "%s".id AND %s.name = \'%s,%s\' AND %s.type = \'model\' AND %s.lang = \'%s\'' % (
-                            trans_name, self._table, trans_name, parent_obj._name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
+                            trans_name, parent_obj._table, trans_name, parent_obj._name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
                         from_order_clause.append('%s %s' % (left_join_clause, on_clause))
                     if order_column._classic_read:
                         inner_clause = self._inherits_join_calc(order_field, query)
