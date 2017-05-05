@@ -69053,8 +69053,8 @@ msgstr "FO line is manually corrected by user"
 
 #. module: account
 #: help:account.partner.ledger,page_split:0
-msgid "Display Ledger Report with One partner per page"
-msgstr "Afficher le Rapport du Grand Livre avec Un partenaire par page"
+msgid "Display Ledger Report with One partner per page (PDF version only)"
+msgstr "Afficher le Rapport du Grand Livre avec Un partenaire par page (version PDF uniquement)"
 
 #. module: base
 #: model:res.currency,currency_name:base.COP

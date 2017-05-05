@@ -33,7 +33,7 @@ class account_partner_ledger(osv.osv_memory):
         'initial_balance': fields.boolean('Include initial balances',
                                     help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
         'reconcil': fields.boolean('Include Reconciled Entries', help='Consider reconciled entries'),
-        'page_split': fields.boolean('One Partner Per Page', help='Display Ledger Report with One partner per page'),
+        'page_split': fields.boolean('One Partner Per Page', help='Display Ledger Report with One partner per page (PDF version only)'),
         'partner_ids': fields.many2many('res.partner', 'account_partner_ledger_partner_rel', 'wizard_id', 'partner_id',
                                         string='Partners', help='Display the report for specific partners only'),
         'only_active_partners': fields.boolean('Only active partners', help='Display the report for active partners only'),
