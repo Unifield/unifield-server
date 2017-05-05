@@ -186,7 +186,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Protection/>
 </Style>
 </Styles>
-<Worksheet ss:Name="Accounts">
+<Worksheet ss:Name="${( get_partners() )|x}">
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="140" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
@@ -326,7 +326,7 @@ else:
     <Data ss:Type="Number">${formatLang(sum_credit_partner(p)) or 0.}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="String">${formatLang(sum_debit_partner(p) - sum_credit_partner(p)) or 0.}</Data>
+    <Data ss:Type="Number">${formatLang(sum_debit_partner(p) - sum_credit_partner(p)) or 0.}</Data>
 </Cell>
 </Row>
 <!-- INITIAL BALANCE SECTION -->

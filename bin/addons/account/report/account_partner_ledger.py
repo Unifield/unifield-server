@@ -163,7 +163,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             # check if we should display all partners or only active ones
             active_selection = data['form'].get('only_active_partners') and ('t',) or ('t', 'f')
             self.cr.execute(
-                    "SELECT DISTINCT l.partner_id "
+                    "SELECT DISTINCT l.partner_id, rp.name "
                     "FROM account_move_line AS l, account_account AS account, "
                     "account_move AS am, res_partner AS rp "
                     "WHERE l.partner_id IS NOT NULL "
@@ -175,7 +175,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                     " " + self.INSTANCE_REQUEST + " "
                     " " + PARTNER_REQUEST + " "
                     "AND rp.active IN %s "
-                    "AND account.active ",
+                    "AND account.active "
+                    "ORDER BY rp.name",
                     (tuple(move_state), tuple(self.account_ids), active_selection,))
             res = self.cr.dictfetchall()
             for res_line in res:
