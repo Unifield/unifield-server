@@ -4681,11 +4681,12 @@ class orm(orm_template):
 
         query = self._where_calc(cr, user, args, context=context)
         self._apply_ir_rules(cr, user, query, 'read', context=context)
-        order_by, from_order_clause = self._generate_order_by(order, query, context=context)
         if order == 'NO_ORDER':
             order_by=''
+            from_order_clause = []
         else:
-            order_by = self._generate_order_by(order, query)
+            order_by, from_order_clause = self._generate_order_by(order, query,
+                    context=context)
 
         from_clause, where_clause, where_clause_params = query.get_sql()
         from_clause = from_clause + ' '.join(from_order_clause)
