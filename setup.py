@@ -152,8 +152,6 @@ def data_files():
         #for root, _, names in os.walk('pixmaps'):
         #    files.append((root, [join(root, name) for name in names]))
         files.append(('.', [join('bin', 'import_xml.rng'),]))
-        files.append(("Microsoft.VC90.CRT", glob.glob('C:\Microsoft.VC90.CRT\*.*')))
-        files.append((join('service','Microsoft.VC90.CRT'), glob.glob('C:\Microsoft.VC90.CRT\*.*')))
         files.extend(fixup_data_pytz_zoneinfo())
     else:
         man_directory = join('share', 'man')
