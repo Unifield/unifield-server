@@ -32,7 +32,7 @@ class import_cell_data(osv.osv_memory):
         cell_data = False
         try:
             line_content = row.cells
-        except ValueError, e:
+        except ValueError:
             line_content = row.cells
         if line_content and len(line_content)-1>=cell_nb and row.cells[cell_nb] and row.cells[cell_nb].data:
             cell_data = row.cells[cell_nb].data
@@ -106,27 +106,27 @@ class import_cell_data(osv.osv_memory):
                 try:
                     expired_date = DateTime.strptime(cell_data,'%Y-%m-%d')
                     return str(expired_date)
-                except ValueError, e:
+                except ValueError:
                     try:
                         expired_date = DateTime.strptime(cell_data,'%Y/%m/%d')
                         return str(expired_date)
-                    except ValueError, e:
+                    except ValueError:
                         try:
                             expired_date = DateTime.strptime(cell_data,'%d-%m-%Y')
                             return str(expired_date)
-                        except ValueError, e:
+                        except ValueError:
                             try:
                                 expired_date = DateTime.strptime(cell_data,'%d/%m/%Y')
                                 return str(expired_date)
-                            except ValueError, e:
+                            except ValueError:
                                 try:
                                     expired_date = DateTime.strptime(cell_data,'%d-%b-%Y')
                                     return str(expired_date)
-                                except ValueError, e:
+                                except ValueError:
                                     try:
                                         expired_date = DateTime.strptime(cell_data,'%d/%b/%Y')
                                         return str(expired_date)
-                                    except ValueError, e:
+                                    except ValueError:
                                         return False
         return False
 
@@ -134,6 +134,9 @@ class import_cell_data(osv.osv_memory):
         list_of_values = []
         for cell_nb in range(len(row)):
             cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
+            # cells filled with whitespace should behave the same as cells that are empty
+            if isinstance(cell_data, basestring) and cell_data.isspace():
+                cell_data = ''
             list_of_values.append(cell_data)
         return list_of_values
 

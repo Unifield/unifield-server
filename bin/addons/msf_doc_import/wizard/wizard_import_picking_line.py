@@ -25,10 +25,8 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
-import pdb
 from msf_doc_import import check_line
 from msf_doc_import.wizard import INT_LINE_COLUMNS_FOR_IMPORT as columns_for_internal_line_import
-from msf_doc_import.wizard import IN_LINE_COLUMNS_FOR_IMPORT as columns_for_incoming_line_import
 
 class wizard_import_pick_line(osv.osv_memory):
     _name = 'wizard.import.pick.line'
@@ -70,7 +68,6 @@ class wizard_import_pick_line(osv.osv_memory):
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         obj_data = self.pool.get('ir.model.data')
-        currency_obj = self.pool.get('res.currency')
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
         kit_obj = self.pool.get('composition.kit')
@@ -91,7 +88,6 @@ class wizard_import_pick_line(osv.osv_memory):
         start_time = time.time()
         date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
         line_with_error = []
-        vals = {'move_lines': []}
 
         for wiz_browse in self.browse(cr, uid, ids, context):
             try:
@@ -268,7 +264,7 @@ class wizard_import_pick_line(osv.osv_memory):
 
                         # write move line on picking
                         #vals['move_lines'].append((0, 0, to_write))
-                        move_id = move_obj.create(cr, uid, to_write, context=context)
+                        move_obj.create(cr, uid, to_write, context=context)
                         if to_write['error_list']:
                             lines_to_correct += 1
                         #move_obj.action_confirm(cr, uid, [move_id], context=context)
@@ -293,7 +289,7 @@ class wizard_import_pick_line(osv.osv_memory):
                         cr.rollback()
                         continue
                     except AttributeError as e:
-                        error_log += _('Line %s in the Excel file was added to the file of the lines with error, an error is occured. Details : %s') % (line_num, e)
+                        error_log += _('Line %s in the Excel file was added to the file of the lines with error, an error is occurred. Details : %s') % (line_num, e)
                         line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
                         ignore_lines += 1
                         line_ignored_num.append(line_num)
@@ -305,7 +301,7 @@ class wizard_import_pick_line(osv.osv_memory):
                         if not context.get('yml_test', False):
                             cr.commit()
             except Exception as e:
-                error_log += _("An error is occured. Details : %s") % e
+                error_log += _("An error is occurred. Details : %s") % e
                 cr.rollback()
                 continue
             finally:

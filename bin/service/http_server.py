@@ -155,7 +155,7 @@ class BaseHttpDaemon(threading.Thread, netsvc.Server):
                 "starting %s service at %s port %d" %
                 (self._RealProto, interface or '0.0.0.0', port,))
         except Exception:
-            logging.getLogger("httpd").exception("Error occured when starting the server daemon.")
+            logging.getLogger("httpd").exception("Error occurred when starting the server daemon.")
             raise
 
     @property

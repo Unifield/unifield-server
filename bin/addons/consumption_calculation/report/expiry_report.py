@@ -34,13 +34,17 @@ class expiry_report(report_sxw.rml_parse):
             'getAddress': self._get_instance_addr,
             'getCurrency': self._get_currency,
             'toDate': self.str_to_time,
+            'getSortedLines': self._get_sorted_lines,
         })
-        
+
+    def _get_sorted_lines(self, report):
+        return sorted(report.line_ids, key=lambda x: (x.product_code, x.batch_number, x.expiry_date))
+
     def _get_lines(self, report, type='expired'):
         line_obj = self.pool.get('expiry.quantity.report.line')
-        
+
         domain = [('report_id', '=', report.id)]
-        
+
         # If we want all lines, just keep the domain on report
         if type != 'all':
             if type == 'expired':
@@ -48,32 +52,32 @@ class expiry_report(report_sxw.rml_parse):
             elif type == 'expiry':
                 operator = '>='
             domain.append(('expiry_date', operator, time.strftime('%Y-%m-%d')))
-            
+
         line_ids = line_obj.search(self.cr, self.uid, domain, order='expiry_date, product_code')
         return line_obj.browse(self.cr, self.uid, line_ids)
-    
+
     def _get_total(self, report, type='all'):
         total = 0.00
-        
+
         for line in self._get_lines(report, type):
-             total += line.product_id and line.product_id.standard_price * line.expired_qty
-             
+            total += line.product_id and line.product_id.standard_price * line.expired_qty
+
         return total
-    
+
     def _get_instance_addr(self):
         instance = self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id
         return '%s / %s / %s' % (instance.instance, instance.mission or '', instance.code)
-    
+
     def _get_currency(self):
         return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.currency_id.name
-    
+
     def str_to_time(self, dtime=False):
         if not dtime:
             dtime = time.strftime('%Y-%m-%d')
-                
+
         if dtime:
             return self.pool.get('date.tools').get_date_formatted(self.cr, self.uid, datetime=dtime)
-        
+
         return ''
 report_sxw.report_sxw('report.expiry.report', 'expiry.quantity.report', 'addons/consumption_calculation/report/expiry_report.rml', parser=expiry_report, header=False)
 

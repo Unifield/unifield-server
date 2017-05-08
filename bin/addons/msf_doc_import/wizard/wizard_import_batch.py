@@ -301,7 +301,7 @@ class wizard_import_batch(osv.osv_memory):
 - Total lines with errors: %s %s
 %s
         ''') % (
-            str(round(time.time() - start_time)),
+            str(round(time.time() - start_time, 1)),
             import_brw.total_lines_to_import-1,
             err_msg and _('without errors') or _('imported'),
             nb_lines_ok,

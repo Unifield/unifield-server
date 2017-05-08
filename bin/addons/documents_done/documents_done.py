@@ -128,7 +128,6 @@ class documents_done_wizard(osv.osv):
         proc_ids = []
         po_ids = []
         tender_ids = []
-        so_ids = []
         invoice_ids = []
         for line in order.order_line:
             # Check procurement orders
@@ -227,7 +226,7 @@ class documents_done_wizard(osv.osv):
         'expected_date': fields.date(string='Expected date', readonly=True),
         'partner_id': fields.many2one('res.partner', string='Partner', readonly=True),
         'problem': fields.function(_get_problem, string='Problem', required=True, method=True, store=False, 
-                                    type='boolean', readonly=True),
+                                   type='boolean', readonly=True),
         'state': fields.char(size=64, string='State', readonly=True),
         'display_state': fields.function(_get_state, fnct_search=_search_state, type='selection', selection=_get_selection,
                                          method=True, store=False, readonly=True, string='State'),
@@ -299,8 +298,6 @@ class documents_done_wizard(osv.osv):
             context = {}
         pb_obj = self.pool.get('documents.done.problem')
         pb_line_obj = self.pool.get('documents.done.problem.line')
-        move_obj = self.pool.get('stock.move')
-        proc_obj = self.pool.get('procurement.order')
 
         for wiz in self.browse(cr, uid, ids, context=context):
 
@@ -470,7 +467,7 @@ class documents_done_wizard(osv.osv):
                     FROM
                         purchase_order po
                     WHERE
-                        state NOT IN ('draft', 'done', 'cancel')
+                        state NOT IN ('draft', 'done', 'cancel', 'split')
                       AND
                         rfq_ok = False)
                 UNION

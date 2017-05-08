@@ -70,7 +70,7 @@
       
       st_obj = self.pool.get('account.bank.statement')
       st_ids = st_obj.search(cr, uid, [('period_id', '=', ref('register_creation_wiz_period_02')), ('journal_id', '=', ref('register_creation_wiz_cheque_journal_0'))])
-      assert len(st_ids) == 1, "A problem occured for register creation. You should be have ONE register created. You have: %s" % st_ids
+      assert len(st_ids) == 1, "A problem occurred for register creation. You should be have ONE register created. You have: %s" % st_ids
 -
   I create a second wizard "Register Creation" with the second period
 -

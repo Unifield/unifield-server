@@ -41,6 +41,11 @@
                         </html>
                     </group>
                     <notebook colspan="4">
+                        <page string="Information" attrs="{'invisible': [('import_error_ok', '=', False), ('state', '!=', 'error')]}">
+                            <field name="nb_file_lines" />
+                            <field name="nb_treated_lines" />
+                            <field name="message" nolabel="1" colspan="4" readonly="1" widget="full_text" />
+                        </page>
                         <page string="Purchase Order">
                             <field name="in_dest_addr" />
                             <newline />
@@ -113,11 +118,6 @@
                                     <field name="change_ok" invisible="1" />
                                 </tree>
                             </field>
-                        </page>
-                        <page string="Information">
-                            <field name="nb_file_lines" />
-                            <field name="nb_treated_lines" />
-                            <field name="message" nolabel="1" colspan="4" readonly="1" />
                         </page>
                         <!--<page string="Previous simulations">
                         </page>-->

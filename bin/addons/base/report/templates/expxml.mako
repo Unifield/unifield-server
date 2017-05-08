@@ -28,6 +28,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="sInteger">
+<NumberFormat ss:Format="#,##0"/>
+<Alignment ss:Vertical="Center" ss:WrapText="1"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
 <Style ss:ID="sShortDate">
     <NumberFormat ss:Format="Short Date"/>
     <Alignment ss:Vertical="Center" ss:WrapText="1"/>
@@ -75,6 +85,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
      % elif d and isDate(d, date_format='%Y-%m-%d %H:%M:%S.%f'):
 <Cell ss:StyleID="sDate">
     <Data ss:Type="DateTime">${d.replace(' ','T')}</Data>
+     % elif d and re.match('^-?[0-9]+$', d):
+<Cell ss:StyleID="sInteger">
+    <Data ss:Type="Number">${d}</Data>
      % elif d and re.match('^-?[0-9]+\.?[0-9]*$', d):
 <Cell ss:StyleID="ssBorder">
     <Data ss:Type="Number">${d}</Data>

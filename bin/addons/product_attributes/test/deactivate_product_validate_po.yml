@@ -33,7 +33,7 @@
 -
   !python {model: product.product}: |
     res = self.deactivate_product(cr, uid, ref('product5'))
-    assert res == True, "Error occured when the de-activation of the product"
+    assert res == True, "Error occurred when the de-activation of the product"
 -
   Validate the PO
 -

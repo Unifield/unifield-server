@@ -36,6 +36,29 @@ from sync_common import sync_log, \
 re_fieldname = re.compile(r"^\w+")
 re_subfield_separator = re.compile(r"[./]")
 
+class fv_formatter:
+    def fmt(self, cr, uid, ids, field_name, arg, context):
+        res = {}
+        for x in self.read(cr, uid, ids, ['fields', 'values'], context):
+            if not x['fields'] or not x['values']:
+                res[x['id']] = ''
+            else:
+                try:
+                    values = eval(x['values'])
+                    fields = eval(x['fields'])
+                    i = 0
+                    fmt = ""
+                    for f in fields:
+                        fmt += f + " -> " + tools.ustr(values[i]) + "\n"
+                        i += 1
+                    res[x['id']] = fmt
+                except:
+                    # Exceptions here would come from incorrectly formatted
+                    # field/value strings, which will be caught in other places
+                    # and logged better there.
+                    res[x['id']] = '(exception)'
+        return res
+
 class local_rule(osv.osv):
     _name = "sync.client.rule"
 
@@ -99,7 +122,7 @@ class local_rule(osv.osv):
 
 local_rule()
 
-class update_to_send(osv.osv):
+class update_to_send(osv.osv,fv_formatter):
     """
         States : to_send : need to be send to the server or the server ack still not receive
                  sended : Ack for this update receive but session not ended
@@ -121,6 +144,7 @@ class update_to_send(osv.osv):
         'rule_id' : fields.many2one('sync.client.rule','Generating Rule', readonly=True, ondelete="set null"),
         'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
         'fields':fields.text('Fields', size=128, readonly=True),
+        'fieldsvalues': fields.function(fv_formatter.fmt, method=True, type='char'),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
         'force_recreation' : fields.boolean('Force record recreation', readonly=True),
         'handle_priority': fields.boolean('Handle Priority'),
@@ -278,10 +302,9 @@ class update_to_send(osv.osv):
         self._logger.debug(_("Push finished: %d updates") % len(update_ids))
 
     _order = 'create_date desc, id desc'
-
 update_to_send()
 
-class update_received(osv.osv):
+class update_received(osv.osv,fv_formatter):
 
     _name = "sync.client.update_received"
     _rec_name = 'source'
@@ -300,6 +323,7 @@ class update_received(osv.osv):
         'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
         'fields' : fields.text("Fields"),
         'values' : fields.text("Values"),
+        'fieldsvalues': fields.function(fv_formatter.fmt, method=True, type='char'),
         'run' : fields.boolean("Run", readonly=True, select=True),
         'log' : fields.text("Execution Messages", readonly=True),
         'log_first_notrun' : fields.text("First not run message", readonly=True),
@@ -507,8 +531,13 @@ class update_received(osv.osv):
             # Prepare updates
             # TODO: skip updates not preparable
             for update in updates:
-                if self.search(cr, uid, [('sdref', '=', update.sdref), ('is_deleted', '=', False), ('run', '=', False),
-                                         ('rule_sequence', '=', update.rule_sequence), ('sequence_number', '<', update.sequence_number)], limit=1, order='NO_ORDER'):
+                if self.search(cr, uid,
+                               [('sdref', '=', update.sdref),
+                                ('is_deleted', '=', False),
+                                   ('run', '=', False),
+                                ('rule_sequence', '=', update.rule_sequence),
+                                ('sequence_number', '<', update.sequence_number)],
+                               limit=1, order='NO_ORDER'):
                     # previous not run on the same (sdref, rule_sequence): do not execute
                     self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on the same record/rule.", context=context)
                     continue
@@ -674,6 +703,7 @@ class update_received(osv.osv):
         rule_seq_list.sort()
         for rule_seq in rule_seq_list:
             updates = update_groups[rule_seq]
+            context['sync_update_session'] = rule_seq[0]
             obj, do_deletion, force_recreation = self.pool.get(updates[0].model), updates[0].is_deleted, updates[0].force_recreation
             assert obj is not None, "Cannot find object model=%s" % updates[0].model
             # Remove updates about deleted records in the list
