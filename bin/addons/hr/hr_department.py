@@ -43,11 +43,17 @@ class hr_department(osv.osv):
         res = self.name_get(cr, uid, ids, context=context)
         return dict(res)
 
+    def _get_ids_to_update(self, cr, uid, ids, context=None):
+        return self.search(cr, uid, [('parent_id', 'in', ids)], context=context) + ids
+
     _name = "hr.department"
     _columns = {
         'name': fields.char('Department Name', size=64, required=True),
         'complete_name': fields.function(_dept_name_get_fnc, method=True,
-            type="char", string='Name', store=True, size=512),
+            type="char", string='Name', size=512,
+            store = {
+                'hr.department': (_get_ids_to_update, ['child_ids', 'name'], 10),
+            }),
         'company_id': fields.many2one('res.company', 'Company', select=True, required=False),
         'parent_id': fields.many2one('hr.department', 'Parent Department', select=True),
         'child_ids': fields.one2many('hr.department', 'parent_id', 'Child Departments'),
