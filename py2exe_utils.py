@@ -25,7 +25,7 @@ opts = {
             'win32event', 'win32pipe', 'win32service', 'win32serviceutil'
         ],
         'dll_excludes': [
-            'w9xpopen.exe', "POWRPROF.dll"
+            'w9xpopen.exe', 'POWRPROF.dll', 'CRYPT32.dll', 'MPR.dll',
         ]
     }},
     'data_files' : [
