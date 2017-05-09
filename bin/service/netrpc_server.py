@@ -106,7 +106,7 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
         threading.Thread.__init__(self, name="NetRPCDaemon-%d"%port)
         netsvc.Server.__init__(self)
         self.__port = port
-        self.__interface = interface or '127.0.0.0'
+        self.__interface = interface or '127.0.0.1'
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((self.__interface, self.__port))
