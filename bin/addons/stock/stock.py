@@ -1838,11 +1838,14 @@ class stock_move(osv.osv):
                 return context['move_line'][0][2]['location_id']
             except:
                 pass
+        # if creation comes from IN with ext cu, then return the ext_cu location as default source location:
+        if context.get('picking_type', False) == 'incoming_shipment' and context.get('active_id', False):
+            for pick in self.pool.get('stock.picking').browse(cr, uid, [context['active_id']], context=context):
+                if pick.ext_cu:
+                    return pick.ext_cu.id
         if context.get('address_in_id', False):
             part_obj_add = self.pool.get('res.partner.address').browse(cr, uid, context['address_in_id'], context=context)
-            if part_obj_add.partner_id and part_obj_add.partner_id.property_stock_customer and part_obj_add.partner_id.property_stock_customer.location_category == 'consumption_unit':
-                return part_obj_add.partner_id.property_stock_customer.id
-            elif part_obj_add.partner_id:
+            if part_obj_add.partner_id:
                 return part_obj_add.partner_id.property_stock_supplier.id
         return False
 
