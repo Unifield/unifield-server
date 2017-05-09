@@ -255,41 +255,41 @@ else:
 <Row></Row>
 <Row>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Partner</Data>
+    <Data ss:Type="String">${_('Partner')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Partner Ref.</Data>
+    <Data ss:Type="String">${_('Partner Ref.')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Date</Data>
+    <Data ss:Type="String">${_('Date')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">JNRL</Data>
+    <Data ss:Type="String">${_('JNRL')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Ref</Data>
+    <Data ss:Type="String">${_('Ref')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Account</Data>
+    <Data ss:Type="String">${_('Account')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Entry Label</Data>
+    <Data ss:Type="String">${_('Entry Label')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Debit</Data>
+    <Data ss:Type="String">${_('Debit')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Credit</Data>
+    <Data ss:Type="String">${_('Credit')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Balance</Data>
+    <Data ss:Type="String">${_('Balance')}</Data>
 </Cell>
 % if display_currency(data) == True:
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Book. Amount</Data>
+    <Data ss:Type="String">${_('Book. Amount')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Book. Curr.</Data>
+    <Data ss:Type="String">${_('Book. Curr.')}</Data>
 </Cell>
 % endif
 </Row>
@@ -351,7 +351,7 @@ else:
     <Data ss:Type="String"></Data>
   </Cell>
   <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">Initial Balance</Data>
+    <Data ss:Type="String">${_('Initial Balance')}</Data>
   </Cell>
   <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ formatLang(get_intial_balance(p)[0][0] or 0.)}</Data>

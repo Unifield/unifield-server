@@ -116,8 +116,10 @@ class common_report_header(object):
         return ''
 
     def _get_account(self, data):
+        account_obj = pooler.get_pool(self.cr.dbname).get('account.account')
         if data.get('form', False) and data['form'].get('chart_account_id', False):
-            return pooler.get_pool(self.cr.dbname).get('account.account').browse(self.cr, self.uid, data['form']['chart_account_id']).name
+            return account_obj.browse(self.cr, self.uid, data['form']['chart_account_id'],
+                                      fields_to_fetch=['name'], context=data.get('context', {})).name
         return ''
 
     def _get_accounts(self, data):
