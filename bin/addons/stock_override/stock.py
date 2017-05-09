@@ -377,6 +377,18 @@ class stock_picking(osv.osv):
                  'company_id2': lambda s,c,u,ids,ctx=None: s.pool.get('res.users').browse(c,u,u).company_id.partner_id.id,
                  }
 
+
+    def on_change_ext_cu(self, cr, uid, ids, ext_cu, context=None):
+        if self.pool.get('stock.move').search_exist(cr, uid, [('picking_id', 'in', ids)], context=context):
+            return {
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('You are changing External Consumption Unit, please check that source location of your stock moves are still consistent'),
+                }
+            }
+        return {}
+
+
     def copy_data(self, cr, uid, id, default=None, context=None):
         if default is None:
             default = {}
