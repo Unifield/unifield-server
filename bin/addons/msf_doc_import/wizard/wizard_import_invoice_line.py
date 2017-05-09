@@ -371,7 +371,7 @@ Importation completed in %s!
                 self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (invoice_name or _('the object'), )})
         return False
 
-    def get_invoice_view(self, cr, uid, invoice_id, view_name, context=None):
+    def get_invoice_view(self, cr, uid, invoice_id, view_name, domain, context=None):
         if view_name in ('view_intermission_form'):
             module = 'account_override'
         else:
@@ -379,12 +379,17 @@ Importation completed in %s!
         if view_name:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
             view_id = view_id and view_id[1] or False
+            tree_view = self.pool.get('ir.model.data').get_object_reference(cr,
+                    uid, 'account', 'invoice_tree')
+            tree_view_id = tree_view and tree_view[1] or False
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'account.invoice',
                 'view_type': 'form',
                 'view_mode': 'form, tree',
                 'view_id': [view_id],
+                'views': [(view_id, 'form'), (tree_view_id, 'tree')],
+                'domain': domain,
                 'target': 'crush',
                 'res_id': invoice_id,
                 'context': context,
@@ -394,6 +399,7 @@ Importation completed in %s!
                 'res_model': 'account.invoice',
                 'view_type': 'form',
                 'view_mode': 'form, tree',
+                'domain': domain,
                 'target': 'crush',
                 'res_id': invoice_id,
                 'context': context,
@@ -461,7 +467,7 @@ Importation completed in %s!
             domain = domain_dict['domain']
             domain += [('id', '=', invoice_id)]
             if invoice_obj.search_exist(cr, uid, domain, context=context):
-                return domain_dict['view_name']
+                return domain_dict['view_name'], domain_dict['domain']
         return None
 
     def cancel(self, cr, uid, ids, context=None):
@@ -473,8 +479,9 @@ Importation completed in %s!
             ids = [ids]
         for wiz_obj in self.read(cr, uid, ids, ['invoice_id']):
             invoice_id = wiz_obj['invoice_id']
-            view_name = self.get_invoice_view_name(cr, uid, invoice_id, context=context)
-            return self.get_invoice_view(cr, uid, invoice_id, view_name, context=context)
+            view_name, domain = self.get_invoice_view_name(cr, uid, invoice_id, context=context)
+            return self.get_invoice_view(cr, uid, invoice_id, view_name,
+                    domain=domain, context=context)
 
     def close_import(self, cr, uid, ids, context=None):
         '''
