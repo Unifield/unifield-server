@@ -55,7 +55,7 @@ class msf_doc_import_accounting(osv.osv_memory):
 
     def create_entries(self, cr, uid, ids, journal_id, context=None):
         """
-        Create journal entry 
+        Create journal entry
         """
         # Checks
         if not context:

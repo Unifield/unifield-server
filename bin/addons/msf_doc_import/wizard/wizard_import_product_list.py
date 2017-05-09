@@ -311,7 +311,7 @@ Importation completed in %s!
             list_id = wiz_read['list_id'] if isinstance(wiz_read['list_id'], (int, long)) else wiz_read['list_id'][0]
             list_name = list_obj.read(cr, uid, list_id, ['name'])['name']
             if wiz_read['state'] != 'done':
-                self.write(cr, uid, ids, {'message': _(' Import in progres... \n Please wait that the import is finished before editing %s.') % (list_name)})
+                self.write(cr, uid, ids, {'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (list_name)})
         return False
 
     def cancel(self, cr, uid, ids, context=None):

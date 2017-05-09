@@ -316,6 +316,11 @@
                     <field name="check_total" position="after">
                         <field name="supplier_reference"/>
                     </field>
+                    <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='invoice_line']" position="before" >
+                        <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        </group>
+                    </xpath>
                     <field name="journal_id" position="replace">
                         <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"
                                on_change="onchange_journal_id(journal_id)"/>
