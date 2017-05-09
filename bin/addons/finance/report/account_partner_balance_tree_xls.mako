@@ -247,21 +247,21 @@ entries = get_partners(data)
 % for p_entries in entries:
 <%
 if p_entries[0].account_type == 'payable':
-    worsheet_name = 'Payable Accounts'
+    worsheet_name = _('Payable Accounts')
 else:
-    worsheet_name = 'Receivable Accounts'
+    worsheet_name = _('Receivable Accounts')
 %>
 <Worksheet ss:Name="${worsheet_name}">
 <%
     col_count = 9
     if data['model'] == 'account.account':
-        header_company_or_chart_of_account = 'Company'
+        header_company_or_chart_of_account = _('Company')
     else:
-        header_company_or_chart_of_account = 'Chart of Account'
+        header_company_or_chart_of_account = _('Chart of Account')
     if data['form'].get('display_partner', '') == 'non-zero_balance':
-        display_account = 'With balance is not equal to 0'
+        display_account = _('With balance is not equal to 0')
     else:
-        display_account = 'All'
+        display_account = _('All')
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="140" />
@@ -279,14 +279,14 @@ header_col_merge_count = col_count - 1
 %>
 <Row>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;Fiscal Year</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Journals</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Display Account</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Entries Sorted By</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Target Moves</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Output Currency</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Accounts</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Journals')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Display Partners')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filter By'), (get_filter(data) or ''))|x}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Entries Sorted By')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Target Moves')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Output currency')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Proprietary Instances')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Accounts')}</Data></Cell>
 </Row>
 <Row>
  <Cell ss:StyleID="ssHeaderCell">
@@ -383,7 +383,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">Initial Balance</Data>
+    <Data ss:Type="String">${_('Initial Balance')}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${formatLang(p_obj.ib_debit or 0.)}</Data>
@@ -430,7 +430,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineItalicRight">
-    <Data ss:Type="String">${'Subtotal %s' % detail_line.get('currency_booking', '')|x}</Data>
+    <Data ss:Type="String">${'%s %s' % (_('Subtotal'), detail_line.get('currency_booking', ''))|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberItalic">
     <Data ss:Type="Number">${formatLang(detail_line.get('debit_booking') or 0.)}</Data>

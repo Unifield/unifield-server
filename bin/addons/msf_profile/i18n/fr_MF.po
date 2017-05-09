@@ -2314,11 +2314,12 @@ msgstr "ISi Stock Intermédiaire - SI Stocks"
 msgid "\"Period from\" must be less than or equal to \"Period to\""
 msgstr "\"Période du\" doit être antérieure ou égale à \"Période à'\""
 
-#. module: account
+#. modules: account, finance
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
 #: report:addons/account/report/account_partner_ledger.mako:0
 #: report:account.partner.balance:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:386
 msgid "Initial Balance"
 msgstr "Solde Initial"
 
@@ -7514,6 +7515,7 @@ msgstr "Monthly review consumption line to delete"
 
 #. module: finance
 #: field:wizard.account.partner.balance.tree,display_partner:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:283
 msgid "Display Partners"
 msgstr "Afficher les Partenaires"
 
@@ -13248,11 +13250,12 @@ msgstr "%A - Nom complet du jour de la semaine."
 msgid "The Internal request '%s' has been closed."
 msgstr "The Internal request '%s' has been closed."
 
-#. module: account
+#. modules: account, finance
 #: selection:account.balance.report,display_account:0
 #: selection:account.bs.report,display_account:0
 #: selection:account.common.account.report,display_account:0
 #: selection:account.partner.balance,display_partner:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:262
 #: selection:account.pl.report,display_account:0
 #: selection:account.report.general.ledger,display_account:0
 #: code:addons/account/report/account_profit_loss.py:207
@@ -22976,12 +22979,13 @@ msgstr "ppl.customize.label"
 msgid "Account Analytic Inverted Balance"
 msgstr "Compte - Solde analytique Inversée"
 
-#. module: account
+#. modules: account, finance
 #: report:account.partner.balance:0
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
 #: report:addons/account/report/account_partner_ledger.mako:0
 #: selection:account.partner.ledger,target_move:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:260
 #, python-format
 msgid "Chart of Account"
 msgstr "Plan comptable"
@@ -26875,12 +26879,13 @@ msgstr "Utilisé pour les écritures comptables manuelles"
 msgid "You must define a stock location"
 msgstr "Vous devez définir une zone de stock"
 
-#. module: account
+#. modules: account, finance
 #: report:account.account.balance:0
 #: report:account.central.journal:0
 #: report:account.general.journal:0
 #: report:account.general.ledger_landscape:0
 #: report:account.partner.balance:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:284
 msgid "Filter By"
 msgstr "Filtrer par"
 
@@ -31901,7 +31906,7 @@ msgstr "MSF Financing Module"
 msgid "Pack Type"
 msgstr "Pack Type"
 
-#. modules: tender_flow, account_voucher, account_override, account_journal, register_accounting, procurement_cycle, base_setup, analytic, report_webkit, stock, product, account_payment, procurement_request, hr, msf_instance, purchase_override, specific_rules, sale_override, base, purchase, account, resource, procurement_auto, sale, procurement, msf_profile
+#. modules: tender_flow, account_voucher, account_override, account_journal, register_accounting, procurement_cycle, base_setup, analytic, report_webkit, stock, product, account_payment, procurement_request, hr, msf_instance, purchase_override, specific_rules, sale_override, base, purchase, account, resource, procurement_auto, sale, procurement, msf_profile, finance
 #: field:account.account,company_id:0
 #: field:account.analytic.journal,company_id:0
 #: field:account.bank.statement,company_id:0
@@ -32004,6 +32009,7 @@ msgstr "Pack Type"
 #: field:stock.production.lot.revision,company_id:0
 #: field:stock.warehouse,company_id:0
 #: field:tender,company_id:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 msgid "Company"
 msgstr "Société"
 
@@ -36214,6 +36220,8 @@ msgstr "L'Identité de l'enregistrement est attachée à ce(t)"
 #: model:ir.actions.act_window,name:account.action_aged_receivable
 #: view:account.account:0
 #: code:addons/account/report/account_partner_ledger.py:0
+#: report:account.partner.balance:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:252
 #, python-format
 msgid "Receivable Accounts"
 msgstr "Comptes Clients "
@@ -37086,7 +37094,7 @@ msgstr "Avec un solde qui n'est pas égal à 0"
 msgid "Macau"
 msgstr "Macau"
 
-#. modules: purchase, account, account_mcdb, procurement_request, purchase_override, sale, account_override, purchase_allocation_report, register_accounting, msf_supply_doc_export
+#. modules: purchase, account, account_mcdb, procurement_request, purchase_override, sale, account_override, purchase_allocation_report, register_accounting, msf_supply_doc_export, finance
 #: field:account.invoice.line,price_subtotal:0
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:98
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:185
@@ -37109,6 +37117,8 @@ msgstr "Macau"
 #: field:wizard.account.invoice.line,price_subtotal:0
 #: report:sale.order.allocation.report:0
 #: field:sale.order.line,price_subtotal:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:433
+#: report:account.partner.balance:0
 msgid "Subtotal"
 msgstr "Sous-total"
 
@@ -40028,6 +40038,9 @@ msgstr "OMANI RIAL"
 #: field:wizard.account.partner.balance.tree,instance_ids:0
 #: view:wizard.account.partner.balance.tree:0
 #: report:account.partner.balance:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:288
 msgid "Proprietary Instances"
 msgstr "Instances Propriétaires"
 
@@ -62105,9 +62118,10 @@ msgstr "Lettrée"
 msgid "Status details"
 msgstr "Détails du Statut"
 
-#. modules: msf_budget, account_mcdb
+#. modules: msf_budget, account_mcdb, finance
 #: field:output.currency.for.export,currency_id:0
 #: field:wizard.local.expenses,output_currency_id:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:287
 msgid "Output currency"
 msgstr "Devise sortante"
 
@@ -67667,7 +67681,7 @@ msgstr "Compte Client"
 msgid "Manage the VAT locally"
 msgstr "Manage the VAT locally"
 
-#. modules: account, account_mcdb
+#. modules: account, account_mcdb, finance
 #: field:account.aged.trial.balance,journal_ids:0
 #: field:account.analytic.cost.ledger.journal.report,journal:0
 #: field:account.balance.report,journal_ids:0
@@ -67685,6 +67699,7 @@ msgstr "Manage the VAT locally"
 #: report:account.partner.balance:0
 #: field:account.partner.balance,journal_ids:0
 #: field:account.partner.ledger,journal_ids:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:282
 #: field:account.pl.report,journal_ids:0
 #: view:account.print.journal:0
 #: field:account.print.journal,journal_ids:0
@@ -70555,8 +70570,14 @@ msgstr "L'origine de la réclamation client doit être une Livraison Entrante"
 #: field:account.vat.declaration,target_move:0
 #: report:addons/account/report/account_partner_ledger.mako:0
 #: field:wizard.account.partner.balance.tree,target_move:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:286
 msgid "Target Moves"
 msgstr "Transactions Cibles"
+
+#. module: account
+#: report:account.partner.balance:0
+msgid "Target Moves"
+msgstr "Transact. Cibles"
 
 #. modules: account_override, account
 #: view:account.account:0
@@ -73244,6 +73265,8 @@ msgstr "Il n'y a qu'une Zone Transbordement"
 #: field:product.pricelist.version,date_start:0
 #: field:resource.calendar.leaves,date_from:0
 #: field:sync.monitor,start:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
 msgid "Start Date"
 msgstr "Date de Début"
 
@@ -73922,9 +73945,10 @@ msgstr "Rechercher un Journal de Compte"
 msgid "Total weight"
 msgstr "Total weight"
 
-#. module: account
+#. modules: account, finance
 #: report:account.journal.period.print:0
 #: field:account.print.journal,sort_selection:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:285
 msgid "Entries Sorted By"
 msgstr "Ecritures Triées Par"
 
@@ -78755,10 +78779,11 @@ msgstr "stock.move.memory.out"
 msgid "Tools"
 msgstr "Outils"
 
-#. module: account_mcdb
+#. modules: account_mcdb, account
 #: report:account.analytic.line:0
 #: report:account.analytic.line_csv:0
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
+#: report:addons/account/report/account_partner_ledger.mako:289
 msgid "Book. Amount"
 msgstr "Montant Enreg."
 
@@ -81479,6 +81504,13 @@ msgstr "Mis au Rebut"
 msgid "Booking currency"
 msgstr "Devise d'enregistrement"
 
+#. module: account
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/account/report/account_partner_ledger.mako:292
+msgid "Book. Curr."
+msgstr "Devise d'enreg."
+
 #. modules: tender_flow, process, financing_contract, account_voucher, export_import_lang, account_override, purchase_allocation_report, register_accounting, transport_mgmt, return_claim, sync_client, account_mcdb, res_currency_tables, procurement_request, stock_forecast, analytic, purchase_followup, stock_override, msf_doc_import, useability_dashboard_and_menu, analytic_distribution, account_payment, msf_homere_interface, hr, account_reconciliation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_budget, purchase, account, msf_outgoing, sale_override, documents_done, sale, sales_followup, procurement, msf_audittrail, stock
 #: view:account.bank.statement:0
 #: field:account.bank.statement,state:0
@@ -82523,7 +82555,7 @@ msgstr "Journal Entries to Review"
 msgid "NEW QTY"
 msgstr "Nelle Qtté"
 
-#. module: account
+#. modules: account, finance
 #: selection:account.balance.report,display_account:0
 #: selection:account.bs.report,display_account:0
 #: selection:account.common.account.report,display_account:0
@@ -82533,6 +82565,7 @@ msgstr "Nelle Qtté"
 #: selection:account.tax.template,type_tax_use:0
 #: code:addons/account/report/account_profit_loss.py:198
 #: code:addons/account/report/account_profit_loss.py:203
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 #, python-format
 msgid "All"
 msgstr "Tous(tes)"
@@ -82695,6 +82728,8 @@ msgstr "Ajouter un en-tête RML"
 #: code:addons/account/report/account_partner_ledger.py:0
 #: code:addons/finance/report/account_partner_balance_tree.py:103
 #: selection:wizard.account.partner.balance.tree,result_selection:0
+#: report:account.partner.balance:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:250
 #, python-format
 msgid "Payable Accounts"
 msgstr "Comptes Fournisseurs"
@@ -82951,6 +82986,10 @@ msgstr "Settings Error!"
 #: field:account.partner.ledger,account_ids:0
 #: report:addons/account/report/account_partner_ledger.mako:0
 #: field:wizard.account.partner.balance.tree,account_ids:0
+#: report:account.partner.balance:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:289
 #, python-format
 msgid "Accounts"
 msgstr "Comptes"
