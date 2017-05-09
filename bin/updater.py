@@ -12,11 +12,7 @@ from datetime import datetime
 from base64 import b64decode
 from StringIO import StringIO
 import logging
-
-if sys.version_info >= (2, 6, 6):
-    from zipfile import ZipFile
-else:
-    from zipfile266 import ZipFile
+from zipfile import ZipFile
 
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
