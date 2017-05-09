@@ -46,6 +46,7 @@ import logging
 import pooler
 
 import SimpleXMLRPCServer
+import BaseHTTPServer
 from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
 
 try:
@@ -58,7 +59,7 @@ try:
 except ImportError:
     class SSLError(Exception): pass
 
-class ThreadedHTTPServer(websrv_lib.ConnThreadingMixIn, SimpleXMLRPCDispatcher, websrv_lib.HTTPServer):
+class ThreadedHTTPServer(websrv_lib.ConnThreadingMixIn, SimpleXMLRPCDispatcher, BaseHTTPServer.HTTPServer):
     """ A threaded httpd server, with all the necessary functionality for us.
 
         It also inherits the xml-rpc dispatcher, so that some xml-rpc functions
@@ -75,7 +76,7 @@ class ThreadedHTTPServer(websrv_lib.ConnThreadingMixIn, SimpleXMLRPCDispatcher, 
         self.logRequests = logRequests
 
         SimpleXMLRPCDispatcher.__init__(self, allow_none, encoding)
-        websrv_lib.HTTPServer.__init__(self, addr, requestHandler)
+        BaseHTTPServer.HTTPServer.__init__(self, addr, requestHandler)
 
         self.numThreads = 0
         self.proto = proto
