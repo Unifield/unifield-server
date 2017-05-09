@@ -475,11 +475,16 @@ msgstr "Angola"
 #: report:account.central.journal:0
 #: report:account.general.journal:0
 #: report:account.journal.period.print:0
-#: report:account.partner.balance:0
-#: report:account.third_party_ledger:0
 #: report:account.vat.declaration:0
 msgid "Start Period"
 msgstr "Commencer Période"
+
+#. module: account
+#: report:account.partner.balance:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+msgid "Start Period"
+msgstr "Période de Début"
 
 #. module: purchase_override
 #: report:msf.purchase.order:0
@@ -3352,6 +3357,7 @@ msgstr "Saint Lucia"
 #: model:ir.model,name:account_period_closing_level.model_account_fiscalyear
 #: field:msf.budget,fiscalyear_id:0
 #: model:ir.model,name:sync_so.model_account_fiscalyear
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:281
 msgid "Fiscal Year"
 msgstr "Exercice Comptable"
 
@@ -36215,7 +36221,6 @@ msgstr "L'Identité de l'enregistrement est attachée à ce(t)"
 #: selection:account.common.partner.report,result_selection:0
 #: selection:account.partner.balance,result_selection:0
 #: selection:account.partner.ledger,result_selection:0
-#: code:addons/account/report/account_partner_balance.py:310
 #: selection:wizard.account.partner.balance.tree,result_selection:0
 #: model:ir.actions.act_window,name:account.action_aged_receivable
 #: view:account.account:0
@@ -36855,6 +36860,7 @@ msgstr "Sur Plusieurs Documents"
 #: field:account.subscription.line,date:0
 #: report:account.tax.code.entries:0
 #: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
 #: selection:account.vat.declaration,filter:0
 #: code:addons/account/report/account_balance_sheet.py:321
 #: code:addons/account/report/account_general_ledger.py:435
@@ -36933,6 +36939,7 @@ msgstr "Sur Plusieurs Documents"
 #: view:sync.client.update_to_send:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:658
 #: report:addons/account/report/account_partner_ledger.mako:0
+#: report:account.partner.balance:0
 #, python-format
 msgid "Date"
 msgstr "Date"
@@ -37321,10 +37328,9 @@ msgstr "Compte- Catégorie"
 #: code:addons/account/report/account_balance_sheet.py:327
 #: code:addons/account/report/account_general_ledger.py:450
 #: code:addons/account/report/account_profit_loss.py:234
-#: code:addons/finance/report/account_partner_balance_tree.py:168
 #, python-format
 msgid "No Filter"
-msgstr "No Filter"
+msgstr "Pas de filtre"
 
 #. module: analytic_distribution
 #: model:ir.actions.act_window,name:analytic_distribution.action_mass_reallocation_search
@@ -48409,7 +48415,6 @@ msgstr "Product is not perishable but line is."
 #: selection:account.common.partner.report,result_selection:0
 #: selection:account.partner.balance,result_selection:0
 #: selection:account.partner.ledger,result_selection:0
-#: code:addons/account/report/account_partner_balance.py:314
 #: code:addons/account/report/account_partner_ledger.py:0
 #: code:addons/finance/report/account_partner_balance_tree.py:105
 #: selection:wizard.account.partner.balance.tree,result_selection:0
@@ -53453,6 +53458,9 @@ msgstr "Africa/Timbuktu"
 #: report:addons/account/report/account_partner_ledger.mako:0
 #: code:addons/finance/report/account_partner_balance_tree.py:204
 #: selection:wizard.account.partner.balance.tree,filter:0
+#: report:account.partner.balance:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
 #, python-format
 msgid "Periods"
 msgstr "Périodes"
@@ -55074,6 +55082,13 @@ msgstr "Objet dans lequel vous voulez créer / écrire l'objet. S'il est vide, a
 #: report:account.vat.declaration:0
 msgid "End Period"
 msgstr "Fin de Période"
+
+#. module: account
+#: report:account.partner.balance:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+msgid "End Period"
+msgstr "Période de Fin"
 
 #. module: account_voucher
 #: view:account.voucher:0
@@ -62335,13 +62350,6 @@ msgstr "Approvisionnement"
 #: field:res.partner.address,street2:0
 msgid "Street2"
 msgstr "Rue (suite)"
-
-#. modules: account, finance
-#: code:addons/account/report/account_partner_balance.py:123
-#: code:addons/finance/wizard/account_report_partner_balance_tree.py:187
-#, python-format
-msgid "Unknown Partner"
-msgstr "Partenaire inconnu"
 
 #. module: base
 #: view:ir.actions.server:0
@@ -75532,6 +75540,10 @@ msgstr "Product Inconsistencies Report generation"
 #. module: account
 #: code:addons/account/report/common_report_header.py:140
 #: report:addons/account/report/account_partner_ledger.mako:0
+#: code:addons/finance/report/account_partner_balance_tree.py:0
+#: report:account.partner.balance:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
 #, python-format
 msgid "No Filter"
 msgstr "Pas de filtre"
@@ -82723,7 +82735,6 @@ msgstr "Ajouter un en-tête RML"
 #: selection:account.common.partner.report,result_selection:0
 #: selection:account.partner.balance,result_selection:0
 #: selection:account.partner.ledger,result_selection:0
-#: code:addons/account/report/account_partner_balance.py:312
 #: view:account.account:0
 #: code:addons/account/report/account_partner_ledger.py:0
 #: code:addons/finance/report/account_partner_balance_tree.py:103

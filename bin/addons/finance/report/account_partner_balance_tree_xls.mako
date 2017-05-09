@@ -278,7 +278,7 @@ else:
 header_col_merge_count = col_count - 1
 %>
 <Row>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;Fiscal Year</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;${_('Fiscal Year')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Journals')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Display Partners')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filter By'), (get_filter(data) or ''))|x}</Data></Cell>
@@ -363,13 +363,13 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${formatLang(p_obj.debit or 0.)}</Data>
+    <Data ss:Type="Number">${p_obj.debit or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${formatLang(p_obj.credit or 0.)}</Data>
+    <Data ss:Type="Number">${p_obj.credit or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${formatLang(p_obj.balance or 0.)}</Data>
+    <Data ss:Type="Number">${p_obj.balance or 0.|x}</Data>
 </Cell>
 </Row>
 
@@ -386,13 +386,13 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String">${_('Initial Balance')}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${formatLang(p_obj.ib_debit or 0.)}</Data>
+    <Data ss:Type="Number">${p_obj.ib_debit or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${formatLang(p_obj.ib_credit or 0.)}</Data>
+    <Data ss:Type="Number">${p_obj.ib_credit or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${formatLang(p_obj.ib_balance or 0.)}</Data>
+    <Data ss:Type="Number">${p_obj.ib_balance or 0.|x}</Data>
 </Cell>
 </Row>
 % endif
@@ -410,13 +410,13 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String">${aml.get('account', '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberBold">
-    <Data ss:Type="Number">${formatLang(aml.get('deb') or 0.)}</Data>
+    <Data ss:Type="Number">${aml.get('deb') or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberBold">
-    <Data ss:Type="Number">${formatLang(aml.get('cred') or 0.)}</Data>
+    <Data ss:Type="Number">${aml.get('cred') or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberBold">
-    <Data ss:Type="Number">${formatLang(aml.get('total') or 0.)}</Data>
+    <Data ss:Type="Number">${aml.get('total') or 0.|x}</Data>
 </Cell>
 </Row>
 
@@ -433,13 +433,13 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String">${'%s %s' % (_('Subtotal'), detail_line.get('currency_booking', ''))|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberItalic">
-    <Data ss:Type="Number">${formatLang(detail_line.get('debit_booking') or 0.)}</Data>
+    <Data ss:Type="Number">${detail_line.get('debit_booking') or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberItalic">
-    <Data ss:Type="Number">${formatLang(detail_line.get('credit_booking') or 0.)}</Data>
+    <Data ss:Type="Number">${detail_line.get('credit_booking') or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberItalic">
-    <Data ss:Type="Number">${formatLang(detail_line.get('total_booking') or 0.)}</Data>
+    <Data ss:Type="Number">${detail_line.get('total_booking') or 0.|x}</Data>
 </Cell>
 </Row>
 % endfor
@@ -463,13 +463,13 @@ balance = currency_conv(balance, False)
     <Data ss:Type="String">TOTAL</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="Number">${formatLang(debit or 0.)}</Data>
+    <Data ss:Type="Number">${debit or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="Number">${formatLang(credit or 0.)}</Data>
+    <Data ss:Type="Number">${credit or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="Number">${formatLang(balance or 0.)}</Data>
+    <Data ss:Type="Number">${balance or 0.|x}</Data>
 </Cell>
 </Row>
 </Table>

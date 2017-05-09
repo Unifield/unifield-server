@@ -136,11 +136,11 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         if not f:
             return res
 
-        if f == 'No Filter':
+        if f == _('No Filter'):
             res = f
-        elif f == 'Date':
+        elif f == _('Date'):
             res = self.formatLang(self._get_start_date(data), date=True) + ' - ' + self.formatLang(self._get_end_date(data), date=True)
-        elif f == 'Periods':
+        elif f == _('Periods'):
             res = self.get_start_period(data) + ' - ' + self.get_end_period(data)
         return res
 

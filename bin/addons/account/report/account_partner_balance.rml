@@ -202,8 +202,8 @@
         <td><para style="terp_default_Centre_8">[[ get_fiscalyear(data)  or '' ]]</para></td>
         <td> <para style="terp_default_Centre_8">[[', '.join([ lt or '' for lt in get_journal(data) ]) ]] </para></td>
 
-        <td><para style="terp_default_Centre_8">[[ get_filter(data)=='No Filter' and get_filter(data) or removeParentNode('para') ]] </para>
-          <blockTable colWidths="57.0,57.0" style="Table3">[[ get_filter(data)=='Date' or removeParentNode('blockTable') ]]
+        <td><para style="terp_default_Centre_8">[[ get_filter(data)==translate('No Filter') and get_filter(data) or removeParentNode('para') ]] </para>
+          <blockTable colWidths="57.0,57.0" style="Table3">[[ get_filter(data)==translate('Date') or removeParentNode('blockTable') ]]
             <tr>
               <td><para style="terp_tblheader_General_Centre">Start Date</para></td>
               <td><para style="terp_tblheader_General_Centre">End Date</para></td>
@@ -213,7 +213,7 @@
               <td><para style="terp_default_Centre_8">[[ formatLang(get_end_date(data),date=True) ]]</para></td>
             </tr>
           </blockTable>
-          <blockTable colWidths="57.0,57.0" style="Table3">[[ get_filter(data)=='Periods' or removeParentNode('blockTable') ]]
+          <blockTable colWidths="57.0,57.0" style="Table3">[[ get_filter(data)==translate('Periods') or removeParentNode('blockTable') ]]
             <tr>
               <td><para style="terp_tblheader_General_Centre">Start Period</para></td>
               <td><para style="terp_tblheader_General_Centre">End Period</para></td>

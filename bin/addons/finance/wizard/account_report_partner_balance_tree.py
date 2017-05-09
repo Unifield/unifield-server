@@ -335,8 +335,6 @@ class account_partner_balance_tree(osv.osv):
         res = self._execute_query_partners(cr, uid, data)
 
         for r in res[0]:
-            if not r.get('partner_name', False):
-                r.update({'partner_name': _('Unknown Partner')})
             debit = r['debit'] + (self.initial_balance and r['ib_debit'] or 0.0)
             credit = r['credit'] + (self.initial_balance and r['ib_credit'] or 0.0)
             balance = (r['debit'] - r['credit']) + (self.initial_balance and r['ib_balance'] or 0.0)
