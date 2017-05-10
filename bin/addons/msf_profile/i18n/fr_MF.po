@@ -486,6 +486,21 @@ msgstr "Commencer Période"
 msgid "Start Period"
 msgstr "Période de Début"
 
+#. modules: account, finance
+#: field:account.common.partner.report,period_from:0
+#: field:account.partner.balance,period_from:0
+#: field:account.partner.ledger,period_from:0
+#: field:wizard.account.partner.balance.tree,period_from:0
+msgid "Start period"
+msgstr "Période de début"
+
+#. modules: account, finance
+#: field:wizard.account.partner.balance.tree,period_to:0
+#: field:account.partner.balance,period_to:0
+#: field:account.partner.ledger,period_to:0
+msgid "End period"
+msgstr "Période de fin"
+
 #. module: purchase_override
 #: report:msf.purchase.order:0
 #: report:purchase.order.merged:0
@@ -762,11 +777,6 @@ msgstr "Importer dans la liste"
 #: view:sale.order.sourcing.progress:0
 msgid "Sourcing progress"
 msgstr "Progression du sourcing"
-
-#. module: finance
-#: field:wizard.account.partner.balance.tree,period_to:0
-msgid "End period"
-msgstr "End period"
 
 #. module: base
 #: help:res.partner,supplier:0
@@ -2236,8 +2246,6 @@ msgstr "\n"
 #: field:account.common.partner.report,period_to:0
 #: field:account.common.report,period_to:0
 #: field:account.general.journal,period_to:0
-#: field:account.partner.balance,period_to:0
-#: field:account.partner.ledger,period_to:0
 #: field:account.pl.report,period_to:0
 #: field:account.print.journal,period_to:0
 #: field:account.report.general.ledger,period_to:0
@@ -16164,11 +16172,6 @@ msgstr "No selection value for lines to select."
 #: view:msf_button_access_rights.button_access_rule:0
 msgid "Groups who have access to this button (Everybody has access if no groups are specified)"
 msgstr "Groups who have access to this button (Everybody has access if no groups are specified)"
-
-#. module: finance
-#: field:wizard.account.partner.balance.tree,period_from:0
-msgid "Start period"
-msgstr "Start period"
 
 #. module: base
 #: field:ir.actions.server,loop_action:0
@@ -36940,6 +36943,8 @@ msgstr "Sur Plusieurs Documents"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:658
 #: report:addons/account/report/account_partner_ledger.mako:0
 #: report:account.partner.balance:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
 #, python-format
 msgid "Date"
 msgstr "Date"
@@ -44086,14 +44091,9 @@ msgstr "La société choisie ne fait pas partie des sociétés autorisées pour 
 #: field:account.general.journal,date_to:0
 #: field:account.installer,date_stop:0
 #: report:account.journal.period.print:0
-#: report:account.partner.balance:0
-#: field:account.partner.balance,date_to:0
-#: field:account.partner.ledger,date_to:0
 #: field:account.pl.report,date_to:0
 #: field:account.print.journal,date_to:0
 #: field:account.report.general.ledger,date_to:0
-#: report:account.third_party_ledger:0
-#: report:account.third_party_ledger_other:0
 #: field:account.vat.declaration,date_to:0
 #: field:product.pricelist.version,date_end:0
 #: field:resource.calendar.leaves,date_to:0
@@ -69551,11 +69551,8 @@ msgstr "Historique"
 #: field:account.central.journal,period_from:0
 #: field:account.common.account.report,period_from:0
 #: field:account.common.journal.report,period_from:0
-#: field:account.common.partner.report,period_from:0
 #: field:account.common.report,period_from:0
 #: field:account.general.journal,period_from:0
-#: field:account.partner.balance,period_from:0
-#: field:account.partner.ledger,period_from:0
 #: field:account.pl.report,period_from:0
 #: field:account.print.journal,period_from:0
 #: field:account.report.general.ledger,period_from:0
@@ -80654,10 +80651,15 @@ msgstr "Le nom de la Zone doit être une chaîne."
 msgid "Import invoice"
 msgstr "Importer facture"
 
-#. module: finance
+#. modules: account, finance
 #: field:wizard.account.partner.balance.tree,date_to:0
+#: report:account.partner.balance:0
+#: field:account.partner.balance,date_to:0
+#: field:account.partner.ledger,date_to:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
 msgid "End Date"
-msgstr "Date de fin"
+msgstr "Date de Fin"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:36

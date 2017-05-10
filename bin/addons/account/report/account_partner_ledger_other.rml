@@ -347,7 +347,7 @@
                 </td>
                 <td>
                     <para style="terp_default_Centre_8">[[ get_filter(data)==translate('No Filter') and get_filter(data) or removeParentNode('para') ]]</para>
-                    <blockTable colWidths="82.0,82.0" style="Table7">
+                    <blockTable colWidths="79.0,79.0" style="Table7">
                         <tr>
                             <td>
                                 <para style="terp_tblheader_General_Centre">[[ get_filter(data)==translate('Date') and translate('Start Date') or removeParentNode('blockTable') ]]</para>
@@ -357,7 +357,7 @@
                             </td>
                         </tr>
                     </blockTable>
-                    <blockTable colWidths="82.0,82.0" style="Table9">
+                    <blockTable colWidths="79.0,79.0" style="Table9">
                         <tr>
                             <td>
                                 <para style="terp_default_Centre_8">[[ get_filter(data)==translate('Date') and ' ' or removeParentNode('blockTable') ]] [[ formatLang(get_start_date(data),date=True) ]]</para>
@@ -367,7 +367,7 @@
                             </td>
                         </tr>
                     </blockTable>
-                    <blockTable colWidths="82.0,82.0" style="Table10">
+                    <blockTable colWidths="79.0,79.0" style="Table10">
                         <tr>
                             <td>
                                 <para style="terp_tblheader_General_Centre">[[ get_filter(data)==translate('Periods') and translate('Start Period') or removeParentNode('blockTable') ]]</para>
@@ -377,7 +377,7 @@
                             </td>
                         </tr>
                     </blockTable>
-                    <blockTable colWidths="82.0,82.0" style="Table11">
+                    <blockTable colWidths="79.0,79.0" style="Table11">
                         <tr>
                             <td>
                                 <para style="terp_default_Centre_8">[[ get_filter(data)==translate('Periods') and ' ' or removeParentNode('blockTable') ]] [[ get_start_period(data) or removeParentNode('para') ]]</para>
@@ -414,7 +414,7 @@
         <blockTable colWidths="83.0,34.0,129.0,79.0,145.0,90.0,90.0,112.0" style="Table15">
             <tr>
                 <td>
-                    <para style="terp_tblheader_Details">[[ display_currency(data) == False and "Date" or removeParentNode('blockTable') ]]</para>
+                    <para style="terp_tblheader_Details">[[ display_currency(data) == False and translate('Date') or removeParentNode('blockTable') ]]</para>
                 </td>
                 <td>
                     <para style="terp_tblheader_Details">JNRL</para>
@@ -443,7 +443,7 @@
 
             <tr>
                 <td>
-                    <para style="terp_tblheader_Details">[[ display_currency(data) == True and "Date" or removeParentNode('blockTable') ]]</para>
+                    <para style="terp_tblheader_Details">[[ display_currency(data) == True and translate('Date') or removeParentNode('blockTable') ]]</para>
                 </td>
                 <td>
                     <para style="terp_tblheader_Details">JNRL</para>
