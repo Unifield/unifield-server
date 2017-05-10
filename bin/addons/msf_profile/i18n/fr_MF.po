@@ -98321,6 +98321,21 @@ msgstr "Balance des Tiers"
 msgid "Take reconciled entries into account"
 msgstr "Prendre en compte les écritures lettrées"
 
+#. module: finance
+#: field:account.partner.balance.tree,ib_debit:0
+msgid "Initial Balance Debit"
+msgstr "Débit Solde Initial"
+
+#. module: finance
+#: field:account.partner.balance.tree,ib_credit:0
+msgid "Initial Balance Credit"
+msgstr "Crédit Solde Initial"
+
+#. module: finance
+#: field:account.partner.balance.tree,ib_balance:0
+msgid "IB Balance"
+msgstr "Balance Solde Initial"
+
 #. module: account
 #: help:account.partner.ledger,instance_ids:0
 msgid "Display the report for specific proprietary instances only"
