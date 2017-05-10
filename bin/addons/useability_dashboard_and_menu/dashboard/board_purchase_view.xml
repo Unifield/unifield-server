@@ -16,7 +16,7 @@
             <field name="name">board.purchase.form</field>
             <field name="model">board.board</field>
             <field name="type">form</field>
-            <field name="priority">24</field>
+            <field name="priority">23</field>
             <field name="arch" type="xml">
                 <form string="My Board">
                     <hpaned>

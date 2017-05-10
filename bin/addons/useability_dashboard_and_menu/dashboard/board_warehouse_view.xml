@@ -117,7 +117,7 @@
             <field name="name">board.warehouse.form.default</field>
             <field name="model">board.board</field>
             <field name="type">form</field>
-            <field name="priority">27</field>
+            <field name="priority">28</field>
             <field name="arch" type="xml">
                 <form string="Warehouse board">
                     <hpaned position="100">
@@ -138,7 +138,7 @@
             <field name="name">board.warehouse.form.default</field>
             <field name="model">board.board</field>
             <field name="type">form</field>
-            <field name="priority">28</field>
+            <field name="priority">27</field>
             <field name="arch" type="xml">
                 <form string="Warehouse board">
                     <hpaned position="100">

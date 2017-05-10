@@ -613,7 +613,7 @@
             <field name="name">rfq.cancel.wizard.form.view</field>
             <field name="model">purchase.order.cancel.wizard</field>
             <field name="type">form</field>
-            <field name="priority" eval="100" />
+            <field name="priority" eval="101" />
             <field name="arch" type="xml">
                 <form string="Cancel Request for Quotation">
                     <group colspan="4" col="1">
@@ -633,7 +633,7 @@
             <field name="name">ask.rfq.cancel.wizard.form.view</field>
             <field name="model">purchase.order.cancel.wizard</field>
             <field name="type">form</field>
-            <field name="priority" eval="101" />
+            <field name="priority" eval="100" />
             <field name="arch" type="xml">
                 <form string="Cancel Request for Quotation">
                     <group colspan="4" col="1">

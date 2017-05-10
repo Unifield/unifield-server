@@ -15,6 +15,7 @@
             <field name="name">account.mcdb.form</field>
             <field name="model">account.mcdb</field>
             <field name="type">form</field>
+            <field name="priority" eval="17"/>
             <field name="arch" type="xml">
                 <form string="Selector - G/L" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" >
                     &general;
@@ -87,7 +88,7 @@
             <field name="name">account.mcdb.analytic.form</field>
             <field name="model">account.mcdb</field>
             <field name="type">form</field>
-            <field name="priority" eval="17"/>
+            <field name="priority" eval="16"/>
             <field name="arch" type="xml">
                 <form string="Selector - Analytic" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     &general;

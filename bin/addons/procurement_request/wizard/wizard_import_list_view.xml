@@ -7,6 +7,7 @@
             <field name="name">wizard.import.list.init</field>
             <field name="model">procurement.request.import</field>
             <field name="type">form</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <form string="Import lines">
                     <separator string="Information" colspan="4" />

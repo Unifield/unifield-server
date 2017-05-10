@@ -137,7 +137,7 @@
             <field name="name">board.administration.form</field>
             <field name="model">board.board</field>
             <field name="type">form</field>
-            <field name="priority">17</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <form string="Administration Dashboard">
                     <hpaned position="100">

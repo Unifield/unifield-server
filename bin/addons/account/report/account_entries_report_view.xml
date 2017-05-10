@@ -5,6 +5,7 @@
         <field name="name">account.entries.report.tree</field>
         <field name="model">account.entries.report</field>
         <field name="type">tree</field>
+         <field name="priority" eval="18"/>
         <field name="arch" type="xml">
             <tree colors="blue:move_state in ('draft');black:move_state in ('posted')" string="Entries Analysis">
                 <field name="date" invisible="1"/>

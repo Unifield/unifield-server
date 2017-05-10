@@ -55,7 +55,7 @@
             <field name="name">board.account.form</field>
             <field name="model">board.board</field>
             <field name="type">form</field>
-            <field name="priority">20</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <form string="Account Board">
                     <hpaned>

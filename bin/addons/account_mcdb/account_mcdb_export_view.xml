@@ -45,6 +45,7 @@
             <field name="name">account.move.line.csv.export.form</field>
             <field name="model">account.line.csv.export</field>
             <field name="type">form</field>
+            <field name="priority" eval="18"/>
             <field name="arch" type="xml">
                 <form string="Account Entries Export">
                     <separator colspan="4" string="Message" />

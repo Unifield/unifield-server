@@ -95,6 +95,7 @@
             <field name="name">composition.kit.tree</field>
             <field name="model">composition.kit</field>
             <field name="type">tree</field>
+            <field name="priority" eval="18"/>
             <field name="arch" type="xml">
             	<tree string="Kit Composition">
             		<field name="composition_type" invisible="True" />

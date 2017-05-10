@@ -95,7 +95,7 @@
             <field name="name">account.voucher.sale.form</field>
             <field name="model">account.voucher</field>
             <field name="type">form</field>
-            <field name="priority">19</field>
+            <field name="priority">20</field>
             <field name="arch" type="xml">
                 <form string="Sales Receipt">
                     <group col="6" colspan="4">
@@ -222,7 +222,7 @@
             <field name="name">account.voucher.purchase.form</field>
             <field name="model">account.voucher</field>
             <field name="type">form</field>
-            <field name="priority">20</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <form string="Supplier Voucher">
                     <group col="6" colspan="4">

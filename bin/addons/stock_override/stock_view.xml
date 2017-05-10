@@ -530,7 +530,7 @@
         	<field name="name">view.picking.in.form</field>
         	<field name="model">stock.picking</field>
         	<field name="type">form</field>
-            <field name="priority">17</field>
+            <field name="priority">22</field>
         	<field name="arch" type="xml">
         		<form string="Incoming Shipments">
                     <field name="progress_memory_not_done" invisible="1" />
@@ -841,6 +841,7 @@
             <field name="name">view.picking.out.form</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
+            <field name="priority">23</field>
             <field name="arch" type="xml">
                 <form string="Delivery Orders">
                     <group col="6" colspan="4">

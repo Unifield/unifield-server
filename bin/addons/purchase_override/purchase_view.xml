@@ -202,6 +202,7 @@
             <field name="name">purchase.view.purchase.order.filter</field>
             <field name="model">purchase.order</field>
             <field name="type">search</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <search string="Search Purchase Orders">
                     <group col="8" colspan="4">

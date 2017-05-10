@@ -287,7 +287,7 @@
             <field name="name">account.voucher.receipt.form</field>
             <field name="model">account.voucher</field>
             <field name="type">form</field>
-            <field name="priority">18</field>
+            <field name="priority">19</field>
             <field name="arch" type="xml">
                 <form string="Customer Payment">
                     <group col="6" colspan="4">

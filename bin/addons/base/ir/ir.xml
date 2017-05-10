@@ -52,6 +52,7 @@
             <field name="name">ir.values.tree.action</field>
             <field name="model">ir.values</field>
             <field name="type">tree</field>
+            <field name="priority" eval="18"/>
             <field name="arch" type="xml">
                 <tree string="Client Actions">
                     <field name="name"/>

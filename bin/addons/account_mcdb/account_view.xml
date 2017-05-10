@@ -7,7 +7,7 @@
             <field name="name">account.move.line.mcdb.search.result</field>
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
-            <field name="priority" eval="20"/>
+            <field name="priority" eval="13"/>
             <field name="arch" type="xml">
                 <tree string="Account Entries" min_rows="100" hide_new_button="1" hide_delete_button="1"  noteditable="1" >
                     <field name="instance_id"/>
