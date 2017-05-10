@@ -98337,6 +98337,11 @@ msgid "IB Balance"
 msgstr "Balance Solde Initial"
 
 #. module: account
+#: field:account.common.partner.report,account_domain:0
+msgid "Account domain"
+msgstr "Domaine des comptes"
+
+#. module: account
 #: help:account.partner.ledger,instance_ids:0
 msgid "Display the report for specific proprietary instances only"
 msgstr "Afficher le rapport uniquement pour des instances propriétaires spécifiques"
