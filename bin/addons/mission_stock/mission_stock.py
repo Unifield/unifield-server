@@ -443,8 +443,8 @@ class stock_mission_report(osv.osv):
                 return
 
             logging.getLogger('MSR').info("""____________________ Start the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
-            msr_in_progress._delete_all(cr, uid, context)
-            self.update(cr, uid, ids=[], context=None)
+            msr_in_progress._delete_all(cr, uid, context)  # delete previously generated before to start
+            self.update(cr, uid, ids=[], context=context)
             msr_in_progress._delete_all(cr, uid, context)
             cr.commit()
             logging.getLogger('MSR').info("""____________________ Finished the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
@@ -452,7 +452,6 @@ class stock_mission_report(osv.osv):
             cr.rollback()
             logging.getLogger('MSR').error("""____________________ Error while running the update process of MSR, at %s - Error: %s""" % (time.strftime('%Y-%m-%d %H:%M:%S'), str(e)), exc_info=True)
             msr_in_progress._delete_all(cr, uid, context)
-            cr.commit()
         finally:
             cr.close(True)
 
@@ -610,22 +609,19 @@ class stock_mission_report(osv.osv):
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
             except Exception as e:
                 logger.error('Error: %s' % e, exc_info=True)
-                new_cr = pooler.get_db(cr.dbname).cursor()
                 import traceback
                 error_vals = {
                         'export_state': 'error',
                         'export_error_msg': traceback.format_exc(),
                 }
-                self.write(new_cr, uid, [report['id']], error_vals, context=context)
-                new_cr.commit()
-                new_cr.close()
+                self.write(cr, uid, [report['id']], error_vals, context=context)
             else:
                 self.write(cr, uid, [report['id']], {'export_state': 'done',
                     'export_error_msg': False}, context=context)
 
-            # Update the update date on report
-            self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
-            logger.info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
+                # Update the update date on report
+                self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+                logger.info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
 
     def update_lines(self, cr, uid, report_ids, context=None):
         location_obj = self.pool.get('stock.location')
@@ -791,7 +787,6 @@ class stock_mission_report(osv.osv):
                         [('datas_fname', 'in', file_name_list)],
                         context=context)
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
-        cr.commit()
 
     def _get_export(self, cr, uid, ids, product_values, context=None):
         '''
