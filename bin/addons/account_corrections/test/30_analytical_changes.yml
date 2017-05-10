@@ -54,7 +54,7 @@
     # Launch Correction wizard
     logging.getLogger('tests').log(logging.TEST, 'I launch the correction wizard from JI (%s)' % line.name)
     correction_wizard_data = aml_obj.button_do_accounting_corrections(cr, uid, line.move_id.id)
-    assert correction_wizard_data != False, "An error occured at Correction wizard launch."
+    assert correction_wizard_data != False, "An error occurred at Correction wizard launch."
     assert correction_wizard_data.get('res_model', False) == 'wizard.journal.items.corrections', "Wrong Correction Wizard return from account move line: %s. Expected: wizard.journal.items.corrections" % correction_wizard_data.get('res_model', False)
     wiz_id = correction_wizard_data.get('res_id', False)
     # Check that February is open
@@ -90,7 +90,7 @@
     assert len(cc_corrected_ids) == 1, "You should only have ONE analytic line even if this one was corrected before! Current: %s" % len(cc_corrected_ids)
     cc_corrected = ana_obj.browse(cr, uid, cc_corrected_ids)[0]
     assert cc_corrected.date == time.strftime('%Y-02-04'), "Wrong date on analytic line. Should be %s. Current: %s" % (time.strftime('%Y-02-04'), cc_corrected.date)
-    assert cc_corrected.cost_center_id.id == ref('analytic_cc2'), "An error occured during CC change from CC1 to CC2. Current: %s" % cc_corrected.cost_center_id.name
+    assert cc_corrected.cost_center_id.id == ref('analytic_cc2'), "An error occurred during CC change from CC1 to CC2. Current: %s" % cc_corrected.cost_center_id.name
     all_p_ids = period_obj.search(cr, uid, [])
     assert cc_corrected.period_id.number == 2, "Wrong period. Should be 2. Current: %s" % cc_corrected.period_id.number
 -
@@ -128,7 +128,7 @@
     # Launch Correction wizard
     logging.getLogger('tests').log(logging.TEST, 'I launch the correction wizard from JI (%s)' % line.name)
     correction_wizard_data = aml_obj.button_do_accounting_corrections(cr, uid, line.move_id.id)
-    assert correction_wizard_data != False, "An error occured at Correction wizard launch."
+    assert correction_wizard_data != False, "An error occurred at Correction wizard launch."
     assert correction_wizard_data.get('res_model', False) == 'wizard.journal.items.corrections', "Wrong Correction Wizard return from account move line: %s. Expected: wizard.journal.items.corrections" % correction_wizard_data.get('res_model', False)
     wiz_id = correction_wizard_data.get('res_id', False)
     # I set a date on the wizard and launch analytic correction wizard

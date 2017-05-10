@@ -13,12 +13,12 @@ class ocba_export_wizard(osv.osv_memory):
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True),
-        'selection': fields.selection([('unexported', 'Not yet exported'), ('all', 'All lines')], string="Select", required=True),
+        'selection': fields.selection([('all', 'All lines'), ('unexported', 'Not yet exported')], string="Select", required=True),
     }
 
     _defaults = {
         'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, strftime('%Y-%m-%d'), context=c),
-        'selection': lambda *a: 'unexported',
+        'selection': lambda *a: 'all',
     }
 
     def button_export(self, cr, uid, ids, context=None):

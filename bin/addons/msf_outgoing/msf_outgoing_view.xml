@@ -1276,12 +1276,11 @@
 									<field name="location_id" />
 									<field name="location_dest_id" />
 									<field name="state" />
-									<field name="comment" />
 									<field name="move_lines" nolabel="True" colspan="4" mode="tree" readonly="True">
 										<tree colors="red: inactive_product==True">
-											<field name="name" />
-											<field name="origin" />
 											<field name="product_id" />
+											<field name="origin" />
+									        <field name="comment" />
 											<field name="prodlot_id" />
 											<field name="expired_date" />
 											<field name="product_qty" />
@@ -1472,7 +1471,7 @@
 			<field name="type">search</field>
 			<field name="arch" type="xml">
 				<search string="Shipment">
-                    <field name="name"/>
+                    <field name="product_id"/>
                     <field name="picking_id" string="Pack" domain="[('already_shipped','=',True), ('shipment_id','!=',False)]"/>
                     <field name="pick_shipment_id" string="Shipment" />
                     <field name="origin"/>

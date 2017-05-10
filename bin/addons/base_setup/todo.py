@@ -60,7 +60,7 @@ class base_setup_company(osv.osv_memory):
         from the company's fields
         """
         defaults = super(base_setup_company, self)\
-              .default_get(cr, uid, fields_list=fields_list, context=context)
+            .default_get(cr, uid, fields_list=fields_list, context=context)
         companies = self.pool.get('res.company')
         company_id = companies.search(cr, uid, [], limit=1, order="id")
         if not company_id or 'company_id' not in fields_list:
@@ -99,20 +99,21 @@ class base_setup_company(osv.osv_memory):
         'phone':fields.char('Phone', size=64),
         'currency':fields.many2one('res.currency', 'Currency', required=True),
         'rml_header1':fields.char('Report Header', size=200,
-            help='''This sentence will appear at the top right corner of your reports.
+                                  help='''This sentence will appear at the top right corner of your reports.
 We suggest you to put a slogan here:
 "Open Source Business Solutions".'''),
         'rml_footer1':fields.char('Report Footer 1', size=200,
-            help='''This sentence will appear at the bottom of your reports.
+                                  help='''This sentence will appear at the bottom of your reports.
 We suggest you to write legal sentences here:
 Web: http://openerp.com - Fax: +32.81.73.35.01 - Fortis Bank: 126-2013269-07'''),
         'rml_footer2':fields.char('Report Footer 2', size=200,
-            help='''This sentence will appear at the bottom of your reports.
+                                  help='''This sentence will appear at the bottom of your reports.
 We suggest you to put bank information here:
 IBAN: BE74 1262 0121 6907 - SWIFT: CPDF BE71 - VAT: BE0477.472.701'''),
         'logo':fields.binary('Logo'),
         'account_no':fields.char('Bank Account No', size=64),
-        'website': fields.char('Company Website', size=64, help="Example: http://openerp.com"),
+        'website': fields.char('Company Website', size=64, help="Example: http://www.msf.org/"),
+        'contact_name': fields.char('Contact Name', size=64, select=1, required=True)
     }
 
     def execute(self, cr, uid, ids, context=None):
@@ -138,7 +139,7 @@ IBAN: BE74 1262 0121 6907 - SWIFT: CPDF BE71 - VAT: BE0477.472.701'''),
         })
 
         address_data = {
-            'name':payload.name,
+            'name':payload.contact_name,
             'street':payload.street,
             'street2':payload.street2,
             'zip':payload.zip,
@@ -154,9 +155,9 @@ IBAN: BE74 1262 0121 6907 - SWIFT: CPDF BE71 - VAT: BE0477.472.701'''),
                 address_data)
         else:
             self.pool.get('res.partner.address').create(cr, uid,
-                    dict(address_data,
-                         partner_id=int(company.partner_id)),
-                    context=context)
+                                                        dict(address_data,
+                                                             partner_id=int(company.partner_id)),
+                                                        context=context)
 base_setup_company()
 
 class res_currency(osv.osv):

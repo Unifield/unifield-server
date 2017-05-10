@@ -28,6 +28,7 @@ from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
 class account_period(osv.osv):
     _name = "account.period"
     _inherit = "account.period"
+    _unlink_sdref = True
 
     # To avoid issues with existing OpenERP code (account move line for example)
     # the state are:
@@ -155,8 +156,8 @@ class account_period(osv.osv):
                 pp_ids = self.search(
                     cr, uid,
                     [('date_start', '<', period.date_start),
-                    ('fiscalyear_id', '=', period.fiscalyear_id.id),
-                    ('number', '>', 0), ('number', '<', 16)],
+                     ('fiscalyear_id', '=', period.fiscalyear_id.id),
+                     ('number', '>', 0), ('number', '<', 16)],
                     context=context)
                 for pp in self.browse(cr, uid, pp_ids, context=context):
                     if check_states.index(pp.state) <= check_states.index(period.state):
@@ -167,8 +168,8 @@ class account_period(osv.osv):
                 np_ids = self.search(
                     cr, uid,
                     [('date_start', '>', period.date_start),
-                    ('fiscalyear_id', '=', period.fiscalyear_id.id),
-                    ('number', '>', 0), ('number', '<', 16)],
+                     ('fiscalyear_id', '=', period.fiscalyear_id.id),
+                     ('number', '>', 0), ('number', '<', 16)],
                     context=context)
                 for np in self.browse(cr, uid, np_ids, context=context):
                     if check_states.index(np.state) >= check_states.index(period.state):
@@ -211,7 +212,7 @@ class account_period(osv.osv):
                     if period_id == None or period_id == comp_curr_id:
                         continue
                     rate_ids = curr_rate_obj.search(cr, uid, [('currency_id', '=', period_id), ('name', '>=', period.date_start),
-                        ('name', '<=', period.date_stop)], context=context)
+                                                              ('name', '<=', period.date_stop)], context=context)
                     # if no rate found
                     if not rate_ids:
                         curr_name = curr_obj.read(cr, uid, period_id, ['name']).get('name', False)
@@ -302,9 +303,9 @@ class account_period(osv.osv):
     _columns = {
         'name': fields.char('Period Name', size=64, required=True, translate=True),
         'special': fields.boolean('Opening/Closing Period', size=12,
-            help="These periods can overlap.", readonly=True),
+                                  help="These periods can overlap.", readonly=True),
         'state': fields.selection(ACCOUNT_PERIOD_STATE_SELECTION, 'State', readonly=True,
-            help='HQ opens a monthly period. After validation, it will be closed by the different levels.'),
+                                  help='HQ opens a monthly period. After validation, it will be closed by the different levels.'),
         'number': fields.integer(string="Number for register creation", help="This number informs period's order. Should be between 1 and 15."),
         'field_process': fields.boolean('Is this period in Field close processing?', readonly=True),
         'state_sync_flag': fields.char('Sync Flag', required=True, size=64, help='Flag for controlling sync actions on the period state.'),
@@ -368,7 +369,7 @@ class account_period(osv.osv):
             ids = [ids]
 
         is_system = [ rec.is_system \
-            for rec in self.browse(cr, uid, ids, context=context) ]
+                      for rec in self.browse(cr, uid, ids, context=context) ]
         if any(is_system):
             raise osv.except_osv(_('Warning'), _('System period not deletable'))
         return super(account_period, self).unlink(cr, uid, ids, context=context)

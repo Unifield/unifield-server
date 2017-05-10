@@ -259,6 +259,6 @@ report when the last update field will be filled. Thank you for your comprehensi
     def update(self, cr, uid, ids, context=None):
         msr_obj = self.pool.get('stock.mission.report')
         ids = msr_obj.search(cr, uid, [], context=context)
-        return msr_obj.background_update(cr, uid, ids)
+        return msr_obj.background_update(cr, uid, ids, context=context)
 
 mission_stock_wizard()

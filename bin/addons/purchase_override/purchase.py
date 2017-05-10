@@ -781,7 +781,7 @@ class purchase_order(osv.osv):
             elif partner['partner_type'] not in ('external', 'esc') and order_type == 'direct':
                 v.update({'partner_address_id': False, 'partner_id': False, 'pricelist_id': False,})
                 w.update({'message': 'You cannot have a Direct Purchase Order with a partner which is not external or an ESC',
-                          'title': 'An error has occured !'})
+                          'title': 'An error has occurred !'})
         elif partner_id and partner_id == local_market and order_type != 'purchase_list':
             v['partner_id'] = None
             v['partner_address_id'] = None
@@ -2035,6 +2035,9 @@ stock moves which are already processed : '''
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if context is None:
+            context = {}
+
         # duplicated code with wkf_confirm_wait_order because of backward compatibility issue with yml tests for dates,
         # which doesnt execute wkf_confirm_wait_order (null value in column "date_expected" violates not-null constraint for stock.move otherwise)
         # msf_order_date checks
@@ -2063,6 +2066,7 @@ stock moves which are already processed : '''
             todo2 = []
             todo3 = []
             todo4 = {}
+            to_invoice = set()
             if order.partner_id.partner_type in ('internal', 'esc') and order.order_type == 'regular' or \
                     order.order_type in ['donation_exp', 'donation_st', 'loan']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
@@ -2107,6 +2111,10 @@ stock moves which are already processed : '''
                                                             'date': strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                         wf_service.trg_trigger(uid, 'stock.move', move.id, cr)
                         if move.picking_id:
+                            if move.picking_id.sale_id:
+                                sale = move.picking_id.sale_id
+                                if sale.partner_id.partner_type in ('section', 'intermission') and sale.invoice_quantity == 'procurement':
+                                    to_invoice.add(move.picking_id.id)
                             all_move_closed = True
                             # Check if the picking should be updated
                             if move.picking_id.subtype == 'picking':
@@ -2122,6 +2130,11 @@ stock moves which are already processed : '''
                 for pick_id in todo3:
                     wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
                     wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
+
+            if to_invoice:
+                conf_context = context.copy()
+                conf_context['invoice_dpo_confirmation'] = order.id
+                self.pool.get('stock.picking').action_invoice_create(cr, uid, list(to_invoice), type='out_invoice', context=conf_context)
 
         # @@@override@purchase.purchase.order.wkf_approve_order
         self.write(cr, uid, ids, {'state': 'approved', 'date_approve': strftime('%Y-%m-%d')})
@@ -2330,8 +2343,6 @@ stock moves which are already processed : '''
                     'product_uos_qty': order_line.product_qty,
                     'product_uom': order_line.product_uom.id,
                     'product_uos': order_line.product_uom.id,
-                    'date': order_line.date_planned,
-                    'date_expected': order_line.date_planned,
                     'location_id': loc_id,
                     'location_dest_id': dest,
                     'picking_id': picking_id,
@@ -3279,6 +3290,9 @@ class purchase_order_line(osv.osv):
             context = {}
         if not default:
             default = {}
+
+        if 'origin' not in default:
+            default.update({'origin': False})
 
         if 'move_dest_id' not in default:
             default.update({'move_dest_id': False})

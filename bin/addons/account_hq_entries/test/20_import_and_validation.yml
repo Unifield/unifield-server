@@ -21,7 +21,7 @@
     }, context=context)
     # launch wizard validation
     res = self.button_validate(cr, uid, [wiz_id], context)
-    assert res != False, "An error occured during HQ entries validation."
+    assert res != False, "An error occurred during HQ entries validation."
     message = res.get('context', False) and res.get('context').get('message', False) and res.get('context').get('message') or False
     res_id = res.get('res_id', False)
     assert res_id != False, "No confirmation wizard found!"

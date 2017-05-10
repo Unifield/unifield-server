@@ -81,9 +81,9 @@ class hr_payroll_import(osv.osv_memory):
     }
 
     def update_payroll_entries(self, cr, uid,
-        data='', field='', date_format='%d/%m/%Y',
-        wiz_state='simu',
-        context=None):
+                               data='', field='', date_format='%d/%m/%Y',
+                               wiz_state='simu',
+                               context=None):
         """
         Import payroll entries regarding all elements given in "data"
         """
@@ -148,7 +148,7 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('A date is missing!'))
         try:
             line_date = time.strftime('%Y-%m-%d', time.strptime(date[0], date_format))
-        except ValueError, e:
+        except ValueError:
             raise osv.except_osv(_('Error'), _('Wrong format for date: %s') % date[0])
         period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
         if not period_ids:
@@ -225,7 +225,7 @@ class hr_payroll_import(osv.osv_memory):
                 separator = str(time.strftime('%m' + date_format_separator + '%Y', time.strptime(date[0], date_format)))
                 try:
                     ref = description and description[0] and ustr(description[0]).split(separator) and ustr(description[0]).split(separator)[1] or ''
-                except IndexError, e:
+                except IndexError:
                     ref = ''
             # US_263: get employee destination, if haven't get default destination
             if employee_id:
@@ -295,7 +295,7 @@ class hr_payroll_import(osv.osv_memory):
                 self.pool.get('hr.employee').write(cr, uid, [employee_id], {'cost_center_id': cost_center_id, 'destination_id': destination_id,}, context)
 
             res = self.pool.get('hr.payroll.msf').create(cr, uid, vals,
-                context={'from': 'import'})
+                                                         context={'from': 'import'})
             if res:
                 created += 1
         else:
@@ -323,14 +323,14 @@ class hr_payroll_import(osv.osv_memory):
         return pwd.decode('base64')
 
     def _uf_side_rounding_line_check_gap(self, cr, uid,
-        currency_id, currency_code, posting_date, gap_amount, context=None):
+                                         currency_id, currency_code, posting_date, gap_amount, context=None):
         """
         US-201 check balance gap no more than 1 EUR
         """
         eur_gap_limit = UF_SIDE_ROUNDING_LINE.get('eur_gap_limit', 1.)
 
         eur_ids = self.pool.get('res.currency').search(cr, uid,
-            [('name', '=', 'EUR')], context=context)
+                                                       [('name', '=', 'EUR')], context=context)
         if not eur_ids:
             msg = _("%s: No EUR currency found") % (
                 UF_SIDE_ROUNDING_LINE['name'], )
@@ -341,8 +341,8 @@ class hr_payroll_import(osv.osv_memory):
             new_ctx = context is not None and context.copy() or {}
             new_ctx['date'] = posting_date
             eur_amount = self.pool.get('res.currency').compute(cr, uid,
-                currency_id, eur_ids[0], gap_amount, round=True,
-                context=new_ctx)
+                                                               currency_id, eur_ids[0], gap_amount, round=True,
+                                                               context=new_ctx)
 
             if abs(eur_amount) > eur_gap_limit:
                 msg = _("%s, import aborted, file is balanced with more than" \
@@ -352,7 +352,7 @@ class hr_payroll_import(osv.osv_memory):
                             eur_amount,
                             gap_amount,
                             currency_code,
-                        )
+                )
                 raise osv.except_osv(_('Error'), msg)
         else:
             # booking = EUR
@@ -362,11 +362,11 @@ class hr_payroll_import(osv.osv_memory):
                             UF_SIDE_ROUNDING_LINE['name'],
                             eur_gap_limit,
                             gap_amount,
-                        )
+                )
                 raise osv.except_osv(_('Error'), msg)
 
     def _uf_side_rounding_line_create(self, cr, uid, ids,
-            header_vals=None, amount=0., context=None):
+                                      header_vals=None, amount=0., context=None):
         """
         US-201: no payroll rounding line, create a rounding payroll entry
         UF side (has importer users can not update the Homere archive)
@@ -388,8 +388,8 @@ class hr_payroll_import(osv.osv_memory):
         if not account_code:
             err_account()
         account_ids = self.pool.get('account.account').search(cr, uid, [
-                ('code', '=', account_code),
-            ], context=context)
+            ('code', '=', account_code),
+        ], context=context)
         if not account_ids:
             err_account(account_code=account_code)
 
@@ -408,15 +408,15 @@ class hr_payroll_import(osv.osv_memory):
 
         # cost center: 1st FX gain loss of instance
         instance = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0].company_id.instance_id
+                                                     context=context)[0].company_id.instance_id
         cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [
             ('category', '=', 'OC'),
             ('for_fx_gain_loss', '=', True),
         ], context=context)
         if not cc_ids:
             msg = _("%s: No 'FX gain loss' cost center found" \
-                " for instance '%s'") % (UF_SIDE_ROUNDING_LINE['name'],
-                    instance.name, )
+                    " for instance '%s'") % (UF_SIDE_ROUNDING_LINE['name'],
+                                             instance.name, )
             raise osv.except_osv(_('Error'), msg)
 
         # create lines
@@ -507,7 +507,7 @@ class hr_payroll_import(osv.osv_memory):
                     Config = ConfigParser.SafeConfigParser()
                     Config.readfp(zipobj.open('envoi.ini', 'r', xyargv))
                     field = Config.get('DEFAUT', 'PAYS')
-                except Exception, e:
+                except Exception:
                     raise osv.except_osv(_('Error'), _('Could not read envoi.ini file in given ZIP file.'))
                 if not field:
                     raise osv.except_osv(_('Warning'), _('Field not found in envoi.ini file.'))
@@ -544,11 +544,11 @@ class hr_payroll_import(osv.osv_memory):
                     res_amount_rounded = round(res_amount, 2)
                     if res_amount_rounded != 0.0:
                         self._uf_side_rounding_line_check_gap(cr, uid,
-                            header_vals['currency_id'],
-                            header_vals['currency_code'],
-                            header_vals['date'],
-                            res_amount_rounded,
-                            context=context)
+                                                              header_vals['currency_id'],
+                                                              header_vals['currency_code'],
+                                                              header_vals['date'],
+                                                              res_amount_rounded,
+                                                              context=context)
 
                         # adapt difference by writing on payroll rounding line
                         pr_ids = self.pool.get('hr.payroll.msf').search(
@@ -568,9 +568,9 @@ class hr_payroll_import(osv.osv_memory):
                                 })
                             else:
                                 self._uf_side_rounding_line_create(cr, uid, ids,
-                                    context=context, header_vals=header_vals,
-                                    amount=-1 * res_amount_rounded)
-                            #raise osv.except_osv(_('Error'), _('An error occured on balance and no payroll rounding line found.'))
+                                                                   context=context, header_vals=header_vals,
+                                                                   amount=-1 * res_amount_rounded)
+                            #raise osv.except_osv(_('Error'), _('An error occurred on balance and no payroll rounding line found.'))
                         else:
                             # Fetch Payroll rounding amount line and update
                             pr = self.pool.get('hr.payroll.msf').browse(cr, uid, pr_ids[0])
@@ -594,7 +594,7 @@ class hr_payroll_import(osv.osv_memory):
 
             self.write(cr, uid, [wiz.id], {'state': 'proceed', 'msg': error_msg})
             view_id = self.pool.get('ir.model.data').get_object_reference(cr,
-                uid, 'msf_homere_interface', 'payroll_import_wizard')
+                                                                          uid, 'msf_homere_interface', 'payroll_import_wizard')
             view_id = view_id and view_id[1] or False
 
             return {
