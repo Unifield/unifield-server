@@ -44,7 +44,15 @@ class hr_department(osv.osv):
         return dict(res)
 
     def _get_ids_to_update(self, cr, uid, ids, context=None):
-        return self.search(cr, uid, [('parent_id', 'in', ids)], context=context) + ids
+        '''
+        recursive method to get all hr.department ids which have ancestor
+        related to ids
+        '''
+        child_ids = self.search(cr, uid, [('parent_id', 'in', ids)], context=context)
+        sub_child_ids = []
+        if child_ids:
+             sub_child_ids = self._get_ids_to_update(cr, uid, child_ids, context=context)
+        return ids + sub_child_ids
 
     _name = "hr.department"
     _columns = {
