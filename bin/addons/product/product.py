@@ -273,7 +273,7 @@ class product_template(osv.osv):
         'rental': fields.boolean('Can be Rent'),
         'categ_id': fields.many2one('product.category','Category', required=True, change_default=True, domain="[('type','=','normal')]" ,help="Select category for the current product"),
         'list_price': fields.float('Sale Price', digits_compute=dp.get_precision('Sale Price'), help="Base price for computing the customer price. Sometimes called the catalog price."),
-        'standard_price': fields.float('Cost Price', required=True, digits_compute=dp.get_precision('Account'), help="Product's cost for accounting stock valuation. It is the base price for the supplier price."),
+        'standard_price': fields.float('Cost Price', required=True, digits_compute=dp.get_precision('Account'), help="Price of product calculated according to the selected costing method."),
         'volume': fields.float('Volume', help="The volume in m3."),
         'weight': fields.float('Gross weight', help="The gross weight in Kg."),
         'weight_net': fields.float('Net weight', help="The net weight in Kg."),
@@ -328,7 +328,6 @@ class product_template(osv.osv):
 
     _defaults = {
         'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'product.template', context=c),
-        'type': lambda *a: 'product',
         'list_price': lambda *a: 1,
         'cost_method': lambda *a: 'standard',
         'supply_method': lambda *a: 'buy',

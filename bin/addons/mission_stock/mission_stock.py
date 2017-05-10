@@ -103,7 +103,7 @@ HEADER_DICT = {
 GET_EXPORT_REQUEST = '''SELECT
         l.product_id AS product_id,
         l.default_code as default_code,
-        pt.name as pt_name,
+        COALESCE(trans.value, pt.name) as pt_name,
         pu.name as pu_name,
         trim(to_char(l.internal_qty, '999999999999.999')) as l_internal_qty,
         trim(to_char(l.wh_qty, '999999999999.999')) as l_wh_qty,
@@ -123,6 +123,8 @@ GET_EXPORT_REQUEST = '''SELECT
          LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
          LEFT JOIN product_uom pu ON pt.uom_id = pu.id
          LEFT JOIN res_currency rc ON pp.currency_id = rc.id
+         LEFT JOIN ir_translation trans ON trans.res_id = pt.id AND
+             trans.name='product.template,name' AND lang = %s
     WHERE l.mission_report_id = %s
     ORDER BY l.default_code'''
 
@@ -320,7 +322,7 @@ class stock_mission_report(osv.osv):
 
                 writer.writerow(data_list)
             except Exception, e:
-                logging.getLogger('Mission stock report').warning("""An error is occured when generate the mission stock report file : %s\n""" % e, exc_info=True)
+                logging.getLogger('Mission stock report').warning("""An error is occurred when generate the mission stock report file : %s\n""" % e, exc_info=True)
 
         if not write_attachment_in_db:
             # delete previous reports in DB if any
@@ -398,7 +400,7 @@ class stock_mission_report(osv.osv):
                 #sheet.row(row_count).height = 60*20 # to fit the previous hardcoded mako configuration
                 row_count += 1
             except Exception, e:
-                logging.getLogger('MSR').warning("""An error is occured when generate the mission stock report xls file : %s\n""" % e, exc_info=True)
+                logging.getLogger('MSR').warning("""An error is occurred when generate the mission stock report xls file : %s\n""" % e, exc_info=True)
         file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.xls')
         if not write_attachment_in_db:
             xls_file = open(os.path.join(attachments_path, file_name), 'wb')
@@ -439,7 +441,7 @@ class stock_mission_report(osv.osv):
                 return
 
             logging.getLogger('MSR').info("""____________________ Start the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
-            self.update(cr, uid, ids=[], context=None)
+            self.update(cr, uid, ids=[], context=context)
             msr_in_progress._delete_all(cr, uid, context)
             cr.commit()
             logging.getLogger('MSR').info("""____________________ Finished the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
@@ -563,7 +565,6 @@ class stock_mission_report(osv.osv):
                 line_obj.create(cr, uid, {
                     'product_id': product, 
                     'mission_report_id': report['id'],
-                    'product_state': prod_state,
                     'product_active': prod_active,
                     'state_ud': prod_state_ud,
                     'international_status_code': prod_creator,
@@ -772,7 +773,8 @@ class stock_mission_report(osv.osv):
 
         for report_id in ids:
             logger.info('___ Start export SQL request...')
-            cr.execute(GET_EXPORT_REQUEST, (report_id, ))
+            lang = context.get('lang')
+            cr.execute(GET_EXPORT_REQUEST, (lang, report_id))
             request_result = cr.dictfetchall()
 
             logger.info('___ Start CSV and XLS generation...')

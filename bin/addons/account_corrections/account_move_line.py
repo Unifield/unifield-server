@@ -130,24 +130,24 @@ class account_move_line(osv.osv):
 
     _columns = {
         'corrected': fields.boolean(string="Corrected?", readonly=True,
-            help="If true, this line has been corrected by an accounting correction wizard"),
+                                    help="If true, this line has been corrected by an accounting correction wizard"),
         'corrected_line_id': fields.many2one('account.move.line', string="Corrected Line", readonly=True,
-            help="Line that have been corrected by this one."),
+                                             help="Line that have been corrected by this one."),
         'reversal': fields.boolean(string="Reversal?", readonly=True,
-            help="If true, this line is a reversal of another (This was done via a correction wizard)."),
+                                   help="If true, this line is a reversal of another (This was done via a correction wizard)."),
         'reversal_line_id': fields.many2one('account.move.line', string="Reversal Line", readonly=True,
-            help="Line that have been reversed by this one."),
+                                            help="Line that have been reversed by this one."),
         'have_an_historic': fields.boolean(string="Display historic?", readonly=True,
-            help="If true, this implies that this line have historical correction(s)."),
+                                           help="If true, this implies that this line have historical correction(s)."),
         'is_corrigible': fields.function(_is_corrigible, method=True, string="Is corrigible?", type='boolean',
-            readonly=True, help="This informs system if this item is corrigible. Criteria: the entry state should be posted, account should not be payable or \
+                                         readonly=True, help="This informs system if this item is corrigible. Criteria: the entry state should be posted, account should not be payable or \
 receivable, item have not been corrected, item have not been reversed and account is not the default one of the linked register (statement).",
-            store=False),
+                                         store=False),
         'corrected_st_line_id': fields.many2one('account.bank.statement.line', string="Corrected register line", readonly=True,
-            help="This register line is those which have been corrected last."),
+                                                help="This register line is those which have been corrected last."),
         'last_cor_was_only_analytic': fields.boolean(string="AD Corrected?",
-            invisible=True,
-            help="If true, this line has been corrected by an accounting correction wizard but with only an AD correction (no G/L correction)"),
+                                                     invisible=True,
+                                                     help="If true, this line has been corrected by an accounting correction wizard but with only an AD correction (no G/L correction)"),
     }
 
     _defaults = {
@@ -497,7 +497,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context,
-            limit=1, order='date_start, name')
+                                                            limit=1, order='date_start, name')
         # Sort ids
         move_lines = self.browse(cr, uid, ids, context=context)
         tmp_move_ids = [x.move_id.id for x in move_lines if x.move_id]
@@ -671,8 +671,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
         success_move_line_ids = []
 
         # New account
+        # Check the compatibility between the new account selected for the COR lines and the posting date
+        self._check_date(cr, uid, {'date': date, 'account_id': new_account_id}, context=context)
         new_account = self.pool.get('account.account').browse(cr, uid,
-            new_account_id, context=context)
+                                                              new_account_id, context=context)
 
         # Search correction journal
         j_corr_ids = j_obj.search(cr, uid, [('type', '=', 'correction'),
@@ -687,7 +689,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         # Search attached period
         period_obj = self.pool.get('account.period')
         period_ids = period_obj.search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)],
-                                                                context=context, limit=1, order='date_start, name')
+                                       context=context, limit=1, order='date_start, name')
         period_number = period_ids and period_obj.browse(cr, uid, period_ids, context)[0].number or False
 
         # Browse all given move line for correct them
@@ -700,19 +702,19 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # + BKLG-19/3: search only for fp ones as 'free' are not synced to
             # HQ and initial_al_ids[0] is used to set reversal_origin
             initial_al_ids = al_obj.search(cr, uid,
-                [('move_id', '=', ml.id), ('account_id.category', '=', 'FUNDING')],
-                context=context)
+                                           [('move_id', '=', ml.id), ('account_id.category', '=', 'FUNDING')],
+                                           context=context)
             # Note: this search result will be used near end of this function
             # (see # Change analytic lines that come from)
             if not distrib_id and \
                 not initial_al_ids and new_account and \
-                new_account.is_analytic_addicted:
+                    new_account.is_analytic_addicted:
                 # we check only if no distrib_id arg passed to function
                 msg = _("The line '%s' with new account '%s - %s' need an" \
-                    " analytic distribution (you may have changed account from" \
-                    " one with no AD required to a new one with AD required).")
+                        " analytic distribution (you may have changed account from" \
+                        " one with no AD required to a new one with AD required).")
                 raise osv.except_osv(_('Error'), msg % (ml.move_id.name,
-                    new_account.code, new_account.name, ))
+                                                        new_account.code, new_account.name, ))
 
             # If this line was already been corrected, check the first analytic line ID (but not the first first analytic line)
             first_analytic_line_id = False
@@ -861,7 +863,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)],
-            context=context, limit=1, order='date_start, name')
+                                                            context=context, limit=1, order='date_start, name')
         # Correct all given move lines
         for ml in self.browse(cr, uid, ids, context=context):
             # Search the move line (in the move) to be changed (account that have a payable OR a receivable account)
@@ -886,7 +888,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Search the new attached account_id
             partner_type = 'res.partner,%s' % partner_id
             account_vals = self.pool.get('account.bank.statement.line').onchange_partner_type(cr, uid, [], partner_type, move_line.credit,
-                move_line.debit, context=context)
+                                                                                              move_line.debit, context=context)
             if not 'value' in account_vals and not account_vals.get('value').get('account_id', False):
                 raise osv.except_osv(_('Error'), _('No account found for this partner!'))
             account_id = account_vals.get('value').get('account_id')
@@ -917,7 +919,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             # Do the correction line
             name = self.join_without_redundancy(move_line.name, 'COR')
             self.write(cr, uid, [correction_line_id], {'name': name, 'journal_id': journal_id, 'corrected_line_id': move_line.id,
-                'account_id': account_id, 'partner_id': partner_id, 'have_an_historic': True,}, context=context)
+                                                       'account_id': account_id, 'partner_id': partner_id, 'have_an_historic': True,}, context=context)
             # Inform old line that it have been corrected
             self.write(cr, uid, [move_line.id], {'corrected': True, 'have_an_historic': True,}, context=context)
             # Post the move

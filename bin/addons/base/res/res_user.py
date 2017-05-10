@@ -703,7 +703,7 @@ class users(osv.osv):
                     for user_id, is_erp_manager in erp_manager_res.items():
                         if is_erp_manager:
                             super(users, self).write(cr, uid, user_id, vals_sync, context=context)
-                self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)

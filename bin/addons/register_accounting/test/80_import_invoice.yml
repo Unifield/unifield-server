@@ -124,7 +124,7 @@
 -
   !python {model: account.bank.statement.line}: |
     search_ids = self.search(cr, uid, [('statement_id', '=', ref('cash_register_10y'))])
-    assert len(search_ids) == 1, "More than one line found: an error occured with Import Invoice Wizard."
+    assert len(search_ids) == 1, "More than one line found: an error occurred with Import Invoice Wizard."
     line = self.browse(cr, uid, search_ids)[0]
     assert line.state == 'temp', "Register line is not Temp posted"
     assert line.amount == -96.0, "Wrong amount"

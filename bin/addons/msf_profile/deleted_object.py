@@ -37,12 +37,12 @@ class deleted_object(osv.osv):
         'model': fields.char('Object Model', size=64, readonly=True),
         'deleted_obj_id': fields.integer('Deleted Object ID', readonly=True),
         'deleted_obj_sd_ref': fields.char('Deleted Object SD Ref', size=128,
-            read_only=True),
+                                          read_only=True),
         'deletion_date': fields.datetime('Deletion Date', read_only=True),
         'user_id': fields.many2one('res.users', 'User who delete',
-            read_only=True),
+                                   read_only=True),
         'deleted_in_sync': fields.boolean(string='Deleted by sync',
-            help='This object has been deleted during a synchronization'),
+                                          help='This object has been deleted during a synchronization'),
     }
 
 deleted_object()
@@ -76,28 +76,29 @@ class extended_orm_delete_method:
         to keep track of deleted objects"""
         if context is None:
             context = {}
-        res = original_unlink(self, cr, uid, ids, context=context)
-        if not res:
-            return res
         if not ids:
             return True
-        if isinstance(ids, (int, long)):
-            ids = [ids]
 
         # we don't need to keep a track of all deleted objects
         model_deleted_black_list = ['funding.pool.distribution.line',
                                     ]
-        if self._name in model_deleted_black_list or\
+        if self._name in model_deleted_black_list or \
+                not self.pool.get('sync.client.entity') or  \
                 self._name.startswith('ir.') or\
                 isinstance(self, orm.orm_memory): # don't track object from
                                                   # orm.orm_memory class
-            return res
+                return original_unlink(self, cr, uid, ids, context=context)
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         deletion_date = time.strftime('%Y-%m-%d %H:%M:%S')
         model_obj = self.pool.get(self._name)
-        if not self.pool.get('sync.client.entity'):
-            # sync client not installed
-            return res
+
+
         obj_sd_ref = model_obj.get_sd_ref(cr, uid, ids)
+        res = original_unlink(self, cr, uid, ids, context=context)
+
         is_sync_context = context.get('sync_update_execution', False) or context.get('sync_message_execution', False)
         deleted_obj_module = self.pool.get('deleted.object')
         for sub_ids in cr.split_for_in_conditions(ids):
@@ -110,7 +111,7 @@ class extended_orm_delete_method:
                         'deletion_date': deletion_date,
                         'user_id': uid,
                         'deleted_in_sync': is_sync_context,}
-                del_obj = deleted_obj_module.create(cr, uid, vals)
+                deleted_obj_module.create(cr, uid, vals)
         return res
 
 for symbol in filter(lambda sym: isinstance(sym, types.MethodType),

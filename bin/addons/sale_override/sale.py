@@ -1340,7 +1340,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # 5/ Check if there is a temporary product in the sale order :
             temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
             line_with_temp_ids = line_obj.search(cr, uid, [('order_id', '=', order.id), ('product_id', 'in', temp_prod_ids)], context=context)
-            line_err = ' / '.join([str(line.line_number) for l in line_obj.browse(cr, uid, line_with_temp_ids, context=context)])
+            line_err = ' / '.join([str(l['line_number']) for l in line_obj.read(cr, uid, line_with_temp_ids, ['line_number'], context=context)])
             if line_with_temp_ids:
                 raise osv.except_osv(
                     _("Warning"),
@@ -1917,8 +1917,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'product_qty': line.product_uom_qty,
             'product_uom': line.product_uom.id,
             'product_uos_qty': line.product_uos_qty,
-            'product_uos': (line.product_uos and line.product_uos.id)\
-            or line.product_uom.id,
+            'product_uos': (line.product_uos and line.product_uos.id) or line.product_uom.id,
             'product_packaging': line.product_packaging.id,
             'address_id': line.address_allotment_id.id or order.partner_shipping_id.id,
             'location_id': location_id,
@@ -1926,7 +1925,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'sale_line_id': line.id,
             'tracking_id': False,
             'state': 'draft',
-            # 'state': 'waiting',
             'note': line.notes,
             'company_id': order.company_id.id,
             'reason_type_id': self._get_reason_type(cr, uid, order),

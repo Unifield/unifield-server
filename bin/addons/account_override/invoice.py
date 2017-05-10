@@ -378,11 +378,16 @@ class account_invoice(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note']):
+        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note', 'is_intermission', 'state']):
             if inv.get('type', '') == 'in_invoice' and not inv.get('is_inkind_donation', False) and not inv.get('is_debit_note', False):
                 if inv.get('purchase_ids', False):
-                    # US-1702 Do not allow at all the deletion of SI coming from PO
-                    raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
+                    if inv.get('is_intermission'):
+                        if inv.get('state', '') != 'draft':  # only draft IVIs can be deleted
+                            raise osv.except_osv(_('Warning'),
+                                                 _('Intermission Vouchers linked to a PO can be deleted only in Draft state.'))
+                    else:
+                        # US-1702 Do not allow at all the deletion of SI coming from PO
+                        raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
         return True
 
     def _hook_period_id(self, cr, uid, inv, context=None):
@@ -492,6 +497,13 @@ class account_invoice(osv.osv):
             'partner_move_line': False,
             'imported_invoices': False
         })
+        # Manual duplication should generate a "manual document not created through the supply workflow"
+        # so we don't keep the link to: FOs, Picking List
+        if context.get('from_button', False):
+            default.update({
+                'order_ids': False,
+                'picking_id': False,
+            })
         # Reset register_line_ids if not given in default
         if 'register_line_ids' not in default:
             default['register_line_ids'] = []
@@ -1423,10 +1435,19 @@ class account_invoice_line(osv.osv):
     def copy_data(self, cr, uid, inv_id, default=None, context=None):
         """
         Copy an invoice line without its move lines
+        and without link to PO/FO lines when the duplication is manual
         """
         if default is None:
             default = {}
         default.update({'move_lines': False,})
+        # Manual duplication should generate a "manual document not created through the supply workflow"
+        # so we don't keep the link to PO/FO at line level
+        if context.get('from_button', False):
+            default.update({
+                'order_line_id': False,
+                'sale_order_line_id': False,
+                'sale_order_lines': False,
+            })
         return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
 
     def unlink(self, cr, uid, ids, context=None):

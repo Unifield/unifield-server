@@ -104,7 +104,7 @@ class output_currency_for_export(osv.osv_memory):
         """
         # Some verifications
         if not context or not context.get('active_ids', False) or not context.get('active_model', False):
-            raise osv.except_osv(_('Error'), _('An error has occured. Please contact an administrator.'))
+            raise osv.except_osv(_('Error'), _('An error has occurred. Please contact an administrator.'))
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values

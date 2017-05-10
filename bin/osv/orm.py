@@ -1047,7 +1047,7 @@ class orm_template(object):
                 #US-88: If this from an import account analytic, and there is sql error, AND not sync context, then just clear the cache
                 if 'account.analytic.account' in self._name and not context.get('sync_update_execution', False):
                     cache.clean_caches_for_db(cr.dbname)
-                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e), '')
+                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
 
             if config.get('import_partial', False) and filename and (not (position%100)):
                 data = pickle.load(file(config.get('import_partial')))
@@ -1173,7 +1173,7 @@ class orm_template(object):
         # get the default values set by the user and override the default
         # values defined in the object
         ir_values_obj = self.pool.get('ir.values')
-        res = ir_values_obj.get(cr, uid, 'default', False, [self._name])
+        res = ir_values_obj.get(cr, uid, 'default', False, [self._name], context=context)
         for id, field, field_value in res:
             if field in fields_list:
                 fld_def = (field in self._columns) and self._columns[field] or self._inherit_fields[field][2]
@@ -2342,7 +2342,12 @@ class orm_memory(orm_template):
                 upd_todo.append(field)
         for object_id in ids:
             self._check_access(user, object_id, mode='write')
-            self.datas[object_id].update(vals2)
+            try:
+                self.datas[object_id].update(vals2)
+            except KeyError:
+                error_message = _('Object id \'%s\' not found in \'%s\'. You may try to access a deleted temporary object (ie. wizard)')
+                error_message = error_message % (object_id, self._name)
+                raise except_orm(_('Error'), error_message)
             self.datas[object_id]['internal.date_access'] = time.time()
             for field in upd_todo:
                 self._columns[field].set_memory(cr, self, object_id, field, vals[field], user, context)
@@ -3782,6 +3787,9 @@ class orm(orm_template):
                                                     order='NO_ORDER', context=context)
             # Step 2. Marching towards the real deletion of referenced records
             pool_model_data.unlink(cr, uid, referenced_ids, context=context)
+
+            if context.get('avoid_sdref_deletion') and hasattr(self, '_unlink_sdref') and self._unlink_sdref:
+                cr.execute("DELETE FROM ir_model_data WHERE model=%s AND res_id in %s AND module='sd'", (self._name, sub_ids))
 
             # For the same reason, removing the record relevant to ir_values
             ir_value_ids = pool_ir_values.search(cr, uid,

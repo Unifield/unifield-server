@@ -63,7 +63,7 @@ class account_move_reconcile(osv.osv):
             if total:
                 name = '%s (%.2f)' % (r.name, total)
                 result.append((r.id,name))
-            else:
+            elif hasattr(r, "name"):
                 result.append((r.id,r.name))
         # @@@end
         return result
