@@ -83,7 +83,7 @@ class view(osv.osv):
         'arch': '<?xml version="1.0"?>\n<tree string="My view">\n\t<field name="name"/>\n</tree>',
         'priority': 16
     }
-    _order = "priority,name"
+    _order = "priority,id"
     _constraints = [
         (_check_xml, 'Invalid XML for View Architecture!', ['arch'])
     ]
