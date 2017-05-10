@@ -23,6 +23,7 @@ from mx.DateTime.DateTime import DateFrom, RelativeDateTime, Age, now
 import threading
 import time
 import logging
+import cgi
 
 from osv import fields
 from osv import osv
@@ -547,7 +548,7 @@ class weekly_forecast_report(osv.osv):
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(pipe_qty)s</Data></Cell>
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(exp_qty)s</Data></Cell>""" % {
                         'product_code': product['default_code'],
-                        'product_name': product['name'].replace('&', '&amp;'),
+                        'product_name': cgi.escape(product['name']),
                         'unit_price': product['standard_price'],
                         'consumption': cons,
                         'stock_qty': product['qty_available'],
