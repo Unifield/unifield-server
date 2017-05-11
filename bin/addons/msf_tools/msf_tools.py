@@ -577,12 +577,12 @@ class ir_translation(osv.osv):
     def _get_ids(self, cr, uid, name, tt, lang, ids):
         res = dict.fromkeys(ids, False)
         if ids:
-            cr.execute('select res_id,value ' +
-                       'from ir_translation ' +
-                       'where lang=%s ' +
-                       'and type=%s ' +
-                       'and name=%s ' +
-                       'and res_id IN %s',
+            cr.execute('''SELECT res_id, value
+                       FROM ir_translation
+                       WHERE lang=%s
+                       AND type=%s
+                       AND name=%s
+                       AND res_id IN %s''',
                        (lang, tt, name, tuple(ids)))
             for res_id, value in cr.fetchall():
                 res[res_id] = value
@@ -599,30 +599,30 @@ class ir_translation(osv.osv):
                     # product.template have not xml_id
                     if "product.template" in model_name:
                         model_name = 'product.product'
-                        cr.execute('SELECT id ' +
-                                   'FROM product_product ' +
-                                   'WHERE product_tmpl_id=%s',
+                        cr.execute('''SELECT id
+                                   FROM product_product
+                                   WHERE product_tmpl_id=%s''',
                                    ([current_id]))
 
                         for prod_id in cr.fetchall():
                             current_id = prod_id
 
                     # Search xml_id in ir_model_data
-                    cr.execute('SELECT name ' +
-                               'FROM ir_model_data ' +
-                               'WHERE module=\'sd\' and model=%s and res_id=%s',
+                    cr.execute('''SELECT name
+                               FROM ir_model_data
+                               WHERE module=\'sd\' AND model=%s AND res_id=%s''',
                                (model_name, current_id))
 
                     for xml_id in cr.fetchall():
                         # Search in translation by xml_id
-                        cr.execute('select res_id, value ' +
-                                   'from ir_translation ' +
-                                   'where lang=%s ' +
-                                   'and type=%s ' +
-                                   'and name=%s ' +
-                                   'and xml_id=%s',
-                                   (lang, tt, name, xml_id))
-                        for res_id, value in cr.fetchall():
+                        cr.execute('''SELECT value
+                            FROM ir_translation
+                            WHERE lang=%s
+                            AND type=%s
+                            AND name=%s
+                            AND xml_id=%s''',
+                            (lang, tt, name, xml_id))
+                        for value in cr.fetchall():
                             res[id] = value
         return res
 
