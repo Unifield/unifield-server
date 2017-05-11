@@ -95,13 +95,15 @@ class expression(object):
                         doms.insert(0, '|')
                     doms += ['&', ('parent_left', '<', o.parent_right), ('parent_left', '>=', o.parent_left)]
                 if prefix:
-                    return [(left, 'in', table.search(cr, uid, doms, context=context))]
+                    return [(left, 'in', table.search(cr, uid, doms,
+                    order='NO_ORDER', context=context))]
                 return doms
             else:
                 def rg(ids, table, parent):
                     if not ids:
                         return []
-                    ids2 = table.search(cr, uid, [(parent, 'in', ids)], context=context)
+                    ids2 = table.search(cr, uid, [(parent, 'in', ids)],
+                        order='NO_ORDER', context=context)
                     return ids + rg(ids2, table, parent)
                 return [(left, 'in', rg(ids, table, parent or table._parent_name))]
 
@@ -142,15 +144,18 @@ class expression(object):
             field_obj = table.pool.get(field._obj)
             if len(fargs) > 1:
                 if field._type == 'many2one':
-                    right = field_obj.search(cr, uid, [(fargs[1], operator, right)], context=context)
+                    right = field_obj.search(cr, uid, [(fargs[1], operator,
+                        right)], order='NO_ORDER', context=context)
                     if right == []:
                         self.__exp[i] = ( 'id', '=', 0 )
                     else:
                         self.__exp[i] = (fargs[0], 'in', right)
                 # Making search easier when there is a left operand as field.o2m or field.m2m
                 if field._type in ['many2many','one2many']:
-                    right = field_obj.search(cr, uid, [(fargs[1], operator, right)], context=context)
-                    right1 = table.search(cr, uid, [(fargs[0],'in', right)], context=context)
+                    right = field_obj.search(cr, uid, [(fargs[1], operator,
+                        right)], order='NO_ORDER', context=context)
+                    right1 = table.search(cr, uid, [(fargs[0],'in', right)],
+                            order='NO_ORDER', context=context)
                     if right1 == []:
                         self.__exp[i] = ( 'id', '=', 0 )
                     else:
