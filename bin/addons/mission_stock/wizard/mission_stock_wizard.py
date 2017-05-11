@@ -138,6 +138,7 @@ class mission_stock_wizard(osv.osv_memory):
             v.update({
                 'last_update': report.last_update,
                 'export_ok': report.export_ok and self._get_processed_value(cr, uid, report_id, context=context, state=True) == 'done',
+                'export_error_msg': report.export_error_msg,
                 'processed_value': self._get_processed_value(cr, uid, report_id, context=context)
             })
         else:
