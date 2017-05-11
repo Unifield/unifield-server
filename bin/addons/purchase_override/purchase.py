@@ -1851,9 +1851,10 @@ stock moves which are already processed : '''
             move_to_delete.update(out_move_ids)
         if pick_id_to_delete:
             pick_obj.write(cr, uid, list(pick_id_to_delete), {'state': 'draft'}, context=context)
-            pick_obj.unlink(cr, uid, list(pick_id_to_delete))
         if move_to_delete:
             move_obj.unlink(cr, uid, list(move_to_delete), context=context, force=True)
+        if pick_id_to_delete:
+            pick_obj.unlink(cr, uid, list(pick_id_to_delete))
         return True
 
     def check_if_product(self, cr, uid, ids, context=None):
