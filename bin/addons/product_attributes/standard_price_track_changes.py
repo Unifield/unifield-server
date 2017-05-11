@@ -67,13 +67,13 @@ class standard_price_track_changes(osv.osv):
         ),
         'old_standard_price': fields.float(
             string='Old Cost Price',
-            digits_compute=dp.get_precision('Account'),
+            digits_compute=dp.get_precision('Purchase Price Computation'),
             required=False,
             readonly=True,
         ),
         'new_standard_price': fields.float(
             string='New Cost Price',
-            digits_compute=dp.get_precision('Account'),
+            digits_compute=dp.get_precision('Purchase Price Computation'),
             required=True,
             readonly=True,
         ),
@@ -152,9 +152,6 @@ class standard_price_track_changes(osv.osv):
 
         new_price = vals.get('standard_price', False)
         old_price = vals.get('old_price', False)
-
-        if new_price and old_price and abs(new_price - old_price) <= 10**-3:
-            return None
 
         # If it is the first standard.price.track.changes for this product
         # the old price must be False and the new price is the current
