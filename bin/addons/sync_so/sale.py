@@ -22,6 +22,8 @@
 import logging
 
 from osv import osv, fields
+import so_po_common
+assert so_po_common # needed by rw
 import time
 from sync_client import get_sale_purchase_logger
 
@@ -113,18 +115,18 @@ class sale_order_sync(osv.osv):
         if not context:
             context = {}
 
-        so_po_common = self.pool.get('so.po.common')
+        so_po_common_obj = self.pool.get('so.po.common')
         if context.get('restore_flag'):
             # UF-1830: Cannot create an FO from a recovery message
-            so_po_common.create_invalid_recovery_message(cr, uid, source, po_info.name, context)
+            so_po_common_obj.create_invalid_recovery_message(cr, uid, source, po_info.name, context)
             return "Recovery: cannot create the SO from a PO. Please inform the owner of the PO " + po_info.name + " to cancel it and to recreate a new process."
 
         context['no_check_line'] = True
         po_dict = po_info.to_dict()
 
         header_result = {}
-        so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, source, po_info, False, False, False, True, context)
+        so_po_common_obj.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
+        header_result['order_line'] = so_po_common_obj.get_lines(cr, uid, source, po_info, False, False, False, True, context)
         # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
         order_line = []
         for line in header_result['order_line']:
@@ -165,7 +167,7 @@ class sale_order_sync(osv.osv):
 #            for line in order.order_line:
 #                so_line_obj.write(cr, uid, [line.id], {'confirmed_delivery_date': False})
 
-        so_po_common.update_next_line_number_fo_po(cr, uid, so_id, self, 'sale_order_line', context)
+        so_po_common_obj.update_next_line_number_fo_po(cr, uid, so_id, self, 'sale_order_line', context)
 
         # Just to print the result message when the sync message got executed
         message = "The FO " + name + " created successfully, linked to the PO " + po_info.name + " at " + source
@@ -179,13 +181,13 @@ class sale_order_sync(osv.osv):
         context['no_check_line'] = True
 
         po_dict = po_info.to_dict()
-        so_po_common = self.pool.get('so.po.common')
+        so_po_common_obj = self.pool.get('so.po.common')
 
         header_result = {}
-        so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
-        so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
+        so_po_common_obj.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
+        so_id = so_po_common_obj.get_original_so_id(cr, uid, po_info.partner_ref, context)
 
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, source, po_info, False, so_id, True, False, context)
+        header_result['order_line'] = so_po_common_obj.get_lines(cr, uid, source, po_info, False, so_id, True, False, context)
 
         default = {}
         default.update(header_result)
@@ -204,13 +206,13 @@ class sale_order_sync(osv.osv):
             context = {}
 
         context['no_check_line'] = True
-        so_po_common = self.pool.get('so.po.common')
-        so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
+        so_po_common_obj = self.pool.get('so.po.common')
+        so_id = so_po_common_obj.get_original_so_id(cr, uid, po_info.partner_ref, context)
         if not so_id:
             if context.get('restore_flag'):
                 # UF-1830: Create a message to remove the invalid reference to the inexistent document
-                so_po_common = self.pool.get('so.po.common')
-                so_po_common.create_invalid_recovery_message(cr, uid, source, po_info.name, context)
+                so_po_common_obj = self.pool.get('so.po.common')
+                so_po_common_obj.create_invalid_recovery_message(cr, uid, source, po_info.name, context)
                 return "Recovery: the reference on " + po_info.name + " at " + source + " will be set to void."
             raise Exception, "Cannot find the original FO with the given info."
 
