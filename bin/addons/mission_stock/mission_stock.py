@@ -468,15 +468,10 @@ class stock_mission_report(osv.osv):
             ids = [ids]
 
         msr_in_progress = self.pool.get('msr_in_progress')
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
 
         report_ids = self.search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
         full_report_ids = self.search(cr, uid, [('full_view', '=', True)], context=context)
-
-        self.delete_previous_reports_attachments(cr, uid, report_ids+full_report_ids)
-        self.write(cr, uid, report_ids+full_report_ids, {'report_ok': False},
-                context=context)
-
-        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
 
         # Create a local report if no exist
         if not report_ids and context.get('update_mode', False) not in ('update', 'init') and instance_id:
@@ -559,8 +554,12 @@ class stock_mission_report(osv.osv):
         line_obj = self.pool.get('stock.mission.report.line')
         self.write(cr, uid, report_ids, {'export_state': 'in_progress',
             'export_error_msg': False}, context=context)
-        try:
-            for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
+        for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
+            try:
+                self.delete_previous_reports_attachments(cr, uid, report['id'])
+                self.write(cr, uid, report['id'], {'report_ok': False},
+                        context=context)
+
                 # Create one line by product
                 cr.execute('''SELECT p.id, ps.code, p.active, p.state_ud, pis.code
                               FROM product_product p
@@ -614,15 +613,16 @@ class stock_mission_report(osv.osv):
                 # Update the update date on report
                 self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                 logger.info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
-        except Exception as e:
-            cr.rollback()
-            logger.error('Error: %s' % e, exc_info=True)
-            import traceback
-            error_vals = {
-                    'export_state': 'error',
-                    'export_error_msg': traceback.format_exc(),
-            }
-            self.write(cr, uid, [report['id']], error_vals, context=context)
+            except Exception as e:
+                cr.rollback()
+                logger.error('Error: %s' % e, exc_info=True)
+                import traceback
+                error_vals = {
+                        'export_state': 'error',
+                        'export_error_msg': traceback.format_exc(),
+                }
+                self.write(cr, uid, [report['id']], error_vals, context=context)
+            cr.commit()
 
     def update_lines(self, cr, uid, report_ids, context=None):
         location_obj = self.pool.get('stock.location')
@@ -788,6 +788,16 @@ class stock_mission_report(osv.osv):
                         [('datas_fname', 'in', file_name_list)],
                         context=context)
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
+                try:
+                    # in case reports are stored on file system, delete them
+                    attachments_path = self.pool.get('ir.attachment').get_root_path(cr, uid)
+                    for file_name in file_name_list:
+                        complete_path = os.path.join(attachments_path,
+                                file_name)
+                        if os.path.isfile(complete_path):
+                            os.remove(complete_path)
+                except:
+                    pass
 
     def _get_export(self, cr, uid, ids, product_values, context=None):
         '''
