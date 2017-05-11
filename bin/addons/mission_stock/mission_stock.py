@@ -559,8 +559,8 @@ class stock_mission_report(osv.osv):
         line_obj = self.pool.get('stock.mission.report.line')
         self.write(cr, uid, report_ids, {'export_state': 'in_progress',
             'export_error_msg': False}, context=context)
-        for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
-            try:
+        try:
+            for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
                 # Create one line by product
                 cr.execute('''SELECT p.id, ps.code, p.active, p.state_ud, pis.code
                               FROM product_product p
@@ -608,21 +608,21 @@ class stock_mission_report(osv.osv):
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
-            except Exception as e:
-                logger.error('Error: %s' % e, exc_info=True)
-                import traceback
-                error_vals = {
-                        'export_state': 'error',
-                        'export_error_msg': traceback.format_exc(),
-                }
-                self.write(cr, uid, [report['id']], error_vals, context=context)
-            else:
                 self.write(cr, uid, [report['id']], {'export_state': 'done',
                     'export_error_msg': False}, context=context)
 
                 # Update the update date on report
                 self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                 logger.info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
+        except Exception as e:
+            cr.rollback()
+            logger.error('Error: %s' % e, exc_info=True)
+            import traceback
+            error_vals = {
+                    'export_state': 'error',
+                    'export_error_msg': traceback.format_exc(),
+            }
+            self.write(cr, uid, [report['id']], error_vals, context=context)
 
     def update_lines(self, cr, uid, report_ids, context=None):
         location_obj = self.pool.get('stock.location')
