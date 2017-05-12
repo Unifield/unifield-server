@@ -162,13 +162,16 @@ class account_move_line(osv.osv):
         if context.get('sync_update_execution'):
             partial_to_compute = {}
             bypass_standard = False
+            standard_method = []
             for line in self.browse(cr, uid, ids, fields_to_fetch=['reconcile_partial_id'], context=context):
                 if line.reconcile_partial_id and line.reconcile_partial_id.nb_partial_legs:
                     bypass_standard = True
                     if line.reconcile_partial_id.nb_partial_legs == len(line.reconcile_partial_id.line_partial_ids):
                         partial_to_compute[line.reconcile_partial_id.id] = True
+                else:
+                    standard_method.append(line.id)
             if bypass_standard:
-                return self.search(cr, uid, [('reconcile_partial_id', 'in', partial_to_compute.keys())], context=context)
+                return self.search(cr, uid, [('reconcile_partial_id', 'in', partial_to_compute.keys())], context=context) + standard_method
 
         return ids
 
