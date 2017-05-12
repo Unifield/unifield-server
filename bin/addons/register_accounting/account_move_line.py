@@ -135,7 +135,9 @@ class account_move_line(osv.osv):
                     amount_reg = reg_line.amount
                     ignore_id = reg_line.first_move_line_id.id
                     for ml in sorted(reg_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
-                        if ml.id == ignore_id:
+                        # US-2301 If a partial payment has been done and hardposted in project, in coordo the payment
+                        # shouldn't be deducted again from the residual => ignore lines already partially reconciled
+                        if ml.id == ignore_id or ml.reconcile_partial_id:
                             continue
                         if ml.id == move_line.id:
                             if abs(move_line_total) < abs(amount_reg):
