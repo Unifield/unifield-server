@@ -121,7 +121,6 @@ class account_move_line(osv.osv):
         WARNING: This method has been taken from account module from OpenERP
         """
         self.check_imported_invoice(cr, uid, ids, context)
-        # @@@override@account.account_move_line.py
         move_rec_obj = self.pool.get('account.move.reconcile')
         merges = []
         unmerge = []
@@ -188,7 +187,6 @@ class account_move_line(osv.osv):
             self.pool.get('account.move.line').synchronize(cr, uid, merges+unmerge, context=context)
 
         move_rec_obj.reconcile_partial_check(cr, uid, [r_id] + merges_rec, context=context)
-        # @@@end
         return True
 
     def reconcile(self, cr, uid, ids, type='auto', writeoff_acc_id=False, writeoff_period_id=False, writeoff_journal_id=False, context=None):
@@ -196,7 +194,6 @@ class account_move_line(osv.osv):
         WARNING: This method has been taken from account module from OpenERP
         """
         self.check_imported_invoice(cr, uid, ids, context)
-        # @@@override@account.account_move_line.py
         account_obj = self.pool.get('account.account')
         move_rec_obj = self.pool.get('account.move.reconcile')
         partner_obj = self.pool.get('res.partner')
@@ -301,7 +298,6 @@ class account_move_line(osv.osv):
             partner_id = lines[0].partner_id and lines[0].partner_id.id or False
             if partner_id and context and context.get('stop_reconcile', False):
                 partner_obj.write(cr, uid, [partner_id], {'last_reconciliation_date': time.strftime('%Y-%m-%d %H:%M:%S')})
-        # @@@end
         return r_id
 
     def _hook_check_period_state(self, cr, uid, result=False, context=None, *args, **kargs):
