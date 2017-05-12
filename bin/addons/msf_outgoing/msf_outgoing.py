@@ -3489,8 +3489,13 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
-        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        # if wizard already exists, then open it (able save as draft/reset functionnality):
+        wiz_ids = proc_obj.search(cr, uid, [('picking_id', 'in', ids), ('draft', '=', True)], context=context)
+        if wiz_ids:
+            processor_id = wiz_ids[0]
+        else:
+            processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
+            proc_obj.create_lines(cr, uid, processor_id, context=context)
 
         return {
             'type': 'ir.actions.act_window',
@@ -3680,8 +3685,13 @@ class stock_picking(osv.osv):
                 _('The picking ticket is not in \'Available\' state. Please check this and re-try')
             )
 
-        processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
-        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        # if wizard already exists, then open it (able save as draft/reset functionnality):
+        wiz_ids = proc_obj.search(cr, uid, [('picking_id', 'in', ids), ('draft', '=', True)], context=context)
+        if wiz_ids:
+            processor_id = wiz_ids[0]
+        else:
+            processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
+            proc_obj.create_lines(cr, uid, processor_id, context=context)
 
         return {
             'type': 'ir.actions.act_window',
