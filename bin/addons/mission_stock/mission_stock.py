@@ -556,7 +556,6 @@ class stock_mission_report(osv.osv):
             'export_error_msg': False}, context=context)
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
             try:
-                self.delete_previous_reports_attachments(cr, uid, report['id'])
                 self.write(cr, uid, report['id'], {'report_ok': False},
                         context=context)
 
@@ -615,6 +614,8 @@ class stock_mission_report(osv.osv):
                 logger.info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
             except Exception as e:
                 cr.rollback()
+                # in case of error delete previously generated attachments
+                self.delete_previous_reports_attachments(cr, uid, report['id'])
                 logger.error('Error: %s' % e, exc_info=True)
                 import traceback
                 error_vals = {
