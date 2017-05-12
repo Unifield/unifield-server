@@ -35,8 +35,6 @@ class hr_department(osv.osv):
             if record['parent_id']:
                 name = record['parent_id'][1]+' / '+name
             res.append((record['id'], name))
-        # sort result
-        res.sort(lambda x, y: cmp(x[1], y[1]))
         return res
 
     def _dept_name_get_fnc(self, cr, uid, ids, prop, unknow_none, context=None):
