@@ -107,7 +107,6 @@ class account_move_line(osv.osv):
         res = {}
         if context is None:
             context = {}
-        cur_obj = self.pool.get('res.currency')
         for move_line in self.browse(cr, uid, ids, context=context):
             res[move_line.id] = 0.0
 
@@ -119,8 +118,6 @@ class account_move_line(osv.osv):
 
             move_line_total = move_line.amount_currency
             sign = move_line.amount_currency < 0 and -1 or 1
-
-            context_unreconciled = context.copy()
             if move_line.reconcile_partial_id:
                 for payment_line in move_line.reconcile_partial_id.line_partial_ids:
                     if payment_line.id == move_line.id:
@@ -129,12 +126,6 @@ class account_move_line(osv.osv):
                         move_line_total += payment_line.amount_currency
                     else:
                         raise osv.except_osv(_('No Currency'),_("Payment line without currency %s")%(payment_line.id,))
-                        if move_line.currency_id:
-                            context_unreconciled.update({'date': payment_line.date})
-                            amount_in_foreign_currency = cur_obj.compute(cr, uid, move_line.company_id.currency_id.id, move_line.currency_id.id, (payment_line.debit - payment_line.credit), round=False, context=context_unreconciled)
-                            move_line_total += amount_in_foreign_currency
-                        else:
-                            raise osv.except_osv(_('No Currency'),_("Move line without currency %s")%(move_line.id,))
             for reg_line in move_line.imported_invoice_line_ids:
                 if move_line_total == 0:
                     break
@@ -163,6 +154,20 @@ class account_move_line(osv.osv):
     def _get_reconciles(self, cr, uid, ids, context=None):
         return self.pool.get('account.move.line').search(cr, uid, ['|', ('reconcile_id','in',ids), ('reconcile_partial_id','in',ids)])
 
+    def _get_move_line_residual_import(self, cr, uid, ids, context=None):
+        if context.get('sync_update_execution'):
+            partial_to_compute = {}
+            bypass_standard = False
+            for line in self.browse(cr, uid, ids, fields_to_fetch=['reconcile_partial_id'], context=context):
+                if line.reconcile_partial_id and line.reconcile_partial_id.nb_partial_legs:
+                    bypass_standard = True
+                    if line.reconcile_partial_id.nb_partial_legs == len(line.reconcile_partial_id.line_partial_ids):
+                        partial_to_compute[line.reconcile_partial_id.id] = True
+            if bypass_standard:
+                a = self.search(cr, uid, [('reconcile_partial_id', 'in', partial_to_compute.keys())], context=context)
+                return a
+        return ids
+
     def _get_linked_statement(self, cr, uid, ids, context=None):
         new_move = True
         r_move = {}
@@ -180,6 +185,7 @@ class account_move_line(osv.osv):
                     new_move = True
                     for i in ids:
                         r_move[i] = True
+        print "Get linked state", r_move.keys()
         return r_move.keys()
 
     _columns = {
@@ -205,7 +211,7 @@ class account_move_line(osv.osv):
                                                  help="This line has been created by a cheque import. This id is the move line imported."),
         'amount_residual_import_inv': fields.function(_amount_residual_import_inv, method=True, string='Residual Amount',
                                                       store={
-                                                          'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['amount_currency','reconcile_id','reconcile_partial_id','imported_invoice_line_ids'], 10),
+                                                          'account.move.line': (_get_move_line_residual_import, ['amount_currency','reconcile_id','reconcile_partial_id','imported_invoice_line_ids'], 10),
                                                           'account.move.reconcile': (_get_reconciles, None, 10),
                                                           'account.bank.statement.line': (_get_linked_statement, None, 10),
                                                       }),

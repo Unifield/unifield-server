@@ -173,6 +173,7 @@ class account_move_line(osv.osv):
             'type': type,
             'line_partial_ids': map(lambda x: (4,x,False), merges+unmerge),
             'is_multi_instance': different_level,
+            'nb_partial_legs': len(set(merges+unmerge)),
         })
 
         # do not delete / recreate AJIs
@@ -476,12 +477,14 @@ class account_move_reconcile(osv.osv):
         'is_multi_instance': fields.boolean(string="Reconcile at least 2 lines that comes from different instance levels."),
         'multi_instance_level_creation': fields.selection([('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')],
                                                           string='Where the adjustement line should be created'
-                                                          )
+                                                          ),
+        'nb_partial_legs': fields.integer('Nb legs in parials'),
     }
 
     _defaults = {
         'is_multi_instance': lambda *a: False,
         'multi_instance_level_creation': False,
+        'nb_partial_legs': 0,
     }
 
     def create(self, cr, uid, vals, context=None):
