@@ -98459,3 +98459,9 @@ msgstr "Vous pouvez sourcé une ligne de don uniquement sur stock"
 msgid "You can't source a donation 'on order'."
 msgstr "Vous ne pouvez pas sourcer un don 'sur commande'."
 
+#. module: base
+#: field:ir.model,default_order:0
+#, python-format
+msgid "Default Order"
+msgstr "Ordre par défaut"
+
