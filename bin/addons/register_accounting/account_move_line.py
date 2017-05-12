@@ -187,7 +187,6 @@ class account_move_line(osv.osv):
                     new_move = True
                     for i in ids:
                         r_move[i] = True
-        print "Get linked state", r_move.keys()
         return r_move.keys()
 
     _columns = {
