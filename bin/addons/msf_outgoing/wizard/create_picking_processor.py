@@ -55,6 +55,9 @@ class create_picking_processor(osv.osv):
 
         wizard_brw_list = self.browse(cr, uid, ids, context=context)
 
+        # disable "save as draft":
+        self.write(cr, uid, ids, {'draft': False}, context=context)
+
         self.integrity_check_quantity(cr, uid, wizard_brw_list, context=context)
         self.integrity_check_prodlot(cr, uid, wizard_brw_list, context=context)
         # call stock_picking method which returns action call

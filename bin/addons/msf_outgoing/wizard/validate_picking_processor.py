@@ -59,8 +59,10 @@ class validate_picking_processor(osv.osv):
         if context is None:
             context = {}
 
-        to_unlink = []
+        # disable "save as draft":
+        self.write(cr, uid, ids, {'draft': False}, context=context)
 
+        to_unlink = []
         for proc in self.browse(cr, uid, ids, context=context):
             total_qty = 0.00
 
