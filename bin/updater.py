@@ -12,6 +12,11 @@ from datetime import datetime
 from base64 import b64decode
 from StringIO import StringIO
 import logging
+import subprocess
+import base64
+
+import tools
+import pooler
 
 if sys.version_info >= (2, 6, 6):
     from zipfile import ZipFile
@@ -234,7 +239,7 @@ def do_update():
                     warn("webmode registry key not found")
                     regval = "c:\Program Files (x86)\msf\Unifield\Web\service\libs\servicemanager.pyd"
 
-                res = re.match("^(.*)\\service\\libs\\servicemanager.pyd", regval)
+                res = re.match("^(.*)\\\\service\\\\libs\\\\servicemanager.pyd", regval)
                 if res:
                     webpath = res.group(1)
                 else:
@@ -306,7 +311,6 @@ def do_update():
             #Restart web server
             if webupdated and os.name == "nt":
                 try:
-                    import subprocess
                     subprocess.call('net stop "OpenERP Web 6.0"')
                     subprocess.call('net start "OpenERP Web 6.0"')
                 except OSError, e:
@@ -340,9 +344,8 @@ def do_update():
 
 def update_path():
     """If server starts normally, this step will fix the paths with the configured path in config rc"""
-    from tools import config
     for v in ('log_file', 'lock_file', 'update_dir', 'server_version_file', 'new_version_file'):
-        globals()[v] = os.path.join(config['root_path'], globals()[v])
+        globals()[v] = os.path.join(tools.config['root_path'], globals()[v])
     global server_version
     server_version = get_server_version()
 
@@ -351,7 +354,6 @@ def do_prepare(cr, revision_ids):
     """Prepare patches for an upgrade of the server and set the lock file"""
     if not revision_ids:
         return ('failure', 'Nothing to do.', {})
-    import pooler
     pool = pooler.get_pool(cr.dbname)
     version = pool.get('sync_client.version')
 
@@ -461,7 +463,6 @@ def do_upgrade(cr, pool):
         revision_ids = versions.search(cr, 1, [('sum','in',list(server_lack_versions))], order='date asc')
         res = do_prepare(cr, revision_ids)
         if res[0] == 'success':
-            import tools
             os.chdir( tools.config['root_path'] )
             restart_server()
         else:
@@ -477,11 +478,8 @@ def reconnect_sync_server():
     """Reconnect the connection manager to the SYNC_SERVER if password file
     exists
     """
-    import tools
     credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
     if os.path.isfile(credential_filepath):
-        import base64
-        import pooler
         f = open(credential_filepath, 'r')
         lines = f.readlines()
         f.close()
@@ -519,7 +517,6 @@ def check_mako_xml():
     not present in it. This tag is useless and can lead to regression if the
     count change.
     """
-    import tools
     logger.info("Check mako and xml files don't contain ExpandedColumnCount tag...")
     path_to_exclude = [os.path.join(tools.config['root_path'], 'backup')]
     for file_path in find(tools.config['root_path']):
