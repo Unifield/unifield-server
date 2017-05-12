@@ -2978,6 +2978,9 @@ class stock_inventory(osv.osv):
 
         for inv in self.read(cr, uid, ids, ['inventory_line_id', 'date', 'name'], context=context):
             move_ids = []
+
+            # gather all information needed for the lines treatment first to do
+            # less requests
             line_read = inv_line_obj.read(cr, uid, inv['inventory_line_id'],
                     ['product_id', 'product_uom', 'prod_lot_id', 'location_id',
                         'product_qty', 'inventory_id', 'dont_move', 'comment',
