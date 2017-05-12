@@ -1586,6 +1586,8 @@ class stock_inventory(osv.osv):
         res = super(stock_inventory, self)._hook_dont_move(cr, uid, *args, **kwargs)
         if 'line' in kwargs:
             return res and not kwargs['line'].dont_move
+        if 'dont_move' in kwargs:
+            return res and not kwargs['dont_move']
 
         return res
 
