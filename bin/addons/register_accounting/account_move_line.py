@@ -157,6 +157,8 @@ class account_move_line(osv.osv):
         return self.pool.get('account.move.line').search(cr, uid, ['|', ('reconcile_id','in',ids), ('reconcile_partial_id','in',ids)])
 
     def _get_move_line_residual_import(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         if context.get('sync_update_execution'):
             partial_to_compute = {}
             bypass_standard = False
@@ -166,8 +168,8 @@ class account_move_line(osv.osv):
                     if line.reconcile_partial_id.nb_partial_legs == len(line.reconcile_partial_id.line_partial_ids):
                         partial_to_compute[line.reconcile_partial_id.id] = True
             if bypass_standard:
-                a = self.search(cr, uid, [('reconcile_partial_id', 'in', partial_to_compute.keys())], context=context)
-                return a
+                return self.search(cr, uid, [('reconcile_partial_id', 'in', partial_to_compute.keys())], context=context)
+
         return ids
 
     def _get_linked_statement(self, cr, uid, ids, context=None):

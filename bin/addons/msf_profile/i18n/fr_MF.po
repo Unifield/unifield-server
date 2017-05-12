@@ -98459,3 +98459,8 @@ msgstr "Vous pouvez sourcé une ligne de don uniquement sur stock"
 msgid "You can't source a donation 'on order'."
 msgstr "Vous ne pouvez pas sourcer un don 'sur commande'."
 
+#. module: account_reconciliation
+#: field:account.move.reconcile,nb_partial_legs:0
+msgid "Nb legs in parials"
+msgstr "Non d'entrées du lettrage partiel"
+
