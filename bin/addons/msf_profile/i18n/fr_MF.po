@@ -98461,6 +98461,6 @@ msgstr "Vous ne pouvez pas sourcer un don 'sur commande'."
 
 #. module: account_reconciliation
 #: field:account.move.reconcile,nb_partial_legs:0
-msgid "Nb legs in parials"
+msgid "Nb legs in partial reconcile"
 msgstr "Non d'entrées du lettrage partiel"
 

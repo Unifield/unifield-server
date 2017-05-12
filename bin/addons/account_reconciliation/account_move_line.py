@@ -474,7 +474,7 @@ class account_move_reconcile(osv.osv):
         'multi_instance_level_creation': fields.selection([('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')],
                                                           string='Where the adjustement line should be created'
                                                           ),
-        'nb_partial_legs': fields.integer('Nb legs in parials'),
+        'nb_partial_legs': fields.integer('Nb legs in partial reconcile'),
     }
 
     _defaults = {
