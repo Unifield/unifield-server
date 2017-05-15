@@ -304,58 +304,107 @@
             </field>
         </record>
 
-       <record id="view_purchase_order_filter" model="ir.ui.view">
-            <field name="name">purchase.order.list.select</field>
+
+        <record id="purchase.view_purchase_order_filter" model="ir.ui.view">
+            <field name="name">purchase.view.purchase.order.filter</field>
             <field name="model">purchase.order</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Search Purchase Order">
-                 <group col='10' colspan='4'>
-                    <filter icon="terp-document-new" name="draft" string="Quotations" domain="[('state','=','draft')]" separator="1" help="Purchase order which are in draft state"/>
-                    <filter icon="terp-camera_test" name="confirmed" string="To Approve" domain="[('state','in',('wait','confirmed'))]" separator="1" help="Purchase order to be approved"/>
-                    <filter icon="terp-check" name="approved" string="Approved" domain="[('state','in',('approved','done'))]" separator="1" help="Approved purchase order"/>
-                    <separator orientation="vertical"/>
-                    <filter icon="terp-emblem-important" name="exception" string="Exception" domain="[('state','in',('except_invoice','except_picking'))]" separator="1" help="Purchase order which are in the exception state"/>
-                    <separator orientation="vertical"/>
-                    <filter icon="terp-gtk-go-back-rtl" string="Not Invoiced" domain="[('invoice_ids','=', False)]" separator="1" help="Purchase orders that include lines not invoiced." groups="base.group_extended"/>
-                    <separator orientation="vertical"/>
-                    <field name="name" select="1" string="Reference"/>
-                    <field name="partner_id" select="1"/>
-                    <field name="product_id" select="1"/>
-                    <field name="create_uid" select="1"/>
-                </group>
-                <newline/>
-                  <group expand="0" string="Group By..." colspan="4" col="10" groups="base.group_extended">
-                    <filter string="Supplier" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
-                     <separator orientation="vertical"/>
-                    <filter string="Origin" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'origin'}"/>
-                    <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
-                     <separator orientation="vertical"/>
-                    <filter string="Order Date" icon="terp-go-month" domain="[]" context="{'group_by':'date_order'}"/>
-                    <filter string="Expected Date" icon="terp-go-month" domain="[]" context="{'group_by':'minimum_planned_date'}"/>
-
-                </group>
-              </search>
+                <search string="Search Purchase Orders">
+                    <group col="8" colspan="4">
+                      <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft'])]" separator="1" help="Purchase orders which are in draft state" />
+                      <filter icon="terp-camera_test" name="confirmed" string="Validated" domain="[('state','in',['confirmed','wait'])]" separator="1" help="Purchase orders which are in validated state." />
+                      <filter icon="gtk-paste-v" name="sourced" string="Sourced" domain="[('state','=','sourced')]" separator="1" />
+                      <filter icon="terp-check" name="confirmed_wait" string="Confirmed (waiting)" domain="[('state', 'in', ['confirmed_wait'])]" separator="1" help="Purchase orders which are in approved state." />
+                      <filter icon="terp-check" name="approved" string="Confirmed" domain="[('state', 'in', ['approved'])]" separator="1" help="Purchase orders which are in approved state." />
+                      <filter icon="gtk-close" name="done" string="Closed" domain="[('state', 'in', ['done'])]" separator="1" help="Purchase orders which are in done state." />
+                      <separator orientation="vertical" />
+                      <filter icon="gtk-missing-image" name="inactive" string="Show Split" domain="[('state','=','split')]" context="{'active_test': False}" separator="1" />
+                      <separator orientation="vertical" />
+                      <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', 'in', ['cancel'])]" separator="1" help="Purchase orders which are in cancelled state." />
+                      <separator orientation="vertical" />
+                      <filter icon="terp-emblem-important" name="exception" string="Exception" domain="[('state', 'in', ['except_invoice', 'except_picking'])]" separator="1" help="Purchase orders which are in the exception state." />
+                      <separator orientation="vertical" />
+                      <field name="name" select="1" string="Reference" />
+                      <field name="partner_id" select="1" string="Supplier" />
+                      <field name="partner_ref" select="1" string="Supplier Ref." />
+                    </group>
+                    <newline />
+                    <group>
+                      <field name="product_id" />
+                      <field name="origin" />
+                      <field name="create_uid" />
+                      <field name="date_order" />
+                    </group>
+                    <newline />
+                    <group string="Type" expand="0">
+	                  <filter icon="terp-check" string="Regular" domain="[('order_type','=','regular')]" />
+	                  <filter icon="terp-stage" string="Donation before expiry" domain="[('order_type','=','donation_exp')]" />
+	                  <filter icon="terp-gtk-jump-to-ltr" string="Standard Donation" domain="[('order_type','=','donation_st')]" />
+	                  <filter icon="terp-partner" string="Loan" domain="[('order_type','=','loan')]" />
+	                  <filter icon="terp-gtk-jump-to-rtl" string="In-Kind donation" domain="[('order_type','=','in_kind')]" />
+	                  <filter icon="terp-purchase" string="Purchase List" domain="[('order_type','=','purchase_list')]" />
+	                  <filter icon="terp-crm" string="Direct PO" domain="[('order_type','=','direct')]" />
+	                </group>
+	                <newline />
+	                <group string="Priority" expand="0">
+                      <filter icon="gtk-dialog-warning" string="Emergency" domain="[('priority','=','emergency')]"/>
+                      <filter icon="gtk-yes" string="Normal" domain="[('priority','=','normal')]"/>
+                      <filter icon="gtk-info" string="Priority" domain="[('priority','=','priority')]"/>
+	                </group>
+	                <newline />
+	                <group string="Category" expand="0">
+                      <filter icon="gtk-color-picker" string="Medical" domain="[('categ','=','medical')]"/>
+                      <filter icon="terp-stock" string="Logistic" domain="[('categ','=','log')]"/>
+                      <filter icon="terp-purchase" string="Service" domain="[('categ','=','service')]"/>
+                      <filter icon="gtk-quit" string="Transport" domain="[('categ','=','transport')]"/>
+                      <filter icon="gtk-harddisk" string="Other" domain="[('categ','=','other')]"/>                            
+	                </group>
+                    <newline />
+                    <group expand="0" string="Group By..." colspan="4" col="10">
+                      <filter string="Order Type" icon="terp-rating-rated" domain="[]" context="{'group_by':'order_type'}"/>
+                      <separator orientation="vertical" />
+                      <filter string="Priority" icon="terp-project" domain="[]" context="{'group_by': 'priority'}" />
+                      <separator orientation="vertical" />
+                      <filter string="Category" icon="terp-translate" domain="[]" context="{'group_by':'categ'}"/>
+                      <separator orientation="vertical" />
+                      <filter string="Supplier" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                      <separator orientation="vertical" />
+                      <filter string="Origin" icon="terp-gtk-jump-to-rtl" domain="[]" context="{'group_by':'origin'}"/>
+                      <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+                      <separator orientation="vertical" />
+                      <filter string="Order Date" icon="terp-go-month" domain="[]" context="{'group_by':'date_order'}"/>
+                      <filter string="Expected Date" icon="terp-go-month" domain="[]" context="{'group_by':'delivery_requested_date'}" />
+                    </group>
+                </search>
             </field>
         </record>
-        <record id="purchase_order_tree" model="ir.ui.view">
-            <field name="name">purchase.order.tree</field>
+
+
+        <record id="purchase.purchase_order_tree" model="ir.ui.view">
+            <field name="name">purchase.order.type.tree.view</field>
             <field name="model">purchase.order</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree colors="grey:state=='cancel';blue:state in ('wait','confirmed');red:state in ('except_invoice','except_picking')" string="Purchase Order">
-                    <field name="name" string="Reference"/>
-                    <field name="date_order" string="Order Date"/>
-                    <field name="partner_id"/>
-                    <field name="company_id" groups="base.group_multi_company" widget="selection"/>
-                    <field name="location_id"/>
-                    <field name="minimum_planned_date"/>
-                    <field name="origin"/>
-                    <field name="invoiced_rate" widget="progressbar"/>
-                    <field name="shipped_rate" widget="progressbar"/>
-                    <field name="amount_untaxed" sum="Total Untaxed amount"/>
-                    <field name="amount_total" sum="Total amount"/>
-                    <field name="state"/>
+                <tree string="Purchase Orders"
+                      colors="grey:state=='cancel';blue:state in ('wait','confirmed');red:state in ('except_invoice','except_picking')">
+                      <field name="name" string="Reference" />
+                      <field name="order_type" />
+                      <field name="priority" />
+                      <field name="categ" />
+                      <field name="date_order" />
+                      <field name="partner_ref" />
+                      <field name="partner_id" string="Supplier" />
+                      <field name="delivery_requested_date" />
+                      <field name="origin" />
+                      <field name="customer_ref"/>
+                      <field name="dest_partner_names" />
+                      <field name="line_count" />
+                      <field name="shipped_rate" widget="progressbar" />
+                      <field name="invoiced_rate" widget="progressbar" />
+                      <field name="amount_total" />
+                      <field name="pricelist_id" string="Currency" />
+                      <field name="state" />
                 </tree>
             </field>
         </record>
@@ -374,15 +423,17 @@
             parent="menu_procurement_management"
             sequence="6"/>
 
-        <record id="purchase_form_action" model="ir.actions.act_window">
+        <record id="purchase.purchase_form_action" model="ir.actions.act_window">
             <field name="name">Purchase Orders</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">purchase.order</field>
             <field name="view_mode">tree,form,graph,calendar</field>
-            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid}</field>
-            <field name="search_view_id" ref="view_purchase_order_filter"/>
+            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid, 'purchase_order': True}</field>
+            <field name="domain">[('tender_id', '=', False)]</field>
+            <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
             <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
         </record>
+
         <menuitem action="purchase_form_action" id="menu_purchase_form_action" parent="menu_procurement_management" />
 
 
