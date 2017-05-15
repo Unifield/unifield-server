@@ -535,7 +535,7 @@ class weekly_forecast_report(osv.osv):
                     weekly_cons = cons
                     if report.interval_type == 'week':
                         weekly_cons = round(cons / 30 * 7, 2)
-                        weekly_cons = uom_obj._change_round_up_qty(new_cr, uid, product['uom_id'][0], weekly_cons, 'cons', result={})['value'].get('cons', 0.0)
+                        weekly_cons = uom_obj._change_round_up_qty(new_cr, uid, product['uom_id'][0], weekly_cons, 'cons', result={})['value'].get('cons', round(weekly_cons))
 
                     line_values += """<Row>
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"String\">%(product_code)s</Data></Cell>
@@ -651,7 +651,7 @@ class weekly_forecast_report(osv.osv):
             logging.getLogger('weekly.forecast.report').warn('Exception', exc_info=True)
             new_cr.rollback()
             progress_comment = """
-            An error occured during the processing of the report.\n
+            An error occurred during the processing of the report.\n
             Details of the error:\n
             %s
             """ % str(e)
@@ -747,7 +747,7 @@ class weekly_forecast_report(osv.osv):
             prodlot_ids = lot_obj.search(cr, uid, [
                 ('product_id', '=', product['id']),
                 ('stock_available', '>', 0.00),
-#                ('life_date', '>=', time.strftime('%Y-%m-%d')),
+                #                ('life_date', '>=', time.strftime('%Y-%m-%d')),
                 ('life_date', '<=', report_end_date.strftime('%Y-%m-%d')),
             ], order='life_date', context=context)
 

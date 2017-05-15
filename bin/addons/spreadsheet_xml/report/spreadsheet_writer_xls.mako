@@ -49,8 +49,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<Table ss:ExpandedColumnCount="${len(headers)}" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
-x:FullRows="1">
+<Table>
 % for x in headers:
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
@@ -63,11 +62,11 @@ x:FullRows="1">
 <Row>
   % for index, h in enumerate(headers):
     <% result=row[index] %>
-    % if h[1] == 'date' and result and result != 'False':
+    % if h[1] == 'date' and isDate(result):
         <Cell ss:StyleID="sShortDate">
             <Data ss:Type="DateTime">${result|n}T00:00:00.000</Data>
         </Cell>
-    % elif h[1] == 'datetime' and result and result != 'False':
+    % elif h[1] == 'datetime' and isDateTime(result):
         <Cell ss:StyleID="sDate">
             <Data ss:Type="DateTime">${("%s.000"%result.replace(' ','T'))|n}</Data>
         </Cell>
@@ -78,7 +77,7 @@ x:FullRows="1">
             % elif h[1] in ('number', 'int', 'float'):
                 % if isinstance(result, tuple) and len(result) > 1:
                     <Data ss:Type="${result[1]}">${result[0]}</Data>
-                % elif not isinstance(result, bool): 
+                % elif not isinstance(result, bool):
                     <Data ss:Type="Number">${result}</Data>
                 % else:
                     <Data ss:Type="String"></Data>

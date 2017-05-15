@@ -741,6 +741,81 @@
 
         <menuitem action="action_res_users" id="menu_action_res_users" parent="base.menu_users"/>
 
+        <record id="view_users_white_list_tree" model="ir.ui.view">
+            <field name="name">res.users.tree</field>
+            <field name="model">res.users</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Users" hide_new_button="1" hide_delete_button="1" editable="top">
+                    <field name="name"/>
+                    <field name="login"/>
+                    <field name="context_lang"/>
+                    <field name="date"/>
+                    <field name="is_synchronizable"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_res_users_white_list" model="ir.actions.act_window">
+            <field name="name">Synchronization white-list</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.users</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_users_white_list_tree"/>
+            <field name="domain">[('is_synchronizable', '=', True), ('instance_level', '=', 'hq')]</field>
+            <field name="search_view_id" ref="view_users_search"/>
+            <field name="context">{'user_white_list': True}</field>
+            <field name="help">List of Users that will be synchronizable. To
+                synchronize a User, he should be marked as "Synchronizable"
+                (ie. be in this list) and have the checkbox "Synchronize"
+                checked from the user view. You can add new users to this list
+                using the right dropdown menu and click on action "Add Users".</field>
+        </record>
+
+        <menuitem action="action_res_users_white_list" id="menu_action_res_users_whitelist" parent="base.menu_users" groups="base.group_erp_manager"/>
+
+        <record id="add_users_to_white_list" model="ir.ui.view">
+            <field name="name">add.users.to.whitelist.view</field>
+            <field name="model">wizard.add.users.synchronized</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Add multiple products">
+                    <group colspan="4">
+                        <html>
+                            <p><translate>Please note that users can be added to the white list only if:</translate></p>
+                            <ul>
+                                <li><translate>It is done from the HQ</translate></li>
+                                <li><translate>The user is not member of Administration / Access Rights</translate></li>
+                                <li><translate>The user is not already marked as "Synchronizable"</translate></li>
+                            </ul>
+                        </html>
+                    </group>
+                    <separator colspan="4" />
+                    <field name="user_ids" nolabel="1" colspan="4" mode="tree" domain="[('is_synchronizable', '=', False), ('is_erp_manager', '=', False), ('instance_level', '=', 'hq')]">
+                        <tree string="Add multiple users" editable="top">
+                            <field name="name"/>
+                            <field name="login"/>
+                            <field name="is_erp_manager" invisible="1"/>
+                        </tree>
+                    </field>
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                    <button name="add_users_to_white_list" string="Add Users to white list" icon="terp-check" colspan="3" type="object" />
+                </form>
+            </field>
+        </record>
+
+
+        <act_window name="Add Users"
+            res_model="wizard.add.users.synchronized"
+            src_model="res.users"
+            view_mode="form"
+            target="new"
+            multi="True"
+            key2="client_action_multi"
+            empty_ids="1"
+            id="action_open_wizard_add_users_to_white_list" />
+
         <record id="action_res_users_my" model="ir.actions.act_window">
             <field name="name">Change My Preferences</field>
             <field name="type">ir.actions.act_window</field>
@@ -921,6 +996,7 @@
                         <group col="2" colspan="4" attrs="{'invisible':[('type','=','url')]}">
                             <field name="datas" filename="datas_fname"/>
                             <field name="datas_fname" select="1"/>
+                            <field name="path"/>
                         </group>
                         <group col="2" colspan="4" attrs="{'invisible':[('type','=','binary')]}">
                             <field name="url" widget="url"/>

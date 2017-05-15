@@ -31,14 +31,23 @@ class SpreadsheetCell(SpreadsheetTools):
                         self.type = 'float'
                         self.data = float(self.data or 0.0)
                     else:
-                        self.type = 'int'
-                        self.data = int(self.data)
+                        try:
+                            self.type = 'int'
+                            self.data = int(self.data)
+                        except Exception as e:
+                            self.type = 'int_error'
+                            self.data = str(e)
+
                 elif dtype == 'Boolean':
                     self.data = self.data in ('1', 'T', 't', 'True', 'true')
                     self.type = 'bool'
                 elif dtype == 'DateTime' and self.data:
-                    self.data = DateTime.ISO.ParseDateTime(self.data)
-                    self.type = 'datetime'
+                    try:
+                        self.data = DateTime.ISO.ParseDateTime(self.data)
+                        self.type = 'datetime'
+                    except Exception as e:
+                        self.data = str(e)
+                        self.type = 'datetime_error'
                 elif dtype == 'String':
                     self.type = 'str'
                     if self.data:
@@ -123,7 +132,7 @@ class SpreadsheetXML(SpreadsheetTools):
                 self.xmlobj = etree.parse(xmlfile)
             else:
                 self.xmlobj = etree.XML(xmlstring)
-        except etree.XMLSyntaxError as e:
+        except etree.XMLSyntaxError:
             raise osv.except_osv(_('Error'), _('Wrong format: it should be in Spreadsheet XML 2003'))
 
     def getWorksheets(self):
@@ -137,7 +146,11 @@ class SpreadsheetXML(SpreadsheetTools):
 
     def getRows(self,worksheet=1):
         table = self.xmlobj.xpath('//ss:Worksheet[%d]/ss:Table[1]'%(worksheet, ), **self.xa)
-        return SpreadsheetRow(table[0].getiterator(etree.QName(self.defaultns, 'Row')))
+        if not table:
+            # in case no table, raise something understandable instead
+            # of giving a let-me-fix
+            raise osv.except_osv(_('Error'), _('File format problem: no Table found in the file, check the file format.'))
+        return SpreadsheetRow(table[0].iter('{%s}Row' % self.defaultns))
 
     def enc(self, s):
         if isinstance(s, unicode):
@@ -150,10 +163,10 @@ class SpreadsheetXML(SpreadsheetTools):
         else:
             data = []
         for row in self.getRows(worksheet):
-                if to_file:
-                    writer.writerow([self.enc(x.data) for x in row.iter_cells()])
-                else:
-                    data.append([self.enc(x.data) for x in row.iter_cells()])
+            if to_file:
+                writer.writerow([self.enc(x.data) for x in row.iter_cells()])
+            else:
+                data.append([self.enc(x.data) for x in row.iter_cells()])
         if to_file:
             return True
         return data

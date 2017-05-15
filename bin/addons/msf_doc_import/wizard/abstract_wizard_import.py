@@ -70,19 +70,16 @@ your support team and give us this message.
         :param date_value: String value to compute
         :return: A datetime instance or False
         """
+        # US:2527: accept only one format, reject other
         date_format = [
-            '%Y-%m-%d',
-            '%Y-%m/%d',
-            '%d-%m-%Y',
             '%d/%m/%Y',
-            '%d-%b-%Y',
-            '%d/%b-%Y',
         ]
 
         d = False
         for dformat in date_format:
             try:
-                d = str(DateTime.strptime(date_value, dformat))
+                d = DateTime.strptime(date_value, dformat)
+                d = d.strftime('%Y-%m-%d %H:%M:%S')
             except ValueError:
                 continue
 
@@ -117,9 +114,9 @@ your support team and give us this message.
                 if d:
                     return (0, d, None)
                 else:
-                    return (-1, value, _('The date format was not correct'))
+                    return (-1, value, _('The date format was not correct. The expected date should be > 01/01/1900 in this format DD/MM/YYYY.'))
             else:
-                return (-1, value, _('The date format was not correct'))
+                return (-1, value, _('The date format was not correct. The expected date should be > 01/01/1900 in this format DD/MM/YYYY.'))
         elif header[1] == 'Integer':
             if vtype == 'number':
                 return (0, value, None)
@@ -363,7 +360,14 @@ class abstract_wizard_import(osv.osv_memory):
 
         file_obj.getNbRows()
         # iterator on rows
-        return file_obj.getRows(), file_obj.getNbRows()
+        try:
+            res = file_obj.getRows(), file_obj.getNbRows()
+            return res
+        except TypeError as e:
+            raise osv.except_osv(
+                _('Error'),
+                _('An error occurs during the reading of the file. Please contact an administrator and give him the import file and this error: %s') % e,
+            )
 
     def check_headers(self, headers_row, headers_title, context=None):
         """
@@ -376,7 +380,7 @@ class abstract_wizard_import(osv.osv_memory):
             raise osv.except_osv(
                 _('Error'),
                 _('The number of columns in the Excel file (%s) is different than the expected number '\
-                        'of columns (%s).\nColumns should be in this order: %s') % (
+                  'of columns (%s).\nColumns should be in this order: %s') % (
                     len(headers_row),
                     len(headers_title),
                     '\n * '.join(h[0] for h in headers_title),
@@ -417,7 +421,7 @@ class abstract_wizard_import(osv.osv_memory):
         """
         try:
             line_content = row.cells
-        except ValueError as e:
+        except ValueError:
             return (-1, _('Line is empty'))
 
         if len(line_content) > len(headers):

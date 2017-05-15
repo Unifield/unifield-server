@@ -31,6 +31,8 @@ from report import report_sxw
 class finance_archive(finance_export.finance_archive):
     def postprocess_reconciliable(self, cr, uid, data, model, column_deletion=False):
         """
+        ##### WARNING #####
+        ### IN CASE CHANGES ARE MADE TO THIS METHOD, keep in mind that this is used for OCP export as well. ###
         Replace 15th column by its reconcile name.
         Note: as we begin to 0, the python column is 14.
         """
@@ -69,7 +71,6 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
         if context is None:
             context = {}
         # Prepare some values
-        pool = pooler.get_pool(cr.dbname)
         excluded_journal_types = ['hq']
         # Fetch data from wizard
         if not data.get('form', False):
@@ -103,20 +104,18 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
         }
 
         # Create part of filename (search 3 first code digits)
-        instance = pool.get('msf.instance').browse(cr, uid, instance_id)
-        instance_name = 'OCB'  # since US-949
         processrequests = [
             {
                 'headers': ['DB ID', 'Entry Sequence', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third Party', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit', 'Functional Credit', 'Functional Currency', 'Reconcile reference'],
-                'filename': instance_name + "_%(year)s%(month)s_Check on reconcilable entries.csv",
+                'filename': "Check on reconcilable entries.csv",
                 'key': 'reconciliable',
                 'query_params': (tuple(excluded_journal_types), tuple(instance_ids),),
                 'function': 'postprocess_reconciliable',
                 'fnct_params': 'account.move.line',
-                },
+            },
         ]
         # Launch finance archive object
-        fe = finance_archive(sqlrequests, processrequests)
+        fe = finance_archive(sqlrequests, processrequests, context=context)
         # Use archive method to create the archive
         return fe.archive(cr, uid)
 

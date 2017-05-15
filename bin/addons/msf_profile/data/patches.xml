@@ -1,6 +1,46 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="remove_not_synchronized_data" model="patch.scripts">
+            <field name="method">remove_not_synchronized_data</field>
+        </record>
+
+        <record id="us_2632_patch" model="patch.scripts">
+            <field name="method">us_2632_patch</field>
+        </record>
+
+        <record id="us_2110_patch" model="patch.scripts">
+            <field name="method">us_2110_patch</field>
+        </record>
+
+        <record id="setup_security_on_sync_server" model="patch.scripts">
+            <field name="method">setup_security_on_sync_server</field>
+        </record>
+
+        <record id="us_1613" model="patch.scripts">
+            <field name="method">us_1613_remove_all_track_changes_action</field>
+        </record>
+
+        <record id="us_2068" model="patch.scripts">
+            <field name="method">us_2068_remove_updated_linked_to_activate_instance</field>
+        </record>
+
+        <record id="us_1482" model="patch.scripts">
+            <field name="method">us_1482_fix_default_code_on_msf_lines</field>
+        </record>
+
+        <record id="us_1381" model="patch.scripts">
+            <field name="method">us_1381_encrypt_passwords</field>
+        </record>
+
+        <record id="us_1610" model="patch.scripts">
+            <field name="method">us_1610_set_oc_on_all_groups</field>
+        </record>
+
+        <record id="us_1725" model="patch.scripts">
+            <field name="method">us_1725_force_sync_on_hr_employee</field>
+        </record>
+
         <record id="us_1388" model="patch.scripts">
             <field name="method">us_1388_change_sequence_implementation</field>
         </record>
@@ -29,6 +69,10 @@
             <field name="method">us_918_patch</field>
         </record>
 
+        <record id="us_1030_create_pricelist_patch" model="patch.scripts">
+            <field name="method">us_1030_create_pricelist_patch</field>
+        </record>
+
         <record id="us_750_patch" model="patch.scripts">
             <field name="method">us_750_patch</field>
         </record>
@@ -47,10 +91,6 @@
 
         <record id="us_1185_patch" model="patch.scripts">
             <field name="method">us_1185_patch</field>
-        </record>
-
-        <record id="us_1454_patch" model="patch.scripts">
-            <field name="method">us_1454_patch</field>
         </record>
 
         <record id="us_1263_patch" model="patch.scripts">
@@ -99,5 +139,40 @@
             <field name="method">us_1421_lower_login</field>
         </record>
 
+        <record id="us_1558_trans_admin_fr" model="patch.scripts">
+            <field name="method">us_trans_admin_fr</field>
+        </record>
+
+        <record id="us_1732_sync_state_ud" model="patch.scripts">
+            <field name="method">us_1732_sync_state_ud</field>
+        </record>
+
+        <record id="us_1766_fix_fxa_aji_curr" model="patch.scripts">
+            <field name="method">us_1766_fix_fxa_aji_curr</field>
+        </record>
+
+        <record id="us_635_dest_partner_ids" model="patch.scripts">
+            <field name="method">us_635_dest_partner_ids</field>
+        </record>
+
+        <record id="us_1671_stopped_products" model="patch.scripts">
+            <field name="method">us_1671_stopped_products</field>
+        </record>
+
+        <record id="us_1167_status_inconsistencies" model="patch.scripts">
+            <field name="method">us_1167_status_inconsistencies</field>
+        </record>
+
+        <record id="us_2075_partner_locally_created" model="patch.scripts">
+            <field name="method">us_2075_partner_locally_created</field>
+        </record>
+
+        <record id="us_1721_dates_on_products" model="patch.scripts">
+            <field name="method">us_1721_dates_on_products</field>
+        </record>
+
+        <record id="us_1359_update_move_shipment" model="patch.scripts">
+            <field name="method">us_1359_update_move_shipment</field>
+        </record>
     </data>
 </openerp>

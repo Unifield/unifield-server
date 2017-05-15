@@ -32,9 +32,9 @@ class account_partner_balance_tree(osv.osv):
         'uid': fields.many2one('res.users', 'Uid', invisible=True),
         'build_ts': fields.datetime('Build timestamp', invisible=True),
         'account_type': fields.selection([
-                ('payable', 'Payable'),
-                ('receivable', 'Receivable')
-            ],
+            ('payable', 'Payable'),
+            ('receivable', 'Receivable')
+        ],
             'Account type'),
         'partner_id': fields.many2one('res.partner', 'Partner', invisible=True),
         'name': fields.char('Partner', size=168),  # partner name
@@ -81,20 +81,20 @@ class account_partner_balance_tree(osv.osv):
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
         query = "SELECT ac.type as account_type," \
-        " p.id as partner_id, p.ref as partner_ref, p.name as partner_name," \
-        " sum(debit) AS debit, sum(credit) AS credit," \
-        " CASE WHEN sum(debit) > sum(credit) THEN sum(debit) - sum(credit) ELSE 0 END AS sdebit," \
-        " CASE WHEN sum(debit) < sum(credit) THEN sum(credit) - sum(debit) ELSE 0 END AS scredit" \
-        " FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id)" \
-        " JOIN account_account ac ON (l.account_id = ac.id)" \
-        " JOIN account_move am ON (am.id = l.move_id)" \
-        " JOIN account_account_type at ON (ac.user_type = at.id)" \
-        " WHERE ac.type IN " + account_type + "" \
-        " AND am.state IN " + move_state + "" \
-        " AND " + where + "" \
-        " " + TAX_REQUEST + " " \
-        " GROUP BY ac.type,p.id,p.ref,p.name" \
-        " ORDER BY ac.type,p.name"
+            " p.id as partner_id, p.ref as partner_ref, p.name as partner_name," \
+            " COALESCE(sum(debit),0) AS debit, COALESCE(sum(credit), 0) AS credit," \
+            " CASE WHEN sum(debit) > sum(credit) THEN sum(debit) - sum(credit) ELSE 0 END AS sdebit," \
+            " CASE WHEN sum(debit) < sum(credit) THEN sum(credit) - sum(debit) ELSE 0 END AS scredit" \
+            " FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id)" \
+            " JOIN account_account ac ON (l.account_id = ac.id)" \
+            " JOIN account_move am ON (am.id = l.move_id)" \
+            " JOIN account_account_type at ON (ac.user_type = at.id)" \
+            " WHERE ac.type IN " + account_type + "" \
+            " AND am.state IN " + move_state + "" \
+            " AND " + where + "" \
+            " " + TAX_REQUEST + " " \
+            " GROUP BY ac.type,p.id,p.ref,p.name" \
+            " ORDER BY ac.type,p.name"
         cr.execute(query)
         res = cr.dictfetchall()
         if data['form'].get('display_partner', '') == 'non-zero_balance':
@@ -112,16 +112,16 @@ class account_partner_balance_tree(osv.osv):
             move_state = "('posted')"
 
         query = "SELECT l.id FROM account_move_line l" \
-        " JOIN account_account ac ON (l.account_id = ac.id)" \
-        " JOIN account_move am ON (am.id = l.move_id)" \
-        " JOIN account_account_type at ON (ac.user_type = at.id) WHERE "
+            " JOIN account_account ac ON (l.account_id = ac.id)" \
+            " JOIN account_move am ON (am.id = l.move_id)" \
+            " JOIN account_account_type at ON (ac.user_type = at.id) WHERE "
         if partner_id:
             query += "l.partner_id = " + str(partner_id) + "" \
-            " AND ac.type = '" + account_type + "'" \
-            " AND am.state IN " + move_state + ""
+                " AND ac.type = '" + account_type + "'" \
+                " AND am.state IN " + move_state + ""
         else:
             query += "ac.type = '" + account_type + "'" \
-            " AND am.state IN " + move_state + ""
+                " AND am.state IN " + move_state + ""
         # UFTP-312: Filtering regarding tax account (if user asked it)
         if data['form'].get('tax', False):
             query += " AND at.code != 'tax' "
@@ -209,10 +209,10 @@ class account_partner_balance_tree(osv.osv):
         if r and r[0] and r[0]['partner_id']:
             if context and 'data' in context and 'form' in context['data']:
                 move_line_ids = self._execute_query_selected_partner_move_line_ids(
-                                                cr, uid,
-                                                r[0]['account_type'].lower(),
-                                                r[0]['partner_id'][0],
-                                                context['data'])
+                    cr, uid,
+                    r[0]['account_type'].lower(),
+                    r[0]['partner_id'][0],
+                    context['data'])
                 if move_line_ids:
                     new_context = {}
                     if context:
@@ -223,12 +223,12 @@ class account_partner_balance_tree(osv.osv):
                         comp_currency_id = self._get_company_currency(cr, uid, context=context)
                         output_currency_id = context['data']['form'].get('output_currency', comp_currency_id)
                         if comp_currency_id and output_currency_id \
-                            and comp_currency_id != output_currency_id:
+                                and comp_currency_id != output_currency_id:
                             # output currency in action context
                             new_context['output_currency_id'] = output_currency_id
                     view_id = self.pool.get('ir.model.data').get_object_reference(
-                                cr, uid, 'finance',
-                                'view_account_partner_balance_tree_move_line_tree')[1]
+                        cr, uid, 'finance',
+                        'view_account_partner_balance_tree_move_line_tree')[1]
                     res = {
                         'name': 'Journal Items',
                         'type': 'ir.actions.act_window',
@@ -258,7 +258,7 @@ class account_partner_balance_tree(osv.osv):
         if not amount or amount == 0.:
             return 0.
         if not comp_currency_id or not output_currency_id \
-            or comp_currency_id == output_currency_id:
+                or comp_currency_id == output_currency_id:
             # unset currencies or ouput currency == company currency
             return amount
         if date:
@@ -266,10 +266,10 @@ class account_partner_balance_tree(osv.osv):
         else:
             context=None
         amount = self.pool.get('res.currency').compute(cr, uid,
-                                                comp_currency_id,
-                                                output_currency_id,
-                                                amount,
-                                                context=context)
+                                                       comp_currency_id,
+                                                       output_currency_id,
+                                                       amount,
+                                                       context=context)
         if not amount:
             amount = 0.
         return amount
@@ -291,9 +291,9 @@ class account_partner_balance_tree(osv.osv):
 
     def get_partner_account_move_lines_data(self, cr, uid, account_type, partner_id, data, context=None):
         ids = self._execute_query_selected_partner_move_line_ids(cr, uid,
-                                                        account_type,
-                                                        partner_id,
-                                                        data)
+                                                                 account_type,
+                                                                 partner_id,
+                                                                 data)
         if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
@@ -313,11 +313,11 @@ class account_partner_balance_tree(osv.osv):
         return total_debit, total_credit (tuple)
         """
         query = "SELECT" \
-        " sum(debit) AS debit, sum(credit) AS credit, sum(balance) as balance" \
-        " FROM account_partner_balance_tree" \
-        " WHERE account_type IN ('" + account_type + "')" \
-        " AND uid = " + str(uid) + "" \
-        " AND build_ts='" + data['build_ts'] + "'"
+            " sum(debit) AS debit, sum(credit) AS credit, sum(balance) as balance" \
+            " FROM account_partner_balance_tree" \
+            " WHERE account_type IN ('" + account_type + "')" \
+            " AND uid = " + str(uid) + "" \
+            " AND build_ts='" + data['build_ts'] + "'"
         cr.execute(query)
         res = cr.dictfetchall()
         return res[0]['debit'], res[0]['credit'], res[0]['balance']
@@ -331,9 +331,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
     _inherit = 'account.common.partner.report'
     _name = 'wizard.account.partner.balance.tree'
     _description = 'Print Account Partner Balance View'
+
     _columns = {
         'display_partner': fields.selection([('non-zero_balance',
-                                             'With balance is not equal to 0'),
+                                              'With balance is not equal to 0'),
                                              ('all', 'All Partners')]
                                             ,'Display Partners'),
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
@@ -367,6 +368,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             context = {}
 
         data = {}
+        data['keep_open'] = 1
         data['ids'] = context.get('active_ids', [])
         data['model'] = context.get('active_model', 'ir.ui.menu')
         data['build_ts'] = datetime.datetime.now().strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
@@ -391,17 +393,19 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             account_type = 'Receivable and Payable'
         return data, account_type
 
-    def show(self, cr, uid, ids, context=None):
+    def show(self, cr, buid, ids, context=None):
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
         self.pool.get('account.partner.balance.tree').build_data(cr,
-                                                        uid, data,
-                                                        context=context)
+                                                                 uid, data,
+                                                                 context=context)
         return {
             'type': 'ir.actions.act_window',
             'name': 'Partner Balance ' + account_type,
             'res_model': 'account.partner.balance.tree',
             'view_type': 'form',
             'view_mode': 'tree,form',
+            'keep_open': 1,
             'ref': 'view_account_partner_balance_tree',
             'domain': [
                 ('uid', '=', uid),
@@ -410,9 +414,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             'context': context,
         }
 
-    def print_pdf(self, cr, uid, ids, context=None):
+    def print_pdf(self, cr, buid, ids, context=None):
         if context is None:
             context = {}
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
         return {
             'type': 'ir.actions.report.xml',
@@ -420,13 +425,14 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             'datas': data,
         }
 
-    def print_xls(self, cr, uid, ids, context=None):
+    def print_xls(self, cr, buid, ids, context=None):
         if context is None:
             context = {}
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
         self.pool.get('account.partner.balance.tree').build_data(cr,
-                                                        uid, data,
-                                                        context=context)
+                                                                 uid, data,
+                                                                 context=context)
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.partner.balance.tree_xls',
@@ -438,6 +444,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             self.write(cr, uid, ids, { 'journal_ids': [(6, 0, [])] },
                        context=context)
         return {}
+
 
 wizard_account_partner_balance_tree()
 

@@ -24,6 +24,7 @@ This module is dedicated to help checking lines of Excel file at importation.
 """
 from msf_doc_import import MAX_LINES_NB
 from tools.translate import _
+from mx import DateTime
 import logging
 import pooler
 
@@ -257,6 +258,7 @@ def product_value(cr, uid, **kwargs):
     # Tender does not have price_unit, it is False
     price_unit = kwargs['to_write'].get('price_unit', False)
     cost_price = kwargs['to_write'].get('cost_price', False)
+    product_code = kwargs['to_write'].get('product_code', False)
     error_list = kwargs['to_write']['error_list']
     default_code = kwargs['to_write']['default_code']
     # The tender line may have a default product if it is not found
@@ -286,7 +288,9 @@ def product_value(cr, uid, **kwargs):
     except IndexError:
         comment += _(' Product Code to be defined')
         error_list.append(_('The Product\'s Code has to be defined'))
-    return {'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit': price_unit, 'cost_price': cost_price}
+    return {
+        'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit': price_unit,
+        'cost_price': cost_price, 'product_code':product_code}
 
 
 def quantity_value(**kwargs):
@@ -457,14 +461,39 @@ def compute_date_value(**kwargs):
     warning_list = kwargs['to_write']['warning_list']
     cell_nb = kwargs.get('cell_nb', 5)
     try:
-        if row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
-            date_planned = row.cells[cell_nb].data
+        if not row.cells[cell_nb].data:
+            warning_list.append(_('Delivery requested date not found. The date from the header has been taken.'))
+        elif row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
+            date_planned = row.cells[cell_nb].data.strftime('%Y-%m-%d')
         else:
-            warning_list.append(_('The date format was not correct. The date from the header has been taken.'))
+            warning_list.append(_('The delivery requested date format was not correct. The date from the header has been taken.'))
     # if nothing is found at the line index (empty cell)
     except IndexError:
-        warning_list.append(_('The date format was not correct. The date from the header has been taken.'))
+        warning_list.append(_('The delivery requested date format was not correct. The date from the header has been taken.'))
     return {'date_planned': date_planned, 'error_list': error_list, 'warning_list': warning_list}
+
+
+def compute_confirmed_delivery_date_value(**kwargs):
+    """
+    Retrieves Date from Excel file or take the one from the parent
+    """
+    row = kwargs['row']
+    confirmed_delivery_date = kwargs['to_write']['confirmed_delivery_date']
+    error_list = kwargs['to_write']['error_list']
+    # with warning_list: the line does not appear in red, it is just informative
+    warning_list = kwargs['to_write']['warning_list']
+    cell_nb = kwargs.get('cell_nb', 7)
+    try:
+        if not row.cells[cell_nb].data:
+            warning_list.append(_('Confirmed delivery date not found. The date from the header has been taken (if any)'))
+        elif row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
+            confirmed_delivery_date = row.cells[cell_nb].data.strftime('%Y-%m-%d')
+        else:
+            warning_list.append(_('The confirmed delivery date format was not correct. The date from the header has been taken (if any)'))
+    # if nothing is found at the line index (empty cell)
+    except IndexError:
+        warning_list.append(_('The confirmed delivery date format was not correct. The date from the header has been taken (if any)'))
+    return {'confirmed_delivery_date': confirmed_delivery_date, 'error_list': error_list, 'warning_list': warning_list}
 
 
 def compute_batch_expiry_value(cr, uid, **kwargs):
@@ -477,7 +506,6 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
     bn_obj = kwargs['bn_obj']
     product_obj = kwargs['product_obj']
     product_id = kwargs['product_id']
-    date_format = kwargs['date_format']
     error_list = kwargs['to_write']['error_list']
     warning_list = kwargs['to_write']['warning_list']
     picking_type = kwargs.get('picking_type', 'internal')
@@ -490,8 +518,26 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
     if row.cells[bn_cell_nb] and row.cells[bn_cell_nb].type in ('int', 'str') and row.cells[bn_cell_nb].data:
         batch_name = row.cells[bn_cell_nb].data
 
-    if row.cells[ed_cell_nb] and row.cells[ed_cell_nb].type == 'datetime' and row.cells[ed_cell_nb].data:
-        expiry_date = row.cells[ed_cell_nb].data
+    if row.cells[ed_cell_nb] and row.cells[ed_cell_nb].data:
+        if row.cells[ed_cell_nb].type == 'str':
+            # if the cell is type str, cast it to DateTime
+            try:
+                expiry_date = DateTime.strptime(row.cells[ed_cell_nb].data, '%d/%m/%Y')
+            except:
+                error_list.append(_('Incorrectly formatted expiry date: %s. '
+                                    'The expected date should be > 01/01/1900 in this format '
+                                    'DD/MM/YYYY.') % row.cells[ed_cell_nb].data)
+                expiry_date = False
+        elif row.cells[ed_cell_nb].type == 'datetime':
+            expiry_date = row.cells[ed_cell_nb].data
+        if expiry_date:
+            try:
+                expiry_date = expiry_date.strftime('%Y-%m-%d')
+            except:
+                error_list.append(_('Incorrectly formatted expiry date: %s. '
+                                    'The expected date should be > 01/01/1900 in this format '
+                                    'DD/MM/YYYY.') % expiry_date)
+                expiry_date = False
 
     prd_brw = product_id and product_obj and product_obj.browse(cr, uid, product_id) or False
 
@@ -499,7 +545,7 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
     ed_mgmt = prd_brw and prd_brw.perishable
 
     if not bn_ids and product_id and batch_name and expiry_date:
-        bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch_name), ('life_date', '=', expiry_date.strftime('%Y-%m-%d'))])
+        bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch_name), ('life_date', '=', expiry_date)])
         if not bn_ids:
             if bn_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch_name)]):
                 if bn_mgmt:
@@ -510,7 +556,7 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
                 bn_ids = [bn_obj.create(cr, uid, {
                     'product_id': product_id,
                     'name': batch_name,
-                    'life_date': expiry_date.strftime('%Y-%m-%d'),
+                    'life_date': expiry_date,
                 })]
             else:
                 error_list.append(_('Batch not found'))
@@ -518,7 +564,7 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
         if bn_mgmt:
             error_list.append(_('The Batch number is not set.'))
         elif ed_mgmt:
-            bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry_date.strftime('%Y-%m-%d'))])
+            bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry_date)])
     elif not bn_ids and product_id and batch_name:
         if bn_mgmt:
             error_list.append(_('Expiry date is not set, so batch not selected.'))
@@ -610,6 +656,30 @@ def comment_value(**kwargs):
     except IndexError:
         warning_list.append(_("No comment was defined"))
     return {'comment': comment, 'warning_list': warning_list}
+
+
+def line_number_value(**kwargs):
+    '''
+    Retrives line number from Excel file
+    '''
+    row = kwargs["row"]
+    cell_nb  = kwargs['cell_nb']
+    line_number = kwargs['to_write']['line_number']
+    error_list = kwargs['to_write']['error_list']
+    try:
+        if not row.cells[cell_nb]:
+            error_list.append(_("No line number present so generated by system"))
+        elif not row.cells[cell_nb].data:
+            error_list.append(_("No line number present so generated by system"))
+        elif row.cells[cell_nb].type != 'int':
+            error_list.append(_("The line number must be an integer, system has generated a new one"))
+        else:
+            line_number = row.cells[cell_nb].data
+    except IndexError:
+        error_list.append(_("No line number present so generated by system"))
+    return {'line_number': line_number, 'error_list': error_list}
+
+
 
 def check_lines_currency(rows, ccy_col_index, ccy_expected_code):
     """

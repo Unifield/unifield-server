@@ -33,18 +33,24 @@ class ocb_export_wizard(osv.osv_memory):
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True),
-        'selection': fields.selection([('unexported', 'Not yet exported'), ('all', 'All lines')], string="Select", required=True),
+        'selection': fields.selection([('all', 'All lines'), ('unexported', 'Not yet exported')], string="Select", required=True),
     }
 
     _defaults = {
         'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, strftime('%Y-%m-%d'), context=c),
-        'selection': lambda *a: 'unexported',
+        'selection': lambda *a: 'all',
     }
 
     def button_export(self, cr, uid, ids, context=None):
         """
         Launch a report to generate the ZIP file.
         """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         # Prepare some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
@@ -67,19 +73,8 @@ class ocb_export_wizard(osv.osv_memory):
             if wizard.period_id.number == 16:
                 msg = _("You can not select '%s' as already included in' \
                     '  December export")  % (
-                        wizard.period_id.name or 'Period 16', )
+                    wizard.period_id.name or 'Period 16', )
                 raise osv.except_osv(_('Warning'), msg)
-            """elif wizard.period_id.number == 12:
-                domain = [
-                    ('instance_id', '=', wizard.instance_id.id),
-                    ('fy_id', '=', wizard.period_id.fiscalyear_id.id),
-                    ('state', '=', 'mission-closed'),
-                ]
-                if not self.pool.get('account.fiscalyear.state').search(cr, uid,
-                    domain, count=True, context=context):
-                    msg = _("Target instance '%s' should be at least' \
-                        yearly closed")  % (wizard.instance_id.code, )
-                    raise osv.except_osv(_('Error'), msg)"""
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         data['form'].update({'selection': wizard.selection})
@@ -89,7 +84,20 @@ class ocb_export_wizard(osv.osv_memory):
             wizard.instance_id and wizard.instance_id.code or '',
             period_name)
 
-        return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocb', 'datas': data}
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'file_name': data['target_filename'],
+            'report_name': 'hq.ocb',
+        }, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+
+        data['context'] = context
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'hq.ocb',
+            'datas': data,
+            'context': context,
+        }
 
 ocb_export_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

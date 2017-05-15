@@ -46,7 +46,7 @@ class stock_incoming_processor(osv.osv):
             ('to_cross_docking', 'To Cross Docking'),
             ('to_stock', 'To Stock'),
             ('default', 'Other Types'),
-            ],
+        ],
             string='Destination Type',
             readonly=False,
             required=True,
@@ -56,7 +56,7 @@ class stock_incoming_processor(osv.osv):
             ('from_cross_docking', 'From Cross Docking'),
             ('from_stock', 'From stock'),
             ('default', 'Default'),
-            ],
+        ],
             string='Source Type',
             readonly=False,
         ),
@@ -152,12 +152,8 @@ class stock_incoming_processor(osv.osv):
                 raise osv.except_osv(
                     _('Error'),
                     _('You cannot process two times the same IN. Please '\
-'return to IN form view and re-try.'),
+                      'return to IN form view and re-try.'),
                 )
-
-            self.write(cr, uid, [proc.id], {
-                'already_processed': True,
-            }, context=context)
 
             for line in proc.move_ids:
                 # If one line as an error, return to wizard
@@ -171,6 +167,10 @@ class stock_incoming_processor(osv.osv):
                         'target': 'new',
                         'context': context,
                     }
+
+            self.write(cr, uid, [proc.id], {
+                'already_processed': True,
+            }, context=context)
 
             for line in proc.move_ids:
                 # if no quantity, don't process the move
@@ -281,8 +281,8 @@ class stock_incoming_processor(osv.osv):
 
             result['warning'] = {'title': _('Error'),
                                  'message': _('The Allocated stocks setup is set to Unallocated.' \
-'In this configuration, you cannot made moves from/to Cross-docking locations.')
-            }
+                                              'In this configuration, you cannot made moves from/to Cross-docking locations.')
+                                 }
 
         return result
 
@@ -315,10 +315,19 @@ class stock_incoming_processor(osv.osv):
             ids = [ids]
         if not ids:
             raise osv.except_osv(
-             _('Processing Error'),
-             _('No data to process !'),
+                _('Processing Error'),
+                _('No data to process !'),
             )
-        incoming_obj.write(cr, uid, ids, {'draft': True}, context=context)
+
+        # make sure that the current incoming proc is not already processed :
+        for r in incoming_obj.read(cr, uid, ids, ['already_processed']):
+            if not r['already_processed']:
+                incoming_obj.write(cr, uid, ids, {'draft': True}, context=context)
+            else:
+                raise osv.except_osv(
+                    _('Error'), _('The incoming shipment has already been processed, you cannot save it as draft.')
+                )
+
         return {}
 
     def force_process(self, cr, uid, ids, context=None):
@@ -374,7 +383,9 @@ class stock_incoming_processor(osv.osv):
                                               'move_uom_id': move.product_uom and move.product_uom.id or False,
                                               'move_price_unit': move.price_unit or move.product_id.standard_price,
                                               'move_currency_id': move.price_currency_id and move.price_currency_id.id or False,
-                                              'line_number': move.line_number, }, context=context)
+                                              'line_number': move.line_number,
+                                              'external_ref': move.purchase_line_id and move.purchase_line_id.external_ref or False,
+                                              }, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.in.simulation.screen',
@@ -418,7 +429,7 @@ class stock_move_in_processor(osv.osv):
             ids = [ids]
 
         main_stock_id = self.pool.get('ir.model.data').get_object_reference(cr,
-            uid, 'stock', 'stock_location_stock')[1]
+                                                                            uid, 'stock', 'stock_location_stock')[1]
         cd_id = False
 
         # get related move ids and map them to ids
@@ -432,8 +443,8 @@ class stock_move_in_processor(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
         # store the result as most of the time lines have same order_id
         move_purchase_line = self.pool.get('stock.move').read(cr,
-                uid, moves_to_ids.keys(), ['id', 'purchase_line_id'],
-                context=context)
+                                                              uid, moves_to_ids.keys(), ['id', 'purchase_line_id'],
+                                                              context=context)
 
         move_id_to_purchase_line_id = {}
         for ret in move_purchase_line:
@@ -441,22 +452,22 @@ class stock_move_in_processor(osv.osv):
                 move_id_to_purchase_line_id[ret['id']] = ret['purchase_line_id'][0]
 
         purchase_line_order_id = self.pool.get('purchase.order.line').read(cr,
-                uid, set(move_id_to_purchase_line_id.values()), ['id', 'order_id'], context=context)
+                                                                           uid, set(move_id_to_purchase_line_id.values()), ['id', 'order_id'], context=context)
 
         purchase_line_id_by_order_id = dict([(ret['id'], ret['order_id'][0])
-            for ret in purchase_line_order_id])
+                                             for ret in purchase_line_order_id])
         order_id_set = set(purchase_line_id_by_order_id.values())
 
         order_id_location_dict = {}
         for order_id in order_id_set:
             sol_ids = po_obj.get_sol_ids_from_po_ids(cr, uid,
-                    [order_id], context=context)
+                                                     [order_id], context=context)
             if sol_ids:
                 location_ids = [main_stock_id] if main_stock_id else []
                 # move associated with a SO, check not with an IR (so is FO)
                 is_from_fo = True
                 for sol in sol_obj.browse(cr, uid, sol_ids,
-                    context=context):
+                                          context=context):
                     if sol.order_id and sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
                         # from an IR then not from FO
                         is_from_fo = False
@@ -488,6 +499,15 @@ class stock_move_in_processor(osv.osv):
                 res[id] = False
         return res
 
+    def _set_comment(self, cr, uid, ml_id, name=None, value=None, fnct_inv_arg=None, context=None):
+        """
+        Just used to not break default OpenERP behaviour
+        """
+        if name and value:
+            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
+            cr.execute(sql, (value, ml_id))
+        return True
+
     _columns = {
         # Parent wizard
         'wizard_id': fields.many2one(
@@ -510,6 +530,19 @@ class stock_move_in_processor(osv.osv):
             },
             readonly=True,
             help="Expected product to receive",
+            multi='move_info',
+        ),
+        'comment': fields.function(
+            _get_move_info,
+            fnct_inv=_set_comment,
+            method=True,
+            string='Comment',
+            type='text',
+            store={
+                'stock.move.in.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Comment of the move",
             multi='move_info',
         ),
         'ordered_uom_id': fields.function(

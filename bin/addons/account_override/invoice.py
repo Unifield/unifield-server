@@ -121,9 +121,19 @@ class account_invoice(osv.osv):
             ('state', '=', 'open'),
             ('type', '=', 'out_invoice'),
             ('journal_id.type', 'not in', ['migration']),
-            ('partner_id.partner_type', '=', 'section'),
         ]
         return dom1+[('is_debit_note', '=', False)]
+
+    def _get_int_journal_for_current_instance(self, cr, uid, context=None):
+        """
+        Returns the id of the Intermission journal of the current instance if it exists, else returns False.
+        """
+        if context is None:
+            context = {}
+        journal_obj = self.pool.get('account.journal')
+        int_journal_domain = [('type', '=', 'intermission'), ('is_current_instance', '=', True)]
+        int_journal_id = journal_obj.search(cr, uid, int_journal_domain, order='NO_ORDER', limit=1, context=context)
+        return int_journal_id and int_journal_id[0] or False
 
     def _get_fake_m2o_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
@@ -139,11 +149,9 @@ class account_invoice(osv.osv):
                     if user[0].company_id.intermission_default_counterpart:
                         res[i.id] = user[0].company_id.intermission_default_counterpart.id
                 elif name == 'journal_id':
-                    int_journal_id = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')], context=context)
+                    int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
                     if int_journal_id:
-                        if isinstance(int_journal_id, (int, long)):
-                            int_journal_id = [int_journal_id]
-                        res[i.id] = int_journal_id[0]
+                        res[i.id] = int_journal_id
                 elif name == 'currency_id':
                     user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
                     if user[0].company_id.currency_id:
@@ -175,7 +183,7 @@ class account_invoice(osv.osv):
         res = {}
         for inv in self.browse(cr, uid, ids, context=context):
             res[inv.id] = {'virtual_currency_id': inv.currency_id.id or False, 'virtual_account_id': inv.account_id.id or False,
-            'virtual_partner_id': inv.partner_id.id or False}
+                           'virtual_partner_id': inv.partner_id.id or False}
         return res
 
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
@@ -190,7 +198,7 @@ class account_invoice(osv.osv):
         return res
 
     def _get_can_merge_lines(self, cr, uid, ids, field_name, args,
-        context=None):
+                             context=None):
         res = {}
         if not ids:
             return res
@@ -213,33 +221,32 @@ class account_invoice(osv.osv):
     _columns = {
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
-            help="This field contains the information related to the numbering of the lines of this order."),
+                                       help="This field contains the information related to the numbering of the lines of this order."),
         'date_invoice': fields.date('Posting Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
-            'close':[('readonly',True)]}, select=True),
+                                                            'close':[('readonly',True)]}, select=True),
         'document_date': fields.date('Document Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
-            'close':[('readonly',True)]}, select=True),
+                                                              'close':[('readonly',True)]}, select=True),
         'is_debit_note': fields.boolean(string="Is a Debit Note?"),
         'is_inkind_donation': fields.boolean(string="Is an In-kind Donation?"),
         'is_intermission': fields.boolean(string="Is an Intermission Voucher?"),
         'ready_for_import_in_debit_note': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_debit_note, type="boolean",
-            method=True, string="Can be imported as invoice in a debit note?",),
+                                                          method=True, string="Can be imported as invoice in a debit note?",),
         'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
         'partner_move_line': fields.one2many('account.move.line', 'invoice_partner_link', string="Partner move line", readonly=True),
-        'fake_account_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.account", string="Account", readonly="True"),
-        'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", readonly="True"),
+        'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", hide_default_menu=True, readonly="True"),
         'fake_currency_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="res.currency", string="Currency", readonly="True"),
         'have_donation_certificate': fields.function(_get_have_donation_certificate, method=True, type='boolean', string="Have a Certificate of donation?"),
         'purchase_list': fields.boolean(string='Purchase List ?', help='Check this box if the invoice comes from a purchase list', readonly=True, states={'draft':[('readonly',False)]}),
         'virtual_currency_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Currency",
-            type='many2one', relation="res.currency", readonly=True),
+                                               type='many2one', relation="res.currency", readonly=True),
         'virtual_account_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Account",
-            type='many2one', relation="account.account", readonly=True),
+                                              type='many2one', relation="account.account", readonly=True),
         'virtual_partner_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Supplier",
-            type='many2one', relation="res.partner", readonly=True),
+                                              type='many2one', relation="res.partner", readonly=True),
         'register_line_ids': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register Lines"),
         'is_direct_invoice': fields.boolean("Is direct invoice?", readonly=True),
         'address_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=False,
-            states={'draft':[('readonly',False)]}),
+                                              states={'draft':[('readonly',False)]}),
         'register_posting_date': fields.date(string="Register posting date for Direct Invoice", required=False),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'st_lines': fields.one2many('account.bank.statement.line', 'invoice_id', string="Register lines", readonly=True, help="Register lines that have a link to this invoice."),
@@ -284,10 +291,10 @@ class account_invoice(osv.osv):
             res['domain']['journal_id'] = [('id', 'in', journal_ids)]
         return res
 
-    def onchange_partner_id(self, cr, uid, ids, ctype, partner_id,\
-        date_invoice=False, payment_term=False, partner_bank_id=False, company_id=False, is_inkind_donation=False, is_intermission=False, is_debit_note=False, is_direct_invoice=False):
+    def onchange_partner_id(self, cr, uid, ids, ctype, partner_id, date_invoice=False, payment_term=False, partner_bank_id=False,
+                            company_id=False, is_inkind_donation=False, is_intermission=False, is_debit_note=False, is_direct_invoice=False,
+                            account_id=False):
         """
-        Update fake_account_id field regarding account_id result.
         Get default donation account for Donation invoices.
         Get default intermission account for Intermission Voucher IN/OUT invoices.
         Get default currency from partner if this one is linked to a pricelist.
@@ -299,13 +306,16 @@ class account_invoice(osv.osv):
             account_id = partner and partner.donation_payable_account and partner.donation_payable_account.id or False
             res['value']['account_id'] = account_id
         if is_intermission and partner_id:
-            intermission_default_account = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
-            account_id = intermission_default_account and intermission_default_account.id or False
-            if not account_id:
-                raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
-            res['value']['account_id'] = account_id
-        if res.get('value', False) and 'account_id' in res['value']:
-            res['value'].update({'fake_account_id': res['value'].get('account_id')})
+            if account_id:
+                # if the account_id field is filled in: keep its value
+                res['value']['account_id'] = account_id
+            else:
+                # else: use its default value
+                intermission_default_account = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
+                account_id = intermission_default_account and intermission_default_account.id or False
+                if not account_id:
+                    raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
+                res['value']['account_id'] = account_id
         if partner_id and ctype:
             p = self.pool.get('res.partner').browse(cr, uid, partner_id)
             ai_direct_invoice = False
@@ -326,7 +336,7 @@ class account_invoice(osv.osv):
                         res['value'].update({'currency_id': c_id})
         # UFTP-168: If debit note, set account to False value
         if is_debit_note:
-            res['value'].update({'account_id': False, 'fake_account_id': False})
+            res['value'].update({'account_id': False})
         return res
 
     def _check_document_date(self, cr, uid, ids):
@@ -337,7 +347,7 @@ class account_invoice(osv.osv):
             ids = [ids]
         for i in self.browse(cr, uid, ids):
             self.pool.get('finance.tools').check_document_date(cr, uid,
-                i.document_date, i.date_invoice)
+                                                               i.document_date, i.date_invoice)
         return True
 
     def _check_invoice_merged_lines(self, cr, uid, ids, context=None):
@@ -377,17 +387,16 @@ class account_invoice(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        purchase_obj = self.pool.get('purchase.order')
-        commitment_obj = self.pool.get('account.commitment')
-        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note', 'state']):
+        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note', 'is_intermission', 'state']):
             if inv.get('type', '') == 'in_invoice' and not inv.get('is_inkind_donation', False) and not inv.get('is_debit_note', False):
                 if inv.get('purchase_ids', False):
-                    # UTP-808: Allow draft invoice deletion. If commitment exists, set them as done.
-                    if inv.get('state', '') != 'draft':
-                        raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
+                    if inv.get('is_intermission'):
+                        if inv.get('state', '') != 'draft':  # only draft IVIs can be deleted
+                            raise osv.except_osv(_('Warning'),
+                                                 _('Intermission Vouchers linked to a PO can be deleted only in Draft state.'))
                     else:
-                        for purchase in purchase_obj.browse(cr, uid, inv.get('purchase_ids', []), context=context):
-                            commitment_obj.action_commitment_done(cr, uid, [x.id for x in purchase.commitment_ids])
+                        # US-1702 Do not allow at all the deletion of SI coming from PO
+                        raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
         return True
 
     def _hook_period_id(self, cr, uid, inv, context=None):
@@ -402,8 +411,8 @@ class account_invoice(osv.osv):
             return False
         # NB: there is some period state. So we define that we choose only open period (so not draft and not done)
         res = self.pool.get('account.period').search(cr, uid, [('date_start','<=',inv.date_invoice or strftime('%Y-%m-%d')),
-            ('date_stop','>=',inv.date_invoice or strftime('%Y-%m-%d')), ('state', 'not in', ['created', 'done']),
-            ('company_id', '=', inv.company_id.id), ('special', '=', False)], context=context, order="date_start ASC, name ASC")
+                                                               ('date_stop','>=',inv.date_invoice or strftime('%Y-%m-%d')), ('state', 'not in', ['created', 'done']),
+                                                               ('company_id', '=', inv.company_id.id), ('special', '=', False)], context=context, order="date_start ASC, name ASC")
         return res
 
     def __hook_lines_before_pay_and_reconcile(self, cr, uid, lines):
@@ -437,11 +446,20 @@ class account_invoice(osv.osv):
             for node in nodes:
                 node.getparent().remove(node)
             res['arch'] = etree.tostring(doc)
+        elif view_type == 'form' and context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' \
+                and not context.get('is_debit_note', False) and not context.get('is_intermission', False):
+            # Restriction on allowed partners for STV: Inter-section or External type, customers only
+            doc = etree.XML(res['arch'])
+            partner_nodes = doc.xpath("//field[@name='partner_id']")
+            partner_domain_stv = "[('partner_type', 'in', ('section', 'external')), ('customer', '=', True)]"
+            for node in partner_nodes:
+                node.set('domain', partner_domain_stv)
+            res['arch'] = etree.tostring(doc)
         return res
 
     def default_get(self, cr, uid, fields, context=None):
         """
-        Fill in fake account and fake currency for intermission invoice (in context).
+        Fill in fake currency for intermission invoice (in context).
         """
         defaults = super(account_invoice, self).default_get(cr, uid, fields, context=context)
         if context and context.get('is_intermission', False):
@@ -458,16 +476,13 @@ class account_invoice(osv.osv):
                         defaults['currency_id'] = defaults['fake_currency_id']
                     # get 'intermission counter part' account
                     if user[0].company_id.intermission_default_counterpart:
-                        defaults['fake_account_id'] = user[0].company_id.intermission_default_counterpart.id
-                        defaults['account_id'] = defaults['fake_account_id']
+                        defaults['account_id'] = user[0].company_id.intermission_default_counterpart.id
                     else:
                         raise osv.except_osv("Error","Company Intermission Counterpart Account must be set")
                 # 'INT' intermission journal
-                int_journal_id = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')], context=context)
+                int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
                 if int_journal_id:
-                    if isinstance(int_journal_id, (int, long)):
-                        int_journal_id = [int_journal_id]
-                    defaults['fake_journal_id'] = int_journal_id[0]
+                    defaults['fake_journal_id'] = int_journal_id
                     defaults['journal_id'] = defaults['fake_journal_id']
         return defaults
 
@@ -489,6 +504,13 @@ class account_invoice(osv.osv):
             'partner_move_line': False,
             'imported_invoices': False
         })
+        # Manual duplication should generate a "manual document not created through the supply workflow"
+        # so we don't keep the link to: FOs, Picking List
+        if context.get('from_button', False):
+            default.update({
+                'order_ids': False,
+                'picking_id': False,
+            })
         # Reset register_line_ids if not given in default
         if 'register_line_ids' not in default:
             default['register_line_ids'] = []
@@ -521,7 +543,7 @@ class account_invoice(osv.osv):
             context = {}
         if 'document_date' in vals and 'date_invoice' in vals:
             self.pool.get('finance.tools').check_document_date(cr, uid,
-                vals['document_date'], vals['date_invoice'], context=context)
+                                                               vals['document_date'], vals['date_invoice'], context=context)
 
         # Create a sequence for this new invoice
         res_seq = self.create_sequence(cr, uid, vals, context)
@@ -559,7 +581,7 @@ class account_invoice(osv.osv):
                         args = [('price_include', '=', '1'),
                                 ('id', '=', tax_line[2]['account_tax_id'])]
                         tax_ids = tax_obj.search(cr, uid, args, limit=1,
-                                order='NO_ORDER', context=context)
+                                                 order='NO_ORDER', context=context)
                         if tax_ids:
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
@@ -628,7 +650,7 @@ class account_invoice(osv.osv):
             supplier_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_supplier_form')
             customer_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
             supplier_direct_invoice_res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'register_accounting', 'direct_supplier_invoice_form')
-        except ValueError, e:
+        except ValueError:
             return super(account_invoice, self).log(cr, uid, inv_id, message, secondary, context)
         debit_view_id = debit_res and debit_res[1] or False
         debit_note_ctx = {'view_id': debit_view_id, 'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}
@@ -661,7 +683,7 @@ class account_invoice(osv.osv):
             if not local_ctx.get('journal_type', False):
                 supplier_view_id = supplier_invoice_res and supplier_invoice_res[1] or False
                 local_ctx.update({'journal_type': 'purchase',
-                                'view_id': supplier_view_id})
+                                  'view_id': supplier_view_id})
             elif local_ctx.get('direct_invoice_view', False): # UFTP-166: The wrong context saved in log
                 supplier_view_id = supplier_direct_invoice_res and supplier_direct_invoice_res[1] or False
                 local_ctx = {'journal_type': 'purchase',
@@ -683,6 +705,22 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids):
             values = {}
             curr_date = strftime('%Y-%m-%d')
+            if inv.is_debit_note:
+                for inv_line in inv.invoice_line:
+                    if inv_line.partner_id != inv.partner_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('All the imported lines must have the same partner as the Debit Note.'))
+            # the journal used for Intermission Vouchers must be the INT journal of the current instance
+            is_iv = context and context.get('type') in ['in_invoice', 'out_invoice'] and not context.get('is_debit_note') \
+                and not context.get('is_inkind_donation') and context.get('is_intermission')
+            if is_iv:
+                int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
+                # update the IV if the INT journal exists but isn't used in the IV (= journal created after the IV creation)
+                if int_journal_id:
+                    if not inv.journal_id or inv.journal_id.id != int_journal_id:
+                        self.write(cr, uid, inv.id, {'journal_id': int_journal_id}, context=context)
+                else:
+                    raise osv.except_osv(_('Warning'), _('No Intermission journal found for the current instance.'))
             if not inv.date_invoice and not inv.document_date:
                 values.update({'date': curr_date, 'document_date': curr_date, 'state': 'date'})
             elif not inv.date_invoice:
@@ -703,7 +741,7 @@ class account_invoice(osv.osv):
                     'view_mode': 'form',
                     'view_type': 'form',
                     'res_id': wiz_id,
-                    }
+                }
 
             wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
 
@@ -873,7 +911,7 @@ class account_invoice(osv.osv):
             if inv.type != 'out_invoice' or inv.is_debit_note == False:
                 raise osv.except_osv(_('Error'), _('You can only do import invoice on a Debit Note!'))
             w_id = self.pool.get('debit.note.import.invoice').create(cr, uid, {'invoice_id': inv.id, 'currency_id': inv.currency_id.id,
-                'partner_id': inv.partner_id.id}, context=context)
+                                                                               'partner_id': inv.partner_id.id}, context=context)
             context.update({
                 'active_id': inv.id,
                 'active_ids': ids,
@@ -912,7 +950,7 @@ class account_invoice(osv.osv):
             raise osv.except_osv(_('Error'), _('No invoice line in this invoice or not enough elements'))
         for invl in inv_lines_obj.browse(cr, uid, invoice_line_ids, context=context):
             wiz_lines_obj.create(cr, uid, {'invoice_line_id': invl.id, 'product_id': invl.product_id.id, 'quantity': invl.quantity,
-                'price_unit': invl.price_unit, 'description': invl.name, 'wizard_id': wizard_id}, context=context)
+                                           'price_unit': invl.price_unit, 'description': invl.name, 'wizard_id': wizard_id}, context=context)
         # Return wizard
         if wizard_id:
             return {
@@ -965,7 +1003,7 @@ class account_invoice(osv.osv):
         def check(inv_br):
             if not inv_br.can_merge_lines:
                 raise osv.except_osv(_('Error'),
-                    _("Invoice not eligible for lines merging"))
+                                     _("Invoice not eligible for lines merging"))
 
             account_iterations = {}
             for l in inv_br.invoice_line:
@@ -981,7 +1019,7 @@ class account_invoice(osv.osv):
 
             if not any_to_merge:
                 raise osv.except_osv(_('Error'),
-                    _("Invoice has no line to merge by account"))
+                                     _("Invoice has no line to merge by account"))
 
         def is_tax_included(inv_br):
             '''
@@ -1019,7 +1057,7 @@ class account_invoice(osv.osv):
                     # no tax(es) for this line, abort tax(es) in merge
                     vals['invoice_line_tax_id'] = False
                 if not vals['invoice_line_tax_id']:
-                   break
+                    break
             return vals
 
         def compute_merge(inv_br):
@@ -1112,7 +1150,7 @@ class account_invoice(osv.osv):
                     continue  # line not to del (1 by account)
                 # delete AD
                 if l.analytic_distribution_id \
-                    and not l.analytic_distribution_id.id in ad_to_del_ids:
+                        and not l.analytic_distribution_id.id in ad_to_del_ids:
                     ad_to_del_ids.append(l.analytic_distribution_id.id)
                 line_to_del_ids.append(l.id)
 
@@ -1144,7 +1182,7 @@ class account_invoice(osv.osv):
 
                 # create merge line
                 if not self.pool.get('account.invoice.line').create(cr, uid,
-                    vals, context=context):
+                                                                    vals, context=context):
                     break
 
             # recompute seq number for not merged lines
@@ -1195,8 +1233,8 @@ class account_invoice(osv.osv):
         return res
 
     def check_accounts_for_partner(self, cr, uid, ids, context=None,
-        header_obj=False, lines_field='invoice_line',
-        line_level_partner_type=False):
+                                   header_obj=False, lines_field='invoice_line',
+                                   line_level_partner_type=False):
         """
         :param header_obj: target model for header or self
         :param lines_field: lines o2m field
@@ -1214,10 +1252,10 @@ class account_invoice(osv.osv):
                 and r.partner_id.id or False
 
             # header check
-            if partner_id and hasattr(r, 'account_id') and r.account_id:
+            if hasattr(r, 'account_id') and r.account_id:
                 if not account_obj.is_allowed_for_thirdparty(cr, uid,
-                    [r.account_id.id], partner_id=partner_id,
-                        context=context)[r.account_id.id]:
+                                                             [r.account_id.id], partner_id=partner_id,
+                                                             context=context)[r.account_id.id]:
                     header_errors.append(
                         _('invoice header account and partner not compatible.'))
 
@@ -1233,12 +1271,11 @@ class account_invoice(osv.osv):
                         if line_level_partner_type:
                             # partner at line level
                             partner_type = l.partner_type
-                        if (partner_id or partner_type) \
-                            and not account_obj.is_allowed_for_thirdparty(cr,
-                                uid, [l.account_id.id],
-                                partner_type=partner_type,
-                                partner_id=partner_id,
-                                context=context)[l.account_id.id]:
+                        if not account_obj.is_allowed_for_thirdparty(cr,
+                                                                     uid, [l.account_id.id],
+                                                                     partner_type=partner_type or False,
+                                                                     partner_id=partner_id or False,
+                                                                     context=context)[l.account_id.id]:
                             num = hasattr(l, 'line_number') and l.line_number \
                                 or line_index
                             if not lines_errors:
@@ -1246,12 +1283,12 @@ class account_invoice(osv.osv):
                                     _('following # lines with account/partner' \
                                         ' are not compatible:'))
                             lines_errors.append(_('#%d account %s - %s') % (num,
-                                l.account_id.code, l.account_id.name, ))
+                                                                            l.account_id.code, l.account_id.name, ))
                     line_index += 1
 
         if header_errors or lines_errors:
             raise osv.except_osv(_('Error'),
-                "\n".join(header_errors + lines_errors))
+                                 "\n".join(header_errors + lines_errors))
 
 account_invoice()
 
@@ -1318,8 +1355,8 @@ class account_invoice_line(osv.osv):
         'import_invoice_id': fields.many2one('account.invoice', string="From an import invoice", readonly=True),
         'move_lines':fields.one2many('account.move.line', 'invoice_line_id', string="Journal Item", readonly=True),
         'is_corrected': fields.function(_have_been_corrected, method=True, string="Have been corrected?", type='boolean',
-            readonly=True, help="This informs system if this item have been corrected in analytic lines. Criteria: the invoice line is linked to a journal items that have analytic item which is reallocated.",
-            store=False),
+                                        readonly=True, help="This informs system if this item have been corrected in analytic lines. Criteria: the invoice line is linked to a journal items that have analytic item which is reallocated.",
+                                        store=False),
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
         'reference': fields.char(string="Reference", size=64),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
@@ -1401,13 +1438,13 @@ class account_invoice_line(osv.osv):
 
             if purchase_lines_obj:
                 purchase_line_ids = purchase_lines_obj.search(cr, uid,
-                        [('invoice_lines', 'in', [inv_id])], order='NO_ORDER')
+                                                              [('invoice_lines', 'in', [inv_id])], order='NO_ORDER')
                 if purchase_line_ids:
                     purchase_lines_obj.write(cr, uid, purchase_line_ids, {'invoice_lines': [(4, new_id)]})
 
             if sale_lines_obj:
                 sale_lines_ids =  sale_lines_obj.search(cr, uid,
-                        [('invoice_lines', 'in', [inv_id])], order='NO_ORDER')
+                                                        [('invoice_lines', 'in', [inv_id])], order='NO_ORDER')
                 if sale_lines_ids:
                     sale_lines_obj.write(cr, uid,  sale_lines_ids, {'invoice_lines': [(4, new_id)]})
 
@@ -1416,10 +1453,19 @@ class account_invoice_line(osv.osv):
     def copy_data(self, cr, uid, inv_id, default=None, context=None):
         """
         Copy an invoice line without its move lines
+        and without link to PO/FO lines when the duplication is manual
         """
         if default is None:
             default = {}
         default.update({'move_lines': False,})
+        # Manual duplication should generate a "manual document not created through the supply workflow"
+        # so we don't keep the link to PO/FO at line level
+        if context.get('from_button', False):
+            default.update({
+                'order_line_id': False,
+                'sale_order_line_id': False,
+                'sale_order_lines': False,
+            })
         return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
 
     def unlink(self, cr, uid, ids, context=None):
@@ -1440,8 +1486,8 @@ class account_invoice_line(osv.osv):
                 direct_invoice_ids.append(invl.invoice_id.id)
                 # find account_bank_statement_lines and used this to delete the account_moves and associated records
                 absl_ids = abst_obj.search(cr, uid,
-                        [('invoice_id','=',invl.invoice_id.id)],
-                        order='NO_ORDER')
+                                           [('invoice_id','=',invl.invoice_id.id)],
+                                           order='NO_ORDER')
                 if absl_ids:
                     abst_obj.unlink_moves(cr, uid, absl_ids, context)
         # Normal behaviour
@@ -1530,7 +1576,7 @@ class res_partner(osv.osv):
         return res
 
     def _get_search_by_invoice_type(self, cr, uid, obj, name, args,
-        context=None):
+                                    context=None):
         res = []
         if not len(args):
             return res
@@ -1558,11 +1604,11 @@ class res_partner(osv.osv):
 
     _columns = {
         'by_invoice_type': fields.function(_get_fake, type='boolean',
-            fnct_search=_get_search_by_invoice_type, method=True),
+                                           fnct_search=_get_search_by_invoice_type, method=True),
     }
 
     def name_search(self, cr, uid, name='', args=None, operator='ilike',
-        context=None, limit=100):
+                    context=None, limit=100):
         # BKLG-50: IN/OUT invoice/refund partner autocompletion filter
         # regarding supplier/customer
         if context is None:
@@ -1579,7 +1625,7 @@ class res_partner(osv.osv):
             args += alternate_domain
 
         return super(res_partner, self).name_search(cr, uid, name=name,
-            args=args, operator=operator, context=context, limit=limit)
+                                                    args=args, operator=operator, context=context, limit=limit)
 
 res_partner()
 

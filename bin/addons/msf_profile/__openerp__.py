@@ -124,6 +124,7 @@
         'view/email_configuration_view.xml',
         "data/patches.xml",
         'view/deleted_object_view.xml',
+         "view/boad_accounting_view.xml",
     ],
     "demo_xml": [
     ],

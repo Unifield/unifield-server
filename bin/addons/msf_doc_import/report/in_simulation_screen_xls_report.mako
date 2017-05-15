@@ -152,6 +152,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price Unit')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Curr.')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ext. Ref')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('CHG')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product')}</Data></Cell>
@@ -174,6 +175,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.move_price_unit or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.move_currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.line_number or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.external_ref or '')|x}</Data></Cell>
         % if l.type_change == 'error':
         <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(getSel(l, 'type_change') or '')|x}</Data></Cell>
         <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(getSel(l, 'integrity_status') or '')|x}</Data></Cell>
@@ -221,7 +223,7 @@
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
-        % if l.imp_exp_date not in (False, 'False'):
+        % if isDate(l.imp_exp_date):
         <Cell ss:StyleID="line_change_short_date" ><Data ss:Type="DateTime">${(l.imp_exp_date)|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ></Cell>
@@ -234,7 +236,9 @@
     <Row></Row>
 
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Information')}</Data></Cell>
+        <Cell ss:StyleID="header" MergeAcross="3"><Data ss:Type="String">${_('Information')}</Data></Cell>
+    </Row>
+    <Row>
         <Cell ss:StyleID="line" MergeAcross="3" ><Data ss:Type="String">${(o.message or '')|x}</Data></Cell>
     </Row>
 

@@ -6,6 +6,7 @@
 			<field name="name">procurement.order.form.view</field>
 			<field name="model">procurement.order</field>
 			<field name="type">form</field>
+            <field name="priority">20</field>
 			<field name="inherit_id" ref="procurement.procurement_form_view" />
 			<field name="arch" type="xml">
 				<data>
@@ -32,6 +33,7 @@
 			<field name="name">purchase.procurement.order.form.view</field>
 			<field name="model">procurement.order</field>
 			<field name="type">form</field>
+            <field name="priority">30</field>
 			<field name="inherit_id" ref="purchase.view_procurement_form_inherit" />
 			<field name="arch" type="xml">
 				<data>

@@ -32,7 +32,6 @@
 
 import subprocess
 import os
-import report
 import tempfile
 import time
 import datetime
@@ -40,10 +39,13 @@ from mako.template import Template
 from mako import exceptions
 import netsvc
 import pooler
+import logging
 from report_helper import WebKitHelper
 from report.report_sxw import report_sxw, report_rml, _int_format, \
-                              _float_format, _date_format, _dttime_format, browse_record_list, \
-                              rml_parse
+    _float_format, _date_format, _dttime_format, browse_record_list, \
+    rml_parse
+from lxml import etree
+from lxml.etree import XMLSyntaxError
 import addons
 import tools
 from tools.translate import _
@@ -56,7 +58,7 @@ def mako_template(text):
     This template uses UTF-8 encoding
     """
     # default_filters=['unicode', 'h'] can be used to set global filters
-    return Template(text, input_encoding='utf-8', output_encoding='utf-8')
+    return Template(text, input_encoding='utf-8', output_encoding='utf-8', default_filters=['decode.utf8'])
 
 class _int_noformat(_int_format):
     def __str__(self):
@@ -80,13 +82,13 @@ class WebKitParser(report_sxw):
     """Custom class that use webkit to render HTML reports
        Code partially taken from report openoffice. Thanks guys :)
     """
-    
+
     def __init__(self, name, table, rml=False, parser=False, 
-        header=True, store=False):
+                 header=True, store=False):
         self.parser_instance = False
         self.localcontext={}
         report_sxw.__init__(self, name, table, rml, parser, 
-            header, store)
+                            header, store)
 
     def getObjects(self, cr, uid, ids, context):
         table_obj = pooler.get_pool(cr.dbname).get(self.table)
@@ -99,28 +101,28 @@ class WebKitParser(report_sxw):
         path = path['lib_path']
         if not path:
             raise except_osv(
-                             _('Wkhtmltopdf library path is not set in company'),
-                             _('Please install executable on your system'+
-                             ' (sudo apt-get install wkhtmltopdf) or download it from here:'+
-                             ' http://code.google.com/p/wkhtmltopdf/downloads/list and set the'+
-                             ' path to the executable on the Company form.'+
-                             'Minimal version is 0.9.9')
-                            ) 
+                _('Wkhtmltopdf library path is not set in company'),
+                _('Please install executable on your system'+
+                  ' (sudo apt-get install wkhtmltopdf) or download it from here:'+
+                  ' http://code.google.com/p/wkhtmltopdf/downloads/list and set the'+
+                  ' path to the executable on the Company form.'+
+                  'Minimal version is 0.9.9')
+            ) 
         if os.path.isabs(path) :
             if (os.path.exists(path) and os.access(path, os.X_OK)\
-                and os.path.basename(path).startswith('wkhtmltopdf')):
+                    and os.path.basename(path).startswith('wkhtmltopdf')):
                 return path
             else:
                 raise except_osv(
-                                _('Wrong Wkhtmltopdf path set in company'+
-                                'Given path is not executable or path is wrong'),
-                                'for path %s'%(path)
-                                )
+                    _('Wrong Wkhtmltopdf path set in company'+
+                      'Given path is not executable or path is wrong'),
+                    'for path %s'%(path)
+                )
         else :
             raise except_osv(
-                            _('path to Wkhtmltopdf is not absolute'),
-                            'for path %s'%(path)
-                            )
+                _('path to Wkhtmltopdf is not absolute'),
+                'for path %s'%(path)
+            )
     def generate_pdf(self, comm_path, report_xml, header, footer, html_list, webkit_header=False):
         """Call webkit in order to generate pdf"""
         if not webkit_header:
@@ -128,7 +130,6 @@ class WebKitParser(report_sxw):
         tmp_dir = tempfile.gettempdir()
         out = report_xml.name+str(time.time())+'.pdf'
         out = os.path.join(tmp_dir, out.replace(' ',''))
-        files = []
         file_to_del = []
         if comm_path:
             command = [comm_path]
@@ -140,27 +141,27 @@ class WebKitParser(report_sxw):
         command.extend(['--encoding', 'utf-8'])
         if header :
             head_file = file( os.path.join(
-                                  tmp_dir,
-                                  str(time.time()) + '.head.html'
-                                 ), 
-                                'w'
-                            )
+                tmp_dir,
+                str(time.time()) + '.head.html'
+            ), 
+                'w'
+            )
             head_file.write(header)
             head_file.close()
             file_to_del.append(head_file.name)
             command.extend(['--header-html', head_file.name])
         if footer :
             foot_file = file(  os.path.join(
-                                  tmp_dir,
-                                  str(time.time()) + '.foot.html'
-                                 ), 
-                                'w'
-                            )
+                tmp_dir,
+                str(time.time()) + '.foot.html'
+            ), 
+                'w'
+            )
             foot_file.write(footer)
             foot_file.close()
             file_to_del.append(foot_file.name)
             command.extend(['--footer-html', foot_file.name])
-            
+
         if webkit_header.margin_top :
             command.extend(['--margin-top', str(webkit_header.margin_top).replace(',', '.')])
         if webkit_header.margin_bottom :
@@ -182,14 +183,13 @@ class WebKitParser(report_sxw):
             file_to_del.append(html_file.name)
             command.append(html_file.name)
         command.append(out)
-        generate_command = ' '.join(command)
         try:
             status = subprocess.call(command, stderr=subprocess.PIPE) # ignore stderr
             if status :
                 raise except_osv(
-                                _('Webkit raise an error' ), 
-                                status
-                            )
+                    _('Webkit raise an error' ), 
+                    status
+                )
         except Exception:
             for f_to_del in file_to_del :
                 os.unlink(f_to_del)
@@ -200,8 +200,8 @@ class WebKitParser(report_sxw):
 
         os.unlink(out)
         return pdf
-    
-    
+
+
     def setLang(self, lang):
         if not lang:
             lang = 'en_US'
@@ -215,7 +215,7 @@ class WebKitParser(report_sxw):
         if not res :
             return src
         return res 
- 
+
     def formatLang(self, value, digits=None, date=False, date_time=False, grouping=True, monetary=False):
         """format using the know cursor, language from localcontext"""
         if digits is None:
@@ -224,7 +224,7 @@ class WebKitParser(report_sxw):
             return ''
         pool_lang = self.pool.get('res.lang')
         lang = self.localcontext['lang']
-        
+
         lang_ids = pool_lang.search(self.parser_instance.cr, self.parser_instance.uid, [('code','=',lang)])[0]
         lang_obj = pool_lang.browse(self.parser_instance.cr, self.parser_instance.uid, lang_ids)
 
@@ -250,7 +250,7 @@ class WebKitParser(report_sxw):
     # override needed to keep the attachments' storing procedure
     def create_single_pdf(self, cursor, uid, ids, data, report_xml, context=None):
         """generate the PDF"""
-        
+
         if context is None:
             context={}
 
@@ -259,11 +259,11 @@ class WebKitParser(report_sxw):
 
         self.report_xml = report_xml
         self.parser_instance = self.parser(
-                                            cursor,
-                                            uid,
-                                            self.name2,
-                                            context=context
-                                        )
+            cursor,
+            uid,
+            self.name2,
+            context=context
+        )
 
         self.pool = pooler.get_pool(cursor.dbname)
         objs = self.getObjects(cursor, uid, ids, context)
@@ -281,7 +281,7 @@ class WebKitParser(report_sxw):
         header = report_xml.webkit_header.html
         footer = report_xml.webkit_header.footer_html
         if not header and report_xml.header:
-          raise except_osv(
+            raise except_osv(
                 _('No header defined for this Webkit report!'),
                 _('Please set a header in company settings')
             )
@@ -315,7 +315,7 @@ class WebKitParser(report_sxw):
             css = ''
         user = self.pool.get('res.users').browse(cursor, uid, uid)
         company= user.company_id
-        
+
         #default_filters=['unicode', 'entity'] can be used to set global filter
         body_mako_tpl = mako_template(template)
         helper = WebKitHelper(cursor, uid, report_xml.id, context)
@@ -327,39 +327,39 @@ class WebKitParser(report_sxw):
                                              css=css,
                                              _=self.translate_call,
                                              **self.parser_instance.localcontext
-                                        )
-        except Exception, e:
+                                             )
+        except Exception:
             msg = exceptions.text_error_template().render()
             netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)
             raise except_osv(_('Webkit render'), msg)
         head_mako_tpl = mako_template(header)
         try :
             head = head_mako_tpl.render(
-                                        company=company,
-                                        time=time,
-                                        helper=helper,
-                                        css=css,
-                                        formatLang=self.formatLang,
-                                        setLang=self.setLang,
-                                        _=self.translate_call,
-                                        _debug=False
-                                    )
-        except Exception, e:
+                company=company,
+                time=time,
+                helper=helper,
+                css=css,
+                formatLang=self.formatLang,
+                setLang=self.setLang,
+                _=self.translate_call,
+                _debug=False
+            )
+        except Exception:
             raise except_osv(_('Webkit render'),
-                exceptions.text_error_template().render())
+                             exceptions.text_error_template().render())
         foot = False
         if footer :
             foot_mako_tpl = mako_template(footer)
             try :
                 foot = foot_mako_tpl.render(
-                                            company=company,
-                                            time=time,
-                                            helper=helper,
-                                            css=css,
-                                            formatLang=self.formatLang,
-                                            setLang=self.setLang,
-                                            _=self.translate_call,
-                                            )
+                    company=company,
+                    time=time,
+                    helper=helper,
+                    css=css,
+                    formatLang=self.formatLang,
+                    setLang=self.setLang,
+                    _=self.translate_call,
+                )
             except:
                 msg = exceptions.text_error_template().render()
                 netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)
@@ -367,16 +367,16 @@ class WebKitParser(report_sxw):
         if report_xml.webkit_debug :
             try :
                 deb = head_mako_tpl.render(
-                                            company=company,
-                                            time=time,
-                                            helper=helper,
-                                            css=css,
-                                            _debug=tools.ustr(html),
-                                            formatLang=self.formatLang,
-                                            setLang=self.setLang,
-                                            _=self.translate_call,
-                                            )
-            except Exception, e:
+                    company=company,
+                    time=time,
+                    helper=helper,
+                    css=css,
+                    _debug=tools.ustr(html),
+                    formatLang=self.formatLang,
+                    setLang=self.setLang,
+                    _=self.translate_call,
+                )
+            except Exception:
                 msg = exceptions.text_error_template().render()
                 netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)
                 raise except_osv(_('Webkit render'), msg)
@@ -392,15 +392,14 @@ class WebKitParser(report_sxw):
         pool = pooler.get_pool(cursor.dbname)
         ir_obj = pool.get('ir.actions.report.xml')
         report_xml_ids = ir_obj.search(cursor, uid,
-                [('report_name', '=', self.name[7:])], context=context)
+                                       [('report_name', '=', self.name[7:])], context=context)
         if report_xml_ids:
-            
             report_xml = ir_obj.browse(
-                                        cursor, 
-                                        uid, 
-                                        report_xml_ids[0], 
-                                        context=context
-                                    )
+                cursor, 
+                uid, 
+                report_xml_ids[0], 
+                context=context
+            )
             report_xml.report_rml = None
             report_xml.report_rml_content = None
             report_xml.report_sxw_content_data = None
@@ -413,7 +412,121 @@ class WebKitParser(report_sxw):
         result = self.create_source_pdf(cursor, uid, ids, data, report_xml, context)
         if not result:
             return (False,False)
+        if result and isinstance(result[0], basestring) and\
+                result[0].startswith('<?xml'):
+            new_result = self.check_malformed_xml_spreadsheet(xml_string=result[0],
+                                                              report_name=report_xml.report_name)
+            if new_result:
+                # change the first element of the tuple
+                result = list(result)
+                result[0] = new_result
+                result = tuple(result)
+
         return result
+
+    def sanitizeWorksheetName(self, name):
+        '''
+        according to microsoft documentation :
+        https://msdn.microsoft.com/en-us/library/office/aa140066(v=office.10).aspx#odc_xmlss_ss:worksheet
+        The following caracters are not allowed : /, \, ?, *, [, ]
+        It also seems that microsoft excel do not accept Worksheet name longer
+        than 31 characters.
+        '''
+        if not name:
+            return _('Sheet 1')
+        replacement_char = '-'
+        not_allowed_char_list = ['/', '\\', '?', '*', '[', ']']
+        new_name = name
+        if set(new_name).intersection(not_allowed_char_list):
+            for char in not_allowed_char_list:
+                if char in new_name:
+                    new_name = new_name.replace(char, replacement_char)
+
+        return new_name[:31]
+
+    def check_malformed_xml_spreadsheet(self, xml_string, report_name):
+        '''Check that the xml spreadsheet doesn't contain
+        node <Date ss:Type="DateTime"> with 'False' in the values
+        log an error if that is the case an remove the corresponding node.
+        '''
+        logger = logging.getLogger('mako_spreadsheet')
+        try:
+            file_dom = etree.fromstring(xml_string)
+        except XMLSyntaxError as e:
+            # US-2540: in case of xml syntax error, log the error and return
+            # the malformed XML
+            error_message = 'Error in report %s: %s' % (report_name, e)
+            logger.error(error_message)
+            return xml_string
+
+        namespaces = {
+            'o': 'urn:schemas-microsoft-com:office:office',
+            'x': 'urn:schemas-microsoft-com:office:excel',
+            'ss': 'urn:schemas-microsoft-com:office:spreadsheet',
+            'html': 'http://www.w3.org/TR/REC-html40'
+        }
+
+        spreadsheet_elements = file_dom.xpath('//ss:Worksheet',
+                                              namespaces=namespaces)
+
+        # Check spreadcheet names
+        xml_modified = False
+        sheet_name_dict = {}
+        count = 0
+        for sheet in spreadsheet_elements:
+            sheet_name = sheet.get('{%(ss)s}Name' % namespaces, _('Sheet 1'))
+            new_name = self.sanitizeWorksheetName(sheet_name)
+            if new_name != sheet_name:
+                # if the sheet name already exists, modify it to add
+                # a counter to the name
+                if new_name in sheet_name_dict:
+                    sheet_name_dict[new_name] += 1
+                    count = sheet_name_dict[new_name]
+                    new_name = '%s_%s' % (new_name[:28], count)
+                else:
+                    sheet_name_dict[new_name] = 1
+                sheet.attrib['{urn:schemas-microsoft-com:office:spreadsheet}Name'] = new_name
+                xml_modified = True
+            else:
+                if new_name not in sheet_name_dict:
+                    sheet_name_dict[new_name] = 1
+
+        # Check date cells
+        data_time_elements = file_dom.xpath('//ss:Data[@ss:Type="DateTime"]',
+                                            namespaces=namespaces)
+        element_to_remove = []
+        for element in data_time_elements:
+            if 'False' in element.text:
+                error_message = 'Line %s of document %s is corrupted, ' \
+                    'DateTime cannot contain \'False\': %s' % \
+                        (element.sourceline, report_name, element.text)
+                logger.error(error_message)
+                element_to_remove.append(element)
+        for element in element_to_remove:
+            # if a malformed node exists, replace it with an empty String cell
+            element.attrib['{urn:schemas-microsoft-com:office:spreadsheet}Type'] = 'String'
+            element.text = ''
+            xml_modified = True
+
+        # Check Number cells
+        number_cells = file_dom.xpath('//ss:Data[@ss:Type="Number"]',
+                                      namespaces=namespaces)
+        for cell in number_cells:
+            # if space in the in Numbers, remove them
+            forbidden_chars = [' ', u'\xa0']
+            for char in forbidden_chars:
+                if char in cell.text:
+                    error_message = 'Line %s of document %s is corrupted, a '\
+                        'Number cannot contain characters or spaces: %s' % \
+                            (cell.sourceline, report_name, cell.text)
+                    logger.warning(error_message)
+                    cell.text = cell.text.replace(char, '')
+                    xml_modified = True
+
+        if xml_modified:
+            # return modified xml
+            return etree.tostring(file_dom, xml_declaration=True, encoding="utf-8")
+        return xml_string
 
 
 class XlsWebKitParser(WebKitParser):

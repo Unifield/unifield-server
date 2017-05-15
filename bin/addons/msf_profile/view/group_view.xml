@@ -9,7 +9,7 @@
             <field name="inherit_id" ref="base.view_groups_form" />
             <field name="arch" type="xml">
                 <data>
-                    <xpath expr="//form//field[@name='name']" position="after">
+                    <xpath expr="//form//field[@name='level']" position="after">
                         <field name='is_an_admin_profile' />
                     </xpath>
                 </data>

@@ -21,6 +21,9 @@
 
 from osv import osv
 from osv import fields
+
+from specific_rules.specific_rules import SHORT_SHELF_LIFE_MESS
+
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import base64
 from tools.translate import _
@@ -83,7 +86,7 @@ class wiz_common_import(osv.osv_memory):
         return header_dict
 
     def check_header_values(self, cr, uid, ids, context, header_index,
-        real_columns, origin=False):
+                            real_columns, origin=False):
         """
         Check that the columns in the header will be taken into account.
         """
@@ -99,7 +102,7 @@ class wiz_common_import(osv.osv_memory):
                 if origin:
                     # special case from document origin
                     if origin == 'PO' and k == 'Delivery requested date' \
-                        and 'Delivery Request Date' in real_columns:
+                            and 'Delivery Request Date' in real_columns:
                         continue  # 'Delivery requested date' tolerated (for Rfq vs 'Delivery Requested Date' of PO_COLUMNS_HEADER_FOR_IMPORT)
                 vals = {'state': 'draft',
                         'message': _('The column "%s" is not taken into account. Please correct it. The list of columns accepted is: %s'
@@ -193,25 +196,35 @@ class wizard_common_import_line(osv.osv_memory):
             return {}
 
         res = {}
+        is_ssl = False
         try:
             for wl in self.browse(cr, uid, ids, context=context):
                 if wl.parent_model in ('tender', 'sale.order', 'purchase.order'):
                     categ = self.pool.get(wl.parent_model).read(cr, uid, wl.parent_id, ['categ'], context=context)['categ']
                     if categ:
+                        is_ssl = product_ids[0][2] and \
+                            product_obj.search_exist(cr, uid, [('is_ssl', '=', True), ('id', 'in', product_ids[0][2])], context=context)
+
                         for product_id in product_ids[0][2]:
                             c_msg = product_obj.check_consistency(cr, uid, product_id, categ, context=context)
                             if c_msg:
                                 res.setdefault('warning', {})
                                 res['warning'].setdefault('title', _('Warning'))
-                                res['warning'].setdefault('message', '')
-                                res['warning']['message'] = '%s \n %s' % (
-                                    res.get('warning', {}).get('message', ''),
-                                    c_msg,
-                                )
+                                res['warning']['message'] = c_msg
+                                if is_ssl:
+                                    res['warning']['message'] = '%s\n%s' % (res['warning']['message'], _(SHORT_SHELF_LIFE_MESS))
+                            if res:
                                 return res
         except IndexError:
             return {}
 
+        if is_ssl:
+            return {
+                'warning': {
+                    'title':  _('Warning'),
+                    'message': _(SHORT_SHELF_LIFE_MESS),
+                }
+            }
         return res
 
 
@@ -229,7 +242,6 @@ class wizard_common_import_line(osv.osv_memory):
 
         for wiz in self.read(cr, uid, ids, fields_to_read, context=context):
             parent_id = wiz['parent_id']
-            parent_obj = self.pool.get(wiz['parent_model'])
             line_obj = self.pool.get(wiz['line_model'])
             product_ids = wiz['product_ids']
 
@@ -264,6 +276,14 @@ product_product_import_line_qty()
 
 class product_product(osv.osv):
     _inherit = 'product.product'
+
+    def write(self, cr, uid, ids, vals, context=None):
+        import_product_qty = 'import_product_qty'
+        if len(vals) == 1 and import_product_qty in vals:
+            self._write_imp_product_qty(cr, uid, ids, field_name=import_product_qty, values=vals[import_product_qty], args=None, context=context)
+            return True
+
+        return super(product_product, self).write(cr, uid, ids, vals, context=context)
 
     def _get_import_product_qty(self, cr, uid, ids, field_name, args, context=None):
         if context is None:
@@ -314,7 +334,7 @@ class product_product(osv.osv):
     }
 
     def on_change_import_product_qty(self, cr, uid, ids, import_product_qty,
-        context=None):
+                                     context=None):
         res = {}
         if not ids:
             return res
@@ -323,7 +343,7 @@ class product_product(osv.osv):
             res['warning'] = {
                 'title': _('Warning'),
                 'message': _('You can not set a negative quantity'),
-        }
+            }
         return res
 
 product_product()
@@ -408,7 +428,7 @@ class purchase_order(osv.osv):
                         'categ': order_id.categ})
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'purchase.order', 'purchase.order.line', context=context)
+            open_wizard(cr, uid, ids[0], 'purchase.order', 'purchase.order.line', context=context)
 
 
 purchase_order()
@@ -422,17 +442,19 @@ class tender_line(osv.osv):
         Create lines according to product in list
         '''
         p_obj = self.pool.get('product.product')
-        tender_obj = self.pool.get('tender')
 
         context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
-            values = {'tender_id': parent_id,
-                      'product_id': p_data['id'],
-                      'product_uom': p_data['uom_id'][0]}
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty', 'categ_id'], context=context):
+            values = {
+                'tender_id': parent_id,
+                'product_id': p_data['id'],
+                'product_uom': p_data['uom_id'][0],
+                'categ_id': p_data['categ_id'],
+            }
 
-            values.update(self.on_product_change(cr, uid, False, p_data['id'], p_data['uom_id'][0], p_data['import_product_qty'], context=context).get('value', {}))
+            values.update(self.on_product_change(cr, uid, False, p_data['id'], p_data['uom_id'][0], p_data['import_product_qty'], p_data['categ_id'], context=context).get('value', {}))
 
             # Set the quantity to 0.00
             values.update({'qty': p_data['import_product_qty']})
@@ -455,7 +477,6 @@ class tender(osv.osv):
             context = {}
         ids = isinstance(ids, (int, long)) and [ids] or ids
 
-        tender = self.browse(cr, uid, ids[0], context=context)
         context.update({
             'product_ids_domain': [],
             # UFTP-15: we active 'only not forbidden' filter as default
@@ -465,7 +486,7 @@ class tender(osv.osv):
         })
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'tender', 'tender.line', context=context)
+            open_wizard(cr, uid, ids[0], 'tender', 'tender.line', context=context)
 
 tender()
 
@@ -500,19 +521,19 @@ class sale_order_line(osv.osv):
                                                                '').get('value', {}))
             else:
                 values.update(self.product_id_on_change(cr, uid, False, order_data['pricelist_id'][0],
-                                                                     p_data['id'],
-                                                                     p_data['import_product_qty'],
-                                                                     p_data['uom_id'][0],
-                                                                     p_data['uom_id'][0],
-                                                                     '',
-                                                                     order_data['partner_id'][0],
-                                                                     context.get('lang'),
-                                                                     True,
-                                                                     order_data['date_order'],
-                                                                     False,
-                                                                     order_data['fiscal_position'] and order_data['fiscal_position'][0] or False,
-                                                                     False).get('value', {}),
-                                                                     context=context)
+                                                        p_data['id'],
+                                                        p_data['import_product_qty'],
+                                                        p_data['uom_id'][0],
+                                                        p_data['uom_id'][0],
+                                                        '',
+                                                        order_data['partner_id'][0],
+                                                        context.get('lang'),
+                                                        True,
+                                                        order_data['date_order'],
+                                                        False,
+                                                        order_data['fiscal_position'] and order_data['fiscal_position'][0] or False,
+                                                        False).get('value', {}),
+                              context=context)
 
             # Set the quantity to 0.00
             values.update({'product_uom_qty': p_data['import_product_qty'], 'product_uos_qty': p_data['import_product_qty']})
@@ -563,7 +584,7 @@ class sale_order(osv.osv):
         context.update(context_update)
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'sale.order', 'sale.order.line', context=context)
+            open_wizard(cr, uid, ids[0], 'sale.order', 'sale.order.line', context=context)
 
 sale_order()
 
@@ -576,7 +597,6 @@ class composition_item(osv.osv):
         Create lines according to product in list
         '''
         p_obj  = self.pool.get('product.product')
-        kit_obj = self.pool.get('composition.kit')
 
         context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
@@ -607,7 +627,7 @@ class composition_kit(osv.osv):
         context = context is None and {} or context
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'composition.kit', 'composition.item', context=context)
+            open_wizard(cr, uid, ids[0], 'composition.kit', 'composition.item', context=context)
 
 composition_kit()
 
@@ -620,7 +640,6 @@ class supplier_catalogue_line(osv.osv):
         Create lines according to product in list
         '''
         p_obj = self.pool.get('product.product')
-        cat_obj = self.pool.get('supplier.catalogue')
 
         context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
@@ -654,7 +673,7 @@ class supplier_catalogue(osv.osv):
         context = context is None and {} or context
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'supplier.catalogue', 'supplier.catalogue.line', context=context)
+            open_wizard(cr, uid, ids[0], 'supplier.catalogue', 'supplier.catalogue.line', context=context)
 
 supplier_catalogue()
 
@@ -675,9 +694,6 @@ class stock_move(osv.osv):
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
         picking = pick_obj.browse(cr, uid, parent_id, context=context)
-
-        nomen_manda_log = get_ref(cr, uid, 'msf_config_locations', 'nomen_log')[1]
-        nomen_manda_med = get_ref(cr, uid, 'msf_config_locations', 'nomen_med')[1]
 
         if picking.partner_id and picking.type == 'in':
             location_id = picking.partner_id.property_stock_supplier.id
@@ -740,7 +756,7 @@ class stock_picking(osv.osv):
                                                    ('available_for_restriction', '=', {'location_id': cd_loc})]})
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'stock.picking', 'stock.move', context=context)
+            open_wizard(cr, uid, ids[0], 'stock.picking', 'stock.move', context=context)
 
 stock_picking()
 
@@ -749,7 +765,7 @@ class stock_warehouse_orderpoint_line(osv.osv):
     _inherit = 'stock.warehouse.orderpoint.line'
 
     def create_multiple_lines(self, cr, uid, parent_id, product_ids,
-        context=None):
+                              context=None):
         '''
         Create lines according to product in list
         '''
@@ -764,14 +780,14 @@ class stock_warehouse_orderpoint_line(osv.osv):
         }
         if parent_id:
             parent_r = swo_obj.read(cr, uid, parent_id, parent_vals.keys(),
-                context=context)
+                                    context=context)
             if parent_r:
                 for f in parent_vals.keys():
                     parent_vals[f] = parent_r[f] or 0.
 
         # set line vals
         for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'],
-            context=context):
+                                 context=context):
             values = {
                 'product_id': p_data['id'],
                 'product_uom_id': p_data['uom_id'][0],
@@ -781,10 +797,10 @@ class stock_warehouse_orderpoint_line(osv.osv):
                 values[k] = parent_vals[k]
 
             values.update(self.onchange_product_id(cr, uid, False,
-                p_data['id'], p_data['uom_id'][0],
-                values.get('product_min_qty', 0.),
-                values.get('product_max_qty', 0.),
-                context=context).get('value', {}))
+                                                   p_data['id'], p_data['uom_id'][0],
+                                                   values.get('product_min_qty', 0.),
+                                                   values.get('product_max_qty', 0.),
+                                                   context=context).get('value', {}))
 
             domain = [
                 ('product_id', '=', p_data['id']),
@@ -792,7 +808,7 @@ class stock_warehouse_orderpoint_line(osv.osv):
             ]
             if not self.search(cr, uid, domain, context=context):
                 self.create(cr, uid, values,
-                    context=dict(context, noraise=True))
+                            context=dict(context, noraise=True))
 
         return True
 
@@ -814,8 +830,8 @@ class stock_warehouse_orderpoint(osv.osv):
         })
 
         return self.pool.get('wizard.common.import.line').open_wizard(cr, uid,
-            ids[0], 'stock.warehouse.orderpoint',
-            'stock.warehouse.orderpoint.line', context=context)
+                                                                      ids[0], 'stock.warehouse.orderpoint',
+                                                                      'stock.warehouse.orderpoint.line', context=context)
 
 stock_warehouse_orderpoint()
 
@@ -857,7 +873,7 @@ class stock_warehouse_auto_supply(osv.osv):
         context.update({'product_ids_domain': [('type', 'not in', ['consu', 'service', 'service_recep'])]})
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'stock.warehouse.automatic.supply', 'stock.warehouse.automatic.supply.line', context=context)
+            open_wizard(cr, uid, ids[0], 'stock.warehouse.automatic.supply', 'stock.warehouse.automatic.supply.line', context=context)
 
 stock_warehouse_auto_supply()
 
@@ -899,7 +915,7 @@ class stock_warehouse_order_cycle(osv.osv):
         context.update({'product_ids_domain': [('type', 'not in', ['consu', 'service', 'service_recep'])]})
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'stock.warehouse.order.cycle', 'stock.warehouse.order.cycle.line', context=context)
+            open_wizard(cr, uid, ids[0], 'stock.warehouse.order.cycle', 'stock.warehouse.order.cycle.line', context=context)
 
 stock_warehouse_order_cycle()
 
@@ -954,7 +970,7 @@ class threshold_value(osv.osv):
         context.update({'product_ids_domain': [('type', 'not in', ['consu', 'service', 'service_recep'])]})
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'threshold.value', 'threshold.value.line', context=context)
+            open_wizard(cr, uid, ids[0], 'threshold.value', 'threshold.value.line', context=context)
 
 threshold_value()
 
@@ -1005,7 +1021,7 @@ class stock_inventory(osv.osv):
                                                ('available_for_restriction', '=', {'location_id': stock_loc})]})
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'stock.inventory', 'stock.inventory.line', context=context)
+            open_wizard(cr, uid, ids[0], 'stock.inventory', 'stock.inventory.line', context=context)
 
 stock_inventory()
 
@@ -1055,7 +1071,7 @@ class initial_stock_inventory(osv.osv):
                                                ('available_for_restriction', '=', {'location_id': stock_loc})]})
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'initial.stock.inventory', 'initial.stock.inventory.line', context=context)
+            open_wizard(cr, uid, ids[0], 'initial.stock.inventory', 'initial.stock.inventory.line', context=context)
 
 initial_stock_inventory()
 
@@ -1098,7 +1114,7 @@ class real_average_consumption(osv.osv):
         context.update({'product_ids_domain': [('available_for_restriction', '=', 'consumption')]})
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'real.average.consumption', 'real.average.consumption.line', context=context)
+            open_wizard(cr, uid, ids[0], 'real.average.consumption', 'real.average.consumption.line', context=context)
 
 real_average_consumption()
 
@@ -1110,8 +1126,6 @@ class monthly_review_consumption_line(osv.osv):
         '''
         Create lines according to product in list
         '''
-        p_obj = self.pool.get('product.product')
-
         c_data = self.pool.get('monthly.review.consumption').read(cr, uid, parent_id, ['period_from', 'period_to'], context=context)
 
         for product_id in product_ids:
@@ -1140,6 +1154,6 @@ class monthly_review_consumption(osv.osv):
         context = context is None and {} or context
 
         return self.pool.get('wizard.common.import.line').\
-                open_wizard(cr, uid, ids[0], 'monthly.review.consumption', 'monthly.review.consumption.line', context=context)
+            open_wizard(cr, uid, ids[0], 'monthly.review.consumption', 'monthly.review.consumption.line', context=context)
 
 monthly_review_consumption()

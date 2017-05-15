@@ -49,8 +49,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<Table ss:ExpandedColumnCount="17" ss:ExpandedRowCount="${len(objects)+1}" x:FullColumns="1"
-x:FullRows="1">
+<Table>
 % for x in range(0,17):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
@@ -61,7 +60,7 @@ x:FullRows="1">
 </Row>
 % for o in objects:
 <Row>
-% if o.document_date and o.document_date != 'False':
+% if isDate(o.document_date):
 <Cell ss:StyleID="ssBorderDate">
         <Data ss:Type="DateTime">${o.document_date|n}T00:00:00</Data>
 </Cell>
@@ -70,7 +69,7 @@ x:FullRows="1">
         <Data ss:Type="String"> </Data>
 </Cell>
 % endif
-% if o.date and o.date != 'False':
+% if isDate(o.date):
 <Cell ss:StyleID="ssBorderDate">
         <Data ss:Type="DateTime">${o.date|n}T00:00:00</Data>
 </Cell>

@@ -149,10 +149,10 @@ class procurement_request_sourcing_document(osv.osv):
         if brw.sourcing_document_type == 'out':
             if doc.subtype == 'picking':
                 view_id = data_obj.get_object_reference(cr, uid,
-                    'msf_outgoing', 'view_picking_ticket_form')[1]
+                                                        'msf_outgoing', 'view_picking_ticket_form')[1]
             elif doc.subtype == 'standard':
                 view_id = data_obj.get_object_reference(cr, uid,
-                    'stock', 'view_picking_out_form')[1]
+                                                        'stock', 'view_picking_out_form')[1]
 
             res['view_id'] = [view_id]
 
@@ -304,7 +304,7 @@ class procurement_request(osv.osv):
     _columns = {
         'date_order': fields.date('Ordered Date', required=True, readonly=False, select=True, states={}),
         'location_requestor_id': fields.many2one('stock.location', string='Location Requestor', ondelete="cascade",
-        domain=[('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], help='You can only select an internal location'),
+                                                 domain=[('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], help='You can only select an internal location'),
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
@@ -318,40 +318,40 @@ class procurement_request(osv.osv):
         ),
         'ir_total_amount': fields.function(_ir_amount_all, method=True, digits_compute=dp.get_precision('Sale Price'), string='Indicative Total Value'),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Sale Price'), string='Untaxed Amount',
-            store={
-                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
-            },
+                                          store={
+            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
+            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+        },
             multi='sums', help="The amount without tax."),
         'amount_tax': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Sale Price'), string='Taxes',
-            store={
-                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
-            },
+                                      store={
+            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
+            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+        },
             multi='sums', help="The tax amount."),
         'amount_total': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Sale Price'), string='Total',
-            store={
-                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
-            },
+                                        store={
+            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
+            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+        },
             multi='sums', help="The total amount."),
         'purchase_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Purchase Total',
-            store={
-                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
-            },
+                                           store={
+            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
+            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
+        },
             multi='by_type', help="The amount of lines sourced on order"),
         'stock_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total',
-            store={
-                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
-            },
+                                        store={
+            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
+            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
+        },
             multi='by_type', help="The amount of lines sourced from stock"),
         'proc_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total',
-            store={
-                'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
-            },
+                                       store={
+            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
+            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
+        },
             multi='by_type', help="The amount of lines sourced from stock"),
         'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
@@ -399,7 +399,6 @@ class procurement_request(osv.osv):
         '''
         if not ids:
             return True
-        res = True
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -451,7 +450,7 @@ class procurement_request(osv.osv):
             args.append(('procurement_request', '=', False))
 
         return super(procurement_request, self).search(cr, uid, args, offset,
-                limit, order, context, count)
+                                                       limit, order, context, count)
 
     def _hook_copy_default(self, cr, uid, *args, **kwargs):
         id = kwargs['id']
@@ -535,13 +534,23 @@ class procurement_request(osv.osv):
                     reset_soq.append(line.id)
 
                 if line.nomen_manda_0.id == nomen_manda_0 \
-                or line.nomen_manda_1.id == nomen_manda_1 \
-                or line.nomen_manda_2.id == nomen_manda_2 \
-                or line.nomen_manda_3.id == nomen_manda_3 \
-                or line.product_uom.id == uom_tbd:
+                        or line.nomen_manda_1.id == nomen_manda_1 \
+                        or line.nomen_manda_2.id == nomen_manda_2 \
+                        or line.nomen_manda_3.id == nomen_manda_3 \
+                        or line.product_uom.id == uom_tbd:
                     nb_lines += 1
                 if line.product_uom_qty <= 0.00:
                     raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
+
+                # 5/ Check if there is a temporary product in the sale order :
+                temp_prod_ids = self.pool.get('product.product').search(cr, uid, [('international_status', '=', 5)], context=context)
+                line_with_temp_ids = line_obj.search(cr, uid, [('order_id', '=', req.id), ('product_id', 'in', temp_prod_ids)], context=context)
+                line_err = ' / '.join([str(line.line_number) for l in line_obj.browse(cr, uid, line_with_temp_ids, context=context)])
+                if line_with_temp_ids:
+                    raise osv.except_osv(
+                        _("Warning"),
+                        _("You can not confirm internal request containing temporary product (line: %s)") % line_err,
+                    )
             if nb_lines:
                 raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !') % nb_lines)
             self.log(cr, uid, req.id, _("The internal request '%s' has been validated (nb lines: %s).") % (req.name, len(req.order_line)), context=context)
@@ -649,6 +658,8 @@ class procurement_request_line(osv.osv):
             if line.order_id.procurement_request:
                 subtotal = line.cost_price * line.product_uom_qty
                 res[line.id] = cur_obj.round(cr, uid, curr_browse.rounding, subtotal)
+                if line.cost_price > 0 and res[line.id] < 0.01:
+                    res[line.id] = 0.01
             else:
                 new_ids.append(line.id)
 
@@ -721,7 +732,7 @@ class procurement_request_line(osv.osv):
         return res
 
     _columns = {
-        'cost_price': fields.float(string='Cost price'),
+        'cost_price': fields.float(string='Cost price', digits_compute=dp.get_precision('Sale Price Computation')),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute=dp.get_precision('Sale Price')),
@@ -815,20 +826,11 @@ class procurement_request_line(osv.osv):
             context = {}
         value = {'comment': comment}
         domain = {}
-        obj_data = self.pool.get('ir.model.data')
-        tbd_0 = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1]
-        tbd_1 = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1]
-        tbd_2 = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1]
 
         if comment and not product_id:
             value.update({'name': 'To be defined',
                           'supplier': False,
                           'product_ok': True})
-            # it bugs with the To Be Defined => needs to be removed
-#            if not nomen_manda_0:
-#                value.update({'nomen_manda_0': tbd_0,
-#                              'nomen_manda_1': tbd_1,
-#                              'nomen_manda_2': tbd_2,})
             domain = {'product_uom':[], 'supplier': [('partner_type', 'in', ['internal', 'section', 'intermission'])]}
         if not comment:
             value.update({'product_ok': True})

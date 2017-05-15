@@ -122,14 +122,54 @@ purchase_order_report_xls('report.purchase.order_xls','purchase.order','addons/m
 # VALIDATED PURCHASE ORDER (Excel XML)
 class validated_purchase_order_report_xls(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
+        if context is None:
+            context = {}
+        context['lang'] = 'en_MF'
         super(validated_purchase_order_report_xls, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+            'maxADLines': self.get_max_ad_lines,
+        })
+
+    def set_context(self, objects, data, ids, report_type = None):
+        super(validated_purchase_order_report_xls, self).set_context(objects, data, ids, report_type=report_type)
+        self.localcontext['need_ad'] = data.get('need_ad', True)
+
+    def get_max_ad_lines(self, order):
+        max_ad_lines = 0
+        for line in order.order_line:
+            if line.analytic_distribution_id:
+                if len(line.analytic_distribution_id.cost_center_lines) > max_ad_lines:
+                    max_ad_lines = len(line.analytic_distribution_id.cost_center_lines)
+
+        return max_ad_lines
 
 SpreadsheetReport('report.validated.purchase.order_xls', 'purchase.order', 'addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako', parser=validated_purchase_order_report_xls)
 
 # VALIDATE PURCHASE ORDER (Pure XML)
 class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
+        if context is None:
+            context = {}
+        context['lang'] = 'en_MF'
         super(parser_validated_purchase_order_report_xml, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'time': time,
+            'maxADLines': self.get_max_ad_lines,
+        })
+
+    def set_context(self, objects, data, ids, report_type = None):
+        super(parser_validated_purchase_order_report_xml, self).set_context(objects, data, ids, report_type=report_type)
+        self.localcontext['need_ad'] = data.get('need_ad', True)
+
+    def get_max_ad_lines(self, order):
+        max_ad_lines = 0
+        for line in order.order_line:
+            if line.analytic_distribution_id:
+                if len(line.analytic_distribution_id.cost_center_lines) > max_ad_lines:
+                    max_ad_lines = len(line.analytic_distribution_id.cost_center_lines)
+
+        return max_ad_lines
 
 class validated_purchase_order_report_xml(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -186,7 +226,7 @@ tender_report_xls('report.tender_xls','tender','addons/msf_supply_doc_export/rep
 class stock_cost_reevaluation_report_xls(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
         WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
-    
+
     def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
         report_xml.webkit_debug = 1
         report_xml.header= " "
@@ -346,7 +386,7 @@ class po_follow_up_mixin(object):
         for state_val, state_string in PURCHASE_ORDER_STATE_SELECTION:
             states[state_val] = state_string
         return states
-     
+
     def getHeaderLine(self,obj):
         ''' format the header line for each PO object '''
         po_header = []
@@ -369,13 +409,6 @@ class po_follow_up_mixin(object):
         po_header['amount'] = 'Estimated amount: ' + str(obj.amount_total)
         line = po_header['ref'] + po_header['status'] + po_header['created'] + po_header['deldate'] + po_header['items'] + po_header['amount'] 
         return line
-
-    
-    def getReportHeaderLine1(self):
-        return self.datas['report_parms']
-    
-    def getReportHeaderLine2(self):
-        return self.datas.get('report_header')[1]
 
     def getRunParms(self):
         return self.datas['report_parms']
@@ -416,15 +449,11 @@ class po_follow_up_mixin(object):
 
     def getPOLines(self, po_id):
         ''' developer note: would be a lot easier to write this as a single sql and then use on-break '''
-        # TODO the multiplier is the value populated for no change in stock_move.price_unit
-        # TODO it probably should be 1
-        multiplier = 1.0000100000000001
         po_obj = self.pool.get('purchase.order')
         pol_obj = self.pool.get('purchase.order.line')
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id','=',po_id)], order='line_number')
-#        po_lines = pol_obj.browse(self.cr, self.uid, po_line_ids)
         report_lines = []
         order = po_obj.browse(self.cr, self.uid, po_id)
         for line in self.yieldPoLines(po_line_ids):
@@ -467,7 +496,7 @@ class po_follow_up_mixin(object):
                 report_lines.extend(self.printAnalyticLines(analytic_lines))
                 first_line = False
 
-            for spsul in same_product_same_uom:
+            for spsul in sorted(same_product_same_uom, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
@@ -489,13 +518,14 @@ class po_follow_up_mixin(object):
 
                 report_lines.append(report_line)
 
+                if spsul.get('backorder_id') and spsul.get('state') != 'done':
+                    report_line['qty_backordered'] = spsul.get('product_qty', '')
+
                 if first_line:
-                    if spsul.get('backorder_id') and spsul.get('state') != 'done':
-                        report_line['qty_backordered'] = spsul.get('product_qty', '')
                     report_lines.extend(self.printAnalyticLines(analytic_lines))
                     first_line = False
 
-            for spl in same_product:
+            for spl in sorted(same_product, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
@@ -516,9 +546,10 @@ class po_follow_up_mixin(object):
                 }
                 report_lines.append(report_line)
 
+                if spl.get('backorder_id') and spl.get('state') != 'done':
+                    report_line['qty_backordered'] = spl.get('product_qty', '')
+
                 if first_line:
-                    if spl.get('backorder_id') and spl.get('state') != 'done':
-                        report_line['qty_backordered'] = spl.get('product_qty', '')
                     report_lines.extend(self.printAnalyticLines(analytic_lines))
                     first_line = False
 
@@ -574,7 +605,7 @@ class po_follow_up_mixin(object):
               AND
                 sm.picking_id = sp.id
             ORDER BY
-                sp.name, sm.id asc''', tuple([po_line_id]))
+                sp.name, sp.backorder_id, sm.id asc''', tuple([po_line_id]))
         for res in self.cr.dictfetchall():
             yield res
 
@@ -582,13 +613,13 @@ class po_follow_up_mixin(object):
 
     def getReportHeaderLine1(self):
         return self.datas.get('report_header')[0]
-    
+
     def getReportHeaderLine2(self):
         return self.datas.get('report_header')[1]
 
     def getPOLineHeaders(self):
         return ['Order Ref', 'Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price', 'Created', 'Confirmed Delivery', 'Status', 'Destination','Cost Center']
-      
+
 
 
 class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
@@ -607,7 +638,7 @@ class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
             'getRunParms': self.getRunParms,
         })
 
-    
+
 
 
 class po_follow_up_report_xls(SpreadsheetReport):
@@ -653,25 +684,23 @@ class ir_values(osv.osv):
             context = {}
         values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
         trans_obj = self.pool.get('ir.translation')
-        
-        Internal_Requests = trans_obj.tr_view(cr, 'Internal Requests', context)
-        Field_Orders = trans_obj.tr_view(cr, 'Sales Orders', context)
+
         if key == 'action' and key2 == 'client_print_multi' and 'sale.order' in [x[0] for x in models]:
             new_act = []
             #field_orders_view = data_obj.get_object_reference(cr, uid, 'procurement_request', 'action_procurement_request')[1]
             for v in values:
                 if context.get('procurement_request', False):
                     if v[2].get('report_name', False) in ('internal.request_xls', 'procurement.request.report') \
-                    or v[1] == 'action_open_wizard_import': # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
+                            or v[1] == 'action_open_wizard_import': # this is an internal request, we only display import lines for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
                         new_act.append(v)
                 else:
                     if v[2].get('report_name', False) == 'msf.sale.order' \
-                    or v[2].get('report_name', False) == 'sale.order_xls' \
-                    or v[2].get('report_name', False) == 'sale.order.allocation.report' \
-                    or v[1] == 'Order Follow Up': # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
+                        or v[2].get('report_name', False) == 'sale.order_xls' \
+                        or v[2].get('report_name', False) == 'sale.order.allocation.report' \
+                            or v[1] == 'Order Follow Up': # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
                         new_act.append(v)
                 values = new_act
-                
+
         elif (context.get('_terp_view_name') or context.get('picking_type')) and key == 'action' and key2 == 'client_print_multi' and 'stock.picking' in [x[0] for x in models] and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
             Picking_Tickets = trans_obj.tr_view(cr, 'Picking Tickets', context)
@@ -683,11 +712,11 @@ class ir_values(osv.osv):
             Internal_Moves = trans_obj.tr_view(cr, 'Internal Moves', context)
             for v in values:
                 if v[2].get('report_name', False) == 'picking.ticket' and (context.get('_terp_view_name') in (Picking_Tickets, Picking_Ticket) or context.get('picking_type') == 'picking_ticket') and context.get('picking_screen', False)\
-                or v[2].get('report_name', False) == 'pre.packing.list' and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
-                or v[2].get('report_name', False) == 'empty.picking.ticket' and (context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) or context.get('picking_type', False) == 'picking_ticket')\
-                or v[2].get('report_name', False) == 'labels' and (context.get('_terp_view_name') in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order] or context.get('picking_type', False) in ('delivery_order', 'picking_ticket'))\
-                or v[2].get('report_name', False) in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move') \
-                or v[2].get('report_name', False) == 'delivery.order' and (context.get('_terp_view_name') in [Delivery_Orders, Delivery_Order] or context.get('picking_type', False) == 'delivery_order'):
+                    or v[2].get('report_name', False) == 'pre.packing.list' and context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) and context.get('ppl_screen', False)\
+                    or v[2].get('report_name', False) == 'empty.picking.ticket' and (context.get('_terp_view_name') in (Pre_Packing_Lists, Pre_Packing_List) or context.get('picking_type', False) == 'picking_ticket')\
+                    or v[2].get('report_name', False) == 'labels' and (context.get('_terp_view_name') in [Picking_Ticket, Picking_Tickets, Pre_Packing_List, Pre_Packing_Lists, Delivery_Orders, Delivery_Order] or context.get('picking_type', False) in ('delivery_order', 'picking_ticket'))\
+                    or v[2].get('report_name', False) in ('internal.move.xls', 'internal.move') and (('_terp_view_name' in context and context['_terp_view_name'] in [Internal_Moves]) or context.get('picking_type') == 'internal_move') \
+                        or v[2].get('report_name', False) == 'delivery.order' and (context.get('_terp_view_name') in [Delivery_Orders, Delivery_Order] or context.get('picking_type', False) == 'delivery_order'):
                     new_act.append(v)
                 values = new_act
         elif context.get('_terp_view_name') and key == 'action' and key2 == 'client_print_multi' and 'shipment' in [x[0] for x in models]:
@@ -704,7 +733,7 @@ class ir_values(osv.osv):
                 elif context['_terp_view_name'] in (Shipment_Lists, Shipment_List, Shipments, Shipment):
                     new_act.append(v)
                 values = new_act
-        elif context.get('picking_screen') and context.get('from_so') and context.get('picking_type', False) != 'incoming_shipment':
+        elif key == 'action' and key2 == 'client_print_multi' and context.get('picking_screen') and context.get('from_so') and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
             for v in values:
                 if v[2].get('report_name', False) :

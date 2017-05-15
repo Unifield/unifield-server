@@ -56,9 +56,15 @@ class finance_archive():
      + Do not repeat headers if you use the same filename for more than 1 request. This avoid having multiple lines as headers.
     """
 
-    def __init__(self, sql, process):
+    def __init__(self, sql, process, context=None):
+        if context is None:
+            context = {}
         self.sqlrequests = sql
         self.processrequests = process
+        if 'background_id' in context:
+            self.bg_id = context['background_id']
+        else:
+            self.bg_id = None
 
     def line_to_utf8(self, line):
         """
@@ -183,6 +189,14 @@ class finance_archive():
         # - filename
         # - key of sqlrequests dict to fetch its SQL request
         files = {}
+
+        if self.bg_id:
+            bg_report_obj = pool.get('memory.background.report')
+        else:
+            bg_report_obj = None
+
+        request_count = 0
+
         for fileparams in self.processrequests:
             if not fileparams.get('filename', False):
                 raise osv.except_osv(_('Error'), _('Filename param is missing!'))
@@ -224,7 +238,7 @@ class finance_archive():
                     try:
                         cr.execute(update_request, (tuple(ids),))
                     except Exception, e:
-                        raise osv.except_osv(_('Error'), _('An error occured: %s') % (e.message and e.message or '',))
+                        raise osv.except_osv(_('Error'), _('An error occurred: %s') % (e.message and e.message or '',))
             without_headers = []
             # Check if a function is given. If yes, use it.
             # If not, transform lines into UTF-8. Note that postprocess method should transform lines into UTF-8 ones.
@@ -255,6 +269,13 @@ class finance_archive():
             # Only add a link to the temporary file if not in "files" dict
             if filename not in files:
                 files[filename] = tmp_file
+
+            if bg_report_obj:
+                request_count += 1
+                percent = request_count / float(len(self.processrequests) + 1)  # add 1
+                # to the total because task is not finish at the end of the for
+                # loop, there is some ZIP work to do
+                bg_report_obj.update_percent(cr, uid, [self.bg_id], percent)
 
         # WRITE RESULT INTO AN ARCHIVE
         # Create a ZIP file

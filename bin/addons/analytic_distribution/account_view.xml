@@ -19,11 +19,12 @@
             <field name="model">account.destination.link</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Account/Destination" colors="grey:used" notselectable="used" >
+                <tree string="Account/Destination" colors="grey:used;red:disabled" notselectable="used" >
                     <field name="name" invisible="1"/>
                     <field name="account_id"/>
                     <field name="destination_id"/>
                     <field name="used" invisible="1"/>
+                    <field name="disabled" invisible="1"/>
                 </tree>
             </field>
         </record>
@@ -34,6 +35,7 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search Account/Destination">
+                    <filter icon="gtk-missing-image" name="active" string="Show Active" domain="[('disabled', '=', False)]" separator="1" />
                     <field name="account_id"/>
                 </search>
             </field>
@@ -44,7 +46,7 @@
             <field name="model">account.account</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account.view_account_form"/>
-            <field name="priority" eval="18"/>
+            <field name="priority">25</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="//field[@name='user_type']" position="replace">

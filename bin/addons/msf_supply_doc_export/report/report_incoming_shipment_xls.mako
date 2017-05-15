@@ -98,7 +98,8 @@
     </Row>
     
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number*')}</Data></Cell>    
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number')}</Data></Cell>    
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ext. Reference')}</Data></Cell>    
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code*')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Qty*')}</Data></Cell>
@@ -114,6 +115,7 @@
     % for line in o.move_lines:
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.line_number or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.purchase_line_id and line.purchase_line_id.external_ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or '')|x}</Data></Cell>
@@ -121,7 +123,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${((line.purchase_line_id and line.purchase_line_id.price_unit) or (line.product_id and line.product_id.standard_price) or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.picking_id and line.picking_id.purchase_id and line.picking_id.purchase_id.pricelist_id.currency_id.name or line.company_id.currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.prodlot_id and line.prodlot_id.name or '')|x}</Data></Cell>
-        % if line.expired_date not in (False, 'False'):
+        % if isDate(line.expired_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.expired_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ></Cell>

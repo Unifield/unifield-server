@@ -28,6 +28,8 @@ import time
 from sync_common import xmlid_to_sdref
 from sync_client import get_sale_purchase_logger
 
+from tools.translate import _
+
 
 class stock_move(osv.osv):
     _inherit = 'stock.move'
@@ -141,11 +143,10 @@ class stock_picking(osv.osv):
                     indexOfProdCode = len_code  + len(prod_code)
                     batch_name = xmlid[indexOfProdCode:]
                 else: # US-1449+1435, if the product code is not found in this batch number xmlid value, then try to find another way
-                    temp = xmlid[len('sd.batch_numer'):]
                     bn_id = xmlid.rfind('_', 0, len(xmlid))
                     if bn_id != -1:
                         batch_name = xmlid[bn_id + 1:]
-                
+
                 existing_bn = prodlot_obj.search(cr, uid, [('name', '=', batch_name), ('product_id', '=', product_id)], context=context)
                 if existing_bn:
                     batch_id = existing_bn[0]
@@ -201,6 +202,7 @@ class stock_picking(osv.osv):
                   'name': data['name'],
                   'quantity': data['product_qty'] or 0.0,
                   'note': data['note'],
+                  'comment': data.get('comment'),
                   }
         return result
 
@@ -445,7 +447,9 @@ class stock_picking(osv.osv):
                     already_set_moves.append(move_id)
                     if not line_proc_ids:
                         data['ordered_quantity'] = data['quantity']
-                        move_proc.create(cr, uid, data, context=context)
+                        new_id = move_proc.create(cr, uid, data, context=context)
+                        if data.get('comment'):
+                            move_proc.write(cr, uid, new_id, {'comment': data['comment']}, context=context)
                     else:
                         for line in move_proc.browse(cr, uid, line_proc_ids, context=context):
                             if line.product_id.id == data.get('product_id') and \
@@ -453,10 +457,18 @@ class stock_picking(osv.osv):
                                (line.prodlot_id and line.prodlot_id.id == data.get('prodlot_id')) or (not line.prodlot_id and not data.get('prodlot_id')) and \
                                (line.asset_id and line.asset_id.id == data.get('asset_id')) or (not line.asset_id and not data.get('asset_id')):
                                 move_proc.write(cr, uid, [line.id], data, context=context)
+                                # comment is ovewritten in previous write
+                                if data.get('comment'):
+                                    move_proc.write(cr, uid, line.id, {
+                                        'comment': data['comment']
+                                    }, context=context)
                                 break
                         else:
                             data['ordered_quantity'] = data['quantity']
-                            move_proc.create(cr, uid, data, context=context)
+                            move_proc_id = move_proc.create(cr, uid, data, context=context)
+                            # comment is ovewritten in previous write
+                            if data.get('comment'):
+                                move_proc.write(cr, uid, move_proc_id, {'comment': data['comment']}, context=context)
                     #US-1294: Add this move and quantity as already shipped, since it's added to the wizard for processing
                     self._add_to_shipped_moves(already_shipped_moves, move_id, data['quantity'])
 
@@ -513,8 +525,8 @@ class stock_picking(osv.osv):
             return message
 
     def _manual_create_sync_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
-         rule_obj = self.pool.get("sync.client.message_rule")
-         rule_obj._manual_create_sync_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
+        rule_obj = self.pool.get("sync.client.message_rule")
+        rule_obj._manual_create_sync_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
 
     # REMOVE THIS METHOD, NO MORE USE! do_incoming_shipment_sync
 
@@ -627,7 +639,6 @@ class stock_picking(osv.osv):
         self._logger.info("+++ Closed INcoming at %s confirms the delivery to DPO at %s" % (source, cr.dbname))
 
         wf_service = netsvc.LocalService("workflow")
-        so_po_common = self.pool.get('so.po.common')
         pick_dict = out_info.to_dict()
 
         dpo_line_id = pick_dict.get('dpo_line_id', False)
@@ -659,7 +670,6 @@ class stock_picking(osv.osv):
         context['InShipOut'] = ""
         self._logger.info("+++ Closed INcoming at %s confirms the delivery of the relevant OUT/SHIP at %s" % (source, cr.dbname))
 
-        wf_service = netsvc.LocalService("workflow")
         so_po_common = self.pool.get('so.po.common')
         pick_dict = out_info.to_dict()
 
@@ -790,7 +800,6 @@ class stock_picking(osv.osv):
             context = {}
         self._logger.info("+++ Create batch number that comes with the SHIP/OUT from %s - This message is deprecated." % source)
 
-        so_po_common = self.pool.get('so.po.common')
         batch_obj = self.pool.get('stock.production.lot')
 
         batch_dict = out_info.to_dict()
@@ -827,9 +836,7 @@ class stock_picking(osv.osv):
         if not context:
             context = {}
         #self._logger.info("+++ Retrieve batch number for the SHIP/OUT from %s")
-        so_po_common = self.pool.get('so.po.common')
         batch_obj = self.pool.get('stock.production.lot')
-        prod_obj = self.pool.get('product.product')
 
         if not ('name' in batch_dict and 'life_date' in batch_dict):
             # Search for the batch object with the given data
@@ -853,7 +860,6 @@ class stock_picking(osv.osv):
         if not context:
             context = {}
         self._logger.info("+++ Create asset form that comes with the SHIP/OUT from %s" % source)
-        so_po_common = self.pool.get('so.po.common')
         asset_obj = self.pool.get('product.asset')
 
         asset_dict = out_info.to_dict()
@@ -1030,7 +1036,7 @@ class stock_picking(osv.osv):
                 return 'Invoice created for picking %s' % stock_picking.name
         else:
             return 'Picking %s state should be done and invoice_state should be 2binvoiced. Actual values were: %s and %s' \
-                    % (stock_picking.name, picking.state, picking.invoice_state)
+                % (stock_picking.name, picking.state, picking.invoice_state)
 
     def on_create(self, cr, uid, id, values, context=None):
         if context is None \
@@ -1061,7 +1067,7 @@ class stock_picking(osv.osv):
         # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \
-                context=context)
+                                              context=context)
             if 'move_lines' in changes:
                 old_lines, new_lines = map(set, changes['move_lines'])
                 logger.is_product_added |= (len(new_lines - old_lines) > 0)
@@ -1073,7 +1079,7 @@ class stock_picking(osv.osv):
                 logger.is_quantity_modified |= ('product_qty' in line_changes)
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False,
-            group=False, type='out_invoice', context=None):
+                              group=False, type='out_invoice', context=None):
         """
         If Remote Warehouse module is installed, only create supplier invoice at Central Platform
         """
@@ -1089,7 +1095,7 @@ class stock_picking(osv.osv):
 
         if do_invoice:
             invoice_result = super(stock_picking, self).action_invoice_create(cr, uid, ids,
-                                  journal_id=journal_id, group=group, type=type, context=context)
+                                                                              journal_id=journal_id, group=group, type=type, context=context)
         return invoice_result
 stock_picking()
 
@@ -1110,11 +1116,11 @@ class shipment(osv.osv):
                     context['changes']['shipment'].keys(),
                     context=context):
                 lines.setdefault(rec_line.id, {})[rec_line.id] = \
-                     context['changes']['shipment'][rec_line.id]
+                    context['changes']['shipment'][rec_line.id]
         # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \
-                context=context)
+                                              context=context)
             logger.is_status_modified |= True
 
 shipment()

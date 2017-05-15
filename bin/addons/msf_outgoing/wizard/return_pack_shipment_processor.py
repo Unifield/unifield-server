@@ -61,16 +61,16 @@ class return_pack_shipment_processor(osv.osv):
                 }, context=context)
 
         return {
-                'type': 'ir.actions.act_window',
-                'name': _('Returns Packs from Shipment'),
-                'res_model': self._name,
-                'view_mode': 'form',
-                'view_type': 'form',
-                'res_id': ids[0],
-                'nodestroy': True,
-                'target': 'new',
-                'context': context,
-                }
+            'type': 'ir.actions.act_window',
+            'name': _('Returns Packs from Shipment'),
+            'res_model': self._name,
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': ids[0],
+            'nodestroy': True,
+            'target': 'new',
+            'context': context,
+        }
 
     def deselect_all(self, cr, uid, ids, context=None):
         """
@@ -95,16 +95,16 @@ class return_pack_shipment_processor(osv.osv):
         }, context=context)
 
         return {
-                'type': 'ir.actions.act_window',
-                'name': _('Returns Packs from Shipment'),
-                'res_model': self._name,
-                'view_type': 'form',
-                'view_mode': 'form',
-                'res_id': ids[0],
-                'nodestroy': True,
-                'target': 'new',
-                'context': context,
-                }
+            'type': 'ir.actions.act_window',
+            'name': _('Returns Packs from Shipment'),
+            'res_model': self._name,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids[0],
+            'nodestroy': True,
+            'target': 'new',
+            'context': context,
+        }
 
     def do_return_pack_from_shipment(self, cr, uid, ids, context=None):
         """
@@ -258,6 +258,10 @@ class return_pack_shipment_family_processor(osv.osv):
             store=False,
             readonly=True,
             multi='pack_info',
+        ),
+        'comment': fields.text(
+            string='Comment',
+            readonly=True,
         ),
         'integrity_status': fields.selection(
             string=' ',

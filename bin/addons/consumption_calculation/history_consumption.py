@@ -21,7 +21,7 @@
 
 from osv import osv
 from osv import fields
-from mx.DateTime import *
+from mx.DateTime import DateFrom, RelativeDateTime
 from lxml import etree
 from tools.translate import _
 import logging
@@ -91,7 +91,7 @@ class product_history_consumption(osv.osv):
             context = {}
         res = {'value': {}}
         month_obj = self.pool.get('product.history.consumption.month')
-        
+
         if date_from:
             date_from = (DateFrom(date_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
             res['value'].update({'date_from': date_from})
@@ -111,11 +111,11 @@ class product_history_consumption(osv.osv):
                 search_ids = month_obj.search(cr, uid, [('name', '=', current_date.strftime('%m/%Y')), ('history_id', 'in', ids)], context=context)
                 # If the month is in the period and not in the list, create it
                 if not search_ids:
-#                    month_id = month_obj.create(cr, uid, {'name': current_date.strftime('%m/%Y'),
-#                                                          'date_from': current_date.strftime('%Y-%m-%d'),
-#                                                          'date_to': (current_date + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
-#                                                          'history_id': ids[0]}, context=context)
-#                    res['value']['month_ids'].append(month_id)
+                    #                    month_id = month_obj.create(cr, uid, {'name': current_date.strftime('%m/%Y'),
+                    #                                                          'date_from': current_date.strftime('%Y-%m-%d'),
+                    #                                                          'date_to': (current_date + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d'),
+                    #                                                          'history_id': ids[0]}, context=context)
+                    #                    res['value']['month_ids'].append(month_id)
                     res['value']['month_ids'].append({'name': current_date.strftime('%m/%Y'),
                                                       'date_from': current_date.strftime('%Y-%m-%d'),
                                                       'date_to': (current_date + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')})
@@ -148,8 +148,8 @@ class product_history_consumption(osv.osv):
                                            'location_id',
                                            'id',
                                            'nomen_manda_0',
-                                           'sublist_id']
-                                           , context=context)
+                                           'sublist_id'],
+                          context=context)
         product_ids = []
 
         # Update the locations in context
@@ -242,6 +242,22 @@ class product_history_consumption(osv.osv):
         import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
 
+        res = self.browse(cr, uid, ids[0], context=context)
+        if res.consumption_type == 'rac':
+            cr.execute('''
+            SELECT distinct(product_id)
+            FROM real_average_consumption_line
+            WHERE move_id IS NOT NULL
+            ''')
+        else:
+            cr.execute('''
+              SELECT distinct(s.product_id)
+              FROM stock_move s
+                LEFT JOIN stock_location l ON l.id = s.location_id OR l.id = s.location_dest_id
+              WHERE l.usage in ('customer', 'internal')
+            ''')
+        product_ids = [x[0] for x in cr.fetchall()]
+
         # split ids into slices to not read a lot record in the same time (memory)
         ids_len = len(product_ids)
         slice_len = 500
@@ -257,9 +273,10 @@ class product_history_consumption(osv.osv):
         for slice_ids in slices:
             try:
                 self.pool.get('product.product').read(new_cr, uid, slice_ids, ['average'], context=context)
-            except Exception, e:
+            except Exception:
                 logging.getLogger('history.consumption').warn('Exception in read average', exc_info=True)
                 new_cr.rollback()
+
         self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
 
         new_cr.commit()
@@ -434,13 +451,13 @@ class product_product(osv.osv):
                 new_data.append(new_r)
 
             res['datas'] = new_data
-        
+
         return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if not context:
-           context = {}
-        
+            context = {}
+
         ctx = context.copy()
         if 'location' in context and type(context.get('location')) == type([]):
             ctx.update({'location': context.get('location')[0]})
@@ -495,7 +512,7 @@ class product_product(osv.osv):
             context = {}
 
         res = super(product_product, self).fields_get(cr, uid, fields, context=context)
-        
+
         if context.get('history_cons', False):
             months = context.get('months', [])
 
@@ -549,7 +566,7 @@ class product_product(osv.osv):
                                         ('consumption_id', '=', obj_id)]
                     if context.get('amc') == 'AMC':
                         cons_prod_domain.append(('cons_type', '=', 'amc'))
-                        cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, context=context)
+                        cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, order='NO_ORDER', limit=1, context=context)
                         if cons_id:
                             consumption = cons_prod_obj.browse(cr, uid, cons_id[0], context=context).value
                         else:
@@ -561,7 +578,7 @@ class product_product(osv.osv):
                                                            'value': consumption}, context=context)
                     else:
                         cons_prod_domain.append(('cons_type', '=', 'fmc'))
-                        cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, context=context)
+                        cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, order='NO_ORDER', limit=1, context=context)
                         if cons_id:
                             consumption = cons_prod_obj.browse(cr, uid, cons_id[0], context=context).value
                         else:
@@ -581,7 +598,7 @@ class product_product(osv.osv):
                                     ('consumption_id', '=', obj_id),
                                     ('cons_type', '=', context.get('amc') == 'AMC' and 'amc' or 'fmc')]
                 r.update({'average': round(total_consumption/float(len(context.get('months'))),2)})
-                cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, context=context)
+                cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, order='NO_ORDER', limit=1, context=context)
                 if cons_id:
                     cons_prod_obj.write(cr, uid, cons_id, {'value': r['average']}, context=context)
                 else:
@@ -619,7 +636,7 @@ class product_product(osv.osv):
         hist_obj = self.pool.get('product.history.consumption.product')
 
         res = super(product_product, self).search(cr, uid, args, offset, limit,
-                order, context, count)
+                                                  order, context, count)
 
         if context.get('history_cons', False) and context.get('obj_id', False):
             if order and order != 'NO_ORDER' or average_domain:
@@ -650,8 +667,8 @@ class product_product(osv.osv):
             elif average_domain:
                 # UTP-501 'average' filter without sorting
                 hist_ids = hist_obj.search(cr, uid, hist_domain, offset=offset,
-                        limit=limit, order=order,
-                        context=context)
+                                           limit=limit, order=order,
+                                           context=context)
                 res = [x['product_id'][0] for x in hist_obj.read(cr, uid, hist_ids, ['product_id'], context=context)]
 
         return res
@@ -664,10 +681,10 @@ class product_history_consumption_product(osv.osv):
 
     _columns = {
         'consumption_id': fields.many2one('product.history.consumption', string='Consumption id', select=1, ondelete='cascade'),
-        'product_id': fields.many2one('product.product', string='Product'),
-        'name': fields.char(size=64, string='Name'),
-        'value': fields.float(digits=(16,2), string='Value', select=1),
-        'cons_type': fields.selection([('amc', 'AMC'), ('fmc', 'FMC')], string='Consumption type'),
+        'product_id': fields.many2one('product.product', string='Product', select=1),
+        'name': fields.char(size=64, string='Name', select=1),
+        'value': fields.float(digits=(16,2), string='Value'),
+        'cons_type': fields.selection([('amc', 'AMC'), ('fmc', 'FMC')], string='Consumption type', select=1),
     }
 
     def read(self, cr, uid, ids, fields, context=None, load='_classic_read'):

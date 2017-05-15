@@ -253,6 +253,7 @@
             <field name="name">res.users.form</field>
             <field name="model">res.users</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="base.view_users_form" />
             <field name="arch" type="xml">
             	<data>
@@ -325,6 +326,7 @@
             <field name="name">act.report.xml.view</field>
             <field name="model">ir.actions.report.xml</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="base.act_report_xml_view" />
             <field name="arch" type="xml">
                 <data>
@@ -369,6 +371,7 @@
             <field name="arch" type="xml">
                 <search string="Groups">
                     <filter name="show_active" string="Only inactive" icon="gtk-cancel" domain="[('visible_res_groups', '=', False)]" context="{'show_invisible': True}" />
+                    <filter name="show_good_level" string="All Levels" icon="gtk-cancel" context="{'show_all_level': True}" />
                     <field name="name" />
                     <field name="is_an_admin_profile" />
                 </search>
@@ -381,7 +384,7 @@
             <field name="res_model">res.groups</field>
             <field name="view_type">form</field>
             <field name="domain">[('visible_res_groups', '=', True)]</field>
-            <field name="context">{'show_invisible': False}</field>
+            <field name="context">{'show_invisible': False, 'show_all_level': False}</field>
             <field name="search_view_id" ref="res_groups_search_view" />
             <field name="help">A group is a set of functional areas that will be assigned to the user in order to give them access and rights to specific applications and tasks in the system. You can create custom groups or edit the ones existing by default in order to customize the view of the menu that users will be able to see. Whether they can have a read, write, create and delete access right can be managed from here.</field>
         </record>
@@ -395,6 +398,7 @@
             <field name="arch" type="xml">
                 <search string="Users">
                     <filter name="show_inactive" string="Show inactive" icon="gtk-ok" domain="[('active', '=', False)]" />
+                    <filter name="show_synchronized" string="Show synchronized" icon="gtk-ok" domain="[('synchronize', '=', True)]"/>
                     <field name="name" />
                     <field name="login" />
                     <field name="address_id" string="Address" />

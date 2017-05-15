@@ -84,7 +84,7 @@ class import_currencies(osv.osv_memory):
             return False, 'exist', _('Already exists at this date.')
         return True, '', ''
 
-    def import_rates(self, cr, uid, ids, context=None):
+    def import_rates(self, cr, uid, ids, context=None, auto_import=False):
         """
         Read wizard and import currencies even if they already exists.
         Create a list of what problem have been encounted during process.
@@ -97,27 +97,48 @@ class import_currencies(osv.osv_memory):
         currency_rate_obj = self.pool.get('res.currency.rate')
         currency_list = []
         date = None
+
+        def manage_error(line_index, msg, name='', code='', status=''):
+            if auto_import:
+                rejected_lines.append((line_index, [name, code, status], msg))
+            else:
+                raise osv.except_osv(_('Error'), 'Line %s, %s' % (line_index, _(msg)))
+
         for wizard in self.browse(cr, uid, ids, context=context):
             if not wizard.import_file:
                 raise osv.except_osv(_('Warning'), _('Please browse a csv file.'))
             import_file = base64.decodestring(wizard.import_file)
             import_string = StringIO.StringIO(import_file)
             import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
+
             if not import_data:
                 raise osv.except_osv(_('Warning'), _('File is empty.'))
 
             self._check_periods(cr, uid, wizard.rate_date, context=context)
             date = wizard.rate_date
-            idx = 0
+            processed_lines = []
+            rejected_lines = []
+            headers = []
+            line_index = 0
             for line in import_data:
-                if idx == 0:
-                    if line[0] != 'Currency Code' and line[0] != 'Rate':
-                        raise osv.except_osv(_('Warning'), _('File header is not in the correct format and cannot be imported.'))
+                if not line:
+                    # ignore empty lines
+                    continue
+                if auto_import:
+                    # auto_import uses a Date column, useless here
+                    # remove it
+                    line = line[1:]
+                if line_index == 0:
+                    headers = line
+                    if headers[0] != 'Currency Code' and headers[0] != 'Rate':
+                        msg = _('File header is not in the correct format and cannot be imported.')
+                        manage_error(line_index, msg)
                     else:
-                        idx = idx + 1
+                        line_index += 1
                         continue
                 if len(line) != 2:
-                    raise osv.except_osv(_('Warning'), _('File is not in the correct format and cannot be imported.'))
+                    msg = _('File is not in the correct format and cannot be imported.')
+                    manage_error(line_index, msg)
                 else:
                     if len(line[0]) > 0 and len(line[0]) == 3:
                         # update context with active_test = False; otherwise, non-set currencies
@@ -131,17 +152,22 @@ class import_currencies(osv.osv_memory):
                                 'rate': float(line[1]),
                                 'currency_id': currency_ids[0]
                             })
-                        if not line_res:
+                            processed_lines.append((line_index,[]))
+                        else:
                             currency_list.append([line, "%s (%s)" % (line[0], line_problem_description)])
+                            rejected_lines.append((line, "%s (%s)" % (line[0], line_problem_description)))
                     else:
-                        raise osv.except_osv(_('Warning'), _('File is not in the correct format and cannot be imported.'))
+                        msg = _('File is not in the correct format and cannot be imported.')
+                        manage_error(line_index, msg)
+                line_index += 1
 
+        if auto_import:
+            return processed_lines, rejected_lines, headers
 
         # Prepare some info
         model = 'confirm.import.currencies'
-        message = ''
         complementary_data = {}
-        # Give currencies list if any problem occured
+        # Give currencies list if any problem occurred
         if currency_list and len(currency_list) > 0:
             model = 'warning.import.currencies'
             wizard_id = self.pool.get(model).create(cr, uid, {'currency_list': '\n'.join([x and x and x[1] for x in currency_list]), 'date': date}, context=context)
@@ -151,12 +177,12 @@ class import_currencies(osv.osv_memory):
             complementary_data.update({'res_id': wizard_id})
         # Prepare result
         res = {
-                'type': 'ir.actions.act_window',
-                'res_model': model,
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': context
+            'type': 'ir.actions.act_window',
+            'res_model': model,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context
         }
         # Add complementary data if necessary
         if complementary_data:

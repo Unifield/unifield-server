@@ -130,7 +130,7 @@ class financing_contract_contract(osv.osv):
     def contract_open_proxy(self, cr, uid, ids, context=None):
         # utp-1030/7: check grant amount when going on in workflow
         return self._check_grant_amount_proxy(cr, uid, ids,
-            'contract_open', context=context)
+                                              'contract_open', context=context)
 
     def contract_open(self, cr, uid, ids, *args):
         self.write(cr, uid, ids, {
@@ -170,7 +170,7 @@ class financing_contract_contract(osv.osv):
     def contract_soft_closed_proxy(self, cr, uid, ids, context=None):
         # utp-1030/7: check grant amount when going on in workflow
         return self._check_grant_amount_proxy(cr, uid, ids,
-            'contract_soft_closed', context=context)
+                                              'contract_soft_closed', context=context)
 
     def contract_soft_closed(self, cr, uid, ids, *args):
         """
@@ -201,7 +201,7 @@ class financing_contract_contract(osv.osv):
     def contract_hard_closed_proxy(self, cr, uid, ids, context=None):
         # utp-1030/7: check grant amount when going on in workflow
         return self._check_grant_amount_proxy(cr, uid, ids,
-            'contract_hard_closed', context=context)
+                                              'contract_hard_closed', context=context)
 
     def contract_hard_closed(self, cr, uid, ids, *args):
         self.write(cr, uid, ids, {
@@ -216,7 +216,7 @@ class financing_contract_contract(osv.osv):
         # UTP-1063: Don't use MSF Private Funds anymore
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except Exception as e:
+        except Exception:
             fp_id = 0
 
         #US-385: Move the funding pool and cost center outside the loop, put them at header of the domain
@@ -281,16 +281,16 @@ class financing_contract_contract(osv.osv):
         """
         # get company instance
         user = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0]
+                                                 context=context)[0]
         if user and user.company_id and user.company_id.instance_id:
             instance_level = (user.company_id.instance_id.id,
-                user.company_id.instance_id.level, )
+                              user.company_id.instance_id.level, )
         else:
             instance_level = (False, False, )
         return instance_level
 
     def _get_instance_level(self, cr, uid, ids, field_name=None, arg=None,
-        context=None):
+                            context=None):
         """ get instance level (from connected user) """
         if not ids:
             return {}
@@ -311,13 +311,14 @@ class financing_contract_contract(osv.osv):
         'soft_closed_date': fields.date('Soft-closed date'),
         'hard_closed_date': fields.date('Hard-closed date'),
         'state': fields.selection([('draft','Draft'),
-                                    ('open','Open'),
-                                    ('soft_closed', 'Soft-closed'),
-                                    ('hard_closed', 'Hard-closed')], 'State'),
+                                   ('open','Open'),
+                                   ('soft_closed', 'Soft-closed'),
+                                   ('hard_closed', 'Hard-closed')], 'State'),
         'currency_table_id': fields.many2one('res.currency.table', 'Currency Table'),
         'instance_id': fields.many2one('msf.instance','Proprietary Instance', required=True),
         # Define for _inherits
-        'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade"),
+        'format_id': fields.many2one('financing.contract.format', 'Format',
+                                     ondelete="cascade", required=True),
         'fp_added_flag': fields.boolean('Flag when new FP is added'),
         'instance_level': fields.function(_get_instance_level, method=True, string="Current instance level", type="char", readonly=True),  # UFTP-343
     }
@@ -478,7 +479,7 @@ class financing_contract_contract(osv.osv):
                 project_budget += round(line.project_budget)
                 allocated_real += round(line.allocated_real)
                 project_real += round(line.project_real)
-                reporting_line_id = self.create_reporting_line(cr, uid, contract, line, contract_line_id, context=context)
+                self.create_reporting_line(cr, uid, contract, line, contract_line_id, context=context)
 
         # Refresh contract line with general infos
         analytic_domain = self.get_contract_domain(cr, uid, contract, context=context)
@@ -491,8 +492,8 @@ class financing_contract_contract(osv.osv):
                            'allocated_real': allocated_real,
                            'project_real': project_real,
 
-                            'allocated_balance': allocated_balance,
-                            'project_balance': project_balance,
+                           'allocated_balance': allocated_balance,
+                           'project_balance': project_balance,
 
                            'analytic_domain': analytic_domain}
         reporting_line_obj.write(cr, uid, [contract_line_id], vals=contract_values, context=context)
@@ -501,19 +502,19 @@ class financing_contract_contract(osv.osv):
         model_data_obj = self.pool.get('ir.model.data')
         view_id = False
         view_ids = model_data_obj.search(cr, uid,
-                                        [('module', '=', 'financing_contract'),
-                                         ('name', '=', 'view_donor_reporting_line_tree_%s' % str(contract.reporting_type))],
-                                        offset=0, limit=1)
+                                         [('module', '=', 'financing_contract'),
+                                          ('name', '=', 'view_donor_reporting_line_tree_%s' % str(contract.reporting_type))],
+                                         offset=0, limit=1)
         if len(view_ids) > 0:
             view_id = model_data_obj.browse(cr, uid, view_ids[0]).res_id
         return {
-               'type': 'ir.actions.act_window',
-               'res_model': 'financing.contract.donor.reporting.line',
-               'view_type': 'tree',
-               'view_id': [view_id],
-               'target': 'current',
-               'domain': [('id', '=', contract_line_id)],
-               'context': context
+            'type': 'ir.actions.act_window',
+            'res_model': 'financing.contract.donor.reporting.line',
+            'view_type': 'tree',
+            'view_id': [view_id],
+            'target': 'current',
+            'domain': [('id', '=', contract_line_id)],
+            'context': context
         }
 
     def menu_allocated_expense_report(self, cr, uid, ids, context=None):
@@ -525,13 +526,13 @@ class financing_contract_contract(osv.osv):
                                           'contract_id': ids[0]}, context=context)
         # we open a wizard
         return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'wizard.expense.report',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.expense.report',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def menu_project_expense_report(self, cr, uid, ids, context=None):
@@ -544,13 +545,13 @@ class financing_contract_contract(osv.osv):
                                           'contract_id': ids[0]}, context=context)
         # we open a wizard
         return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'wizard.expense.report',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.expense.report',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def menu_csv_interactive_report(self, cr, uid, ids, context=None):
@@ -561,13 +562,13 @@ class financing_contract_contract(osv.osv):
                                           'contract_id': ids[0]}, context=context)
         # we open a wizard
         return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'wizard.interactive.report',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.interactive.report',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def allocated_expenses_report(self, cr, uid, ids, context=None):
@@ -593,10 +594,10 @@ class financing_contract_contract(osv.osv):
 
     def default_get(self, cr, uid, fields, context=None):
         res = super(financing_contract_contract, self).default_get(cr, uid,
-            fields, context=context)
+                                                                   fields, context=context)
 
         instance_id, instance_level = self.__get_instance_level(cr, uid,
-            context=context)
+                                                                context=context)
         res['instance_level'] = instance_level
         if instance_level and instance_level == 'coordo':
             """
@@ -627,6 +628,9 @@ class financing_contract_contract(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if context is None:
+            context = {}
+
         if 'donor_id' in vals:
             donor = self.pool.get('financing.contract.donor').browse(cr, uid, vals['donor_id'], context=context)
             for contract in self.browse(cr, uid, ids, context=context):
@@ -659,9 +663,10 @@ class financing_contract_contract(osv.osv):
         format =  self.browse(cr,uid,ids,context=context)[0].format_id
         funding_pool_ids = [x.funding_pool_id.id for x in format.funding_pool_ids]
 
-        earmarked_funding_pools = [x.funded for x in format.funding_pool_ids]
-        if not any(earmarked_funding_pools) and format.reporting_type == 'allocated':
-            raise osv.except_osv(_('Error'), _("At least one funding pool should be defined as earmarked in the funding pool list of this financing contract."))
+        if not context.get('sync_update_execution'):
+            earmarked_funding_pools = [x.funded for x in format.funding_pool_ids]
+            if not any(earmarked_funding_pools) and format.reporting_type == 'allocated':
+                raise osv.except_osv(_('Error'), _("At least one funding pool should be defined as earmarked in the funding pool list of this financing contract."))
 
 
         cost_center_ids = [x.id for x in format.cost_center_ids]
@@ -715,7 +720,7 @@ class financing_contract_contract(osv.osv):
         if isinstance(ids, (long, int)):
             ids = [ids]
         check_action = self._check_grant_amount(cr, uid, ids, signal,
-            context=context)
+                                                context=context)
         if check_action:
             return check_action
         wf_service = netsvc.LocalService("workflow")
@@ -750,15 +755,15 @@ class financing_contract_contract(osv.osv):
             if context is None:
                 context = {}
             warn_msg = _("WARNING: 'Grant' amount is not equal to "
-                "'Funded - Budget'.\nGrant: %.2f\nFunded Budget: %.2f")
+                         "'Funded - Budget'.\nGrant: %.2f\nFunded Budget: %.2f")
             context['financing_contract_warning'] = {
                 'text': warn_msg % (self_br.grant_amount, funded_budget, ),
                 'signal': signal,
                 'res_id': ids[0],
             }
             view_id = self.pool.get('ir.model.data').get_object_reference(cr,
-                uid, 'financing_contract',
-                'view_financing_contract_contract_warning_form')[1]
+                                                                          uid, 'financing_contract',
+                                                                          'view_financing_contract_contract_warning_form')[1]
             return {
                 'name': 'Financing Contract Warning',
                 'type': 'ir.actions.act_window',

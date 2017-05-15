@@ -106,9 +106,15 @@
             </Row>
             % for sptc in getSPTC(o.id):
             <Row>
+                % if isDateTime(sptc.change_date):
                 <Cell ss:StyleID="line_short_date">
                     <Data ss:Type="DateTime">${sptc.change_date.replace(' ', 'T')|n}.000</Data>
                 </Cell>
+                % else:
+                <Cell ss:StyleID="line_short_date">
+                    <Data ss:Type="String"></Data>
+                </Cell>
+                % endif
                 <Cell ss:StyleID="line">
                     <Data ss:Type="String">${sptc.user_id.name|x}</Data>
                 </Cell>

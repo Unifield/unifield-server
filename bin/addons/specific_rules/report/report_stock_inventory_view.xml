@@ -7,7 +7,7 @@
             <field name="model">export.report.stock.inventory</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Export Inventory Level">
+                <tree string="Export Inventory Level" noteditable="1">
                     <field name="name" />
                     <field name="location_id" />
                     <field name="state" />
@@ -33,7 +33,7 @@
             <field name="model">export.report.stock.inventory</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Export Inventory Level">
+                <form string="Export Inventory Level" noteditable="state!='draft'">
                     <separator colspan="4" string="Request information" />
                     <field name="name" />
                     <field name="company_id" />
@@ -45,7 +45,12 @@
                            domain="[('src_product_id', '=', product_id)]" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                     <field name="expiry_date" attrs="{'readonly': ['|', ('prodlot_id', '!=', False), ('state', '!=', 'draft')]}" />
                     <separator colspan="4" string="Actions" />
-                    <button name="generate_report" type="object" string="Generate report" icon="gtk-execute" states="draft" />
+                    <button name="generate_report" type="object"
+                            string="Generate report" icon="gtk-execute" states="draft"
+                            attrs="{'readonly': [('location_id', '=', False)]}" />
+                    <button name="generate_report_all_locations" type="object"
+                            string="Generate report (all locations)" icon="gtk-execute" states="draft"
+                            attrs="{'readonly': [('location_id', '!=', False)]}" />
                     <button name="update" type="object" string="Update" icon="gtk-reload" states="in_progress" />
                     <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'ready')]}">
                         <html>                                                      
@@ -108,6 +113,18 @@
             model="export.report.stock.inventory"
             name="stock.inventory.xls"
             file="specific_rules/report/report_stock_inventory_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
+
+        <report
+            id="report_stock_inventory_all_locations_xls"
+            string="Export Inventory Level (All Locations)"
+            model="export.report.stock.inventory.all.locations"
+            name="stock.inventory.all.locations.xls"
+            file="specific_rules/report/report_stock_inventory_all_locations_xls.mako"
             report_type="webkit"
             header="False"
             auto="False"

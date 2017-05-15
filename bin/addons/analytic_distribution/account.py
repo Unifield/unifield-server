@@ -85,15 +85,29 @@ class account_destination_link(osv.osv):
         'destination_id': fields.many2one('account.analytic.account', "Analytical Destination Account", required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", readonly=True),
         'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'tuple_id', 'funding_pool_id', "Funding Pools"),
         'name': fields.function(_get_tuple_name, method=True, type='char', size=254, string="Name", readonly=True,
-            store={
-                'account.destination.link': (lambda self, cr, uid, ids, c={}: ids, ['account_id', 'destination_id'], 20),
-                'account.analytic.account': (_get_analytic_account_ids, ['code'], 10),
-                'account.account': (_get_account_ids, ['code'], 10),
-            }),
+                                store={
+                                    'account.destination.link': (lambda self, cr, uid, ids, c={}: ids, ['account_id', 'destination_id'], 20),
+                                    'account.analytic.account': (_get_analytic_account_ids, ['code'], 10),
+                                    'account.account': (_get_account_ids, ['code'], 10),
+                                }),
         'used': fields.function(_get_used, string='Used', method=True, type='boolean'),
+        'disabled': fields.boolean('Disabled'),
     }
 
     _sql_constraints = [('unique_account_destination', 'unique(account_id, destination_id)', 'Couple account, destination must be unique!')]
+
+    _defaults = {
+        'disabled': lambda *a: False,
+    }
+
+    def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution'):
+            return super(account_destination_link, self).unlink(cr, uid, ids, context)
+
+        self.write(cr, uid, ids, {'disabled': True}, context=context)
+        return True
 
 account_destination_link()
 
@@ -156,12 +170,13 @@ class account_destination_summary(osv.osv):
                     account_destination_summary sum,
                     funding_pool_associated_destinations d
                 WHERE
+                    l.disabled = 'f' and
                     d.tuple_id = l.id and
                     sum.account_id = l.account_id and
                     sum.funding_pool_id = d.funding_pool_id and
                     sum.id in %s
                 ''',(tuple(ids),)
-                )
+            )
             tmp_result = {}
             for x in cr.fetchall():
                 tmp_result.setdefault(x[0], []).append(x[1])
@@ -196,7 +211,8 @@ class account_destination_summary(osv.osv):
                     account_destination_link l,
                     funding_pool_associated_destinations d
                 WHERE
-                    d.tuple_id = l.id
+                    d.tuple_id = l.id and
+                    l.disabled = 'f'
                 GROUP BY
                     l.account_id,d.funding_pool_id
             )
@@ -211,8 +227,9 @@ class account_account(osv.osv):
     _columns = {
         'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False),
         'user_type_report_type': fields.related('user_type', 'report_type', type="char", string="User Type Report Type", store=False),
+        'user_type_name': fields.related('user_type', 'name', type="char", string="User Type Name", store=False),
         'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id',
-            string='Funding Pools'),
+                                                  string='Funding Pools'),
         'default_destination_id': fields.many2one('account.analytic.account', 'Default Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"),
         'destination_ids': many2many_notlazy('account.analytic.account', 'account_destination_link', 'account_id', 'destination_id', 'Destinations', readonly=True),
     }
@@ -248,6 +265,10 @@ class account_account(osv.osv):
                     all_ids = [x.id for x in a.destination_ids] or []
                     all_ids.append(dd_id)
                     super(account_account, self).write(cr, uid, [a.id], {'destination_ids': [(6, 0, all_ids)]})
+            link_obj = self.pool.get('account.destination.link')
+            link_ids = link_obj.search(cr, uid, [('account_id', 'in', ids), ('disabled', '=', True)], context=context)
+            if link_ids:
+                link_obj.write(cr, uid, link_ids, {'disabled': False}, context=context)
             return res
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 
@@ -337,14 +358,14 @@ class account_move(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Global analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Global analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def button_reset_distribution(self, cr, button_uid, ids, context=None):
@@ -391,6 +412,8 @@ class account_move(osv.osv):
         if context is None:
             context = {}
         res = super(account_move, self).validate(cr, uid, ids, context)
+        if context.get('sync_update_execution'):
+            return res
         for m in self.browse(cr, uid, ids):
             if m.status and m.status == 'manu':
                 for ml in m.line_id:

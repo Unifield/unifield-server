@@ -1,9 +1,8 @@
-import time
 from report import report_sxw
 import pooler
-import locale
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
+assert _  # pyflakes check
 
 
 
@@ -13,7 +12,6 @@ class report_project_expenses(report_sxw.report_sxw):
 
     def create(self, cr, uid, ids, data, context=None):
         pool = pooler.get_pool(cr.dbname)
-        res = {}
 
         obj = pool.get('wizard.expense.report')
         # Context updated with wizard's value
@@ -51,17 +49,11 @@ class report_project_expenses2(report_sxw.rml_parse):
             'getSub2':self.getSub2,
             'getLines2':self.getLines2,
             'getFormula':self.getFormula,
-            'isDate':self.isDate,
             'totalRptCurrency': self.totalRptCurrency,
             'totalBookAmt':self.totalBookAmt,
             'getTotalRptCurrency': self.getTotalRptCurrency,
             'getTotalBookAmt': self.getTotalBookAmt,
         })
-
-    def isDate(self,date):
-        if len(date) > 9 :
-            return True
-        return False
 
     def getFormula(self):
         formul = ''

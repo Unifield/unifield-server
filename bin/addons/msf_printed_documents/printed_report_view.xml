@@ -6,6 +6,7 @@
             <field name="name">xml.report.target.filename.form.view</field>
             <field name="model">ir.actions.report.xml</field>
             <field name="type">form</field>
+            <field name="priority">30</field>
             <field name="inherit_id" ref="base.act_report_xml_view"/>
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='report_file']" position="after">

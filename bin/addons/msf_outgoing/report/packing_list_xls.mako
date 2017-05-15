@@ -333,7 +333,7 @@
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
     <Cell ss:MergeAcross="1" ss:StyleID="m99299388"><Data ss:Type="String">FO Date:</Data></Cell>
-    % if p['ppl'].sale_id and p['ppl'].sale_id.date_order not in (False, 'False'):
+    % if p['ppl'].sale_id and isDate(p['ppl'].sale_id.date_order):
     <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${p['ppl'].sale_id.date_order|n}T00:00:00.000</Data></Cell>
     % else:
     <Cell ss:StyleID="s17"><Data ss:Type="String"></Data></Cell>
@@ -348,7 +348,7 @@
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
     <Cell ss:MergeAcross="1" ss:StyleID="m99299408"><Data ss:Type="String">Packing date:</Data></Cell>
-    % if p['ppl'].date not in (False, 'False'):
+    % if p['ppl'].date and isDate(p['ppl'].date[0:10]):
     <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${p['ppl'].date[0:10]|n}T00:00:00.000</Data></Cell>
     % else:
     <Cell ss:StyleID="s17"><Data ss:Type="String"></Data></Cell>
@@ -363,7 +363,7 @@
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
     <Cell ss:MergeAcross="1" ss:StyleID="m99299428"><Data ss:Type="String">RTS date:</Data></Cell>
-    % if objects[0].shipment_expected_date not in (False, 'False'):
+    % if objects[0].shipment_expected_date and isDate(objects[0].shipment_expected_date[0:10]):
     <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${objects[0].shipment_expected_date[0:10]|n}T00:00:00.000</Data></Cell>
     % else:
     <Cell ss:StyleID="s17"><Data ss:Type="String"></Data></Cell>
@@ -441,10 +441,10 @@
        <Cell ss:StyleID="s134"><Data ss:Type="Number">${(m.line_number)|x}</Data></Cell>
        <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.product_id.default_code)|x}</Data></Cell>
        <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.product_id.name)|x}</Data></Cell>
-       <Cell ss:StyleID="s134" ss:MergeAcross="2"><Data ss:Type="String">${(m.sale_line_id and m.sale_line_id.notes or '')|x}</Data></Cell>
+       <Cell ss:StyleID="s134" ss:MergeAcross="2"><Data ss:Type="String">${(m.comment or '')|x}</Data></Cell>
        <Cell ss:StyleID="s134"><Data ss:Type="String">${(formatLang(m.product_qty or 0.00))|x} ${(m.product_uom.name)|x}</Data></Cell>
        <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.prodlot_id.name or '')|x}</Data></Cell>
-       % if m.prodlot_id.life_date and m.prodlot_id.life_date not in (False, 'False'):
+       % if isDate(m.prodlot_id.life_date):
        <Cell ss:StyleID="s134_short_date"><Data ss:Type="DateTime">${(m.prodlot_id.life_date)|n}T00:00:00.000</Data></Cell>
        % else:
        <Cell ss:StyleID="s134"><Data ss:Type="String"></Data></Cell>

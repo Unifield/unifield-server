@@ -25,20 +25,25 @@
     'version': '0.1',
     'category': 'Tools',
     'description': """
-        
+
     """,
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['sync_common', 'msf_tools'],
-    'init_xml': [],
+    'depends': ['sync_common', 'msf_tools', 'useability_dashboard_and_menu',
+                'sync_client', 'product_attributes', 'sale_override'],
+    'init_xml': [
+        'sync_server_menu.xml',
+    ],
     'data': [
         'sync_server_view.xml',
         'update_view.xml',
         'message_view.xml',
         'rules_view.xml',
+        'security/group.xml',
         'security/ir.model.access.csv',
         'data/cron.xml',
         'data/alert_email.xml',
+        'data/audittrail_sync_server.yml',
         'data/automated_import_sync_groups.xml',
     ],
     'demo_xml': [
@@ -49,4 +54,3 @@
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

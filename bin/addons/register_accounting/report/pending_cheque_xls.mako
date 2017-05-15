@@ -181,7 +181,11 @@
   </Row>
   <Row ss:Index="3">
     <Cell ss:StyleID="title"><Data ss:Type="String">${_('Period end date:')}</Data></Cell>
+    % if isDate(o.period_id.date_stop):
     <Cell ss:StyleID="short_date2"><Data ss:Type="DateTime">${o.period_id.date_stop|n}T00:00:00.000</Data></Cell>
+    % else:
+    <Cell ss:StyleID="title"><Data ss:Type="String"></Data></Cell>
+    % endif
   </Row>
   <Row>
     <Cell ss:StyleID="title" ><Data ss:Type="String">${_('Instance:')}</Data></Cell>
@@ -230,8 +234,16 @@
 	</Row>
     % for line in getLines(o):
     <Row>
+        % if isDate(line.document_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data></Cell>
+        % else:
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        % endif
+        % if isDate(line.date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date|n}T00:00:00.000</Data></Cell>
+        % else:
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        % endif
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.period_id and line.statement_id.period_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.cheque_number and line.cheque_number or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.move_id.name or '')|x}</Data></Cell>

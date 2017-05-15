@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
 from sync_common import xmlid_to_sdref
 from lxml import etree
 
@@ -266,7 +266,7 @@ class so_po_common(osv.osv_memory):
             if ana_id:
                 return ana_id
             # UTP-1177: If the AD is given but not valid, stop the process of the message and set the message not run 
-            raise Exception, "Sorry the given analytic distribution " + analytic_id + " is not available. Cannot proceed this message!"
+            raise Exception, "Sorry the given analytic distribution " + analytic_id['id'] + " is not available. Cannot proceed this message!"
         return False
 
     def create_sync_order_label(self, cr, uid, data_dict, context=None):
@@ -373,6 +373,7 @@ class so_po_common(osv.osv_memory):
         split_cancel_line = {}
         split_bypass_lines = {}
         update_lines_sync_order_ids = []
+        msg_err_not_found = "" # prod received by sync but not in our DB
         line_vals_dict = line_values.to_dict()
         if 'order_line' not in line_vals_dict:
             return []
@@ -456,6 +457,11 @@ class so_po_common(osv.osv_memory):
                 if rec_id:
                     values['nomen_manda_0'] = rec_id
 
+            if not values.get('nomen_manda_0') and not values.get('product_id'):
+                if not msg_err_not_found:
+                    msg_err_not_found += "Order could not be created as product not recognised, not existing in current database?\n"
+                msg_err_not_found += "Product '%s' (line %s) with code %s not recognised.\n" % (line.name, line.line_number, line.default_code)
+
             if line_dict.get('nomen_manda_1'):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_1.id), context=context)
                 if rec_id:
@@ -470,7 +476,7 @@ class so_po_common(osv.osv_memory):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_3.id), context=context)
                 if rec_id:
                     values['nomen_manda_3'] = rec_id
-    
+
             if line_dict.get('sync_sourced_origin'):
                 values['origin'] = line_dict.get('sync_sourced_origin')
                 so_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', values['origin']), ('state', 'in', ('sourced', 'progress', 'manual')), ('procurement_request', 'in', ('t', 'f'))], context=context)
@@ -502,7 +508,7 @@ class so_po_common(osv.osv_memory):
                 line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', po_id)], context=context)
                 lines_to_split = self.pool.get('purchase.order.line.to.split').search(cr, uid, [('new_sync_order_line_db_id', '=', sync_order_line_db_id), ('splitted', '=', False)], context=context)
                 if lines_to_split and not line_ids:
-#                if self.pool.get('purchase.order.line.to.split').search(cr, uid, [('new_sync_order_line_db_id', '=', sync_order_line_db_id)], context=context):
+                    #                if self.pool.get('purchase.order.line.to.split').search(cr, uid, [('new_sync_order_line_db_id', '=', sync_order_line_db_id)], context=context):
                     split_bypass_lines.setdefault(sync_order_line_db_id, [])
                     split_bypass_lines[sync_order_line_db_id].append((lines_to_split, values))
                     continue
@@ -542,7 +548,7 @@ class so_po_common(osv.osv_memory):
             elif so_id:
                 # look for the correct PO line for updating the value - corresponding to the SO line
                 line_ids = self.pool.get('sale.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', so_id)], context=context)
-            
+
             if line_ids and line_ids[0]:
                 if for_update: # add this value to the list of update, then remove
                     update_lines.append(line_ids[0])
@@ -552,6 +558,9 @@ class so_po_common(osv.osv_memory):
             else:
                 update_lines_sync_order_ids.append(values['sync_order_line_db_id'])
                 line_result.append((0, 0, values))
+
+        if msg_err_not_found:
+            raise Exception(msg_err_not_found.strip())
 
         for sync_order_line_db_id, line_values in split_bypass_lines.iteritems():
             for line_vals in line_values:
@@ -582,7 +591,7 @@ class so_po_common(osv.osv_memory):
                             context.update({'deleted_line_so_id': so_id})
                         else:
                             line_result.append((2, existing_line))
-        
+
         return line_result 
 
 
@@ -598,7 +607,6 @@ class so_po_common(osv.osv_memory):
 
     def get_stock_move_lines(self, cr, uid, line_values, context):
         line_result = []
-        update_lines = []
 
         line_vals_dict = line_values.to_dict()
         if 'move_lines' not in line_vals_dict:
@@ -695,25 +703,25 @@ class so_po_common(osv.osv_memory):
         arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, destination=partner, context=context)
 
         identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [object_id], rule.server_id, context=context)
-        
+
         if not identifiers:
             return
 
         xml_id = identifiers[object_id]
         existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier',
-            '=', xml_id), ('destination_name', '=', partner_name)],
-            limit=1, order='NO_ORDER', context=context)
+                                                                '=', xml_id), ('destination_name', '=', partner_name)],
+                                                     limit=1, order='NO_ORDER', context=context)
         if existing_message_id: # if similar message does not exist in the system, then do nothing
             return
 
         # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
         data = {
-                'identifier' : xml_id,
-                'remote_call': rule.remote_call,
-                'arguments': arguments,
-                'destination_name': partner_name,
-                'sent' : False,
-                'generate_message' : True,
+            'identifier' : xml_id,
+            'remote_call': rule.remote_call,
+            'arguments': arguments,
+            'destination_name': partner_name,
+            'sent' : False,
+            'generate_message' : True,
         }
         return msg_to_send_obj.create(cr, uid, data, context=context)
 
@@ -726,19 +734,19 @@ class so_po_common(osv.osv_memory):
 
         xml_id = cr.dbname + "_recovery_" + partner_name + "_object_" + name
         existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier',
-            '=', xml_id), ('destination_name', '=', partner_name)],
-            limit=1, order='NO_ORDER', context=context)
+                                                                '=', xml_id), ('destination_name', '=', partner_name)],
+                                                     limit=1, order='NO_ORDER', context=context)
         if existing_message_id: # if similar message does not exist in the system, then do nothing
             return
 
         # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
         data = {
-                'identifier' : xml_id,
-                'remote_call': rule.remote_call,
-                'arguments': [{'name': name}],
-                'destination_name': partner_name,
-                'sent' : False,
-                'generate_message' : True,
+            'identifier' : xml_id,
+            'remote_call': rule.remote_call,
+            'arguments': [{'name': name}],
+            'destination_name': partner_name,
+            'sent' : False,
+            'generate_message' : True,
         }
         return msg_to_send_obj.create(cr, uid, data, context=context)
 

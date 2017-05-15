@@ -86,10 +86,7 @@
                             <action  name="%(order_action_draft)d" string="Order Waiting For Validation" menu_ref="%(sale.menu_sale_order)d,%(base.menu_sales)d" />
                             <action  name="%(internal_request_action_validated)d" string="Internal Request Waiting For Sourcing" menu_ref="%(procurement_request.menu_procurement_request)d,%(base.menu_sales)d" />
                             <action  name="%(order_action_validated)d" string="Order Waiting For Sourcing" menu_ref="%(sale.menu_sale_order)d,%(base.menu_sales)d" />
-                            <!-- Remove the two lines because there are same as above and made let me fix on Field order follow-up (see UF-1650) 
-                            <action colspan="4" height="220" name="%(order_action_draft)d" string="Orders Waiting For Validation" width="510"/>
-                            <action colspan="4" height="220" name="%(order_action_validated)d" string="Orders Waiting For Sourcing" width="510"/> -->
-                            <action colspan="4" height="220" name="%(order_action_sourced)d" string="Orders Sourced" width="510" menu_ref="%(base.menu_sales)d" />
+                            <action colspan="4" height="220" name="%(order_action_sourced)d" string="Orders Sourced" width="510" menu_ref="%(sale.menu_sale_order)d,%(base.menu_sales)d" />
                         </child1>
                     </hpaned>
                 </form>

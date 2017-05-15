@@ -389,10 +389,54 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         res = []
         for arg in args:
-            if arg[0] == 'sale_order_state':
+            if arg[0] == 'sale_order_state' and arg[1] == '=' and arg[2] == 'split_so' :
+                split_dom = [
+                    ('state', '=', 'done'),
+                    ('split_type_sale_order', '=', 'original_sale_order'),
+                    ('procurement_request', '=', False),
+                    ('active', 'in', ['t','f'])
+                ]
+                split_ids = self.pool.get('sale.order').search(cr, uid, split_dom, context=context)
+                res = [('order_id', 'in', split_ids)]
+            elif arg[0] == 'sale_order_state':
                 res = [('order_id.state', arg[1], arg[2])]
 
         return res
+
+    def _src_line_values(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns all field order lines that match with the order category or priority
+        domain given in args.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that runs the method
+        :param obj: Object on which the search is
+        :param field_name: Name of the field on which the search is
+        :param args: The domain
+        :param context: Context of the call
+
+        :return A list of tuples that allows the system to return the list
+                 of matching field order lines
+        :rtype list
+        """
+        if context is None:
+            context = {}
+
+        if not args:
+            return []
+
+        domain = [('active', 'in', ['t', 'f'])]
+        for arg in args:
+            if arg[0] == 'categ':
+                domain.append(('categ', arg[1], arg[2]))
+            elif arg[0] == 'priority':
+                domain.append(('priority', arg[1], arg[2]))
+
+        order_ids = self.pool.get('sale.order').search(cr, uid, domain, context=context)
+        if order_ids:
+            return [('order_id', 'in', order_ids)]
+
+        return []
 
     def _search_need_sourcing(self, cr, uid, obj, name, args, context=None):
         """
@@ -511,6 +555,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'priority': fields.function(
             _get_line_values,
+            fnct_search=_src_line_values,
             method=True,
             selection=ORDER_PRIORITY,
             type='selection',
@@ -521,6 +566,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'categ': fields.function(
             _get_line_values,
+            fnct_search=_src_line_values,
             method=True,
             selection=ORDER_CATEGORY,
             type='selection',
@@ -757,9 +803,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         order_p_type = False
         if vals.get('order_id', False):
             order = order_obj.read(cr, uid, vals['order_id'],
-                        ['procurement_request', 'partner_type', 'state',
-                            'order_type'],
-                        context=context)
+                                   ['procurement_request', 'partner_type', 'state',
+                                    'order_type'],
+                                   context=context)
             ir = order['procurement_request']
             order_p_type = order['partner_type']
             if order['order_type'] == 'loan' and order['state'] == 'validated':
@@ -981,7 +1027,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         _("You can't Source to an 'External' partner if you don't have product."),
                     )
 
-            if line.state not in ('draft', 'cancel') and line.product_id and line.supplier:
+            if line.state not in ('draft', 'cancel') and line.product_id and line.supplier and not context.get('bypass_product_constraints'):
                 # Check product constraints (no external supply, no storage...)
                 check_fnct = product_obj._get_restriction_error
                 self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)
@@ -1168,8 +1214,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         :rtype boolean
         """
         # Objects
-        order_obj = self.pool.get('sale.order')
         po_auto_obj = self.pool.get('po.automation.config')
+        data_obj = self.pool.get('ir.model.data')
+        product_obj = self.pool.get('product.product')
 
         if context is None:
             context = {}
@@ -1189,6 +1236,18 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             raise osv.except_osv(_('Warning'), _("""The product must be chosen before sourcing the line.
                 Please select it within the lines of the associated Field Order (through the "Field Orders" menu).
                 """))
+
+        temp_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]
+        temp_products = product_obj.search(cr, uid, [('international_status', '=', temp_status)], context=context)
+        if temp_products:
+            # checking for temporary products :
+            line_ids = self.search(cr, uid, [('id', 'in', ids), ('product_id', 'in', temp_products),], context=context)
+            err_msg = []
+            for l in self.browse(cr, uid, line_ids, context=context):
+                err_msg.append(_('Line %s of the order %s') % (l.line_number, l.order_id.name))
+
+            if err_msg:
+                raise osv.except_osv(_('Warning'), _("You can not source lines with Temporary products. Details: \n %s") % '\n'.join(msg for msg in err_msg))
 
         loan_stock = self.search(cr, uid, [
             ('id', 'in', ids),
@@ -1238,10 +1297,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             )
         # US_376: If order type is loan, we accept unit price as zero
         no_price_ids = self.search(cr, uid, [
-           ('id', 'in', ids),
-           ('price_unit', '=', 0.00),
-           ('order_id.order_type', 'not in', ['loan', 'donation_st', 'donation_exp']),
-           ('order_id.procurement_request', '=', False),
+            ('id', 'in', ids),
+            ('price_unit', '=', 0.00),
+            ('order_id.order_type', 'not in', ['loan', 'donation_st', 'donation_exp']),
+            ('order_id.procurement_request', '=', False),
         ], limit=1, context=context)
 
         if no_price_ids:
@@ -1304,7 +1363,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             if line['order_id'][0] not in order_to_check:
                 order_to_check.update({line['order_id'][0]: state_to_use})
 
-            if order_type == 'regular' and not order_proc and line['price_unit'] * line['product_uom_qty'] < 0.01:
+            if order_type == 'regular' and not order_proc and line['price_unit'] * line['product_uom_qty'] < 0.00001:
                 raise osv.except_osv(
                     _('Warning'),
                     _('You cannot confirm the sourcing of a line with a subtotal of zero.'),
@@ -1581,7 +1640,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 if line and \
                     ((line.product_id and line.product_id.type in ('service', 'service_recep')) or \
                      (not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id))) and \
-                     line.order_id and not line.order_id.procurement_request:
+                        line.order_id and not line.order_id.procurement_request:
                     po_cft = 'dpo'
 
             result['value'].update({
@@ -1838,10 +1897,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         return result
 
     def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None,
-        context=None, orderby=False):
+                   context=None, orderby=False):
         res = super(sale_order_line, self).read_group(cr, uid, domain, fields,
-            groupby, offset=offset, limit=limit, context=context,
-            orderby=orderby)
+                                                      groupby, offset=offset, limit=limit, context=context,
+                                                      orderby=orderby)
 
         if 'line_number' in fields:
             """
@@ -1855,7 +1914,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 if '__domain' in g:
                     # aware to manage all group levels chain with __domain
                     line_count = self.search(cr, uid, g.get('__domain', []),
-                        context={}, count=True)  # search with 'new' context
+                                             context={}, count=True)  # search with 'new' context
                     g['line_number'] = line_count
         return res
 

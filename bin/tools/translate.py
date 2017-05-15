@@ -233,7 +233,7 @@ class GettextAlias(object):
                 logger.debug('no translation language detected, skipping translation for "%r" ', source)
         except Exception:
             logger.debug('translation went wrong for "%r", skipped', source)
-                # if so, double-check the root/base translations filenames
+            # if so, double-check the root/base translations filenames
         finally:
             if cr and is_new_cr:
                 cr.close()
@@ -388,7 +388,7 @@ class TinyPoFile(object):
         if name is None:
             if not fuzzy:
                 self.warn('Missing "#:" formated comment at line %d for the following source:\n\t%s',
-                        self.cur_line(), source[:30])
+                          self.cur_line(), source[:30])
             return self.next()
         return type, name, res_id, source, trad
 
@@ -417,7 +417,7 @@ class TinyPoFile(object):
                               'modules': reduce(lambda s, m: s + "#\t* %s\n" % m, modules, ""),
                               'bugmail': release.support_email,
                               'now': datetime.utcnow().strftime('%Y-%m-%d %H:%M')+"+0000",
-                            }
+                              }
                           )
 
     def write(self, modules, tnrs, source, trad):
@@ -443,7 +443,7 @@ class TinyPoFile(object):
 
         msg = "msgid %s\n"      \
               "msgstr %s\n\n"   \
-                  % (quote(source), quote(trad))
+            % (quote(source), quote(trad))
         self.buffer.write(msg.encode('utf8'))
 
 
@@ -559,6 +559,20 @@ def trans_parse_view(de):
         res.append(de.get('sum').encode("utf8"))
     if de.get("confirm"):
         res.append(de.get('confirm').encode("utf8"))
+    if de.get("help"):
+        res.append(de.get('help').encode("utf8"))
+    if de.tag == 'translate':
+        text_to_translate = ''
+        if de.text:
+            text_to_translate = de.text.encode("utf8")
+            # this is made for <translate> tags that contain <br /> tags
+            # to incorporate evrything in the same variable
+            for child in de.getchildren():
+                text_to_translate += etree.tostring(child)
+        else:
+            text_to_translate += etree.tostring(child)
+        res.append(text_to_translate)
+
     for n in de:
         res.extend(trans_parse_view(n))
     return res
@@ -583,7 +597,6 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
 
     pool = pooler.get_pool(dbname)
     trans_obj = pool.get('ir.translation')
-    model_data_obj = pool.get('ir.model.data')
     uid = 1
     l = pool.obj_pool.items()
     l.sort()
@@ -712,20 +725,6 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
 
             if field_def.help:
                 push_translation(module, 'help', name, 0, encode(field_def.help))
-
-            if field_def.translate:
-                ids = objmodel.search(cr, uid, [])
-                obj_values = objmodel.read(cr, uid, ids, [field_name])
-                for obj_value in obj_values:
-                    res_id = obj_value['id']
-                    if obj.name in ('ir.model', 'ir.ui.menu'):
-                        res_id = 0
-                    model_data_ids = model_data_obj.search(cr, uid, [
-                        ('model', '=', model),
-                        ('res_id', '=', res_id),
-                        ])
-                    if not model_data_ids:
-                        push_translation(module, 'model', name, 0, encode(obj_value[field_name]))
 
             if hasattr(field_def, 'selection'):
                 sel = False
@@ -902,7 +901,9 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
     # translate strings marked as to be translated
     for module, source, name, id, type in _to_translate:
         trans = trans_obj._get_source(cr, uid, name, type, lang, source, only_translated_terms)
-        if only_translated_terms and trans and trans != source or not only_translated_terms:
+        if (only_translated_terms == 'y' and trans and trans != source) \
+                or (only_translated_terms == 'n' and (not trans or trans == source)) \
+                or not only_translated_terms:
             out.append([module, type, name, id, source, encode(trans) or ''])
 
     return out
@@ -934,7 +935,6 @@ def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True,
     pool = pooler.get_pool(db_name)
     lang_obj = pool.get('res.lang')
     trans_obj = pool.get('ir.translation')
-    model_data_obj = pool.get('ir.model.data')
     iso_lang = tools.get_iso_codes(lang)
     try:
         uid = 1
@@ -1017,6 +1017,7 @@ def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True,
                 trans_obj.create(cr, uid, dic)
         if clear_cache:
             tools.cache.clean_caches_for_db(cr.dbname)
+            tools.read_cache.clean_caches_for_db(cr.dbname)
         if verbose:
             logger.info("translation file loaded succesfully")
     except IOError:
@@ -1081,7 +1082,7 @@ def resetlocale():
 def load_language(cr, lang):
     """Loads a translation terms for a language.
     Used mainly to automate language loading at db initialization.
-    
+
     :param lang: language ISO code with optional _underscore_ and l10n flavor (ex: 'fr', 'fr_BE', but not 'fr-BE')
     :type lang: str
     """

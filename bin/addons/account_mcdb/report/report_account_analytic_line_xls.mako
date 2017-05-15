@@ -54,8 +54,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     if data and data.get('context') and data.get('context').get('display_fp'):
         max = 21
 %>
-<Table ss:ExpandedColumnCount="${max}" x:FullColumns="1"
-x:FullRows="1">
+<Table>
 % for x in range(0,max):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
@@ -87,7 +86,7 @@ x:FullRows="1">
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.ref or '')|x}</Data>
 </Cell>
-% if o.document_date and o.document_date != 'False':
+% if isDate(o.document_date):
 <Cell ss:StyleID="ssBorderDate">
         <Data ss:Type="DateTime">${o.document_date|n}T00:00:00</Data>
 </Cell>
@@ -96,7 +95,7 @@ x:FullRows="1">
         <Data ss:Type="String">  </Data>
 </Cell>
 % endif
-% if o.date and o.date != 'False':
+% if isDate(o.date):
 <Cell ss:StyleID="ssBorderDate">
         <Data ss:Type="DateTime">${o.date|n}T00:00:00</Data>
 </Cell>

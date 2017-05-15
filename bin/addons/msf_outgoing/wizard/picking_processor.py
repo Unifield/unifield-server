@@ -84,7 +84,7 @@ class stock_picking_processor(osv.osv):
             select=True,
             ondelete='cascade',
             help="Picking (incoming, internal, outgoing, picking ticket, packing...) to process",
-            ),
+        ),
         'move_ids': fields.one2many(
             'stock.move.processor',
             'wizard_id',
@@ -238,7 +238,7 @@ class stock_move_processor(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             # Return an error if the move has no product defined
-            if not line.move_id.product_id:
+            if not line.move_id or not line.move_id.product_id:
                 raise osv.except_osv(
                     _('Data Error'),
                     _('The move you are trying to process has no product defined - Please set a product on it before process it.')
@@ -268,6 +268,7 @@ class stock_move_processor(osv.osv):
                 'location_id': location_id,
                 'location_supplier_customer_mem_out': loc_supplier or loc_cust or valid_pt,
                 'type_check': line.move_id.picking_id.type,
+                'comment': line.move_id.comment,
             }
 
         return res
@@ -285,9 +286,9 @@ class stock_move_processor(osv.osv):
         res = {}
 
         move_dict = dict([(x['id'], x['product_id'][0]) for x in self.read(cr, uid, ids,
-                                                               ['id',
-                                                                'product_id'],
-                                                               context=context)])
+                                                                           ['id',
+                                                                            'product_id'],
+                                                                           context=context)])
         product_module = self.pool.get('product.product')
         product_list_dict = product_module.read(cr, uid,
                                                 move_dict.values(),
@@ -309,10 +310,10 @@ class stock_move_processor(osv.osv):
                     'lot_check': product['batch_management'],
                     'exp_check': product['perishable'],
                     'asset_check': product['type'] == 'product' and
-                                         product['subtype'] == 'asset',
+                    product['subtype'] == 'asset',
                     'kit_check': product['type'] == 'product' and
-                                         product['subtype'] == 'kit' and not
-                                         product['perishable'],
+                    product['subtype'] == 'kit' and not
+                    product['perishable'],
                     'kc_check': product['kc_txt'],
                     'ssl_check': product['ssl_txt'],
                     'dg_check': product['dg_txt'],
@@ -450,6 +451,18 @@ class stock_move_processor(osv.osv):
             },
             readonly=True,
             help="Expected product to receive",
+            multi='move_info',
+        ),
+        'comment': fields.function(
+            _get_move_info,
+            method=True,
+            string='Comment',
+            type='text',
+            store={
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Comment of the move",
             multi='move_info',
         ),
         'quantity': fields.float(
@@ -946,7 +959,7 @@ class stock_move_processor(osv.osv):
                 ('life_date', '=', expiry_date),
                 ('type', '=', 'internal'),
                 ('product_id', '=', product_id),
-                ], context=context)
+            ], context=context)
             if not lot_ids:
                 if type_check == 'in':
                     # The corresponding production lot will be created afterwards

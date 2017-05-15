@@ -22,6 +22,7 @@
 # Module imports
 import base64
 from mx import DateTime
+from datetime import datetime
 import threading
 import time
 import logging
@@ -30,6 +31,7 @@ from osv import fields
 from osv import osv
 import pooler
 from tools.translate import _
+import tools
 
 from msf_order_date import TRANSPORT_TYPE
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
@@ -40,7 +42,7 @@ import xml.etree.ElementTree as ET
 # Server imports
 # Addons imports
 NB_OF_HEADER_LINES = 7
-NB_LINES_COLUMNS = 12
+NB_LINES_COLUMNS = 13
 
 
 PRODUCT_CODE_ID = {}
@@ -49,20 +51,22 @@ CURRENCY_NAME_ID = {}
 PRODLOT_NAME_ID = {}
 
 SIMU_LINES = {}
+LN_BY_EXT_REF = {}
 
 
 LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
-                 (1, _('Product Code'), 'mandatory'),
-                 (2, _('Product Description'), 'optionnal'),
-                 (3, _('Product Qty'), 'mandatory'),
-                 (4, _('Product UoM'), 'mandatory'),
-                 (5, _('Price Unit'), 'mandatory'),
-                 (6, _('Currency'), 'mandatory'),
-                 (7, _('Batch'), 'optionnal'),
-                 (8, _('Expiry Date'), 'optionnal'),
-                 (9, _('Packing List'), 'optionnal'),
-                 (10, _('ESC message 1'), 'optionnal'),
-                 (11, _('ESC message 2'), 'optionnal'),
+                 (1, _('External Ref.'), 'optionnal'),
+                 (2, _('Product Code'), 'mandatory'),
+                 (3, _('Product Description'), 'optionnal'),
+                 (4, _('Product Qty'), 'mandatory'),
+                 (5, _('Product UoM'), 'mandatory'),
+                 (6, _('Price Unit'), 'mandatory'),
+                 (7, _('Currency'), 'mandatory'),
+                 (8, _('Batch'), 'optionnal'),
+                 (9, _('Expiry Date'), 'optionnal'),
+                 (10, _('Packing List'), 'optionnal'),
+                 (11, _('ESC message 1'), 'optionnal'),
+                 (12, _('ESC message 2'), 'optionnal'),
                  ]
 
 HEADER_COLUMNS = [(1, _('Freight'), 'optionnal'),
@@ -326,7 +330,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                 index = get_field_index(field, index)
             else:
                 index += 1
-                values[index] = ['line_number', 'product_code',
+                values[index] = ['line_number', 'external_ref', 'product_code',
                                  'product_name', 'product_qty',
                                  'uom_id', 'price_unit', 'currency_id',
                                  'prodlot_id', 'expiry_date',
@@ -365,9 +369,13 @@ class wizard_import_in_simulation_screen(osv.osv):
             index += 1
             values.setdefault(index, [])
             for cell_nb in range(len(row)):
-                cell_data = row.cells and row.cells[cell_nb] and \
-                            row.cells[cell_nb].data
-                values[index].append(cell_data)
+                try:
+                    cell_data = row.cells and row.cells[cell_nb] and \
+                        row.cells[cell_nb].data
+                    values[index].append(cell_data)
+                except DateTime.mxDateTime.RangeError as e:
+                    raise osv.except_osv(_('Error'), _('Line %s of the imported file, \
+the date has a wrong format: %s') % (index+1, str(e)))
 
         return values
 
@@ -390,6 +398,7 @@ class wizard_import_in_simulation_screen(osv.osv):
             global CURRENCY_NAME_ID
             global PRODLOT_NAME_ID
             global SIMU_LINES
+            global LN_BY_EXT_REF
 
             if context is None:
                 context = {}
@@ -419,6 +428,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     First of all, we build a cache for simulation screen lines
                     '''
                     l_num = line.line_number
+                    l_ext_ref = line.external_ref
                     l_prod = line.move_product_id and line.move_product_id.id or False
                     l_uom = line.move_uom_id and line.move_uom_id.id or False
                     # By simulation screen
@@ -441,19 +451,28 @@ class wizard_import_in_simulation_screen(osv.osv):
                     SIMU_LINES[wiz.id][l_num][l_prod][l_uom].setdefault(line.move_product_qty, [])
                     SIMU_LINES[wiz.id][l_num][l_prod][l_uom][line.move_product_qty].append(line.id)
 
+                    LN_BY_EXT_REF.setdefault(wiz.id, {})
+                    if l_ext_ref and l_num:
+                        LN_BY_EXT_REF[wiz.id].setdefault(l_ext_ref, [])
+                        LN_BY_EXT_REF[wiz.id][l_ext_ref].append(l_num)
+
                 # Variables
                 lines_to_ignored = []  # Bad formatting lines
                 file_format_errors = []
                 values_header_errors = []
                 values_line_errors = []
                 message = ''
-
                 header_values = {}
+                file_parse_errors = []
 
-                if wiz.filetype == 'excel':
-                    values = self.get_values_from_excel(cr, uid, wiz.file_to_import, context=context)
-                else:
-                    values = self.get_values_from_xml(cr, uid, wiz.file_to_import, context=context)
+                try:
+                    if wiz.filetype == 'excel':
+                        values = self.get_values_from_excel(cr, uid, wiz.file_to_import, context=context)
+                    else:
+                        values = self.get_values_from_xml(cr, uid, wiz.file_to_import, context=context)
+                except Exception as e:
+                    file_parse_errors.append(str(e))
+
 
                 '''
                 We check for each line if the number of columns is consistent
@@ -463,37 +482,30 @@ class wizard_import_in_simulation_screen(osv.osv):
                 '''
                 # Check number of columns on lines
 
-                for x in xrange(1, NB_OF_HEADER_LINES + 1):
-                    if len(values.get(x, [])) != 2:
-                        lines_to_ignored.append(x)
-                        error_msg = _('Line %s of the imported file: The header \
-    information must be on two columns: Column A for name of the field and column\
-     B for value.') % x
+                if not file_parse_errors:
+                    if len(values.get(NB_OF_HEADER_LINES + 1, [])) != NB_LINES_COLUMNS:
+                        error_msg = _('Line 8 of the Excel file: This line is \
+mandatory and must have %s columns. The values on this line must be the name \
+of the field for IN lines.') % NB_LINES_COLUMNS
                         file_format_errors.append(error_msg)
 
-                if len(values.get(NB_OF_HEADER_LINES + 1, [])) != NB_LINES_COLUMNS:
-                    error_msg = _('Line 8 of the Excel file: This line is \
-    mandatory and must have %s columns. The values on this line must be the name \
-    of the field for IN lines.') % NB_LINES_COLUMNS
-                    file_format_errors.append(error_msg)
+                    for x in xrange(NB_OF_HEADER_LINES + 2, len(values) + 1):
+                        if len(values.get(x, [])) != NB_LINES_COLUMNS:
+                            lines_to_ignored.append(x)
+                            error_msg = _('Line %s of the imported file: The line \
+information must be on %s columns. The line %s has %s columns') % (x, NB_LINES_COLUMNS, x, len(values.get(x, [])))
+                            file_format_errors.append(error_msg)
 
-                for x in xrange(NB_OF_HEADER_LINES + 2, len(values) + 1):
-                    if len(values.get(x, [])) != NB_LINES_COLUMNS:
-                        lines_to_ignored.append(x)
-                        error_msg = _('Line %s of the imported file: The line \
-    information must be on %s columns. The line %s has %s columns') % (x, NB_LINES_COLUMNS, x, len(values.get(x, [])))
-                        file_format_errors.append(error_msg)
+                    nb_file_lines = len(values) - NB_OF_HEADER_LINES - 1
+                    self.write(cr, uid, [wiz.id], {'nb_file_lines': nb_file_lines}, context=context)
 
-                nb_file_lines = len(values) - NB_OF_HEADER_LINES - 1
-                self.write(cr, uid, [wiz.id], {'nb_file_lines': nb_file_lines}, context=context)
-
-                if len(file_format_errors):
+                if file_format_errors or file_parse_errors:
                     message = _('''## IMPORT STOPPED ##
 
-    Nothing has been imported because of bad file format. See below:
+Nothing has been imported because of %s. See below:
 
-    ## File format errors ##\n\n''')
-                    for err in file_format_errors:
+    ## File errors ##\n\n''') % (file_format_errors and _('a bad file format') or _('a file parse error'))
+                    for err in file_format_errors + file_parse_errors:
                         message += '%s\n' % err
 
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
@@ -509,9 +521,6 @@ class wizard_import_in_simulation_screen(osv.osv):
                 # Line 1: Freight
                 freight_ref = values.get(1, ['', ''])[1]
                 header_values['imp_freight_number'] = freight_ref
-
-                # Line 2: Picking Reference
-                picking_ref = values.get(2, ['', ''])[1]
 
                 # Line 3: Origin
                 origin = values.get(3, ['', ''])[1]
@@ -543,6 +552,9 @@ class wizard_import_in_simulation_screen(osv.osv):
                     # Check mandatory fields
                     not_ok = False
                     file_line_error = []
+                    line_number = values.get(x, [False])[0] and int(values.get(x, [False])[0]) or False
+                    ext_ref = values.get(x, [False, False])[1]
+                    ext_ref = ext_ref and tools.ustr(ext_ref) or False
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
                             not_ok = True
@@ -551,10 +563,16 @@ class wizard_import_in_simulation_screen(osv.osv):
                             values_line_errors.append(err)
                             file_line_error.append(err1)
 
-                    if not values.get(x, [''])[0]:
-                        line_number = False
-                    else:
-                        line_number = int(values.get(x, [''])[0])
+                    if line_number and ext_ref:
+                        if line_number not in LN_BY_EXT_REF[wiz.id].get(ext_ref, []):
+                            not_ok = True
+                            err1 = _('No line found for line number \'%s\' and ext. ref. \'%s\' - Line not imported') % (line_number, ext_ref)
+                            err = _('Line %s of the file: %s') % (x, err1)
+                            values_line_errors.append(err)
+                            file_line_error.append(err1)
+
+                    if not line_number and ext_ref:
+                        line_number = LN_BY_EXT_REF[wiz.id].get(ext_ref, [False])[0]
 
                     if not_ok:
                         not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
@@ -566,47 +584,52 @@ class wizard_import_in_simulation_screen(osv.osv):
 
                     vals = values.get(x, [])
                     # Product
-                    if vals[1]:
-                        product_id = PRODUCT_CODE_ID.get(vals[1], False)
-                    if not product_id and vals[1]:
-                        prod_ids = prod_obj.search(cr, uid, [('default_code', '=', vals[1])], context=context)
+                    if vals[2]:
+                        product_id = PRODUCT_CODE_ID.get(vals[2], False)
+                    if not product_id and vals[2]:
+                        prod_ids = prod_obj.search(cr, uid, [('default_code', '=', vals[2])], context=context)
                         if prod_ids:
                             product_id = prod_ids[0]
-                            PRODUCT_CODE_ID.setdefault(vals[1], product_id)
+                            PRODUCT_CODE_ID.setdefault(vals[2], product_id)
 
                     # UoM
-                    if vals[4]:
-                        uom_id = UOM_NAME_ID.get(vals[4], False)
+                    if vals[5]:
+                        uom_id = UOM_NAME_ID.get(vals[5], False)
                         if not uom_id:
-                            uom_ids = uom_obj.search(cr, uid, [('name', '=', vals[4])], context=context)
+                            uom_ids = uom_obj.search(cr, uid, [('name', '=', vals[5])], context=context)
                             if uom_ids:
                                 uom_id = uom_ids[0]
-                                UOM_NAME_ID.setdefault(vals[4], uom_id)
+                                UOM_NAME_ID.setdefault(vals[5], uom_id)
 
                     # Qty
-                    if vals[3]:
-                        qty = float(vals[3])
+                    if vals[4]:
+                        try:
+                            qty = float(vals[4])
+                        except ValueError:
+                            # do not raise here if the qty is not a float as
+                            # it is checked later in import_line()
+                            pass
 
                     # Batch and expiry date
                     # Put the batch + expiry date in a cache to create
                     # the batch that don't exist only during the import
                     # not at simulation time
-                    if vals[7] and vals[8]:
-                        exp_value = vals[8]
-                        if type(vals[8]) == type(DateTime.now()):
+                    if vals[8] and vals[9]:
+                        exp_value = vals[9]
+                        if type(vals[9]) == type(DateTime.now()):
                             exp_value = exp_value.strftime('%Y-%m-%d')
-                        elif vals[8] and isinstance(vals[8], str):
+                        elif vals[9] and isinstance(vals[9], str):
                             try:
-                                time.strptime(vals[8], '%Y-%m-%d')
-                                exp_value = vals[8]
+                                time.strptime(vals[9], '%Y-%m-%d')
+                                exp_value = vals[9]
                             except ValueError:
                                 exp_value = False
 
-                        if exp_value and not prodlot_cache.get(product_id, {}).get(str(vals[7])):
+                        if exp_value and not prodlot_cache.get(product_id, {}).get(tools.ustr(vals[8])):
                             prodlot_cache.setdefault(product_id, {})
-                            prodlot_cache[product_id].setdefault(str(vals[7]), exp_value)
+                            prodlot_cache[product_id].setdefault(tools.ustr(vals[8]), exp_value)
 
-                    file_lines[x] = (line_number, product_id, uom_id, qty)
+                    file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref)
 
                 '''
                 Get the best matching line:
@@ -710,7 +733,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                         SIMU_LINES[wiz.id]['line_ids'].pop(index_in_line)
                     for file_line in file_lines:
                         nb_treated_lines += 1
-                        percent_completed = nb_treated_lines / nb_file_lines * 100
+                        percent_completed = round(nb_treated_lines / float(nb_file_lines) * 100)
                         self.write(cr, uid, [wiz.id], {'nb_treated_lines': nb_treated_lines,
                                                        'percent_completed': percent_completed}, context=context)
                         vals = values.get(file_line[0], [])
@@ -720,18 +743,18 @@ class wizard_import_in_simulation_screen(osv.osv):
                                 wl_obj.write(cr, uid, [in_line], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
                         elif file_line[1] == 'split':
                             new_wl_id = wl_obj.copy(cr, uid, in_line,
-                                                             {'move_product_id': False,
-                                                              'move_product_qty': 0.00,
-                                                              'move_uom_id': False,
-                                                              'move_price_unit': 0.00,
-                                                              'move_currenty_id': False,
-                                                              'type_change': 'split',
-                                                              'imp_batch_name': '',
-                                                              'imp_batch_id': False,
-                                                              'imp_exp_date': False,
-                                                              'error_msg': '',
-                                                              'parent_line_id': in_line,
-                                                              'move_id': False}, context=context)
+                                                    {'move_product_id': False,
+                                                     'move_product_qty': 0.00,
+                                                     'move_uom_id': False,
+                                                     'move_price_unit': 0.00,
+                                                     'move_currenty_id': False,
+                                                     'type_change': 'split',
+                                                     'imp_batch_name': '',
+                                                     'imp_batch_id': False,
+                                                     'imp_exp_date': False,
+                                                     'error_msg': '',
+                                                     'parent_line_id': in_line,
+                                                     'move_id': False}, context=context)
                             err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, context=context)
                             if file_line[0] in not_ok_file_lines:
                                 wl_obj.write(cr, uid, [new_wl_id], {'type_change': 'error', 'error_msg': not_ok_file_lines[file_line[0]]}, context=context)
@@ -776,13 +799,17 @@ class wizard_import_in_simulation_screen(osv.osv):
                 We generate the message which will be displayed on the simulation
                 screen. This message is a merge between all errors.
                 '''
+
+                import_error_ok = False
                 # Generate the message
                 if len(values_header_errors):
+                    import_error_ok = True
                     message += '\n## Error on header values ##\n\n'
                     for err in values_header_errors:
                         message += '%s\n' % err
 
                 if len(values_line_errors):
+                    import_error_ok = True
                     message += '\n## Error on line values ##\n\n'
                     for err in values_line_errors:
                         message += '%s\n' % err
@@ -790,6 +817,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                 header_values['message'] = message
                 header_values['state'] = 'simu_done'
                 header_values['percent_completed'] = 100.0
+                header_values['import_error_ok'] = import_error_ok
                 self.write(cr, uid, [wiz.id], header_values, context=context)
 
                 res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
@@ -807,7 +835,7 @@ class wizard_import_in_simulation_screen(osv.osv):
             SIMU_LINES = {}
         except Exception, e:
             logging.getLogger('in.simulation simulate').warn('Exception', exc_info=True)
-            self.write(cr, uid, ids, {'message': e}, context=context)
+            self.write(cr, uid, ids, {'message': e, 'state': 'error'}, context=context)
             cr.commit()
             cr.close(True)
 
@@ -956,6 +984,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'str_line_number': fields.function(_get_l_num, method=True, type='char', size=32,
                                            string='Line', readonly=True, multi='line_num',
                                            store={'wizard.import.in.line.simulation.screen': (lambda self, cr, uid, ids, c={}: ids, ['line_number'], 20)}),
+        'external_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'type_change': fields.selection([('', ''),
                                          ('split', 'Split'),
                                          ('error', 'Error'),
@@ -978,6 +1007,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'imp_batch_name': fields.char(size=128, string='Batch Number', readonly=True),
         'imp_exp_date': fields.date(string='Expiry date', readonly=True),
         'imp_packing_list': fields.char(size=256, string='Packing list', readonly=True),
+        'imp_external_ref': fields.char(size=256, string='External ref.', readonly=True),
         'message_esc1': fields.char(size=256, string='Message ESC 1', readonly=True),
         'message_esc2': fields.char(size=256, string='Message ESC 2', readonly=True),
         # Computed fields
@@ -1060,8 +1090,15 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         errors = []
         warnings = []
 
+        if len(values) == 13:
+            ext_ref = values.pop(1)
+            values.append(ext_ref)
+
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
+
+            if ext_ref:
+                write_vals['imp_external_ref'] = ext_ref
 
             # Product
             prod_id = False
@@ -1074,9 +1111,20 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     prod_id = PRODUCT_CODE_ID.get(values[1])
 
                 if not prod_id and values[1]:
-                    prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[1]), ], context=context)
+                    stripped_product_code = values[1].strip()
+                    prod_ids = prod_obj.search(cr, uid,
+                                               [('default_code', '=', stripped_product_code)],
+                                               context=context)
                     if not prod_ids:
+                        # if we didn't manage to link our product code with existing product in DB, we cannot continue checks
+                        # because it needs the product id:
                         errors.append(_('Product not found in database'))
+                        write_vals.update({
+                            'error_msg': errors[-1],
+                            'type_change': 'error',
+                        })
+                        self.write(cr, uid, [line.id], write_vals, context=context)
+                        continue
                     else:
                         write_vals['imp_product_id'] = prod_ids[0]
                 else:
@@ -1091,6 +1139,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             err_msg = _('Incorrect float value for field \'Product Qty\'')
             try:
                 qty = float(values[3])
+                if qty < 0:
+                    err_msg = _('Product Qty should be greater than 0.00')
+                    raise ValueError(err_msg)
                 write_vals['imp_product_qty'] = qty
             except Exception:
                 errors.append(err_msg)
@@ -1098,12 +1149,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             # UoM
             uom_value = values[4]
-            if str(uom_value) == line.move_uom_id.name:
+            if tools.ustr(uom_value) == line.move_uom_id.name:
                 write_vals['imp_uom_id'] = line.move_uom_id.id
             else:
-                uom_id = UOM_NAME_ID.get(str(uom_value))
+                uom_id = UOM_NAME_ID.get(tools.ustr(uom_value))
                 if not uom_id:
-                    uom_ids = uom_obj.search(cr, uid, [('name', '=', str(uom_value))], context=context)
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=', tools.ustr(uom_value))], context=context)
                     if uom_ids:
                         write_vals['imp_uom_id'] = uom_ids[0]
                     else:
@@ -1122,9 +1173,13 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             err_msg = _('Incorrect float value for field \'Price Unit\'')
             try:
                 unit_price = float(values[5])
+                if unit_price < 0:
+                    err_msg = _('Unit Price should be greater than 0.00')
+                    raise ValueError(err_msg)
                 write_vals['imp_price_unit'] = unit_price
             except Exception:
                 errors.append(err_msg)
+                write_vals['type_change'] = 'error'
 
             # Currency
             currency_value = values[6]
@@ -1136,7 +1191,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if line_currency:
                 write_vals['imp_currency_id'] = line_currency.id
-                if str(currency_value) != line_currency.name:
+                if tools.ustr(currency_value) != line_currency.name:
                     err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
                     errors.append(err_msg)
 
@@ -1150,47 +1205,61 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             if not lot_check and not exp_check and batch_value:
                 warnings.append(_('A batch is defined on the imported file but the product doesn\'t require batch number - Batch ignored'))
             elif batch_value:
-                batch_id = PRODLOT_NAME_ID.get(str(batch_value))
+                batch_id = PRODLOT_NAME_ID.get(tools.ustr(batch_value))
                 batch_ids = prodlot_obj.search(cr, uid, [('product_id', '=', write_vals['imp_product_id'])], context=context)
                 if not batch_id or batch_id not in batch_ids:
                     batch_id = None # UFTP-386: If the batch number does not belong to the batch_idS of the given product --> set it to None again!
-                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', str(batch_value)), ('product_id', '=', write_vals['imp_product_id'])], context=context)
+                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', tools.ustr(batch_value)), ('product_id', '=', write_vals['imp_product_id'])], context=context)
                     if batch_ids:
                         batch_id = batch_ids[0]
-                        PRODLOT_NAME_ID.setdefault(str(batch_value), batch_id)
+                        PRODLOT_NAME_ID.setdefault(tools.ustr(batch_value), batch_id)
                     else:
-                        if lot_check and prodlot_cache.get(write_vals['imp_product_id'], {}).get(str(batch_value)):
+                        if lot_check and prodlot_cache.get(write_vals['imp_product_id'], {}).get(tools.ustr(batch_value)):
                             write_vals.update({
-                                'imp_batch_name': str(batch_value),
-                                'imp_exp_date': prodlot_cache[write_vals['imp_product_id']][str(batch_value)],
+                                'imp_batch_name': tools.ustr(batch_value),
+                                'imp_exp_date': prodlot_cache[write_vals['imp_product_id']][tools.ustr(batch_value)],
                             })
                         else:
-                            write_vals['imp_batch_name'] = str(batch_value)
+                            write_vals['imp_batch_name'] = tools.ustr(batch_value)
 
                 if batch_id:
                     write_vals.update({
                         'imp_batch_id': batch_id,
-                        'imp_batch_name': str(batch_value),
+                        'imp_batch_name': tools.ustr(batch_value),
                     })
                 else:
                     # UFTP-386: Add the warning message indicating that the batch does not exist for THIS product (but for others!)
                     # If the batch is a completely new, no need to warn.
-                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', str(batch_value))], context=context)
+                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', tools.ustr(batch_value))], context=context)
                     if batch_ids:
                         warnings.append(_('The given batch does not exist for the given product, but will be created automatically during the process.'))
-                        write_vals.update({'imp_batch_name': str(batch_value),})
+                        write_vals.update({'imp_batch_name': tools.ustr(batch_value),})
 
             # Expired date
             exp_value = values[8]
             if not lot_check and not exp_check and exp_value:
                 warnings.append(_('An expired date is defined on the imported file but the product doesn\'t require expired date - Expired date ignored'))
             elif exp_value:
+                date_tools = self.pool.get('date.tools')
+                date_format = date_tools.get_date_format(cr, uid, context=context)
                 if exp_value and type(exp_value) == type(DateTime.now()):
-                    write_vals['imp_exp_date'] = exp_value.strftime('%Y-%m-%d')
+                    if datetime.strptime(exp_value.strftime('%Y-%m-%d'), '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
+                        err_msg = _('You cannot create a batch number with an expiry date before %s') % (
+                            datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                        )
+                        errors.append(err_msg)
+                    else:
+                        write_vals['imp_exp_date'] = exp_value.strftime('%Y-%m-%d')
                 elif exp_value and isinstance(exp_value, str):
                     try:
                         time.strptime(exp_value, '%Y-%m-%d')
-                        write_vals['imp_exp_date'] = exp_value
+                        if datetime.strptime(exp_value, '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
+                            error_msg = _('You cannot create a batch number with an expiry date before %s') % (
+                                datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                            )
+                            errors.append(err_msg)
+                        else:
+                            write_vals['imp_exp_date'] = exp_value
                     except ValueError:
                         err_msg = _('Incorrect date value for field \'Expired date\'')
                         errors.append(err_msg)
@@ -1232,9 +1301,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if batch_value and exp_date:
                     # If a name and an expiry date for batch are defined, create a new batch
                     prodlot_cache.setdefault(product.id, {})
-                    prodlot_cache[product.id].setdefault(str(batch_value), exp_date)
+                    prodlot_cache[product.id].setdefault(tools.ustr(batch_value), exp_date)
                     write_vals.update({
-                        'imp_batch_name': str(batch_value),
+                        'imp_batch_name': tools.ustr(batch_value),
                         'imp_exp_date': exp_date,
                     })
 
@@ -1256,7 +1325,10 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if line.type_change == 'new':
                 write_vals['type_change'] = 'error'
-                errors.append(_('Line does not correspond to original IN'))
+                if write_vals.get('imp_external_ref'):
+                    errors.append(_('No original IN lines with external ref \'%s\' found.') % write_vals['imp_external_ref'])
+                else:
+                    errors.append(_('Line does not correspond to original IN'))
 
             error_msg = line.error_msg or ''
             for err in errors:

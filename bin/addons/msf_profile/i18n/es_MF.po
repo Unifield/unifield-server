@@ -1378,7 +1378,7 @@ msgstr "PP automático: %s"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:661
 #, python-format
-msgid "An error occured on the automatic reconciliation in advance return."
+msgid "An error occurred on the automatic reconciliation in advance return."
 msgstr "Se produjo un error en la conciliación automática del reembolso de anticipo."
 
 #. module: msf_outgoing
@@ -5146,7 +5146,7 @@ msgstr "kit.selection.sale.line"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/cashbox_write_off.py:237
 #, python-format
-msgid "An error has occured !"
+msgid "An error has occurred !"
 msgstr "¡Se ha producido un error!"
 
 #. module: base
@@ -6501,7 +6501,7 @@ msgstr "Invoice Address"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:373
 #, python-format
-msgid "Line %s. A problem occured for line registration. Please contact an Administrator."
+msgid "Line %s. A problem occurred for line registration. Please contact an Administrator."
 msgstr "Línea %s. Se produjo un error al intentar registrar la línea. Por favor, póngase en contacto con un administrador."
 
 #. module: msf_doc_import
@@ -11670,7 +11670,7 @@ msgstr "18 J(A)"
 #. module: consumption_calculation
 #: field:real.average.consumption,cons_location_id:0
 #: field:real.consumption.change.location,location_id:0
-msgid "Consumer location"
+msgid "Source Location"
 msgstr "Ubicación de consumo"
 
 #. module: msf_doc_import
@@ -16417,7 +16417,7 @@ msgstr "6.  %d, %m         ==> 05, 12"
 #. module: analytic_distribution_supply
 #: code:addons/analytic_distribution_supply/sale.py:233
 #, python-format
-msgid "An error occured for analytic distribution copy for invoice line."
+msgid "An error occurred for analytic distribution copy for invoice line."
 msgstr "Ha ocurrido un error al copiar la distribución analítica para la línea de factura."
 
 #. module: register_accounting
@@ -17825,7 +17825,7 @@ msgstr "Cancelado"
 #: code:addons/register_accounting/account_bank_statement.py:433
 #: code:addons/register_accounting/account_cash_statement.py:181
 #, python-format
-msgid "A problem occured: More than one register have this one as previous register!"
+msgid "A problem occurred: More than one register have this one as previous register!"
 msgstr "Ha surgido un problema: ¡hay más de un registro que tiene este como su registro previo!"
 
 #. module: kit
@@ -20412,7 +20412,6 @@ msgid "Expected Shipped Date :"
 msgstr "Expected Shipped Date :"
 
 #. module: sync_client
-#: field:sync.client.activate_entity,name:0
 #: field:sync.client.child_entity,name:0
 #: field:sync.client.entity,name:0
 #: field:sync.client.register_entity,name:0
@@ -20837,8 +20836,8 @@ msgstr "Code"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_register_import.py:481
 #, python-format
-msgid "An error occured %s: %s"
-msgstr "An error occured %s: %s"
+msgid "An error occurred %s: %s"
+msgstr "An error occurred %s: %s"
 
 #. module: specific_rules
 #: code:addons/specific_rules/specific_rules.py:657
@@ -20928,8 +20927,8 @@ msgstr "Validar tique de picking"
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/wizard/hq_entries_validation.py:221
 #, python-format
-msgid "An unexpected error occured. Please contact an administrator."
-msgstr "An unexpected error occured. Please contact an administrator."
+msgid "An unexpected error occurred. Please contact an administrator."
+msgstr "An unexpected error occurred. Please contact an administrator."
 
 #. module: vertical_integration
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:303
@@ -22169,7 +22168,7 @@ msgstr "El archivo de traducción se ha importado correctamente."
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:288
 #, python-format
-msgid "An error occured on nationality. Please verify all nationalities."
+msgid "An error occurred on nationality. Please verify all nationalities."
 msgstr "Se produjo un error en la nacionalidad. Por favor verifique todas las nacionalidades."
 
 #. modules: purchase, stock_override, product_asset, specific_rules, kit, stock
@@ -23406,7 +23405,6 @@ msgstr "Mensajes"
 #: report:account.move.line_csv:0
 #: report:addons/account_mcdb/report/report_account_bank_statement_line_xls.mako:58
 #: report:addons/account_mcdb/report/report_account_move_line_xls.mako:58
-#: field:account.invoice,fake_account_id:0
 #: model:ir.model,name:account_override.model_account_account
 #: field:account.voucher,account_id:0
 #: field:account.voucher.line,account_id:0
@@ -23657,13 +23655,6 @@ msgstr "Corp."
 msgid "RFQs"
 msgstr "Solicitudes de presupuestos"
 
-#. modules: account_activable, analytic_distribution
-#: code:addons/account_activable/account_activable.py:51
-#: code:addons/analytic_distribution/analytic_account.py:232
-#, python-format
-msgid "You cannot set an inactivity date lower than tomorrow!"
-msgstr "¡No se puede establecer una fecha de inactividad anterior a la fecha de mañana!"
-
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_purchase_import_xml_line
 msgid "purchase.import.xml.line"
@@ -23825,6 +23816,11 @@ msgstr "Crédito total"
 #: code:addons/sales_followup/sale_followup.py:387
 #, python-format
 msgid "In Progress"
+msgstr "En curso"
+
+#. module: procurement_request
+#: view:sale.order:0
+msgid "Confirmed"
 msgstr "En curso"
 
 #. module: account
@@ -28697,7 +28693,7 @@ msgstr "Reglas específicas"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_confirm_bank.py:51
 #, python-format
-msgid "An unknown error has occured on Bank confirmation wizard. Please contact an administrator to solve this problem."
+msgid "An unknown error has occurred on Bank confirmation wizard. Please contact an administrator to solve this problem."
 msgstr "Un error desconocido ha ocurrido en el asistente de confirmación del banco. Por favor, póngase en contacto con un administrador para resolver este problema."
 
 #. modules: sale_override, tender_flow, purchase_override
@@ -33940,11 +33936,6 @@ msgid "\n"
 "    "
 msgstr "     Modificación de tercero con nuevos plazos de entrega     "
 
-#. module: sync_client
-#: view:sync.client.activate_entity:0
-msgid "Activate entity"
-msgstr "Activar entidad"
-
 #. modules: account, register_accounting
 #: selection:account.journal.column,field:0
 #: field:account.bank.statement.line,imported_invoice_line_ids:0
@@ -35426,11 +35417,6 @@ msgstr "Recurso"
 msgid "Print Tax Statement"
 msgstr "Imprimir extracto de impuestos"
 
-#. module: sync_client
-#: model:ir.model,name:sync_client.model_sync_client_activate_entity
-msgid "sync.client.activate_entity"
-msgstr "sync.client.activate_entity"
-
 #. modules: msf_doc_import, register_accounting
 #: code:addons/msf_doc_import/account.py:400
 #: code:addons/register_accounting/wizard/wizard_register_import.py:468
@@ -36845,7 +36831,7 @@ msgstr "You have not yet set a USB Instance Type for this instance. Please do th
 #. module: account_mcdb
 #: code:addons/account_mcdb/wizard/output_currency_for_export.py:105
 #, python-format
-msgid "An error has occured. Please contact an administrator."
+msgid "An error has occurred. Please contact an administrator."
 msgstr "Ha ocurrido un error. Por favor, póngase en contacto con un administrador."
 
 #. module: export_import_lang
@@ -41624,7 +41610,7 @@ msgstr "Lista de los módulos en los que se define el campo"
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:311
 #, python-format
-msgid "An error occured on balance and no payroll rounding line found."
+msgid "An error occurred on balance and no payroll rounding line found."
 msgstr "Se produjo un error en el equilibrio y no hay línea de redondeo de nómina."
 
 #. modules: msf_order_date, msf_doc_import, partner_modification, transport_mgmt
@@ -45365,8 +45351,8 @@ msgstr "Es el tiempo entre dos reabastecimientos"
 #: model:ir.ui.menu,name:stock_batch_recall.menu_batch_recall
 #: view:report.batch.recall:0
 #: view:stock.batch.recall:0
-msgid "Batch Recall"
-msgstr "Recuperación de lotes"
+msgid "Batch Location"
+msgstr "Ubicación de lotes"
 
 #. module: msf_cross_docking
 #: code:addons/msf_cross_docking/cross_docking.py:349
@@ -47638,11 +47624,6 @@ msgstr "¿El sistema utilizará los movimientos no asignados desde la perspectiv
 msgid "America/Cancun"
 msgstr "América / Cancun"
 
-#. module: sync_client
-#: view:sync.client.activate_entity:0
-msgid "Activate"
-msgstr "Activar"
-
 #. module: base
 #: selection:ir.translation,lang:0
 msgid "Bosnian / bosanski jezik"
@@ -48473,7 +48454,7 @@ msgstr "HQ entry unsplit wizard"
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/wizard/wizard_confirm_closing_period.py:50
 #, python-format
-msgid "An unknown error has occured on Period closing confirmation wizard. Please contact an administrator to solve this problem."
+msgid "An unknown error has occurred on Period closing confirmation wizard. Please contact an administrator to solve this problem."
 msgstr "Un error desconocido ha ocurrido en el asistente de confirmación de cierre del periodo. Por favor, póngase en contacto con el administrador para resolver este problema."
 
 #. module: base
@@ -48920,7 +48901,7 @@ msgstr "res.country.restriction"
 #: code:addons/analytic_distribution_supply/invoice.py:118
 #: code:addons/analytic_distribution_supply/sale.py:221
 #, python-format
-msgid "An error occured for analytic distribution copy for invoice."
+msgid "An error occurred for analytic distribution copy for invoice."
 msgstr "Ha ocurrido un error al copiar la distribución analítica para la factura."
 
 #. module: base
@@ -49202,7 +49183,7 @@ msgstr "Saldo del extracto bancario"
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:1709
 #, python-format
-msgid "An error occured on down_payment check. Please contact an administrator to resolve this problem."
+msgid "An error occurred on down_payment check. Please contact an administrator to resolve this problem."
 msgstr "Se produjo un error en el cheque down_payment. Por favor, póngase en contacto con un administrador para resolver este problema."
 
 #. module: account
@@ -54958,7 +54939,7 @@ msgstr "Pacífico / Pitcairn"
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/account_commitment.py:382
 #, python-format
-msgid "An error occured on engagement lines deletion."
+msgid "An error occurred on engagement lines deletion."
 msgstr "Se produjo un error al eliminar las líneas del comprometido."
 
 #. module: base
@@ -60873,7 +60854,7 @@ msgstr "Transición"
 #: code:addons/account_mcdb/report/account_mcdb_export.py:156
 #: code:addons/account_mcdb/report/account_mcdb_export.py:243
 #, python-format
-msgid "An error occured. Please contact an administrator to resolve this problem."
+msgid "An error occurred. Please contact an administrator to resolve this problem."
 msgstr "Se ha producido un error. Por favor, póngase en contacto con un administrador para resolver este problema."
 
 #. modules: procurement_auto, procurement_cycle, stock_schedule
@@ -62617,12 +62598,16 @@ msgstr "La lista de componentes para consumir está vacía."
 msgid "No correction journal found!"
 msgstr "¡No se ha encontrado un diario de corrección!"
 
-#. modules: base, consumption_calculation
+#. module: base
 #: view:workflow.activity:0
 #: field:workflow.workitem,act_id:0
+msgid "Activity"
+msgstr "Actividad"
+
+#. module: consumption_calculation
 #: view:real.average.consumption:0
 #: field:real.average.consumption,activity_id:0
-msgid "Activity"
+msgid "Destination Location"
 msgstr "Actividad"
 
 #. module: register_accounting
@@ -63852,8 +63837,8 @@ msgstr "El modelo al que pertenece este campo"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:414
 #, python-format
-msgid "An error occured. %s: %s"
-msgstr "An error occured. %s: %s"
+msgid "An error occurred. %s: %s"
+msgstr "An error occurred. %s: %s"
 
 #. module: order_nomenclature
 #: field:purchase.order.line,nomenclature_code:0
@@ -72645,8 +72630,8 @@ msgstr "Tipo de comunicación"
 #: code:addons/msf_doc_import/account.py:419
 #: code:addons/register_accounting/wizard/wizard_register_import.py:485
 #, python-format
-msgid "An error occured: %s"
-msgstr "An error occured: %s"
+msgid "An error occurred: %s"
+msgstr "An error occurred: %s"
 
 #. module: account_hq_entries
 #: help:account.account,is_not_hq_correctible:0
@@ -78123,3 +78108,50 @@ msgstr "Expiry date"
 msgid "get_import_batch_headers_type"
 msgstr "Type"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#, python-format
+msgid "fo_import_product_code"
+msgstr "Product Code"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#, python-format
+msgid "fo_import_product_description"
+msgstr "Product Description"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#, python-format
+msgid "fo_import_qty"
+msgstr "Quantity"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#, python-format
+msgid "fo_import_uom"
+msgstr "UoM"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#, python-format
+msgid "fo_import_price"
+msgstr "Price"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#, python-format
+msgid "fo_import_drd"
+msgstr "Delivery requested date"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#, python-format
+msgid "fo_import_currency"
+msgstr "Currency"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#, python-format
+msgid "fo_import_comment"
+msgstr "Comment"

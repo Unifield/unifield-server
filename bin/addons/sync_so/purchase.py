@@ -23,7 +23,6 @@ from osv import osv, fields
 import netsvc
 
 import logging
-import pdb
 import time
 from tools.translate import _
 
@@ -74,6 +73,7 @@ class purchase_order_line_sync(osv.osv):
                 'date': line_dict.get('confirmed_delivery_date', time.strftime('%Y-%m-%d %H:%M:%S')),
                 'change_reason': False,
                 'product_id': line_dict.get('product_id'),
+                'comment': line_dict.get('comment'),
             }],
         }
 
@@ -187,7 +187,7 @@ class purchase_order_sync(osv.osv):
         for po in self.browse(cr, uid, ids, context=context):
             res[po.id] = False
             if po.state == 'confirmed' \
-                and po.partner_id and po.partner_id.partner_type != 'esc':  # uftp-88 PO for ESC partner are never to synchronised, no warning msg in PO form
+                    and po.partner_id and po.partner_id.partner_type != 'esc':  # uftp-88 PO for ESC partner are never to synchronised, no warning msg in PO form
                 po_identifier = self.get_sd_ref(cr, uid, po.id, context=context)
                 sync_msg_ids = sync_msg_obj.search(
                     cr, uid,
@@ -231,9 +231,9 @@ class purchase_order_sync(osv.osv):
             pol_id = False
             if not spl_brw.line_id:
                 already_pol_ids = self.pool.get('purchase.order.line').search(cr, uid,
-                        [('sync_order_line_db_id', '=',
-                            spl_brw.new_sync_order_line_db_id)],
-                        limit=1, order='NO_ORDER', context=context)
+                                                                              [('sync_order_line_db_id', '=',
+                                                                                spl_brw.new_sync_order_line_db_id)],
+                                                                              limit=1, order='NO_ORDER', context=context)
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', spl_brw.sync_order_line_db_id)], context=context)
                 if not pol_ids or already_pol_ids:
                     continue
@@ -349,7 +349,7 @@ class purchase_order_sync(osv.osv):
 
         # UF-1830: Check if the future FO split exists in the system, if it is the case, then the message is coming from a recovery from the partner!
         check_exist = self.search(cr, uid, [('name', '=',
-            header_result['name'])], order='NO_ORDER')
+                                             header_result['name'])], order='NO_ORDER')
         if check_exist:
             # if it is the case, then just update the reference to the newly created FO-split at the partner side
             self.write(cr, uid, check_exist, {'partner_ref': header_result['partner_ref']} , context=context)
@@ -381,11 +381,11 @@ class purchase_order_sync(osv.osv):
         line_obj = self.pool.get('purchase.order.line')
         #to_split = {}
         for line in default['order_line']:
-        #    if line[2].get('is_line_split') and line[2].get('original_purchase_line_id') and line[2].get('original_purchase_line_id') in to_split:
-        #        to_split[line[2].get('original_purchase_line_id')].append(line[2])
-        #        del default['order_line'][default['order_line'].index(line)]
-        #    elif line[2].get('original_purchase_line_id') and line[2].get('original_purchase_line_id') not in to_split:
-        #        to_split.setdefault(line[2].get('original_purchase_line_id'), [])
+            #    if line[2].get('is_line_split') and line[2].get('original_purchase_line_id') and line[2].get('original_purchase_line_id') in to_split:
+            #        to_split[line[2].get('original_purchase_line_id')].append(line[2])
+            #        del default['order_line'][default['order_line'].index(line)]
+            #    elif line[2].get('original_purchase_line_id') and line[2].get('original_purchase_line_id') not in to_split:
+            #        to_split.setdefault(line[2].get('original_purchase_line_id'), [])
             orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', line[2].get('original_purchase_line_id'))])
             if orig_line:
                 orig_line = line_obj.browse(cr, uid, orig_line[0], context=context)
@@ -404,13 +404,11 @@ class purchase_order_sync(osv.osv):
         res_id = self.create(cr, uid, default , context=context)
         so_po_common.update_next_line_number_fo_po(cr, uid, res_id, self, 'purchase_order_line', context)
 
-        #self.manage_split_po_lines(cr, uid, res_id, context=context)
 
         proc_ids = []
         order_ids = []
         order = self.browse(cr, uid, res_id, context=context)
         origin_lines = []
-        #pdb.set_trace()
         for order_line in order.order_line:
             if order_line.original_purchase_line_id:
                 orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', order_line.original_purchase_line_id)], context=context)
@@ -429,34 +427,13 @@ class purchase_order_sync(osv.osv):
                     if line.order_id:
                         order_ids.append(line.order_id.id)
 
-        # Remove the original PO lines that are not in the split PO
-#        for original_line in original_po.order_line:
-#            if original_line.id not in origin_lines:
-#                line_obj.fake_unlink(cr, uid, [original_line.id], context=context)
-        
+
         self.manage_split_po_lines(cr, uid, res_id, context=context)
 
         if proc_ids:
             self.pool.get('procurement.order').write(cr, uid, proc_ids, {'purchase_id': res_id}, context=context)
-            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', proc_ids, 'purchase.order', order_ids, res_id, cr)
+            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', proc_ids, 'purchase.order', order_ids, res_id, cr, force=True)
 
-#        for orig_line, split_lines in to_split.iteritems():
-#            pol_ids = line_obj.search(cr, uid, [('order_id', '=', res_id), ('original_purchase_line_id', '=', orig_line)], context=context)
-#            if pol_ids:
-#                pol_brw = line_obj.browse(cr, uid, pol_ids[0], context=context)
-#                for sp in split_lines:
-#                    line_obj.write(cr, uid, pol_ids[0], {'product_qty': pol_brw.product_qty + sp.get('product_qty')}, context=context)
-#                    split_obj = self.pool.get('split.purchase.order.line.wizard')
-#                    split_id = split_obj.create(cr, uid, {
-#                        'purchase_line_id': pol_brw.id,
-#                        'original_qty': pol_brw.product_qty + sp.get('product_qty'),
-#                        'old_line_qty': pol_brw.product_qty,
-#                        'new_line_qty': sp.get('product_qty'),
-#                    }, context=context)
-#                    split_obj.split_line(cr, uid, [split_id], context=context)
-#                    new_line_ids = line_obj.search(cr, uid, [('order_id', '=', res_id)], order='id desc', limit=1)
-#                    if new_line_ids and sp.get('sync_order_line_db_id'):
-#                        line_obj.write(cr, uid, new_line_ids, {'sync_order_line_db_id': sp.get('sync_order_line_db_id')}, context=context)
 
         fo_ids = self.pool.get('sale.order').search(cr, uid, [('loan_id', '=', po_id)], context=context)
         if fo_ids:
@@ -533,11 +510,11 @@ class purchase_order_sync(osv.osv):
         default.update(header_result)
 
         if po_id: # only update the PO - should never be in here!
-            res_id = self.write(cr, uid, po_id, default, context=context)
+            self.write(cr, uid, po_id, default, context=context)
         else:
             # create a new PO, then send it to Validated state
             po_id = self.create(cr, uid, default , context=context)
-        
+
         for line in self.browse(cr, uid, po_id, context=context).order_line:
             if line.sync_order_line_db_id:
                 cancel_ids = self.pool.get('sale.order.line.cancel').search(cr, uid, [('resource_sync_line_db_id', '=', line.sync_order_line_db_id)], context=context)
@@ -548,7 +525,7 @@ class purchase_order_sync(osv.osv):
                         if sol.procurement_id and sol.procurement_id.purchase_id:
                             self.pool.get('procurement.order').write(cr, uid, [sol.procurement_id.id], {'purchase_id': po_id}, context=context)
                             line_obj.write(cr, uid, [line.id], {'procurement_id': sol.procurement_id.id}, context=context)
-                            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', [sol.procurement_id.id], 'purchase.order', [po_id], po_id, cr)
+                            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', [sol.procurement_id.id], 'purchase.order', [po_id], po_id, cr, force=True)
                         if sol.order_id and (not sol.order_id.procurement_request or sol.order_id.location_requestor_id.usage == 'customer'):
                             self.write(cr, uid, [po_id], {'cross_docking_ok': True}, context=context)
 
@@ -562,8 +539,8 @@ class purchase_order_sync(osv.osv):
                     account_id = line.account_4_distribution and line.account_4_distribution.id or False
                     # Search default destination_id
                     destination_id = self.pool.get('account.account').read(cr, uid, account_id, ['default_destination_id']).get('default_destination_id', False)
-                    distrib_id = ana_obj.create(cr, uid, {'purchase_line_ids': [(4,line.id)],
-                        'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
+                    ana_obj.create(cr, uid, {'purchase_line_ids': [(4,line.id)],
+                                             'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
 
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
@@ -657,14 +634,14 @@ class purchase_order_sync(osv.osv):
         default = {}
         default.update(header_result)
 
-        res_id = self.write(cr, uid, po_id, default, context=context)
+        self.write(cr, uid, po_id, default, context=context)
         if so_info.original_so_id_sale_order:
             wf_service = netsvc.LocalService("workflow")
             if so_info.state == 'validated':
-                ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
+                wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
             else:
-                ret = wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
-                res = self.purchase_approve(cr, uid, [po_id], context=context) # UTP-972: Use a proper workflow to confirm a PO
+                wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
+                self.purchase_approve(cr, uid, [po_id], context=context) # UTP-972: Use a proper workflow to confirm a PO
                 # UFTP-49: the call to wf_service.trg_validate does not trigger any write to PO, so there is no log recorded, set it manually here
                 logger = get_sale_purchase_logger(cr, uid, self, po_id, context=context)
                 logger.is_status_modified = True
@@ -719,7 +696,7 @@ class purchase_order_sync(osv.osv):
         default = {}
         default.update(header_result)
 
-        res_id = self.write(cr, uid, po_id, default, context=context)
+        self.write(cr, uid, po_id, default, context=context)
 
         message = "The PO " + original_po.name + " is updated by sync as its partner FO " + so_info.name + " got updated at " + source
         self._logger.info(message)
@@ -794,7 +771,7 @@ class purchase_order_sync(osv.osv):
         # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \
-                context=context)
+                                              context=context)
             if 'order_line' in changes:
                 old_lines, new_lines = map(set, changes['order_line'])
                 logger.is_product_added |= (len(new_lines - old_lines) > 0)

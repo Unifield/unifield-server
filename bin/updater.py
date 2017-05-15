@@ -12,13 +12,11 @@ from datetime import datetime
 from base64 import b64decode
 from StringIO import StringIO
 import logging
-import time
-from osv import osv
 
 if sys.version_info >= (2, 6, 6):
-    from zipfile import ZipFile, ZipInfo
+    from zipfile import ZipFile
 else:
-    from zipfile266 import ZipFile, ZipInfo
+    from zipfile266 import ZipFile
 
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
@@ -62,8 +60,8 @@ def unset_lock(file=None):
     global exec_path
     if file is None: file = lock_file
     with open(file, "r") as f:
-         data = eval(f.read().strip())
-         exec_path = data['path']
+        data = eval(f.read().strip())
+        exec_path = data['path']
     os.unlink(file)
 
 def parse_version_file(filepath):
@@ -82,7 +80,7 @@ def parse_version_file(filepath):
                 versions.append({'md5sum': md5sum,
                                  'date': date,
                                  'name': version_name,
-                                })
+                                 })
             except AttributeError:
                 raise Exception("Unable to parse version from file `%s': %s" % (filepath, line))
     return versions
@@ -278,8 +276,8 @@ def do_update():
             if webupdated and os.name == "nt":
                 try:
                     import subprocess
-                    retcode = subprocess.call('net stop "OpenERP Web 6.0"')
-                    retcode = subprocess.call('net start "OpenERP Web 6.0"')
+                    subprocess.call('net stop "OpenERP Web 6.0"')
+                    subprocess.call('net start "OpenERP Web 6.0"')
                 except OSError, e:
                     warn("Exception in Web server restart :")
                     warn(unicode(e))
@@ -463,7 +461,7 @@ def reconnect_sync_server():
                 logger.info('dbname = %s' % dbname)
                 db, pool = pooler.get_db_and_pool(dbname)
                 db, pool = pooler.restart_pool(dbname) # do not remove this line, it is required to restart pool not to have
-                                                       # strange behaviour with the connection on web interface
+                # strange behaviour with the connection on web interface
 
                 # do not execute this code on server side
                 if not pool.get("sync.server.entity"):
@@ -482,4 +480,34 @@ def reconnect_sync_server():
             except Exception as e:
                 message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file : %s"
                 logger.error(message % (unicode(e)))
+
+
+def check_mako_xml():
+    """
+    read all xml and mako files to check that the tag ExpandedColumnCount is
+    not present in it. This tag is useless and can lead to regression if the
+    count change.
+    """
+    import tools
+    logger.info("Check mako and xml files don't contain ExpandedColumnCount tag...")
+    path_to_exclude = [os.path.join(tools.config['root_path'], 'backup')]
+    for file_path in find(tools.config['root_path']):
+        full_path = os.path.join(tools.config['root_path'], file_path)
+        if not os.path.isfile(full_path):
+            continue
+        if full_path.endswith('.xml') or full_path.endswith('.mako'):
+            excluded = False
+            for exclusion in path_to_exclude:
+                if exclusion in full_path:
+                    excluded = True
+                    break
+            if excluded:
+                continue
+            with open(full_path, 'r') as file_to_check:
+                line_number = 0
+                for line in file_to_check:
+                    line_number += 1
+                    if 'ExpandedColumnCount' in line:
+                        logger.warning('ExpandedColumnCount is present in file %s line %s.' % (full_path, line_number))
+    logger.info("Check mako and xml files finished.")
 

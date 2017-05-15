@@ -24,8 +24,6 @@ from osv import osv
 
 from tools.translate import _
 
-import decimal_precision as dp
-
 
 class ppl_processor(osv.osv):
     """
@@ -50,7 +48,18 @@ class ppl_processor(osv.osv):
         ),
     }
 
-    def do_ppl_step1(self, cr, uid, ids, context=None):
+    def do_check_ppl(self, cr, uid, ids, context=None):
+        """
+        Run a check of the integrity of lines
+        """
+        if context is None:
+            context = {}
+
+        res = self.do_ppl_step1(cr, uid, ids, context=context, just_check=True)
+
+        return res
+
+    def do_ppl_step1(self, cr, uid, ids, context=None, just_check=False):
         """
         Make some integrity checks and call the do_ppl_step1 method of the stock.picking object
         """
@@ -75,6 +84,7 @@ class ppl_processor(osv.osv):
         to_smaller_ids = []
         overlap_ids = []
         gap_ids = []
+        ok_ids = []
 
         for wizard in self.browse(cr, uid, ids, context=context):
             # List of sequences
@@ -82,6 +92,7 @@ class ppl_processor(osv.osv):
 
             for line in wizard.move_ids:
                 sequences.append((line.from_pack, line.to_pack, line.id))
+                ok_ids.append(line.id)
 
             # If no data, we return False
             if not sequences:
@@ -126,7 +137,10 @@ class ppl_processor(osv.osv):
         if gap_ids:
             ppl_move_obj.write(cr, uid, gap_ids, {'integrity_status': 'gap'}, context=context)
 
-        if missing_ids or to_smaller_ids or overlap_ids or gap_ids:
+        if not (missing_ids or to_smaller_ids or overlap_ids or gap_ids) and just_check:
+            ppl_move_obj.write(cr, uid, ok_ids, {'integrity_status': 'empty'}, context=context)
+
+        if missing_ids or to_smaller_ids or overlap_ids or gap_ids or just_check:
             view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
             return {
                 'type': 'ir.actions.act_window',
@@ -440,6 +454,18 @@ class ppl_move_processor(osv.osv):
             help="Expected product to receive",
             multi='move_info',
         ),
+        'comment': fields.function(
+            _get_move_info,
+            method=True,
+            string='Comment',
+            type='text',
+            store={
+                 'ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Comment of the move",
+            multi='move_info',
+        ),
         'ordered_uom_id': fields.function(
             _get_move_info,
             method=True,
@@ -633,6 +659,15 @@ class ppl_move_processor(osv.osv):
 
         return super(ppl_move_processor, self).create(cr, uid, vals, context=context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Remove the integrity status value if from_pack or to_pack is changed.
+        """
+        if vals.get('from_pack') or vals.get('to_pack'):
+            vals['integrity_status'] = 'empty'
+
+        return super(ppl_move_processor, self).write(cr, uid, ids, vals, context=context)
+
     def _get_line_data(self, cr, uid, wizard=False, move=False, context=None):
         """
         Just put the stock move product quantity into the ppl.move.processor
@@ -716,6 +751,18 @@ class ppl_move_processor(osv.osv):
             self.copy(cr, uid, line.id, cp_vals, context=context)
 
         return pick_wiz_id
+
+    # View methods
+    def from_to_pack_change(self, cr, uid, ids, from_pack, to_pack):
+        """
+        Remove the integrity status when from/to pack value is changed
+        """
+        if from_pack or to_pack:
+            return {
+                'value': {'integrity_status': 'empty',},
+            }
+
+        return {}
 
 ppl_move_processor()
 

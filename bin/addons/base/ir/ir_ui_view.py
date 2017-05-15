@@ -24,7 +24,6 @@ from lxml import etree
 from tools import graph
 from tools.safe_eval import safe_eval as eval
 import tools
-import netsvc
 import os
 import logging
 
@@ -89,6 +88,11 @@ class view(osv.osv):
         (_check_xml, 'Invalid XML for View Architecture!', ['arch'])
     ]
 
+    _sql_constraints = [
+        ('unique_view', 'unique(priority, inherit_id, model)',
+            'View with this model, inherit_id and priority already exists!'),
+    ]
+
     def _auto_init(self, cr, context=None):
         super(view, self)._auto_init(cr, context)
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'ir_ui_view_model_type_inherit_id\'')
@@ -127,19 +131,19 @@ class view(osv.osv):
         _Arrow_Obj=self.pool.get(conn_obj)
 
         for model_key,model_value in _Model_Obj._columns.items():
-                if model_value._type=='one2many':
-                    if model_value._obj==node_obj:
-                        _Node_Field=model_key
-                        _Model_Field=model_value._fields_id
-                    flag=False
-                    for node_key,node_value in _Node_Obj._columns.items():
-                        if node_value._type=='one2many':
-                             if node_value._obj==conn_obj:
-                                 if src_node in _Arrow_Obj._columns and flag:
-                                    _Source_Field=node_key
-                                 if des_node in _Arrow_Obj._columns and not flag:
-                                    _Destination_Field=node_key
-                                    flag = True
+            if model_value._type=='one2many':
+                if model_value._obj==node_obj:
+                    _Node_Field=model_key
+                    _Model_Field=model_value._fields_id
+                flag=False
+                for node_key,node_value in _Node_Obj._columns.items():
+                    if node_value._type=='one2many':
+                        if node_value._obj==conn_obj:
+                            if src_node in _Arrow_Obj._columns and flag:
+                                _Source_Field=node_key
+                            if des_node in _Arrow_Obj._columns and not flag:
+                                _Destination_Field=node_key
+                                flag = True
 
         datas = _Model_Obj.read(cr, uid, id, [],context)
         for a in _Node_Obj.read(cr,uid,datas[_Node_Field],[]):

@@ -54,7 +54,7 @@ class account_line_csv_export(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not writer:
-            raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
+            raise osv.except_osv(_('Error'), _('An error occurred. Please contact an administrator to resolve this problem.'))
         # Prepare some value
         currency_name = ""
         if currency_id:
@@ -66,7 +66,7 @@ class account_line_csv_export(osv.osv_memory):
             head += [_('Func. Debit'), _('Func. Credit'), _('Func. Currency')]
         else:
             head += [_('Output Debit'), _('Output Credit'), _('Output Currency')]
-        head += [_('Reconcile'), _('Reconcile Date'), _('State')]
+        head += [_('Reconcile'), _('State')]
         writer.writerow(map(lambda x: x.encode('utf-8'), head))
         # Sort items
         ids.sort()
@@ -138,8 +138,6 @@ class account_line_csv_export(osv.osv_memory):
                     csv_line.append(currency_name.encode('utf-8') or '')
                     #reconcile
                     csv_line.append(ml.reconcile_txt and ml.reconcile_txt.encode('utf-8') or '')
-                    #reconcile date US-533
-                    csv_line.append(ml.reconcile_date or '')
                     #state
                     csv_line.append(field_sel(cr, uid, ml, 'move_state', context).encode('utf-8'))
                     # Write line
@@ -176,7 +174,7 @@ class account_line_csv_export(osv.osv_memory):
         # Is funding pool column needed?
         display_fp = context.get('display_fp', False)
         if not writer:
-            raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
+            raise osv.except_osv(_('Error'), _('An error occurred. Please contact an administrator to resolve this problem.'))
         # Prepare some value
         currency_name = ""
         field_sel = self.pool.get('ir.model.fields').get_browse_selection
@@ -277,7 +275,7 @@ class account_line_csv_export(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not writer:
-            raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
+            raise osv.except_osv(_('Error'), _('An error occurred. Please contact an administrator to resolve this problem.'))
 
         # Prepare some value
         currency_name = ""

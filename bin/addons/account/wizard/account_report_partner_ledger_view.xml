@@ -31,7 +31,7 @@
              <field name="res_model">account.partner.ledger</field>
              <field name="type">ir.actions.act_window</field>
              <field name="view_type">form</field>
-             <field name="view_mode">tree,form</field>
+             <field name="view_mode">form</field>
              <field name="view_id" ref="account_partner_ledger_view"/>
              <field name="context">{'record_id':active_id}</field>
              <field name="target">new</field>

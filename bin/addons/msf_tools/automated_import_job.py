@@ -197,7 +197,7 @@ class automated_import_job(osv.osv):
                 if not error:
                     if no_file:
                         error = _('No file to import in %s !') % job.import_id.src_path
-                    elif md5 and self.search(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], limit=1, order='NO_ORDER', context=context):
+                    elif md5 and self.search_exist(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], context=context):
                         error = _('A file with same checksum has been already imported !')
                         move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
 
@@ -206,7 +206,7 @@ class automated_import_job(osv.osv):
                         'filename': filename,
                         'file_to_import': data64,
                         'start_time': start_time,
-                        'end_time': time.strftime('%Y-%m-%d'),
+                        'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                         'nb_processed_records': 0,
                         'nb_rejected_records': 0,
                         'comment': error,
@@ -221,7 +221,7 @@ class automated_import_job(osv.osv):
                 md5 = hashlib.md5(job.file_to_import).hexdigest()
 
                 if job.file_sum != md5:
-                    if self.search(cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], limit=1, order='NO_ORDER', context=context):
+                    if self.search_exist(cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], context=context):
                         self.write(cr, uid, [job.id], {'file_sum': md5}, context=context)
                         return {
                             'type': 'ir.actions.act_window',
@@ -239,6 +239,8 @@ class automated_import_job(osv.osv):
                 data64 = base64.encodestring(job.file_to_import)
 
             # Process import
+            error_message = []
+            state = 'done'
             try:
                 processed, rejected, headers = getattr(
                     self.pool.get(job.import_id.function_id.model_id.model),
@@ -249,6 +251,11 @@ class automated_import_job(osv.osv):
 
                 if rejected:
                     nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True)
+                    state = 'error'
+                    for resjected_line in rejected:
+                        line_message = _('Line %s: ' % resjected_line[0])
+                        line_message += resjected_line[2]
+                        error_message.append(line_message)
 
                 self.write(cr, uid, [job.id], {
                     'filename': filename,
@@ -256,15 +263,16 @@ class automated_import_job(osv.osv):
                     'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'nb_processed_records': nb_processed,
                     'nb_rejected_records': nb_rejected,
+                    'comment': '\n'.join(error_message),
                     'file_sum': md5,
                     'file_to_import': data64,
-                    'state': 'done',
+                    'state': state,
                 }, context=context)
             except Exception as e:
                 self.write(cr, uid, [job.id], {
                     'filename': False,
                     'start_time': start_time,
-                    'end_time': time.strftime('%Y-%m-%d'),
+                    'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'nb_processed_records': 0,
                     'nb_rejected_records': 0,
                     'comment': str(e),

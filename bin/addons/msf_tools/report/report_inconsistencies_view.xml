@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+
+        <record id="export_report_inconsistencies_form_view" model="ir.ui.view">
+            <field name="name">export.report.inconsistencies.form.view</field>
+            <field name="model">export.report.inconsistencies</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Export inconsistencies">
+                    <separator colspan="4" string="Request information" />
+                    <field name="name" />
+                    <field name="state" />
+                    <button name="generate_report" type="object" string="Generate report" 
+                        icon="gtk-execute" states='draft' />
+                </form>
+            </field>
+        </record>
+
+
+        <record id="export_report_inconsistencies_tree_view" model="ir.ui.view">
+            <field name="name">export.report.inconsistencies.tree.view</field>
+            <field name="model">export.report.inconsistencies</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Export inconsistencies">
+                    <field name="name" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+
+        <record id="report_inconsistencies_search_view" model="ir.ui.view">
+            <field name="name">export.report.inconsistencies.search.view</field>
+            <field name="model">export.report.inconsistencies</field> <!-- _name of openERP object -->
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Export inconsistencies">
+                    <field name="name" />
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+
+
+        <record id="report_inconsistencies_info_view" model="ir.ui.view">
+            <field name="name">export.report.inconsistencies.info.view</field>
+            <field name="model">export.report.inconsistencies</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Status of the report" hide_new_button="1" hide_delete_button="1">
+                    <label> </label>
+                    <group colspan="2" col="2">
+                        <html>
+                            <div style="align: center">
+                                <p style="font-size:14px;align:center">
+                                    <translate>Your export inconsistent products demand will be treated quickly.</translate><br />
+                                </p>
+                                <p style="font-size:14px;align:center">
+                                    <translate>Due to the volume of data, your report cannot be shown immediatly.</translate><br />
+                                </p>
+                                <p style="font-size:14px;align:center">
+                                    <translate>When the report will be ready, you can access to it by the menu Tools / Product Status Inconsistencies</translate><br />
+                                </p>
+                            </div>
+                        </html>
+                    </group>
+                    <label> </label>
+                </form>
+            </field>
+        </record>
+
+
+        <record id="export_report_inconsistencies_action" model="ir.actions.act_window">
+            <field name="name">Product Status Inconsistencies</field>
+            <field name="res_model">export.report.inconsistencies</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        
+        <menuitem
+            id="export_report_inconsistencies_menu"
+            action="export_report_inconsistencies_action"
+            parent="object_query.menu_preferences"
+            sequence="51" />
+
+    </data>
+</openerp>

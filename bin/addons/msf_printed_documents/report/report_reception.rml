@@ -575,7 +575,7 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <para style="TextInformationN" alignment="LEFT">-</para>
+                                            <para style="TextInformation" alignment="LEFT">[[ line.comment or '-' ]]</para>
                                         </td>
                                         <td>
                                             <para style="TextInformationN" alignment="LEFT">-</para>

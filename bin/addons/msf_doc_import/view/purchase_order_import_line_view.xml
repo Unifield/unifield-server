@@ -6,7 +6,7 @@
             <field name="name">purchase.order.form.import</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
-            <field name="priority">301</field>
+            <field name="priority">110</field>
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
@@ -25,7 +25,7 @@
                     <field name="soq_updated" invisible="1" readonly="1" />
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True</attribute>
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True or red_color == True; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Notes']/field[@name='notes']" position="before">
                     <field name="import_in_progress" readonly="1" invisible="0" />
@@ -40,6 +40,9 @@
                             <field name="filename" />
                         </tree>
                     </field>
+                </xpath>
+                <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="before" >
+                    <button name="wizard_import_po_line" string="Import RfQ lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'rfq_sent')]}"/>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="before" >
                   <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
@@ -60,7 +63,7 @@
             <field name="name">purchase.order.line.form</field>
             <field name="model">purchase.order.line</field>
             <field name="type">form</field>
-            <field name="priority" eval="100" />
+            <field name="priority">40</field>
             <field name="inherit_id" ref="purchase_override.purchase_order_line_form_view_inherit" />
             <field name="arch" type="xml">
                 <data>
@@ -139,6 +142,8 @@
                 <form string="Export PO validated">
                     <separator colspan="4" string="File format" />
                     <field name="file_type" />
+                    <newline />
+                    <field name="need_ad" colspan="2" invisible="1" />
                     <separator colspan="4" string="Actions" />
                     <group colspan="4" col="4">
                         <label> </label>

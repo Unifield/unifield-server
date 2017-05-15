@@ -32,6 +32,10 @@
         </Borders>
         <Protection />
     </Style>
+    <Style ss:ID="line_wb">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Protection ss:Protected="0" />
+    </Style>
     <Style ss:ID="line">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
         <Borders>
@@ -57,7 +61,8 @@
 ## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
 % for o in objects:
 <ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}" ss:Protected="1">
-## definition of the columns' size
+    ## definition of the columns' size
+<% max_ad_lines = maxADLines(o) %>
 <% nb_of_columns = 17 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
@@ -83,7 +88,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Creation Date')}</Data></Cell>
-        % if o.date_order not in ('False', False):
+        % if isDate(o.date_order):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -99,7 +104,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Requested Date')}</Data></Cell>
-        % if o.delivery_requested_date not in (False, 'False'):
+        % if isDate(o.delivery_requested_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -111,7 +116,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('RTS Date')}</Data></Cell>
-        % if o.ready_to_ship_date not in ('False', False):
+        % if isDate(o.ready_to_ship_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.ready_to_ship_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -143,7 +148,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Shipment Date')}</Data></Cell>
-        % if o.shipment_date not in ('False', False):
+        % if isDate(o.shipment_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.shipment_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -165,7 +170,45 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Message ESC Header')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.message_esc or ''|x}</Data></Cell>
     </Row>
-    
+
+    % if need_ad and o.analytic_distribution_id:
+        <Row>
+            <Cell ss:MergeDown="1" ss:StyleID="header" ><Data ss:Type="String">${_('Analytic Distribution')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
+            % for x in range(1, len(o.analytic_distribution_id.cost_center_lines)):
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
+            % endfor
+        </Row>
+        <Row>
+        % for i, ccl in enumerate(o.analytic_distribution_id.cost_center_lines):
+            <Cell ss:Index="${(i*4+2)|x}" ss:StyleID="line" ><Data ss:Type="String">${(ccl.destination_id.code or '')|x}</Data></Cell>
+            <Cell ss:Index="${(i*4+3)|x}" ss:StyleID="line" ><Data ss:Type="String">${(ccl.analytic_id.code or '')|x}</Data></Cell>
+            <Cell ss:Index="${(i*4+4)|x}" ss:StyleID="line" ><Data ss:Type="Number">${(ccl.percentage or 0.00)|x}</Data></Cell>
+            <Cell ss:Index="${(i*4+5)|x}" ss:StyleID="line" ><Data ss:Type="Number">${((ccl.percentage/100.00)*o.amount_total or 0.00)|x}</Data></Cell>
+        % endfor
+        </Row>
+    % else:
+        <Row>
+            <Cell ss:MergeDown="1" ss:StyleID="header" ><Data ss:Type="String">${_('Analytic Distribution')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
+        </Row>
+        <Row>
+            <Cell ss:Index="2" ss:StyleID="line" />
+            <Cell ss:Index="3" ss:StyleID="line" />
+            <Cell ss:Index="4" ss:StyleID="line" />
+            <Cell ss:Index="5" ss:StyleID="line" />
+        </Row>
+    % endif
+
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number')}</Data></Cell>    
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ext. Ref.')}</Data></Cell>    
@@ -186,8 +229,22 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Project Ref')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 1')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 2')}</Data></Cell>
+        % if max_ad_lines:
+            % for x in range(1, max_ad_lines+1):
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
+            % endfor
+        % else:
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
+        % endif
     </Row>
     % for line in o.order_line:
+    <% len_cc_lines = line.analytic_distribution_id and len(line.analytic_distribution_id.cost_center_lines) or 0 %>
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.line_number or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.external_ref or '')|x}</Data></Cell>
@@ -198,17 +255,17 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.pricelist_id.currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin or '')|x}</Data></Cell>
-        % if line.date_planned not in (False, 'False'):
+        % if isDate(line.date_planned):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date_planned|n}T00:00:00.000</Data></Cell>
-        % elif o.delivery_requested_date not in (False, 'False'):
+        % elif isDate(o.delivery_requested_date):
         ## if the date does not exist in the line we take the one from the header
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
-        % if line.confirmed_delivery_date not in ('False', False):
+        % if isDate(line.confirmed_delivery_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.confirmed_delivery_date|n}T00:00:00.000</Data></Cell>
-        % elif o.delivery_confirmed_date not in ('False', False):
+        % elif isDate(o.delivery_confirmed_date):
         ## if the date does not exist in the line we take the one from the header
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_confirmed_date|n}T00:00:00.000</Data></Cell>
         % else:
@@ -222,6 +279,27 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.fnct_project_ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        % if need_ad:
+            % if line.analytic_distribution_id:
+                % for ccl in line.analytic_distribution_id.cost_center_lines:
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.destination_id.code or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.analytic_id.code or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="Number">${(ccl.percentage or 0.00)|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="Number">${((ccl.percentage/100.00) * line.price_subtotal or 0.00)|x}</Data></Cell>
+                % endfor
+                % for x in range(0, max_ad_lines-len_cc_lines):
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+                % endfor
+            % endif
+        % else:
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        % endif
     </Row>
     % endfor
 </Table>

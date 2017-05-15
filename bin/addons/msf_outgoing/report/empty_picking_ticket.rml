@@ -4,13 +4,10 @@
     <!-- Templating -->
     <template pageSize="(842.0,595.0)" title="Packing-List" author="Unifield,MSF" allowSplitting="20">
         <pageTemplate id="first">
-            <frame id="first" x1="0.0" y1="0.0" width="842" height="520" />
+            <frame id="first" x1="0.0" y1="0.0" width="842" height="580" />
 
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="13.0"/>
-                <drawString x="20.0" y="555.0">PRE-PACKING LIST ([[ getSel(objects[0], 'state') ]])</drawString>
-                <fill color="blue"/>
-                <drawString x="20.0" y="541.0">[[ objects[0].name ]]</drawString>
                 <image x="705.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8" />
                 <fill color="black" />
@@ -21,13 +18,10 @@
         </pageTemplate>
 
         <pageTemplate id="second">
-            <frame id="second" x1="0.0" y1="0.0" width="842" height="520" />
+            <frame id="second" x1="0.0" y1="0.0" width="842" height="580" />
 
             <pageGraphics>
                 <setFont name="Helvetica-Bold" size="13.0"/>
-                <drawString x="20.0" y="555.0">PICKING TICKET ([[ getSel(objects[0], 'state') ]])</drawString>
-                <fill color="blue"/>
-                <drawString x="20.0" y="541.0">[[ objects[0].name ]]</drawString>
                 <image x="725.0" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
                 <setFont name="Helvetica" size="8" />
                 <fill color="black" />
@@ -45,6 +39,11 @@
             <blockValign value="TOP" />
         </blockTableStyle>
 
+        <blockTableStyle id="HeaderBigInfos">
+            <blockAlignment value="LEFT" />
+            <blockValign value="TOP" />
+        </blockTableStyle>
+
         <blockTableStyle id="WarningTable">
             <blockAlignment value="CENTRE" />
             <blockValign value="MIDDLE" />
@@ -58,6 +57,17 @@
             <blockBackground colorName="#c0c0c0" start="0,1" stop="-1,-1" />
             <lineStyle kind="OUTLINE" colorName="black" start="-5,0" stop="-1,0" />
             <lineStyle kind="GRID" colorName="black" start="0,1" stop="-1,-1" />
+            <blockSpan start="0,1" stop="0,-1" />
+            <blockSpan start="3,1" stop="3,-1" />
+            <blockSpan start="4,1" stop="4,-1" />
+            <blockSpan start="5,1" stop="5,-1" />
+            <blockSpan start="6,1" stop="6,-1" />
+            <blockSpan start="7,1" stop="7,-1" />
+            <blockSpan start="8,1" stop="8,-1" />
+            <blockSpan start="9,1" stop="9,-1" />
+            <blockSpan start="10,1" stop="10,-1" />
+            <blockSpan start="11,1" stop="11,-1" />
+            <blockSpan start="12,1" stop="12,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="LinesValues">
@@ -78,6 +88,8 @@
             <blockSpan start="8,0" stop="8,-1" />
         </blockTableStyle>
 
+        <paraStyle name="HeaderInfosBigTitle" fontName="Helvetica-Bold" fontSize="12.0" />
+        <paraStyle name="HeaderInfosBigTitleBlue" fontName="Helvetica-Bold" fontSize="12.0" textColor="blue" />
         <paraStyle name="HeaderInfosTitle" fontName="Helvetica" fontSize="8.0" />
         <paraStyle name="HeaderInfosValue" fontName="Helvetica" fontSize="8.0" textColor="blue" />
 
@@ -98,10 +110,36 @@
     <story>
         [[ repeatIn(objects, 'pt') ]]
 
+        <blockTable colWidths="300.0,170.0,170.0,165.0" style="HeaderBigInfos">
+            <tr>
+                <td>
+                    <para style="HeaderInfosBigTitle">
+                        PRE-PACKING LIST ([[ getSel(pt, 'state') ]])
+                    </para>
+                    <para style="HeaderInfosBigTitleBlue">
+                        [[ pt.name ]]
+                    </para>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </blockTable>
+
         <!-- Empty line -->
         <para style="HeaderInfosTitle">
             <font color="white"> </font>
         </para>
+        <para style="HeaderInfosTitle">
+            <font color="white"> </font>
+        </para>
+        <para style="HeaderInfosTitle">
+            <font color="white"> </font>
+        </para>
+        <para style="HeaderInfosTitle">
+            <font color="white"> </font>
+        </para>
+
 
         <!-- Picking Ticket header values -->
 
@@ -251,10 +289,75 @@
                     <para style="LineHeader">(w x l x h) (cm)</para>
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeaderLeft"></para>
+                </td>
+                <td>
+                    <para style="LineHeaderLeft">Comment</para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+            </tr>
         </blockTable>
 
         <pto>
             <pto_header>
+        <blockTable colWidths="300.0,170.0,170.0,165.0" style="HeaderBigInfos">
+            <tr>
+                <td>
+                    <para style="HeaderInfosBigTitle">
+                        PRE-PACKING LIST ([[ getSel(pt, 'state') ]])
+                    </para>
+                    <para style="HeaderInfosBigTitleBlue">
+                        [[ pt.name ]]
+                    </para>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+	    <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </blockTable>
                 <blockTable colWidths="30.0,60.0,220.0,55.0,75.0,65.0,20.0,20.0,20.0,55.0,45.0,45.0,50.0,50.0" style="LinesHeader">
                     <tr>
                         <td>
@@ -344,6 +447,50 @@
                             <para style="LineHeader">Size (w x l x h) (cm)</para>
                         </td>
                     </tr>
+                    <tr>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeaderLeft"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeaderLeft">Comment</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                    </tr>
                 </blockTable>
             </pto_header>
 
@@ -409,7 +556,7 @@
                         <para style="LineValue"></para>
                     </td>
                     <td>
-                        <para style="LineValue"></para>
+                        <para style="LineValueLeft">[[ m.comment ]]</para>
                     </td>
                     <td>
                         <para style="LineValue"></para>
@@ -456,6 +603,7 @@
             </para>
 
         </pto>
+        <setNextTemplate name="first" />
 
     </story>
 

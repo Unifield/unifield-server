@@ -29,6 +29,9 @@ import os
 import logging
 from threading import Lock
 
+from msf_field_access_rights.osv_override import _get_instance_level
+
+
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
     _logger = logging.getLogger('patch_scripts')
@@ -43,6 +46,264 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2632_patch(self, cr, uid, *a, **b):
+        '''fix ir.model.data entries on sync_server instances
+        '''
+        update_module = self.pool.get('sync.server.update')
+        if update_module:
+            cr.execute("""
+            UPDATE ir_model_data SET module='msf_sync_data_server' WHERE
+            model='sync_server.message_rule' AND module='';
+            """)
+
+    def remove_not_synchronized_data(self, cr, uid, *a, **b):
+        '''
+        The list of models to synchronize was wrong. It is now build
+        automatically and is then more exact.
+        This patch will remove all the data from ir_model_data that are not
+        synchronized models.
+        '''
+        from sync_common import WHITE_LIST_MODEL
+        removed_obj = 0
+
+        # if sync_client module is installed, get the list of synchronized models
+        if self.pool.get('sync.client.rule') and\
+                self.pool.get('sync.client.message_rule'):
+            entity_obj = self.pool.get('sync.client.entity')
+            server_model_white_set = entity_obj.get_model_white_list(cr, uid)
+
+            # check that all models from the newly generated list are in the hardcoded white list
+            difference = server_model_white_set.difference(WHITE_LIST_MODEL)
+            if difference:
+                err_msg = 'Warning: Some models used in the synchronization '\
+                    'rule are not present in the WHITE_LIST_MODEL: %s'
+                self._logger.warn(err_msg)
+            if server_model_white_set:
+                # get list of all existing models used in ir_model_data
+                cr.execute('SELECT DISTINCT(model) FROM ir_model_data')
+                model_list = [x and x[0] for x in cr.fetchall()]
+                model_to_remove = (set(model_list).difference(server_model_white_set))
+                import pprint
+                pp = pprint.PrettyPrinter(indent=2)
+                model_to_remove_pp = pp.pformat(model_to_remove)
+                self._logger.warn('%s models should not be part of ir_model_data.' % len(model_to_remove))
+                self._logger.warn('The objects linked to the model(s) %s will be removed from ir_model_data.' % model_to_remove_pp)
+
+                for model in model_to_remove:
+                    cr.execute("DELETE FROM ir_model_data WHERE model='%s' AND module='sd'" % model)
+                    current_count = cr.rowcount
+                    removed_obj += current_count
+                    self._logger.warn('ir.model.data, model=%s, %s objects deleted.' % (model, current_count))
+                self._logger.warn('ir.model.data, total of %s objects deleted.' % removed_obj)
+
+    def us_1613_remove_all_track_changes_action(self, cr, uid, *a, **b):
+        '''
+        each time the msf_audittrail is updated, the subscribe() method is
+        called on all rules.
+        This method create a new action for each rule (even if one already
+        exists). This patch will remove all existing 'Track changes' actions
+        (they will be re-created on the next msf_audittrail update and now
+        there is a check to prevent to have more than one).
+        '''
+        obj_action = self.pool.get('ir.actions.act_window')
+        if obj_action:
+            search_result = obj_action.search(cr, uid,
+                                              [('name', '=', 'Track changes'),
+                                               ('domain', '!=', False)])
+            if search_result:
+                obj_action.unlink(cr, uid, search_result)
+                self._logger.warn('%d Track changes action deleted' % (len(search_result),))
+                # call subscribe on all rule to recreate the Trach changes action
+                rule_obj = self.pool.get('audittrail.rule')
+                rules_ids = rule_obj.search(cr, uid, [])
+                rule_obj.subscribe(cr,uid, rules_ids)
+
+    def us_2110_patch(self, cr, uid, *a, **b):
+        '''setup the size on all attachment'''
+        attachment_obj = self.pool.get('ir.attachment')
+        attachment_ids = attachment_obj.search(cr, uid, [])
+        deleted_count = 0
+        logger = logging.getLogger('update')
+        for attachment in attachment_obj.browse(cr, uid, attachment_ids):
+            vals = {}
+            # check existance of the linked document, if the linked document
+            # don't exist anymore, delete the attachement
+            model_obj = self.pool.get(attachment.res_model)
+            if not model_obj or not model_obj.search(cr, uid,
+                                                     [('id', '=', attachment.res_id),]):
+                attachment_obj.unlink(cr, uid, attachment.id)
+                logger.warn('deleting attachment %s' % attachment.id)
+                deleted_count += 1
+                continue
+            if attachment.datas:
+                decoded_datas = base64.decodestring(attachment.datas)
+                vals['size'] = attachment_obj.get_octet_size(decoded_datas)
+                attachment_obj.write(cr, uid, attachment.id, vals)
+        if deleted_count:
+            logger.warn('%s attachment(s) deleted.' % deleted_count)
+
+    def us_2068_remove_updated_linked_to_activate_instance(self, cr, uid, *a, **b):
+        '''
+        A button "Activate Instance" as be removed from the user interface, but
+        this button had some related updates that are sent to new instance on
+        the first sync and genereate not run. Remove all of this updates on the
+        sync server.
+        '''
+        update_module = self.pool.get('sync.server.update')
+        if update_module:
+            # this script is exucuted on server side only
+            update_to_delete_ids = update_module.search(cr, uid,
+                                                        [('sdref', 'in',
+                                                          ('sync_client_activate_wizard_action',
+                                                           'BAR_sync_clientactivate_entity_wizard_view_activate'))])
+            update_module.unlink(cr, uid, update_to_delete_ids)
+
+    def us_2075_partner_locally_created(self, cr, uid, *a, **b):
+        entity = self.pool.get('sync.client.entity')
+        if entity:
+            identifier = entity.get_entity(cr, uid).identifier
+            if identifier:
+                cr.execute("""update res_partner set locally_created='f' where id in (
+                    select res_id from ir_model_data d
+                    where d.module='sd'
+                        and d.model='res.partner'
+                        and name not in ('msf_doc_import_supplier_tbd', 'order_types_res_partner_local_market')
+                        and name not like '%s%%'
+                    ) """ % (identifier, ))
+                self._logger.warn('%s non local partners updated' % (cr.rowcount,))
+        return True
+
+    def setup_security_on_sync_server(self, cr, uid, *a, **b):
+        update_module = self.pool.get('sync.server.update')
+        if not update_module:
+            # this script is executed on server side, update the first delete
+            return
+
+        data_obj = self.pool.get('ir.model.data')
+        group_id = data_obj.get_object_reference(cr, uid, 'base',
+                                                 'group_erp_manager')[1]
+
+        model_obj = self.pool.get('ir.model')
+        model_list_not_to_change = ['res.users', 'res.lang', 'res.widget',
+                                    'res.widget.user', 'res.log', 'publisher_warranty.contract',
+                                    'module.module']
+        model_ids = model_obj.search(cr, uid,
+                                     [('model', 'not like', "ir%"),
+                                      ('model', 'not in', model_list_not_to_change)])
+
+        access_obj = self.pool.get('ir.model.access')
+        no_group_access = access_obj.search(cr, uid, [('group_id', '=', False),
+                                                      ('model_id', 'in', model_ids)])
+        access_obj.write(cr, uid, no_group_access, {'group_id': group_id})
+
+    def us_1482_fix_default_code_on_msf_lines(self, cr, uid, *a, **b):
+        """
+        If the default code set on the MSR lines is different from the
+        default_code set on the related product_id, it means that the MSR lines
+        should be updated.
+        The call of write on them do the job.
+        """
+
+        request = """
+        UPDATE stock_mission_report_line
+        SET default_code=subquerry.pp_code
+        FROM
+            (SELECT msrl.id AS msrl_id, msrl.default_code AS msrl_code,
+             pp.default_code AS pp_code FROM stock_mission_report_line AS msrl
+             JOIN product_product AS pp ON pp.id = msrl.product_id
+             WHERE
+                msrl.default_code != pp.default_code
+            ) AS subquerry
+        WHERE
+            stock_mission_report_line.id = msrl_id
+        """
+        cr.execute(request)
+
+    def us_1381_encrypt_passwords(self, cr, uid, *a, **b):
+        """
+        encrypt all passwords
+        """
+        from passlib.hash import bcrypt
+        users_obj = self.pool.get('res.users')
+        user_ids = users_obj.search(cr, uid, [('active', 'in', ('t', 'f'))])
+        for user in users_obj.read(cr, uid, user_ids, ['password']):
+            original_password = tools.ustr(user['password'])
+            # check the password is not already encrypted
+            if not bcrypt.identify(original_password):
+                encrypted_password = bcrypt.encrypt(original_password)
+                users_obj.write(cr, uid, user['id'],
+                                {'password': encrypted_password})
+
+    def us_1610_set_oc_on_all_groups(self, cr, uid, *a, **b):
+        from sync_common import OC_LIST
+        lower_oc_list = [x.lower() for x in OC_LIST]
+        logger = logging.getLogger('update')
+        update_module = self.pool.get('sync.server.entity_group')
+        if update_module:
+            # get all groups that don't have any oc
+            group_ids = update_module.search(cr, uid,
+                                             [('oc', '=', False)])
+            for group in update_module.read(cr, uid, group_ids, ['name']):
+                group_name = group['name'].lower()
+                if 'oc' in group_name:
+                    index = group_name.index('oc')
+                    oc = group_name[index:index+3]
+                    if oc in lower_oc_list:
+                        update_module.write(cr, uid, group['id'], {'oc': oc})
+                    else:
+                        logger.warn("""OC = %s from group '%s' is not in the OC_LIST, please fix
+                                manually""" % (oc, group['name']))
+                else:
+                    logger.warn('sync.server.entity_group "%s" does not contain '\
+                                '"oc" or "OC" in its name. Please set up the '\
+                                'oc manually' % group['name'])
+
+        sync_client_module = self.pool.get('sync.client.entity')
+        if sync_client_module:
+            # get all entities that don't have any oc
+            entity_ids = sync_client_module.search(cr, uid,
+                                                   [('oc', '=', False)])
+            for entity in sync_client_module.read(cr, uid, entity_ids,
+                                                  ['name']):
+                entity_name = entity['name'].lower()
+                if 'oc' in entity_name:
+                    index = entity_name.index('oc')
+                    oc = entity_name[index:index+3]
+                    if oc in lower_oc_list:
+                        sync_client_module.write(cr, uid, entity['id'], {'oc': oc})
+                    else:
+                        logger.warn("""OC = %s from group '%s' is not in the OC_LIST, please fix
+                                manually""" % (oc, group['name']))
+                else:
+                    logger.warn('sync.client.entity "%s" does not contain '\
+                                '"oc" or "OC" in its name. Please set up the '\
+                                'oc manually' % entity['name'])
+
+    def us_1725_force_sync_on_hr_employee(self, cr, uid, *a, **b):
+        '''
+        force sync on all local employee
+        '''
+
+        if _get_instance_level(self, cr, uid) == 'coordo':
+
+            # get all local employee
+            hr_employee_obj = self.pool.get('hr.employee')
+            local_employee_ids = hr_employee_obj.search(cr, uid,
+                                                        [('employee_type', '=', 'local'),
+                                                         ('name','!=','Administrator')])
+
+            total_employee = len(local_employee_ids)
+            start_chunk = 0
+            chunk_size = 100
+            while start_chunk < total_employee:
+                ids_chunk = local_employee_ids[start_chunk:start_chunk+chunk_size]
+                cr.execute("""UPDATE
+                    ir_model_data SET last_modification=NOW(), touched='[''code'']'
+                WHERE
+                    module='sd' AND model='hr.employee' AND res_id in %s""",
+                           (tuple(ids_chunk),))
+                start_chunk += chunk_size
+
     def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
         """
         change the implementation of the finance.ocb.export ir_sequence to be
@@ -51,7 +312,7 @@ class patch_scripts(osv.osv):
         seq_obj = self.pool.get('ir.sequence')
         # get the ir_sequence id
         seq_id_list = seq_obj.search(cr, uid,
-                [('code', '=', 'finance.ocb.export')])
+                                     [('code', '=', 'finance.ocb.export')])
         if seq_id_list:
             seq_obj.write(cr, uid, seq_id_list, {'implementation': 'psql'})
 
@@ -94,6 +355,20 @@ class patch_scripts(osv.osv):
         WHERE model='sync.server.group_type' AND
         name='sync_remote_warehouse_rule_group_type'
         """)
+
+    # XXX do not remove this patch !!! XXX
+    def us_1030_create_pricelist_patch(self, cr, uid, *a, **b):
+        '''
+        Find currencies without associated pricelist and create this price list
+        '''
+        currency_module = self.pool.get('res.currency')
+        # Find currencies without associated pricelist
+        cr.execute("""SELECT id FROM res_currency
+                   WHERE id NOT IN (SELECT currency_id FROM product_pricelist)
+                   AND currency_table_id IS NULL""")
+        curr_ids = cr.fetchall()
+        for cur_id in curr_ids:
+            currency_module.create_associated_pricelist(cr, uid, cur_id[0])
 
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
@@ -175,29 +450,6 @@ class patch_scripts(osv.osv):
                 cr.execute("UPDATE sync_client_update_to_send "
                            "SET sdref='ZMW' "
                            "WHERE sdref='ZMK'")
-    def us_1454_patch(self, cr, uid, *a, **b):
-        '''setup the size on all attachment'''
-        attachment_obj = self.pool.get('ir.attachment')
-        attachment_ids = attachment_obj.search(cr, uid, [])
-        vals = {}
-        deleted_count = 0
-        logger = logging.getLogger('update')
-        for attachment in attachment_obj.browse(cr, uid, attachment_ids):
-            # check existance of the linked document, if the linked document
-            # don't exist anymore, delete the attachement
-            model_obj = self.pool.get(attachment.res_model)
-            if not model_obj or not model_obj.search(cr, uid,
-                    [('id', '=', attachment.res_id),]):
-                attachment_obj.unlink(cr, uid, attachment.id)
-                logger.warn('deleting attachment %s' % attachment.id)
-                deleted_count += 1
-                continue
-
-            if attachment.datas and not attachment.size:
-                vals['size'] = attachment_obj.get_size(attachment.datas)
-                attachment_obj.write(cr, uid, attachment.id, vals)
-        if deleted_count:
-            logger.warn('%s attachment(s) deleted.' % deleted_count)
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
@@ -220,7 +472,7 @@ class patch_scripts(osv.osv):
         # children
         period_state_ids = []
         period_state_ids = period_state_obj.search(cr, uid,
-                            [('instance_id', 'not in', children_ids + instance_ids)])
+                                                   [('instance_id', 'not in', children_ids + instance_ids)])
         if period_state_ids:
             period_state_obj.unlink(cr, uid, period_state_ids)
 
@@ -230,7 +482,7 @@ class patch_scripts(osv.osv):
         for period_state_id in period_state_ids:
             period_state_xml_id = period_state_obj.get_sd_ref(cr, uid, period_state_id)
             ids_to_delete.append(model_data._get_id(cr, uid, 'sd',
-                                                   period_state_xml_id))
+                                                    period_state_xml_id))
         model_data.unlink(cr, uid, ids_to_delete)
 
         # touch all ir.model.data object related to the curent
@@ -387,7 +639,7 @@ class patch_scripts(osv.osv):
     def us_822_patch(self, cr, uid, *a, **b):
         fy_obj = self.pool.get('account.fiscalyear')
         level = self.pool.get('res.users').browse(cr, uid,
-            [uid])[0].company_id.instance_id.level
+                                                  [uid])[0].company_id.instance_id.level
 
         # create FY15 /FY16 'system' periods (number 0 and 16)
         if level == 'section':
@@ -404,21 +656,20 @@ class patch_scripts(osv.osv):
                         periods_to_create.insert(0, 0)
 
                     self.pool.get('account.year.end.closing').create_periods(cr,
-                        uid, fy_rec.id, periods_to_create=periods_to_create)
+                                                                             uid, fy_rec.id, periods_to_create=periods_to_create)
 
         # update fiscal year state (new model behaviour-like period state)
         fy_ids = self.pool.get('account.fiscalyear').search(cr, uid, [])
         if fy_ids:
             self.pool.get('account.fiscalyear.state').update_state(cr, uid,
-                fy_ids)
+                                                                   fy_ids)
 
         return True
 
     def us_908_patch(self, cr, uid, *a, **b):
         # add the version to unifield-version.txt as the code which
         # automatically add this version name is contained in the patch itself.
-        from updater import re_version, md5hex_size
-        import re
+        from updater import re_version
         from tools import config
         file_path = os.path.join(config['root_path'], 'unifield-version.txt')
         # get the last known patch line
@@ -436,14 +687,14 @@ class patch_scripts(osv.osv):
         if not version_name:
             # check that the previous patch was UF2.1
             previous_line = lines[-2].rstrip() or lines[-3].rstrip() #  may be
-                                                # there is a blank line between
+            # there is a blank line between
             previous_line_res = re_version.findall(previous_line)
             p_md5sum, p_date, p_version_name = previous_line_res[0]
             if p_md5sum == '16679c0321623dd7e13fdd5fad6f677c':
                 last_line = '%s %s %s' % (md5sum, date, 'UF2.1-0') + os.linesep
                 lines[-1] = last_line
                 with open(file_path, 'w') as file:
-                        file.writelines(lines)
+                    file.writelines(lines)
 
     def uftp_144_patch(self, cr, uid, *a, **b):
         """
@@ -471,7 +722,7 @@ class patch_scripts(osv.osv):
                 ('module', '=', 'sd'),
                 ('model', '=', 'msf_button_access_rights.button_access_rule'),
                 ('res_id', '=', rule['id'])
-                ])
+            ])
             if d_ids:
                 data_obj.unlink(cr, uid, d_ids)
         for view in view_to_gen:
@@ -485,7 +736,6 @@ class patch_scripts(osv.osv):
         rules_obj = self.pool.get('msf_button_access_rights.button_access_rule')
 
         usr = user_obj.browse(cr, uid, [uid], context=context)[0]
-        level_current = False
 
         rule_ids = rules_obj.search(cr, uid, [('xmlname', '=', False), ('type', '=', 'action'), ('view_id', '!=', False), ('active', 'in', ['t', 'f'])])
         if rule_ids:
@@ -493,7 +743,7 @@ class patch_scripts(osv.osv):
                 ('module', '=', 'sd'),
                 ('model', '=', 'msf_button_access_rights.button_access_rule'),
                 ('res_id', 'in', rule_ids)
-                ])
+            ])
             if rule_ids:
                 data_obj.unlink(cr, uid, data_ids)
             for rule in rules_obj.read(cr, uid, rule_ids, ['type', 'name']):
@@ -547,13 +797,11 @@ class patch_scripts(osv.osv):
         :return: True
         """
         prd_obj = self.pool.get('product.product')
-        phs_obj = self.pool.get('product.heat_sensitive')
         data_obj = self.pool.get('ir.model.data')
 
         heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
         no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
 
-        phs_ids = phs_obj.search(cr, uid, [('active', '=', False)])
         prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '!=', False), ('active', 'in', ['t', 'f'])])
         if prd_ids:
             cr.execute("""
@@ -621,7 +869,7 @@ class patch_scripts(osv.osv):
         # AT HQ level: untick 8/9 top accounts for display in BS/PL report
         user_rec = self.pool.get('res.users').browse(cr, uid, [uid])[0]
         if user_rec.company_id and user_rec.company_id.instance_id \
-            and user_rec.company_id.instance_id.level == 'section':
+                and user_rec.company_id.instance_id.level == 'section':
             account_obj = self.pool.get('account.account')
             codes = ['8', '9', ]
 
@@ -636,7 +884,6 @@ class patch_scripts(osv.osv):
 
     def us_1263_patch(self, cr, uid, *a, **b):
         ms_obj = self.pool.get('stock.mission.report')
-        msl_obj = self.pool.get('stock.mission.report.line')
 
         ms_touched = "['name']"
         msl_touched = "['internal_qty']"
@@ -774,7 +1021,207 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_trans_admin_fr(self, cr, uid, *a, **b):
+        """
+        replay fr_MF translations for instances were sync has been run with French admin user
+        """
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        instance_name = False
+        instance_id = False
+        top_level = False
+        coordo_id = False
+        if usr and usr.company_id and usr.company_id.instance_id:
+            instance_name = usr.company_id.instance_id.instance
+            instance_id = usr.company_id.instance_id.instance_identifier
+            if usr.company_id.instance_id.parent_id:
+                if usr.company_id.instance_id.parent_id.parent_id:
+                    coordo_id = usr.company_id.instance_id.parent_id.instance_identifier
+                    top_level = usr.company_id.instance_id.parent_id.parent_id.instance
+                else:
+                    top_level = usr.company_id.instance_id.parent_id.instance
+
+        if instance_name in ('OCG_CM1_COO', 'OCG_CM1_KSR',
+                             'OCG_CM1_MRA', 'OCBHT118', 'OCBHT143', 'OCBHT101'):
+            self._logger.warn('Replay fr_MF updates')
+            cr.execute("""delete from ir_model_data where model='ir.translation' and module='sd'
+                and res_id in (select id from ir_translation where res_id=0 and name='product.template,name')
+            """);
+            cr.execute("delete from ir_translation where res_id=0 and name='product.template,name'");
+            if top_level:
+                cr.execute("""update sync_client_update_received set run='f' where id in
+                    (select max(id) from sync_client_update_received where model='ir.translation' and source=%s group by sdref)
+                """, (top_level, ))
+
+            else:
+                cr.execute("""update sync_client_update_received set run='f' where id in
+                    (select max(id) from sync_client_update_received where sdref in
+                            (select d.name from ir_model_data d where d.module='sd' and d.model='ir.translation' and d.res_id in
+                                (select t.id from ir_translation t, product_template p where t.name='product.template,name' and t.res_id=p.id and lang='fr_MF')
+                            ) group by sdref
+                        )
+                """)
+
+            if instance_id:
+                # delete en_MF translations created on instance for UniData products
+                # sync down deletion
+                cr.execute("""update ir_model_data set last_modification=NOW() where module='sd' and model='ir.translation' and res_id in (
+                    select id from ir_translation t where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
+                    (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
+                    and name like '"""+instance_id+"""%'
+                )""")
+                cr.execute("""delete from ir_translation t
+                    where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
+                        (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
+                    and id in
+                        (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '"""+instance_id+"""%')
+                """)
+                if coordo_id and instance_name in ('OCBHT118', 'OCBHT143'):
+                    # also remove old UniData trans sent by coordo
+                    cr.execute("""delete from ir_translation t
+                        where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
+                            (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
+                        and id in
+                            (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '"""+coordo_id+"""%')
+                    """)
+
+                self._logger.warn('%s local translation for UniData products deleted' % (cr.rowcount,))
+
+    def us_1732_sync_state_ud(self, cr, uid, *a, **b):
+        """
+        Make the product.product with state_ud is not null as to be synchronized at HQ
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param a: Named parameters
+        :param b: Unnamed parameters
+        :return:
+        """
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                UPDATE ir_model_data SET last_modification = NOW(), touched = '[''state_ud'']'
+                WHERE
+                    module = 'sd'
+                AND
+                    model = 'product.product'
+                AND
+                    res_id IN (
+                        SELECT id FROM product_product WHERE state_ud IS NOT NULL
+            )""")
+
+    def us_1766_fix_fxa_aji_curr(self, cr, uid, *a, **b):
+        """
+        Fix FXA AJIs:
+            - set book currency = fct currency
+            - set book amount = fct amount
+        """
+        context = {}
+        logger = logging.getLogger('fix_us_1766')
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        currency_id = user.company_id.currency_id and user.company_id.currency_id.id or False
+
+        if currency_id:
+            journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'cur_adj'), ('active', 'in', ['t', 'f'])])
+            if journal_ids:
+                cr.execute("""select entry_sequence from account_analytic_line
+                    where journal_id in %s and
+                    currency_id != %s """, (tuple(journal_ids), currency_id))
+                all_seq = [x[0] for x in cr.fetchall()]
+                logger.warn('Fix %d FXA AJIs: %s' % (len(all_seq), ','.join(all_seq)))
+                cr.execute("""update account_analytic_line set
+                    currency_id = %s,
+                    amount = amount_currency
+                    where journal_id in %s and
+                    currency_id != %s""", (currency_id, tuple(journal_ids), currency_id))
+
+
+    def us_635_dest_partner_ids(self, cr, uid, *a, **b):
+        """
+        Fill many2many field dest_partner_ids
+        """
+        context = {}
+        po_obj = self.pool.get('purchase.order')
+        so_obj = self.pool.get('sale.order')
+
+        po_ids = po_obj.search(cr, uid, [], context=context)
+        for po_id in po_ids:
+            so_ids = po_obj.get_so_ids_from_po_ids(cr, uid, po_id, context=context)
+            for so in so_obj.browse(cr, uid, so_ids, context=context):
+                if not so.procurement_request:
+                    po_obj.write(cr, uid, po_id, {
+                        'dest_partner_ids': [(4, so.partner_id.id)],
+                    }, context=context)
+
+        return True
+
+    def us_1671_stopped_products(self, cr, uid, *a, **b):
+        '''
+        Fill field product_state of object stock.mission.report.line with the state of the products (product.product)
+        '''
+        prod_obj = self.pool.get('product.product')
+        smrl_obj = self.pool.get('stock.mission.report.line')
+        context = {}
+
+        prod_ids = prod_obj.search(cr, uid, [('state', '!=', False), ('active', 'in', ['t', 'f'])], context=context)
+        smrl_to_modify = smrl_obj.search(cr, uid, [('product_id', 'in', prod_ids), ('mission_report_id.local_report', '=', True)], context=context)
+
+        for smrl in smrl_obj.browse(cr, uid, smrl_to_modify, context=context):
+            smrl_obj.write(cr, uid, smrl.id, {'product_state': smrl.product_id.state.code}, context=context)
+        return True
+
+    def us_1721_dates_on_products(self, cr, uid, *a, **b):
+        """
+        Fill the uf_create_date and uf_write_date for existing products
+        """
+        cr.execute("""UPDATE product_product SET uf_write_date = write_date, uf_create_date = create_date""")
+        return True
+
+    def us_1359_update_move_shipment(self, cr, uid, *a, **b):
+        """
+        Fill the 'pick_shipment_id' value for stock move in a shipment
+        """
+        cr.execute("""UPDATE stock_move sm SET pick_shipment_id = sp.shipment_id FROM stock_picking sp WHERE sm.picking_id = sp.id AND sp.shipment_id IS NOT NULL""")
+        return True
+
+    def us_1167_status_inconsistencies(self, cr, uid, *a, **b):
+        '''
+        fill fields of stock.mission.report.line:
+            - state_ud
+            - product_active
+            - international_status_code
+        '''
+        smr_obj = self.pool.get('stock.mission.report')
+        context = {}
+
+        smr_ids = smr_obj.search(cr, uid, [('local_report', '=', True)], context=context)
+
+        if not smr_ids:
+            return True
+
+        cr.execute('''
+        UPDATE stock_mission_report_line
+        SET state_ud = sr.state_ud, international_status_code = sr.is_code, product_active = sr.active
+        FROM (
+          SELECT p.id AS id, p.active AS active, COALESCE(p.state_ud, '') AS state_ud, pis.code AS is_code
+          FROM product_product p
+            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+            LEFT JOIN product_international_status pis ON pis.id = p.international_status
+          ) AS sr
+        WHERE stock_mission_report_line.product_id = sr.id;
+        ''')
+
+        cr.execute('''
+        UPDATE ir_model_data
+        SET touched = '[''state_ud'', ''product_active'', ''international_status_code'']', last_modification = now()
+        WHERE model = 'stock.mission.report.line' AND res_id IN (
+          SELECT id FROM stock_mission_report_line WHERE mission_report_id IN %s)
+        ''' % (tuple(smr_ids),))
+
+        return True
+
+
 patch_scripts()
+
 
 
 class ir_model_data(osv.osv):
@@ -811,7 +1258,7 @@ class ir_model_data(osv.osv):
                 logger.warn('Sql done')
                 os.rename(fp.name, "%sold" % fp.name)
                 logger.warn('Sql file renamed')
-            except IOError, e:
+            except IOError:
                 # file does not exist
                 pass
 
@@ -846,7 +1293,7 @@ class ir_model_data(osv.osv):
                 logger.warn('Sql done')
                 os.rename(fp.name, "%sold" % fp.name)
                 logger.warn('Sql file renamed')
-            except IOError, e:
+            except IOError:
                 # file does not exist
                 pass
 
@@ -855,7 +1302,7 @@ class ir_model_data(osv.osv):
             try:
                 fp = tools.file_open(touch_file, 'r')
                 fp.close()
-            except IOError, e:
+            except IOError:
                 return True
             logger.warn('Execute US-268 queries')
             journal_obj = self.pool.get('account.journal')
@@ -891,21 +1338,21 @@ class ir_model_data(osv.osv):
                     cr.execute('update account_invoice set journal_id=%s, number=%s where id=%s', (journal_id, reference, invoice_ids[0]))
 
                 self._us_268_gen_message(cr, uid, account_move_obj, move.id,
-                    ['instance_id', 'journal_id', 'name'], [instance_xml_id, journal_xml_id, reference]
-                )
+                                         ['instance_id', 'journal_id', 'name'], [instance_xml_id, journal_xml_id, reference]
+                                         )
                 for line in move.line_id:
                     cr.execute('update account_move_line set instance_id=%s, journal_id=%s where id=%s', (instance_id, journal_id, line.id))
                     self._us_268_gen_message(cr, uid, self.pool.get('account.move.line'), line.id,
-                        ['instance_id', 'journal_id'], [instance_xml_id, journal_xml_id]
-                    )
+                                             ['instance_id', 'journal_id'], [instance_xml_id, journal_xml_id]
+                                             )
 
                     analytic_ids = analytic_obj.search(cr, uid, [('move_id', '=', line.id)])
 
                     for analytic_id in analytic_ids:
                         cr.execute('update account_analytic_line set instance_id=%s, entry_sequence=%s, journal_id=%s where id=%s', (instance_id, reference, analytic_journal_id, analytic_id))
                         self._us_268_gen_message(cr, uid, analytic_obj, analytic_id,
-                            ['instance_id', 'entry_sequence', 'journal_id'], [instance_xml_id, reference, analytic_journal_xml_id]
-                        )
+                                                 ['instance_id', 'entry_sequence', 'journal_id'], [instance_xml_id, reference, analytic_journal_xml_id]
+                                                 )
             os.rename(fp.name, "%sold" % fp.name)
             logger.warn('Set US-268 as executed')
 
@@ -1090,7 +1537,7 @@ class ir_cron_linux(osv.osv_memory):
             args = self._jobs[job][2]
             fct(cr, uid, *args)
             self._logger.info("Linux cron: job %s done" % (job, ))
-        except Exception, e:
+        except Exception:
             self._logger.warning('Linux cron: job %s failed' % (job, ), exc_info=1)
         finally:
             self.running[job].release()

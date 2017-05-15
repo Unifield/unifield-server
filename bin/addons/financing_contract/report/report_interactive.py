@@ -1,10 +1,8 @@
-import time
 from report import report_sxw
 import pooler
-import locale
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
-
+assert _ #pyflakes check
 
 class report_interactive(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -15,7 +13,6 @@ class report_interactive(report_sxw.rml_parse):
             'getLines':self.getLines,
             'getTot':self.getTot,
             'getCostCenter':self.getCostCenter,
-            'isDate':self.isDate,
             'checkType':self.checkType,
             'checkType2':self.checkType2,
         })
@@ -41,12 +38,6 @@ class report_interactive(report_sxw.rml_parse):
             return True
         return False
 
-
-    def isDate(self,date):
-        if len(date) > 9 :
-            return True
-        return False
-
     def getCostCenter(self,obj):
         ccs = []
         for cc in obj.cost_center_ids:
@@ -57,7 +48,6 @@ class report_interactive(report_sxw.rml_parse):
         if self.tot[o]:
             return self.tot[o]
         return ''
-
 
     def getLines(self,contract):
         pool = pooler.get_pool(self.cr.dbname)

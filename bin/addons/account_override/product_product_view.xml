@@ -6,7 +6,7 @@
             <field name="model">product.product</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="product.product_normal_form_view"/>
-            <field name="priority">20</field>
+            <field name="priority">100</field>
             <field name="arch" type="xml">
                 <page string="Accounting" position="inside">
                     <group colspan="4" col="2">
@@ -22,7 +22,7 @@
             <field name="model">product.category</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="product.product_category_form_view"/>
-            <field name="priority">20</field>
+            <field name="priority">36</field>
             <field name="arch" type="xml">
                 <form position="inside">
                     <group col="2" colspan="2">

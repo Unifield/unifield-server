@@ -21,7 +21,6 @@
 
 from osv import osv
 from osv import fields
-from osv import orm
 from tools.translate import _
 
 import socket
@@ -32,11 +31,10 @@ import sys
 import os
 import math
 import hashlib
-import traceback
 from psycopg2 import OperationalError
 
 import logging
-from sync_common import sync_log, get_md5, check_md5
+from sync_common import get_md5, check_md5
 from service.web_services import check_tz
 
 from threading import Thread, RLock, Lock
@@ -44,8 +42,10 @@ import pooler
 
 import functools
 
-from datetime import datetime
-import updater
+from sync_common import WHITE_LIST_MODEL
+from datetime import datetime, timedelta
+
+from sync_common import OC_LIST_TUPLE
 
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
@@ -60,6 +60,18 @@ def check_patch_scripts(cr, uid, context=None):
 
 class SkipStep(StandardError):
     pass
+
+
+class AdminLoginException(Exception):
+    def __init__(self):
+        self.value = "Not connected to server. "\
+            "You cannot use 'admin' in the config file for "\
+            "automatic connection, please use a user dedicated "\
+            "to the synchronization or manually connect before "\
+            "launching a sync."
+
+    def __str__(self):
+        return repr(self.value)
 
 
 class BackgroundProcess(Thread):
@@ -80,6 +92,12 @@ class BackgroundProcess(Thread):
             # Check if we are not already syncing
             entity.is_syncing(raise_on_syncing=True)
             # Check if connection is up
+            connection_obj = pool.get('sync.client.sync_server_connection')
+            try:
+                connection_obj.get_connection_from_config_file(cr, uid, context=context)
+            except AdminLoginException as e:
+                connected = False
+                raise osv.except_osv(_("Error!"), _(e.value))
             if not pool.get('sync.client.sync_server_connection').is_connected:
                 connected = False
                 raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
@@ -92,7 +110,7 @@ class BackgroundProcess(Thread):
                     connection = pool.get("sync.client.sync_server_connection")
                     sync_type = context and context.get('sync_type', 'manual')
                     automatic_patching = sync_type == 'automatic' and\
-                            connection.is_automatic_patching_allowed(cr, uid)
+                        connection.is_automatic_patching_allowed(cr, uid)
                     if not automatic_patching:
                         cr.commit()
                         raise osv.except_osv(_('Error!'), _(up_to_date[1]))
@@ -206,16 +224,33 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                         self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=context)
                     context['log_sale_purchase'] = True
 
+                    # generate a white list of models
+                    if self.pool.get('sync.client.rule') and\
+                            self.pool.get('sync.client.message_rule'):
+                        server_model_white_set = self.get_model_white_list(cr, uid)
+                        # check all models are in the hardcoded white list
+                        difference = server_model_white_set.difference(WHITE_LIST_MODEL)
+                        if difference:
+                            msg = 'Warning: Some models used in the synchronization '\
+                                'rule are not present in the WHITE_LIST_MODEL: %s'
+                            logger.append(_(msg) % ' ,'.join(list(difference)))
+
                     # create a specific cursor for the call
                     self.sync_cursor = pooler.get_db(cr.dbname).cursor()
 
                     if need_connection:
                         # Check if connection is up
-                        if not self.pool.get('sync.client.sync_server_connection').is_connected:
+                        connection_obj = self.pool.get('sync.client.sync_server_connection')
+                        if not connection_obj.is_connected:
                             if fn.__name__ == 'sync_manual_withbackup':
-                               self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforemanualsync', context=context)
-
-                            raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
+                                self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforemanualsync', context=context)
+                            # try to coonect from the file
+                            try:
+                                if not connection_obj.get_connection_from_config_file(cr,
+                                                                                      uid, context=context):
+                                    raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
+                            except AdminLoginException as e:
+                                raise osv.except_osv(_("Error!"), _(e.value))
                         # Check for update (if connection is up)
                         if hasattr(self, 'upgrade'):
                             # TODO: replace the return value of upgrade to a status and raise an error on required update
@@ -228,7 +263,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
                             sync_type = context.get('sync_type', 'manual')
                             automatic_patching = sync_type == 'automatic' and\
-                                    connection_module.is_automatic_patching_allowed(cr, uid)
+                                connection_module.is_automatic_patching_allowed(cr, uid)
                             if not up_to_date[0] and not automatic_patching:
                                 raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
                             elif 'last' not in up_to_date[1].lower():
@@ -237,9 +272,9 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                                     upgrade_module = self.pool.get('sync_client.upgrade')
                                     upgrade_id = upgrade_module.create(cr, uid, {})
                                     upgrade_module.do_upgrade(cr, uid,
-                                            [upgrade_id], sync_type=context.get('sync_type', 'manual'))
+                                                              [upgrade_id], sync_type=context.get('sync_type', 'manual'))
                                     raise osv.except_osv(_('Sync aborted'),
-                                            _("Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."))
+                                                         _("Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."))
                     else:
                         context['offline_synchronization'] = True
 
@@ -322,22 +357,59 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
 already_syncing_error = osv.except_osv(_('Already Syncing...'), _('OpenERP can only perform one synchronization at a time - you must wait for the current synchronization to finish before you can synchronize again.'))
 
-def get_hardware_id():
-        mac = []
-        if sys.platform == 'win32':
-            for line in os.popen("ipconfig /all"):
-                if line.lstrip().startswith('Physical Address'):
-                    mac.append(line.split(':')[1].strip().replace('-',':'))
-        else:
-            for line in os.popen("/sbin/ifconfig"):
-                if line.find('Ether') > -1:
-                    mac.append(line.split()[4])
-        mac.sort()
-        logging.getLogger('sync.client').info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac))
-        hw_hash = hashlib.md5(''.join(mac)).hexdigest()
-        logging.getLogger('sync.client').info('Hardware identifier: %s' % (hw_hash,))
-        return hw_hash
+def generate_new_hwid():
+    '''
+            @return: the new hardware id
+    '''
+    logger = logging.getLogger('sync.client')
+    mac_list = []
+    if sys.platform == 'win32':
+        # generate a new hwid with uuid library
+        hw_hash = uuid.uuid1().hex
+    else:
+        for line in os.popen("/sbin/ifconfig"):
+            if line.find('Ether') > -1:
+                mac_list.append(line.split()[4])
+        if not mac_list:
+            raise Exception, '/sbin/ifconfig give no result, please check it is correctly installed'
+        mac_list.sort()
+        logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac_list))
+        hw_hash = hashlib.md5(''.join(mac_list)).hexdigest()
+    logger.info('Hardware identifier: %s' % hw_hash)
+    return hw_hash
 
+def get_hardware_id():
+    logger = logging.getLogger('sync.client')
+    if sys.platform == 'win32':
+            # US-1746: on windows machine get the hardware id from the registry
+            # to avoid hwid change with new network interface (wifi adtapters,
+            # vpn, ...)
+
+        import _winreg
+        sub_key = 'SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0'
+
+        try:
+                # check if there is hwid stored in the registry
+            with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, sub_key,
+                                 0, _winreg.KEY_READ) as registry_key:
+                hw_hash, regtype = _winreg.QueryValueEx(registry_key, "HardwareId")
+                logger.info("HardwareId registry key found: %s" % hw_hash)
+        except WindowsError:
+            logger.info("HardwareId registry key not found, create it.")
+
+            # generate a new hwid on windows
+            hw_hash = generate_new_hwid()
+
+            # write the new hwid in the registry
+            try:
+                with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, sub_key,
+                                     0, _winreg.KEY_ALL_ACCESS) as registry_key:
+                    _winreg.SetValueEx(registry_key, "HardwareId", 0, _winreg.REG_SZ, hw_hash)
+            except WindowsError as e:
+                logger.error('Error on write of HardwareId in the registry: %s' % e)
+    else:
+        hw_hash = generate_new_hwid()
+    return hw_hash
 
 class Entity(osv.osv):
     """ OpenERP entity name and unique identifier """
@@ -346,7 +418,7 @@ class Entity(osv.osv):
     _logger = logging.getLogger('sync.client')
     _hardware_id = get_hardware_id()
 
-    def _auto_init(self,cr,context=None):
+    def _auto_init(self, cr, context=None):
         res = super(Entity, self)._auto_init(cr, context=context)
         if not self.search(cr, 1, [], limit=1, order='NO_ORDER', context=context):
             self.create(cr, 1, {'identifier' : self.generate_uuid()}, context=context)
@@ -393,6 +465,9 @@ class Entity(osv.osv):
     _columns = {
         'name':fields.char('Instance Name', size=64, readonly=True),
         'identifier':fields.char('Identifier', size=64, readonly=True),
+        'oc': fields.selection(OC_LIST_TUPLE,
+                               'Operational Center'), # not required here because _auto_init create
+        # before to know from witch OC it is part of
         'parent':fields.char('Parent Instance', size=64, readonly=True),
         'update_last': fields.integer('Last update', required=True),
         'update_offset' : fields.integer('Update Offset', required=True, readonly=True),
@@ -450,6 +525,78 @@ class Entity(osv.osv):
             self.sync_lock = RLock()
         finally:
             self.renew_lock.release()
+
+    def get_model_white_list(self, cr, uid):
+        '''
+        return a set of all models involved in the synchronization process
+        '''
+        model_field_dict = {}
+
+        # search for model of sync_server.sync_rule
+        if self.pool.get('sync_server.sync_rule'):
+            rule_module = self.pool.get('sync_server.sync_rule')
+            model_field_name = 'model_id'
+        else:
+            rule_module = self.pool.get('sync.client.rule')
+            model_field_name = 'model'
+        obj_ids = rule_module.search(cr, uid, [('active', '=', True)])
+        for obj in rule_module.read(cr, uid, obj_ids, [model_field_name, 'included_fields']):
+            if obj[model_field_name] not in model_field_dict:
+                model_field_dict[obj[model_field_name]] = set()
+            model_field_dict[obj[model_field_name]].update(eval(obj['included_fields']))
+
+        # search for model of sync_server.message_rule
+        if self.pool.get('sync_server.message_rule'):
+            rule_module = self.pool.get('sync_server.message_rule')
+            model_field_name = 'model_id'
+        else:
+            rule_module = self.pool.get('sync.client.message_rule')
+            model_field_name = 'model'
+        obj_ids = rule_module.search(cr, uid, [('active', '=', True)])
+        for obj in rule_module.read(cr, uid, obj_ids, [model_field_name, 'arguments']):
+            if obj[model_field_name] not in model_field_dict:
+                model_field_dict[obj[model_field_name]] = set()
+            model_field_dict[obj[model_field_name]].update(eval(obj['arguments']))
+       
+        model_set = set(model_field_dict.keys())
+
+        def get_field_obj(model, field_name):
+            model_obj = self.pool.get(model)
+            field_obj = None
+            if field_name in model_obj._columns:
+                field_obj = model_obj._columns[field_name]
+            elif field_name in model_obj._inherit_fields:
+                field_obj = model_obj._inherit_fields[field_name][2]
+            return field_obj
+
+
+        # for each field corresponding to each model, check if it is a m2m m2o or o2m
+        # if yes, add the model of the relation to the model set
+
+        for model, field_list in model_field_dict.items():
+            field_list_to_parse = [x for x in field_list if '/id' in x]
+            if not field_list_to_parse:
+                continue
+
+            for field in field_list_to_parse:
+                field = field.replace('/id', '')
+                if len(field.split('/')) == 2:
+                    related_field, field = field.split('/')
+                    field_obj = get_field_obj(model, related_field)
+                    related_model = field_obj._obj
+                    field_obj = get_field_obj(related_model, field)
+                else:
+                    field_obj = get_field_obj(model, field)
+                if field_obj._type in ('many2one', 'many2many', 'one2many'):
+                    model_set.add(field_obj._obj)
+
+        # specific cases to sync BAR and FAR
+        to_remove = ['ir.ui.view', 'ir.model.fields', 'ir.sequence']
+        for f in to_remove:
+            if f in model_set:
+                model_set.remove(f) 
+
+        return model_set
 
     @sync_process('data_push')
     def push_update(self, cr, uid, context=None):
@@ -545,7 +692,7 @@ class Entity(osv.osv):
 
         if logger and (imported or deleted):
             logger.replace(logger_index, _("Update(s) sent: %d import update(s) and %d delete update(s) = %d total update(s)") \
-                                         % (imported, deleted, (imported + deleted)))
+                           % (imported, deleted, (imported + deleted)))
 
         #state update_send => update_validate
         return imported + deleted
@@ -690,16 +837,16 @@ class Entity(osv.osv):
                 to_do, update_ids = update_ids[:MAX_EXECUTED_UPDATES], update_ids[MAX_EXECUTED_UPDATES:]
                 messages, imported_executed, deleted_executed = \
                     updates.execute_update(cr, uid,
-                        to_do,
-                        priorities=priorities_stuff,
-                        context=context)
+                                           to_do,
+                                           priorities=priorities_stuff,
+                                           context=context)
                 imported += imported_executed
                 deleted += deleted_executed
                 # Do nothing with messages
                 done += to_do
                 if logger:
                     logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates on %d updates") \
-                                                 % (imported, deleted, update_count))
+                                   % (imported, deleted, update_count))
                     logger.write()
                 # intermittent commit
                 if len(done) >= MAX_EXECUTED_UPDATES:
@@ -711,7 +858,7 @@ class Entity(osv.osv):
             if logger:
                 if imported or deleted:
                     logger.replace(logger_index, _("Update(s) processed: %d import updates + %d delete updates = %d total updates") % \
-                                                 (imported, deleted, imported+deleted))
+                                   (imported, deleted, imported+deleted))
                 else:
                     logger.pop(logger_index)
                 notrun_count = updates.search(cr, uid, [('run','=',False)], count=True, context=context)
@@ -837,7 +984,7 @@ class Entity(osv.osv):
         instance_uuid = entity.identifier
         while True:
             res = proxy.get_message(instance_uuid, self._hardware_id,
-                    max_packet_size, last_seq)
+                                    max_packet_size, last_seq)
             if not res[0]: raise Exception, res[1]
 
             packet = res[1]
@@ -900,8 +1047,8 @@ class Entity(osv.osv):
             context = {}
         context['sync_type'] = 'automatic'
         BackgroundProcess(cr, uid,
-            ('sync_recover_withbackup' if recover else 'sync_withbackup'),
-            context).start()
+                          ('sync_recover_withbackup' if recover else 'sync_withbackup'),
+                          context).start()
         return True
 
     def sync_manual_threaded(self, cr, uid, recover=False, context=None):
@@ -909,8 +1056,8 @@ class Entity(osv.osv):
             context = {}
         context['sync_type'] = 'manual'
         BackgroundProcess(cr, uid,
-            ('sync_manual_recover_withbackup' if recover else 'sync_manual_withbackup'),
-            context).start()
+                          ('sync_manual_recover_withbackup' if recover else 'sync_manual_withbackup'),
+                          context).start()
         return True
 
     @sync_process()
@@ -961,7 +1108,7 @@ class Entity(osv.osv):
             context = {}
         # is sync modules installed ?
         for sql_table, module in [('sync_client.version', 'update_client'),
-                       ('so.po.common', 'sync_so')]:
+                                  ('so.po.common', 'sync_so')]:
             if not self.pool.get(sql_table):
                 raise osv.except_osv('Error', "%s module is not installed ! You need to install it to be able to sync." % module)
         # US_394: force synchronization lang to en_US
@@ -1046,8 +1193,30 @@ class Entity(osv.osv):
             #except StandardError:
             #    return False
             self.aborting = True
+            # US-2306 : before to close the cursor, clear the _get_id caches
+            self.pool.get('ir.model.data')._get_id.clear_cache(cr.dbname)
             self.sync_cursor.close(True)
         return True
+
+    def clean_updates(self, cr, uid):
+        '''delete old updates older than 6 months
+        '''
+        nb_month_to_clean = 6
+
+        # delete sync_client_update_received older than 6 month
+        cr.execute("""DELETE FROM sync_client_update_received
+        WHERE create_date < now() - interval '%d month' AND
+        execution_date IS NOT NULL AND run='t'""" % nb_month_to_clean)
+        deleted_update_received = cr.rowcount
+        self._logger.info('clean_updates method has deleted %d sync_client_update_received' % deleted_update_received)
+
+        # delete sync_client_update_to_send older than 6 month
+        cr.execute("""DELETE FROM sync_client_update_to_send
+        WHERE create_date < now() - interval '%d month' AND
+        sent_date IS NOT NULL AND sent='t'""" % nb_month_to_clean)
+        deleted_update_to_send = cr.rowcount
+        self._logger.info('clean_updates method has deleted %d sync_client_update_to_send' % deleted_update_to_send)
+
 
 Entity()
 
@@ -1109,9 +1278,9 @@ class Connection(osv.osv):
         'timeout' : fields.float("Timeout"),
         'netrpc_retry' : fields.integer("NetRPC retry"),
         'xmlrpc_retry' : fields.integer("XmlRPC retry"),
-        'automatic_patching' : fields.boolean('Silent Upgrade', help="Enable this if you want to automatically install patch on synchronization during this hours."),
-        'automatic_patching_hour_from': fields.float('Upgrade from', size=8, help="Enable upgrade from this day time"),
-        'automatic_patching_hour_to': fields.float('Upgrade until', size=8, help="Enable upgrade unitl this day time"),
+        'automatic_patching' : fields.boolean('Silent Upgrade', help="Enable this if you want to automatically install patches during these hours."),
+        'automatic_patching_hour_from': fields.float('Upgrade from', size=8, help="Enable upgrade from this time"),
+        'automatic_patching_hour_to': fields.float('Upgrade until', size=8, help="Enable upgrade unitl this time"),
     }
 
     _defaults = {
@@ -1135,8 +1304,8 @@ class Connection(osv.osv):
         """
         result = {'value': {}, 'warning': {}}
         values_dict = {
-                'automatic_patching_hour_from':automatic_patching_hour_from,
-                'automatic_patching_hour_to':automatic_patching_hour_to
+            'automatic_patching_hour_from':automatic_patching_hour_from,
+            'automatic_patching_hour_to':automatic_patching_hour_to
         }
         for name, value in values_dict.items():
             if value < 0:
@@ -1169,12 +1338,12 @@ class Connection(osv.osv):
             # case 1: the from date is in the past
             # ex. it is 3h, from_date=19h, to_date=7h
             if from_date > now:
-                from_date = datetime(now.year, now.month, now.day - 1, hour_from, min_from)
+                from_date = from_date - timedelta(days=1)
 
             # case 2: the to_date is in the future
             # ex. it is 20h, from_date=19h, to_date=7h
             elif now > to_date:
-                to_date = datetime(now.year, now.month, now.day + 1, hour_to, min_to)
+                to_date = to_date + timedelta(days=1)
 
         return now > from_date and now < to_date
 
@@ -1201,7 +1370,35 @@ class Connection(osv.osv):
             raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
         return connector
 
-    def connect(self, cr, uid, ids=None, password=None, context=None):
+    def get_connection_from_config_file(self, cr, uid, ids=None, context=None):
+        '''
+        get credentials from config file if any and try to connect to the sync
+        server with them. Return True if it has been connected using this
+        credentials, False otherwise
+        '''
+        logger = logging.getLogger('sync.client')
+        if not self.is_connected:
+            login = tools.config.get('sync_user_login')
+            if login == 'admin':
+                raise AdminLoginException
+            password = tools.config.get('sync_user_password')
+            if login and password:
+                # write this credentials in the connection manager to be
+                # consistent with the credentials used for the current
+                # connection and what is in the connection manager
+                connection_ids = self.search(cr, 1, [])
+                if connection_ids:
+                    logger.info('Automatic set up of sync connection credentials')
+                    data_to_write = {
+                        'login': login,
+                        'password': password,
+                    }
+                    self.write(cr, 1, connection_ids, data_to_write)
+                    cr.commit()
+                return self.connect(cr, 1, password=password, login=login)
+        return False
+
+    def connect(self, cr, uid, ids=None, password=None, login=None, context=None):
         """
         connect the instance to the SYNC_SERVER instance for synchronization
         """
@@ -1221,7 +1418,9 @@ class Connection(osv.osv):
                     con.password = password
                 else:
                     self._password = con.login
-            cnx = rpc.Connection(connector, con.database, con.login, self._password)
+            if login is None:
+                login=con.login
+            cnx = rpc.Connection(connector, con.database, login, self._password)
             con._cache = {}
             if cnx.user_id:
                 self._uid = cnx.user_id
@@ -1271,16 +1470,16 @@ class Connection(osv.osv):
     def write(self, *args, **kwargs):
         # reset connection flag when connection data changed
         connection_property_list = [
-                'database',
-                'host',
-                'login',
-                'max_size',
-                'netrpc_retry',
-                'password',
-                'port',
-                'protocol',
-                'timeout',
-                'xmlrpc_retry'
+            'database',
+            'host',
+            'login',
+            'max_size',
+            'netrpc_retry',
+            'password',
+            'port',
+            'protocol',
+            'timeout',
+            'xmlrpc_retry'
         ]
 
         new_values = args[3]

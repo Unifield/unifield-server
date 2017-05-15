@@ -19,8 +19,6 @@
 #
 ##############################################################################
 
-import tools
-
 from osv import osv, fields
 from tools.translate import _
 from decimal_precision import decimal_precision as dp
@@ -29,25 +27,23 @@ from tools.sql import drop_view_if_exists
 
 class stock_batch_recall(osv.osv_memory):
     _name = 'stock.batch.recall'
-    _description = 'Batch Recall'
-    
+    _description = 'Batch Location'
+
     _columns = {
         'product_id': fields.many2one('product.product', string='Product'),
         'prodlot_id': fields.many2one('stock.production.lot', string='Batch number'),
         'expired_date': fields.date(string='Expired Date')
     }
-    
+
     def get_ids(self, cr, uid, ids, context=None):
         '''
         Returns all stock moves according to parameters
         '''
-        move_obj = self.pool.get('stock.move')
-        
         domain = [('product_qty', '>', 0.00)]
         for track in self.browse(cr, uid, ids):
             if not track.product_id and not track.prodlot_id and not track.expired_date:
                 raise osv.except_osv(_('Error'), _('You should at least enter one information'))
-            
+
             if track.expired_date:
                 domain.append(('expired_date', '>=', track.expired_date))
                 domain.append(('expired_date', '<=', track.expired_date))
@@ -56,7 +52,7 @@ class stock_batch_recall(osv.osv_memory):
             if track.prodlot_id:
                 domain.append(('prodlot_id', '=', track.prodlot_id.id))
         return domain
-    
+
     def return_view(self, cr, uid, ids, context=None):
         '''
         Print the report on Web client (search view)
@@ -65,29 +61,26 @@ class stock_batch_recall(osv.osv_memory):
             context = {}
         mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
-        
-        view_context = {}
-        #view_context = {'group_by_ctx': ['product_id', 'location_id'], 'group_by_no_leaf': 1}
-        
+
         domain = self.get_ids(cr, uid, ids)
-        
+
         result = mod_obj._get_id(cr, uid, 'stock_batch_recall', 'action_report_batch_recall')
         id = mod_obj.read(cr, uid, [result], ['res_id'], context=context)[0]['res_id']
-        
+
         result = act_obj.read(cr, uid, [id], context=context)[0]
 
         result['domain'] = domain
         result['context'] = context
         result['target'] = 'crush'
-        
+
         return result
-        
+
 stock_batch_recall()
 
 class report_batch_recall(osv.osv):
     _name = 'report.batch.recall'
     _rec_name = 'product_id'
-    _description = 'Batch Recall'
+    _description = 'Batch Location'
     _auto = False
     _columns = {
         'product_id':fields.many2one('product.product', 'Product', readonly=True),
@@ -97,7 +90,7 @@ class report_batch_recall(osv.osv):
         'product_qty':fields.float('Quantity',  digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'location_type': fields.selection([('supplier', 'Supplier Location'), ('view', 'View'), ('internal', 'Internal Location'), ('customer', 'Customer Location'), ('inventory', 'Inventory'), ('procurement', 'Procurement'), ('production', 'Production'), ('transit', 'Transit Location for Inter-Companies Transfers')], 'Location Type', required=True),
     }
-    
+
     def init(self, cr):
         drop_view_if_exists(cr, 'report_batch_recall')
         cr.execute("""
@@ -227,7 +220,7 @@ class report_batch_recall(osv.osv):
               lot.name,
               rec.location_id
         );""")
-        
+
     def unlink(self, cr, uid, ids, context=None):
         raise osv.except_osv(_('Error !'), _('You cannot delete any record!'))
 

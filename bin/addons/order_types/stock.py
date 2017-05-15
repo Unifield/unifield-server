@@ -192,7 +192,7 @@ class stock_picking(osv.osv):
         if new_ids:
             stock_move_obj = self.pool.get('stock.move')
             move_line_read_list = self.read(cr, uid, new_ids, ['id', 'move_lines', 'type'],
-                                      context=context)
+                                            context=context)
             for move_line_dict in move_line_read_list:
                 stock_move_ids = move_line_dict['move_lines']
                 if stock_move_obj.search(cr, uid, [('id', 'in', stock_move_ids),
@@ -200,7 +200,7 @@ class stock_picking(osv.osv):
                                                     ('donation_exp',
                                                      'donation_st',
                                                      'in_kind')),
-                                                  ], context=context):
+                                                   ], context=context):
                     res[move_line_dict['id']] = True
         return res
 
@@ -227,12 +227,12 @@ class stock_picking(osv.osv):
         for picking in self.browse(cr, uid, ids):
             for move in picking.move_lines:
                 self.pool.get('stock.certificate.valuation').create(cr, uid, {'picking_id': picking.id,
-                                                                             'product_id': move.product_id.id,
-                                                                             'qty': move.product_qty,
-                                                                             'print_id': print_id,
-                                                                             'move_id': move.id,
-                                                                             'prodlot_id': move.prodlot_id.id,
-                                                                             'unit_price': move.product_id.list_price})
+                                                                              'product_id': move.product_id.id,
+                                                                              'qty': move.product_qty,
+                                                                              'print_id': print_id,
+                                                                              'move_id': move.id,
+                                                                              'prodlot_id': move.prodlot_id.id,
+                                                                              'unit_price': move.product_id.list_price})
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.print.certificate',
@@ -296,7 +296,7 @@ class stock_picking(osv.osv):
 
         if certif and not context.get('attach_ok', False):
             partial_id = self.pool.get("stock.certificate.picking").create(
-                            cr, uid, {'picking_id': ids[0]}, context=dict(context, active_ids=ids))
+                cr, uid, {'picking_id': ids[0]}, context=dict(context, active_ids=ids))
             return {'name':_("Attach a certificate of donation"),
                     'view_mode': 'form',
                     'view_id': False,
@@ -326,10 +326,8 @@ class stock_picking(osv.osv):
 
                 # US-148
                 if pick.type == 'in':
-                    args = [('picking_id', '=', pick.id),
-                            ('draft', '=', True)]
-                    wiz_ids = wizard_obj.search(cr, uid, args=args,
-                                                context=context)
+                    domain = [('picking_id', '=', pick.id), ('draft', '=', True), ('already_processed', '=', False)]
+                    wiz_ids = wizard_obj.search(cr, uid, domain, context=context)
                     if wiz_ids:
                         proc_id = wiz_ids[0]
                     else:
@@ -349,13 +347,13 @@ class stock_picking(osv.osv):
                     'view_type': 'form',
                     'view_mode': 'form',
                     'target': 'new',
-                    }
+                }
 
                 if not context.get('force_process', False) and pick.type == 'in' \
                    and not pick.in_dpo \
                    and pick.state != 'shipped' and pick.partner_id.partner_type == 'internal':
                     view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
-                        'msf_outgoing', 'stock_incoming_processor_internal_warning_form_view')[1]
+                                                                                  'msf_outgoing', 'stock_incoming_processor_internal_warning_form_view')[1]
                     res['view_id'] = [view_id]
 
                 return res

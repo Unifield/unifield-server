@@ -91,7 +91,7 @@ class account_move_line(osv.osv):
         st_period_id = context.get('st_period_id', False)  # register period id
         if st_period_id:
             period_r = self.pool.get('account.period').read(cr, uid,
-                [st_period_id], ['date_stop'], context=context)[0]
+                                                            [st_period_id], ['date_stop'], context=context)[0]
             if period_r:
                 # exclude future periods
                 dom1.append(('date', '<=', period_r['date_stop']))
@@ -126,7 +126,7 @@ class account_move_line(osv.osv):
                     if payment_line.id == move_line.id:
                         continue
                     if payment_line.currency_id and move_line.currency_id and payment_line.currency_id.id == move_line.currency_id.id:
-                            move_line_total += payment_line.amount_currency
+                        move_line_total += payment_line.amount_currency
                     else:
                         raise osv.except_osv(_('No Currency'),_("Payment line without currency %s")%(payment_line.id,))
                         if move_line.currency_id:
@@ -186,29 +186,29 @@ class account_move_line(osv.osv):
         'transfer_journal_id': fields.many2one('account.journal', 'Journal', ondelete="restrict"),
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True,
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')],
-            multi="third_parties_key"),
+                                        string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')],
+                                        multi="third_parties_key", hide_default_menu=True),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True,
-            string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')],
-            help="To use for python code when registering", multi="third_parties_key"),
+                                         string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')],
+                                         help="To use for python code when registering", multi="third_parties_key"),
         'supplier_invoice_ref': fields.related('invoice', 'name', type='char', size=64, string="Supplier inv.ref.", store=False),
         'imported_invoice_line_ids': fields.many2many('account.bank.statement.line', 'imported_invoice', 'move_line_id', 'st_line_id',
-            string="Imported Invoices", required=False, readonly=True),
+                                                      string="Imported Invoices", required=False, readonly=True),
         'from_import_invoice_ml_id': fields.many2one('account.move.line', 'From import invoice',
-            help="Move line that have been used for an Pending Payments Wizard in order to generate the present move line"),
+                                                     help="Move line that have been used for an Pending Payments Wizard in order to generate the present move line"),
         'is_cheque': fields.function(_get_fake, fnct_search=_search_cheque, type="boolean", method=True, string="Come from a cheque register ?",
-            help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
+                                     help="True if this line come from a cheque register and especially from an account attached to a cheque register."),
         'ready_for_import_in_register': fields.function(_get_fake, fnct_search=_search_ready_for_import_in_register, type="boolean",
-            method=True, string="Can be imported as invoice in register?",),
+                                                        method=True, string="Can be imported as invoice in register?",),
         'from_import_cheque_id': fields.one2many('account.bank.statement.line', 'from_import_cheque_id', string="Cheque Imported",
-            help="This line has been created by a cheque import. This id is the move line imported."),
+                                                 help="This line has been created by a cheque import. This id is the move line imported."),
         'amount_residual_import_inv': fields.function(_amount_residual_import_inv, method=True, string='Residual Amount',
-                        store={
-                          'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['amount_currency','reconcile_id','reconcile_partial_id','imported_invoice_line_ids'], 10),
-                          'account.move.reconcile': (_get_reconciles, None, 10),
-                          'account.bank.statement.line': (_get_linked_statement, None, 10),
-                        }),
+                                                      store={
+                                                          'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['amount_currency','reconcile_id','reconcile_partial_id','imported_invoice_line_ids'], 10),
+                                                          'account.move.reconcile': (_get_reconciles, None, 10),
+                                                          'account.bank.statement.line': (_get_linked_statement, None, 10),
+                                                      }),
         'partner_txt': fields.text(string="Third Parties", help="Help user to display and sort Third Parties"),
         'partner_identification': fields.related('employee_id', 'identification_id', type='char', string='Id No', size=32),
         'down_payment_id': fields.many2one('purchase.order', string="Purchase Order for Down Payment", readonly=True, ondelete='cascade'),
@@ -300,11 +300,14 @@ class account_move_line(osv.osv):
                 third_type = [('account.journal', 'Journal')]
                 third_required = True
                 third_selection = 'account.journal,0'
-
             elif acc_type == 'advance':
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'hr.employee,0'
+            elif acc_type in ['down_payment', 'payroll']:
+                third_type = [('res.partner', 'Partner')]
+                third_required = True
+                third_selection = 'res.partner,0'
         val.update({'partner_type_mandatory': third_required, 'partner_type': {'options': third_type, 'selection': third_selection}})
         return {'value': val}
 

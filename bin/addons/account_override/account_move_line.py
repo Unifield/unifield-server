@@ -155,13 +155,17 @@ class account_move_line(osv.osv):
 
     def _get_reconciled_move_lines(self, cr, uid, ids, context=None):
         res = []
-        for line in self.browse(cr, uid, ids):
+        for line in self.browse(cr, uid, ids, context=context,
+                                fields_to_fetch=['reconcile_id', 'reconcile_partial_id', 'reconcile_txt']):
             if line.reconcile_id:
                 for t in line.reconcile_id.line_id:
                     res.append(t.id)
             elif line.reconcile_partial_id:
                 for p in line.reconcile_partial_id.line_partial_ids:
                     res.append(p.id)
+            # when an "unreconciliation" is synchronized the reconcile_txt must be reset
+            elif line.reconcile_txt and context.get('sync_update_execution'):
+                res.append(line.id)
         return res
 
     def _balance_currency(self, cr, uid, ids, name, arg, context=None):
@@ -175,8 +179,8 @@ class account_move_line(osv.osv):
                     WHERE l2.account_id = l1.account_id
                       AND l1.id <= l2.id
                       AND l2.id IN %s AND """ + \
-                self._query_get(cr, uid, obj='l1', context=c) + \
-                " GROUP BY l2.id"
+            self._query_get(cr, uid, obj='l1', context=c) + \
+            " GROUP BY l2.id"
 
         cr.execute(sql, [tuple(ids)])
         result = dict(cr.fetchall())
@@ -242,9 +246,9 @@ class account_move_line(osv.osv):
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Unposted'), ('posted', 'Posted')],
-            help="This indicates the state of the Journal Entry."),
+                                     help="This indicates the state of the Journal Entry."),
         'is_addendum_line': fields.boolean('Is an addendum line?', readonly=True,
-            help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
+                                           help="This inform account_reconciliation module that this line is an addendum line for reconciliations."),
         'move_id': fields.many2one('account.move', 'Entry Sequence', ondelete="cascade", help="The move of this entry line.", select=2, required=True, readonly=True),
         'name': fields.char('Description', size=64, required=True, readonly=True),
         'journal_id': fields.many2one('account.journal', 'Journal Code', required=True, select=1),
@@ -253,34 +257,37 @@ class account_move_line(osv.osv):
         'currency_id': fields.many2one('res.currency', 'Book. Currency', help="The optional other currency if it is a multi-currency entry."),
         'document_date': fields.date('Document Date', size=255, required=True, readonly=True),
         'date': fields.related('move_id','date', string='Posting date', type='date', required=True, select=True,
-                store = {
-                    'account.move': (_get_move_lines, ['date'], 20)
-                }, readonly=True),
+                               store = {
+                                   'account.move': (_get_move_lines, ['date'], 20)
+                               }, readonly=True),
         'is_write_off': fields.boolean('Is a write-off line?', readonly=True,
-            help="This inform that no correction is possible for a line that come from a write-off!"),
+                                       help="This inform that no correction is possible for a line that come from a write-off!"),
         'reference': fields.char(string='Reference', size=64),
         'ref': fields.function(_get_reference, fnct_inv=_set_fake_reference, fnct_search=_search_reference, string='Reference', method=True, type='char', size=64, store=True, readonly=True),
         'state': fields.selection([('draft','Invalid'), ('valid','Valid')], 'State', readonly=True,
-            help='When new move line is created the state will be \'Draft\'.\n* When all the payments are done it will be in \'Valid\' state.'),
+                                  help='When new move line is created the state will be \'Draft\'.\n* When all the payments are done it will be in \'Valid\' state.'),
         'journal_type': fields.related('journal_id', 'type', string="Journal Type", type="selection", selection=_journal_type_get, readonly=True, \
-        help="This indicates the type of the Journal attached to this Journal Item"),
+                                       help="This indicates the type of the Journal attached to this Journal Item"),
         'exported': fields.boolean("Exported"),
         'reconcile_txt': fields.function(_get_reconcile_txt, type='text', method=True, string="Reconcile",
-            help="Help user to display and sort Reconciliation",
-            store = {
-                'account.move.reconcile': (_get_move_lines_for_reconcile, ['name', 'line_id', 'line_partial_ids'], 10),
-                'account.move.line': (_get_reconciled_move_lines, ['reconcile_id', 'reconcile_partial_id', 'debit', 'credit'], 10),
-            }
-        ),
+                                         help="Help user to display and sort Reconciliation",
+                                         store = {
+                                             'account.move.reconcile': (_get_move_lines_for_reconcile, ['name', 'line_id', 'line_partial_ids'], 10),
+                                             'account.move.line': (_get_reconciled_move_lines, ['reconcile_id', 'reconcile_partial_id', 'debit', 'credit'], 10),
+                                         }
+                                         ),
         'is_reconciled': fields.function(_get_is_reconciled, fnct_search=_search_is_reconciled, type='boolean', method=True, string="Is reconciled", help="Is that line partially/totally reconciled?"),
         'balance_currency': fields.function(_balance_currency, fnct_search=_balance_currency_search, method=True, string='Balance Booking'),
         'corrected_upstream': fields.boolean('Corrected from CC/HQ', readonly=True, help='This line have been corrected from Coordo or HQ level to a cost center that have the same level or superior.'),
         'line_number': fields.integer(string='Line Number'),
         'invoice_partner_link': fields.many2one('account.invoice', string="Invoice partner link", readonly=True,
-            help="This link implies this line come from the total of an invoice, directly from partner account.", ondelete="cascade"),
+                                                help="This link implies this line come from the total of an invoice, directly from partner account.", ondelete="cascade"),
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line origin", readonly=True,
-            help="Invoice line which have produced this line.", ondelete="cascade"),
+                                           help="Invoice line which have produced this line.", ondelete="cascade"),
         'status_move': fields.related('move_id', 'status', type='char', readonly=True, size=128, store=True, write_relate=False, string="JE status", _fnct_migrate=_init_status_move),
+        'sequence_move': fields.related('move_id', 'name', type='char',
+                                        readonly=True, size=128, store=False, write_relate=False,
+                                        string="Sequence"),
     }
 
     _defaults = {
@@ -320,7 +327,29 @@ class account_move_line(osv.osv):
             return 0.0
         # Create an sql query
         sql =  """
-            SELECT SUM(debit - credit)
+            SELECT SUM(COALESCE(debit,0) - COALESCE(credit,0))
+            FROM account_move_line
+            WHERE id in %s
+        """
+
+        cr.execute(sql, (tuple(ids),))
+        res = cr.fetchall()
+        if isinstance(ids, list):
+            res = res[0]
+        return res
+
+    def _accounting_booking_balance(self, cr, uid, ids, context=None):
+        """
+        Get the accounting balance of the given lines in booking currency
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            return 0.0
+        sql = """
+            SELECT SUM(COALESCE(debit_currency,0) - COALESCE(credit_currency,0))
             FROM account_move_line
             WHERE id in %s
         """
@@ -339,15 +368,15 @@ class account_move_line(osv.osv):
             if vals.get('period_id', False):
                 period_obj = self.pool.get('account.period')
                 if period_obj.browse(cr, uid, vals['period_id'],
-                    context=context).is_system:
-                        # US-822: no check for system periods -sync or not-
-                        # 0/16 periods entries -during FY deactivated accounts-
-                        do_check = False
+                                     context=context).is_system:
+                    # US-822: no check for system periods -sync or not-
+                    # 0/16 periods entries -during FY deactivated accounts-
+                    do_check = False
 
             if do_check:
                 if vals['date'] < account.activation_date \
-                or (account.inactivation_date != False and \
-                    vals['date'] >= account.inactivation_date):
+                    or (account.inactivation_date != False and \
+                        vals['date'] >= account.inactivation_date):
                     raise osv.except_osv(_('Error !'), _('The selected account is not active: %s.') % (account.code or '',))
         return super(account_move_line, self)._check_date(cr, uid, vals, context, check)
 
@@ -369,7 +398,7 @@ class account_move_line(osv.osv):
             if vals.get('date', False):
                 date = vals.get('date')
             self.pool.get('finance.tools').check_document_date(cr, uid,
-                dd, date, show_date=True, context=context)
+                                                               dd, date, show_date=True, context=context)
         return True
 
     def _check_date_validity(self, cr, uid, ids, vals=None):
@@ -389,15 +418,29 @@ class account_move_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Given date [%s] is outside defined period: %s') % (date, period and period.name or ''))
         return True
 
-    def _check_accounts_partner_compat(self, cr, uid, vals, context=None):
-        # US-672/2
-        if context and context.get('from_web_menu', False) \
-            and vals.get('account_id', False) \
-            and vals.get('partner_type', False):
-
-            self.pool.get('account.account').is_allowed_for_thirdparty(
-                cr, uid, vals['account_id'], partner_type=vals['partner_type'],
-                from_vals=True, raise_it=True, context=context)
+    def _check_accounts_partner_compat(self, cr, uid, aml_ids, context=None):
+        if context and context.get('from_web_menu', False):
+            if isinstance(aml_ids, (int, long)):
+                aml_ids = [aml_ids]
+            # get the values of the JI fields related to partner and account
+            fields_to_read = ['partner_type', 'partner_txt', 'employee_id', 'transfer_journal_id', 'partner_id', 'account_id']
+            for aml in self.read(cr, uid, aml_ids, fields_to_read, context=context):
+                partner_type = aml['partner_type'] and 'selection' in aml['partner_type'] \
+                    and aml['partner_type']['selection'] or False
+                if partner_type:  # format is 'model_name,id'
+                    pt_model, pt_id = tuple(partner_type.split(','))
+                    if not pt_id:
+                        partner_type = False
+                account_id = aml['account_id'] and aml['account_id'][0] or False
+                partner_txt = aml['partner_txt'] or False
+                employee_id = aml['employee_id'] and aml['employee_id'][0] or False
+                transfer_journal_id = aml['transfer_journal_id'] and aml['transfer_journal_id'][0] or False
+                partner_id = aml['partner_id'] and aml['partner_id'][0] or False
+                # US-672/2
+                self.pool.get('account.account').is_allowed_for_thirdparty(
+                    cr, uid, account_id, partner_type=partner_type, partner_txt=partner_txt, employee_id=employee_id,
+                    transfer_journal_id=transfer_journal_id, partner_id=partner_id, from_vals=True, raise_it=True,
+                    context=context)
 
     def create(self, cr, uid, vals, context=None, check=True):
         """
@@ -420,8 +463,8 @@ class account_move_line(osv.osv):
             vals.update({'document_date': vals.get('date')})
         if vals.get('document_date', False) and vals.get('date', False):
             self.pool.get('finance.tools').check_document_date(cr, uid,
-                vals.get('document_date'), vals.get('date'), show_date=True,
-                context=context)
+                                                               vals.get('document_date'), vals.get('date'), show_date=True,
+                                                               context=context)
         if 'move_id' in vals and context.get('from_web_menu'):
             m = self.pool.get('account.move').browse(cr, uid, vals.get('move_id'))
             if m and m.document_date:
@@ -436,8 +479,8 @@ class account_move_line(osv.osv):
         # US-220: vals.ref must have 64 digits max
         if vals.get('ref'):
             vals['ref'] = vals['ref'][:64]
-        self._check_accounts_partner_compat(cr, uid, vals, context=context)
         res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
+        self._check_accounts_partner_compat(cr, uid, res, context=context)
         # UTP-317: Check partner (if active or not)
         if res and not (context.get('sync_update_execution', False) or context.get('addendum_line_creation', False)): #UF-2214: Not for the case of sync. # UTP-1022: Not for the case of addendum line creation
             aml = self.browse(cr, uid, [res], context)
@@ -459,7 +502,13 @@ class account_move_line(osv.osv):
             context = {}
         if context.get('from_web_menu', False):
             for ml in self.browse(cr, uid, ids):
-                if ml.move_id and ml.move_id.status == 'sys':
+                # US-1822 When unreconciling entries, to check if the write can be done use the reconciliation status
+                # (manual / auto) instead of the JI one
+                if 'unreconcile_date' in vals and vals['unreconcile_date']:
+                    reconciliation = ml.reconcile_id or ml.reconcile_partial_id or False
+                    if reconciliation and reconciliation.type == 'auto':
+                        raise osv.except_osv(_('Warning'), _('Only manually reconciled entries can be unreconciled.'))
+                elif ml.move_id and ml.move_id.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You cannot change Journal Items that comes from the system!'))
             # Check date validity with period
             self._check_date_validity(cr, uid, ids, vals)
@@ -473,8 +522,8 @@ class account_move_line(osv.osv):
                     context.update({'date': m.date})
         # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
         self._check_document_date(cr, uid, ids, vals, context=context)
-        self._check_accounts_partner_compat(cr, uid, vals, context=context)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
+        self._check_accounts_partner_compat(cr, uid, ids, context=context)
         # UFTP-262: Check reference field for all lines. Optimisation: Do nothing if reference is in vals as it will be applied on all lines.
         if context.get('from_web_menu', False) and not vals.get('reference', False):
             for ml in self.browse(cr, uid, ids):
@@ -493,7 +542,27 @@ class account_move_line(osv.osv):
         if context.get('move_state'):
             args.append(('move_state', '=', context.get('move_state')))
         return super(account_move_line, self).search(cr, uid, args, offset,
-                limit, order, context=context, count=count)
+                                                     limit, order, context=context, count=count)
+
+    def copy(self, cr, uid, aml_id, default=None, context=None):
+        """
+        When duplicate a JI, don't copy:
+        - the link to register lines
+        - the reconciliation date
+        - the unreconciliation date
+        - the old reconciliation ref (unreconcile_txt)
+        """
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        default.update({
+            'imported_invoice_line_ids': [],
+            'reconcile_date': None,
+            'unreconcile_date': None,
+            'unreconcile_txt': '',
+        })
+        return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 
     def button_duplicate(self, cr, uid, ids, context=None):
         """

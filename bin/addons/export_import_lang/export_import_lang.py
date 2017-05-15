@@ -9,10 +9,7 @@ from tools.translate import _
 from tools.misc import get_iso_codes
 import threading
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
-from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import logging
-from tempfile import TemporaryFile
-import zipfile
 import lang_tools
 
 class base_language_export(osv.osv_memory):
@@ -21,7 +18,7 @@ class base_language_export(osv.osv_memory):
 
 
     _columns = {
-        'only_translated_terms': fields.boolean('Export only translated terms'),
+        'only_translated_terms': fields.selection([('', 'All terms'), ('y', 'Only translated'), ('n', 'Only untranslated')], 'Filter'),
         'format': fields.selection([('csv', 'CSV File'), ('po', 'PO File'), ('tgz', 'TGZ Archive'), ('xls', 'Microsoft SpreadSheet XML'), ('compact.xls', 'Compact SpreadSheet XML')], 'File Format', required=True),
         'advanced': fields.boolean('Show advanced options'),
     }
@@ -217,6 +214,8 @@ class base_language_import(osv.osv_memory):
 
             self.write(cr, uid, [ids[0]], {'data': ''})
             tools.cache.clean_caches_for_db(cr.dbname)
+            tools.read_cache.clean_caches_for_db(cr.dbname)
+
             cr.commit()
             cr.close(True)
         except Exception, e:
@@ -273,7 +272,7 @@ class res_lang(osv.osv):
             modobj.update_translations(cr, uid, mids, code, context=context)
         except Exception, e:
             cr.rollback()
-            req_id = self.pool.get('res.request').create(cr, uid, {
+            self.pool.get('res.request').create(cr, uid, {
                 'name': _('Failed to install new language %s') % code,
                 'act_from': uid,
                 'act_to': uid,
@@ -283,7 +282,7 @@ class res_lang(osv.osv):
                 ''') % (code, e)
             })
         else:
-            req_id = self.pool.get('res.request').create(cr, uid, {
+            self.pool.get('res.request').create(cr, uid, {
                 'name': _('New language %s installed') % code,
                 'act_from': uid,
                 'act_to': uid,

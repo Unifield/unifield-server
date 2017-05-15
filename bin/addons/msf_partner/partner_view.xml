@@ -15,6 +15,7 @@
                     <xpath expr="/tree/field[@name='ref']" position="after">
                         <field name="active" invisible="1"/>
                         <field name="partner_type" />
+                        <field name="locally_created" invisible="1" />
                         <field name="in_product" invisible="1" />
                         <field name="min_qty" invisible="not context.get('choose_supplier')" />
                         <field name="delay" invisible="not context.get('choose_supplier')" />
@@ -37,13 +38,14 @@
             <field name="name">msf.view.partner.form</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
-            <field name="priority" eval="40" />
+            <field name="priority">50</field>
             <field name="inherit_id" ref="partner_modification.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/group/group/field[@name='title']" position="replace">
                         <field name="partner_type" 
                             on_change="on_change_partner_type(partner_type, property_product_pricelist, property_product_pricelist_purchase)" />
+                        <field name="locally_created" invisible="1" />
                     </xpath>
                     <xpath expr="/form/group/group[2]/field[@name='supplier']" position="after">
                         <field name="manufacturer" />
@@ -143,7 +145,7 @@
             <field name="name">view.partner.form.replace</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
-            <field name="priority" eval="50" />
+            <field name="priority">80</field>
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
@@ -186,7 +188,7 @@
             <field name="name">view.partner.form.replace.2</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
-            <field name="priority" eval="50" />
+            <field name="priority">75</field>
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
@@ -201,6 +203,7 @@
                                       <group colspan="2" col="4">
                                         <separator string="Postal Address" colspan="4" col="4" />
                                         <field name="type" string="Type" colspan="2"/>
+                                        <field name="office_name" colspan="2" />
                                         <field name="street" colspan="4"/>
                                         <field name="street2" colspan="4"/>
                                         <field name="zip"/>
@@ -246,6 +249,7 @@
             <field name="name">partner.vat.management.form.view</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="account.view_partner_property_form" />
             <field name="arch" type="xml">
                 <data>
