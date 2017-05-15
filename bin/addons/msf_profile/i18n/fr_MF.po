@@ -10659,7 +10659,7 @@ msgstr "ir.actions.act_window_close"
 #. module: register_accounting
 #: view:account.invoice:0
 msgid "Down Payments"
-msgstr "Down Payments"
+msgstr "Acomptes"
 
 #. modules: sale_override, kit
 #: field:stock.move,original_from_process_stock_move:0
@@ -15603,11 +15603,6 @@ msgstr "Numéro unique du bon de commande, calculé automatiquement à la créat
 #: field:sync.monitor,data_push_create:0
 msgid "DP create"
 msgstr "DP create"
-
-#. module: account_mcdb
-#: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
-msgid "Book. Currency"
-msgstr "Book. Currency"
 
 #. module: stock
 #: model:ir.model,name:stock.model_stock_move_split_lines_exist
@@ -42905,12 +42900,6 @@ msgstr "Budget Mensuel (XLS)"
 msgid "Information"
 msgstr "Informations"
 
-#. modules: account_override, account
-#: selection:account.journal.column,field:0
-#: field:account.move.line,reconcile_txt:0
-msgid "Reconcile"
-msgstr "Reconcile"
-
 #. module: msf_outgoing
 #: field:create.picking.processor,contains_dg:0
 #: field:internal.picking.processor,contains_dg:0
@@ -60393,6 +60382,11 @@ msgstr "Erreur utilisateur!"
 msgid "Reconcile"
 msgstr "Lettrer"
 
+#. modules: account
+#: field:account.move.line,reconcile_txt:0
+msgid "Reconcile"
+msgstr "Lettrage"
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_po.py:673
 #: code:addons/msf_doc_import/wizard/wizard_import_po.py:767
@@ -72392,6 +72386,7 @@ msgstr "Constraint error on Uom"
 #: field:wizard.import.invoice.lines,currency_id:0
 #: field:account.move,currency_id:0
 #: field:account.move,manual_currency_id:0
+#: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #, python-format
 msgid "Book. Currency"
 msgstr "Enreg.Devise"
@@ -83701,7 +83696,7 @@ msgstr "pour un Bon de Commande, date de première réception de marchandises"
 #: view:account.invoice:0
 #: report:addons/register_accounting/report/fully_report_xls.mako:548
 msgid "Down Payment"
-msgstr "Down Payment"
+msgstr "Acompte"
 
 #. module: account_voucher
 #: report:voucher.print:0
