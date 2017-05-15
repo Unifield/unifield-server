@@ -296,7 +296,18 @@ def do_update():
                         warn("`%s' -> `%s'" % (target, f))
                         os.rename(target, f)
 
+            # Read and apply the deleted.txt file.
             process_deletes(update_dir, webpath)
+
+            # Clean out the PYC files so that they can be recompiled
+            # by the (potentially) updated pythonXX.dll.
+            for d in [ '.', webpath ]:
+                for root, dirs, files in os.walk(d):
+                    for file in files:
+                        if file.endswith('.pyc'):
+                            file = os.path.join(root, file)
+                            warn('Purge pyc: %s' % file)
+                            os.unlink(file)
 
             add_versions([(x['md5sum'], x['date'],
                            x['name']) for x in revisions])
