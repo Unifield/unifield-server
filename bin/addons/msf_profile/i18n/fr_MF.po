@@ -75072,9 +75072,10 @@ msgstr "Zone de Transit pour les transferts inter-sociétés"
 #: selection:sale.followup.multi.wizard,state:0
 #: selection:sync.monitor,state:0
 #: selection:tender.line,line_state:0
+#: selection:stock.mission.report,export_state:0
 #, python-format
 msgid "Done"
-msgstr "Done"
+msgstr "Fait"
 
 #. module: consumption_calculation
 #: code:addons/consumption_calculation/expiry_calculation.py:368
@@ -98464,4 +98465,35 @@ msgstr "Vous ne pouvez pas sourcer un don 'sur commande'."
 #, python-format
 msgid "Default Order"
 msgstr "Ordre par défaut"
+
+#. module: mission_stock
+#: view:mission.stock.wizard:0
+msgid "Errors"
+msgstr "Erreurs"
+
+#. module: mission_stock
+#: field:stock.mission.report,export_state:0
+msgid "Export state"
+msgstr "Statut du rapport"
+
+#. module: mission_stock
+#: selection:stock.mission.report,export_state:0
+msgid "Draft"
+msgstr "Brouillon"
+
+#. module: mission_stock
+#: selection:stock.mission.report,export_state:0
+msgid "Error"
+msgstr "Erreur"
+
+#. module: mission_stock
+#: field:mission.stock.wizard,export_error_msg:0
+#: field:stock.mission.report,export_error_msg:0
+msgid "Error message"
+msgstr "Message d'erreur"
+
+#. module: mission_stock
+#: selection:stock.mission.report,export_state:0
+msgid "In Progress"
+msgstr "En cours"
 
