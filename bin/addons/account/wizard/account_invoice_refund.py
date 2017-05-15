@@ -212,8 +212,7 @@ class account_invoice_refund(osv.osv_memory):
                                                      writeoff_acc_id=account_id
                                                      )
                     if mode == 'modify':
-                        invoice = inv_obj.read(cr, uid, [inv.id], self._hook_fields_for_modify_refund(cr, uid), context=context)
-                        invoice = invoice[0]
+                        invoice = inv_obj.read(cr, uid, inv.id, self._hook_fields_for_modify_refund(cr, uid), context=context)
                         del invoice['id']
                         invoice_lines = inv_line_obj.read(cr, uid, invoice['invoice_line'], context=context)
                         invoice_lines = inv_obj._refund_cleanup_lines(cr, uid, invoice_lines)
@@ -250,7 +249,7 @@ class account_invoice_refund(osv.osv_memory):
             return result
 
     def invoice_refund(self, cr, uid, ids, context=None):
-        data_refund = self.read(cr, uid, ids, [],context=context)[0]['filter_refund']
+        data_refund = self.read(cr, uid, ids[0], ['filter_refund'], context=context)['filter_refund']
         return self.compute_refund(cr, uid, ids, data_refund, context=context)
 
 
