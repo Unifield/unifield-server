@@ -1397,7 +1397,10 @@
 						<separator orientation="vertical"/>
 						<field name="name"/>
 						<field name="partner_id2" />
-                                                <field name="picking_ids" />
+                        <field name="picking_ids" />
+                        <field name="date"/>
+                        <field name="shipment_expected_date"/>
+                        <field name="shipment_actual_date"/>
 					</group>
 					<newline/>
 					<group expand="0" string="Group By..." colspan="4" col="8">
