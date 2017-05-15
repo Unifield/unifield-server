@@ -74,32 +74,6 @@
             </field>
         </record>
 
-        <record id="purchase_form_view_transport_mgmt" model="ir.ui.view">
-            <field name="name">purchase.form.view.transport.mgmt</field>
-            <field name="model">purchase.order</field>
-            <field name="type">form</field>
-            <field name="priority">50</field>
-            <field name="inherit_id" ref="purchase_override.purchase_order_type_form_view" />
-            <field name="arch" type="xml">
-                <data>
-
-                    <xpath expr="/form/notebook//field[@name='origin']" position="after">
-<!--                        <button name="display_transport_line" type="object" string="Display/Hide Transport line" icon="gtk-execute" colspan="2" attrs="{'invisible': ['|', '|', '|', ('rfq_ok', '=', True), ('state', 'in', ['approved', 'done']), ('categ', '=', 'transport'), ('intl_supplier_ok', '=', True)]}"/>-->
-                    </xpath>
-
-                    <xpath expr="/form//field[@name='pricelist_id']" position="replace">
-                        <field domain="[('type','=','purchase')]" name="pricelist_id"
-                        	on_change="onchange_pricelist_id(partner_id, pricelist_id, transport_currency_id)" />
-                    </xpath>
-
-                    <xpath expr="/form//field[@name='location_id']" position="after">
-                        <field name="incoterm_id" attrs="{'invisible': [('intl_supplier_ok', '=', False)], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" widget="selection" />
-                    </xpath>
-
-                </data>
-            </field>
-        </record>
-
         <!-- Add a 'description' field on PO search view to search on details -->
         <record id="purchase_order_search_description_view" model="ir.ui.view">
             <field name="name">purchase.order.search.description.view</field>

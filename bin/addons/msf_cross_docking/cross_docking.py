@@ -39,7 +39,7 @@ class purchase_order(osv.osv):
     _columns = {
         'cross_docking_ok': fields.boolean('Cross docking'),
         'location_id': fields.many2one('stock.location', 'Destination', required=True, domain=[('usage', '<>', 'view')],
-        help="""This location is set according to the Warehouse selected, or according to the option 'Cross docking'
+                                       help="""This location is set according to the Warehouse selected, or according to the option 'Cross docking'
         or freely if you do not select 'Warehouse'.But if the 'Order category' is set to 'Transport' or 'Service',
         you cannot have an other location than 'Service'"""),
     }
@@ -75,7 +75,7 @@ class purchase_order(osv.osv):
             warning = {
                 'title': _('Warning'),
                 'message': _('The IR lines to an internal location sourced by one of the lines of this PO will not affected by this modification'),
-                }
+            }
         else:
             warehouse_obj = self.pool.get('stock.warehouse')
             if not warehouse_id:
@@ -111,16 +111,6 @@ class purchase_order(osv.osv):
             If the 'Order Category' is 'Service' or 'Transport', you cannot have an other location than 'Service'
             """)}, 'value': {'location_id': stock_loc_obj.get_service_location(cr, uid)}}
         res['value']['cross_docking_ok'] = cross_docking_ok
-        return res
-
-    def onchange_warehouse_id(self, cr, uid, ids,  warehouse_id, order_type, dest_address_id):
-        """ Set cross_docking_ok to False when we change warehouse.
-        @param warehouse_id: Changed id of warehouse.
-        @return: Dictionary of values.
-        """
-        res = super(purchase_order, self).onchange_warehouse_id(cr, uid, ids,  warehouse_id, order_type, dest_address_id)
-        if warehouse_id:
-            res['value'].update({'cross_docking_ok': False})
         return res
 
     def onchange_categ(self, cr, uid, ids, category, warehouse_id, cross_docking_ok, location_id, context=None):
@@ -654,7 +644,6 @@ class stock_move(osv.osv):
                 todo.append(move.id)
                 self.infolog(cr, uid, "The source location of the stock move id:%s has been changed to cross-docking location" % (move.id))
         ret = True
-        picking_todo = []
         if todo:
             ret = self.write(cr, uid, todo, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
             
@@ -688,7 +677,6 @@ class stock_move(osv.osv):
             ids = [ids]
         obj_data = self.pool.get('ir.model.data')
         todo = []
-        picking_todo = []
         for move in self.browse(cr, uid, ids, context=context):
             if move.state != 'done':
                 '''
