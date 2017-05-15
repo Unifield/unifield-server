@@ -333,14 +333,16 @@
                         <page string="Down Payments">
                             <field name="down_payment_ids" nolabel="1" colspan="4">
                                 <tree string="Down Payment">
-                                    <field name="statement_id" string="Register"/>
-                                    <field name="date"/>
+                                    <field name="move_id"/>
                                     <field name="name" string="Description"/>
-                                    <field name="account_id"/>
-                                    <field name="amount_currency" string="Amount" sum="Total Amount"/>
-                                    <field name="down_payment_amount" string="Expended amount"/>
-                                    <field name="currency_id"/>
+                                    <field name="ref"/>
+                                    <field name="date"/>
+                                    <field name="partner_type"/>
                                     <field name="reconcile_txt"/>
+                                    <field name="debit_currency"/>
+                                    <field name="credit_currency"/>
+                                    <field name="amount_currency" sum="Total Amount"/>
+                                    <field name="currency_id"/>
                                 </tree>
                             </field>
                         </page>
