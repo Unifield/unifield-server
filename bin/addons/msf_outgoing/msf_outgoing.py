@@ -885,6 +885,13 @@ class shipment(osv.osv):
                     draft_initial_qty += return_qty
                     move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty}, context=context)
 
+                    # Update "save as draft" lines with returned qty:
+                    save_as_draft_move = self.pool.get('create.picking.move.processor').search(cr, uid ,[('move_id', '=', draft_move.id)], context=context)
+                    for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
+                        self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
+                            'quantity': sad_move.quantity + return_qty,
+                        }, context=context)
+                    
             # log the increase action - display the picking ticket view form - log message for each draft packing because each corresponds to a different draft picking
             if not log_flag:
                 draft_shipment_name = self.read(cr, uid, shipment.id, ['name'], context=context)['name']
