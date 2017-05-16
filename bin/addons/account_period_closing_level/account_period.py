@@ -659,9 +659,12 @@ class account_period(osv.osv):
         """
         Open all recurring lines
         """
-        return self.invoice_view(cr, uid, ids,
+        res =  self.invoice_view(cr, uid, ids,
                 action_xmlid='account.action_subscription_form',
                 context=context)
+        # open the sidebar by default
+        res['sidebar_open'] = True
+        return res
 
     def button_payrolls(self, cr, uid, ids, context=None):
         """
