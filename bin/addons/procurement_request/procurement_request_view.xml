@@ -54,6 +54,7 @@
                         <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
                         <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
                         <field name="functional_currency_id" />
+                        <field name="categ"/>
                         <field name="fo_to_resource" invisible="1" />
                         <field name="parent_order_name" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
                     </group>
