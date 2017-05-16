@@ -311,6 +311,7 @@ class act_window(osv.osv):
                                            help='It gives the status if the tip has to be displayed or not when a user executes an action'),
         'multi': fields.boolean('Action on Multiple Doc.', help="If set to true, the action will not be displayed on the right toolbar of a form view"),
         'empty_ids': fields.boolean('For action: is selection of records needed ?'),
+        'sidebar_open': fields.boolean('Open the sidebar by default'),
         'groups_txt': fields.function(
             _get_groups_txt,
             method=True,
@@ -332,6 +333,7 @@ class act_window(osv.osv):
         'auto_refresh': lambda *a: 0,
         'auto_search':lambda *a: True,
         'multi': False,
+        'sidebar_open': lambda *a: False,
     }
 
     def for_xml_id(self, cr, uid, module, xml_id, context=None):
