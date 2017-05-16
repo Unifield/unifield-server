@@ -102,7 +102,8 @@ class account_common_report(osv.osv_memory):
         if filter == 'filter_no':
             res['value'] = {'period_from': False, 'period_to': False, 'date_from': False ,'date_to': False}
         if filter in ('filter_date', 'filter_date_doc', ):
-            res['value'] = {'period_from': False, 'period_to': False, 'date_from': time.strftime('%Y-01-01'), 'date_to': time.strftime('%Y-%m-%d')}
+            # Since US-1643 don't fill in the date fields automatically
+            res['value'] = {'period_from': False, 'period_to': False}
         if filter == 'filter_period':
             res['value'] = {'date_from': False, 'date_to': False}
             if fiscalyear_id:
