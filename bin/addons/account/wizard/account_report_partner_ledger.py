@@ -49,8 +49,8 @@ class account_partner_ledger(osv.osv_memory):
        'reconcil': False,
        'initial_balance': False,
        'page_split': False,
-       'result_selection': 'supplier',  # UF-1715: 'Payable Accounts' by default instead of 'Receivable'
-       'account_domain': "[('type', 'in', ['payable'])]",
+       'result_selection': 'customer_supplier',
+       'account_domain': "[('type', 'in', ['payable', 'receivable'])]",
        'only_active_partners': False,
        'tax': False, # UFTP-312: Add an exclude tax account possibility
        'fiscalyear_id': False,

@@ -69,7 +69,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         self.init_query = obj_move._query_get(self.cr, self.uid, obj='l', context=ctx2)
         self.reconcil = data['form'].get('reconcil', False)
         self.initial_balance = data['form'].get('initial_balance', False)
-        self.result_selection = data['form'].get('result_selection', 'customer')
+        self.result_selection = data['form'].get('result_selection', 'customer_supplier')
         self.amount_currency = data['form'].get('amount_currency', False)
         self.target_move = data['form'].get('target_move', 'all')
         self.period_id = data['form'].get('period_from', False)

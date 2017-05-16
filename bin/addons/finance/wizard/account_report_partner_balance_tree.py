@@ -543,8 +543,8 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
 
     _defaults = {
         'display_partner': 'non-zero_balance',
-        'result_selection': 'supplier',
-        'account_domain': "[('type', 'in', ['payable'])]",
+        'result_selection': 'customer_supplier',
+        'account_domain': "[('type', 'in', ['payable', 'receivable'])]",
         'journal_ids': _get_journals,
         'tax': False,
         'only_active_partners': False,
