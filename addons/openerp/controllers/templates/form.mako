@@ -176,7 +176,7 @@
                 <%
                   if sidebar_closed:
                       sidebar_class="closed"
-                  elif form.screen.view_type in ['form', 'calendar', 'gantt']:
+                  elif form.screen.view_type in ['form', 'calendar', 'gantt'] or sidebar_open:
                       sidebar_class="open"
                   else:
                       sidebar_class="closed"

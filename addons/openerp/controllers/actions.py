@@ -64,7 +64,8 @@ def restart_pooler_if_new_module():
 
 def execute_window(view_ids, model, res_id=False, domain=None, view_type='form', context=None,
                    mode='form,tree', name=None, target=None, limit=None, search_view=None,
-                   context_menu=False, display_menu_tip=False, action_id=None):
+                   context_menu=False, display_menu_tip=False, action_id=None,
+                   sidebar_open=False):
     """Performs `actions.act_window` action.
 
     @param view_ids: view ids
@@ -74,6 +75,7 @@ def execute_window(view_ids, model, res_id=False, domain=None, view_type='form',
     @param view_type: view type, eigther `form` or `tree`
     @param context: the context
     @param mode: view mode, eigther `form,tree` or `tree,form` or None
+    @param sidebar_open: force the side bar to the open position if True
 
     @return: view (mostly XHTML code)
     """
@@ -89,6 +91,7 @@ def execute_window(view_ids, model, res_id=False, domain=None, view_type='form',
     params.search_view = search_view
     params['context_menu'] = context_menu
     params['display_menu_tip'] = display_menu_tip
+    params['sidebar_open'] = sidebar_open
     params['target'] = target or None
     cherrypy.request._terp_view_name = name or None
     cherrypy.request._terp_view_target = target or None
@@ -363,7 +366,8 @@ def act_window(action, data):
                           search_view=data['search_view'],
                           context_menu=data.get('context_menu'),
                           display_menu_tip=display_menu_tip,
-                          action_id=action.get('id'))
+                          action_id=action.get('id'),
+                          sidebar_open=action.get('sidebar_open'))
 
 def server(action, data):
     context = dict(data.get('context', {}),
