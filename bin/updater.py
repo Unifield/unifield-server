@@ -236,7 +236,7 @@ def do_update():
                     warn("webmode registry key not found")
                     regval = "c:\Program Files (x86)\msf\Unifield\Web\service\libs\servicemanager.pyd"
 
-                res = re.match("^(.*)\\service\\libs\\servicemanager.pyd", regval)
+                res = re.match("^(.*)\\\\service\\\\libs\\\\servicemanager.pyd", regval)
                 if res:
                     webpath = res.group(1)
                 else:
