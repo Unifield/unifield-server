@@ -86,6 +86,18 @@ class ir_model(osv.osv):
             res[model.id] = self.pool.get("ir.ui.view").search(cr, uid, [('model', '=', model.model)])
         return res
 
+    def _get_default_order(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        for obj in self.read(cr, uid, ids, ['model'], context=context):
+            res[obj['id']] = ''
+            rel_obj = self.pool.get(obj['model'])
+            if rel_obj:
+                if rel_obj._parent_order:
+                    res[obj['id']] = '%s / Parent: %s' % (rel_obj._order, rel_obj._parent_order)
+                else:
+                    res[obj['id']] = rel_obj._order
+        return res
+
     _columns = {
         'name': fields.char('Object Name', size=64, translate=True, required=True),
         'model': fields.char('Object', size=64, required=True, select=1),
@@ -98,6 +110,7 @@ class ir_model(osv.osv):
                                       help="Indicates whether this object model lives in memory only, i.e. is not persisted (osv.osv_memory)"),
         'modules': fields.function(_in_modules, method=True, type='char', size=128, string='In modules', help='List of modules in which the object is defined or inherited'),
         'view_ids': fields.function(_view_ids, method=True, type='one2many', obj='ir.ui.view', string='Views'),
+        'default_order': fields.function(_get_default_order, method=True, string="Default Order", type="char"),
     }
 
     _defaults = {

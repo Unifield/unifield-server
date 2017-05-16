@@ -243,7 +243,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                 error_msg = ''
                 for e in errors:
                     if error_msg:
-                        error_msg += ' // '
+                        error_msg += '\n'
                     if len(errors[e]) > 1:
                         error_msg += 'Lines %s ' % ', '.join(str(x[1]) for x in errors[e])
                     else:
