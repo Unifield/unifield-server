@@ -46,7 +46,7 @@ class account_partner_ledger(osv.osv_memory):
     }
 
     _defaults = {
-       'reconcil': True,
+       'reconcil': False,
        'initial_balance': False,
        'page_split': False,
        'result_selection': 'supplier',  # UF-1715: 'Payable Accounts' by default instead of 'Receivable'

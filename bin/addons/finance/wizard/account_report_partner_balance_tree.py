@@ -181,7 +181,7 @@ class account_partner_balance_tree(osv.osv):
         self.ib_move_state_list = data['form'].get('target_move', 'all') == 'posted' and ['posted'] or ['draft', 'posted']
         # reconciliation filter
         self.RECONCILE_REQUEST = ''
-        if not data['form'].get('include_reconciled_entries', True):
+        if not data['form'].get('include_reconciled_entries', False):
             self.RECONCILE_REQUEST = 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
         # proprietary instances filter
         self.INSTANCE_REQUEST = ''
@@ -272,7 +272,7 @@ class account_partner_balance_tree(osv.osv):
             # UFTP-312: Filtering regarding tax account (if user asked it)
             if data['form'].get('tax', False):
                 query += " AND at.code != 'tax' "
-            if not data['form'].get('include_reconciled_entries', True):
+            if not data['form'].get('include_reconciled_entries', False):
                 query += 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
             if where:
                 query += " AND " + where + ""
@@ -548,7 +548,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'journal_ids': _get_journals,
         'tax': False,
         'only_active_partners': False,
-        'include_reconciled_entries': True,
+        'include_reconciled_entries': False,
         'fiscalyear_id': False,
     }
 
