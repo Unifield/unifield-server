@@ -145,7 +145,7 @@ class account_partner_balance_tree(osv.osv):
         obj_move = self.pool.get('account.move.line')
         obj_journal = self.pool.get('account.journal')
         obj_fy = self.pool.get('account.fiscalyear')
-        where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
+        where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context', {})) or ''
 
         result_selection = data['form'].get('result_selection', '')
         if (result_selection == 'customer'):
@@ -187,11 +187,7 @@ class account_partner_balance_tree(osv.osv):
         self.INSTANCE_REQUEST = ''
         instance_ids = data['form']['instance_ids']
         if instance_ids:
-            # we add instance filter in 'where'
-            if where:
-                where += " AND "
-            self.INSTANCE_REQUEST = "l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
-            where += self.INSTANCE_REQUEST
+            self.INSTANCE_REQUEST = " AND l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
 
         # UFTP-312: take tax exclusion in account if user asked for it
         self.TAX_REQUEST = ''
@@ -218,6 +214,7 @@ class account_partner_balance_tree(osv.osv):
 
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
+        where = where and 'AND %s' % where or ''
         query = "SELECT ac.type as account_type," \
             " p.id as partner_id, p.ref as partner_ref, p.name as partner_name," \
             " COALESCE(sum(debit),0) AS debit, COALESCE(sum(credit), 0) AS credit," \
@@ -229,7 +226,8 @@ class account_partner_balance_tree(osv.osv):
             " JOIN account_account_type at ON (ac.user_type = at.id)" \
             " WHERE ac.type IN " + self.account_type + "" \
             " AND am.state IN " + move_state + "" \
-            " AND " + where + "" \
+            " " + where + "" \
+            " " + self.INSTANCE_REQUEST + " " \
             " " + self.TAX_REQUEST + " " \
             " " + self.PARTNER_REQUEST + " " \
             " " + self.ACCOUNT_REQUEST + " " \
@@ -252,7 +250,7 @@ class account_partner_balance_tree(osv.osv):
         if not self.move_line_ids or account_type != self.move_line_ids['account_type'] \
                 or partner_id != self.move_line_ids['partner_id'] or data != self.move_line_ids['data']:
             obj_move = self.pool.get('account.move.line')
-            where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
+            where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context', {})) or ''
 
             move_state = "('draft','posted')"
             if data['form'].get('target_move', 'all') == 'posted':
@@ -274,6 +272,8 @@ class account_partner_balance_tree(osv.osv):
                 query += " AND at.code != 'tax' "
             if not data['form'].get('include_reconciled_entries', False):
                 query += 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
+            if data['form']['instance_ids']:
+                query += " AND l.instance_id in(%s)" % (",".join(map(str, data['form']['instance_ids'])))
             if where:
                 query += " AND " + where + ""
 
