@@ -9248,8 +9248,8 @@ msgstr "Tender not draft"
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
 #: report:addons/account/report/account_partner_ledger.mako:0
-msgid "JNRL"
-msgstr "Journal"
+msgid "JRNL"
+msgstr "JRNL"
 
 #. module: msf_tools
 #: view:export.report.inconsistencies:0
@@ -44289,9 +44289,6 @@ msgstr "Lignes de Taxe"
 
 #. module: account
 #: report:account.journal.period.print:0
-#: report:account.third_party_ledger:0
-#: report:account.third_party_ledger_other:0
-#: report:addons/account/report/account_partner_ledger.mako:270
 msgid "Ref"
 msgstr "Réf."
 
@@ -44905,6 +44902,9 @@ msgstr "Aucun appel d'offre"
 #: code:addons/account_mcdb/report/account_mcdb_export.py:187
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
 #: report:addons/account_mcdb/report/report_account_move_line_xls.mako:57
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/account/report/account_partner_ledger.mako:270
 #: field:account.journal.fake,sequence_id:0
 #: view:account.move.line:0
 #, python-format

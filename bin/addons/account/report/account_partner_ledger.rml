@@ -398,10 +398,10 @@
             <para style="terp_tblheader_Details">Date</para>
           </td>
           <td>
-            <para style="terp_tblheader_Details">JNRL</para>
+            <para style="terp_tblheader_Details">JRNL</para>
           </td>
           <td>
-            <para style="terp_tblheader_Details_Centre">Ref</para>
+            <para style="terp_tblheader_Details_Centre">Entry Sequence</para>
           </td>
           <td>
             <para style="terp_tblheader_Details_Centre">Account</para>
@@ -505,10 +505,10 @@
             <para style="terp_tblheader_Details">Date</para>
           </td>
           <td>
-            <para style="terp_tblheader_Details">JNRL</para>
+            <para style="terp_tblheader_Details">JRNL</para>
           </td>
           <td>
-            <para style="terp_tblheader_Details_Centre">Ref</para>
+            <para style="terp_tblheader_Details_Centre">Entry Sequence</para>
           </td>
           <td>
             <para style="terp_tblheader_Details_Centre">Account</para>

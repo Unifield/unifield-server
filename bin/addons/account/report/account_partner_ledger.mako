@@ -192,7 +192,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="85" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
@@ -264,10 +264,10 @@ else:
     <Data ss:Type="String">${_('Date')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('JNRL')}</Data>
+    <Data ss:Type="String">${_('JRNL')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">${_('Ref')}</Data>
+    <Data ss:Type="String">${_('Entry Sequence')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${_('Account')}</Data>
