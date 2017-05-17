@@ -659,14 +659,21 @@ class account_period(osv.osv):
             ids = [ids]
         # Search reconciliable accounts
         account_ids = self.pool.get('account.account').search(cr, uid, [('reconcile', '=', True)],context=context)
+
+        model_obj = self.pool.get('account.mcdb')
+        period_ids = []
+        period = self.read(cr, uid, ids[0], ['date_stop'], context=context)
+        period_domain = [('date_stop', '<=', period['date_stop'])]
+        period_ids = self.pool.get('account.period').search(cr, uid, period_domain,
+                context=context)
+
         # Create a filter for G/L selector
         vals = {
             'reconciled': 'unreconciled',
             'display_account': True,
-            'account_ids': [(6, 0, account_ids)],
             'description': _('Journal items that are on reconciliable accounts but that are not reconciled.'),
             'display_period': True,
-            'period_ids': [(6, 0, ids)]
+            'period_ids': [(6, 0, period_ids)]
         }
         res_id = self.pool.get('account.mcdb').create(cr, uid, vals, context=context)
         module = 'account_mcdb'
@@ -693,11 +700,25 @@ class account_period(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        model_obj = self.pool.get('account.commitment')
+        period_ids = []
+        period = self.read(cr, uid, ids[0], ['date_stop'], context=context)
+        period_domain = [('date_stop', '<=', period['date_stop'])]
+        period_ids = self.pool.get('account.period').search(cr, uid, period_domain,
+                context=context)
         # Update context to set "Except Done" button by default
         context.update({'search_default_exceptdone': 1, 'search_default_draft': 0, 'search_default_open': 0, 'search_default_done': 0})
-        return self.invoice_view(cr, uid, ids,
-                action_xmlid='analytic_distribution.action_account_commitment_tree',
-                context=context)
+        return {
+            'name': _('Commitments'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.commitment',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
+            'domain': [('state', '!=', 'done'), ('period_id', 'in', ids)]
+        }
 
     def button_revaluation(self, cr, uid, ids, context=None):
         """
