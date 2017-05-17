@@ -474,7 +474,8 @@ class account_partner_balance_tree(osv.osv):
             if ids:
                 sql = """SELECT c.name as currency_booking,
                         SUM(aml.debit_currency) as debit_booking, SUM(aml.credit_currency) as credit_booking, 
-                        SUM(debit_currency) - SUM(credit_currency) as total_booking
+                        SUM(debit_currency) - SUM(credit_currency) as total_booking,
+                        SUM(aml.debit) - SUM(aml.credit) as total_functional
                         FROM account_move_line AS aml
                         INNER JOIN account_account AS a ON aml.account_id = a.id
                         INNER JOIN res_currency AS c ON aml.currency_id = c.id
