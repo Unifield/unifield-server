@@ -46,6 +46,16 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2632_patch(self, cr, uid, *a, **b):
+        '''fix ir.model.data entries on sync_server instances
+        '''
+        update_module = self.pool.get('sync.server.update')
+        if update_module:
+            cr.execute("""
+            UPDATE ir_model_data SET module='msf_sync_data_server' WHERE
+            model='sync_server.message_rule' AND module='';
+            """)
+
     def remove_not_synchronized_data(self, cr, uid, *a, **b):
         '''
         The list of models to synchronize was wrong. It is now build
@@ -166,7 +176,7 @@ class patch_scripts(osv.osv):
     def setup_security_on_sync_server(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if not update_module:
-            # this script is exucuted on server side, update the first delete
+            # this script is executed on server side, update the first delete
             return
 
         data_obj = self.pool.get('ir.model.data')
@@ -1209,9 +1219,6 @@ class patch_scripts(osv.osv):
 
         return True
 
-
-    def us_2815_remove_null_in_comment(self, cr, uid, *a, **b):
-        cr.execute("update stock_move set comment='' where comment is null");
 
 patch_scripts()
 

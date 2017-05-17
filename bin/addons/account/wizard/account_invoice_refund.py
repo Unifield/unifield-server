@@ -105,6 +105,17 @@ class account_invoice_refund(osv.osv_memory):
         """
         return period
 
+    def _get_reconcilable_amls(self, aml_list, to_reconcile_dict):
+        """
+        Fill in to_reconcile_dict with the aml from aml_list having a reconcilable account
+        (key = account id, value = list of aml ids)
+        """
+        for ml in aml_list:
+            if ml.account_id.reconcile:
+                if ml.account_id.id not in to_reconcile_dict:
+                    to_reconcile_dict[ml.account_id.id] = []
+                to_reconcile_dict[ml.account_id.id].append(ml.id)
+
     def compute_refund(self, cr, uid, ids, mode='refund', context=None):
         """
         @param cr: the current row, from the database cursor,
@@ -182,29 +193,23 @@ class account_invoice_refund(osv.osv_memory):
                 created_inv.append(refund_id[0])
                 if mode in ('cancel', 'modify'):
                     movelines = inv.move_id.line_id
-                    to_reconcile_ids = {}
                     for line in movelines:
-                        if line.account_id.id == inv.account_id.id:
-                            if line.invoice_line_id and line.invoice_line_id.invoice_id.id == inv.id:
-                                # US-261: in case of invoice line with same account as header: do not reconcile it (will generated FXA entries...)
-                                continue
-                            to_reconcile_ids[line.account_id.id] = [line.id]
                         if type(line.reconcile_id) != osv.orm.browse_null:
                             reconcile_obj.unlink(cr, uid, line.reconcile_id.id)
                     wf_service.trg_validate(uid, 'account.invoice', \
                                             refund.id, 'invoice_open', cr)
                     refund = inv_obj.browse(cr, uid, refund_id[0], context=context)
-                    for tmpline in  refund.move_id.line_id:
-                        if tmpline.account_id.id == inv.account_id.id:
-                            if tmpline.invoice_line_id and tmpline.invoice_line_id.invoice_id.id == refund.id:
-                                # US-254: in case of invoice line with same account as header: do not reconcile it (will generated FXA entries...)
-                                continue
-                            to_reconcile_ids[tmpline.account_id.id].append(tmpline.id)
-                    for account in to_reconcile_ids:
-                        account_m_line_obj.reconcile(cr, uid, to_reconcile_ids[account],
+
+                    # get all invoice and refund lines with reconcilable account, and store them in "to_reconcile"
+                    to_reconcile = {}
+                    self._get_reconcilable_amls(movelines, to_reconcile)
+                    self._get_reconcilable_amls(refund.move_id.line_id, to_reconcile)
+                    # reconcile the lines grouped by account
+                    for account_id in to_reconcile:
+                        account_m_line_obj.reconcile(cr, uid, to_reconcile[account_id],
                                                      writeoff_period_id=period,
                                                      writeoff_journal_id = inv.journal_id.id,
-                                                     writeoff_acc_id=inv.account_id.id
+                                                     writeoff_acc_id=account_id
                                                      )
                     if mode == 'modify':
                         invoice = inv_obj.read(cr, uid, [inv.id], self._hook_fields_for_modify_refund(cr, uid), context=context)

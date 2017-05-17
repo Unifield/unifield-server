@@ -1902,6 +1902,7 @@ msgstr "Yougoslavie"
 #: selection:report.stock.move,order_type:0
 #: view:purchase.order:0
 #: selection:purchase.report,order_type:0
+#: code:addons/purchase_override/purchase.py:46
 msgid "Donation before expiry"
 msgstr "Donation avant expiration"
 
@@ -5618,6 +5619,7 @@ msgstr "Please check Expiry Date is correct!.\n"
 #: selection:stock.forecast.line,order_type:0
 #: selection:report.stock.move,order_type:0
 #: selection:purchase.report,order_type:0
+#: code:addons/purchase_override/purchase.py:47
 msgid "Standard donation"
 msgstr "Donation normale"
 
@@ -8808,6 +8810,7 @@ msgstr "UdM Secondaire"
 #: selection:sale.order.line,po_cft:0
 #: selection:stock.forecast.line,order_type:0
 #: selection:report.stock.move,order_type:0
+#: code:addons/purchase_override/purchase.py:51
 msgid "Direct Purchase Order"
 msgstr "Bon de Commande Directe"
 
@@ -17136,12 +17139,6 @@ msgid "Batch is missing.\n"
 msgstr "Numéro de lot manquant.\n"
 ""
 
-#. modules: purchase, tender_flow
-#: view:purchase.report:0
-#: selection:purchase.report,order_type:0
-msgid "Purchase List"
-msgstr "Purchase List"
-
 #. modules: msf_doc_import, specific_rules, procurement
 #: constraint:stock.warehouse.orderpoint.line:0
 #: constraint:stock.warehouse.orderpoint.line:0
@@ -23887,6 +23884,7 @@ msgstr "Is resourced ?"
 #: selection:report.stock.move,order_type:0
 #: view:purchase.order:0
 #: selection:purchase.report,order_type:0
+#: code:addons/purchase_override/purchase.py:48
 msgid "Loan"
 msgstr "Prêt"
 
@@ -29732,6 +29730,7 @@ msgstr "Close it"
 #: selection:report.stock.move,order_type:0
 #: view:purchase.order:0
 #: selection:purchase.report,order_type:0
+#: code:addons/purchase_override/purchase.py:45
 msgid "Regular"
 msgstr "Normal"
 
@@ -52110,6 +52109,7 @@ msgstr "A line must a have a quantity larger than 0.00"
 #: selection:stock.forecast.line,order_type:0
 #: selection:report.stock.move,order_type:0
 #: view:purchase.order:0
+#: code:addons/purchase_override/purchase.py:50
 msgid "Purchase List"
 msgstr "Liste d'Achats"
 
@@ -55757,6 +55757,7 @@ msgstr "Africa/Lagos"
 #: selection:purchase.order.line,order_type:0
 #: selection:stock.forecast.line,order_type:0
 #: selection:report.stock.move,order_type:0
+#: code:addons/purchase_override/purchase.py:49
 msgid "In Kind Donation"
 msgstr "Donation en Nature"
 
@@ -98391,8 +98392,76 @@ msgid "Object id \'%s\' not found in \'%s\'. You may try to access a deleted tem
 msgstr "L'object d'id \'%s\' n'a pas été trouvé pour \'%s\'. Vous essayez probablement d'accéder à un objet temporaire qui n'existe plus (ex. un assistant)"
 
 #. module: account_override
-#: code:addons/account_override/invoice.py:387
+#: code:addons/account_override/invoice.py:396
 #, python-format
 msgid "Intermission Vouchers linked to a PO can be deleted only in Draft state."
 msgstr "Les Bons Intermission liés à un BC ne peuvent être supprimés qu'à l'état Brouillon."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:723
+#, python-format
+msgid "No Intermission journal found for the current instance."
+msgstr "Pas de journal Intermission trouvé pour l'instance actuelle."
+
+#. module: purchase_override
+#: field:purchase.order,fixed_order_type:0
+msgid "Possible order types"
+msgstr "Types de commande possibles"
+
+#. module: purchase_override
+#: code:addons/purchase_override/purchase.py:669
+#: code:addons/purchase_override/purchase.py:853
+#, python-format
+msgid "%s: This purchase order is a loan counterpart. You cannot change its order type"
+msgstr "%s: Ce bon de commande est la contrepartie d'un prêt. Vous ne pouvez pas modifier son type"
+
+#. module: purchase_override
+#: code:addons/purchase_override/purchase.py:672
+#: code:addons/purchase_override/purchase.py:857
+#, python-format
+msgid "%s: Only %s order types are allowed for this purchase order"
+msgstr "%s: Seuls les types %s sont autorisés pour cette commande"
+
+#. modules: sourcing, purchase_override, sync_so
+#: constraint:purchase.order:0
+#: constraint:purchase.order:0
+#: constraint:purchase.order:0
+msgid "The order type of the order is not consistent with the order type of the source"
+msgstr "Le type de commande n'est pas compatible avec le type de la commande qui est sourcée"
+
+#. module: purchase_override
+#: code:addons/purchase_override/purchase.py:888
+#, python-format
+msgid "You cannot select Direct Purchase order for a lines sourced to a normal PO"
+msgstr "Vous ne pouvez pas sélectionner 'Bon de commande direct' pour des lignes sourcées sur un PO normal"
+
+#. module: sourcing
+#: code:addons/sourcing/sale_order_line.py:929
+#, python-format
+msgid "loan"
+msgstr "prêt"
+
+#. module: sourcing
+#: code:addons/sourcing/sale_order_line.py:929
+#, python-format
+msgid "donation"
+msgstr "don"
+
+#. module: sourcing
+#: code:addons/sourcing/sale_order_line.py:1004
+#, python-format
+msgid "You can only source a Donation line from stock."
+msgstr "Vous pouvez sourcé une ligne de don uniquement sur stock"
+
+#. module: sourcing
+#: code:addons/sourcing/sale_order_line.py:1278
+#, python-format
+msgid "You can't source a donation 'on order'."
+msgstr "Vous ne pouvez pas sourcer un don 'sur commande'."
+
+#. module: base
+#: field:ir.model,default_order:0
+#, python-format
+msgid "Default Order"
+msgstr "Ordre par défaut"
 

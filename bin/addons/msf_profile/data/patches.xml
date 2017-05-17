@@ -5,6 +5,10 @@
             <field name="method">remove_not_synchronized_data</field>
         </record>
 
+        <record id="us_2632_patch" model="patch.scripts">
+            <field name="method">us_2632_patch</field>
+        </record>
+
         <record id="us_2110_patch" model="patch.scripts">
             <field name="method">us_2110_patch</field>
         </record>
@@ -169,10 +173,6 @@
 
         <record id="us_1359_update_move_shipment" model="patch.scripts">
             <field name="method">us_1359_update_move_shipment</field>
-        </record>
-
-        <record id="us_2815_remove_null_in_comment" model="patch.scripts">
-            <field name="method">us_2815_remove_null_in_comment</field>
         </record>
     </data>
 </openerp>
