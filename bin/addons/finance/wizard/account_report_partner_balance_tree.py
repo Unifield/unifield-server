@@ -267,7 +267,7 @@ class account_partner_balance_tree(osv.osv):
             if data['form'].get('tax', False):
                 query += " AND at.code != 'tax' "
             if not data['form'].get('include_reconciled_entries', False):
-                query += 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
+                query += ' AND l.reconcile_id IS NULL'  # include only non-reconciled entries
             if data['form'].get('instance_ids', False):
                 query += " AND l.instance_id in(%s)" % (",".join(map(str, data['form']['instance_ids'])))
             if data['form'].get('account_ids', False):  # some accounts are specifically selected
