@@ -717,7 +717,7 @@ class account_period(osv.osv):
             'view_mode': 'tree,form',
             'view_type': 'form',
             'context': context,
-            'domain': [('state', '!=', 'done'), ('period_id', 'in', ids)]
+            'domain': [('state', '!=', 'done'), ('period_id', 'in', period_ids)]
         }
 
     def button_revaluation(self, cr, uid, ids, context=None):
