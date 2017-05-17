@@ -135,7 +135,7 @@ class account_move_line(osv.osv):
                     amount_reg = reg_line.amount
                     ignore_id = reg_line.first_move_line_id.id
                     if context.get('sync_update_execution'):
-                        if self.pool.get('account.move.line').search_exist(cr, uid, [('statement_id', '=', reg_line.id), ('reconcile_partial_id', '!=', False)], context=context):
+                        if self.pool.get('account.move.line').search_exist(cr, uid, [('move_id', '=', reg_line.first_move_line_id.move_id.id), ('id', '!=', ignore_id), ('reconcile_partial_id', '!=', False)], context=context):
                             # US-2301: reg. line hard posted at lower level, sync upd are not processed in the right order
                             # the move line has a reconciliation so it's not in temp state
                             continue
