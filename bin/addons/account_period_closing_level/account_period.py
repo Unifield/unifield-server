@@ -472,7 +472,7 @@ class account_period(osv.osv):
             context = {}
         return self.register_view(cr, uid, ids, 'cash', context=context)
 
-    def invoice_view(self, cr, uid, ids, name=_('Invoices'), domain=None, module='account', view_name='invoice_tree', action_xmlid=None, context=None):
+    def invoice_view(self, cr, uid, ids, action_xmlid=None, context=None):
         """
         Open an invoice tree view with the given domain for the period in ids
         """
@@ -481,8 +481,6 @@ class account_period(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if domain is None:
-            domain = []
 
         # to get action_xmlid:
         # 1/ on the web interface get id of ir.ui.menu menu
