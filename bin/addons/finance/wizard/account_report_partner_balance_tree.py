@@ -185,7 +185,7 @@ class account_partner_balance_tree(osv.osv):
             self.RECONCILE_REQUEST = 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
         # proprietary instances filter
         self.INSTANCE_REQUEST = ''
-        instance_ids = data['form']['instance_ids']
+        instance_ids = data['form'].get('instance_ids', False)
         if instance_ids:
             self.INSTANCE_REQUEST = " AND l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
 
@@ -272,7 +272,7 @@ class account_partner_balance_tree(osv.osv):
                 query += " AND at.code != 'tax' "
             if not data['form'].get('include_reconciled_entries', False):
                 query += 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
-            if data['form']['instance_ids']:
+            if data['form'].get('instance_ids', False):
                 query += " AND l.instance_id in(%s)" % (",".join(map(str, data['form']['instance_ids'])))
             if where:
                 query += " AND " + where + ""
