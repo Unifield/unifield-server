@@ -484,58 +484,35 @@ class account_period(osv.osv):
         if domain is None:
             domain = []
 
-        if action_xmlid:
-            # to get action_xmlid:
-            # 1/ on the web interface get id of ir.ui.menu menu
-            # 2/ get id of ir.actions.act_window:
-            #        select value from ir_values where model='ir.ui.menu' and res_id=<menu_id>;
-            # 3/ get xmlid:
-            #    select module||'.'||name from ir_model_data where res_id=<act_id> and module!='sd' and model='ir.actions.act_window';
-            module, xmlid = action_xmlid.split('.', 1)
-            act_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
-            keys = ['display_menu_tip', 'help', 'type', 'domain', 'res_model', 'view_id', 'search_view_id', 'view_mode', 'view_ids', 'context', 'name', 'views', 'view_type']
-            act = self.pool.get('ir.actions.act_window').read(cr, uid, act_id, keys, context=context)
-            act_domain = act.get('domain', "[]") or "[]"
-            act_context = act.get('context', "{}") or "{}"
-            globals_dict = {'uid': uid}
-            if 'active_id' in context:
-                globals_dict['active_id'] = context['active_id']
-            eval_domain = safe_eval(act_domain, globals_dict)
+        # to get action_xmlid:
+        # 1/ on the web interface get id of ir.ui.menu menu
+        # 2/ get id of ir.actions.act_window:
+        #        select value from ir_values where model='ir.ui.menu' and res_id=<menu_id>;
+        # 3/ get xmlid:
+        #    select module||'.'||name from ir_model_data where res_id=<act_id> and module!='sd' and model='ir.actions.act_window';
+        module, xmlid = action_xmlid.split('.', 1)
+        act_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
+        keys = ['display_menu_tip', 'help', 'type', 'domain', 'res_model', 'view_id', 'search_view_id', 'view_mode', 'view_ids', 'context', 'name', 'views', 'view_type']
+        act = self.pool.get('ir.actions.act_window').read(cr, uid, act_id, keys, context=context)
+        act_domain = act.get('domain', "[]") or "[]"
+        act_context = act.get('context', "{}") or "{}"
+        globals_dict = {'uid': uid}
+        if 'active_id' in context:
+            globals_dict['active_id'] = context['active_id']
+        eval_domain = safe_eval(act_domain, globals_dict)
 
-            model_obj = self.pool.get(act['res_model'])
-            if 'date_invoice' in model_obj._columns or\
-                    'date_invoice' in model_obj._inherit_fields:
-                period = self.read(cr, uid, ids[0], ['date_stop'], context=context)
-                eval_domain += [('date_invoice', '<=', period['date_stop']), ('state', 'in', ['draft', 'open'])]
+        model_obj = self.pool.get(act['res_model'])
+        if 'date_invoice' in model_obj._columns or\
+                'date_invoice' in model_obj._inherit_fields:
+            period = self.read(cr, uid, ids[0], ['date_stop'], context=context)
+            eval_domain += [('date_invoice', '<=', period['date_stop']), ('state', 'in', ['draft', 'open'])]
 
-            eval_context = safe_eval(act_context, globals_dict)
-            eval_context['search_default_draft'] = 0
-            act['context'] = eval_context
-            act['domain'] = eval_domain
-            act['target'] = 'current'
-            return act
-
-        # TODO: convert call with action_xmlid arg, and remove this
-        # Search invoices
-        for period in self.browse(cr, uid, ids, context=context):
-            # prepare view
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
-            view_id = view_id and view_id[1] or False
-            if 'date_invoice' in model_obj._columns or\
-                    'date_invoice' in model_obj._inherit_fields:
-                domain += [('date_invoice', '>=', period.date_start), ('date_invoice', '<=', period.date_stop), ('state', 'in', ['draft', 'open'])]
-            context.update({'search_default_draft': 0})
-            return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'account.invoice',
-                'view_type': 'form',
-                'view_mode': 'tree,form',
-                'view_id': [view_id],
-                'target': 'current',
-                'domain': domain,
-                'context': context,
-                'name': name,
-            }
+        eval_context = safe_eval(act_context, globals_dict)
+        eval_context['search_default_draft'] = 0
+        act['context'] = eval_context
+        act['domain'] = eval_domain
+        act['target'] = 'current'
+        return act
 
     # Stock transfer voucher
     def button_stock_transfer_vouchers(self, cr, uid, ids, context=None):
