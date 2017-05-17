@@ -206,11 +206,7 @@ class account_partner_balance_tree(osv.osv):
 
         self.ACCOUNT_REQUEST = ''
         if data['form'].get('account_ids', False):  # some accounts are specifically selected
-            account_ids = data['form']['account_ids']
-            if len(account_ids) == 1:
-                self.ACCOUNT_REQUEST = 'AND ac.id = %s' % account_ids[0]
-            else:
-                self.ACCOUNT_REQUEST = 'AND ac.id IN %s' % (tuple(account_ids),)
+            self.ACCOUNT_REQUEST = " AND ac.id IN (%s)" % (",".join(map(str, data['form']['account_ids'])))
 
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
@@ -274,6 +270,8 @@ class account_partner_balance_tree(osv.osv):
                 query += 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
             if data['form'].get('instance_ids', False):
                 query += " AND l.instance_id in(%s)" % (",".join(map(str, data['form']['instance_ids'])))
+            if data['form'].get('account_ids', False):  # some accounts are specifically selected
+                query += " AND ac.id IN (%s)" % (",".join(map(str, data['form']['account_ids'])))
             if where:
                 query += " AND " + where + ""
 
