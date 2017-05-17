@@ -134,10 +134,13 @@ class account_move_line(osv.osv):
                         raise osv.except_osv(_('Error Currency'),_("Register line %s: currency not equal to invoice %s")%(reg_line.id,move_line.id,))
                     amount_reg = reg_line.amount
                     ignore_id = reg_line.first_move_line_id.id
+                    if context.get('sync_update_execution'):
+                        if self.pool.get('account.move.line').search_exist(cr, uid, [('statement_id', '=', reg_line.id), ('reconcile_partial_id', '!=', False)], context=context):
+                            # US-2301: reg. line hard posted at lower level, sync upd are not processed in the right order
+                            # the move line has a reconciliation so it's not in temp state
+                            continue
                     for ml in sorted(reg_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
-                        # US-2301 If a partial payment has been done and hardposted in project, in coordo the payment
-                        # shouldn't be deducted again from the residual => ignore lines already partially reconciled
-                        if ml.id == ignore_id or ml.reconcile_partial_id:
+                        if ml.id == ignore_id:
                             continue
                         if ml.id == move_line.id:
                             if abs(move_line_total) < abs(amount_reg):
