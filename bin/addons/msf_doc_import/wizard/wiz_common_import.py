@@ -697,6 +697,8 @@ class stock_move(osv.osv):
 
         if picking.partner_id and picking.type == 'in':
             location_id = picking.partner_id.property_stock_supplier.id
+        elif picking.ext_cu and picking.type == 'in':
+            location_id = picking.ext_cu.id
         elif picking.type == 'in':
             location_id = get_ref(cr, uid, 'stock', 'stock_location_suppliers')[1]
         else:
