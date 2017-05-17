@@ -127,12 +127,12 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     data = {
                         'po_name': po_name,
                         'cdd': cdd,
+                        'line_number': line.line_number,
+                        'product_name': line.product_id.name,
+                        'product_code': line.product_id.code,
                     }
                     if first_line:
                         data.update({
-                            'line_number': line.line_number,
-                            'product_name': line.product_id.name,
-                            'product_code': line.product_id.code,
                             'uom_id': line.product_uom.name,
                             'ordered_qty': line.product_uom_qty,
                             'backordered_qty': '',
