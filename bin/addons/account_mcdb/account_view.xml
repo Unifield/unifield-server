@@ -339,7 +339,7 @@
                                 <separator orientation="vertical"/>
                                 <field name="document_date" select="1"/>
                                 <field name="date" select="1" string="Posting Date"/>
-                                <field name="period_id"/>
+                                <field name="period_id" domain="[]"/>
                             </group>
                             <newline/>
                             <group col='8' colspan='4'>
