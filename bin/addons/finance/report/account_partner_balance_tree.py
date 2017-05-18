@@ -111,7 +111,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         """
         Returns True if there is no data to display in the report
         """
-        return self.empty_report
+        return bool(self.empty_report)
 
     def _get_partners(self, data):
         """ return a list of 1 or 2 elements each element containing browse objects
@@ -122,8 +122,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             objects = self.apbt_obj.get_partner_data(self.cr, self.uid, [at], data)
             if objects:
                 res.append(objects)
-        if self.empty_report and res:
-            self.empty_report = False
+        self.empty_report = len(res)
         return res
 
     def _get_partner_account_move_lines(self, account_type, partner_id, data):
