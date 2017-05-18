@@ -178,17 +178,10 @@ class stock_inventory(osv.osv):
         """
         # Copy the comment
         if inventory_line:
-            if 'comment' not in move_vals:
-                move_vals.update({
+            move_vals.update({
                     'comment': inventory_line.comment,
-                })
-            if 'reason_type_id' not in move_vals:
-                move_vals.update({
                     'reason_type_id': inventory_line.reason_type_id.id,
-                })
-        move_vals.update({
-            'not_chained': True,
-        })
+            })
 
         return super(stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals)
         # @@@end

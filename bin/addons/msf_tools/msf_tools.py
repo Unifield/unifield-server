@@ -610,7 +610,7 @@ class ir_translation(osv.osv):
                     # Search xml_id in ir_model_data
                     cr.execute('''SELECT name
                                FROM ir_model_data
-                               WHERE module=\'sd\' AND model=%s AND res_id=%s''',
+                               WHERE module='sd' AND model=%s AND res_id=%s''',
                                (model_name, current_id))
 
                     for xml_id in cr.fetchall():

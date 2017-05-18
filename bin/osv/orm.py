@@ -2080,9 +2080,8 @@ class orm_template(object):
             args += [(self._rec_name, operator, name)]
         access_rights_uid = name_get_uid or user
 
-        # no need to order the ids as they will be re-ordered by the read
-        ids = self._search(cr, user, args, limit=limit, order='NO_ORDER',
-                context=context, access_rights_uid=access_rights_uid)
+        ids = self._search(cr, user, args, limit=limit, context=context,
+                access_rights_uid=access_rights_uid)
         res = self.name_get(cr, access_rights_uid, ids, context)
         return res
 
