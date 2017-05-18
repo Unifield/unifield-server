@@ -130,6 +130,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         'line_number': line.line_number,
                         'product_name': line.product_id.name,
                         'product_code': line.product_id.code,
+                        'is_delivered': False,
                     }
                     if first_line:
                         data.update({
@@ -143,6 +144,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     if ppl:
                         packing = move.picking_id.previous_step_id.name
                         shipment = move.picking_id.shipment_id.name
+                        is_delivered = move.picking_id.shipment_id.state == 'delivered'
                         if not grouped:
                             key = (packing, shipment, move.product_uom.name)
                         else:
@@ -150,6 +152,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         data.update({
                             'packing': packing,
                             'shipment': shipment,
+                            'is_delivered': is_delivered,
                             'delivered_qty': not only_bo and move.product_qty or 0.00,
                             'delivered_uom': not only_bo and move.product_uom.name or 0.00,
                             'rts': not only_bo and move.picking_id.shipment_id.shipment_expected_date[0:10] or '',
