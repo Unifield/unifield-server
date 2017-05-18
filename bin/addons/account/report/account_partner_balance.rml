@@ -242,10 +242,11 @@
       <para style="terp_default_8">
         <font color="white"> </font>
       </para>
-      <blockTable colWidths="140.0,80.0,80.0,80.0,80.0,80.0" repeatRows="1" style="Table2">
+      <blockTable colWidths="140.0,55.0,65.0,70.0,70.0,70.0,70.0" repeatRows="1" style="Table2">
         <tr>
           <td><para style="P12a">Partner</para></td>
           <td><para style="P12b">Account</para></td>
+          <td><para style="P12b">Currency</para></td>
           <td><para style="P12b">Debit</para></td>
           <td><para style="P12b">Credit</para></td>
           <td><para style="P12b">Booking Balance</para></td>
@@ -256,18 +257,20 @@
           <!-- For each partner: show one header line, another optional line if the initial balance must be displayed,
                and the detail per account -->
           <td>
-            <blockTable colWidths="140.0,80.0,80.0,80.0,80.0,80.0">
+            <blockTable colWidths="130.0,69.0,63.0,65.0,68.0,68.0,68.0">
               <tr>
                 <td><para style="P15">[[ p_obj.name or '' ]][[ p_obj.partner_id and p_obj.partner_id.ref and ' - %s' % p_obj.partner_id.ref ]]</para></td>
                 <td><para style="P15"></para></td>
+                <td><para style="P4Bold">[[ company.currency_id.name ]]</para></td>
                 <td><para style="P4Bold" fontSize="8.5">[[ formatLang(p_obj.debit or 0.0) ]]</para></td>
                 <td><para style="P4Bold" fontSize="8.5">[[ formatLang(p_obj.credit or 0.0) ]]</para></td>
                 <td><para style="P4Bold" fontSize="8.5">[[ formatLang(p_obj.balance or 0.0) ]]</para></td>
-                <td><para style="P4Bold" fontSize="8.5">[[ formatLang(p_obj.balance or 0.0) ]] [[ company.currency_id.name ]]</para></td>
+                <td><para style="P4Bold" fontSize="8.5">[[ formatLang(p_obj.balance or 0.0) ]]</para></td>
               </tr>
               <tr> [[data['form']['initial_balance'] == True and ' ' or removeParentNode('tr') ]]
                 <td><para style="P4"></para></td>
                 <td><para style="P4">Initial Balance</para></td>
+                <td><para style="P4">[[ company.currency_id.name ]]</para></td>
                 <td><para style="P4">[[ formatLang(p_obj.ib_debit or 0.0) ]]</para></td>
                 <td><para style="P4">[[ formatLang(p_obj.ib_credit or 0.0) ]]</para></td>
                 <td><para style="P4">[[ formatLang(p_obj.ib_balance or 0.0) ]]</para></td>
@@ -278,10 +281,11 @@
                 <!-- For each account: display one line with the total in functional currency,
                      and one line per booking currency used -->
                 <td>
-                  <blockTable colWidths="139.0,79.0,76.0,78.0,81.0,80.0">
+                  <blockTable colWidths="151.0,28.0,79.0,64.0,72.0,67.0,67.0">
                    <tr>
                      <td><para style="P4Bold"></para></td>
                      <td><para style="P4Bold">[[ aml.get('account', '') ]]</para></td>
+                     <td><para style="P4Bold">[[ company.currency_id.name ]]</para></td>
                      <td><para style="P4Bold">[[ formatLang(aml.get('deb') or 0.0) ]]</para></td>
                      <td><para style="P4Bold">[[ formatLang(aml.get('cred') or 0.0) ]]</para></td>
                      <td><para style="P4Bold">[[ formatLang(aml.get('total') or 0.0) ]]</para></td>
@@ -290,7 +294,8 @@
                    <tr>
                      [[ repeatIn(get_lines_per_currency(p_entries[0].account_type, p_obj.partner_id.id, data, aml.get('account')), 'detail_line') ]]
                      <td><para style="P4Italic"></para></td>
-                     <td><para style="P4Italic">[[ '%s %s' % (translate('Subtotal'), detail_line.get('currency_booking', '')) ]]</para></td>
+                     <td><para style="P4Italic">[[ translate('Subtotal') ]]</para></td>
+                     <td><para style="P4Italic">[[ detail_line.get('currency_booking', '') ]]</para></td>
                      <td><para style="P4Italic">[[ formatLang(detail_line.get('debit_booking') or 0.0) ]]</para></td>
                      <td><para style="P4Italic">[[ formatLang(detail_line.get('credit_booking') or 0.0) ]]</para></td>
                      <td><para style="P4Italic">[[ formatLang(detail_line.get('total_booking') or 0.0) ]]</para></td>
