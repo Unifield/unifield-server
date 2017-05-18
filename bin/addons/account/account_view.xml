@@ -244,6 +244,7 @@
            <field name="name">account.treasury.graph</field>
            <field name="model">account.account</field>
            <field name="type">graph</field>
+           <field name="priority">17</field>
            <field name="arch" type="xml">
                <graph string="Treasury Analysis" type="bar">
                   <field name="name"/>
@@ -478,6 +479,7 @@
             <field name="name">account.cash.statement.select</field>
             <field name="model">account.bank.statement</field>
             <field name="type">search</field>
+            <field name="priority" eval="18"/>
             <field name="arch" type="xml">
                 <search string="Search Bank Statements">
                     <group col="8" colspan="4">
@@ -522,6 +524,7 @@
             <field name="name">account.bank.statement.search</field>
             <field name="model">account.bank.statement</field>
             <field name="type">search</field>
+            <field name="priority" eval="17"/>
             <field name="arch" type="xml">
                 <search string="Search Bank Statements">
                     <group col="8" colspan="4">
@@ -625,6 +628,7 @@
             <field name="name">account.bank.statement.reconcile.form</field>
             <field name="model">account.bank.statement</field>
             <field name="type">form</field>
+            <field eval="17" name="priority"/>
             <field name="arch" type="xml">
                 <form string="Bank Statement">
                     <group col="7" colspan="4">
@@ -809,6 +813,7 @@
             <field name="name">view.audittrail.log.line.account.move.tree</field>
             <field name="model">audittrail.log.line</field>
             <field name="type">tree</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <tree string="Logs" hide_new_button="1" hide_delete_button="1" noteditable="1" editable="top">
                     <field name="log" />
@@ -1036,7 +1041,7 @@
             <field name="name">account.move.line.tree</field>
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
-            <field eval="4" name="priority"/>
+            <field eval="5" name="priority"/>
             <field name="arch" type="xml">
                 <tree colors="red:state in ('draft');black:state in ('valid')" string="Journal Items" editable="top" on_write="on_create_write">
                     <field name="date"/>
@@ -1326,6 +1331,7 @@
             <field name="name">account.move.tree</field>
             <field name="model">account.move</field>
             <field name="type">tree</field>
+            <field name="priority" eval="17"/>
             <field name="arch" type="xml">
                 <tree colors="blue:state in ('draft');black:state in ('posted')" string="Journal Entries">
                     <field name="name"/>
@@ -2584,6 +2590,7 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
             <field name="name">account.bank.statement.form</field>
             <field name="model">account.bank.statement</field>
             <field name="type">form</field>
+            <field eval="16" name="priority"/>
             <field name="arch" type="xml">
                 <form string="Statement">
                     <group col="6" colspan="4">

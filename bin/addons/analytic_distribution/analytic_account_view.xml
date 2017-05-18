@@ -165,7 +165,7 @@
             <field name="model">account.analytic.account</field>
             <field name="type">tree</field>
             <field name="field_parent">child_complete_ids</field>
-            <field name="priority" eval="25"/>
+            <field name="priority" eval="26"/>
             <field name="arch" type="xml">
                 <tree string="Analytic account" toolbar="1" expand_button="1">
                     <field name="name"/>

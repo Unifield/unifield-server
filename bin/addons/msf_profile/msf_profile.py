@@ -56,6 +56,24 @@ class patch_scripts(osv.osv):
             model='sync_server.message_rule' AND module='';
             """)
 
+    def us_2806_add_ir_ui_view_constraint(self, cr, uid, *a, **b):
+        '''
+        The constraint may have not been added during the update because it is
+        needeed to update all the modules before to add this constraint.
+        Having it in this patch script will add it at the end of the update.
+        '''
+        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'ir_ui_view_model_type_priority\'')
+        if not cr.fetchone():
+            cr.execute("""SELECT model, type, priority, count(*)
+            FROM ir_ui_view
+            WHERE inherit_id IS NULL
+            GROUP BY model, type, priority
+            HAVING count(*) > 1""")
+            if not cr.fetchone():
+                cr.execute('CREATE UNIQUE INDEX ir_ui_view_model_type_priority ON ir_ui_view (priority, type, model) WHERE inherit_id IS NULL')
+            else:
+                self._logger.warn('The constraint \'ir_ui_view_model_type_priority\' have not been created because there is some duplicated values.')
+
     def remove_not_synchronized_data(self, cr, uid, *a, **b):
         '''
         The list of models to synchronize was wrong. It is now build

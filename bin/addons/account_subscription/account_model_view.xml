@@ -150,6 +150,7 @@
             <field name="name">account.move.line.recurring_entries_to_validate</field>
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
+            <field name="priority" eval="14"/>
             <field name="arch" type="xml">
                 <tree string="Recurring Entries To Validate" min_rows="100" hide_new_button="1" hide_delete_button="1"
                 colors="red:analytic_distribution_state not in ('valid')">

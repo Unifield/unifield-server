@@ -28,6 +28,7 @@
             <field name="name">ppl.processor.step2.form.view</field>
             <field name="model">ppl.processor</field>
             <field name="type">form</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <form string="PPL Information - Step 2">
                     <field name="date" invisible="1" />

@@ -42,6 +42,7 @@
          <field name="name">report.stock.move.graph</field>
          <field name="model">report.stock.move</field>
          <field name="type">graph</field>
+         <field name="priority">18</field>
          <field name="arch" type="xml">
              <graph string="Moves Analysis" type="bar">
                  <field name="product_id"/>
@@ -53,6 +54,7 @@
          <field name="name">report.stock.move.graph</field>
          <field name="model">report.stock.move</field>
          <field name="type">graph</field>
+        <field name="priority">17</field>
          <field name="arch" type="xml">
              <graph string="Moves Analysis" type="bar">
                  <field name="day"/>

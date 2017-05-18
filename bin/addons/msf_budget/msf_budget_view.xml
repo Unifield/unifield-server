@@ -275,6 +275,7 @@
             <field name="type">tree</field>
             <field name="domain">[('category','=','OC')]</field>
             <field name="field_parent">child_complete_ids</field>
+            <field name="priority" eval="16"/>
             <field name="arch" type="xml">
                 <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts"
                  toolbar="1" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
