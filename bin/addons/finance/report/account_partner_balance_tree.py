@@ -31,7 +31,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         self.apbt_obj = self.pool.get('account.partner.balance.tree')
         self.uid = uid
         self.initial_balance = False
-        self.empty_report = False
+        self.empty_report = True
         self.localcontext.update({
             # header
             'get_account': self._get_account,
@@ -122,10 +122,8 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             objects = self.apbt_obj.get_partner_data(self.cr, self.uid, [at], data)
             if objects:
                 res.append(objects)
-        if res:
+        if self.empty_report and res:
             self.empty_report = False
-        else:
-            self.empty_report = True
         return res
 
     def _get_partner_account_move_lines(self, account_type, partner_id, data):
