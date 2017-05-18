@@ -2079,9 +2079,8 @@ class orm_template(object):
         if name:
             args += [(self._rec_name, operator, name)]
         access_rights_uid = name_get_uid or user
-
         ids = self._search(cr, user, args, limit=limit, context=context,
-                access_rights_uid=access_rights_uid)
+                           access_rights_uid=access_rights_uid)
         res = self.name_get(cr, access_rights_uid, ids, context)
         return res
 
