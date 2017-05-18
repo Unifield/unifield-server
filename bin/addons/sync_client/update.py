@@ -701,14 +701,6 @@ class update_received(osv.osv,fv_formatter):
                         'touched' : '[]',
                     },
                     context=context)
-            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('run', '=', False),
-                                                 ('is_deleted', '=', False)], order='NO_ORDER', context=context)
-            if toSetRun_ids:
-                self.write(cr, uid, toSetRun_ids, {
-                    'editable' : False,
-                    'run' : True,
-                    'log' : 'Manually set to run by the system. Due to a delete',
-                }, context=context)
             return
 
         error_message = ""
