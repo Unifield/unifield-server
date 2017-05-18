@@ -356,7 +356,10 @@ header_col_merge_count = col_count - 1
     <Data ss:Type="String">Credit</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Balance</Data>
+    <Data ss:Type="String">Booking Balance</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderRight">
+    <Data ss:Type="String">Balance ${get_output_currency_code()|x}</Data>
 </Cell>
 </Row>
 ## partner row
@@ -384,6 +387,9 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${p_obj.credit or 0.|x}</Data>
 </Cell>
+    <Cell ss:StyleID="ssPartnerNumber">
+    <Data ss:Type="Number">${p_obj.balance or 0.|x}</Data>
+</Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${p_obj.balance or 0.|x}</Data>
 </Cell>
@@ -409,6 +415,9 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${p_obj.ib_credit or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineNumber">
+    <Data ss:Type="Number">${p_obj.ib_balance or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${p_obj.ib_balance or 0.|x}</Data>
@@ -440,6 +449,9 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 <Cell ss:StyleID="ssAccountLineNumberBold">
     <Data ss:Type="Number">${aml.get('total') or 0.|x}</Data>
 </Cell>
+<Cell ss:StyleID="ssAccountLineNumberBold">
+    <Data ss:Type="Number">${aml.get('total') or 0.|x}</Data>
+</Cell>
 </Row>
 
 <!-- SUBTOTALS per currency -->
@@ -465,6 +477,9 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberItalic">
     <Data ss:Type="Number">${detail_line.get('total_booking') or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineNumberItalic">
+    <Data ss:Type="Number">${detail_line.get('total_functional') or 0.|x}</Data>
 </Cell>
 </Row>
 % endfor
@@ -495,6 +510,9 @@ balance = currency_conv(balance, False)
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
     <Data ss:Type="Number">${credit or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderNumber">
+    <Data ss:Type="String">-</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
     <Data ss:Type="Number">${balance or 0.|x}</Data>
