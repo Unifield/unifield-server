@@ -294,7 +294,7 @@ header_col_merge_count = col_count - 1
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filter By'), (get_filter(data) or ''))|x}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Entries Sorted By')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Target Moves')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Output currency')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Functional Currency')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Proprietary Instances')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Accounts')}</Data></Cell>
 </Row>
@@ -318,7 +318,7 @@ header_col_merge_count = col_count - 1
      <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${get_output_currency_code()|x}</Data>
+     <Data ss:Type="String">${company.currency_id.name|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${(', '.join([ inst or '' for inst in get_prop_instances(data) ]))|x}</Data>
@@ -359,7 +359,7 @@ header_col_merge_count = col_count - 1
     <Data ss:Type="String">${_('Booking Balance')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">${'%s %s' % (_('Balance'), get_output_currency_code())|x}</Data>
+    <Data ss:Type="String">${'%s %s' % (_('Balance'), company.currency_id.name)|x}</Data>
 </Cell>
 </Row>
 ## partner row
@@ -379,7 +379,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerRight">
-    <Data ss:Type="String">${get_output_currency_code()|x}</Data>
+    <Data ss:Type="String">${company.currency_id.name|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${p_obj.debit or 0.|x}</Data>
@@ -408,7 +408,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String">${_('Initial Balance')}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineRight">
-    <Data ss:Type="String">${get_output_currency_code()|x}</Data>
+    <Data ss:Type="String">${company.currency_id.name|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${p_obj.ib_debit or 0.|x}</Data>
@@ -438,7 +438,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String">${aml.get('account', '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineAccountCodeBold">
-    <Data ss:Type="String">${get_output_currency_code()|x}</Data>
+    <Data ss:Type="String">${company.currency_id.name|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberBold">
     <Data ss:Type="Number">${aml.get('deb') or 0.|x}</Data>

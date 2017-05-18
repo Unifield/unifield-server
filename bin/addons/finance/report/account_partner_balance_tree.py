@@ -58,7 +58,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_empty_report': self._get_empty_report,
 
             # currency
-            'get_output_currency_code': self._get_output_currency_code,
             'currency_conv': self._currency_conv,
         })
 
@@ -234,11 +233,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             self.cr.execute('select code from account_journal where id IN %s',(tuple(data['form']['journal_ids']),))
             codes = [x for x, in self.cr.fetchall()]
         return codes
-
-    def _get_output_currency_code(self):
-        if not self.output_currency_code:
-            return ''
-        return self.output_currency_code
 
     def _get_prop_instances(self, data):
         """

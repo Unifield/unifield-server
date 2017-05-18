@@ -62160,7 +62160,6 @@ msgstr "Détails du Statut"
 #. modules: msf_budget, account_mcdb, finance
 #: field:output.currency.for.export,currency_id:0
 #: field:wizard.local.expenses,output_currency_id:0
-#: report:addons/finance/report/account_partner_balance_tree_xls.mako:287
 msgid "Output currency"
 msgstr "Devise sortante"
 
@@ -67408,13 +67407,14 @@ msgstr "Remise (%)"
 msgid "Attach a certificate of donation"
 msgstr "Joindre un certificat de donation"
 
-#. modules: res_currency_functional, msf_accrual
+#. modules: res_currency_functional, msf_accrual, account
 #: field:msf.accrual.line,functional_currency_id:0
 #: field:account.move,functional_currency_id:0
 #: field:purchase.order,functional_currency_id:0
 #: field:purchase.order.line,functional_currency_id:0
 #: field:sale.order,functional_currency_id:0
 #: field:sale.order.line,functional_currency_id:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:297
 msgid "Functional Currency"
 msgstr "Devise fonctionnelle"
 
