@@ -103,6 +103,7 @@
                         <field name="currency_id" select="1"/>
                         <field name="date" select='1'/>
                         <field name="partner_id" select='1'/>
+                        <field name="name" select="1"/>
                     </group>
                     <newline/>
                 </search>
