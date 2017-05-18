@@ -503,7 +503,7 @@ balance = currency_conv(balance, False)
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssCellRightBold">
-    <Data ss:Type="String">TOTAL</Data>
+    <Data ss:Type="String">${_('TOTAL')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
     <Data ss:Type="Number">${debit or 0.|x}</Data>

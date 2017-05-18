@@ -291,7 +291,7 @@
                    <tr>
                      [[ repeatIn(get_lines_per_currency(p_entries[0].account_type, p_obj.partner_id.id, data, aml.get('account')), 'detail_line') ]]
                      <td><para style="P4Italic"></para></td>
-                     <td><para style="P4Italic">[[ translate('Subtotal') ]]</para></td>
+                     <td><para style="P4Italic">Subtotal</para></td>
                      <td><para style="P4Italic">[[ detail_line.get('currency_booking', '') ]]</para></td>
                      <td><para style="P4Italic">[[ formatLang(detail_line.get('debit_booking') or 0.0) ]]</para></td>
                      <td><para style="P4Italic">[[ formatLang(detail_line.get('credit_booking') or 0.0) ]]</para></td>

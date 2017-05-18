@@ -73566,10 +73566,11 @@ msgstr "Produits par Zone"
 msgid "Allotment Partner"
 msgstr "Partenaire Répartition"
 
-#. modules: financing_contract, consumption_calculation, register_accounting
+#. modules: financing_contract, consumption_calculation, register_accounting, account
 #: report:expiry.report:0
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:546
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:267
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 msgid "TOTAL"
 msgstr "TOTAL"
 
