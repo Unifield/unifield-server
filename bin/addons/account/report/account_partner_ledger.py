@@ -37,8 +37,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             'lines': self.lines,
             'sum_debit_partner': self._sum_debit_partner,
             'sum_credit_partner': self._sum_credit_partner,
-#            'sum_debit': self._sum_debit,
-#            'sum_credit': self._sum_credit,
             'get_currency': self._get_currency,
             'comma_me': self.comma_me,
             'get_start_period': self.get_start_period,
