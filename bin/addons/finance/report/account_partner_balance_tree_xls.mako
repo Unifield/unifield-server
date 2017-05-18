@@ -338,28 +338,28 @@ header_col_merge_count = col_count - 1
 ## partner header
 <Row>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Partner</Data>
+    <Data ss:Type="String">${_('Partner')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Partner Ref.</Data>
+    <Data ss:Type="String">${_('Partner Ref.')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Account</Data>
+    <Data ss:Type="String">${_('Account')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Currency</Data>
+    <Data ss:Type="String">${_('Currency')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Debit</Data>
+    <Data ss:Type="String">${_('Debit')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Credit</Data>
+    <Data ss:Type="String">${_('Credit')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Booking Balance</Data>
+    <Data ss:Type="String">${_('Booking Balance')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Balance ${get_output_currency_code()|x}</Data>
+    <Data ss:Type="String">${'%s %s' % (_('Balance'), get_output_currency_code())|x}</Data>
 </Cell>
 </Row>
 ## partner row

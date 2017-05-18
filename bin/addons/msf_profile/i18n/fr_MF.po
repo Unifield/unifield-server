@@ -8922,8 +8922,15 @@ msgstr "Zone Source"
 #: field:report.account.receivable,balance:0
 #: field:report.aged.receivable,balance:0
 #: report:addons/account/report/account_partner_ledger.mako:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 msgid "Balance"
 msgstr "Solde de la balance"
+
+#. module: account
+#: report:account.partner.balance:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
+msgid "Booking Balance"
+msgstr "Solde de la balance enreg."
 
 #. module: product_attributes
 #: field:product.product,nomen_ids:0
@@ -26687,6 +26694,7 @@ msgstr "Voir les mouvements"
 #: field:res.partner,child_ids:0
 #: field:res.request,ref_partner_id:0
 #: report:addons/account/report/account_partner_ledger.mako:261
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 msgid "Partner Ref."
 msgstr "Réf. partenaire"
 
@@ -37875,6 +37883,8 @@ msgstr "Masculin"
 #: report:addons/msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako:63
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:211
 #: report:addons/account/report/account_partner_ledger.mako:0
+#: report:account.partner.balance:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 msgid "Currency"
 msgstr "Devise"
 
@@ -49002,6 +49012,7 @@ msgstr "Claim Description"
 #: field:supplier.catalogue,partner_id:0
 #: model:ir.model,name:sync_so.model_res_partner
 #: report:account.partner.balance:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 #: report:addons/account/report/account_partner_ledger.mako:258
 #, python-format
 msgid "Partner"
@@ -53070,6 +53081,7 @@ msgstr "Balance Agée Partenaire"
 #: report:sale.order.allocation.report:0
 #: report:account.partner.balance:0
 #: report:addons/account/report/account_partner_ledger.mako:273
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 #, python-format
 msgid "Account"
 msgstr "Compte"
@@ -62211,6 +62223,7 @@ msgstr "Coefficient pour le parent"
 #: field:msf.doc.import.accounting.lines,credit:0
 #: field:wizard.register.import.lines,credit:0
 #: report:addons/account/report/account_partner_ledger.mako:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 msgid "Credit"
 msgstr "Crédit"
 
@@ -69189,6 +69202,7 @@ msgstr "Ligne %s : %s"
 #: field:msf.doc.import.accounting.lines,debit:0
 #: field:wizard.register.import.lines,debit:0
 #: report:addons/account/report/account_partner_ledger.mako:0
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 msgid "Debit"
 msgstr "Débit"
 
