@@ -148,6 +148,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssAccountLineRight">
+<Alignment ss:Vertical="Top" ss:Horizontal="Right" ss:WrapText="1"/>
+<Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
 <Style ss:ID="ssAccountLineItalicRight">
 <Alignment ss:Vertical="Top" ss:Horizontal="Right" ss:WrapText="1"/>
 <Font ss:Size="8" ss:Italic="1"/>
@@ -268,7 +278,7 @@ else:
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
@@ -337,6 +347,9 @@ header_col_merge_count = col_count - 1
     <Data ss:Type="String">Account</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
+    <Data ss:Type="String">Currency</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">Debit</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
@@ -362,6 +375,9 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String"></Data>
 </Cell>
+<Cell ss:StyleID="ssPartnerRight">
+    <Data ss:Type="String">${get_output_currency_code()|x}</Data>
+</Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${p_obj.debit or 0.|x}</Data>
 </Cell>
@@ -384,6 +400,9 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${_('Initial Balance')}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineRight">
+    <Data ss:Type="String">${get_output_currency_code()|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${p_obj.ib_debit or 0.|x}</Data>
@@ -409,6 +428,9 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 <Cell ss:StyleID="ssAccountLineAccountCodeBold">
     <Data ss:Type="String">${aml.get('account', '')|x}</Data>
 </Cell>
+<Cell ss:StyleID="ssAccountLineAccountCodeBold">
+    <Data ss:Type="String">${get_output_currency_code()|x}</Data>
+</Cell>
 <Cell ss:StyleID="ssAccountLineNumberBold">
     <Data ss:Type="Number">${aml.get('deb') or 0.|x}</Data>
 </Cell>
@@ -430,7 +452,10 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineItalicRight">
-    <Data ss:Type="String">${'%s %s' % (_('Subtotal'), detail_line.get('currency_booking', ''))|x}</Data>
+    <Data ss:Type="String">${_('Subtotal')}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineItalicRight">
+    <Data ss:Type="String">${detail_line.get('currency_booking', '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberItalic">
     <Data ss:Type="Number">${detail_line.get('debit_booking') or 0.|x}</Data>
@@ -453,6 +478,9 @@ debit = currency_conv(debit, False)
 credit = currency_conv(credit, False)
 balance = currency_conv(balance, False)
 %>
+<Cell ss:StyleID="ssCell">
+    <Data ss:Type="String"></Data>
+</Cell>
 <Cell ss:StyleID="ssCell">
     <Data ss:Type="String"></Data>
 </Cell>
