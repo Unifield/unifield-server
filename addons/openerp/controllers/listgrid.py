@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -47,6 +47,10 @@ class List(SecuredController):
         ids = params.ids or []
 
         model = params.parent.model
+        dashboard = False
+        if model == 'board.board':
+            dashboard = True
+            model = params.model
         if model != params.model and not params.parent.id:
             error = _("Parent record doesn't exists...")
 
@@ -70,9 +74,13 @@ class List(SecuredController):
                 if '__id' in data: data.pop('__id')
                 if 'id' in data: data.pop('id')
 
-                fld = source.split('/')[-1]
-                data = {fld : [(id and 1, id, data.copy())]}
-                proxy.write([params.parent.id], data, ctx)
+                if not dashboard:
+                    fld = source.split('/')[-1]
+                    data = {fld : [(id and 1, id, data.copy())]}
+                    proxy.write([params.parent.id], data, ctx)
+                else:
+                    data = data.copy()
+                    proxy.write([id], data, ctx)
 
                 if not id:
                     all_ids = proxy.read([params.parent.id], [fld])[0][fld]
@@ -81,7 +89,6 @@ class List(SecuredController):
                     ids = all_ids
                     if new_ids:
                         id = new_ids[0]
-
             else:
                 data = frm.copy()
                 if 'id' in data: data.pop('id')
@@ -103,7 +110,6 @@ class List(SecuredController):
     @expose('json', methods=('POST',))
     def remove(self, **kw):
         params, data = TinyDict.split(kw)
-        sc_ids = [i['id'] for i in cherrypy.session['terp_shortcuts']]
         error = None
         proxy = rpc.RPCProxy(params.model)
         if params.id:
@@ -117,11 +123,11 @@ class List(SecuredController):
             try:
                 ctx = context_with_concurrency_info(params.context, params.concurrency_info)
                 if isinstance(params.id, list):
-                    res = proxy.unlink(params.id, ctx)
+                    proxy.unlink(params.id, ctx)
                     for i in params.id:
                         params.ids.remove(i)
                 else:
-                    res = proxy.unlink([params.id], ctx)
+                    proxy.unlink([params.id], ctx)
                     params.ids.remove(params.id)
 
                 if params.model == 'res.request':
@@ -225,12 +231,12 @@ class List(SecuredController):
             params.ids = None
         from view_graph.widgets import _graph
         wid = _graph.Graph(model=params.model,
-              view=view,
-              view_id=params.view_id,
-              ids=params.ids, domain=params.domain,
-              view_mode = params.view_mode,
-              context=params.context,
-              group_by = params.group_by_ctx)
+                           view=view,
+                           view_id=params.view_id,
+                           ids=params.ids, domain=params.domain,
+                           view_mode = params.view_mode,
+                           context=params.context,
+                           group_by = params.group_by_ctx)
         view=ustr(wid.render())
         return dict(view = view)
 
@@ -331,9 +337,6 @@ class List(SecuredController):
     @expose('json')
     def button_action(self, **kw):
         params, data = TinyDict.split(kw)
-        error = None
-        reload = (params.context or {}).get('reload', False)
-        result = {}
 
         name = params.button_name
         btype = params.button_type
@@ -443,7 +446,7 @@ class List(SecuredController):
 
         total = []
         for field in sum_fields:
-           total.append([])
+            total.append([])
 
         for i in range(len(selected_ids)):
             for k in range(len(sum_fields)):
@@ -520,4 +523,3 @@ class List(SecuredController):
             return dict(error=str(e))
 
 # vim: ts=4 sts=4 sw=4 si et
-

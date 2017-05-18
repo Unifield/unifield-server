@@ -32,7 +32,8 @@ class Screen(TinyInputWidget):
     template = "/openerp/widgets/templates/screen.mako"
 
     params = ['model', 'state', 'id', 'ids', 'view_id', 'view_ids', 'view_mode', 'view_type', 'domain',
-              'context', 'limit', 'offset', 'count', 'approximation', 'group_by_ctx', 'action_id']
+              'context', 'limit', 'offset', 'count', 'approximation',
+              'group_by_ctx', 'action_id', 'target_action_id']
 
     member_widgets = ['widget']
 
@@ -83,6 +84,7 @@ class Screen(TinyInputWidget):
         self.limit         = params.limit
         self.count         = params.count
         self.approximation = params.approximation
+        self.target_action_id = params.target_action_id or False
 
         if (self.ids or self.id) and self.count == 0:
             if self.ids and len(self.ids) < self.limit:
