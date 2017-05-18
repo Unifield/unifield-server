@@ -98490,3 +98490,8 @@ msgstr "En cours"
 #: view:board.board:0
 msgid "Commitment Vouchers to validate"
 msgstr "Bons d'Engagement à valider"
+
+#. module: account_reconciliation
+#: field:account.move.reconcile,nb_partial_legs:0
+msgid "Nb legs in partial reconcile"
+msgstr "Nb d'entrées du lettrage partiel"
