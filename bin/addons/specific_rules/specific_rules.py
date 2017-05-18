@@ -19,16 +19,10 @@
 ##############################################################################
 
 from mx import DateTime
-from datetime import datetime, timedelta, date
-from dateutil.relativedelta import relativedelta, relativedelta
-import logging
 import operator
 import time
 
-import netsvc
 from osv import osv, fields
-from osv.orm import browse_record, browse_null
-import pooler
 import tools
 from tools.translate import _
 
@@ -67,23 +61,23 @@ class sale_order_line(osv.osv):
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
 
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
-            uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-            lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+                          uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+                          lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
         '''
         if the product is short shelf life we display a warning
         '''
         # call to super
         result = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
-            uom, qty_uos, uos, name, partner_id, lang, update_tax, date_order, packaging, fiscal_position, flag)
+                                                                uom, qty_uos, uos, name, partner_id, lang, update_tax, date_order, packaging, fiscal_position, flag)
 
         # if the product is short shelf life, display a warning
         if product:
             prod_obj = self.pool.get('product.product')
             if prod_obj.browse(cr, uid, product).is_ssl:
                 warning = {
-                            'title': 'Short Shelf Life product',
+                    'title': 'Short Shelf Life product',
                             'message': _(SHORT_SHELF_LIFE_MESS)
-                            }
+                }
                 result.update(warning=warning)
 
         return result
@@ -158,25 +152,25 @@ class purchase_order_line(osv.osv):
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
 
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
-            partner_id, date_order=False, fiscal_position=False, date_planned=False,
-            name=False, price_unit=False, notes=False, state=False, old_price_unit=0.00, nomen_manda_0=False,
-            comment='', context=None):
+                             partner_id, date_order=False, fiscal_position=False, date_planned=False,
+                             name=False, price_unit=False, notes=False, state=False, old_price_unit=0.00, nomen_manda_0=False,
+                             comment='', context=None):
         '''
         if the product is short shelf life we display a warning
         '''
         # call to super
         result = super(purchase_order_line, self).product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
-            partner_id, date_order, fiscal_position, date_planned,
-            name, price_unit, notes, state, old_price_unit, nomen_manda_0, comment, context)
+                                                                       partner_id, date_order, fiscal_position, date_planned,
+                                                                       name, price_unit, notes, state, old_price_unit, nomen_manda_0, comment, context)
 
         # if the product is short shelf life, display a warning
         if product:
             prod_obj = self.pool.get('product.product')
             if prod_obj.browse(cr, uid, product).is_ssl:
                 warning = {
-                            'title': 'Short Shelf Life product',
+                    'title': 'Short Shelf Life product',
                             'message': _(SHORT_SHELF_LIFE_MESS)
-                            }
+                }
                 result.update(warning=warning)
 
         return result
@@ -255,7 +249,7 @@ class stock_warehouse_orderpoint(osv.osv):
     _columns = {
         'name': fields.char('Reference', size=128, required=True, select=True),
         'location_id': fields.many2one('stock.location', 'Location', required=True, ondelete="cascade",
-                                        domain="[('is_replenishment', '=', warehouse_id)]"),
+                                       domain="[('is_replenishment', '=', warehouse_id)]"),
         'product_id': fields.many2one('product.product', 'Product', required=False, ondelete='cascade', domain=[('type','=','product')]),  # UTP-1186 in line_ids now so not required any more
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=False),  # UTP-1186 in line_ids now so not required any more
         'product_line_ids': fields.function(
@@ -362,14 +356,14 @@ class stock_warehouse_orderpoint_line(osv.osv):
                 if not line_br.product_min_qty or \
                     line_br.product_min_qty <= 0.00 or \
                     not line_br.product_max_qty or \
-                    line_br.product_max_qty <= 0.00:
+                        line_br.product_max_qty <= 0.00:
                     raise osv.except_osv(_('Error'),
-                        _('%s: Line must have a quantity larger than 0.00') % (
+                                         _('%s: Line must have a quantity larger than 0.00') % (
                         line_br.product_id.name, ))
                     return False
                 if line_br.product_min_qty > line_br.product_max_qty:
                     raise osv.except_osv(_('Error'),
-                        _('%s: Line can not have a min quantity greater than max quantity') % (
+                                         _('%s: Line can not have a min quantity greater than max quantity') % (
                         line_br.product_id.name, ))
                     return False
 
@@ -377,7 +371,7 @@ class stock_warehouse_orderpoint_line(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         res = super(stock_warehouse_orderpoint_line, self).create(cr, uid, vals,
-            context=context)
+                                                                  context=context)
         if res:
             self._check_product_qty(cr, uid, res, context=context)
         return res
@@ -386,7 +380,7 @@ class stock_warehouse_orderpoint_line(osv.osv):
         if not ids:
             return True
         res = super(stock_warehouse_orderpoint_line, self).write(cr, uid, ids,
-            vals, context=context)
+                                                                 vals, context=context)
         self._check_product_qty(cr, uid, ids, context=context)
         return res
 
@@ -413,8 +407,8 @@ class stock_warehouse_orderpoint_line(osv.osv):
     ]
 
     def onchange_product_id(self, cr, uid, ids,
-        product_id, uom_id, product_min_qty, product_max_qty,
-        context=None):
+                            product_id, uom_id, product_min_qty, product_max_qty,
+                            context=None):
         """
         find uom for changed product.
         :param product_id: changed id of product
@@ -424,7 +418,7 @@ class stock_warehouse_orderpoint_line(osv.osv):
 
         if product_id:
             product_br = self.pool.get('product.product').browse(cr, uid,
-                product_id, context=context)
+                                                                 product_id, context=context)
             v = {'product_uom_id': product_br.uom_id.id}
             res.update({'value': v})
             sub_domain = [('category_id', '=', product_br.uom_id.category_id.id), ]
@@ -443,12 +437,12 @@ class stock_warehouse_orderpoint_line(osv.osv):
 
         uom_id = res.get('value', {}).get('product_uom', uom_id)
         res = self.onchange_uom_qty(cr, uid, ids, uom_id, product_min_qty,
-            product_max_qty, context=context, res=res)
+                                    product_max_qty, context=context, res=res)
 
         return res
 
     def onchange_uom_qty(self, cr, uid, ids,
-        uom_id, product_min_qty, product_max_qty, context=None, res=None):
+                         uom_id, product_min_qty, product_max_qty, context=None, res=None):
         """
         check the round of qty according to uom
         """
@@ -457,10 +451,10 @@ class stock_warehouse_orderpoint_line(osv.osv):
 
         if product_min_qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid,
-                uom_id, product_min_qty, 'product_min_qty', result=res)
+                                                                    uom_id, product_min_qty, 'product_min_qty', result=res)
         if product_max_qty:
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid,
-                uom_id, product_max_qty, 'product_max_qty', result=res)
+                                                                    uom_id, product_max_qty, 'product_max_qty', result=res)
 
         return res
 
@@ -476,11 +470,11 @@ class product_uom(osv.osv):
         return false for each id
         '''
         if isinstance(ids,(long, int)):
-           ids = [ids]
+            ids = [ids]
 
         result = {}
         for id in ids:
-          result[id] = False
+            result[id] = False
         return result
 
     def _search_uom_by_product(self, cr, uid, obj, name, args, context=None):
@@ -505,11 +499,11 @@ class product_uom(osv.osv):
         return false for each id
         '''
         if isinstance(ids,(long, int)):
-           ids = [ids]
+            ids = [ids]
 
         result = {}
         for id in ids:
-          result[id] = False
+            result[id] = False
         return result
 
     def _search_uom_by_parent(self, cr, uid, obj, name, args, context=None):
@@ -532,7 +526,7 @@ class product_uom(osv.osv):
         'uom_by_product': fields.function(_get_uom_by_product, fnct_search=_search_uom_by_product, string='UoM by Product',
                                           method=True, help='Field used to filter the UoM for a specific product'),
         'uom_by_parent': fields.function(_get_uom_by_parent, fnct_search=_search_uom_by_parent, string='UoM by Parent',
-                                          method=True, help='Field used to filter the UoM for a specific product'),
+                                         method=True, help='Field used to filter the UoM for a specific product'),
     }
 
 product_uom()
@@ -710,12 +704,12 @@ class stock_move(osv.osv):
                     raise osv.except_osv(_('Error!'),  _('The selected product is Expiry Date Mandatory while the selected Batch number corresponds to Batch Number Mandatory.'))
             if not move.prodlot_id and move.product_qty and \
                (move.state == 'done' and \
-               ( \
-                   (move.product_id.track_production and move.location_id.usage == 'production') or \
-                   (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
-                   (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
-                   (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') \
-               )):
+                ( \
+                (move.product_id.track_production and move.location_id.usage == 'production') or \
+                (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
+                (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
+                (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') \
+                )):
                 raise osv.except_osv(_('Error!'),  _('You must assign a batch number for this product.'))
 
         return True
@@ -798,7 +792,7 @@ class stock_move(osv.osv):
                                                               'perishable',
                                                               'type',
                                                               'subtype',],
-                                                             context=context)
+            context=context)
         product_dict = dict([(x['id'], x) for x in product_list_dict])
 
         for stock_move_dict in read_result:
@@ -910,7 +904,7 @@ class stock_move(osv.osv):
     }
 
     _constraints = [
-            (_check_tracking, 'You must assign a batch number for this product.', ['prodlot_id']),
+        (_check_tracking, 'You must assign a batch number for this product.', ['prodlot_id']),
     ]
 
 stock_move()
@@ -1013,15 +1007,15 @@ class stock_production_lot(osv.osv):
         revision_obj = self.pool.get('stock.production.lot.revision')
 
         for lot in self.browse(cr, uid, ids, context=context):
-           # create revision object for each lot
-           version_number = lot.sequence_id.get_id(code_or_id='id', context=context)
-           values = {'name': 'Auto Revision Logging',
-                     'description': 'The batch number has been modified, this revision log has been created automatically.',
-                     'date': time.strftime('%Y-%m-%d'),
-                     'indice': version_number,
-                     'author_id': uid,
-                     'lot_id': lot.id,}
-           revision_obj.create(cr, uid, values, context=context)
+            # create revision object for each lot
+            version_number = lot.sequence_id.get_id(code_or_id='id', context=context)
+            values = {'name': 'Auto Revision Logging',
+                      'description': 'The batch number has been modified, this revision log has been created automatically.',
+                      'date': time.strftime('%Y-%m-%d'),
+                      'indice': version_number,
+                      'author_id': uid,
+                      'lot_id': lot.id,}
+            revision_obj.create(cr, uid, values, context=context)
 
         return super(stock_production_lot, self).write(cr, uid, ids, vals, context=context)
 
@@ -1070,11 +1064,11 @@ class stock_production_lot(osv.osv):
         return false for each id
         '''
         if isinstance(ids,(long, int)):
-           ids = [ids]
+            ids = [ids]
 
         result = {}
         for id in ids:
-          result[id] = False
+            result[id] = False
         return result
 
     def _stock_search_virtual(self, cr, uid, obj, name, args, context=None):
@@ -1126,10 +1120,10 @@ class stock_production_lot(osv.osv):
                 context['location_id'] = location_id
 
     def _location_dive(self, cr, uid, parent_location_ids, result_ids=None,
-        context=None):
+                       context=None):
         result_ids += [id for id in parent_location_ids if id not in result_ids]
         for r in self.pool.get('stock.location').read(cr, uid,
-            parent_location_ids, ['child_ids'], context=context):
+                                                      parent_location_ids, ['child_ids'], context=context):
             if r['child_ids']:
                 self._location_dive(cr, uid, r['child_ids'],
                     result_ids=result_ids, context=context)
@@ -1370,7 +1364,7 @@ class stock_production_lot(osv.osv):
                     (_check_perishable_type_integrity,
                     'You can\'t create an internal Batch Number for a product which is batch managed or which is not perishable. If the product is batch managed, please create a standard batch number.',
                     ['Type', 'Product']),
-                ]
+                    ]
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         '''
@@ -1586,6 +1580,8 @@ class stock_inventory(osv.osv):
         res = super(stock_inventory, self)._hook_dont_move(cr, uid, *args, **kwargs)
         if 'line' in kwargs:
             return res and not kwargs['line'].dont_move
+        if 'dont_move' in kwargs:
+            return res and not kwargs['dont_move']
 
         return res
 
@@ -1605,9 +1601,9 @@ class stock_inventory(osv.osv):
             GROUP BY l.product_id, l.location_id, l.%s, l.expiry_date
             HAVING count(l.id) > 1
             ORDER BY count(l.id) DESC""" % (
-                self._name.replace('.', '_'),
+            self._name.replace('.', '_'),
                 self._name == 'stock.inventory' and 'prod_lot_id' or 'prodlot_name',
-            )
+        )
         cr.execute(sql_req, (tuple(ids),))
         check_res = cr.dictfetchall()
         if check_res:
@@ -1617,10 +1613,6 @@ class stock_inventory(osv.osv):
 Expiry date. Only one line with same data is expected."""))
 
         return True
-
-    def action_done(self, cr, uid, ids, context=None):
-        self.check_integrity(cr, uid, ids, context=context)
-        return super(stock_inventory, self).action_done(cr, uid, ids, context=context)
 
     def action_confirm(self, cr, uid, ids, context=None):
         '''
@@ -1989,7 +1981,7 @@ class stock_inventory_line(osv.osv):
             if not obj.location_id \
                or not self._check_perishable(cr, uid, [obj.id]) \
                or not self._check_batch_management(cr, uid, [obj.id]):
-                   result[obj.id]['has_problem'] = True
+                result[obj.id]['has_problem'] = True
 
             result[obj.id]['duplicate_line'] = False
             src_domain = [
@@ -2163,7 +2155,7 @@ class stock_inventory_line(osv.osv):
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
                  'type_check': 'in',
                  'dont_move': lambda *a: False,
-                 }
+    }
 
     def _uom_constraint(self, cr, uid, ids, context=None):
         for obj in self.browse(cr, uid, ids, context=context):
@@ -2325,7 +2317,7 @@ CREATE OR REPLACE view report_stock_inventory AS (
             product_qty_op_fct = getattr(operator, 'ne')
 
         if self._name == 'report.stock.inventory' and res:
-             return [data for data in res if product_qty_op_fct(data.get(product_qty_tuple[0], 10), product_qty_tuple[2])]
+            return [data for data in res if product_qty_op_fct(data.get(product_qty_tuple[0], 10), product_qty_tuple[2])]
         return res
 
 report_stock_inventory()

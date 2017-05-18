@@ -58,7 +58,9 @@ class stock_inventory(osv.osv):
         '''
         inactive_lines = self.pool.get('stock.inventory.line').search(cr, uid, [('product_id.active', '=', False),
                                                                                 ('inventory_id', 'in', ids),
-                                                                                ('inventory_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+                                                                                ('inventory_id.state', 'not in', ['draft', 'cancel', 'done'])],
+                                                                      order='NO_ORDER',
+                                                                      limit=2, context=context)
 
         if inactive_lines:
             plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
