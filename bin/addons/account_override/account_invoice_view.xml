@@ -804,6 +804,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
+            <!-- US-2704 if the domain change, do not forget to update the domain of account_board_supplier_invoice_draft in finance/board_account_view.xml -->
             <field name="domain">[('type','=','in_invoice'), ('is_direct_invoice', '=', False), ('is_inkind_donation', '=', False), ('is_debit_note', "=", False), ('is_intermission', '=', False)]</field>
             <field name="context">{'type':'in_invoice', 'journal_type': 'purchase'}</field>
             <field name="search_view_id" ref="account.view_account_invoice_filter"/>

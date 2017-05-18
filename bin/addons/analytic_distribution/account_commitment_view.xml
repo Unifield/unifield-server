@@ -197,6 +197,7 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="account_commitment_tree"/>
             <field name="search_view_id" ref="account_commitment_search"/>
+            <!-- US-2704 if a domain is added here, do not forget to update the domain of account_board_commitment_voucher in finance/board_account_view.xml -->
             <field name="context">{'search_default_exceptdone': 1, 'target_filename_prefix': 'Commitment Vouchers'}</field>
         </record>
 
