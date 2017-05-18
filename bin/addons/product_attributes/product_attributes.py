@@ -818,6 +818,7 @@ class product_attributes(osv.osv):
                 ('phase_out', 'Phase Out'),
                 ('stopped', 'Stopped'),
                 ('archived', 'Archived'),
+                ('forbidden', 'Forbidden'),
             ],
             string='UniData Status',
             readonly=True,
