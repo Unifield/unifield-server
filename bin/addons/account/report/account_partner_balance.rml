@@ -254,7 +254,7 @@
           <!-- For each partner: show one header line, another optional line if the initial balance must be displayed,
                and the detail per account -->
           <td>
-            <blockTable colWidths="130.0,69.0,63.0,65.0,68.0,68.0,68.0">
+            <blockTable colWidths="136.0,69.0,60.0,63.0,71.0,68.0,68.0">
               <tr>
                 <td><para style="P15">[[ p_obj.name or '' ]][[ p_obj.partner_id and p_obj.partner_id.ref and ' - %s' % p_obj.partner_id.ref ]]</para></td>
                 <td><para style="P15"></para></td>
