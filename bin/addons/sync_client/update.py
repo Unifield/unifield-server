@@ -36,6 +36,21 @@ from sync_common import sync_log, \
 re_fieldname = re.compile(r"^\w+")
 re_subfield_separator = re.compile(r"[./]")
 
+
+# US-2837: in case update of the following models is received and the
+# corresponding object has been deleted, it will be recreated.
+# For other models not in this list, they will be set as run and get a message:
+# 'Manually set to run by the system. Due to a delete'
+OBJ_TO_RECREATE = [
+    'res.partner',
+    'account.period',
+    'ir.model.access',
+    'msf_field_access_rights.field_access_rule',
+    'msf_field_access_rights.field_access_rule_line',
+    'msf_button_access_rights.button_access_rule',
+    'ir.rule',
+]
+
 class fv_formatter:
     def fmt(self, cr, uid, ids, field_name, arg, context):
         res = {}
@@ -531,13 +546,12 @@ class update_received(osv.osv,fv_formatter):
             # Prepare updates
             # TODO: skip updates not preparable
             for update in updates:
-                if self.search(cr, uid,
+                if self.search_exist(cr, uid,
                                [('sdref', '=', update.sdref),
                                 ('is_deleted', '=', False),
-                                   ('run', '=', False),
+                                ('run', '=', False),
                                 ('rule_sequence', '=', update.rule_sequence),
-                                ('sequence_number', '<', update.sequence_number)],
-                               limit=1, order='NO_ORDER'):
+                                ('sequence_number', '<', update.sequence_number)]):
                     # previous not run on the same (sdref, rule_sequence): do not execute
                     self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on the same record/rule.", context=context)
                     continue
@@ -687,6 +701,15 @@ class update_received(osv.osv,fv_formatter):
                         'touched' : '[]',
                     },
                     context=context)
+            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('run', '=', False),
+                                                 ('is_deleted', '=', False)], order='NO_ORDER', context=context)
+            if toSetRun_ids:
+                self.write(cr, uid, toSetRun_ids, {
+                    'editable' : False,
+                    'run' : True,
+                    'log' : 'Manually set to run by the system. Due to a delete',
+                }, context=context)
+            return
 
         error_message = ""
         imported, deleted = 0, 0
@@ -728,11 +751,36 @@ class update_received(osv.osv,fv_formatter):
 
             if deleted_update_ids:
                 sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
-                toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs),
-                                                     ('is_deleted', '=', False), ('run', '=', False)],
-                                           order='NO_ORDER', context=context)
-                if not toSetRun_ids:
-                    self.write(cr, uid, deleted_update_ids, {
+                generic_domain = [
+                    ('sdref', 'in', sdrefs),
+                    ('run', '=', False),
+                    ('is_deleted', '=', False)]
+                to_set_run_domain = generic_domain + [('model', 'not in', OBJ_TO_RECREATE)]
+                to_set_recreate_domain = generic_domain + [('model', 'in', OBJ_TO_RECREATE)]
+
+                to_set_run_ids = self.search(cr, uid, to_set_run_domain,
+                        order='NO_ORDER', context=context)
+                if to_set_run_ids:
+                    self.write(cr, uid, to_set_run_ids, {
+                        'execution_date': datetime.now(),
+                        'editable' : False,
+                        'run' : True,
+                        'log' : 'Manually set to run by the system. Due to a delete',
+                    }, context=context)
+
+                # US-2837: check if some objects have to be recreated in case
+                # an update is received after the object was deleted
+                to_set_recreate_ids = self.search(cr, uid, to_set_recreate_domain,
+                        order='NO_ORDER', context=context)
+                if to_set_recreate_ids:
+                    deleted_update_ids = [x for x in deleted_update_ids if x not in to_set_recreate_ids]
+                    self.write(cr, uid, to_set_recreate_ids, {
+                        'force_recreation': True,
+                    }, context=context)
+
+                update_ignored = list(set(deleted_update_ids) - set(to_set_run_ids + to_set_recreate_ids))
+                if update_ignored:
+                    self.write(cr, uid, update_ignored, {
                         'execution_date': datetime.now(),
                         'editable' : False,
                         'run' : True,
@@ -740,7 +788,7 @@ class update_received(osv.osv,fv_formatter):
                     }, context=context)
 
             updates = filter(lambda update: update.id not in deleted_update_ids or
-                             (not do_deletion and force_recreation), updates)
+                             (not do_deletion and update.force_recreation), updates)
 
             if not updates:
                 continue
