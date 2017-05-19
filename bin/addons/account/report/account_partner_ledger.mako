@@ -298,28 +298,12 @@ else:
 
 % for p in objects:
 <!-- PARTNER HEADER -->
-<Row></Row>
 <Row>
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String">${p.name or ''|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssPartner">
+<Cell ss:StyleID="ssPartner" ss:MergeAcross="5">
     <Data ss:Type="String">${p.ref or ''|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${sum_debit_partner(p) or 0.|x}</Data>
