@@ -36,7 +36,9 @@ def precommit(local_branch, master_branch, old_revision_number, old_revision_id,
 
     cmd = [ 'pyflakes' ]
     cmd.extend(files_to_check)
-    result = subprocess.call(cmd)
+    env = os.environ.copy()
+    env["PYFLAKES_BUILTINS"]="_"
+    result = subprocess.call(cmd, env=env)
 
     if result != 0:
         raise errors.BzrError("Fix pyflakes warnings before committing.")
