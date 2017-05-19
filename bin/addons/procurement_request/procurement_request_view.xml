@@ -63,7 +63,8 @@
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                             <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
                                 <tree string="Products" editable="top" >
-                                    <field name="product_id" on_change="requested_product_id_change(product_id, comment)" 
+                                    <field name="categ" invisible="1"/>
+                                    <field name="product_id" on_change="requested_product_id_change(product_id, comment, parent.categ)" 
                                     context="available_for_restriction='consumption',search_default_not_restricted=1"
                                     attrs="{'required': [('product_ok', '=', False)]}" />
                                     <field name="comment" string="Comment instead of the product" on_change="comment_change(comment,product_id,nomen_manda_0)"
