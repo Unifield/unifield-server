@@ -967,7 +967,7 @@ class real_average_consumption_line(osv.osv):
 
         return res
 
-    def product_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context=None):
+    def product_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, categ=False, context=None):
         '''
         Set the product uom when the product change
         '''
@@ -976,6 +976,7 @@ class real_average_consumption_line(osv.osv):
         product_obj = self.pool.get('product.product')
         v = {'batch_mandatory': False, 'date_mandatory': False, 'asset_mandatory': False}
         d = {'uom_id': []} 
+        warning = False
         if product_id:
             # Test the compatibility of the product with a consumption report
             res, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values={'value': v}, vals={'constraints': 'consumption'}, context=context)
@@ -1000,10 +1001,19 @@ class real_average_consumption_line(osv.osv):
             d['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
             if location_id:
                 v.update({'product_qty': qty_available})
+
+            # Check consistency of product according to the selected order category:
+            if categ:
+                consistency_message = product_obj.check_consistency(cr, uid, product_id, categ, context=context)
+                if consistency_message:
+                    warning = {
+                        'title': _('Warning'),
+                        'message': '%s \n %s' % (res.get('warning', {}).get('message', ''), consistency_message)
+                    }
         else:
             v.update({'uom_id': False, 'product_qty': 0.00, 'prodlot_id': False, 'expiry_date': False, 'consumed_qty': 0.00})
 
-        return {'value': v, 'domain': d}
+        return {'value': v, 'domain': d, 'warning': warning}
 
     def copy(self, cr, uid, line_id, default=None, context=None):
         if not context:

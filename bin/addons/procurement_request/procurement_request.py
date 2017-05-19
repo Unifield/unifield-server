@@ -802,7 +802,7 @@ class procurement_request_line(osv.osv):
             consistency_message = product_obj.check_consistency(cr, uid, product_id, categ, context=context)
             if consistency_message:
                 vals.setdefault('warning', {})
-                vals['warning'].setdefault('title', 'Warning')
+                vals['warning'].setdefault('title', _('Warning'))
                 vals['warning'].setdefault('message', '')
                 vals['warning']['message'] = '%s \n %s' % (vals.get('warning', {}).get('message', ''), consistency_message)
 
