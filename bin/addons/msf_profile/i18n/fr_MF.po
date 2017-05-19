@@ -73981,10 +73981,9 @@ msgstr "Rechercher un Journal de Compte"
 msgid "Total weight"
 msgstr "Total weight"
 
-#. modules: account, finance
+#. module: account
 #: report:account.journal.period.print:0
 #: field:account.print.journal,sort_selection:0
-#: report:addons/finance/report/account_partner_balance_tree_xls.mako:285
 msgid "Entries Sorted By"
 msgstr "Ecritures Triées Par"
 

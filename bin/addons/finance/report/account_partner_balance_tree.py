@@ -39,7 +39,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_journal': self._get_journal,
             'get_filter': self._get_filter,
             'get_filter_info': self._get_filter_info,
-            'get_sortby': self._get_sortby,
             'get_start_date':self._get_start_date,
             'get_end_date':self._get_end_date,
             'get_start_period': self.get_start_period,
@@ -59,7 +58,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         })
 
     def set_context(self, objects, data, ids, report_type=None):
-        self.sortby = data['form'].get('sortby', 'sort_date')
         self.initial_balance = data['form'].get('initial_balance', False)
         self.display_partner = data['form'].get('display_partner', 'non-zero_balance')
         self.result_selection = data['form'].get('result_selection')
@@ -134,13 +132,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         elif f == _('Periods'):
             res = self.get_start_period(data) + ' - ' + self.get_end_period(data)
         return res
-
-    def _get_sortby(self, data):
-        if self.sortby == 'sort_date':
-            return 'Date'
-        elif self.sortby == 'sort_journal_partner':
-            return 'Journal & Partner'
-        return 'Date'
 
     def _get_start_date(self, data):
         if data.get('form', False) and data['form'].get('date_from', False):

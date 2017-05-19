@@ -311,10 +311,9 @@ header_col_merge_count = col_count - 1
 %>
 <Row>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;${_('Fiscal Year')}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Journals')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Journals')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Display Partners')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filter By'), (get_filter(data) or ''))|x}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Entries Sorted By')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Target Moves')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Functional Currency')}</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Proprietary Instances')}</Data></Cell>
@@ -324,7 +323,7 @@ header_col_merge_count = col_count - 1
  <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${(get_account(data) or '')|x}&#10;&#10;${(get_fiscalyear(data) or '')|x}</Data>
  </Cell>
- <Cell ss:StyleID="ssHeaderCell">
+ <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
      <Data ss:Type="String">${(', '.join([ journal or '' for journal in get_journal(data) ]))|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
@@ -332,9 +331,6 @@ header_col_merge_count = col_count - 1
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>
- </Cell>
- <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${(get_sortby(data) or '')|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
