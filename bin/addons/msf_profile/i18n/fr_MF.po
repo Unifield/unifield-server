@@ -98214,7 +98214,6 @@ msgstr "Problem de format de fichier :  aucun tableau trouvé dans le fichier, v
 msgid "Article must be used only in a properly designed programme, need a more detailed description."
 msgstr "L'article doit être uniquement utilisé dans un programme correctement construit, à besoin d'une description plus détaillée."
 
-<<<<<<< TREE
 #. module: sync_client
 #: view:sync.client.update_received:0
 msgid "Updates Received"
