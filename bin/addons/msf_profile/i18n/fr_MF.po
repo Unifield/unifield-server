@@ -98497,3 +98497,7 @@ msgstr "Message d'erreur"
 msgid "In Progress"
 msgstr "En cours"
 
+#. module: product_attributes
+#: selection:product.product,state_ud:0
+msgid "Forbidden"
+msgstr "Interdit"
