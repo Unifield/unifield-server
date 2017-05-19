@@ -340,7 +340,7 @@ header_col_merge_count = col_count - 1
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${_('Partner')}</Data>
 </Cell>
-<Cell ss:StyleID="ssHeader">
+<Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
     <Data ss:Type="String">${_('Partner Ref.')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
@@ -372,7 +372,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String">${partner_name|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssPartner">
+<Cell ss:StyleID="ssPartner" ss:MergeAcross="1">
     <Data ss:Type="String">${partner_ref|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartner">
@@ -401,7 +401,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLine">
+<Cell ss:StyleID="ssAccountLine" ss:MergeAcross="1">
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
@@ -431,7 +431,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLine">
+<Cell ss:StyleID="ssAccountLine" ss:MergeAcross="1">
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineAccountCodeBold">
@@ -460,7 +460,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLine">
+<Cell ss:StyleID="ssAccountLine" ss:MergeAcross="1">
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineItalicRight">
