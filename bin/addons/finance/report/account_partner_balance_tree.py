@@ -31,7 +31,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         self.apbt_obj = self.pool.get('account.partner.balance.tree')
         self.uid = uid
         self.initial_balance = False
-        self.empty_report = True
+        self.has_data = True
         self.localcontext.update({
             # header
             'get_account': self._get_account,
@@ -55,7 +55,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_partner_account_move_lines': self._get_partner_account_move_lines,
             'get_lines_per_currency': self._get_lines_per_currency,
             'get_partners_total_debit_credit_balance_by_account_type': self._get_partners_total_debit_credit_balance_by_account_type,
-            'get_empty_report': self._get_empty_report,
+            'get_has_data': self._get_has_data,
         })
 
     def set_context(self, objects, data, ids, report_type=None):
@@ -89,11 +89,11 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             return _('Receivable and Payable Accounts')
         return ''
 
-    def _get_empty_report(self):
+    def _get_has_data(self):
         """
-        Returns True if there is no data to display in the report
+        Returns True if there is data to display in the report
         """
-        return bool(self.empty_report)
+        return bool(self.has_data)
 
     def _get_partners(self, data):
         """ return a list of 1 or 2 elements each element containing browse objects
@@ -104,7 +104,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             objects = self.apbt_obj.get_partner_data(self.cr, self.uid, [at], data)
             if objects:
                 res.append(objects)
-        self.empty_report = len(res)
+        self.has_data = len(res)
         return res
 
     def _get_partner_account_move_lines(self, account_type, partner_id, data):
