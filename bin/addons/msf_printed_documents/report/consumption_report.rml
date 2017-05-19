@@ -208,7 +208,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation" alignment="LEFT"><b>Order category :</b></para>
+                    <para style="TextInformation" alignment="LEFT"><b>Category :</b></para>
                 </td>
                 <td>
                     <para style="TextInformation" alignment="LEFT">[[ getSel(objects[0], 'categ') or False]]</para>
