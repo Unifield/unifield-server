@@ -1,10 +1,19 @@
 import os
 import re
 import sys
-import glob
 
 from setuptools import setup
 from setup_py2exe_custom import custom_py2exe, fixup_data_pytz_zoneinfo
+
+# To make pyflakes happy
+version = None
+name = None
+description = None
+long_description = None
+author = None
+author_email = None
+url = None
+download_url = None
 
 execfile(os.path.join("openobject", "release.py"))
 
@@ -13,6 +22,8 @@ if 'bdist_rpm' in sys.argv:
     version_dash_incompatible = True
 try:
     import py2exe
+    assert py2exe
+
     from py2exe_utils import opts
     opts['options'].setdefault('py2exe',{})
     opts['options']['py2exe'].setdefault('includes',[])
@@ -85,7 +96,7 @@ setup(
         "CherryPy==10.2.1",
         "Mako==1.0.6",
         "Babel==2.4.0",
-        "FormEncode==2.0.0.a1",
+        "formencode==1.3.1",
         "simplejson==3.10.0",
         "python-dateutil==2.6.0",
         "pytz==2017.2",

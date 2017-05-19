@@ -24,6 +24,7 @@ import locale
 import math
 import re
 import time
+from openobject import ustr
 
 BINARY_FIELD_STORAGE_CLASS = cgi.FieldStorage
 try:
@@ -151,6 +152,7 @@ class Selection(BaseValidator):
 
 class Reference(BaseValidator):
     if_empty = False
+    accept_iterator = True
 
     def _to_python(self, value, state):
 
