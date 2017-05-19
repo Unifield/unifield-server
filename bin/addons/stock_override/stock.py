@@ -2588,6 +2588,15 @@ class stock_location(osv.osv):
             return [('id', 'in', ids)]
         return []
 
+    def _search_filter_cu_partner(self, cr, uid, ids, fields, arg, context=None):
+        if not arg or not arg[0][2] or not isinstance(arg[0][2], list) or not len(arg[0][2]) == 2:
+            return []
+        if context is None:
+            context = {}
+        ext_cu = arg[0][2][0]
+        partner_id = arg[0][2][1]
+        # TODO: write here the filter
+        return []
 
     _columns = {
         'chained_location_type': fields.selection([('none', 'None'), ('customer', 'Customer'), ('fixed', 'Fixed Location'), ('nomenclature', 'Nomenclature')],
@@ -2599,6 +2608,7 @@ class stock_location(osv.osv):
                                                   "\n* Fixed Location: The chained location is taken from the next field: Chained Location if Fixed." \
                                                   "\n* Nomenclature: The chained location is taken from the options field: Chained Location is according to the nomenclature level of product."\
                                                   ),
+        'filter_cu_partner': fields.function(_fake_get, method=True, type='boolean', string='Filter location by ext cu/partner', fnct_search=_search_filter_cu_partner),
         'chained_options_ids': fields.one2many('stock.location.chained.options', 'location_id', string='Chained options'),
         'optional_loc': fields.boolean(string='Is an optional location ?'),
         'stock_real': fields.function(_product_value, method=True, type='float', string='Real Stock', multi="stock"),
