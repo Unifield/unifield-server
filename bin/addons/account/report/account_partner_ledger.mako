@@ -277,6 +277,9 @@ else:
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${_('Entry Label')}</Data>
 </Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${_('Currency')}</Data>
+</Cell>
 <Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">${_('Debit')}</Data>
 </Cell>
@@ -284,7 +287,7 @@ else:
     <Data ss:Type="String">${_('Credit')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">${_('Balance')}</Data>
+    <Data ss:Type="String">${'%s %s' % (_('Balance'), company.currency_id.name)|x}</Data>
 </Cell>
 % if display_currency(data) == True:
 <Cell ss:StyleID="ssHeaderRight">
@@ -304,6 +307,9 @@ else:
 </Cell>
 <Cell ss:StyleID="ssPartner" ss:MergeAcross="5">
     <Data ss:Type="String">${p.ref or ''|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${sum_debit_partner(p) or 0.|x}</Data>
@@ -338,6 +344,9 @@ else:
   </Cell>
   <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${_('Initial Balance')}</Data>
+  </Cell>
+  <Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String"></Data>
   </Cell>
   <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ get_intial_balance(p)[0][0] or 0.|x}</Data>
@@ -376,6 +385,9 @@ else:
   %>
   <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${ entry_label |x}</Data>
+  </Cell>
+  <Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String"></Data>
   </Cell>
   <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ line['debit'] or 0.0|x}</Data>
