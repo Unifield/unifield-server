@@ -500,7 +500,7 @@ debit, credit, balance = get_partners_total_debit_credit_balance_by_account_type
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssCellRightBold">
-    <Data ss:Type="String">${_('TOTAL')}</Data>
+    <Data ss:Type="String">${_('TOTAL PARTNERS')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
     <Data ss:Type="Number">${debit or 0.|x}</Data>

@@ -305,7 +305,7 @@
           </td>
         </tr>
         <tr>
-          <td><para style="P7">Total:</para></td>
+          <td><para style="P7">TOTAL PARTNERS:</para></td>
           <td><para style="P8"></para></td>
           <td><para style="P8"></para></td>
           <td><para style="P8"><u>[[ formatLang(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[0] or 0.0) ]]</u></para></td>

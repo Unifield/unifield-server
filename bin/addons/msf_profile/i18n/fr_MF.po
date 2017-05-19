@@ -41970,7 +41970,6 @@ msgstr "Priorité:"
 #: report:account.analytic.account.quantity_cost_ledger:0
 #: report:account.central.journal:0
 #: report:account.general.journal:0
-#: report:account.partner.balance:0
 #: report:payment.order:0
 #: report:lot.stock.overview:0
 #: report:lot.stock.overview_all:0
@@ -73570,9 +73569,18 @@ msgstr "Partenaire Répartition"
 #: report:expiry.report:0
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:546
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:267
-#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 msgid "TOTAL"
 msgstr "TOTAL"
+
+#. module: finance
+#: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
+msgid "TOTAL PARTNERS"
+msgstr "TOTAL PARTENAIRES"
+
+#. module: account
+#: report:account.partner.balance:0
+msgid "TOTAL PARTNERS:"
+msgstr "TOTAL PARTENAIRES :"
 
 #. module: account
 #: model:ir.model,name:account.model_account_tax_chart
