@@ -56,13 +56,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_lines_per_currency': self._get_lines_per_currency,
             'get_partners_total_debit_credit_balance_by_account_type': self._get_partners_total_debit_credit_balance_by_account_type,
             'get_empty_report': self._get_empty_report,
-
-            # currency
-            'currency_conv': self._currency_conv,
         })
-
-        # company currency
-        self.currency_id = self.apbt_obj._get_company_currency(cr, uid, context=context)
 
     def set_context(self, objects, data, ids, report_type=None):
         self.sortby = data['form'].get('sortby', 'sort_date')
@@ -77,17 +71,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             self.ACCOUNT_TYPE = ('payable',)
         else:
             self.ACCOUNT_TYPE = ('payable', 'receivable')
-
-        # output currency
-        self.output_currency_id = data['form']['output_currency']
-        self.output_currency_code = ''
-        if self.output_currency_id:
-            ouput_cur_r = self.pool.get('res.currency').read(self.cr,
-                                            self.uid,
-                                            [self.output_currency_id],
-                                            ['name'])
-            if ouput_cur_r and ouput_cur_r[0] and ouput_cur_r[0]['name']:
-                self.output_currency_code = ouput_cur_r[0]['name']
 
         return super(account_partner_balance_tree, self).set_context(objects, data, ids, report_type=report_type)
 
@@ -242,12 +225,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             self.cr.execute('select code from msf_instance where id IN %s',(tuple(data['form']['instance_ids']),))
             return [lt or '' for lt, in self.cr.fetchall()]
         return [_('All Instances')]
-
-    def _currency_conv(self, amount, date):
-        return self.apbt_obj._currency_conv(self.cr, self.uid, amount,
-                                                self.currency_id,
-                                                self.output_currency_id,
-                                                date)
 
 class account_partner_balance_tree_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):

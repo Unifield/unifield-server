@@ -91517,9 +91517,8 @@ msgstr "Etc/GMT-9"
 msgid "Char"
 msgstr "Chaîne"
 
-#. modules: account, finance
+#. module: account
 #: code:addons/account/report/account_general_ledger.py:252
-#: code:addons/finance/wizard/account_report_partner_balance_tree.py:252
 #, python-format
 msgid "Company has no default currency"
 msgstr "Company has no default currency"

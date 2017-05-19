@@ -489,9 +489,6 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 ## total debit / credit / balance row
 <%
 debit, credit, balance = get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)
-debit = currency_conv(debit, False)
-credit = currency_conv(credit, False)
-balance = currency_conv(balance, False)
 %>
 <Cell ss:StyleID="ssCell">
     <Data ss:Type="String"></Data>

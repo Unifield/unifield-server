@@ -308,7 +308,6 @@ class account_partner_balance_tree(osv.osv):
         data
         {'model': 'ir.ui.menu', 'ids': [494], 'build_ts': build_timestamp,
          'form': {
-            'output_currency': 1,
             'display_partner': 'non-zero_balance', 'chart_account_id': 1,
             'result_selection': 'customer', 'date_from': False,
             'period_to': False,
@@ -327,9 +326,6 @@ class account_partner_balance_tree(osv.osv):
         context['data'] = data
         self._delete_previous_data(cr, uid, context=context)
 
-        comp_currency_id = self._get_company_currency(cr, uid, context=context)
-        output_currency_id = data['form'].get('output_currency', comp_currency_id)
-
         res = self._execute_query_partners(cr, uid, data)
 
         for r in res[0]:
@@ -343,12 +339,12 @@ class account_partner_balance_tree(osv.osv):
                 'partner_id': r['partner_id'],
                 'name': r['partner_name'],
                 'partner_ref': r['partner_ref'],
-                'debit': self._currency_conv(cr, uid, debit, comp_currency_id, output_currency_id),
-                'credit': self._currency_conv(cr, uid, credit, comp_currency_id, output_currency_id),
-                'balance': self._currency_conv(cr, uid, debit - credit, comp_currency_id, output_currency_id),
-                'ib_debit': self._currency_conv(cr, uid, r['ib_debit'] or 0.0, comp_currency_id, output_currency_id),
-                'ib_credit': self._currency_conv(cr, uid, r['ib_credit'] or 0.0, comp_currency_id, output_currency_id),
-                'ib_balance': self._currency_conv(cr, uid, r['ib_balance'] or 0.0, comp_currency_id, output_currency_id),
+                'debit': debit,
+                'credit': credit,
+                'balance': debit - credit,
+                'ib_debit': r['ib_debit'] or 0.0,
+                'ib_credit': r['ib_credit'] or 0.0,
+                'ib_balance': r['ib_balance'] or 0.0,
             }
             self.create(cr, uid, vals, context=context)
 
@@ -374,12 +370,6 @@ class account_partner_balance_tree(osv.osv):
                         for k in ctx_key_2copy:
                             if k in context:
                                 new_context[k] = context[k]
-                        comp_currency_id = self._get_company_currency(cr, uid, context=context)
-                        output_currency_id = context['data']['form'].get('output_currency', comp_currency_id)
-                        if comp_currency_id and output_currency_id \
-                                and comp_currency_id != output_currency_id:
-                            # output currency in action context
-                            new_context['output_currency_id'] = output_currency_id
                     view_id = self.pool.get('ir.model.data').get_object_reference(
                         cr, uid, 'finance',
                         'view_account_partner_balance_tree_move_line_tree')[1]
@@ -396,37 +386,6 @@ class account_partner_balance_tree(osv.osv):
                         res['view_id'] = [view_id]
                 return res
         return res
-
-    def _get_company_currency(self, cr, uid, context=None):
-        res = False
-        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
-        if user and user[0] and user[0].company_id:
-            res = user[0].company_id.currency_id.id
-        if not res:
-            raise osv.except_osv(_('Error !'), _('Company has no default currency'))
-        return res
-
-    def _currency_conv(self, cr, uid, amount,
-                       comp_currency_id, output_currency_id,
-                       date=False):
-        if not amount or amount == 0.:
-            return 0.
-        if not comp_currency_id or not output_currency_id \
-                or comp_currency_id == output_currency_id:
-            # unset currencies or ouput currency == company currency
-            return amount
-        if date:
-            context={'date': date}
-        else:
-            context=None
-        amount = self.pool.get('res.currency').compute(cr, uid,
-                                                       comp_currency_id,
-                                                       output_currency_id,
-                                                       amount,
-                                                       context=context)
-        if not amount:
-            amount = 0.
-        return amount
 
     def get_partner_data(self, cr, uid, account_types, data, context=None):
         """ browse with account_type filter 'payable' or 'receivable'"""
@@ -523,7 +482,6 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
                                               'With balance is not equal to 0'),
                                              ('all', 'All Partners')]
                                             ,'Display Partners'),
-        'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
         'partner_ids': fields.many2many('res.partner', 'account_partner_balance_partner_rel', 'wizard_id', 'partner_id',
@@ -551,14 +509,6 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'fiscalyear_id': False,
     }
 
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(wizard_account_partner_balance_tree, self).default_get(cr, uid, fields, context=context)
-        # get company default currency
-        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
-        if user and user[0] and user[0].company_id:
-            res['output_currency'] = user[0].company_id.currency_id.id
-        return res
-
     def _get_data(self, cr, uid, ids, context=None):
         """return data, account_type (tuple)"""
         if context is None:
@@ -571,7 +521,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data['build_ts'] = datetime.datetime.now().strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
         data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from',
                                                 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner',
-                                                'output_currency', 'instance_ids', 'tax', 'partner_ids', 'initial_balance',
+                                                'instance_ids', 'tax', 'partner_ids', 'initial_balance',
                                                 'only_active_partners', 'account_ids', 'include_reconciled_entries'])[0]
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)

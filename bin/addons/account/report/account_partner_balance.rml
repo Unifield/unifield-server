@@ -308,10 +308,10 @@
           <td><para style="P7">Total:</para></td>
           <td><para style="P8"></para></td>
           <td><para style="P8"></para></td>
-          <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[0], False) or 0.0) ]]</u></para></td>
-          <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[1], False) or 0.0) ]]</u></para></td>
+          <td><para style="P8"><u>[[ formatLang(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[0] or 0.0) ]]</u></para></td>
+          <td><para style="P8"><u>[[ formatLang(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[1] or 0.0) ]]</u></para></td>
           <td><para style="P8"></para></td>
-          <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[2], False) or 0.0) ]]</u></para></td>
+          <td><para style="P8"><u>[[ formatLang(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[2] or 0.0) ]]</u></para></td>
         </tr>
       </blockTable>
       <pageBreak>[[ p_entries[0].account_type != 'payable'  and removeParentNode('pageBreak')]] </pageBreak>

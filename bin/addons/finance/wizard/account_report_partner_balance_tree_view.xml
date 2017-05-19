@@ -76,7 +76,6 @@
                     <field name="credit" sum="Total Func. Credit"/>
                     <field name="output_amount_debit" invisible="1" />
                     <field name="output_amount_credit" invisible="1" />
-                    <field name="output_currency" invisible="1" />
                     <field name="functional_currency_id"/>
                     <field name="reconcile_txt"/>
                     <field name="state"/>
@@ -97,7 +96,6 @@
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="result_selection" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
                 <field name="display_partner"/>
-                <field name="output_currency" invisible="1" />
                 <field name="include_reconciled_entries"/>
                 <field name="initial_balance" attrs="{'readonly': [('fiscalyear_id', '=', False)]}"/>
                 <field name="only_active_partners"/>
