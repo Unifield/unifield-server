@@ -118,7 +118,7 @@ class _column(object):
 
     def search(self, cr, obj, args, name, value, offset=0, limit=None, uid=None, context=None):
         ids = obj.search(cr, uid, args+self._domain+[(name, 'ilike', value)],
-                offset, limit, order='NO_ORDER', context=context)
+                offset, limit, context=context)
         res = obj.read(cr, uid, ids, [name], context=context)
         return [x[name] for x in res]
 
