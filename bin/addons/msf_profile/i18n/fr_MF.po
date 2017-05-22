@@ -98355,6 +98355,12 @@ msgstr "Balance Solde Initial"
 msgid "Account domain"
 msgstr "Domaine des comptes"
 
+#. module: finance
+#: code:addons/finance/wizard/account_report_partner_balance_tree.py:389
+#, python-format
+msgid "No Journal Items to show."
+msgstr "Pas de lignes d'écritures comptables à afficher."
+
 #. module: account
 #: help:account.partner.ledger,instance_ids:0
 msgid "Display the report for specific proprietary instances only"

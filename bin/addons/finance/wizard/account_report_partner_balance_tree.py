@@ -351,40 +351,42 @@ class account_partner_balance_tree(osv.osv):
     def open_journal_items(self, cr, uid, ids, context=None):
         # get related partner
         res = {}
-        if not ids:
-            return res
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        r = self.read(cr, uid, ids, ['account_type', 'partner_id'], context=context)
-        if r and r[0] and r[0]['partner_id']:
-            if context and 'data' in context and 'form' in context['data']:
-                move_line_ids = self._execute_query_selected_partner_move_line_ids(
-                    cr, uid,
-                    r[0]['account_type'].lower(),
-                    r[0]['partner_id'][0],
-                    context['data'])
-                if move_line_ids:
-                    new_context = {}
-                    if context:
-                        ctx_key_2copy = ('lang', 'tz', 'department_id', 'client', 'name')
-                        for k in ctx_key_2copy:
-                            if k in context:
-                                new_context[k] = context[k]
-                    view_id = self.pool.get('ir.model.data').get_object_reference(
-                        cr, uid, 'finance',
-                        'view_account_partner_balance_tree_move_line_tree')[1]
-                    res = {
-                        'name': 'Journal Items',
-                        'type': 'ir.actions.act_window',
-                        'res_model': 'account.move.line',
-                        'view_mode': 'tree,form',
-                        'view_type': 'form',
-                        'domain': [('id','in',tuple(move_line_ids))],
-                        'context': new_context,
-                    }
-                    if view_id:
-                        res['view_id'] = [view_id]
-                return res
+        if context is None:
+            context = {}
+        if ids:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            r = self.read(cr, uid, ids, ['account_type', 'partner_id'], context=context)
+            if r and r[0] and r[0]['partner_id']:
+                if context and 'data' in context and 'form' in context['data']:
+                    move_line_ids = self._execute_query_selected_partner_move_line_ids(
+                        cr, uid,
+                        r[0]['account_type'].lower(),
+                        r[0]['partner_id'][0],
+                        context['data'])
+                    if move_line_ids:
+                        new_context = {}
+                        if context:
+                            ctx_key_2copy = ('lang', 'tz', 'department_id', 'client', 'name')
+                            for k in ctx_key_2copy:
+                                if k in context:
+                                    new_context[k] = context[k]
+                        view_id = self.pool.get('ir.model.data').get_object_reference(
+                            cr, uid, 'finance',
+                            'view_account_partner_balance_tree_move_line_tree')[1]
+                        res = {
+                            'name': 'Journal Items',
+                            'type': 'ir.actions.act_window',
+                            'res_model': 'account.move.line',
+                            'view_mode': 'tree,form',
+                            'view_type': 'form',
+                            'domain': [('id','in',tuple(move_line_ids))],
+                            'context': new_context,
+                        }
+                        if view_id:
+                            res['view_id'] = [view_id]
+        if not res:
+            raise osv.except_osv(_('Warning !'), _('No Journal Items to show.'))
         return res
 
     def get_partner_data(self, cr, uid, account_types, data, context=None):
