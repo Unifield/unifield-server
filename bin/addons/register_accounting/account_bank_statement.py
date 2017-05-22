@@ -1981,7 +1981,7 @@ class account_bank_statement_line(osv.osv):
             to_remove= ['from_import_cheque_id', 'down_payment_id', 'imported_invoice_line_ids', 'move_ids']
             keys_to_read = [x for x in values.keys() if x not in to_remove]
             if keys_to_read:
-                for x in self.read(cr, uid, isinstance(ids, (int, long)) and [ids] or ids, keys_to_read, context=context):
+                for x in self.read(cr, uid, ids, keys_to_read, context=context):
                     for k in keys_to_read:
                         if isinstance(x[k], tuple) and x[k]:
                             if x[k][0] != values[k]:
