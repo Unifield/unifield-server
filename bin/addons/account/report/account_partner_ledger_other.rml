@@ -569,7 +569,7 @@
                             <para style="P7">[[ line['a_code'] ]]</para>
                         </td>
                         <td>
-                            <para style="P3">[[ strip_name(line['ref'], 42) ]] - [[ line['name'] ]]</para>
+                            <para style="P3">[[ format_entry_label('%s - %s' % (line['ref'], line['name']), 29) ]]</para>
                         </td>
                         <td>
                             <para style="P3">[[ company.currency_id.name ]]</para>

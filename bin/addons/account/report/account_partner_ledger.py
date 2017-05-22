@@ -53,6 +53,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             'get_target_move': self._get_target_move,
             'get_instances': self._get_instances_from_data,
             'get_accounts': self._get_accounts,
+            'format_entry_label': self._format_entry_label,
         })
 
     def set_context(self, objects, data, ids, report_type=None):
@@ -202,6 +203,18 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             return new
         else:
             return self.comma_me(new)
+
+    def _format_entry_label(self, label, index):
+        """
+        Formats the entry label:
+        adds a line break every (index) character
+        """
+        x = 0
+        new_label = ""
+        while x < len(label):
+            new_label = "%s%s%s" % (new_label, '\n', label[x:x+index])
+            x += index
+        return new_label
 
     def lines(self, partner):
         move_state = ['draft','posted']
