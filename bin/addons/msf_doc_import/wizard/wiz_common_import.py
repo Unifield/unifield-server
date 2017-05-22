@@ -106,7 +106,7 @@ class wiz_common_import(osv.osv_memory):
                         continue  # 'Delivery requested date' tolerated (for Rfq vs 'Delivery Requested Date' of PO_COLUMNS_HEADER_FOR_IMPORT)
                 vals = {'state': 'draft',
                         'message': _('The column "%s" is not taken into account. Please correct it. The list of columns accepted is: %s'
-                                     ) % (k, ','.join(translated_headers))}
+                                     ) % (k, ', '.join(translated_headers))}
                 return False, vals
         return True, True
 
