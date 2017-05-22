@@ -98494,3 +98494,9 @@ msgstr "Bons d'Engagement à valider"
 #: field:account.move.reconcile,nb_partial_legs:0
 msgid "Nb legs in partial reconcile"
 msgstr "Nb d'entrées du lettrage partiel"
+
+#. module: product_attributes
+#: selection:product.product,state_ud:0
+msgid "Forbidden"
+msgstr "Interdit"
+
