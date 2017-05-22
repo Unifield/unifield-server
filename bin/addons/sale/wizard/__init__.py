@@ -22,5 +22,7 @@
 import sale_make_invoice
 import sale_line_invoice
 import sale_make_invoice_advance
+import split_order_line
+import order_change_currency
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
