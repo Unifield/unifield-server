@@ -98128,7 +98128,7 @@ msgstr "L'article doit être uniquement utilisé dans un programme correctement 
 #. module: stock_override
 #: code:addons/stock_override/stock.py:386
 #, python-format
-msgid "You are changing External Consumption Unit, please check that source location of your stock moves are still consistent"
+msgid "You are changing an External Consumption Unit, please check that source location of your stock moves are still consistent"
 msgstr "Vous avez changé d'unité de consommation externe, merci de vérifier que vos mouvements de stock sont toujours cohérents"
 
 #. module: stock_override

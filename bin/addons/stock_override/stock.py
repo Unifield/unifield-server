@@ -383,7 +383,7 @@ class stock_picking(osv.osv):
             return {
                 'warning': {
                     'title': _('Warning'),
-                    'message': _('You are changing External Consumption Unit, please check that source location of your stock moves are still consistent'),
+                    'message': _('You are changing an External Consumption Unit, please check that source location of your stock moves are still consistent'),
                 }
             }
         return {}
