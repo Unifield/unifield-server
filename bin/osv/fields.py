@@ -117,7 +117,8 @@ class _column(object):
         raise Exception(_('undefined get method !'))
 
     def search(self, cr, obj, args, name, value, offset=0, limit=None, uid=None, context=None):
-        ids = obj.search(cr, uid, args+self._domain+[(name, 'ilike', value)], offset, limit, context=context)
+        ids = obj.search(cr, uid, args+self._domain+[(name, 'ilike', value)],
+                offset, limit, order='NO_ORDER', context=context)
         res = obj.read(cr, uid, ids, [name], context=context)
         return [x[name] for x in res]
 
@@ -496,7 +497,9 @@ class one2many(_column):
         for id in ids:
             res[id] = []
 
-        ids2 = obj.pool.get(self._obj).search(cr, user, self._domain + [(self._fields_id, 'in', ids)], limit=self._limit, context=context)
+        ids2 = obj.pool.get(self._obj).search(cr, user, self._domain +
+                [(self._fields_id, 'in', ids)], order='NO_ORDER',
+                limit=self._limit, context=context)
         for r in obj.pool.get(self._obj)._read_flat(cr, user, ids2, [self._fields_id], context=context, load='_classic_write'):
             if r[self._fields_id] in res:
                 res[r[self._fields_id]].append(r['id'])
@@ -1115,7 +1118,9 @@ class property(function):
                     res[prop.res_id.id][prop.fields_id.name] = False
 
         for rep in replaces:
-            nids = obj.pool.get(rep).search(cr, uid, [('id','in',replaces[rep].keys())], context=context)
+            nids = obj.pool.get(rep).search(cr, uid,
+                    [('id','in',replaces[rep].keys())], order='NO_ORDER',
+                    context=context)
             replaces[rep] = dict(obj.pool.get(rep).name_get(cr, uid, nids, context=context))
 
         for prop in prop_name:
