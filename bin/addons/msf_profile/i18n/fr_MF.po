@@ -98125,3 +98125,13 @@ msgstr "Lorsque le rapport sera prêt, vous pouvez y accéder via le menu Outils
 msgid "Article must be used only in a properly designed programme, need a more detailed description."
 msgstr "L'article doit être uniquement utilisé dans un programme correctement construit, à besoin d'une description plus détaillée."
 
+#. module: stock_override
+#: code:addons/stock_override/stock.py:386
+#, python-format
+msgid "You are changing External Consumption Unit, please check that source location of your stock moves are still consistent"
+msgstr "Vous avez changé d'unité de consommation externe, merci de vérifier que vos mouvements de stock sont toujours cohérents"
+
+#. module: stock_override
+#: field:stock.location,filter_partner_id2:0
+msgid "Filter location by partner"
+msgstr "Filtrer l'emplacement de stock par partenaire"
