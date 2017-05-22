@@ -117,10 +117,10 @@ def parse_groups(group_by, grp_records, headers, ids, model,  offset, limit, con
             ch_ids = []
             if child:
                 rec_dom =  rec.get('__domain')
-                dom = [('id', 'in', ids), rec_dom[0]]
+                dom = [('id', 'in', ids)] + rec_dom
                 ch_ids = [d for id in proxy.search(dom, offset, limit, 0, context)
-                            for  d in data
-                            if int(str(d.get('id'))) == id] # Need to convert in String and then Int.
+                          for  d in data
+                          if int(str(d.get('id'))) == id] # Need to convert in String and then Int.
             rec['child_rec'] = ch_ids
             rec['groups_id'] = 'group_' + str(random.randrange(1, 10000))
             if group_by:
@@ -206,7 +206,7 @@ class ListGroup(List):
         self.group_by_ctx, self.hiddens, self.headers = parse(self.group_by_ctx, self.hiddens, self.headers, None, self.group_by_ctx)
 
         self.grp_records = proxy.read_group(self.context.get('__domain', []) + (self.domain or []),
-                                                fields.keys(), self.group_by_ctx, 0, False, self.context)
+                                            fields.keys(), self.group_by_ctx, 0, False, self.context)
 
         terp_params = getattr(cherrypy.request, 'terp_params', [])
         if terp_params.sort_key and terp_params.sort_key in self.group_by_ctx and self.group_by_ctx.index(terp_params.sort_key) == 0:
@@ -306,7 +306,7 @@ class MultipleGroup(List):
             return
 
         self.grp_records = proxy.read_group(self.context.get('__domain', []),
-                                                fields.keys(), self.group_by_ctx, 0, False, self.context)
+                                            fields.keys(), self.group_by_ctx, 0, False, self.context)
 
         for grp_rec in self.grp_records:
             grp_rec['__level'] = self.group_level

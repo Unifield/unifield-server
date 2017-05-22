@@ -563,6 +563,18 @@ class Selection(TinyInputWidget):
 
 register_widget(Selection, ["selection"])
 
+class FullText(TinyInputWidget):
+    template = "/openerp/widgets/form/templates/full_text.mako"
+
+    def set_value(self, value):
+        if value:
+            super(FullText, self).set_value(value)
+
+    def _make_field_widget(self, attrs, value=False):
+        super(FullText, self)._make_field_widget(attrs, value)
+
+register_widget(FullText, ["full_text"])
+
 
 class DTLink(JSLink):
 
