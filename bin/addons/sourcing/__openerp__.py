@@ -29,7 +29,6 @@
     "depends": [
         "sale",
         "purchase",
-        "sale_override",
         "order_types",
         "order_line_number",
         "msf_order_date",

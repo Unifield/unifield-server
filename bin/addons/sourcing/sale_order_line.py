@@ -35,7 +35,7 @@ from collections import deque
 import decimal_precision as dp
 from order_types import ORDER_PRIORITY
 from order_types import ORDER_CATEGORY
-from sale_override import SALE_ORDER_STATE_SELECTION
+from sale import SALE_ORDER_STATE_SELECTION
 
 _SELECTION_PO_CFT = [
     ('po', 'Purchase Order'),

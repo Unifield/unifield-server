@@ -30,7 +30,6 @@
                 "stock",
                 "product_expiry",
                 "purchase_double_validation",
-                "sale_override",
                 "purchase_override"],
     "author": "TeMPO Consulting, MSF",
     "website": "",

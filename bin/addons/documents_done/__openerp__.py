@@ -23,7 +23,7 @@
     "name": "Documents to Done",
     "version": "1.0",
     "depends": [
-        "sale_override",
+        "sale",
         "purchase_override",
         "stock_override",
         "tender_flow",

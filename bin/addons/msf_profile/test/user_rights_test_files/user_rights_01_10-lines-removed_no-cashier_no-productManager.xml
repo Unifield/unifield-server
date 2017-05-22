@@ -2002,7 +2002,7 @@
     <Cell><Data ss:Type="String">YES</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
-    <Cell><Data ss:Type="String">sale_override</Data></Cell>
+    <Cell><Data ss:Type="String">sale</Data></Cell>
     <Cell><Data ss:Type="String">menu_localisation</Data></Cell>
     <Cell><Data ss:Type="Number">0</Data></Cell>
     <Cell><Data ss:Type="String">Localisation</Data></Cell>
@@ -2016,7 +2016,7 @@
     <Cell><Data ss:Type="String">NO</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
-    <Cell><Data ss:Type="String">sale_override</Data></Cell>
+    <Cell><Data ss:Type="String">sale</Data></Cell>
     <Cell><Data ss:Type="String">menu_country_partner</Data></Cell>
     <Cell><Data ss:Type="String">++</Data></Cell>
     <Cell><Data ss:Type="String">Countries</Data></Cell>
@@ -2030,7 +2030,7 @@
     <Cell><Data ss:Type="String">NO</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
-    <Cell><Data ss:Type="String">sale_override</Data></Cell>
+    <Cell><Data ss:Type="String">sale</Data></Cell>
     <Cell><Data ss:Type="String">menu_country_state_partner</Data></Cell>
     <Cell><Data ss:Type="String">++</Data></Cell>
     <Cell><Data ss:Type="String">Fed. States</Data></Cell>

@@ -22,7 +22,7 @@
 import tools
 from osv import fields, osv
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
-from sale_override import SALE_ORDER_STATE_SELECTION
+from sale import SALE_ORDER_STATE_SELECTION
 
 class sale_report(osv.osv):
     _name = "sale.report"

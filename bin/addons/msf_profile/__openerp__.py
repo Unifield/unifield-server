@@ -40,7 +40,7 @@
         "account_period_closing_level",
         # As register_accounting has account_override and purchase_override dependancies, no need to add them after that
         #"purchase_override",
-        "sale_override",
+        "sale",
         "stock_override",
         "msf_order_date",
         "purchase_compare_rfq",

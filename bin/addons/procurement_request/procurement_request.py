@@ -25,7 +25,7 @@ from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
 
-from sale_override import SALE_ORDER_STATE_SELECTION
+from sale import SALE_ORDER_STATE_SELECTION
 from msf_order_date.order_dates import compute_rts
 
 
