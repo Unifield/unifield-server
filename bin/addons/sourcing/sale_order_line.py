@@ -808,13 +808,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                    context=context)
             ir = order['procurement_request']
             order_p_type = order['partner_type']
-            if order['order_type'] == 'loan' and order['state'] == 'validated':
+            if order['order_type'] in ('loan', 'donation_exp', 'donation_st') and order['state'] == 'validated':
                 vals.update({
                     'type': 'make_to_stock',
                     'po_cft': False,
                     'supplier': False,
-                    'related_sourcing_id': False,
                 })
+                if order['order_type'] == 'loan':
+                    vals['related_sourcing_id'] = False
 
         if product and vals.get('type', False) == 'make_to_order' and not vals.get('supplier', False):
             vals['supplier'] = product.seller_id and product.seller_id.id or False
@@ -922,10 +923,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         l_type = line.type == 'make_to_order'
         o_state = line.order_id and line.order_id.state != 'draft' or False
         ctx_cond = not context.get('fromOrderLine')
-        o_type = line.order_id and line.order_id.order_type == 'loan' or False
+        o_type = line.order_id and line.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] or False
 
         if l_type and o_state and ctx_cond and o_type:
-            return _('You can\'t source a loan \'on order\'.')
+            return _('You can\'t source a %s \'on order\'.') % (line.order_id.order_type == 'loan' and _('loan') or _('donation'))
 
         return False
 
@@ -994,6 +995,13 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 raise osv.except_osv(
                     _('Warning'),
                     _("""You can't source with 'Request for Quotation' to an internal/inter-section/intermission partner."""),
+                )
+
+            if line.order_id.state == 'validated' and line.order_id.order_type in (
+                    'donation_st', 'donation_exp') and line.type != 'make_to_stock':
+                raise osv.except_osv(
+                    _('Warning'),
+                    _("""You can only source a Donation line from stock.""")
                 )
 
             cond1 = not line.order_id.procurement_request and line.po_cft == 'po'
@@ -1147,8 +1155,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'related_sourcing_id': False,
                 })
 
-        # Search lines to modified with loan values
-        loan_sol_ids = self.search(cr, uid, [('order_id.order_type', '=', 'loan'),
+        # Search lines to modified with loan or donation values
+        loan_sol_ids = self.search(cr, uid, [('order_id.order_type', 'in', ['loan', 'donation_st', 'donation_exp']),
                                              ('order_id.state', '=', 'validated'),
                                              ('id', 'in', ids)], context=context)
 
@@ -1257,7 +1265,17 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         ], count=True, context=context)
 
         if loan_stock:
-            raise osv.except_osv(_('Warning'), _("""You can't source a loan 'from stock'."""))
+            raise osv.except_osv(_('Warning'), _("""You can't source a loan 'on order'."""))
+
+        donation_stock = self.search(cr, uid, [
+            ('id', 'in', ids),
+            ('type', '=', 'make_to_order'),
+            ('order_id.state', '!=', 'draft'),
+            ('order_id.order_type', 'in', ['donation_st', 'donation_exp']),
+        ], count=True, context=context)
+
+        if donation_stock:
+            raise osv.except_osv(_('Warning'), _("""You can't source a donation 'on order'."""))
 
         mto_no_cft_no_sup = self.search(cr, uid, [
             ('id', 'in', ids),

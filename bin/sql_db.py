@@ -290,6 +290,10 @@ class Cursor(object):
     def __getattr__(self, name):
         return getattr(self._obj, name)
 
+    @check
+    def table_exists(self, table):
+        self.execute("SELECT relname FROM pg_class WHERE relkind in ('r', 'v') AND relname=%s", (table,))
+        return self.rowcount
 
 class PsycoConnection(psycopg2.extensions.connection):
     pass

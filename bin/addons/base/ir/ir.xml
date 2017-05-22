@@ -1096,6 +1096,7 @@
                         <field name="model"/>
                         <field name="osv_memory"/>
                         <field name="state"/>
+                        <field name="default_order" />
                         <field name="modules" colspan="4"/>
                     </group>
                     <notebook colspan="4">
@@ -1177,6 +1178,7 @@
                     <field name="model"/>
                     <field name="name"/>
                     <field name="state"/>
+                    <field name="default_order" />
                     <field name="osv_memory"/>
                 </tree>
             </field>
