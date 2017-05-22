@@ -50,7 +50,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             'get_partners':self._get_partners,
             'get_intial_balance':self._get_intial_balance,
             'display_initial_balance':self._display_initial_balance,
-            'display_currency':self._display_currency,
             'get_target_move': self._get_target_move,
             'get_instances': self._get_instances_from_data,
             'get_accounts': self._get_accounts,
@@ -68,7 +67,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         self.reconcil = data['form'].get('reconcil', False)
         self.initial_balance = data['form'].get('initial_balance', False)
         self.result_selection = data['form'].get('result_selection', 'customer_supplier')
-        self.amount_currency = data['form'].get('amount_currency', False)
         self.target_move = data['form'].get('target_move', 'all')
         self.period_id = data['form'].get('period_from', False)
         self.date_from = data['form'].get('date_from', False)
@@ -396,11 +394,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
 
     def _display_initial_balance(self, data):
          if self.initial_balance:
-             return True
-         return False
-
-    def _display_currency(self, data):
-         if self.amount_currency:
              return True
          return False
 

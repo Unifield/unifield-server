@@ -287,16 +287,11 @@ else:
     <Data ss:Type="String">${_('Credit')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
+    <Data ss:Type="String">${_('Booking Balance')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">${'%s %s' % (_('Balance'), company.currency_id.name)|x}</Data>
 </Cell>
-% if display_currency(data) == True:
-<Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">${_('Book. Amount')}</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">${_('Book. Curr.')}</Data>
-</Cell>
-% endif
 </Row>
 
 % for p in objects:
@@ -309,13 +304,16 @@ else:
     <Data ss:Type="String">${p.ref or ''|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
+    <Data ss:Type="String">${company.currency_id.name|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${sum_debit_partner(p) or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${sum_credit_partner(p) or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartnerNumber">
+    <Data ss:Type="Number">${(sum_debit_partner(p) or 0.) - (sum_credit_partner(p) or 0.)|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${(sum_debit_partner(p) or 0.) - (sum_credit_partner(p) or 0.)|x}</Data>
@@ -346,13 +344,16 @@ else:
     <Data ss:Type="String">${_('Initial Balance')}</Data>
   </Cell>
   <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String"></Data>
+    <Data ss:Type="String">${company.currency_id.name|x}</Data>
   </Cell>
   <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ get_intial_balance(p)[0][0] or 0.|x}</Data>
   </Cell>
   <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ get_intial_balance(p)[0][1] or 0.|x}</Data>
+  </Cell>
+  <Cell ss:StyleID="ssAccountLineNumber">
+    <Data ss:Type="Number">${ get_intial_balance(p)[0][2] or 0.|x}</Data>
   </Cell>
   <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ get_intial_balance(p)[0][2] or 0.|x}</Data>
@@ -387,7 +388,7 @@ else:
     <Data ss:Type="String">${ entry_label |x}</Data>
   </Cell>
   <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String"></Data>
+    <Data ss:Type="String">${ line['currency_code'] or '' |x}</Data>
   </Cell>
   <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ line['debit'] or 0.0|x}</Data>
@@ -396,16 +397,11 @@ else:
     <Data ss:Type="Number">${ line['credit'] or 0.0|x}</Data>
   </Cell>
   <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${ line['progress'] or 0.0|x}</Data>
-  </Cell>
-  % if display_currency(data) == True:
-  <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ line['amount_currency'] or 0.0|x}</Data>
   </Cell>
-  <Cell ss:StyleID="ssAccountLine">
-    <Data ss:Type="String">${ line['currency_code'] or '' |x}</Data>
+  <Cell ss:StyleID="ssAccountLineNumber">
+    <Data ss:Type="Number">${ line['progress'] or 0.0|x}</Data>
   </Cell>
-  % endif
 </Row>
 % endfor
 % endfor

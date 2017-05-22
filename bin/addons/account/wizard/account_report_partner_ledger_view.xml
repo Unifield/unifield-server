@@ -16,11 +16,11 @@
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="result_selection" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
                 <field name="initial_balance" attrs="{'readonly': [('fiscalyear_id', '=', False)]}"/>
-                <field name="reconcil"/>
-                <field name="amount_currency"/>
                 <field name="page_split"/>
-                <field name="tax" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
+                <field name="reconcil"/>
                 <field name="only_active_partners"/>
+                <field name="tax" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
+                <newline />
                 <field name="instance_ids">
                     <tree noteditable="1">
                         <field name="code"/>

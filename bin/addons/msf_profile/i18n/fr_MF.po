@@ -8926,9 +8926,12 @@ msgstr "Zone Source"
 msgid "Balance"
 msgstr "Solde de la balance"
 
-#. module: account
+#. modules: account,finance
 #: report:account.partner.balance:0
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
+#: report:addons/account/report/account_partner_ledger.mako:290
 msgid "Booking Balance"
 msgstr "Solde de la balance enreg."
 
@@ -37883,6 +37886,8 @@ msgstr "Masculin"
 #: report:addons/msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako:63
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:211
 #: report:addons/account/report/account_partner_ledger.mako:0
+#: report:account.third_party_ledger:0
+#: report:account.third_party_ledger_other:0
 #: report:account.partner.balance:0
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 msgid "Currency"
@@ -39863,7 +39868,6 @@ msgid "Register Line posting date is outside of the register period!"
 msgstr "Register Line posting date is outside of the register period!"
 
 #. module: account
-#: help:account.partner.ledger,amount_currency:0
 #: help:account.report.general.ledger,amount_currency:0
 msgid "It adds the currency column if the currency is different then the company currency"
 msgstr "Ajoute la colonne  devise si la devise n'est pas celle de la société"
@@ -78822,7 +78826,6 @@ msgstr "Outils"
 #: report:account.analytic.line:0
 #: report:account.analytic.line_csv:0
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
-#: report:addons/account/report/account_partner_ledger.mako:289
 msgid "Book. Amount"
 msgstr "Montant Enreg."
 
@@ -81547,13 +81550,6 @@ msgstr "Mis au Rebut"
 #: field:wizard.local.expenses,booking_currency_id:0
 msgid "Booking currency"
 msgstr "Devise d'enregistrement"
-
-#. module: account
-#: report:account.third_party_ledger:0
-#: report:account.third_party_ledger_other:0
-#: report:addons/account/report/account_partner_ledger.mako:292
-msgid "Book. Curr."
-msgstr "Devise d'enreg."
 
 #. modules: tender_flow, process, financing_contract, account_voucher, export_import_lang, account_override, purchase_allocation_report, register_accounting, transport_mgmt, return_claim, sync_client, account_mcdb, res_currency_tables, procurement_request, stock_forecast, analytic, purchase_followup, stock_override, msf_doc_import, useability_dashboard_and_menu, analytic_distribution, account_payment, msf_homere_interface, hr, account_reconciliation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_budget, purchase, account, msf_outgoing, sale_override, documents_done, sale, sales_followup, procurement, msf_audittrail, stock
 #: view:account.bank.statement:0
@@ -87863,7 +87859,6 @@ msgstr "Accruals for MSF"
 #: field:account.central.journal,amount_currency:0
 #: field:account.common.journal.report,amount_currency:0
 #: field:account.general.journal,amount_currency:0
-#: field:account.partner.ledger,amount_currency:0
 #: field:account.print.journal,amount_currency:0
 #: field:account.report.general.ledger,amount_currency:0
 msgid "With Currency"
@@ -91328,8 +91323,6 @@ msgstr "America/Anguilla"
 #: field:account.model.line,currency_id:0
 #: view:account.move:0
 #: view:account.move.line:0
-#: report:account.third_party_ledger:0
-#: report:account.third_party_ledger_other:0
 #: field:analytic.entries.report,currency_id:0
 #: model:ir.model,name:account.model_res_currency
 #: field:report.account.sales,currency_id:0
