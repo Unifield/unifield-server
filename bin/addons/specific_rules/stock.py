@@ -55,7 +55,8 @@ class initial_stock_inventory(osv.osv):
         '''
         Add the price in the stock move
         '''
-        move_vals['price_unit'] = inventory_line.average_cost
+        if inventory_line:
+            move_vals['price_unit'] = inventory_line.average_cost
         return super(initial_stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals)
     
     def action_confirm(self, cr, uid, ids, context=None):

@@ -2970,7 +2970,6 @@ class stock_inventory(osv.osv):
         product_context = dict(context, compute_child=False)
 
         location_obj = self.pool.get('stock.location')
-        inv_line_obj = self.pool.get('stock.inventory.line')
         product_obj = self.pool.get('product.product')
         product_tmpl_obj = self.pool.get('product.template')
         product_dict = {}
@@ -2981,10 +2980,15 @@ class stock_inventory(osv.osv):
 
             # gather all information needed for the lines treatment first to do
             # less requests
+            if self._name == 'initial.stock.inventory':
+                inv_line_obj = self.pool.get('initial.stock.inventory.line')
+            else:
+                inv_line_obj = self.pool.get('stock.inventory.line')
+
             line_read = inv_line_obj.read(cr, uid, inv['inventory_line_id'],
                     ['product_id', 'product_uom', 'prod_lot_id', 'location_id',
                         'product_qty', 'inventory_id', 'dont_move', 'comment',
-                        'reason_type_id'],
+                        'reason_type_id', 'average_cost'],
                     context=context)
             product_id_list = [x['product_id'][0] for x in line_read if
                 x['product_id'][0] not in product_dict]
@@ -3042,8 +3046,11 @@ class stock_inventory(osv.osv):
                         })
                     value.update({
                         'comment': line['comment'],
-                        'reason_type_id': line['reason_type_id'][0]
+                        'reason_type_id': line['reason_type_id'][0],
                     })
+
+                    if self._name == 'initial.stock.inventory':
+                        value.update({'price_unit': line['average_cost']})
                     move_ids.append(self._inventory_line_hook(cr, uid, None, value))
             # Changed the text of the following line to "is confirmed" instead of "is done" due to the state value
             message = _('Inventory') + " '" + inv['name'] + "' "+ _("is confirmed.")
