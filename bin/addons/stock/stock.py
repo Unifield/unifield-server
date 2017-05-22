@@ -3012,7 +3012,7 @@ class stock_inventory(osv.osv):
 
             for line in line_read:
                 pid = line['product_id'][0]
-                lot_id = line['prod_lot_id']and line['prod_lot_id'][0] or False
+                lot_id = line['prod_lot_id'] and line['prod_lot_id'][0] or False
                 product_context.update(uom=line['product_uom'][0],
                         date=inv['date'], prodlot_id=lot_id)
                 amount = location_obj._product_get(cr, uid,
@@ -3022,7 +3022,7 @@ class stock_inventory(osv.osv):
                 if change and self._hook_dont_move(cr, uid, dont_move=line['dont_move']):
                     location_id = product_dict[line['product_id'][0]]['stock_inventory']
                     value = {
-                        'name': 'INV:' + str(inv['id']) + ':' + inv['name'],
+                        'name': 'INV:' + str(line['inventory_id'][0]) + ':' + inv['name'],
                         'product_id': line['product_id'][0],
                         'product_uom': line['product_uom'][0],
                         'prodlot_id': lot_id,
