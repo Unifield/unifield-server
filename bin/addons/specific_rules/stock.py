@@ -55,7 +55,8 @@ class initial_stock_inventory(osv.osv):
         '''
         Add the price in the stock move
         '''
-        move_vals['price_unit'] = inventory_line.average_cost
+        if inventory_line:
+            move_vals['price_unit'] = inventory_line.average_cost
         return super(initial_stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals)
     
     def action_confirm(self, cr, uid, ids, context=None):
@@ -395,18 +396,18 @@ class initial_stock_inventory_line(osv.osv):
         return True
     
     _constraints = [(_check_batch_management,
-                 'You must assign a Batch Number which corresponds to Batch Number Mandatory Products.',
-                 ['prod_lot_id']),
-                (_check_perishable,
-                 'You must assign a Batch Numbre which corresponds to Expiry Date Mandatory Products.',
-                 ['prod_lot_id']),
-                (_check_prodlot_need,
-                 'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory',
-                 ['prod_lot_id']),
-                (_check_same_cost,
-                 'You cannot have two lines with the same product and different average cost.',
-                 ['product_id', 'average_cost'])
-                ]
+                     'You must assign a Batch Number which corresponds to Batch Number Mandatory Products.',
+                     ['prod_lot_id']),
+                    (_check_perishable,
+                     'You must assign a Batch Numbre which corresponds to Expiry Date Mandatory Products.',
+                     ['prod_lot_id']),
+                    (_check_prodlot_need,
+                     'The selected product is neither Batch Number Mandatory nor Expiry Date Mandatory',
+                     ['prod_lot_id']),
+                    (_check_same_cost,
+                     'You cannot have two lines with the same product and different average cost.',
+                     ['product_id', 'average_cost'])
+                    ]
     
     def product_change(self, cr, uid, ids, product_id, location_id, field_change, change_price=False, prodlot_id=False):
         '''
