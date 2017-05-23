@@ -34,9 +34,9 @@ import decimal_precision as dp
 import netsvc
 import pooler
 
-from sale import SALE_ORDER_STATE_SELECTION
-from sale import SALE_ORDER_SPLIT_SELECTION
-from sale import SALE_ORDER_LINE_STATE_SELECTION
+from . import SALE_ORDER_STATE_SELECTION
+from . import SALE_ORDER_SPLIT_SELECTION
+from . import SALE_ORDER_LINE_STATE_SELECTION
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
 
@@ -659,7 +659,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         Set the intl_customer_ok field if the partner is an ESC or an international partner
         '''
-        res = super(sale_order, self).onchange_partner_id_orig(cr, uid, ids, part)
+        res = self.onchange_partner_id_orig(cr, uid, ids, part)
 
         if part and order_type:
             p_obj = self.pool.get('res.partner')
@@ -1015,7 +1015,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'delivery_confirmed_date': time.strftime('%Y-%m-%d')}, context=context)
 
-        res = super(sale_order, self).action_cancel_orig(cr, uid, ids, context=context)
+        res = self.action_cancel_orig(cr, uid, ids, context=context)
 
         for order in self.read(cr, uid, ids, ['procurement_request', 'name'], context=context):
             self.infolog(cr, uid, "The %s id:%s (%s) has been canceled." % (
@@ -3339,7 +3339,7 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
 
-        res = super(sale_order_line, self).product_id_change_orig(cr, uid, ids, pricelist, product, qty,
+        res = self.product_id_change_orig(cr, uid, ids, pricelist, product, qty,
                                                              uom, qty_uos, uos, name, partner_id,
                                                              lang, update_tax, date_order, packaging, fiscal_position, flag)
 
