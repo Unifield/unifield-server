@@ -30,8 +30,6 @@ class account_partner_ledger(osv.osv_memory):
     _description = 'Account Partner Ledger'
 
     _columns = {
-        'initial_balance': fields.boolean('Include initial balances',
-                                    help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
         'reconcil': fields.boolean('Include Reconciled Entries', help='Consider reconciled entries'),
         'page_split': fields.boolean('One Partner Per Page', help='Display Ledger Report with One partner per page (PDF version only)'),
         'partner_ids': fields.many2many('res.partner', 'account_partner_ledger_partner_rel', 'wizard_id', 'partner_id',
@@ -46,7 +44,6 @@ class account_partner_ledger(osv.osv_memory):
 
     _defaults = {
        'reconcil': False,
-       'initial_balance': False,
        'page_split': False,
        'result_selection': 'customer_supplier',
        'account_domain': "[('type', 'in', ['payable', 'receivable'])]",
@@ -59,7 +56,7 @@ class account_partner_ledger(osv.osv_memory):
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['initial_balance', 'reconcil', 'page_split', 'tax', 'partner_ids',
+        data['form'].update(self.read(cr, uid, ids, ['reconcil', 'page_split', 'tax', 'partner_ids',
                                                      'only_active_partners', 'instance_ids', 'account_ids'])[0])
         self._check_dates_fy_consistency(cr, uid, data, context)
         if data['form']['page_split']:
@@ -87,7 +84,7 @@ class account_partner_ledger(osv.osv_memory):
         data['form']['used_context'] = used_context
 
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['initial_balance', 'reconcil', 'page_split', 'tax', 'partner_ids',
+        data['form'].update(self.read(cr, uid, ids, ['reconcil', 'page_split', 'tax', 'partner_ids',
                                                      'only_active_partners', 'instance_ids', 'account_ids'])[0])
         self._check_dates_fy_consistency(cr, uid, data, context)
         return {

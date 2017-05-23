@@ -2328,9 +2328,6 @@ msgid "\"Period from\" must be less than or equal to \"Period to\""
 msgstr "\"Période du\" doit être antérieure ou égale à \"Période à'\""
 
 #. modules: account, finance
-#: report:account.third_party_ledger:0
-#: report:account.third_party_ledger_other:0
-#: report:addons/account/report/account_partner_ledger.mako:0
 #: report:account.partner.balance:0
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:386
 msgid "Initial Balance"
@@ -5502,7 +5499,6 @@ msgid "Install Specific Industry Applications"
 msgstr "Installez Applications Spécifiques à l'Industrie"
 
 #. module: account
-#: help:account.partner.ledger,initial_balance:0
 #: help:account.report.general.ledger,initial_balance:0
 msgid "It adds initial balance row on report which display previous sum amount of debit/credit/balance"
 msgstr "Ajoute une ligne du solde initial sur le rapport qui affiche les montants de débit/crédit/solde précédents"
@@ -70397,7 +70393,6 @@ msgid "Type for register"
 msgstr "Type de Registre"
 
 #. modules: account, finance
-#: field:account.partner.ledger,initial_balance:0
 #: field:account.report.general.ledger,initial_balance:0
 #: field:wizard.account.partner.balance.tree,initial_balance:0
 msgid "Include initial balances"

@@ -458,31 +458,6 @@
         </tr>
       </blockTable>
       <section>
-        <para style="terp_default_2">[[ data['form']['initial_balance'] == True and ' ' or removeParentNode('section') ]] </para>
-        <blockTable colWidths="370.0,40.0,80.0,80.0,90.0,102.0" style="Table13">
-          <tr>
-            <td>
-              <para style="terp_default_9">Initial Balance</para>
-            </td>
-            <td>
-              <para style="terp_default_9">[[ company.currency_id.name ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Right_9">[[ formatLang(get_intial_balance(p)[0][0] or 0.0)]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Right_9">[[ formatLang(get_intial_balance(p)[0][1] or 0.0) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Right_9">[[ formatLang(get_intial_balance(p)[0][2] or 0.0) ]]</para>
-            </td>
-            <td>
-              <para style="terp_default_Right_9">[[ formatLang(get_intial_balance(p)[0][2] or 0.0) ]]</para>
-            </td>
-          </tr>
-        </blockTable>
-      </section>
-      <section>
         <para style="terp_default_8">[[ repeatIn(lines(p), 'line') ]]</para>
         <blockTable colWidths="87.0,25.0,93.0,41.0,124.0,40.0,80.0,80.0,90.0,102.0" style="Table14">
           <tr>

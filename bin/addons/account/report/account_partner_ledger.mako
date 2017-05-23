@@ -148,16 +148,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
-<Style ss:ID="ssIBLine">
-<Alignment ss:Vertical="Top" ss:Horizontal="Right" ss:WrapText="1"/>
-<Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-</Style>
 <Style ss:ID="ssAccountLineWrap">
    <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -174,17 +164,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Style ss:ID="ssAccountLineNumber">
 <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
 <Font ss:Size="8"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-<NumberFormat ss:Format="#,##0.00"/>
-</Style>
-<Style ss:ID="ssIBLineNumber">
-<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
-<Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -340,32 +319,6 @@ else:
     <Data ss:Type="Number">${(sum_debit_partner(p) or 0.) - (sum_credit_partner(p) or 0.)|x}</Data>
 </Cell>
 </Row>
-<!-- INITIAL BALANCE SECTION -->
-% if data['form']['initial_balance'] == True:
-<Row>
-  <Cell ss:StyleID="ssIBLine" ss:MergeAcross="5">
-    <Data ss:Type="String"></Data>
-  </Cell>
-  <Cell ss:StyleID="ssIBLine">
-    <Data ss:Type="String">${_('Initial Balance')}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssIBLine">
-    <Data ss:Type="String">${company.currency_id.name|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssIBLineNumber">
-    <Data ss:Type="Number">${ get_intial_balance(p)[0][0] or 0.|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssIBLineNumber">
-    <Data ss:Type="Number">${ get_intial_balance(p)[0][1] or 0.|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssIBLineNumber">
-    <Data ss:Type="Number">${ get_intial_balance(p)[0][2] or 0.|x}</Data>
-  </Cell>
-  <Cell ss:StyleID="ssIBLineNumber">
-    <Data ss:Type="Number">${ get_intial_balance(p)[0][2] or 0.|x}</Data>
-  </Cell>
-</Row>
-% endif
 <!-- PARTNER LINES -->
 % for line in lines(p):
 <Row>

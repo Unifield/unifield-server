@@ -31,7 +31,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
 
     def __init__(self, cr, uid, name, context=None):
         super(third_party_ledger, self).__init__(cr, uid, name, context=context)
-        self.init_bal_sum = 0.0
         self.localcontext.update({
             'time': time,
             'lines': self.lines,
@@ -48,8 +47,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             'get_fiscalyear': self._get_fiscalyear,
             'get_journal': self._get_journal,
             'get_partners':self._get_partners,
-            'get_intial_balance':self._get_intial_balance,
-            'display_initial_balance':self._display_initial_balance,
             'get_target_move': self._get_target_move,
             'get_instances': self._get_instances_from_data,
             'get_accounts': self._get_accounts,
@@ -62,11 +59,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         obj_journal = self.pool.get('account.journal')
         obj_fy = self.pool.get('account.fiscalyear')
         self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=data['form'].get('used_context', {}))
-        ctx2 = data['form'].get('used_context',{}).copy()
-        ctx2.update({'initial_bal': True})
-        self.init_query = obj_move._query_get(self.cr, self.uid, obj='l', context=ctx2)
         self.reconcil = data['form'].get('reconcil', False)
-        self.initial_balance = data['form'].get('initial_balance', False)
         self.result_selection = data['form'].get('result_selection', 'customer_supplier')
         self.target_move = data['form'].get('target_move', 'all')
         self.period_id = data['form'].get('period_from', False)
@@ -83,13 +76,11 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             fy = obj_fy.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'],
                              context=data['form'].get('used_context', {}))
 
-        # UFTP-312, UFTP-63: To have right initial balance, we have to fetch previous lines before a specific date.
         #+ To have right partner balance, we have to take all next lines after a specific date.
         #+ To do that, we need to make requests regarding a date. So first we take date_from
         #+  then period_from (if no date_from)
         #+  finally fisalyear_id (if no period)
         #+ If no date, the report is wrong.
-        # FROM US-1643: IB calculation takes only into account the FY
         pool = pooler.get_pool(self.cr.dbname)
         self.DATE_FROM = ''
         if self.fiscalyear_id or self.period_id or self.date_from:
@@ -101,20 +92,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 self.DATE_FROM = "AND l.date >= '%s'" % period[0].get('date_start')
             elif self.fiscalyear_id:
                 self.DATE_FROM = "AND l.date >= '%s'" % fy[0].get('date_start')
-
-        # if "Initial Balance" and FY are selected, store data for the IB calculation whatever the dates or periods selected
-        self.IB_DATE_TO = ''
-        self.IB_JOURNAL_REQUEST = ''
-        if self.initial_balance and self.fiscalyear_id:
-            self.IB_DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
-            # all journals by default
-            journal_ids = data['form'].get('journal_ids',
-                                           obj_journal.search(self.cr, self.uid, [], order='NO_ORDER',
-                                                              context=data.get('context', {})))
-            if len(journal_ids) == 1:
-                self.IB_JOURNAL_REQUEST = "AND l.journal_id = %s" % journal_ids[0]
-            else:
-                self.IB_JOURNAL_REQUEST = "AND l.journal_id IN %s" % (tuple(journal_ids),)
 
         # UFTP-312: Exclude tax if user ask it
         self.TAX_REQUEST = ''
@@ -247,39 +224,11 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 (partner.id, tuple(self.account_ids), tuple(move_state)))
         res = self.cr.dictfetchall()
         sum = 0.0
-        if self.initial_balance:
-            sum = self.init_bal_sum
         for r in res:
             sum += r['debit'] - r['credit']
             r['progress'] = sum
             full_account.append(r)
         return full_account
-
-    def _get_intial_balance(self, partner):
-        move_state = ['draft','posted']
-        if self.target_move == 'posted':
-            move_state = ['posted']
-        if self.reconcil:
-            RECONCILE_TAG = " "
-        else:
-            RECONCILE_TAG = "AND l.reconcile_id IS NULL"
-
-        self.cr.execute(
-            "SELECT COALESCE(SUM(l.debit),0.0), COALESCE(SUM(l.credit),0.0), COALESCE(sum(debit-credit), 0.0) " \
-            "FROM account_move_line AS l,  " \
-                "account_move AS m " \
-            "WHERE l.partner_id = %s " \
-            "AND m.id = l.move_id " \
-            "AND m.state IN %s " \
-            "AND account_id IN %s" \
-            " " + RECONCILE_TAG + " "\
-            " " + self.INSTANCE_REQUEST + " "
-            " " + self.IB_JOURNAL_REQUEST + " "
-            " " + self.IB_DATE_TO + " ",
-            (partner.id, tuple(move_state), tuple(self.account_ids)))
-        res = self.cr.fetchall()
-        self.init_bal_sum = res[0][2]
-        return res
 
     def _sum_debit_partner(self, partner):
         move_state = ['draft','posted']
@@ -287,30 +236,10 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             move_state = ['posted']
 
         result_tmp = 0.0
-        result_init = 0.0
         if self.reconcil:
             RECONCILE_TAG = " "
         else:
             RECONCILE_TAG = "AND reconcile_id IS NULL"
-        if self.initial_balance:
-            self.cr.execute(
-                    "SELECT sum(debit) " \
-                    "FROM account_move_line AS l, " \
-                    "account_move AS m "\
-                    "WHERE l.partner_id = %s" \
-                        "AND m.id = l.move_id " \
-                        "AND m.state IN %s "\
-                        "AND account_id IN %s" \
-                        " " + RECONCILE_TAG + " " \
-                        " " + self.IB_DATE_TO + " " \
-                        " " + self.INSTANCE_REQUEST + " "
-                        " " + self.IB_JOURNAL_REQUEST + " ",
-                    (partner.id, tuple(move_state), tuple(self.account_ids)))
-            contemp = self.cr.fetchone()
-            if contemp != None:
-                result_init = contemp[0] or 0.0
-            else:
-                result_init = result_tmp + 0.0
 
         self.cr.execute(
                 "SELECT sum(debit) " \
@@ -331,8 +260,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             result_tmp = contemp[0] or 0.0
         else:
             result_tmp = result_tmp + 0.0
-
-        return result_tmp  + result_init
+        return result_tmp
 
     def _sum_credit_partner(self, partner):
         move_state = ['draft','posted']
@@ -340,30 +268,10 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             move_state = ['posted']
 
         result_tmp = 0.0
-        result_init = 0.0
         if self.reconcil:
             RECONCILE_TAG = " "
         else:
             RECONCILE_TAG = "AND reconcile_id IS NULL"
-        if self.initial_balance:
-            self.cr.execute(
-                    "SELECT sum(credit) " \
-                    "FROM account_move_line AS l, " \
-                    "account_move AS m  "
-                    "WHERE l.partner_id = %s" \
-                        "AND m.id = l.move_id " \
-                        "AND m.state IN %s "
-                        "AND account_id IN %s" \
-                        " " + RECONCILE_TAG + " " \
-                        " " + self.IB_DATE_TO + " " \
-                        " " + self.INSTANCE_REQUEST + " "\
-                        " " + self.IB_JOURNAL_REQUEST + " ",
-                    (partner.id, tuple(move_state), tuple(self.account_ids)))
-            contemp = self.cr.fetchone()
-            if contemp != None:
-                result_init = contemp[0] or 0.0
-            else:
-                result_init = result_tmp + 0.0
 
         self.cr.execute(
                 "SELECT sum(credit) " \
@@ -384,7 +292,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             result_tmp = contemp[0] or 0.0
         else:
             result_tmp = result_tmp + 0.0
-        return result_tmp  + result_init
+        return result_tmp
 
     def _get_partners(self):
         if self.result_selection == 'customer':
@@ -405,11 +313,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         else:
             currency_total = self.tot_currency = 0.0
             return currency_total
-
-    def _display_initial_balance(self, data):
-         if self.initial_balance:
-             return True
-         return False
 
     def _get_journal(self, data, instance_ids=False):
         """
