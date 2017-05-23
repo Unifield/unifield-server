@@ -187,11 +187,11 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         adds a line break every (index) character
         """
         x = 0
-        new_label = ""
+        parts = []
         while x < len(label):
-            new_label = "%s%s%s" % (new_label, '\n', label[x:x+index])
+            parts.append(label[x:x+index])
             x += index
-        return new_label
+        return "\n".join(parts)
 
     def lines(self, partner):
         move_state = ['draft','posted']
