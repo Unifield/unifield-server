@@ -1439,7 +1439,7 @@ class stock_move(osv.osv):
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
         'sync_dpo': fields.boolean(string='Sync. DPO'),
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
-        'is_ext_cu': fields.boolean(sring='Is Ext CU ?'),
+        'is_ext_cu': fields.boolean(string='Ext. CU'),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
