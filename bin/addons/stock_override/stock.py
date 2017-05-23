@@ -2588,20 +2588,24 @@ class stock_location(osv.osv):
             return [('id', 'in', ids)]
         return []
 
-    def _search_filter_partner_id2(self, cr, uid, ids, fields, arg, context=None):
-        if not arg or not arg[0][2] or not isinstance(arg[0][2], list) or not len(arg[0][2]) == 1:
+    def _search_filter_partner_ext_cu(self, cr, uid, ids, fields, arg, context=None):
+        if not arg or not arg[0][2] or not isinstance(arg[0][2], list) or not len(arg[0][2]) == 2:
             return []
         if context is None:
             context = {}
 
         partner_id2 = arg[0][2][0]
-        res_ids = []
-        if partner_id2:
-            res_ids = self.search(cr, uid, [('usage', '=', 'supplier')], context=context)
-        else: # ext_cu
-            res_ids = self.search(cr, uid, [('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], context=context)
+        ext_cu = arg[0][2][1]
 
-        return [('id', 'in', res_ids)]
+        domain = []
+        if not partner_id2 and not ext_cu:
+            domain = []
+        elif partner_id2:
+            domain = [('usage', '=', 'supplier')]
+        else: # ext_cu
+            domain = [('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')]
+
+        return domain
 
 
     _columns = {
@@ -2614,7 +2618,7 @@ class stock_location(osv.osv):
                                                   "\n* Fixed Location: The chained location is taken from the next field: Chained Location if Fixed." \
                                                   "\n* Nomenclature: The chained location is taken from the options field: Chained Location is according to the nomenclature level of product."\
                                                   ),
-        'filter_partner_id2': fields.function(_fake_get, method=True, type='boolean', string='Filter location by partner', fnct_search=_search_filter_partner_id2),
+        'filter_partner_ext_cu': fields.function(_fake_get, method=True, type='boolean', string='Filter location by partner', fnct_search=_search_filter_partner_ext_cu),
         'chained_options_ids': fields.one2many('stock.location.chained.options', 'location_id', string='Chained options'),
         'optional_loc': fields.boolean(string='Is an optional location ?'),
         'stock_real': fields.function(_product_value, method=True, type='float', string='Real Stock', multi="stock"),
