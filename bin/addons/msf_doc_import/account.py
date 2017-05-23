@@ -30,6 +30,7 @@ from base64 import decodestring
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import threading
 import pooler
+import mx
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
 
 class msf_doc_import_accounting(osv.osv_memory):
@@ -170,6 +171,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         errors = []
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id or False
 
+        current_line_num = None
         try:
             # Update wizard
             self.write(cr, uid, ids, {'message': _('Cleaning up old imports…'), 'progression': 1.00})
@@ -255,6 +257,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                     # Check document date
                     if not line[cols['Document Date']]:
                         errors.append(_('Line %s. No document date specified!') % (current_line_num,))
+                        continue
+                    if not isinstance(line[cols['Document Date']], type(mx.DateTime.now())):
+                        errors.append(_('Line %s, the column \'Document Date\' have to be of type DateTime. Check the spreadsheet format (or export a document to have an example).') % (current_line_num,))
                         continue
                     r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
                     # Bypass this line if NO debit AND NO credit
@@ -428,7 +433,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                                              _('The date chosen in the wizard is not in the same period as the imported entries.'))
                     period = period_obj.browse(
                         cr, uid, period_ids[0], context=context)
-                    if period.state in ('created', 'done'):
+                    if period.state != 'draft':
                         raise osv.except_osv(_('Warning'), _('%s is not open!') % (period.name, ))
 
                     # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
@@ -457,6 +462,12 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'partner_id': r_partner or False,
                         'transfer_journal_id': r_journal or False,
                     }
+
+                    # US-2470
+                    if not vals['description']:
+                        errors.append(_('Line %s. Description is missing for the given account: %s.') % (current_line_num, account.code))
+                        continue
+
                     # UTP-1056: Add employee possibility. So we need to check if employee and/or partner is authorized
                     partner_needs = self.pool.get('account.bank.statement.line').onchange_account(cr, uid, False, account_id=account.id, context=context)
                     if not partner_needs:
@@ -487,14 +498,25 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if type_for_reg == 'transfer' and (not is_liquidity or partner_journal.currency.id == r_currency):
                         errors.append(_('Line %s. The Third Party must be a liquidity journal with a currency '
                                         'different from the booking one for the given account: %s.') % (current_line_num, account.code))
+
                     if is_liquidity and file_journal_id == partner_journal.id:
                         raise osv.except_osv(_('Warning'),
                                              _('Line %s. The journal used for the internal transfer must be different from the '
                                                'Journal Entry Journal for the given account: %s.') % (current_line_num, account.code))
 
+                    if account.type == 'liquidity':
+                        # do not permit to import line with liquidity account
+                        # except when importing in Migration journal
+                        if file_journal_id and aj_obj.read(cr, uid,
+                                                           file_journal_id, ['type'],
+                                                           context=context)['type'] != 'migration':
+                            raise osv.except_osv(_('Error'),
+                                                 _('Line %s. It is not possible to import account of type \'Liquidity\', '
+                                                 'please check the account %s.') % (current_line_num, account.code))
+
                     line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
                     if not line_res:
-                        errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))
+                        errors.append(_('Line %s. A problem occurred for line registration. Please contact an Administrator.') % (current_line_num,))
                         continue
                     created += 1
                 # Check if all is ok for the file
@@ -535,12 +557,16 @@ class msf_doc_import_accounting(osv.osv_memory):
                 cr.close(True)
         except osv.except_osv as osv_error:
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occured. %s: %s") % (osv_error.name, osv_error.value,), 'state': 'done', 'progression': 100.0})
+            self.write(cr, uid, ids, {'message': _("An error occurred. %s: %s") % (osv_error.name, osv_error.value,), 'state': 'done', 'progression': 100.0})
             if not from_yml:
                 cr.close(True)
         except Exception as e:
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e.args and e.args[0] or '',), 'state': 'done', 'progression': 100.0})
+            if current_line_num is not None:
+                message = _("An error occurred on line %s: %s") % (current_line_num, e.args and e.args[0] or '')
+            else:
+                message = _("An error occurred: %s") % (e.args and e.args[0] or '',)
+            self.write(cr, uid, ids, {'message': message, 'state': 'done', 'progression': 100.0})
             if not from_yml:
                 cr.close(True)
         return True

@@ -5,6 +5,10 @@
             <field name="method">remove_not_synchronized_data</field>
         </record>
 
+        <record id="us_2632_patch" model="patch.scripts">
+            <field name="method">us_2632_patch</field>
+        </record>
+
         <record id="us_2110_patch" model="patch.scripts">
             <field name="method">us_2110_patch</field>
         </record>

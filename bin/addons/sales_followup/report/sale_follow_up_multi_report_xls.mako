@@ -62,6 +62,16 @@
         </Borders>
         <Font ss:Size="8" ss:Color="#0000FF"/>
     </Style>
+    <Style ss:ID="line_left_green">
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="8" ss:Color="#1A721A"/>
+    </Style>
     <Style ss:ID="line_right">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
         <Borders>
@@ -276,7 +286,11 @@
                 % else:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
+                % if line.get('is_delivered'):
+                <Cell ss:StyleID="line_left_green"><Data ss:Type="String">${line.get('shipment')|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('shipment')|x}</Data></Cell>
+                % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('cdd', False) not in (False, 'False') and saleUstr(formatLang(line.get('cdd'), date=True)) or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('eta', False) not in (False, 'False') and saleUstr(formatLang(line.get('eta'), date=True)) or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('rts', False) not in (False, 'False') and saleUstr(formatLang(line.get('rts'), date=True)) or ''|x}</Data></Cell>

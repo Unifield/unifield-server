@@ -24,7 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from register_tools import create_cashbox_lines
+from register_tools import create_cashbox_lines, previous_register_id
 
 class account_cash_statement(osv.osv):
     _name = "account.bank.statement"
@@ -111,6 +111,15 @@ class account_cash_statement(osv.osv):
             # accountant manual field
             if journal.type == 'bank':
                 vals.update({'balance_start': prev_reg.balance_end_real})
+
+        if not prev_reg and sync_update and vals.get('period_id') and vals.get('journal_id'):
+            prev_reg_id = previous_register_id(self, cr, uid, vals['period_id'], vals['journal_id'], context=context)
+            if prev_reg_id:
+                prev_reg = self.browse(cr, uid, [prev_reg_id], fields_to_fetch=['responsible_ids'], context=context)[0]
+
+        if 'responsible_ids' not in vals and prev_reg and prev_reg.responsible_ids:
+            vals['responsible_ids'] = [(6, 0, [x.id for x in prev_reg.responsible_ids])]
+
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists (or discard if they come from sync)
         if prev_reg_id and not sync_update:
@@ -227,7 +236,7 @@ class account_cash_statement(osv.osv):
         for st in self.browse(cr, uid, ids, context=context):
             st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)], context=context)
             if len(st_prev_ids) > 1:
-                raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
+                raise osv.except_osv(_('Error'), _('A problem occurred: More than one register have this one as previous register!'))
             # Verify that the closing balance have been freezed
             if not st.closing_balance_frozen:
                 raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')

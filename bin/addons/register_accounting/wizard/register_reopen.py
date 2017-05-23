@@ -32,7 +32,7 @@ class register_reopen(osv.osv_memory):
         # Deleted from selection since UTP-209:
         #('writeoff', 'Accept write-off and close register'),
         'choice' : fields.selection( [('reopen', 'Reopen Register')], \
-            string="Decision to make", required=True),
+                                     string="Decision to make", required=True),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -79,7 +79,7 @@ class register_reopen(osv.osv_memory):
                 return { 'type': 'ir.actions.act_window_close', 'res_id': w_id}
             # Write-off choice have been disabled since UTP-209
             else:
-                raise osv.except_osv(_('Warning'), _('An error has occured !'))
+                raise osv.except_osv(_('Warning'), _('An error has occurred !'))
         return { 'type': 'ir.actions.act_window_close', 'res_id': w_id}
 
 register_reopen()

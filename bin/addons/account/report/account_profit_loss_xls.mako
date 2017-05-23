@@ -175,10 +175,10 @@ strong = o.get('level1', False) and o['level1'] < 4 and 'Strong' or ''
 <Row>
 <Cell ss:StyleID="ssAccountLineStrong"><Data ss:Type="String">Balance ${company.currency_id.symbol or ''|x}</Data></Cell>
 <Cell ss:StyleID="ssAccountLineStrong"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="ssAccountLineNumberStrong"><Data ss:Type="Number">${abs(sum_dr())}</Data></Cell>
+<Cell ss:StyleID="ssAccountLineNumberStrong"><Data ss:Type="Number">${sum_dr()}</Data></Cell>
 <Cell ss:StyleID="ssAccountLineStrong"><Data ss:Type="String">Balance ${company.currency_id.symbol or ''|x}</Data></Cell>
 <Cell ss:StyleID="ssAccountLineStrong"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="ssAccountLineNumberStrong"><Data ss:Type="Number">${abs(sum_cr())}</Data></Cell>
+<Cell ss:StyleID="ssAccountLineNumberStrong"><Data ss:Type="Number">${sum_cr()}</Data></Cell>
 </Row>
 
 % if final_result()['type'] and final_result()['type'] == 'Net Loss':

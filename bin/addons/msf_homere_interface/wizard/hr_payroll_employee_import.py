@@ -23,7 +23,6 @@
 
 from zipfile import ZipFile as zf
 from zipfile import is_zipfile
-import py7zlib
 from osv import osv
 from osv import fields
 from tempfile import NamedTemporaryFile,mkdtemp
@@ -38,12 +37,6 @@ from lxml import etree
 import subprocess
 import os
 import shutil
-
-try:
-    from io import BytesIO
-except ImportError:
-    from cStringIO import StringIO as BytesIO
-
 
 def get_7z():
     if os.name == 'nt':
@@ -64,9 +57,9 @@ class hr_payroll_import_confirmation(osv.osv_memory):
         'created': fields.integer(string="Created", size=64, readonly=True),
         'total': fields.integer(string="Processed", size=64, readonly=True),
         'state': fields.selection([('none', 'None'), ('employee', 'From Employee'), ('payroll', 'From Payroll'), ('hq', 'From HQ Entries')],
-            string="State", required=True, readonly=True),
+                                  string="State", required=True, readonly=True),
         'error_line_ids': fields.many2many("hr.payroll.employee.import.errors", "employee_import_error_relation", "wizard_id", "error_id", "Error list",
-            readonly=True),
+                                           readonly=True),
         'errors': fields.text(string="Errors", readonly=True),
         'nberrors': fields.integer(string="Errors", readonly=True),
         'filename': fields.char(string="Filename", size=256, readonly=True),
@@ -142,7 +135,7 @@ class hr_payroll_import_confirmation(osv.osv_memory):
             if context.get('from') == 'expat_employee_import':
                 context.update({'search_default_employee_type_expatriate': 1})
                 action = self.pool.get('ir.actions.act_window').for_xml_id(cr,
-                    uid, 'hr', 'open_view_employee_list_my', context=context)
+                                                                           uid, 'hr', 'open_view_employee_list_my', context=context)
                 action['target'] = 'same'
                 action['context'] = context
                 return action
@@ -192,8 +185,8 @@ class hr_payroll_employee_import(osv.osv_memory):
     }
 
     def update_employee_check(self, cr, uid,
-        staffcode=False, missioncode=False, staff_id=False, uniq_id=False,
-        wizard_id=None, employee_name=False, registered_keys=None):
+                              staffcode=False, missioncode=False, staff_id=False, uniq_id=False,
+                              wizard_id=None, employee_name=False, registered_keys=None):
         """
         Check that:
         - no more than 1 employee exist for "missioncode + staff_id + uniq_id"
@@ -238,7 +231,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {
                 'wizard_id': wizard_id,
                 'msg': _("Import file have more than one employee with the combination key codeterrain/id_staff(/id_unique) of this employee: %s") % (employee_name,)
-                })
+            })
             return (res, what_changed)
 
         # check duplicates already in db
@@ -247,7 +240,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {
                 'wizard_id': wizard_id,
                 'msg': _("Database have more than one employee with the unique code of this employee: %s") % (employee_name,)
-                })
+            })
             return (res, what_changed)
 
         # Check staffcode
@@ -283,20 +276,21 @@ class hr_payroll_employee_import(osv.osv_memory):
         return res
 
     def update_employee_infos(self, cr, uid, employee_data='', wizard_id=None,
-        line_number=None, registered_keys=None):
+                              line_number=None, registered_keys=None, context=None):
         """
         Get employee infos and set them to DB.
         """
         # Some verifications
         created = 0
         updated = 0
+        if context is None:
+            context = {}
         if not employee_data or not wizard_id:
             message = _('No data found for this line: %s.') % line_number
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
             return False, created, updated
         # Prepare some values
         vals = {}
-        current_date = strftime('%Y-%m-%d')
         # Extract information
         try:
             code_staff = employee_data.get('code_staff', False)
@@ -329,10 +323,10 @@ class hr_payroll_employee_import(osv.osv_memory):
 
             # Do some check
             employee_check, what_changed = self.update_employee_check(cr, uid,
-                staffcode=ustr(code_staff), missioncode=ustr(codeterrain),
-                staff_id=id_staff, uniq_id=ustr(uniq_id),
-                wizard_id=wizard_id, employee_name=employee_name,
-                registered_keys=registered_keys)
+                                                                      staffcode=ustr(code_staff), missioncode=ustr(codeterrain),
+                                                                      staff_id=id_staff, uniq_id=ustr(uniq_id),
+                                                                      wizard_id=wizard_id, employee_name=employee_name,
+                                                                      registered_keys=registered_keys)
             if not employee_check and not what_changed:
                 return False, created, updated
 
@@ -373,7 +367,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                     if len(n_ids) == 1:
                         res_nation = n_ids[0]
                     else:
-                        raise osv.except_osv(_('Error'), _('An error occured on nationality. Please verify all nationalities.'))
+                        raise osv.except_osv(_('Error'), _('An error occurred on nationality. Please verify all nationalities.'))
                 vals.update({'country_id': res_nation})
             # Update gender
             if sexe:
@@ -425,10 +419,17 @@ class hr_payroll_employee_import(osv.osv_memory):
                 res = self.pool.get('hr.employee').create(cr, uid, vals, {'from': 'import'})
                 if res:
                     created += 1
+                    # add the employee created to the list in context
+                    if context and 'imported_employee_list' in context:
+                        context['imported_employee_list'].append(res)
             else:
                 res = self.pool.get('hr.employee').write(cr, uid, e_ids, vals, {'from': 'import'})
                 if res:
                     updated += 1
+                    # add the employee edited to the list in context
+                    if context and 'imported_employee_list' in context:
+                        for e_id in e_ids:
+                            context['imported_employee_list'].append(e_id)
             registered_keys[codeterrain + id_staff + uniq_id] = True
         else:
             message = _('Line %s. One of this column is missing: code_terrain, id_unique or id_staff. This often happens when the line is empty.') % (line_number)
@@ -565,9 +566,6 @@ class hr_payroll_employee_import(osv.osv_memory):
         if not context:
             context = {}
         # Prepare some values
-        staff_file = 'staff.csv'
-        contract_file = 'contrat.csv'
-        job_file = 'fonction.csv'
         res = False
         message = _("Employee import FAILED.")
         created = 0
@@ -575,6 +573,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         processed = 0
         filename = ""
         registered_keys = {}
+        employee_obj = self.pool.get('hr.employee')
         # Delete old errors
         error_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [])
         if error_ids:
@@ -590,9 +589,8 @@ class hr_payroll_employee_import(osv.osv_memory):
             job_reader, contract_reader, staff_reader, desc_to_close, tmpdir = self.read_files(cr, uid, filename)
             filename = wiz.filename or ""
 
-            job_ids = False
             if job_reader:
-                job_ids = self.update_job(cr, uid, ids, job_reader, context=context)
+                self.update_job(cr, uid, ids, job_reader, context=context)
             # Do not raise error for job file because it's just a useful piece of data, but not more.
             # read the contract file
             contract_ids = False
@@ -627,15 +625,23 @@ class hr_payroll_employee_import(osv.osv_memory):
                 updated = 0
                 # UF-2504 read staff file again for next enumeration
                 # (because already read/looped above for staff codes)
+                context.update({'imported_employee_list': []})
                 for i, employee_data in enumerate(staff_seen):
                     update, nb_created, nb_updated = self.update_employee_infos(
                         cr, uid, employee_data, wiz.id, i,
-                        registered_keys=registered_keys)
+                        registered_keys=registered_keys, context=context)
                     if not update:
                         res = False
                     created += nb_created
                     updated += nb_updated
                     processed += 1
+                # every existing local employee who isn't included in the per_mois file is set to inactive
+                set_to_inactive_domain = [('id', 'not in', context['imported_employee_list']),
+                                          ('employee_type', '=', 'local'),
+                                          ('active', '=', True),
+                                          ]
+                set_to_inactive_ids = employee_obj.search(cr, uid, set_to_inactive_domain, order='NO_ORDER', context=context)
+                employee_obj.write(cr, uid, set_to_inactive_ids, {'active': False}, context=context)
             else:
                 res = False
                 message = _('Several employees have the same unique code: %s.') % (';'.join(details))

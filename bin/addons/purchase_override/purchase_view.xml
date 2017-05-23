@@ -118,6 +118,8 @@
 
                     <xpath expr="/form/group/field[@name='company_id']" position="before">
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" />
+                        <field name="is_a_counterpart" invisible="1" />
+                        <field name="push_fo" invisible="1" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" />
@@ -132,7 +134,7 @@
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='dest_address_id']" position="replace">
                         <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
-                            on_change="on_change_dest_partner_id(dest_partner_id)" />
+                            on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('partner_type', '=', 'internal')]" />
                         <field name="dest_address_id" domain="[('dest_address', '=', dest_partner_id)]" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
                     </xpath>
                     <xpath expr="/form/notebook//field[@name='fiscal_position']" position="after">

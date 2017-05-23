@@ -32,7 +32,7 @@ class cashbox_write_off(osv.osv_memory):
         # Deleted from selection since UTP-209:
         #('writeoff', 'Accept write-off and close register'),
         'choice' : fields.selection( [('reopen', 'Re-open Register')], \
-            string="Decision about CashBox", required=True),
+                                     string="Decision about CashBox", required=True),
         'account_id': fields.many2one('account.account', string="Write-off Account", domain="[('type', '!=', 'view'), ('user_type_code', '=', 'expense')]"),
         'amount': fields.float(string="CashBox difference", digits=(16, 2), readonly=True),
     }
@@ -96,7 +96,7 @@ class cashbox_write_off(osv.osv_memory):
                 return { 'type': 'ir.actions.act_window_close', 'res_id': w_id}
             # Write-off choice have been disabled since UTP-209
             else:
-                raise osv.except_osv(_('Warning'), _('An error has occured !'))
+                raise osv.except_osv(_('Warning'), _('An error has occurred !'))
         return { 'type': 'ir.actions.act_window_close', 'res_id': w_id}
 
 cashbox_write_off()

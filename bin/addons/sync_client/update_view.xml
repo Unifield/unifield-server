@@ -10,7 +10,7 @@
       <field name="model">sync.client.update_received</field>
       <field name="type">tree</field>
       <field name="arch" type="xml">
-        <tree colors="red:run == False" string="Instance Tree" hide_new_button="1">
+        <tree colors="red:run == False" string="Updates Received" hide_new_button="1">
           <field name="sequence_number"/>
           <field name="source"/>
           <field name="model"/>
@@ -90,6 +90,8 @@
             <button string="Run manually" name="run" type="object"
                     attrs="{'invisible':[('run','=',True)]}"/>
           </group>
+          <separator string="Fields -> Values" colspan="4"/>
+          <field name="fieldsvalues" nolabel="1" colspan="4" widget="text"/>
         </form>
       </field>
     </record>
@@ -160,7 +162,7 @@
       <field name="model">sync.client.update_to_send</field>
       <field name="type">form</field>
       <field name="arch" type="xml">
-        <form string="Instance Form" hide_new_button="1" hide_duplicate_button="1" >
+        <form string="Updates to Send" hide_new_button="1" hide_duplicate_button="1" >
           <group colspan="2" col="2">
             <separator string="Record" colspan="2"/>
             <field name="model"/>
@@ -195,6 +197,8 @@
             <separator string="Values"/>
             <field name="values" nolabel="1"/>
           </group>
+          <separator string="Fields -> Values" colspan="4"/>
+          <field name="fieldsvalues" nolabel="1" colspan="4" widget="text"/>
         </form>
       </field>
     </record>

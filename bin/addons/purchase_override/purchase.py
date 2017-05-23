@@ -27,6 +27,7 @@ import time
 import threading
 import logging
 import pooler
+import json
 from mx.DateTime import Parser
 from mx.DateTime import RelativeDateTime
 from time import strftime
@@ -39,6 +40,17 @@ from datetime import datetime
 import decimal_precision as dp
 
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
+
+ORDER_TYPES_SELECTION = [
+    ('regular', _('Regular')),
+    ('donation_exp', _('Donation before expiry')),
+    ('donation_st', _('Standard donation')),
+    ('loan', _('Loan')),
+    ('in_kind', _('In Kind Donation')),
+    ('purchase_list', _('Purchase List')),
+    ('direct', _('Direct Purchase Order')),
+]
+
 
 class purchase_order_confirm_wizard(osv.osv):
     _name = 'purchase.order.confirm.wizard'
@@ -430,12 +442,80 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _is_fixed_type(self, cr, uid, ids, field_name, args, context=None):
+        """
+        For each PO, set is the Order Type of the PO can be changed or not
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of purchase.order records to check
+        :param field_name: Name of the field to compute
+        :param args: Extra parameters
+        :param context: Context of the call
+        :return: A dictionnary with ID of the purchase.order record as keys and True/Fales as values
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context is None:
+            context =  {}
+
+        context['procurement_request'] = True
+
+        res = {}
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['po_from_fo', 'po_from_ir'], context=context):
+            if po.po_from_fo or po.po_from_ir:
+                src_type = set()
+                sale_ids = self.get_so_ids_from_po_ids(cr, uid, [po.id], context=context)
+                if sale_ids:
+                    for sale in self.pool.get('sale.order').read(cr, uid, sale_ids, ['procurement_request', 'order_type'], context=context):
+                        if sale['procurement_request'] or sale['order_type'] == 'regular':
+                            src_type.add('regular')
+                            src_type.add('purchase_list')
+
+                        if not sale['procurement_request']:
+                            if sale['order_type'] == 'regular':
+                                src_type.add('direct')
+                            elif sale['order_type'] == 'loan':
+                                src_type.add('loan')
+                            elif sale['order_type'] == 'donation_exp':
+                                src_type.add('donation_exp')
+                            elif sale['order_type'] == 'donation_st':
+                                src_type.add('donation_st')
+                res[po.id] = json.dumps(list(src_type))
+            else:
+                res[po.id] = json.dumps([x[0] for x in ORDER_TYPES_SELECTION])
+
+        return res
+
+    def _order_line_order_type(self, cr, uid, ids, context=None):
+        """
+        Return the list of ID of purchase.order records to update
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of purchase.order.line records updated
+        :param context: Context of the call
+        :return: A list that represents a domain to apply on purchase.order records
+        """
+        lines = self.read(cr, uid, ids, ['order_id'], context=context)
+        po_ids = set()
+        for l in lines:
+            po_ids.add(l['order_id'][0])
+
+        return list(po_ids)
+
 
     _columns = {
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
-                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'),
-                                        ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
-                                        ('direct', 'Direct Purchase Order')], string='Order Type', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'order_type': fields.selection(
+            selection=ORDER_TYPES_SELECTION,
+            string='Order Type',
+            required=True,
+            states={
+                'sourced': [('readonly',True)],
+                'split': [('readonly',True)],
+                'approved': [('readonly',True)],
+                'done': [('readonly',True)],
+            },
+        ),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
@@ -454,7 +534,7 @@ class purchase_order(osv.osv):
         'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)],'cancel':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
         'partner_address_id':fields.many2one('res.partner.address', 'Address', required=True,
                                              states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
-        'dest_partner_id': fields.many2one('res.partner', string='Destination partner', domain=[('partner_type', '=', 'internal')]),
+        'dest_partner_id': fields.many2one('res.partner', string='Destination partner'),
         'invoice_address_id': fields.many2one('res.partner.address', string='Invoicing address', required=True,
                                               help="The address where the invoice will be sent."),
         'invoice_method': fields.selection([('manual','Manual'),('order','From Order'),('picking','From Picking')], 'Invoicing Control', required=True, readonly=True,
@@ -528,6 +608,17 @@ class purchase_order(osv.osv):
             string="Line count",
             store=False,
         ),
+        'fixed_order_type': fields.function(
+            _is_fixed_type,
+            method=True,
+            type='char',
+            size=256,
+            string='Possible order types',
+            store={
+                'purchase.order': (lambda obj, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                'purchase.order.line': (_order_line_order_type, ['order_id'], 10),
+            },
+        ),
     }
 
     _defaults = {
@@ -549,6 +640,7 @@ class purchase_order(osv.osv):
         'split_po': False,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'update_in_progress': False,
+        'fixed_order_type': lambda *a: json.dumps([]),
     }
 
     def _check_po_from_fo(self, cr, uid, ids, context=None):
@@ -559,8 +651,39 @@ class purchase_order(osv.osv):
                 return False
         return True
 
+    def _check_order_type(self, cr, uid, ids, context=None):
+        '''
+        Check the integrity of the order type and the source order type
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of sale.order to check
+        :param context: Context of the call
+        :return: True if the integrity is ok.
+        '''
+        err = []
+
+        order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
+
+        for order in self.read(cr, uid, ids, ['name', 'fixed_order_type', 'order_type', 'is_a_counterpart'], context=context):
+            if order['is_a_counterpart'] and order['order_type'] != 'loan':
+                err.append(_('%s: This purchase order is a loan counterpart. You cannot change its order type') % order['name'])
+            else:
+                json_info = json.loads(order['fixed_order_type'])
+                if json_info and order['order_type'] not in json_info:
+                    allowed_type = ' / '.join(order_types_dict.get(x) for x in json_info)
+                    err.append(_('%s: Only %s order types are allowed for this purchase order') % (order['name'], allowed_type))
+
+        if err:
+            raise osv.except_osv(
+                _('Error'),
+                '\n'.join(x for x in err),
+            )
+
+        return True
+
     _constraints = [
         (_check_po_from_fo, 'You cannot choose an internal supplier for this purchase order', []),
+        (_check_order_type, 'The order type of the order is not consistent with the order type of the source', ['order_type'])
     ]
 
     def purchase_cancel(self, cr, uid, ids, context=None):
@@ -724,12 +847,38 @@ class purchase_order(osv.osv):
         w = {}
         local_market = None
 
+        if ids:
+            order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
+            err = []
+            for order in self.read(cr, uid, ids, ['name', 'fixed_order_type', 'order_type', 'is_a_counterpart']):
+                if order['is_a_counterpart'] and order_type != 'loan':
+                    err.append(_('%s: This purchase order is a loan counterpart. You cannot change its order type') % order['name'])
+                else:
+                    json_info = json.loads(order['fixed_order_type'])
+                    if json_info and order_type not in json_info:
+                        allowed_type = ' / '.join(order_types_dict.get(x) for x in json_info)
+                        err.append(
+                            _('%s: Only %s order types are allowed for this purchase order') % (order['name'], allowed_type))
+
+                if err:
+                    return {
+                        'warning': {
+                            'title': _('Error'),
+                            'message': '\n'.join(x for x in err),
+                        },
+                        'value': {
+                            'order_type': order['order_type'],
+                        }
+                    }
+
         # check if the current PO was created from scratch :
         proc_obj = self.pool.get('procurement.order')
         if order_type == 'direct':
             if not proc_obj.search_exist(cr, uid, [('purchase_id', 'in', ids)]):
+                order_type_value = self.read(cr, uid, ids, ['order_type'])
+                order_type_value = order_type_value[0].get('order_type', 'regular') if order_type_value else 'regular'
                 return {
-                    'value': {'order_type': 'regular'},
+                    'value': {'order_type': order_type_value},
                     'warning': {
                         'title': _('Error'),
                         'message': _('You cannot create a direct purchase order from scratch')
@@ -781,7 +930,7 @@ class purchase_order(osv.osv):
             elif partner['partner_type'] not in ('external', 'esc') and order_type == 'direct':
                 v.update({'partner_address_id': False, 'partner_id': False, 'pricelist_id': False,})
                 w.update({'message': 'You cannot have a Direct Purchase Order with a partner which is not external or an ESC',
-                          'title': 'An error has occured !'})
+                          'title': 'An error has occurred !'})
         elif partner_id and partner_id == local_market and order_type != 'purchase_list':
             v['partner_id'] = None
             v['partner_address_id'] = None
@@ -2035,6 +2184,9 @@ stock moves which are already processed : '''
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if context is None:
+            context = {}
+
         # duplicated code with wkf_confirm_wait_order because of backward compatibility issue with yml tests for dates,
         # which doesnt execute wkf_confirm_wait_order (null value in column "date_expected" violates not-null constraint for stock.move otherwise)
         # msf_order_date checks
@@ -2063,6 +2215,7 @@ stock moves which are already processed : '''
             todo2 = []
             todo3 = []
             todo4 = {}
+            to_invoice = set()
             if order.partner_id.partner_type in ('internal', 'esc') and order.order_type == 'regular' or \
                     order.order_type in ['donation_exp', 'donation_st', 'loan']:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
@@ -2107,6 +2260,10 @@ stock moves which are already processed : '''
                                                             'date': strftime('%Y-%m-%d %H:%M:%S')}, context=context)
                         wf_service.trg_trigger(uid, 'stock.move', move.id, cr)
                         if move.picking_id:
+                            if move.picking_id.sale_id:
+                                sale = move.picking_id.sale_id
+                                if sale.partner_id.partner_type in ('section', 'intermission') and sale.invoice_quantity == 'procurement':
+                                    to_invoice.add(move.picking_id.id)
                             all_move_closed = True
                             # Check if the picking should be updated
                             if move.picking_id.subtype == 'picking':
@@ -2122,6 +2279,11 @@ stock moves which are already processed : '''
                 for pick_id in todo3:
                     wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
                     wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
+
+            if to_invoice:
+                conf_context = context.copy()
+                conf_context['invoice_dpo_confirmation'] = order.id
+                self.pool.get('stock.picking').action_invoice_create(cr, uid, list(to_invoice), type='out_invoice', context=conf_context)
 
         # @@@override@purchase.purchase.order.wkf_approve_order
         self.write(cr, uid, ids, {'state': 'approved', 'date_approve': strftime('%Y-%m-%d')})
@@ -2330,8 +2492,6 @@ stock moves which are already processed : '''
                     'product_uos_qty': order_line.product_qty,
                     'product_uom': order_line.product_uom.id,
                     'product_uos': order_line.product_uom.id,
-                    'date': order_line.date_planned,
-                    'date_expected': order_line.date_planned,
                     'location_id': loc_id,
                     'location_dest_id': dest,
                     'picking_id': picking_id,
@@ -3279,6 +3439,9 @@ class purchase_order_line(osv.osv):
             context = {}
         if not default:
             default = {}
+
+        if 'origin' not in default:
+            default.update({'origin': False})
 
         if 'move_dest_id' not in default:
             default.update({'move_dest_id': False})

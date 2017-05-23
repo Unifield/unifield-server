@@ -124,6 +124,17 @@ class account_invoice(osv.osv):
         ]
         return dom1+[('is_debit_note', '=', False)]
 
+    def _get_int_journal_for_current_instance(self, cr, uid, context=None):
+        """
+        Returns the id of the Intermission journal of the current instance if it exists, else returns False.
+        """
+        if context is None:
+            context = {}
+        journal_obj = self.pool.get('account.journal')
+        int_journal_domain = [('type', '=', 'intermission'), ('is_current_instance', '=', True)]
+        int_journal_id = journal_obj.search(cr, uid, int_journal_domain, order='NO_ORDER', limit=1, context=context)
+        return int_journal_id and int_journal_id[0] or False
+
     def _get_fake_m2o_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Get many2one field content
@@ -138,11 +149,9 @@ class account_invoice(osv.osv):
                     if user[0].company_id.intermission_default_counterpart:
                         res[i.id] = user[0].company_id.intermission_default_counterpart.id
                 elif name == 'journal_id':
-                    int_journal_id = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')], context=context)
+                    int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
                     if int_journal_id:
-                        if isinstance(int_journal_id, (int, long)):
-                            int_journal_id = [int_journal_id]
-                        res[i.id] = int_journal_id[0]
+                        res[i.id] = int_journal_id
                 elif name == 'currency_id':
                     user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
                     if user[0].company_id.currency_id:
@@ -378,11 +387,16 @@ class account_invoice(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note']):
+        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note', 'is_intermission', 'state']):
             if inv.get('type', '') == 'in_invoice' and not inv.get('is_inkind_donation', False) and not inv.get('is_debit_note', False):
                 if inv.get('purchase_ids', False):
-                    # US-1702 Do not allow at all the deletion of SI coming from PO
-                    raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
+                    if inv.get('is_intermission'):
+                        if inv.get('state', '') != 'draft':  # only draft IVIs can be deleted
+                            raise osv.except_osv(_('Warning'),
+                                                 _('Intermission Vouchers linked to a PO can be deleted only in Draft state.'))
+                    else:
+                        # US-1702 Do not allow at all the deletion of SI coming from PO
+                        raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
         return True
 
     def _hook_period_id(self, cr, uid, inv, context=None):
@@ -466,11 +480,9 @@ class account_invoice(osv.osv):
                     else:
                         raise osv.except_osv("Error","Company Intermission Counterpart Account must be set")
                 # 'INT' intermission journal
-                int_journal_id = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')], context=context)
+                int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
                 if int_journal_id:
-                    if isinstance(int_journal_id, (int, long)):
-                        int_journal_id = [int_journal_id]
-                    defaults['fake_journal_id'] = int_journal_id[0]
+                    defaults['fake_journal_id'] = int_journal_id
                     defaults['journal_id'] = defaults['fake_journal_id']
         return defaults
 
@@ -492,6 +504,13 @@ class account_invoice(osv.osv):
             'partner_move_line': False,
             'imported_invoices': False
         })
+        # Manual duplication should generate a "manual document not created through the supply workflow"
+        # so we don't keep the link to: FOs, Picking List
+        if context.get('from_button', False):
+            default.update({
+                'order_ids': False,
+                'picking_id': False,
+            })
         # Reset register_line_ids if not given in default
         if 'register_line_ids' not in default:
             default['register_line_ids'] = []
@@ -691,6 +710,17 @@ class account_invoice(osv.osv):
                     if inv_line.partner_id != inv.partner_id:
                         raise osv.except_osv(_('Warning'),
                                              _('All the imported lines must have the same partner as the Debit Note.'))
+            # the journal used for Intermission Vouchers must be the INT journal of the current instance
+            is_iv = context and context.get('type') in ['in_invoice', 'out_invoice'] and not context.get('is_debit_note') \
+                and not context.get('is_inkind_donation') and context.get('is_intermission')
+            if is_iv:
+                int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
+                # update the IV if the INT journal exists but isn't used in the IV (= journal created after the IV creation)
+                if int_journal_id:
+                    if not inv.journal_id or inv.journal_id.id != int_journal_id:
+                        self.write(cr, uid, inv.id, {'journal_id': int_journal_id}, context=context)
+                else:
+                    raise osv.except_osv(_('Warning'), _('No Intermission journal found for the current instance.'))
             if not inv.date_invoice and not inv.document_date:
                 values.update({'date': curr_date, 'document_date': curr_date, 'state': 'date'})
             elif not inv.date_invoice:
@@ -1423,10 +1453,19 @@ class account_invoice_line(osv.osv):
     def copy_data(self, cr, uid, inv_id, default=None, context=None):
         """
         Copy an invoice line without its move lines
+        and without link to PO/FO lines when the duplication is manual
         """
         if default is None:
             default = {}
         default.update({'move_lines': False,})
+        # Manual duplication should generate a "manual document not created through the supply workflow"
+        # so we don't keep the link to PO/FO at line level
+        if context.get('from_button', False):
+            default.update({
+                'order_line_id': False,
+                'sale_order_line_id': False,
+                'sale_order_lines': False,
+            })
         return super(account_invoice_line, self).copy_data(cr, uid, inv_id, default, context)
 
     def unlink(self, cr, uid, ids, context=None):

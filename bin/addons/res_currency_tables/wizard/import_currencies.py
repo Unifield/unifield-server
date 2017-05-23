@@ -167,7 +167,7 @@ class import_currencies(osv.osv_memory):
         # Prepare some info
         model = 'confirm.import.currencies'
         complementary_data = {}
-        # Give currencies list if any problem occured
+        # Give currencies list if any problem occurred
         if currency_list and len(currency_list) > 0:
             model = 'warning.import.currencies'
             wizard_id = self.pool.get(model).create(cr, uid, {'currency_list': '\n'.join([x and x and x[1] for x in currency_list]), 'date': date}, context=context)

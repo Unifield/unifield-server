@@ -39,6 +39,7 @@
         'update_view.xml',
         'message_view.xml',
         'rules_view.xml',
+        'security/group.xml',
         'security/ir.model.access.csv',
         'data/cron.xml',
         'data/alert_email.xml',
