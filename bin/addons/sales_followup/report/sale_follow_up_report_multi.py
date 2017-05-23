@@ -171,9 +171,9 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     else:
                         if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
                             packing = move.picking_id.previous_step_id.name
-                            shipment = move.picking_id.shipment_id.name
+                            shipment = move.picking_id.shipment_id.name or ''
                         else:
-                            shipment = move.picking_id.name
+                            shipment = move.picking_id.name or ''
                             packing = ''
                         if not grouped:
                             key = (packing, False, move.product_uom.name)
