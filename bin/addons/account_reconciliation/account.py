@@ -32,7 +32,6 @@ class account_move_reconcile(osv.osv):
         """
         WARNING: This method has been taken from account module from OpenERP
         """
-        # @@@override@account.account.py
         total = 0.0
         for rec in self.browse(cr, uid, ids, context=context):
             for line in rec.line_partial_ids:
@@ -47,14 +46,12 @@ class account_move_reconcile(osv.osv):
                                                          'unreconcile_tx': '',
                                                      }
                                                      )
-        # @@@end
         return True
 
     def name_get(self, cr, uid, ids, context=None):
         """
         WARNING: This method has been taken from account module from OpenERP
         """
-        # @@@override@account.account.py
         if not ids:
             return []
         result = []
@@ -65,7 +62,6 @@ class account_move_reconcile(osv.osv):
                 result.append((r.id,name))
             elif hasattr(r, "name"):
                 result.append((r.id,r.name))
-        # @@@end
         return result
 
 account_move_reconcile()

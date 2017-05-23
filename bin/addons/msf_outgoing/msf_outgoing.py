@@ -3007,6 +3007,8 @@ class stock_picking(osv.osv):
         moves_states = {}
         pick_to_check = set()
 
+        wf_service = netsvc.LocalService("workflow")
+
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.subtype == 'standard':
                 raise osv.except_osv(
@@ -3090,6 +3092,23 @@ class stock_picking(osv.osv):
                             move_obj.write(cr, uid, [move.backmove_id.id], {'state': 'done'}, context=context)
                             move_obj.update_linked_documents(cr, uid, move.backmove_id.id, move.id, context=context)
                     if move.product_qty == 0.00:
+                        if move.sale_line_id:
+                            other_linked_moves = move_obj.search(cr, uid, [
+                                ('id', '!=', move.id),
+                                ('sale_line_id', '=', move.sale_line_id.id),
+                                ('state', 'not in', ['cancel', 'done'])
+                            ], order='NO_ORDER', limit=1, context=context)
+                            if not other_linked_moves:
+                                other_linked_moves = move_obj.search(cr, uid, [
+                                    ('id', '!=', move.id),
+                                    ('sale_line_id', '=', move.sale_line_id.id),
+                                    ('state', '!=', 'cancel')
+                                ], order='NO_ORDER', limit=1, context=context)
+                            if other_linked_moves:
+                                move_obj.update_linked_documents(cr, uid, move.id, other_linked_moves[0], context=context)
+                                proc_ids = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', other_linked_moves[0])], context=context)
+                                for proc_id in proc_ids:
+                                    wf_service.trg_write(uid, 'procurement.order', proc_id, cr)
                         move.unlink(force=True)
 #                        move.action_done(context=context)
                 elif move.product_qty != 0.00:
@@ -5034,7 +5053,7 @@ class pack_family_memory(osv.osv):
                 min(pl.currency_id) as currency_id,
                 sum(sol.price_unit * m.product_qty) as total_amount,
                 bool_and(m.not_shipped) as not_shipped,
-                '' as comment
+                ''::varchar(1) as comment
             from stock_picking p
             inner join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
             left join sale_order so on so.id = p.sale_id

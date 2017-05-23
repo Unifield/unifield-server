@@ -115,6 +115,7 @@
             <field name="name">board.weekly.res.log.report.graph</field>
             <field name="model">res.log.report</field>
             <field name="type">graph</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <graph string="Weekly Global Activity" type="bar">
                 	<field name="day"/>
@@ -136,6 +137,7 @@
             <field name="name">board.administration.form</field>
             <field name="model">board.board</field>
             <field name="type">form</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <form string="Administration Dashboard">
                     <hpaned position="100">

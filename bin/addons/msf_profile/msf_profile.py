@@ -46,6 +46,34 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2632_patch(self, cr, uid, *a, **b):
+        '''fix ir.model.data entries on sync_server instances
+        '''
+        update_module = self.pool.get('sync.server.update')
+        if update_module:
+            cr.execute("""
+            UPDATE ir_model_data SET module='msf_sync_data_server' WHERE
+            model='sync_server.message_rule' AND module='';
+            """)
+
+    def us_2806_add_ir_ui_view_constraint(self, cr, uid, *a, **b):
+        '''
+        The constraint may have not been added during the update because it is
+        needeed to update all the modules before to add this constraint.
+        Having it in this patch script will add it at the end of the update.
+        '''
+        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'ir_ui_view_model_type_priority\'')
+        if not cr.fetchone():
+            cr.execute("""SELECT model, type, priority, count(*)
+            FROM ir_ui_view
+            WHERE inherit_id IS NULL
+            GROUP BY model, type, priority
+            HAVING count(*) > 1""")
+            if not cr.fetchone():
+                cr.execute('CREATE UNIQUE INDEX ir_ui_view_model_type_priority ON ir_ui_view (priority, type, model) WHERE inherit_id IS NULL')
+            else:
+                self._logger.warn('The constraint \'ir_ui_view_model_type_priority\' have not been created because there is some duplicated values.')
+
     def remove_not_synchronized_data(self, cr, uid, *a, **b):
         '''
         The list of models to synchronize was wrong. It is now build
@@ -166,7 +194,7 @@ class patch_scripts(osv.osv):
     def setup_security_on_sync_server(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if not update_module:
-            # this script is exucuted on server side, update the first delete
+            # this script is executed on server side, update the first delete
             return
 
         data_obj = self.pool.get('ir.model.data')

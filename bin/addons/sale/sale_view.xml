@@ -435,6 +435,7 @@
             <field name="name">sale.order.uninvoiced.line</field>
             <field name="model">sale.order.line</field>
             <field name="type">search</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <search string="Search Uninvoiced Lines">
                     <filter icon="terp-gtk-go-back-rtl" string="To Do"

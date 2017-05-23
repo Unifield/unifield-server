@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -1476,7 +1477,7 @@ class stock_picking(osv.osv):
             'in': 'view_picking_in_form',
             'internal': 'view_picking_form',
         }
-        return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', view_list.get(pick.type, 'view_picking_form')) 
+        return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', view_list.get(pick.type, 'view_picking_form'))
 
     def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
@@ -2969,41 +2970,92 @@ class stock_inventory(osv.osv):
         product_context = dict(context, compute_child=False)
 
         location_obj = self.pool.get('stock.location')
-        for inv in self.browse(cr, uid, ids, context=context):
-            move_ids = []
-            for line in inv.inventory_line_id:
-                pid = line.product_id.id
-                product_context.update(uom=line.product_uom.id, date=inv.date, prodlot_id=line.prod_lot_id.id)
-                amount = location_obj._product_get(cr, uid, line.location_id.id, [pid], product_context)[pid]
+        product_obj = self.pool.get('product.product')
+        product_tmpl_obj = self.pool.get('product.template')
+        product_dict = {}
+        product_tmpl_dict = {}
 
-                change = line.product_qty - amount
-                lot_id = line.prod_lot_id.id
-                if change and self._hook_dont_move(cr, uid, line=line):
-                    location_id = line.product_id.product_tmpl_id.property_stock_inventory.id
+        for inv in self.read(cr, uid, ids, ['inventory_line_id', 'date', 'name'], context=context):
+            move_ids = []
+
+            # gather all information needed for the lines treatment first to do
+            # less requests
+            if self._name == 'initial.stock.inventory':
+                inv_line_obj = self.pool.get('initial.stock.inventory.line')
+            else:
+                inv_line_obj = self.pool.get('stock.inventory.line')
+
+            line_read = inv_line_obj.read(cr, uid, inv['inventory_line_id'],
+                                          ['product_id', 'product_uom', 'prod_lot_id', 'location_id',
+                                           'product_qty', 'inventory_id', 'dont_move', 'comment',
+                                           'reason_type_id', 'average_cost'],
+                                          context=context)
+            product_id_list = [x['product_id'][0] for x in line_read if
+                               x['product_id'][0] not in product_dict]
+            product_id_list = list(set(product_id_list))
+            product_read = product_obj.read(cr, uid, product_id_list,
+                                            ['product_tmpl_id'], context=context)
+            for product in product_read:
+                product_id = product['id']
+                product_dict[product_id] = {}
+                product_dict[product_id]['p_tmpl_id'] = product['product_tmpl_id'][0]
+            tmpl_ids = [x['p_tmpl_id'] for x in product_dict.values()]
+
+            product_tmpl_id_list = [x for x in tmpl_ids if x not in
+                                    product_tmpl_dict]
+            product_tmpl_id_list = list(set(product_tmpl_id_list))
+            product_tmpl_read = product_tmpl_obj.read(cr, uid,
+                                                      product_tmpl_id_list, ['property_stock_inventory'],
+                                                      context=context)
+            product_tmpl_dict = dict((x['id'], x['property_stock_inventory'][0]) for x in product_tmpl_read)
+
+            for product_id in product_id_list:
+                product_tmpl_id = product_dict[product_id]['p_tmpl_id']
+                stock_inventory = product_tmpl_dict[product_tmpl_id]
+                product_dict[product_id]['stock_inventory'] = stock_inventory
+
+            for line in line_read:
+                pid = line['product_id'][0]
+                lot_id = line['prod_lot_id'] and line['prod_lot_id'][0] or False
+                product_context.update(uom=line['product_uom'][0],
+                                       date=inv['date'], prodlot_id=lot_id)
+                amount = location_obj._product_get(cr, uid,
+                                                   line['location_id'][0], [pid], product_context)[pid]
+
+                change = line['product_qty'] - amount
+                if change and self._hook_dont_move(cr, uid, dont_move=line['dont_move']):
+                    location_id = product_dict[line['product_id'][0]]['stock_inventory']
                     value = {
-                        'name': 'INV:' + str(line.inventory_id.id) + ':' + line.inventory_id.name,
-                        'product_id': line.product_id.id,
-                        'product_uom': line.product_uom.id,
+                        'name': 'INV:' + str(inv['id']) + ':' + inv['name'],
+                        'product_id': line['product_id'][0],
+                        'product_uom': line['product_uom'][0],
                         'prodlot_id': lot_id,
-                        'date': inv.date,
+                        'date': inv['date'],
                     }
                     if change > 0:
                         value.update( {
                             'product_qty': change,
                             'location_id': location_id,
-                            'location_dest_id': line.location_id.id,
+                            'location_dest_id': line['location_id'][0],
                         })
                     else:
                         value.update( {
                             'product_qty': -change,
-                            'location_id': line.location_id.id,
+                            'location_id': line['location_id'][0],
                             'location_dest_id': location_id,
                         })
-                    move_ids.append(self._inventory_line_hook(cr, uid, line, value))
-            # Changed the text of the following line to "is confirmed" instead of "is done" due to the state value         
-            message = _('Inventory') + " '" + inv.name + "' "+ _("is confirmed.")
-            self.log(cr, uid, inv.id, message)
-            self.write(cr, uid, [inv.id], {'state': 'confirm', 'move_ids': [(6, 0, move_ids)]})
+                    value.update({
+                        'comment': line['comment'],
+                        'reason_type_id': line['reason_type_id'][0],
+                    })
+
+                    if self._name == 'initial.stock.inventory':
+                        value.update({'price_unit': line['average_cost']})
+                    move_ids.append(self._inventory_line_hook(cr, uid, None, value))
+            # Changed the text of the following line to "is confirmed" instead of "is done" due to the state value
+            message = _('Inventory') + " '" + inv['name'] + "' "+ _("is confirmed.")
+            self.log(cr, uid, inv['id'], message)
+            self.write(cr, uid, [inv['id']], {'state': 'confirm', 'move_ids': [(6, 0, move_ids)]})
         return True
 
     def action_cancel_draft(self, cr, uid, ids, context=None):

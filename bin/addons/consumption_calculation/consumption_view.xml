@@ -313,6 +313,7 @@
             <field name="name">stock.location.search.without_buttons</field>
             <field name="model">stock.location</field>
             <field name="type">search</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <search string="Stock Locations">
                     <field name="name" />

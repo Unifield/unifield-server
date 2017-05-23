@@ -146,6 +146,7 @@
 			<field name="name">picking.ticket.tree</field>
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
+            <field name="priority">18</field>
 			<field name="arch" type="xml">
 				<tree colors="blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date"
                     string="Picking Tickets" hide_new_button="1">
@@ -192,6 +193,7 @@
 			<!-- without priority 'view_picking_form' from stock is used -->
 			<!-- but then other form view also use it... -->
 			<!-- <field eval="11" name="priority"/> -->
+            <field name="priority">18</field>
 			<field name="arch" type="xml">
 				<form string="Picking Ticket" noteditable="not __id">
 					<group col="6" colspan="4">
@@ -377,6 +379,7 @@
 			<field name="name">picking.ticket.search</field>
 			<field name="model">stock.picking</field>
 			<field name="type">search</field>
+            <field name="priority">18</field>
 			<field name="arch" type="xml">
 				<search string="Picking Tickets">
 					<group col="8" colspan="4">
@@ -428,6 +431,7 @@
 			<field name="name">pt.ppl.search</field>
 			<field name="model">stock.picking</field>
 			<field name="type">search</field>
+            <field name="priority">20</field>
 			<field name="arch" type="xml">
 				<search string="Picking Tickets">
 					<group col="8" colspan="4">
@@ -542,6 +546,7 @@
 			<field name="name">ppl.tree</field>
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
+            <field name="priority">19</field>
 			<field name="arch" type="xml">
 				<tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Pre-Packing Lists">
 					<field name="name"/>
@@ -582,6 +587,7 @@
 			<!-- without priority 'view_picking_form' from stock is used -->
 			<!-- but then other form view also use it... -->
 			<!-- <field eval="11" name="priority"/> -->
+            <field name="priority">19</field>
 			<field name="arch" type="xml">
 				<form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Pre-Packing List">
 					<group col="6" colspan="4">
@@ -737,6 +743,7 @@
 			<field name="name">ppl.search</field>
 			<field name="model">stock.picking</field>
 			<field name="type">search</field>
+            <field name="priority">19</field>
 			<field name="arch" type="xml">
 				<search string="Pre-Packing List">
 					<group col="8" colspan="4">
@@ -804,6 +811,7 @@
 			<field name="name">pt.ppl.form</field>
 			<field name="model">stock.picking</field>
 			<field name="type">form</field>
+            <field name="priority">20</field>
 			<field name="arch" type="xml">
 				<form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Shipment preparation">
 					<group col="6" colspan="4">
@@ -883,6 +891,7 @@
 			<field name="name">pt.ppl.tree</field>
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
+            <field name="priority">20</field>
 			<field name="arch" type="xml">
 				<tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Shipment preparation">
 					<field name="name"/>
@@ -930,6 +939,7 @@
 			<field name="name">packing.tree</field>
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
+            <field name="priority">17</field>
 			<field name="arch" type="xml">
 				<tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Packing">
 					<field name="name"/>
@@ -970,6 +980,7 @@
 			<!-- without priority 'view_picking_form' from stock is used -->
 			<!-- but then other form view also use it... -->
 			<!-- <field eval="11" name="priority"/> -->
+            <field name="priority">17</field>
 			<field name="arch" type="xml">
 				<form string="Packing">
 					<group col="6" colspan="4">
@@ -1110,6 +1121,7 @@
 			<field name="name">packing.search</field>
 			<field name="model">stock.picking</field>
 			<field name="type">search</field>
+            <field name="priority">17</field>
 			<field name="arch" type="xml">
 				<search string="Packing">
 					<group col="8" colspan="4">
@@ -1180,6 +1192,7 @@
 			<field name="name">stock.picking.wizard</field>
 			<field name="model">stock.picking</field>
 			<field name="type">form</field>
+            <field name="priority">21</field>
 			<field name="arch" type="xml">
                 <form string="Change description shipment line">
 					<field name="description_ppl"/>
@@ -1446,6 +1459,7 @@
             <field name="name">Closed Shipped Lines</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <tree string="Closed shipped lines" editable="top" noteditable="1" hide_delete_button="1" hide_new_button="1" colors="red: not_shipped">
                     <field name="origin"/>
@@ -1469,6 +1483,7 @@
 			<field name="name">Closed Shipment Lists</field>
 			<field name="model">stock.move</field>
 			<field name="type">search</field>
+            <field name="priority">17</field>
 			<field name="arch" type="xml">
 				<search string="Shipment">
                     <field name="product_id"/>

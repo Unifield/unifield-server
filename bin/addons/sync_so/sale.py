@@ -23,6 +23,7 @@ import logging
 
 from osv import osv, fields
 import so_po_common
+assert so_po_common # needed by rw
 import time
 from sync_client import get_sale_purchase_logger
 
@@ -81,7 +82,7 @@ class sale_order_sync(osv.osv):
         return res
 
     _columns = {
-                'received': fields.boolean('Received by Client', readonly=True),
+        'received': fields.boolean('Received by Client', readonly=True),
                 'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
                 'sync_date': fields.function(
                     _get_sync_date,
@@ -90,7 +91,7 @@ class sale_order_sync(osv.osv):
                     type='datetime',
                     store=False,
                     readonly=True,
-                ),
+        ),
     }
 
     _defaults = {
@@ -114,18 +115,18 @@ class sale_order_sync(osv.osv):
         if not context:
             context = {}
 
-        so_po_common = self.pool.get('so.po.common')
+        so_po_common_obj = self.pool.get('so.po.common')
         if context.get('restore_flag'):
             # UF-1830: Cannot create an FO from a recovery message
-            so_po_common.create_invalid_recovery_message(cr, uid, source, po_info.name, context)
+            so_po_common_obj.create_invalid_recovery_message(cr, uid, source, po_info.name, context)
             return "Recovery: cannot create the SO from a PO. Please inform the owner of the PO " + po_info.name + " to cancel it and to recreate a new process."
 
         context['no_check_line'] = True
         po_dict = po_info.to_dict()
 
         header_result = {}
-        so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, source, po_info, False, False, False, True, context)
+        so_po_common_obj.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
+        header_result['order_line'] = so_po_common_obj.get_lines(cr, uid, source, po_info, False, False, False, True, context)
         # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
         order_line = []
         for line in header_result['order_line']:
@@ -135,6 +136,10 @@ class sale_order_sync(osv.osv):
 
         default = {}
         default.update(header_result)
+        default['fo_created_by_po_sync'] = True
+        default['procurement_request'] = False
+
+        context['procurement_request'] = False
 
         so_id = self.create(cr, uid, default , context=context)
         name = self.browse(cr, uid, so_id, context).name
@@ -147,15 +152,12 @@ class sale_order_sync(osv.osv):
                     ref = source + "." + ref
                     po_object = self.pool.get('purchase.order')
                     po_ids = po_object.search(cr, uid, [('partner_ref', '=',
-                        ref)], order='NO_ORDER', context=context)
+                                                         ref)], order='NO_ORDER', context=context)
 
                     # in both case below, the FO become counter part
                     if po_ids: # IF the PO Loan has already been created, if not, just update the value reference, then when creating the PO loan, this value will be updated
                         # link the FO loan to this PO loan
                         po_object.write(cr, uid, po_ids, {'origin': name}, context=context)
-                        self.write(cr, uid, [so_id], {'fo_created_by_po_sync': True} , context=context)
-                    else:
-                        self.write(cr, uid, [so_id], {'origin': ref, 'fo_created_by_po_sync': True} , context=context)
 
         # reset confirmed_delivery_date to all lines
 #        so_line_obj = self.pool.get('sale.order.line')
@@ -165,7 +167,7 @@ class sale_order_sync(osv.osv):
 #            for line in order.order_line:
 #                so_line_obj.write(cr, uid, [line.id], {'confirmed_delivery_date': False})
 
-        so_po_common.update_next_line_number_fo_po(cr, uid, so_id, self, 'sale_order_line', context)
+        so_po_common_obj.update_next_line_number_fo_po(cr, uid, so_id, self, 'sale_order_line', context)
 
         # Just to print the result message when the sync message got executed
         message = "The FO " + name + " created successfully, linked to the PO " + po_info.name + " at " + source
@@ -179,18 +181,18 @@ class sale_order_sync(osv.osv):
         context['no_check_line'] = True
 
         po_dict = po_info.to_dict()
-        so_po_common = self.pool.get('so.po.common')
+        so_po_common_obj = self.pool.get('so.po.common')
 
         header_result = {}
-        so_po_common.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
-        so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
+        so_po_common_obj.retrieve_so_header_data(cr, uid, source, header_result, po_dict, context)
+        so_id = so_po_common_obj.get_original_so_id(cr, uid, po_info.partner_ref, context)
 
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, source, po_info, False, so_id, True, False, context)
+        header_result['order_line'] = so_po_common_obj.get_lines(cr, uid, source, po_info, False, so_id, True, False, context)
 
         default = {}
         default.update(header_result)
 
-        res_id = self.write(cr, uid, so_id, default , context=context)
+        self.write(cr, uid, so_id, default , context=context)
 
         # Just to print the result message when the sync message got executed
         name = self.browse(cr, uid, so_id, context).name
@@ -204,13 +206,13 @@ class sale_order_sync(osv.osv):
             context = {}
 
         context['no_check_line'] = True
-        so_po_common = self.pool.get('so.po.common')
-        so_id = so_po_common.get_original_so_id(cr, uid, po_info.partner_ref, context)
+        so_po_common_obj = self.pool.get('so.po.common')
+        so_id = so_po_common_obj.get_original_so_id(cr, uid, po_info.partner_ref, context)
         if not so_id:
             if context.get('restore_flag'):
                 # UF-1830: Create a message to remove the invalid reference to the inexistent document
-                so_po_common = self.pool.get('so.po.common')
-                so_po_common.create_invalid_recovery_message(cr, uid, source, po_info.name, context)
+                so_po_common_obj = self.pool.get('so.po.common')
+                so_po_common_obj.create_invalid_recovery_message(cr, uid, source, po_info.name, context)
                 return "Recovery: the reference on " + po_info.name + " at " + source + " will be set to void."
             raise Exception, "Cannot find the original FO with the given info."
 
@@ -218,7 +220,7 @@ class sale_order_sync(osv.osv):
         client_order_ref = source + "." + po_info.name
 
         if not so_value.client_order_ref or client_order_ref != so_value.client_order_ref: # only issue a write if the client_order_reference is not yet set!
-            res_id = self.write(cr, uid, so_id, {'client_order_ref': client_order_ref} , context=context)
+            self.write(cr, uid, so_id, {'client_order_ref': client_order_ref} , context=context)
 
         '''
             Now search all sourced-FOs and update the reference if they have not been set at the moment of sourcing
@@ -229,7 +231,7 @@ class sale_order_sync(osv.osv):
         for line in line_ids:
             temp = self.browse(cr, uid, line).client_order_ref
             if not temp: # only issue a write if the client_order_reference is not yet set!
-                res_id = self.write(cr, uid, line, {'client_order_ref': client_order_ref} , context=context)
+                self.write(cr, uid, line, {'client_order_ref': client_order_ref} , context=context)
 
         # Just to print the result message when the sync message got executed
         message = "The FO " + so_value.name + " updated successfully, as the partner PO " + po_info.name + " got updated at " + source
@@ -311,7 +313,7 @@ class sale_order_sync(osv.osv):
         # monitor changes on purchase.order
         for id, changes in changes.items():
             logger = get_sale_purchase_logger(cr, uid, self, id, \
-                context=context)
+                                              context=context)
             if 'order_line' in changes:
                 old_lines, new_lines = map(set, changes['order_line'])
                 logger.is_product_added |= (len(new_lines - old_lines) > 0)
@@ -343,7 +345,7 @@ class sale_order_sync(osv.osv):
         if isinstance(split_ids, (int, long)):
             split_ids = [split_ids]
 
-        res = super(sale_order_sync, self)._hook_create_sync_split_fo_messages(cr, uid, split_ids, original_id, context=context)
+        super(sale_order_sync, self)._hook_create_sync_split_fo_messages(cr, uid, split_ids, original_id, context=context)
 
         def generate_msg_to_send(rule, model_obj, object_id, partner):
             partner_name = partner.name
@@ -387,7 +389,7 @@ class sale_order_sync(osv.osv):
             # Generate messages for cancel lines
             if solccl_rule:
                 available_solc_ids = solc_obj.search(cr, uid, eval(solccl_rule.domain),
-                        order='NO_ORDER', context=context)
+                                                     order='NO_ORDER', context=context)
                 for asolc in solc_obj.browse(cr, uid, available_solc_ids, context=context):
                     sol_ids = sol_obj.search(cr, uid, [
                         ('order_id', '=', original_id),
@@ -398,7 +400,7 @@ class sale_order_sync(osv.osv):
 
             if nfo_model_obj and nfo_rule:
                 available_nfo_ids = self.search(cr, uid, eval(nfo_rule.domain),
-                        order='NO_ORDER', context=context)
+                                                order='NO_ORDER', context=context)
                 if original_id in available_nfo_ids:
                     generate_msg_to_send(nfo_rule, nfo_model_obj, original_id, orig_partner)
             if vfo_model_obj and vfo_rule:

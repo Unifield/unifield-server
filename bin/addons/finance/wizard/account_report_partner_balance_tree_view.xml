@@ -50,7 +50,7 @@
             <field name="name">account.move.line.tree</field>
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
-            <field name="priority" eval="200"/>
+            <field name="priority" eval="201"/>
             <field name="arch" type="xml">
                 <tree string="Account Entry Line" editable="bottom" noteditable="1" colors="red:state in ('draft');black:state in ('valid')" hide_new_button="1">
                     <field name="journal_id"/>

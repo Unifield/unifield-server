@@ -176,13 +176,13 @@ class stock_inventory(osv.osv):
         @param move_vals:
         @return:
         """
-
         # Copy the comment
-        move_vals.update({
-            'comment': inventory_line.comment,
-            'reason_type_id': inventory_line.reason_type_id.id,
-            'not_chained': True,
-        })
+        if inventory_line:
+            move_vals.update({
+                'comment': inventory_line.comment,
+                    'reason_type_id': inventory_line.reason_type_id.id,
+            })
+        move_vals.update({'not_chained': True})
 
         return super(stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals)
         # @@@end
