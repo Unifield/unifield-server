@@ -145,6 +145,7 @@
             <field name="name">account.analytic.line.form</field>
             <field name="model">account.analytic.line</field>
             <field name="type">form</field>
+            <field name="priority" eval="17"/>
             <field name="arch" type="xml">
                 <form string="Analytic Entry">
                     <group colspan="4" col="6">
@@ -295,6 +296,7 @@
             <field name="name">account.analytic.line.extended_form</field>
             <field name="model">account.analytic.line</field>
             <field name="type">form</field>
+            <field name="priority" eval="18"/>
             <field name="arch" type="xml">
                 <form string="Project line">
                     <field name="name"/>

@@ -269,6 +269,7 @@
             <field name="model">account.account</field>
             <field name="type">tree</field>
             <field name="field_parent">child_id</field>
+            <field name="priority" eval="13"/>
             <field name="arch" type="xml">
                 <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts" toolbar="1" >
                     <field name="code"/>
@@ -505,6 +506,7 @@
             <field name="name">account.bank.statement.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
+            <field name="priority" eval="19"/>
             <field name="arch" type="xml">
                 <tree colors="red:balance_end_real!=balance_end and state=='draft';blue:state=='draft' and (balance_end_real==balance_end);black:state=='confirm'" string="Statement">
                     <field name="name"/>
@@ -2569,6 +2571,7 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
             <field name="name">account.bank.statement.tree</field>
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
+            <field name="priority" eval="17"/>
             <field name="arch" type="xml">
                 <tree colors="red:balance_end_real!=balance_end;blue:state=='draft' and (balance_end_real==balance_end);black:state in ('open')" string="Statement">
                     <field name="name"/>

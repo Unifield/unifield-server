@@ -6,6 +6,7 @@
             <field name="name">project.account.analytic.line.form</field>
             <field name="model">project.account.analytic.line</field>
             <field name="type">form</field>
+            <field name="priority" eval="19"/>
             <field name="arch" type="xml">
                 <form string="View Account Analytic Lines">
                 	<group colspan="4" >
