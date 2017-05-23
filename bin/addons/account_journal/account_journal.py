@@ -216,19 +216,6 @@ class account_journal(osv.osv):
         self.pool.get('account.sequence.fiscalyear').create(cr, uid, {'sequence_id': sequence_id, 'fiscalyear_id': fiscalyear, 'sequence_main_id': main_sequence,})
         return True
 
-    def check_linked_journal(self, cr, uid, journal_id, context=None):
-        """
-        Check that used linked journal is not used twice.
-        """
-        if context is None:
-            context = {}
-        if not journal_id:
-            raise osv.except_osv(_('Error'), _('Programming error.'))
-        res = self.search(cr, uid, [('bank_journal_id', '=', journal_id)], count=1)
-        if res and res > 1:
-            raise osv.except_osv(_('Error'), _('Corresponding bank journal already used. Choose another one.'))
-        return True
-
     def create(self, cr, uid, vals, context=None):
         """
         Create the journal with its sequence, a sequence linked to the fiscalyear and some register if this journal type is bank, cash or cheque.
@@ -279,9 +266,6 @@ class account_journal(osv.osv):
 
         # Create journal
         journal_id = super(account_journal, self).create(cr, uid, vals, context)
-        # Check that linked bank journal if cheque
-        if vals['type'] == 'cheque':
-            self.check_linked_journal(cr, uid, vals['bank_journal_id'] or False)
 
         # Some verification for cash, bank, cheque and cur_adj type
         if vals['type'] in ['cash', 'bank', 'cheque', 'cur_adj']:
@@ -339,9 +323,6 @@ class account_journal(osv.osv):
         for j in self.browse(cr, uid, ids):
             if j.type == 'cur_adj' and j.default_debit_account_id.user_type_code != 'expense':
                 raise osv.except_osv(_('Warning'), _('Default Debit Account should be an expense account for Adjustement Journals!'))
-            # Check linked bank journal if type is cheque
-            if j.type == 'cheque':
-                self.check_linked_journal(cr, uid, j.bank_journal_id.id, context=context)
             # US-265: Check account bank statements if name change
             if not context.get('sync_update_execution'):
                 if vals.get('name', False):
