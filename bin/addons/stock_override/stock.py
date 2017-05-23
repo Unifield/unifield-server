@@ -1348,6 +1348,14 @@ class stock_move(osv.osv):
 
         return False
 
+    def _default_is_ext_cu(self, cr, uid, context=None):
+        if not context:
+            context = {}
+        if context.get('ext_cu', False):
+            return True
+        return False
+
+
     def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
         '''
         Fill the error message if the product of the line is inactive
@@ -1431,6 +1439,7 @@ class stock_move(osv.osv):
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
         'sync_dpo': fields.boolean(string='Sync. DPO'),
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
+        'is_ext_cu': fields.boolean(sring='Is Ext CU ?'),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
@@ -1455,6 +1464,7 @@ class stock_move(osv.osv):
         'inactive_product': False,
         'inactive_error': lambda *a: '',
         'has_to_be_resourced': False,
+        'is_ext_cu': _default_is_ext_cu,
     }
 
     @check_rw_warning
