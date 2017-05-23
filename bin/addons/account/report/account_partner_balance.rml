@@ -313,7 +313,7 @@
           </td>
         </tr>
       </blockTable>
-      <pageBreak>[[ p_entries[0].account_type != 'payable'  and removeParentNode('pageBreak')]] </pageBreak>
+      <pageBreak>[[ (p_entries[0].account_type != 'payable' or get_nb_account_types() &lt; 2) and removeParentNode('pageBreak')]]</pageBreak>
     </section>
       <blockTable colWidths="75.0,50.0,50.0,50.0,124.0,50.0,91.0,50.0" style="Table2_header">
         [[ get_has_data() and removeParentNode('blockTable') ]]

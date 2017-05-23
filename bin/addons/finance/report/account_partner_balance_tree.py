@@ -54,6 +54,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_partner_account_move_lines': self._get_partner_account_move_lines,
             'get_lines_per_currency': self._get_lines_per_currency,
             'get_partners_total_debit_credit_balance_by_account_type': self._get_partners_total_debit_credit_balance_by_account_type,
+            'get_nb_account_types': self._get_nb_account_types,
             'get_has_data': self._get_has_data,
         })
 
@@ -77,6 +78,12 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         Returns True if the IB data must be displayed
         """
         return self.initial_balance
+
+    def _get_nb_account_types(self):
+        """
+        Returns the number of different account types to display
+        """
+        return self.ACCOUNT_TYPE and len(self.ACCOUNT_TYPE) or 0
 
     def _get_type_of_accounts(self):
         if self.result_selection == 'customer':
