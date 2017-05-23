@@ -50,7 +50,7 @@ SALE_ORDER_SPLIT_SELECTION = [('original_sale_order', 'Original'),
                               ('stock_split_sale_order', '2'), # from Stock
                               ('local_purchase_split_sale_order', '3')] # Local Purchase
 
-import sale
+import sale_order
 import stock
 import sale_installer
 import wizard

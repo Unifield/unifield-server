@@ -47,7 +47,7 @@
     """,
     'author': 'OpenERP SA',
     'website': 'http://www.openerp.com',
-    'depends': ['stock', 'procurement', 'board', 'stock_override', 'msf_tools'],
+    'depends': ['stock', 'procurement', 'board'],
     'init_xml': [],
     'update_xml': [
         'wizard/sale_make_invoice_advance.xml',
