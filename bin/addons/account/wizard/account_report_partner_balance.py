@@ -34,7 +34,6 @@ class account_partner_balance(osv.osv_memory):
     }
 
     _defaults = {
-#        'initial_balance': True,
         'display_partner': 'non-zero_balance',
     }
 
