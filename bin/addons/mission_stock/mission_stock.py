@@ -260,7 +260,7 @@ class stock_mission_report(osv.osv):
     def xls_write_header(self, sheet, cell_list, style):
         column_count = 0
         for column in cell_list:
-            sheet.write(0, column_count, _(column), style)
+            sheet.write(2, column_count, _(column), style)
             column_count += 1
 
     def xls_write_row(self, sheet, cell_list, row_count, style):
@@ -357,16 +357,6 @@ class stock_mission_report(osv.osv):
                 align: wrap on, vert center, horiz center;
             """)
         header_style.borders = borders
-
-        book = Workbook()
-        sheet = book.add_sheet('Sheet 1')
-        sheet.row_default_height = 60*20
-        header_row = [_(column_name) for column_name, colum_property in header]
-        self.xls_write_header(sheet, header_row, header_style)
-
-        sheet.row(0).height_mismatch = True
-        sheet.row(0).height = 45*20
-
         # this style is done to be the same than previous mako configuration
         row_style = easyxf("""
                 font: height 220;
@@ -375,8 +365,27 @@ class stock_mission_report(osv.osv):
             """)
         row_style.borders = borders
 
+        book = Workbook()
+        sheet = book.add_sheet('Sheet 1')
+        sheet.row_default_height = 60*20
+
+        sheet.write(0, 0, _("Generating instance"), row_style)
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.name
+        sheet.write(0, 1, instance_name, row_style)
+        sheet.write(1, 0, _("Instance selection"), row_style)
+        report_name = self.read(cr, uid, report_id, ['name'])['name']
+        sheet.write(1, 1, report_name, row_style)
+
+        header_row = [_(column_name) for column_name, colum_property in header]
+        self.xls_write_header(sheet, header_row, header_style)
+
+        # tab header bigger height:
+        sheet.row(2).height_mismatch = True
+        sheet.row(2).height = 45*20
+
+
         # write the lines
-        row_count = 1
+        row_count = 3
         for row in request_result:
             try:
                 product_amc = 0.00

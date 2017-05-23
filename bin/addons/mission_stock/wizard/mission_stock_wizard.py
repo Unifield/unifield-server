@@ -166,6 +166,7 @@ class mission_stock_wizard(osv.osv_memory):
         })
 
         return {'type': 'ir.actions.act_window',
+                'name': '%s: %s' % (_('Stock mission report'), wiz_id.report_id.name),
                 'res_model': 'stock.mission.report.line',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
