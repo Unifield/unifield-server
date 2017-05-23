@@ -25,21 +25,19 @@ class wizard_add_cost_centers(osv.osv_memory):
     _description = 'Add Cost Centers'
 
     _columns = {
-        'cost_center_ids': fields.many2many('account.analytic.account', 'wizard_add_cost_centers', 'wizard_id', 'cost_center_id', string='Cost Centers To Synchronize', domain="[('category', '=', 'OC'), ('is_instance_registered', '=', True)]", required=True),
+        'cost_center_ids': fields.many2many('account.analytic.account', 'wizard_add_cost_centers', 'wizard_id', 'cost_center_id', string='Cost Centers To Synchronize', domain="[('category', '=', 'OC')]", required=True),
     }
 
     def add_cost_centers(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        instance_obj = self.pool.get('msf.instance')
         # create vals
         for wizard in self.browse(cr, uid, ids, context=context):
-            target_cost_center_values = []
             for cost_center in wizard.cost_center_ids:
                 self.pool.get('account.target.costcenter').create(cr, uid, {'instance_id': context['active_id'],
                                                                             'cost_center_id': cost_center.id,
                                                                             'target': False}, context=context)
         return {'type' : 'ir.actions.act_window_close'}
-        
+
 wizard_add_cost_centers()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
