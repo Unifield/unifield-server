@@ -559,7 +559,7 @@
                             <para style="P1">[[ (line['currency_id'] == None or line['amount_currency']==None) and removeParentNode('font') ]] [[ formatLang(line['amount_currency'] or 0.0) ]]</para>
                         </td>
                         <td>
-                            <para style="P9">[[ formatLang(line['progress'] or 0.0) ]]</para>
+                            <para style="P9">[[ formatLang(line['total_functional'] or 0.0) ]]</para>
                         </td>
                     </tr>
                 </blockTable>

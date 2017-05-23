@@ -198,7 +198,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         if self.target_move == 'posted':
             move_state = ['posted']
 
-        full_account = []
         if self.reconcil:
             RECONCILE_TAG = " "
         else:
@@ -206,7 +205,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         self.cr.execute(
             "SELECT l.id, l.date, j.code, acc.code as a_code, acc.name as a_name, l.ref, m.name as move_name, l.name, "
             "COALESCE(l.debit_currency, 0) as debit, COALESCE(l.credit_currency, 0) as credit, "
-            "l.amount_currency,l.currency_id, c.name AS currency_code "
+            "l.debit - l.credit as total_functional, l.amount_currency, l.currency_id, c.name AS currency_code "
             "FROM account_move_line l " \
             "LEFT JOIN account_journal j " \
                 "ON (l.journal_id = j.id) " \
@@ -222,13 +221,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 " " + self.INSTANCE_REQUEST + " "
                 "ORDER BY l.date",
                 (partner.id, tuple(self.account_ids), tuple(move_state)))
-        res = self.cr.dictfetchall()
-        sum = 0.0
-        for r in res:
-            sum += r['debit'] - r['credit']
-            r['progress'] = sum
-            full_account.append(r)
-        return full_account
+        return self.cr.dictfetchall()
 
     def _sum_debit_partner(self, partner):
         move_state = ['draft','posted']

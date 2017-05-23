@@ -359,7 +359,7 @@ else:
     <Data ss:Type="Number">${ line['amount_currency'] or 0.0|x}</Data>
   </Cell>
   <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${ line['progress'] or 0.0|x}</Data>
+    <Data ss:Type="Number">${ line['total_functional'] or 0.0|x}</Data>
   </Cell>
 </Row>
 % endfor
