@@ -81,5 +81,16 @@
             file="account/report/account_profit_loss_xls.mako"
             report_type="webkit"
             string="Balance Sheet"/>
+
+        <report id="account_liquidity_balance_xls"
+            auto="False"
+            menu="False"
+            header="False"
+            model="account.bank.statement"
+            name="account.liquidity.balance"
+            file="account/report/account_liquidity_balance.mako"
+            report_type="webkit"
+            target_filename="Liquidity Balance_%(instance_code)s_%(year)s%(month)s%(day)s"
+            string="Liquidity Balance"/>
     </data>
 </openerp>
