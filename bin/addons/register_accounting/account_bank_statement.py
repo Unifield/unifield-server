@@ -1946,10 +1946,11 @@ class account_bank_statement_line(osv.osv):
         field_match = values.keys()[0] in ['move_ids', 'first_move_line_id', 'from_cash_return', 'name', 'direct_state', 'sequence_for_reference', 'imported_invoice_line_ids']
         skip_check = context.get('skip_write_check', False) and context.get('skip_write_check') == True or False
         if values.get('cheque_number'):
-            for line in self.read(cr, uid, ids, ['statement_id'], context=context):
-                self._check_cheque_number_uniticy(cr, uid,
-                        line['statement_id'][0], values.get('cheque_number'),
-                        context=context)
+            for line in self.read(cr, uid, ids, ['statement_id', 'cheque_number'], context=context):
+                if values.get('cheque_number') !=  line['cheque_number']:
+                    self._check_cheque_number_uniticy(cr, uid,
+                            line['statement_id'][0], values.get('cheque_number'),
+                            context=context)
         if (one_field and field_match) or skip_check:
             return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         # Prepare some values
