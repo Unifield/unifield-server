@@ -1885,7 +1885,7 @@ class account_bank_statement_line(osv.osv):
     def _check_cheque_number_uniticy(self, cr, uid, statement_id,
             cheque_number, context=None):
         if context is None:
-            contextu = {}
+            context = {}
         if not context.get('sync_update_execution', False) and\
                 cheque_number and statement_id:
             statement_obj = self.pool.get('account.bank.statement')
