@@ -98710,3 +98710,15 @@ msgstr "Importer des lignes depuis un fichier Excel"
 #, python-format
 msgid "%s_template.xls"
 msgstr "modèle_%s.xls"
+
+#. module: stock_override
+#: code:addons/stock_override/stock.py:386
+#, python-format
+msgid "You are changing an External Consumption Unit, please check that source location of your stock moves are still consistent"
+msgstr "Vous avez changÃ© d'unitÃ© de consommation externe, merci de vÃ©rifier que vos mouvements de stock sont toujours cohÃ©rents"
+
+#. module: stock_override
+#: field:stock.location,filter_partner_id2:0
+msgid "Filter location by partner"
+msgstr "Filtrer l'emplacement de stock par partenaire"
+

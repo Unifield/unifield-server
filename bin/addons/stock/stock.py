@@ -1849,6 +1849,10 @@ class stock_move(osv.osv):
         """
         if context is None:
             context = {}
+
+        if context.get('ext_cu', False):
+            return context['ext_cu']
+
         if context.get('move_line', []):
             try:
                 return context['move_line'][0][2]['location_id']

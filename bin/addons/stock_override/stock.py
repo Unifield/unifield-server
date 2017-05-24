@@ -320,6 +320,7 @@ class stock_picking(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
+        'ext_cu': fields.many2one('stock.location', string='Ext. C.U.'),
         'partner_type': fields.related(
             'partner_id',
             'partner_type',
@@ -375,6 +376,18 @@ class stock_picking(osv.osv):
                  'shipment_ref':False,
                  'company_id2': lambda s,c,u,ids,ctx=None: s.pool.get('res.users').browse(c,u,u).company_id.partner_id.id,
                  }
+
+
+    def on_change_ext_cu(self, cr, uid, ids, ext_cu, context=None):
+        if self.pool.get('stock.move').search_exist(cr, uid, [('picking_id', 'in', ids)], context=context):
+            return {
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('You are changing an External Consumption Unit, please check that source location of your stock moves are still consistent'),
+                }
+            }
+        return {}
+
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         if default is None:
@@ -1335,6 +1348,14 @@ class stock_move(osv.osv):
 
         return False
 
+    def _default_is_ext_cu(self, cr, uid, context=None):
+        if not context:
+            context = {}
+        if context.get('ext_cu', False):
+            return True
+        return False
+
+
     def _get_inactive_product(self, cr, uid, ids, field_name, args, context=None):
         '''
         Fill the error message if the product of the line is inactive
@@ -1418,6 +1439,7 @@ class stock_move(osv.osv):
         'from_dpo': fields.function(_get_from_dpo, fnct_search=_search_from_dpo, type='boolean', method=True, store=False, string='From DPO ?'),
         'sync_dpo': fields.boolean(string='Sync. DPO'),
         'from_wkf_line': fields.related('picking_id', 'from_wkf', type='boolean', string='Internal use: from wkf'),
+        'is_ext_cu': fields.boolean(string='Ext. CU'),
         'fake_state': fields.related('state', type='char', store=False, string="Internal use"),
         'processed_stock_move': fields.boolean(string='Processed Stock Move'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
@@ -1442,6 +1464,7 @@ class stock_move(osv.osv):
         'inactive_product': False,
         'inactive_error': lambda *a: '',
         'has_to_be_resourced': False,
+        'is_ext_cu': _default_is_ext_cu,
     }
 
     @check_rw_warning
@@ -2065,7 +2088,7 @@ class stock_move(osv.osv):
         kwargs['move'] is the current move
         '''
         move = kwargs['move']
-        return move.location_id.usage == 'supplier'
+        return move.location_id.usage == 'supplier' or (move.location_id.usage == 'customer' and move.location_id.location_category == 'consumption_unit')
 
     def _hook_cancel_assign_batch(self, cr, uid, ids, context=None):
         '''
@@ -2437,7 +2460,6 @@ class stock_move(osv.osv):
             'type': ptype,
             'note': picking.note,
             'move_type': picking.move_type,
-            'auto_picking': move[0][1][1] == 'auto',
             'stock_journal_id': move[0][1][3],
             'company_id': move[0][1][4] or res_obj._company_default_get(cr, uid, 'stock.company', context=context),
             'address_id': picking.address_id.id,
@@ -2575,6 +2597,25 @@ class stock_location(osv.osv):
             return [('id', 'in', ids)]
         return []
 
+    def _search_filter_partner_ext_cu(self, cr, uid, ids, fields, arg, context=None):
+        if not arg or not arg[0][2] or not isinstance(arg[0][2], list) or not len(arg[0][2]) == 2:
+            return []
+        if context is None:
+            context = {}
+
+        partner_id2 = arg[0][2][0]
+        ext_cu = arg[0][2][1]
+
+        domain = []
+        if not partner_id2 and not ext_cu:
+            domain = []
+        elif partner_id2:
+            domain = [('usage', '=', 'supplier')]
+        else: # ext_cu
+            domain = [('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')]
+
+        return domain
+
 
     _columns = {
         'chained_location_type': fields.selection([('none', 'None'), ('customer', 'Customer'), ('fixed', 'Fixed Location'), ('nomenclature', 'Nomenclature')],
@@ -2586,6 +2627,7 @@ class stock_location(osv.osv):
                                                   "\n* Fixed Location: The chained location is taken from the next field: Chained Location if Fixed." \
                                                   "\n* Nomenclature: The chained location is taken from the options field: Chained Location is according to the nomenclature level of product."\
                                                   ),
+        'filter_partner_ext_cu': fields.function(_fake_get, method=True, type='boolean', string='Filter location by partner', fnct_search=_search_filter_partner_ext_cu),
         'chained_options_ids': fields.one2many('stock.location.chained.options', 'location_id', string='Chained options'),
         'optional_loc': fields.boolean(string='Is an optional location ?'),
         'stock_real': fields.function(_product_value, method=True, type='float', string='Real Stock', multi="stock"),

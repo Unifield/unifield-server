@@ -165,10 +165,12 @@ class report_reception(report_sxw.rml_parse):
     def getPartnerName(self,o):
         if o.purchase_id:
             return o.purchase_id and o.purchase_id.partner_id and o.purchase_id.partner_id.name or False
-        elif o.partner_id:
+        if o.partner_id:
             return o.partner_id.name
-        else:
-            return False
+        if o.ext_cu:
+            return o.ext_cu.name
+
+        return False
 
     def getPartnerAddress(self,o):
         if o.purchase_id:
