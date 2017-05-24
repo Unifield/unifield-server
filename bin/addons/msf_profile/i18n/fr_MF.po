@@ -42406,23 +42406,6 @@ msgstr "Une localisation avec le même nom dont les paramètres existent déjà 
 msgid "fo_import_price"
 msgstr "Prix"
 
-#. modules: account, msf_instance, finance, account_mcdb
-#: view:account.balance.report:0
-#: field:account.balance.report,instance_ids:0
-#: view:account.bs.report:0
-#: field:account.bs.report,instance_ids:0
-#: view:account.pl.report:0
-#: field:account.pl.report,instance_ids:0
-#: view:account.report.general.ledger:0
-#: field:account.report.general.ledger,instance_ids:0
-#: view:account.mcdb:0
-#: view:wizard.account.partner.balance.tree:0
-#: field:wizard.account.partner.balance.tree,instance_ids:0
-#: view:account.analytic.chart:0
-#: view:account.chart:0
-msgid "Proprietary Instances"
-msgstr "Proprietary Instances"
-
 #. module: purchase_followup
 #: model:ir.actions.report.xml,name:purchase_followup.report_purchase_follow_up_pdf
 msgid "Purchase Order Follow Up PDF Export"
@@ -54991,11 +54974,6 @@ msgstr "base.update.translations"
 msgid "Latvia"
 msgstr "Latvia"
 
-#. module: account_mcdb
-#: view:account.mcdb:0
-msgid "Remove all Instances"
-msgstr "Remove all Instances"
-
 #. module: stock
 #: code:addons/stock/stock.py:1913
 #, python-format
@@ -66521,10 +66499,23 @@ msgstr "PO lines exported"
 msgid "Channel"
 msgstr "Canal"
 
-#. module: msf_instance
+#. modules: account, msf_instance, finance, account_mcdb
 #: model:ir.actions.act_window,name:msf_instance.action_msf_instance_tree
 #: model:ir.ui.menu,name:msf_instance.menu_action_msf_instance_tree
 #: view:msf.instance:0
+#: view:account.balance.report:0
+#: field:account.balance.report,instance_ids:0
+#: view:account.bs.report:0
+#: field:account.bs.report,instance_ids:0
+#: view:account.pl.report:0
+#: field:account.pl.report,instance_ids:0
+#: view:account.report.general.ledger:0
+#: field:account.report.general.ledger,instance_ids:0
+#: view:account.mcdb:0
+#: view:wizard.account.partner.balance.tree:0
+#: field:wizard.account.partner.balance.tree,instance_ids:0
+#: view:account.analytic.chart:0
+#: view:account.chart:0
 msgid "Proprietary Instances"
 msgstr "Instances propriétaire"
 
@@ -67048,11 +67039,6 @@ msgstr "Réf. facture"
 #: field:res.currency,symbol:0
 msgid "Symbol"
 msgstr "Symbole"
-
-#. module: account_mcdb
-#: field:account.mcdb,rev_instance_ids:0
-msgid "Exclude instance selection"
-msgstr "Exclure la sélection d'instance"
 
 #. module: base
 #: field:res.partner,address:0
@@ -87173,11 +87159,6 @@ msgstr "Is a Back Order"
 msgid "America/Argentina/Ushuaia"
 msgstr "Amériques/Argentine/Ushuaia"
 
-#. module: account_mcdb
-#: view:account.mcdb:0
-msgid "Add all Instances"
-msgstr "Add all Instances"
-
 #. module: product
 #: model:ir.actions.act_window,help:product.product_uom_categ_form_action
 msgid "Create and manage the units of measure categories you want to be used in your system. If several units of measure are in the same category, they can be converted to each other. For example, in the unit of measure category \"Time\", you will have the following UoM: Hours, Days."
@@ -98119,7 +98100,7 @@ msgstr "OpenERP ajoutera automatiquement quelques '0' à gauche du 'Prochain Num
 #. module: account_mcdb
 #: field:account.mcdb,display_instance:0
 msgid "Display instances?"
-msgstr "Display instances?"
+msgstr "Afficher les instances ?"
 
 #. module: export_import_lang
 #: code:addons/export_import_lang/export_import_lang.py:106
@@ -98497,3 +98478,60 @@ msgstr "Message d'erreur"
 msgid "In Progress"
 msgstr "En cours"
 
+
+#. module: account_mcdb
+#: field:account.mcdb,top_prop_instance_ids:0
+msgid "Top Proprietary instances"
+msgstr "Instances propriétaires parentes"
+
+#. module: account_mcdb
+#: field:account.mcdb,rev_top_prop_instance_ids:0
+msgid "Exclude top prop instances selection"
+msgstr "Exclure la selection d'instances prop. parentes"
+
+#. module: account_mcdb
+#: field:account.mcdb,display_top_prop_instance:0
+msgid "Display Top prop instances?"
+msgstr "Afficher les instances propriétaires parentes"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/account_mcdb.py:230
+#, python-format
+msgid "You cannot select 'Instances' because 'Top prop Instances' is already selected."
+msgstr "Vous ne pouvez pas selectionner 'Instances' car 'Instance prop. parente' est déjà selectionné."
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Top prop Instances"
+msgstr "Instance prop. parente"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/account_mcdb.py:244
+#, python-format
+msgid "You cannot select 'Top prop Instances' because 'Instances' is already selected."
+msgstr "Vous ne pouvez pas selectionner 'Instance prop. parente' car 'Instances' est déjà selectionné."
+
+#. module: account_mcdb
+#: field:account.mcdb,rev_instance_ids:0
+msgid "Exclude instances selection"
+msgstr "Exclure la sélection d'instance"
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Remove all Instances"
+msgstr "Supprimer toutes les instances"
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Add all Instances"
+msgstr "Ajouter toutes les instances"
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Remove Prop Instances"
+msgstr "Supprimer toutes les instances propriétaires"
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Add Prop Instances"
+msgstr "Ajouter toutes les instances propriétaires"
