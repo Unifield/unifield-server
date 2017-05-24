@@ -411,6 +411,7 @@ class real_average_consumption(osv.osv):
                                                                          'move_type': 'one',
                                                                          'invoice_state': 'none',
                                                                          'date': date,
+                                                                         'rac_id': rac.id,
                                                                          'reason_type_id': reason_type_id}, context=context)
 
             self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
@@ -2051,6 +2052,10 @@ product_product()
 class stock_picking(osv.osv):
     _inherit = 'stock.picking'
     _name = 'stock.picking'
+
+    _columns = {
+        'rac_id': fields.many2one('real.average.consumption', string='Real consumption report'),
+    }
 
     def _hook_log_picking_modify_message(self, cr, uid, ids, context=None, message='', pick=False):
         '''

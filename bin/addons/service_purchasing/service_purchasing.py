@@ -365,7 +365,6 @@ class stock_picking(osv.osv):
             context = {}
 
         result = {}
-
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
             # initialize the dic
@@ -377,6 +376,8 @@ class stock_picking(osv.osv):
             # a purchase order is linked, we gather the categ
             elif obj.purchase_id:
                 result[obj.id]['order_category'] = obj.purchase_id.categ
+            elif obj.rac_id:
+                result[obj.id]['order_category'] = obj.rac_id.categ
 
         return result
 
@@ -406,12 +407,17 @@ class stock_picking(osv.osv):
         result = picking_obj.search(cr, uid, [('sale_id', 'in', ids)], context=context)
         return result
 
+    def _get_rac_ids(self, cr, uid, ids, context=None):
+        context = context or {}
+        return self.pool.get('stock.picking').search(cr, uid, [('rac_id', 'in', ids)], context=context)
+
     _columns = {
             'order_category': fields.function(_vals_get23, method=True, type='selection', selection=ORDER_CATEGORY, string='Order Category', multi='vals_get23', readonly=True,
                 store={
                     'stock.picking': (lambda obj, cr, uid, ids, context: ids, ['purchase_id', 'sale_id'], 10),
                     'purchase.order': (_get_purchase_ids, ['categ', ], 10),
                     'sale.order': (_get_sale_ids, ['categ', ], 10),
+                    'real.average.consumption': (_get_rac_ids, ['categ'], 10),
                 },
             ),
     }
