@@ -30,35 +30,66 @@ class account_partner_ledger(osv.osv_memory):
     _description = 'Account Partner Ledger'
 
     _columns = {
-        'initial_balance': fields.boolean('Include initial balances',
-                                    help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
         'reconcil': fields.boolean('Include Reconciled Entries', help='Consider reconciled entries'),
-        'page_split': fields.boolean('One Partner Per Page', help='Display Ledger Report with One partner per page'),
-        'amount_currency': fields.boolean("With Currency", help="It adds the currency column if the currency is different then the company currency"),
+        'page_split': fields.boolean('One Partner Per Page', help='Display Ledger Report with One partner per page (PDF version only)'),
+        'partner_ids': fields.many2many('res.partner', 'account_partner_ledger_partner_rel', 'wizard_id', 'partner_id',
+                                        string='Partners', help='Display the report for specific partners only'),
+        'only_active_partners': fields.boolean('Only active partners', help='Display the report for active partners only'),
+        'instance_ids': fields.many2many('msf.instance', 'account_partner_ledger_instance_rel', 'wizard_id', 'instance_id',
+                                         string='Proprietary Instances', help='Display the report for specific proprietary instances only'),
+        'account_ids': fields.many2many('account.account', 'account_partner_ledger_account_rel', 'wizard_id', 'account_id',
+                                        string='Accounts', help='Display the report for specific accounts only'),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
     }
+
     _defaults = {
-       'reconcil': True,
-       'initial_balance': False,
+        'reconcil': False,
        'page_split': False,
-       'result_selection': 'supplier',  # UF-1715: 'Payable Accounts' by default instead of 'Receivable'
+       'result_selection': 'customer_supplier',
+       'account_domain': "[('type', 'in', ['payable', 'receivable'])]",
+       'only_active_partners': False,
        'tax': False, # UFTP-312: Add an exclude tax account possibility
+       'fiscalyear_id': False,
     }
 
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['initial_balance', 'reconcil', 'page_split', 'amount_currency', 'tax'])[0])
+        data['form'].update(self.read(cr, uid, ids, ['reconcil', 'page_split', 'tax', 'partner_ids',
+                                                     'only_active_partners', 'instance_ids', 'account_ids'])[0])
+        self._check_dates_fy_consistency(cr, uid, data, context)
         if data['form']['page_split']:
             return {
                 'type': 'ir.actions.report.xml',
                 'report_name': 'account.third_party_ledger',
                 'datas': data,
-        }
+            }
         return {
-                'type': 'ir.actions.report.xml',
+            'type': 'ir.actions.report.xml',
                 'report_name': 'account.third_party_ledger_other',
+                'datas': data,
+        }
+
+    def print_report_xls(self, cr, uid, ids, data, context=None):
+        if context is None:
+            context = {}
+        data = {}
+        data['keep_open'] = 1
+        data['ids'] = context.get('active_ids', [])
+        data['model'] = context.get('active_model', 'ir.ui.menu')
+        data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from', 'period_to',  'filter',  'chart_account_id', 'target_move'])[0]
+        used_context = self._build_contexts(cr, uid, ids, data, context=context)
+        data['form']['periods'] = used_context.get('periods', False) and used_context['periods'] or []
+        data['form']['used_context'] = used_context
+
+        data = self.pre_print_report(cr, uid, ids, data, context=context)
+        data['form'].update(self.read(cr, uid, ids, ['reconcil', 'page_split', 'tax', 'partner_ids',
+                                                     'only_active_partners', 'instance_ids', 'account_ids'])[0])
+        self._check_dates_fy_consistency(cr, uid, data, context)
+        return {
+            'type': 'ir.actions.report.xml',
+                'report_name': 'account.third_party_ledger_xls',
                 'datas': data,
         }
 
