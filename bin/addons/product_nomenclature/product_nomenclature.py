@@ -32,6 +32,7 @@ _LEVELS = 4
 # numbers of sub levels (optional levels)
 _SUB_LEVELS = 6
 
+RANDOM_XMLID_CODE_PREFIX = 'XID-'
 #----------------------------------------------------------
 # Nomenclatures
 #----------------------------------------------------------
@@ -823,7 +824,7 @@ class product_product(osv.osv):
             if not default_code or not vals.get('xmlid_code', False):
                 raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
         elif default_code:  # cases 3, 4
-            vals['xmlid_code'] = 'XID-' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(14))
+            vals['xmlid_code'] = RANDOM_XMLID_CODE_PREFIX + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(14))
         else:
             # not default_code, as this is a mandatory field a default_value will be set later in the code
             to_overwrite = 1
