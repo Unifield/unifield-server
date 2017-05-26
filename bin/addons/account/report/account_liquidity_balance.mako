@@ -107,6 +107,16 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Borders>
 <NumberFormat ss:Format="#,##0.00"/>
 </Style>
+<Style ss:ID="ssRegLine">
+<Alignment ss:Vertical="Top" ss:Horizontal="Left" ss:WrapText="1"/>
+<Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
 </Styles>
 <Worksheet ss:Name="Liquidity Balances">
 <Table x:FullColumns="1" x:FullRows="1">
@@ -117,10 +127,46 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
 
+<!-- TABLE HEADER -->
+<Row>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${_('Instance')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${_('Code')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${_('Name')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${_('Period')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${_('Opening balance')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${_('Calculated balance')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${_('Closing balance')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">${_('Currency')}</Data>
+</Cell>
+</Row>
+
+<!-- TABLE LINES -->
 % for line in get_register_data():
 <Row>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${line['instance']|x}</Data></Cell>
+ <Cell ss:StyleID="ssRegLine"><Data ss:Type="String">${ line['instance'] or ''|x}</Data></Cell>
+ <Cell ss:StyleID="ssRegLine"><Data ss:Type="String">${ line['code'] or ''|x}</Data></Cell>
+ <Cell ss:StyleID="ssRegLine"><Data ss:Type="String">${ line['name'] or ''|x}</Data></Cell>
+ <Cell ss:StyleID="ssRegLine"><Data ss:Type="String">${ line['period'] or ''|x}</Data></Cell>
+ <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line['opening'] or 0.0|x}</Data></Cell>
+ <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line['calculated'] or 0.0|x}</Data></Cell>
+ <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line['closing'] or 0.0|x}</Data></Cell>
 </Row>
 % endfor
 

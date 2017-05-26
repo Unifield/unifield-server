@@ -27,16 +27,17 @@ from time import strptime
 class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
 
     def __init__(self, cr, uid, name, context=None):
-        self.instance_id = False
-        self.instance_ids = False
         self.period_id = False
-        self.fiscalyear_id = False
+        self.instance_ids = False
         super(account_liquidity_balance, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'get_register_data': self._get_register_data,
         })
 
     def _get_register_data(self):
+        """
+        Returns a list of dicts, each containing the data of the liquidity registers for the selected period and instances
+        """
         liquidity_sql = """
             SELECT i.code AS instance, j.code, j.name, %s AS period, req.opening, req.calculated, req.closing
             FROM (
@@ -98,10 +99,9 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         return self.cr.dictfetchall()
 
     def set_context(self, objects, data, ids, report_type=None):
-        self.instance_id = data['form'].get('instance_id', False)
-        self.instance_ids = data['form'].get('instance_ids', False)
+        # get the selection made by the user
         self.period_id = data['form'].get('period_id', False)
-        self.fiscalyear_id = data['form'].get('fiscalyear_id', False)
+        self.instance_ids = data['form'].get('instance_ids', False)
         self.context = data.get('context', {})
         return super(account_liquidity_balance, self).set_context(objects, data, ids, report_type)
 

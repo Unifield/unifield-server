@@ -42,15 +42,14 @@ class liquidity_balance_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        wizard = self.browse(cr, uid, ids[0], context=context)
+        wiz = self.browse(cr, uid, ids[0], fields_to_fetch=['period_id', 'instance_id'], context=context)
         data = {}
         data['form'] = {}
-        if wizard.instance_id:
-            # Get children instances
-            data['form'].update({'instance_id': wizard.instance_id.id,})
-            data['form'].update({'instance_ids': [wizard.instance_id.id] + [x.id for x in wizard.instance_id.child_ids]})
-        data['form'].update({'period_id': wizard.period_id and wizard.period_id.id or False})
-        data['form'].update({'fiscalyear_id': wizard.fiscalyear_id and wizard.fiscalyear_id.id or False})
+        # get the selected period
+        data['form'].update({'period_id': wiz.period_id and wiz.period_id.id or False})
+        # get the selected instance AND its children
+        data['form'].update({'instance_ids': wiz.instance_id and
+                                             ([wiz.instance_id.id] + [x.id for x in wiz.instance_id.child_ids]) or False})
         data['context'] = context
         return {
             'type': 'ir.actions.report.xml',
