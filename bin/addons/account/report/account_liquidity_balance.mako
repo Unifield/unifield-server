@@ -139,7 +139,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <NumberFormat ss:Format="#,##0.00"/>
 </Style>
 </Styles>
-<Worksheet ss:Name="Liquidity Balances">
+<Worksheet ss:Name="${_('Liquidity Balances')}">
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />

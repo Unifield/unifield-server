@@ -10098,7 +10098,7 @@ msgstr "Vous devez définir le compte bancaire\n"
 msgid "Connection Manager"
 msgstr "Gestionnaire de Connexion"
 
-#. module: vertical_integration
+#. modules: vertical_integration, account
 #: field:ocb.export.wizard,instance_id:0
 #: field:ocb.matching.export.wizard,instance_id:0
 #: field:ocba.export.wizard,instance_id:0
@@ -10106,8 +10106,9 @@ msgstr "Gestionnaire de Connexion"
 #: field:ocp.matching.export.wizard,instance_id:0
 #: field:wizard.hq.report.oca,instance_id:0
 #: field:wizard.hq.report.ocg,instance_id:0
+#: field:liquidity.balance.wizard,instance_id:0
 msgid "Top proprietary instance"
-msgstr "Top proprietary instance"
+msgstr "Instance propriétaire parente"
 
 #. module: order_types
 #: view:stock.certificate.picking:0
@@ -20645,6 +20646,7 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:658
 #: field:res.country.restriction.memory,name:0
 #: field:unifield.setup.configuration,name:0
+#: report:addons/account/report/account_liquidity_balance.mako:162
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -24389,6 +24391,8 @@ msgstr "Wizard to split processor lines"
 #: field:wizard.register.creation,period_id:0
 #: field:wizard.register.creation.lines,period_id:0
 #: field:wizard.register.import.lines,period_id:0
+#: field:liquidity.balance.wizard,period_id:0
+#: report:addons/account/report/account_liquidity_balance.mako:165
 #, python-format
 msgid "Period"
 msgstr "Période"
@@ -27403,6 +27407,7 @@ msgstr "Identifiant XML"
 #: view:purchase.order:0
 #: view:stock.forecast:0
 #: view:stock.move.tracking:0
+#: view:liquidity.balance.wizard:0
 msgid "Print"
 msgstr "Imprimer"
 
@@ -29763,8 +29768,9 @@ msgstr "Move lines"
 msgid "BURUNDIAN FRANC"
 msgstr "BURUNDIAN FRANC"
 
-#. module: register_accounting
+#. modules: register_accounting, account
 #: report:cash.inventory:0
+#: report:addons/account/report/account_liquidity_balance.mako:174
 msgid "Closing balance"
 msgstr "Solde de clôture"
 
@@ -34409,6 +34415,7 @@ msgstr "Michigan"
 #: report:sales.follow.up.multi.report_pdf:0
 #: field:stock.incoterms,code:0
 #: report:stock.card.report:0
+#: report:addons/account/report/account_liquidity_balance.mako:159
 #, python-format
 msgid "Code"
 msgstr "Code"
@@ -37782,7 +37789,7 @@ msgstr "Previous"
 msgid "Male"
 msgstr "Masculin"
 
-#. modules: account_override, msf_doc_import, register_accounting, msf_supply_doc_export
+#. modules: account_override, msf_doc_import, register_accounting, msf_supply_doc_export, account
 #: report:allocation.invoices.report:0
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:238
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:245
@@ -37790,6 +37797,7 @@ msgstr "Masculin"
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:108
 #: report:addons/msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako:63
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:211
+#: report:addons/account/report/account_liquidity_balance.mako:177
 msgid "Currency"
 msgstr "Devise"
 
@@ -58288,6 +58296,7 @@ msgstr "Proforma Invoices"
 #: field:operations.event,instance:0
 #: field:sync.monitor,instance_id:0
 #: field:sync.version.instance.monitor,instance_id:0
+#: report:addons/account/report/account_liquidity_balance.mako:156
 msgid "Instance"
 msgstr "Instance"
 
@@ -61960,7 +61969,7 @@ msgstr "Configurer le pied du rapport Webkit."
 msgid "ZAMBIAN KWACHA"
 msgstr "ZAMBIAN KWACHA"
 
-#. modules: vertical_integration, base
+#. modules: vertical_integration, base, account
 #: view:wizard.add.users.synchronized:0
 #: view:wizard.account.partner.balance.tree:0
 #: view:wizard.currency.revaluation:0
@@ -61986,6 +61995,7 @@ msgstr "ZAMBIAN KWACHA"
 #: view:ocba.export.wizard:0
 #: view:ocp.export.wizard:0
 #: view:ocp.matching.export.wizard:0
+#: view:liquidity.balance.wizard:0
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -68299,8 +68309,9 @@ msgstr "Séquence Principale"
 msgid "Confirmed sale order lines, not yet delivered"
 msgstr "Confirmed sale order lines, not yet delivered"
 
-#. module: register_accounting
+#. modules: register_accounting, account
 #: report:cash.inventory:0
+#: report:addons/account/report/account_liquidity_balance.mako:168
 msgid "Opening balance"
 msgstr "Solde d'ouverture"
 
@@ -73261,6 +73272,7 @@ msgstr "Imported Invoices"
 #: field:account.vat.declaration,fiscalyear_id:0
 #: field:account.period.create,fiscalyear:0
 #: field:wizard.local.expenses,fiscalyear_id:0
+#: field:liquidity.balance.wizard,fiscalyear_id:0
 msgid "Fiscal year"
 msgstr "Exercice Comptable"
 
@@ -98556,3 +98568,17 @@ msgstr "Importer des lignes depuis un fichier Excel"
 #, python-format
 msgid "%s_template.xls"
 msgstr "modèle_%s.xls"
+
+#. module: account
+#: report:addons/account/report/account_liquidity_balance.mako:171
+msgid "Calculated balance"
+msgstr "Solde calculé (théorique)"
+
+#. module: account
+#: code:addons/account/wizard/account_report_liquidity_balance.py:65
+#: model:ir.actions.act_window,name:account.action_liquidity_balance_report
+#: model:ir.ui.menu,name:account.menu_liquidity_balance_report
+#: report:addons/account/report/account_liquidity_balance.mako:142
+#, python-format
+msgid "Liquidity Balances"
+msgstr "Balances de trésorie"
