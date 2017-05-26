@@ -43,15 +43,20 @@
                             </group>
                         </group>
                     </group>
-                     <separator string="" colspan="4"/>
-                     <group colspan="2" col="2">
-                         <field name="document_date_from" string="Document date"/>
-                         <field name="posting_date_from" string="Posting date"/>
-                         <field name="document_code"/>
-                     </group>
-                     <group colspan="2" col="2">
-                         <field name="document_date_to" string="to"/>
-                         <field name="posting_date_to" string="to"/>
-                         <field name="document_state" colspan="1" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
+                    <group colspan="2" col="2">
+                        <html>
+                            <br />
+                        </html>
+                    </group>
+                    <separator string="" colspan="4"/>
+                    <group colspan="2" col="2">
+                        <field name="document_date_from" string="Document date"/>
+                        <field name="posting_date_from" string="Posting date"/>
+                        <field name="document_code"/>
+                    </group>
+                    <group colspan="2" col="2">
+                        <field name="document_date_to" string="to"/>
+                        <field name="posting_date_to" string="to"/>
+                        <field name="document_state" colspan="1" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
                     </group>
 
