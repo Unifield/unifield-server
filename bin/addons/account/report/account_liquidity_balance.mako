@@ -167,6 +167,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
  <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line['opening'] or 0.0|x}</Data></Cell>
  <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line['calculated'] or 0.0|x}</Data></Cell>
  <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line['closing'] or 0.0|x}</Data></Cell>
+ <Cell ss:StyleID="ssRegLine"><Data ss:Type="String">${ line['currency'] or ''|x}</Data></Cell>
 </Row>
 % endfor
 

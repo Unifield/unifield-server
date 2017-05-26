@@ -250,8 +250,9 @@ j.type AS "journal_type"
 
 # request used for OCB VI and for Liquidity Balances report
 liquidity_sql = """
-            SELECT i.code AS instance, j.code, j.name, %s AS period, req.opening, req.calculated, req.closing
-            FROM (
+            SELECT i.code AS instance, j.code, j.name, %s AS period, req.opening, req.calculated, req.closing, c.name AS currency
+            FROM res_currency c,
+            (
                 SELECT journal_id, account_id, SUM(col1) AS opening, SUM(col2) AS calculated, SUM(col3) AS closing
                 FROM (
                     (
@@ -292,6 +293,7 @@ liquidity_sql = """
             ) AS req, account_journal j, msf_instance i
             WHERE req.journal_id = j.id
             AND j.instance_id = i.id
+            AND j.currency = c.id
             AND j.instance_id IN %s;
             """
 
@@ -641,7 +643,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'query_params': (first_day_of_last_fy, last_day_of_period),
             },
             {
-                'headers': ['Instance', 'Code', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance'],
+                'headers': ['Instance', 'Code', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance', 'Currency'],
                 'filename': instance_name + '_' + year + month + '_Liquidity Balances.csv',
                 'key': 'liquidity',
                 'query_params': (tuple([period_yyyymm]), first_day_of_period, period.id, last_day_of_period, tuple(instance_ids)),
