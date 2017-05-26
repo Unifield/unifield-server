@@ -98497,3 +98497,8 @@ msgstr "Message d'erreur"
 msgid "In Progress"
 msgstr "En cours"
 
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/import_cheque_on_bank_registers.py:166
+#, python-format
+msgid "Please add a Document Date on imported lines."
+msgstr "Veuillez saisir la date du document sur les lignes importées."
