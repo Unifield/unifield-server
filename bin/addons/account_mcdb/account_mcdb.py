@@ -33,8 +33,7 @@ class account_mcdb(osv.osv):
         'description': fields.char("Query name", required=False, readonly=False, size=255),
         'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code", domain="[('code', '!=', 'IB')]"),  # exclude year closing initial balance journal
         'instance_ids': fields.many2many('msf.instance', 'instance_mcdb', 'mcdb_id', 'instance_id', string="Proprietary instances"),
-        'top_prop_instance_ids': fields.many2many('msf.instance', 'instance_mcdb',
-            'mcdb_id', 'instance_id', string="Top Proprietary instances"),
+        'top_prop_instance_ids': fields.many2many('msf.instance', 'instance_top_mcdb', 'mcdb_id', 'instance_id', string="Top Proprietary instances"),
         'analytic_journal_ids': fields.many2many(obj='account.analytic.journal', rel='account_analytic_journal_mcdb', id1='mcdb_id', id2='analytic_journal_id', string="Analytic journal code"),
         'abs_id': fields.many2one('account.bank.statement', string="Register name"), # Change into many2many ?
         'posting_date_from': fields.date('First posting date'),
@@ -60,7 +59,7 @@ class account_mcdb(osv.osv):
         'amount_from': fields.float('Begin amount in given currency type'),
         'amount_to': fields.float('Ending amount in given currency type'),
         'account_type_ids': fields.many2many(obj='account.account.type', rel='account_account_type_mcdb', id1='mcdb_id', id2='account_type_id',
-            string="Account type"),
+                                             string="Account type"),
         'reconcile_id': fields.many2one('account.move.reconcile', string="Reconcile Reference"),
         'reconcile_date': fields.date("Reconciled at"),
         'ref': fields.char(string='Reference', size=255),
@@ -70,16 +69,16 @@ class account_mcdb(osv.osv):
         'display_in_output_currency': fields.many2one('res.currency', string='Display in output currency'),
         'fx_table_id': fields.many2one('res.currency.table', string="FX Table"),
         'analytic_account_cc_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_cc_mcdb", id1="mcdb_id", id2="analytic_account_id",
-            string="Cost Center"),
+                                                    string="Cost Center"),
         'rev_analytic_account_cc_ids': fields.boolean('Exclude Cost Center selection'),
         'analytic_account_fp_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_fp_mcdb", id1="mcdb_id", id2="analytic_account_id",
-            string="Funding Pool"),
+                                                    string="Funding Pool"),
         'rev_analytic_account_fp_ids': fields.boolean('Exclude Funding Pool selection'),
         'analytic_account_f1_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_f1_mcdb", id1="mcdb_id", id2="analytic_account_id",
-            string="Free 1"),
+                                                    string="Free 1"),
         'rev_analytic_account_f1_ids': fields.boolean('Exclude free 1 selection'),
         'analytic_account_f2_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_f2_mcdb", id1="mcdb_id", id2="analytic_account_id",
-            string="Free 2"),
+                                                    string="Free 2"),
         'rev_analytic_account_f2_ids': fields.boolean('Exclude free 2 selection'),
         'reallocated': fields.selection([('reallocated', 'Reallocated'), ('unreallocated', 'NOT reallocated')], string='Reallocated?'),
         'reversed': fields.selection([('reversed', 'Reversed'), ('notreversed', 'NOT reversed')], string='Reversed?'),
@@ -92,7 +91,7 @@ class account_mcdb(osv.osv):
         'analytic_axis': fields.selection([('fp', 'Funding Pool'), ('f1', 'Free 1'), ('f2', 'Free 2')], string='Display'),
         'rev_analytic_account_dest_ids': fields.boolean('Exclude Destination selection'),
         'analytic_account_dest_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_dest_mcdb", id1="mcdb_id", id2="analytic_account_id",
-            string="Destination"),
+                                                      string="Destination"),
         'display_journal': fields.boolean('Display journals?'),
         'display_period': fields.boolean('Display periods?'),
         'display_instance': fields.boolean('Display instances?'),
@@ -222,22 +221,20 @@ class account_mcdb(osv.osv):
         vals.update({'analytic_account_fp_ids': False, 'analytic_account_cc_ids': False, 'analytic_account_dest_ids': False, 'analytic_account_f1_ids': False, 'analytic_account_f2_ids': False})
         return {'value': vals}
 
-    def onchange_display_instance(self, cr, uid, ids, display_instance,
-            display_top_prop_instance, context=None):
+    def onchange_display_instance(self, cr, uid, ids, display_instance, display_top_prop_instance, context=None):
         if display_instance and display_top_prop_instance:
             warning = {
                 'title': _('Warning'),
                 'message': _('You cannot select \'Instances\' because \'Top prop Instances\' is already selected.')
             }
             value = {'display_instance': False}
-            res = {
+            return {
                 'warning': warning,
                 'value': value
             }
-            return res
+        return {}
 
-    def onchange_display_prop_instance(self, cr, uid, ids, display_instance,
-            display_top_prop_instance, context=None):
+    def onchange_display_prop_instance(self, cr, uid, ids, display_instance, display_top_prop_instance, context=None):
         if display_instance and display_top_prop_instance:
             warning = {
                 'title': _('Warning'),
@@ -245,11 +242,11 @@ class account_mcdb(osv.osv):
             }
             value = {'display_top_prop_instance': False}
 
-            res = {
+            return {
                 'warning': warning,
                 'value': value
             }
-            return res
+        return {}
 
     def button_validate(self, cr, uid, ids, context=None):
         """
@@ -359,7 +356,7 @@ class account_mcdb(osv.osv):
                         domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
             # Then MANY2ONE fields
             for m2o in [('abs_id', 'statement_id'), ('partner_id', 'partner_id'), ('employee_id', 'employee_id'),
-                ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id')]:
+                        ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
             # Finally others fields
