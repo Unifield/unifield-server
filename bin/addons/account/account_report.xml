@@ -90,7 +90,6 @@
             name="account.liquidity.balance"
             file="account/report/account_liquidity_balance.mako"
             report_type="webkit"
-            target_filename="Liquidity Balance_%(instance_code)s_%(year)s%(month)s%(day)s"
             string="Liquidity Balance"/>
     </data>
 </openerp>

@@ -21,8 +21,10 @@
 
 from osv import fields
 from osv import osv
+from tools.translate import _
 
 from time import strftime
+from time import strptime
 
 class liquidity_balance_wizard(osv.osv_memory):
     _name = 'liquidity.balance.wizard'
@@ -51,6 +53,17 @@ class liquidity_balance_wizard(osv.osv_memory):
         data['form'].update({'instance_ids': wiz.instance_id and
                                              ([wiz.instance_id.id] + [x.id for x in wiz.instance_id.child_ids]) or False})
         data['context'] = context
+        instance = wiz.instance_id and wiz.instance_id.code or ''
+        # get the year and month number (used in the file name)
+        year = ''
+        month = ''
+        if wiz.period_id:
+            tm = strptime(wiz.period_id.date_start, '%Y-%m-%d')
+            year_num = tm.tm_year
+            year = str(year_num)
+            month = '%02d' % tm.tm_mon
+        data['target_filename'] = "%s_%s%s_%s" % (instance, year, month, _('Liquidity Balances'))
+        data['form'].update({'year': year, 'month': month})
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.liquidity.balance',

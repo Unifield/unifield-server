@@ -22,7 +22,6 @@
 from report import report_sxw
 from common_report_header import common_report_header
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
-from time import strptime
 
 from vertical_integration import report as reportvi
 
@@ -32,6 +31,8 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         self.liquidity_sql = reportvi.hq_report_ocb.liquidity_sql  # same SQL request as in OCB VI
         self.period_id = False
         self.instance_ids = False
+        self.year = False
+        self.month = False
         super(account_liquidity_balance, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'get_register_data': self._get_register_data,
@@ -41,18 +42,10 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         """
         Returns a list of dicts, each containing the data of the liquidity registers for the selected period and instances
         """
-        instance_ids = self.instance_ids
-        period_id = self.period_id
-        period = self.pool.get('account.period').browse(self.cr, self.uid, period_id, context=self.context,
+        period = self.pool.get('account.period').browse(self.cr, self.uid, self.period_id, context=self.context,
                                                         fields_to_fetch=['date_start', 'date_stop'])
-        last_day_of_period = period.date_stop
-        first_day_of_period = period.date_start
-        tm = strptime(first_day_of_period, '%Y-%m-%d')
-        year_num = tm.tm_year
-        year = str(year_num)
-        month = '%02d' % (tm.tm_mon)
-        period_yyyymm = "{0}{1}".format(year, month)
-        params = (tuple([period_yyyymm]), first_day_of_period, period.id, last_day_of_period, tuple(instance_ids))
+        period_yyyymm = "{0}{1}".format(self.year, self.month)
+        params = (tuple([period_yyyymm]), period.date_start, period.id, period.date_stop, tuple(self.instance_ids))
         self.cr.execute(self.liquidity_sql, params)
         return self.cr.dictfetchall()
 
@@ -60,6 +53,8 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
         # get the selection made by the user
         self.period_id = data['form'].get('period_id', False)
         self.instance_ids = data['form'].get('instance_ids', False)
+        self.year = data['form'].get('year', False)
+        self.month = data['form'].get('month', False)
         self.context = data.get('context', {})
         return super(account_liquidity_balance, self).set_context(objects, data, ids, report_type)
 
