@@ -98727,3 +98727,16 @@ msgstr "Filtrer l'emplacement de stock par partenaire"
 #, python-format
 msgid "Please add a Document Date on imported lines."
 msgstr "Veuillez saisir la date du document sur les lignes importées."
+
+#. module: product_list
+#: code:addons/product_list/product_list.py:306
+#: code:addons/product_list/product_list.py:316
+#, python-format
+msgid "This product cannot be added as it already exists in this list."
+msgstr "Ce produit ne peut pas être ajouter car il est déjà présent dans la liste"
+
+#. module: product_list
+#: code:addons/product_list/wizard/add_products.py:103
+#, python-format
+msgid "product(s) %s already exist(s) in the product list and so cannot be added"
+msgstr "Les produits %s ne peuvent pas être ajouter car ils sont déjà présent dans la liste de produits"
