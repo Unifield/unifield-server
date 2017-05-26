@@ -30,6 +30,7 @@ import base64
 import netsvc
 
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
+from order_types import ORDER_CATEGORY
 
 
 def _get_asset_mandatory(product):
@@ -182,6 +183,7 @@ class real_average_consumption(osv.osv):
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
         'hide_column_error_ok': fields.function(get_bool_values, method=True, readonly=True, type="boolean", string="Show column errors", store=False),
         'state': fields.selection([('draft', 'Draft'), ('done', 'Closed'),('cancel','Cancelled')], string="State", readonly=True),
+        'categ': fields.selection(ORDER_CATEGORY, string='Category', required=True, states={'done':[('readonly',True)]}),
     }
 
     _defaults = {
@@ -191,6 +193,7 @@ class real_average_consumption(osv.osv):
         'period_to': lambda *a: time.strftime('%Y-%m-%d'),
         'nb_lines': lambda *a: 0,
         'state': lambda *a: 'draft',
+        'categ': lambda *a: 'other',
     }
 
     _sql_constraints = [
@@ -212,6 +215,73 @@ class real_average_consumption(osv.osv):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'consumption.report')})
 
         return super(real_average_consumption, self).create(cr, uid, vals, context=context)
+
+
+    def onchange_categ(self, cr, uid, ids, category, context=None):
+        """
+        Check if the list of products is valid for this new category
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of Real consumption to check
+        :param category: DB value of the new choosen category
+        :param context: Context of the call
+        :return: A dictionary containing the warning message if any
+        """
+        nomen_obj = self.pool.get('product.nomenclature')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        message = {}
+        res = False
+
+        if ids and category in ['log', 'medical']:
+            # Check if all product nomenclature of products in FO/IR lines are consistent with the category
+            try:
+                med_nomen = nomen_obj.search(cr, uid, [('level', '=', 0), ('name', '=', 'MED')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
+            try:
+                log_nomen = nomen_obj.search(cr, uid, [('level', '=', 0), ('name', '=', 'LOG')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
+
+            nomen_id = category == 'log' and log_nomen or med_nomen
+            cr.execute('''SELECT l.id
+                          FROM real_average_consumption_line l
+                            LEFT JOIN product_product p ON l.product_id = p.id
+                            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+                            LEFT JOIN real_average_consumption rac ON l.rac_id = rac.id
+                          WHERE (t.nomen_manda_0 != %s) AND rac.id in %s LIMIT 1''',
+                       (nomen_id, tuple(ids)))
+            res = cr.fetchall()
+
+        if ids and category in ['service', 'transport']:
+            # Avoid selection of non-service products on Service FO
+            category = category == 'service' and 'service_recep' or 'transport'
+            transport_cat = ''
+            if category == 'transport':
+                transport_cat = 'OR p.transport_ok = False'
+            cr.execute('''SELECT l.id
+                          FROM real_average_consumption_line l
+                            LEFT JOIN product_product p ON l.product_id = p.id
+                            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+                            LEFT JOIN real_average_consumption rac ON l.rac_id = rac.id
+                          WHERE (t.type != 'service_recep' %s) AND rac.id in %%s LIMIT 1''' % transport_cat,
+                       (tuple(ids),))
+            res = cr.fetchall()
+
+        if res:
+            message.update({
+                'title': _('Warning'),
+                'message': _('This order category is not consistent with product(s) on this order.'),
+            })
+
+        return {'warning': message}
+
 
     def change_cons_location_id(self, cr, uid, ids, context=None):
         '''
@@ -341,6 +411,7 @@ class real_average_consumption(osv.osv):
                                                                          'move_type': 'one',
                                                                          'invoice_state': 'none',
                                                                          'date': date,
+                                                                         'rac_id': rac.id,
                                                                          'reason_type_id': reason_type_id}, context=context)
 
             self.write(cr, uid, [rac.id], {'created_ok': True}, context=context)
@@ -964,7 +1035,7 @@ class real_average_consumption_line(osv.osv):
 
         return res
 
-    def product_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, context=None):
+    def product_onchange(self, cr, uid, ids, product_id, location_id=False, uom=False, lot=False, categ=False, context=None):
         '''
         Set the product uom when the product change
         '''
@@ -973,6 +1044,7 @@ class real_average_consumption_line(osv.osv):
         product_obj = self.pool.get('product.product')
         v = {'batch_mandatory': False, 'date_mandatory': False, 'asset_mandatory': False}
         d = {'uom_id': []} 
+        warning = False
         if product_id:
             # Test the compatibility of the product with a consumption report
             res, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values={'value': v}, vals={'constraints': 'consumption'}, context=context)
@@ -997,10 +1069,19 @@ class real_average_consumption_line(osv.osv):
             d['uom_id'] = [('category_id', '=', product.uom_id.category_id.id)]
             if location_id:
                 v.update({'product_qty': qty_available})
+
+            # Check consistency of product according to the selected order category:
+            if categ:
+                consistency_message = product_obj.check_consistency(cr, uid, product_id, categ, context=context)
+                if consistency_message:
+                    warning = {
+                        'title': _('Warning'),
+                        'message': '%s \n %s' % (res.get('warning', {}).get('message', ''), consistency_message)
+                    }
         else:
             v.update({'uom_id': False, 'product_qty': 0.00, 'prodlot_id': False, 'expiry_date': False, 'consumed_qty': 0.00})
 
-        return {'value': v, 'domain': d}
+        return {'value': v, 'domain': d, 'warning': warning}
 
     def copy(self, cr, uid, line_id, default=None, context=None):
         if not context:
@@ -1971,6 +2052,10 @@ product_product()
 class stock_picking(osv.osv):
     _inherit = 'stock.picking'
     _name = 'stock.picking'
+
+    _columns = {
+        'rac_id': fields.many2one('real.average.consumption', string='Real consumption report'),
+    }
 
     def _hook_log_picking_modify_message(self, cr, uid, ids, context=None, message='', pick=False):
         '''

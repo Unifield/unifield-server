@@ -18540,7 +18540,7 @@ msgstr "process.to.consume.line"
 msgid "Save this document to a %s file and edit it with a specific software or a text editor. The file encoding is UTF-8."
 msgstr "Sauvegardez ce document dans un fichier %s et éditez le avec un logiciel spécifique ou un éditeur de texte. L'encodage du fichier est UTF-8."
 
-#. modules: msf_cross_docking, sale_override, tender_flow, purchase_override
+#. modules: msf_cross_docking, sale_override, tender_flow, purchase_override, consumption_calculation
 #: code:addons/msf_cross_docking/cross_docking.py:176
 #: code:addons/purchase_override/purchase.py:4280
 #: code:addons/sale_override/sale.py:1067
@@ -83668,7 +83668,7 @@ msgstr "Mongolie"
 msgid "Initialization…"
 msgstr "Initialisation…"
 
-#. modules: msf_cross_docking, sale_override, tender_flow, purchase_override
+#. modules: msf_cross_docking, sale_override, tender_flow, purchase_override, consumption_calculation
 #: code:addons/msf_cross_docking/cross_docking.py:180
 #: code:addons/purchase_override/purchase.py:4296
 #: code:addons/sale_override/sale.py:1071

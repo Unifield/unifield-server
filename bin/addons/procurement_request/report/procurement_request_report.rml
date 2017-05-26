@@ -156,6 +156,26 @@
                     <para style="Header">[[ req.warehouse_id and get_name('stock.warehouse', req.warehouse_id.id) or '' ]]</para>
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <para style="HeaderRight">Order category :</para>
+                </td>
+                <td>
+                    <para style="Header">[[ getSel(req, 'categ') ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderRight"></para>
+                </td>
+                <td>
+                    <para style="Header"></para>
+                </td>
+                <td>
+                    <para style="HeaderRight"></para>
+                </td>
+                <td>
+                    <para style="Header"></para>
+                </td>
+            </tr>
         </blockTable>
 
         <para style="Header">

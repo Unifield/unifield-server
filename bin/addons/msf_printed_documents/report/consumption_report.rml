@@ -206,6 +206,20 @@
                     <para style="TextInformation" alignment="LEFT"></para>
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"><b>Category :</b></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT">[[ getSel(objects[0], 'categ') or False]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                    <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+            </tr>
 
 
         </blockTable>

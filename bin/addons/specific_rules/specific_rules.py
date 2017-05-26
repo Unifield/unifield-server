@@ -82,8 +82,8 @@ class sale_order_line(osv.osv):
 
         return result
 
-    def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, context=None):
-        result = super(sale_order_line, self).requested_product_id_change(cr, uid, ids, product_id, comment, context)
+    def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, categ=False, context=None):
+        result = super(sale_order_line, self).requested_product_id_change(cr, uid, ids, product_id, comment, categ, context)
         if product_id:
             prod_obj = self.pool.get('product.product')
             if prod_obj.browse(cr, uid, product_id).is_ssl:
