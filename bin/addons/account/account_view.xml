@@ -391,7 +391,7 @@
                     <group>
                     <filter domain="['|', ('type', '=', 'sale'), ('type', '=', 'sale_refund')]" string="Sale" icon="terp-camera_test"/>
                     <filter domain="['|', ('type', '=', 'purchase'), ('type', '=', 'purchase_refund')]" string="Purchase" icon="terp-purchase"/>
-                   <filter domain="['|', ('type', '=', 'cash'), ('type', '=', 'bank')]" string="Liquidity" icon="terp-dolar"/>
+                    <filter domain="['|', ('type', '=', 'cash'), ('type', '=', 'bank')]" string="Liquidity" icon="terp-dolar"/>
                     <filter domain="['|', ('type', '=', 'general'), ('type', '=', 'situation')]" string="Others" icon="terp-stock"/>
                     <separator orientation="vertical"/>
                     <field name="code"/>

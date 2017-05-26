@@ -51,16 +51,29 @@ class account_move_line(osv.osv):
         if args[0][1] != '=' or not args[0][2]:
             raise osv.except_osv(_('Error'), _('Filter not implemented.'))
         j_obj = self.pool.get('account.journal')
-        j_ids = j_obj.search(cr, uid, [('type', '=', 'cheque')])
+
+        dom = []
+        j_ids = []
+        if isinstance(args[0][2], int):
+            bnk_st = self.pool.get('account.bank.statement').read(cr, uid, args[0][2], ['journal_id'], context=context)
+            if bnk_st['journal_id']:
+                j_ids = j_obj.search(cr, uid, [('bank_journal_id', '=', bnk_st['journal_id'][0]), ('type', '=', 'cheque')], context=context)
+                dom = [('journal_id', 'in', j_ids)]
+        else:
+            j_ids = j_obj.search(cr, uid, [('type', '=', 'cheque')])
+
+
         if not j_ids:
             return [('id', '=', 0)]
+
         res = []
         for j in j_obj.read(cr, uid, j_ids, ['default_debit_account_id', 'default_credit_account_id']):
             if j['default_debit_account_id']:
                 res.append(j['default_debit_account_id'][0])
             if j['default_credit_account_id']:
                 res.append(j['default_credit_account_id'][0])
-        return [('account_id', 'in', res)]
+
+        return dom + [('account_id', 'in', res)]
 
     def _search_ready_for_import_in_register(self, cr, uid, obj, name, args, context=None):
         """

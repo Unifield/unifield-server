@@ -98722,3 +98722,8 @@ msgstr "Vous avez changÃ© d'unitÃ© de consommation externe, merci de vÃ©ri
 msgid "Filter location by partner"
 msgstr "Filtrer l'emplacement de stock par partenaire"
 
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/import_cheque_on_bank_registers.py:166
+#, python-format
+msgid "Please add a Document Date on imported lines."
+msgstr "Veuillez saisir la date du document sur les lignes importées."
