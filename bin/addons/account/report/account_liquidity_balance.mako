@@ -117,6 +117,27 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssRegLineRight">
+<Alignment ss:Vertical="Top" ss:Horizontal="Right" ss:WrapText="1"/>
+<Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
+<Style ss:ID="ssRegLineNumber">
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
 </Styles>
 <Worksheet ss:Name="Liquidity Balances">
 <Table x:FullColumns="1" x:FullRows="1">
@@ -164,10 +185,10 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
  <Cell ss:StyleID="ssRegLine"><Data ss:Type="String">${ line['code'] or ''|x}</Data></Cell>
  <Cell ss:StyleID="ssRegLine"><Data ss:Type="String">${ line['name'] or ''|x}</Data></Cell>
  <Cell ss:StyleID="ssRegLine"><Data ss:Type="String">${ line['period'] or ''|x}</Data></Cell>
- <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line['opening'] or 0.0|x}</Data></Cell>
- <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line['calculated'] or 0.0|x}</Data></Cell>
- <Cell ss:StyleID="ssNumber"><Data ss:Type="Number">${ line['closing'] or 0.0|x}</Data></Cell>
- <Cell ss:StyleID="ssRegLine"><Data ss:Type="String">${ line['currency'] or ''|x}</Data></Cell>
+ <Cell ss:StyleID="ssRegLineNumber"><Data ss:Type="Number">${ line['opening'] or 0.0|x}</Data></Cell>
+ <Cell ss:StyleID="ssRegLineNumber"><Data ss:Type="Number">${ line['calculated'] or 0.0|x}</Data></Cell>
+ <Cell ss:StyleID="ssRegLineNumber"><Data ss:Type="Number">${ line['closing'] or 0.0|x}</Data></Cell>
+ <Cell ss:StyleID="ssRegLineRight"><Data ss:Type="String">${ line['currency'] or ''|x}</Data></Cell>
 </Row>
 % endfor
 
