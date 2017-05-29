@@ -46,6 +46,16 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2730_patch(self, cr, uid, *a, **b):
+        '''
+        remove all translations, and then re-import them
+        so that the {*}_MF.po files are authoratative
+        '''
+        cr.execute("delete from ir_translation where lang = 'fr_MF' and type != 'model';")
+        irmm = self.pool.get('ir.module.module')
+        msf_profile_id = irmm.search(cr, uid, [('name', '=', 'msf_profile')])
+        irmm.update_translations(cr, uid, msf_profile_id)
+
     def us_2632_patch(self, cr, uid, *a, **b):
         '''fix ir.model.data entries on sync_server instances
         '''

@@ -2197,15 +2197,6 @@ msgstr "Période à partir de"
 msgid "DateTime"
 msgstr "Horodatage"
 
-#. module: msf_outgoing
-#: field:memory.additionalitems,uom:0
-#: view:ppl.move.processor:0
-#: view:return.ppl.move.processor:0
-#: field:shipment.additionalitems,uom:0
-#: field:stock.move.memory.shipment.additionalitems,uom:0
-msgid "UOM"
-msgstr "UOM"
-
 #. module: msf_budget
 #: report:msf.pdf.budget.monthly:0
 msgid "Dec"
@@ -14703,15 +14694,6 @@ msgstr "More than one corresponding line from this one: %s"
 msgid "Qty delivered"
 msgstr "Qty delivered"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:59
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:66
-#: field:wizard.simu.import.po.line,import_product_name:0
-#: field:wizard.simu.import.po.line,initial_product_name:0
-#, python-format
-msgid "Product Description"
-msgstr "Description du produit"
-
 #. module: stock_forecast
 #: field:stock.forecast.line,stock_situation:0
 #: report:stock.forecast.report:0
@@ -16274,11 +16256,6 @@ msgstr "wizard.interactive.report"
 msgid ","
 msgstr ","
 
-#. module: msf_supply_doc_export
-#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:78
-msgid "Destination Location"
-msgstr "Zone Destination"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -16728,7 +16705,7 @@ msgstr "Turkey"
 msgid "Controlled subst. icon"
 msgstr "Controlled subst. icon"
 
-#. modules: msf_doc_import, stock, consumption_calculation, stock_override, kit
+#. modules: msf_doc_import, stock, consumption_calculation, stock_override, kit, msf_supply_doc_export
 #: view:real.average.consumption:0
 #: field:real.average.consumption,activity_id:0
 #: field:kit.creation,location_dest_id_kit_creation:0
@@ -16739,9 +16716,10 @@ msgstr "Controlled subst. icon"
 #: report:delivery.order:0
 #: report:internal.move:0
 #: field:stock.location.chained.options,dest_location_id:0
+#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:78
 #, python-format
 msgid "Destination Location"
-msgstr "Destination - Zone"
+msgstr "Zone Destination"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -18948,7 +18926,7 @@ msgstr "\n"
 msgid "Saint Lucia"
 msgstr "Sainte-Lucie"
 
-#. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, kit, msf_doc_import, stock
+#. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, kit, msf_doc_import, stock, msf_supply_doc_export
 #: view:real.average.consumption:0
 #: field:real.average.consumption,cons_location_id:0
 #: field:real.consumption.change.location,location_id:0
@@ -18974,6 +18952,7 @@ msgstr "Sainte-Lucie"
 #: report:delivery.order:0
 #: report:internal.move:0
 #: view:stock.move:0
+#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:77
 #, python-format
 msgid "Source Location"
 msgstr "Zone Source"
@@ -20405,7 +20384,7 @@ msgstr "Numéro de référence interne au cas où celle-ci serait différente du
 msgid "Product category MSFID \"%s\" not found"
 msgstr "Product category MSFID \"%s\" not found"
 
-#. modules: product, msf_outgoing, procurement, account_override, product_attributes, msf_supply_doc_export, stock
+#. modules: product, msf_outgoing, procurement, account_override, product_attributes, msf_supply_doc_export, stock, sales_followup, purchase_followup, sale
 #: view:account.invoice:0
 #: view:stock.move.memory.picking:0
 #: view:stock.move.memory.ppl:0
@@ -20416,6 +20395,11 @@ msgstr "Product category MSFID \"%s\" not found"
 #: view:product.template:0
 #: view:stock.move:0
 #: view:stock.move:0
+#: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:68
+#: report:addons/purchase_followup/report/purchase_follow_up_report_xls.mako:204
+#: report:msf.freight_manifest:0
+#: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:221
+#: report:sales.follow.up.report_pdf:0
 msgid "UOM"
 msgstr "UdM"
 
@@ -25715,15 +25699,6 @@ msgstr "Pas de numéro de pièce !"
 #: field:workflow.activity,join_mode:0
 msgid "Join Mode"
 msgstr "Mode de Jointure"
-
-#. modules: sales_followup, msf_supply_doc_export, purchase_followup, sale
-#: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:68
-#: report:addons/purchase_followup/report/purchase_follow_up_report_xls.mako:204
-#: report:msf.freight_manifest:0
-#: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:221
-#: report:sales.follow.up.report_pdf:0
-msgid "UOM"
-msgstr "UDM"
 
 #. module: base
 #: code:addons/base/module/module.py:220
@@ -37607,30 +37582,6 @@ msgstr "L'expédition correspondante en mode brouillon (%s) a été mise à jour
 #, python-format
 msgid "You selected a nomenclature of the last mandatory level as parent, the new nomenclature's type must be 'optional'."
 msgstr "Vous avez sélectionné une nomenclature du dernier niveau obligatoire en tant que parent, le type de la nouvelle nomenclature doit être «facultatif»."
-
-#. modules: msf_supply_doc_export, register_accounting, msf_outgoing, sale, procurement_request
-#: field:create.picking.move.processor,quantity:0
-#: field:internal.move.processor,quantity:0
-#: report:invoice:0
-#: field:memory.additionalitems,quantity:0
-#: field:outgoing.delivery.move.processor,quantity:0
-#: view:ppl.move.processor:0
-#: field:ppl.move.processor,quantity:0
-#: field:return.ppl.move.processor,quantity:0
-#: field:shipment.additional.line.processor,quantity:0
-#: field:shipment.additionalitems,quantity:0
-#: field:split.move.processor,quantity:0
-#: field:stock.move.in.processor,quantity:0
-#: field:stock.move.memory.shipment.additionalitems,quantity:0
-#: field:stock.move.processor,quantity:0
-#: field:validate.move.processor,quantity:0
-#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:71
-#: report:addons/msf_supply_doc_export/report/stock_inventory_xls.mako:64
-#: report:procurement.request.report:0
-#: field:account.direct.invoice.wizard.line,quantity:0
-#: report:msf.freight_manifest:0
-msgid "Quantity"
-msgstr "Quantity"
 
 #. module: product_asset
 #: report:product.asset:0
@@ -58207,24 +58158,6 @@ msgstr "Le nombre de montants partiels, combinables pour trouver un point d'équ
 msgid "No model line given. Please save your model line before."
 msgstr "Pas de modèle de ligne donné. Veuillez d'abord sauver votre modèle de ligne."
 
-#. modules: msf_doc_import, msf_outgoing, sale, stock_override, msf_supply_doc_export
-#: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:166
-#: field:incoming.import.xml.line,expiry_date:0
-#: field:wizard.import.in.line.simulation.screen,imp_exp_date:0
-#: field:create.picking.move.processor,expiry_date:0
-#: field:internal.move.processor,expiry_date:0
-#: field:outgoing.delivery.move.processor,expiry_date:0
-#: field:ppl.move.processor,expiry_date:0
-#: field:return.ppl.move.processor,expiry_date:0
-#: field:stock.move.in.processor,expiry_date:0
-#: field:stock.move.processor,expiry_date:0
-#: field:validate.move.processor,expiry_date:0
-#: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:110
-#: report:msf.report_reception_in:0
-#: field:stock.card.wizard,expiry_date:0
-msgid "Expiry date"
-msgstr "Expiry date"
-
 #. module: base
 #: model:ir.model,name:base.model_res_widget_wizard
 msgid "Add a widget for User"
@@ -60596,7 +60529,7 @@ msgstr "Neutral Zone"
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:41
 #, python-format
 msgid "get_import_batch_headers_product_code"
-msgstr "Code du produit"
+msgstr "Code Produit"
 
 #. module: stock_override
 #: view:stock.card.wizard:0
@@ -66227,6 +66160,8 @@ msgstr "msf_button_access_rights.view_config_wizard_install"
 #: report:internal.move:0
 #: field:report.stock.move,product_code:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:571
+#: field:wizard.simu.import.po.line,import_product_code:0
+#: field:wizard.simu.import.po.line,initial_product_code:0
 #, python-format
 msgid "Product Code"
 msgstr "Code Produit"
@@ -74243,6 +74178,8 @@ msgstr "Sorte de Node"
 #: field:product.asset,prod_int_name:0
 #: field:old.product.list.line,name:0
 #: field:product.list.line,name:0
+#: field:wizard.simu.import.po.line,import_product_name:0
+#: field:wizard.simu.import.po.line,initial_product_name:0
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:140
 #: report:stock.forecast.report:0
 #: report:addons/supplier_catalogue/report/report_supplier_catalogue_lines_xls.mako:71
@@ -74773,11 +74710,6 @@ msgstr "Configurez Votre Application de Gestion de Vente"
 #, python-format
 msgid "Cannot close this period at the field level. All previous periods must be closed before closing this one."
 msgstr "Cannot close this period at the field level. All previous periods must be closed before closing this one."
-
-#. module: consumption_calculation
-#: field:real.average.consumption,activity_name:0
-msgid "Destination Location"
-msgstr "Destination Location"
 
 #. module: msf_outgoing
 #: report:invoice:0
@@ -80845,22 +80777,6 @@ msgstr "Expiration"
 msgid "Create / Write / Copy"
 msgstr "Créer / Ecrire / Copier"
 
-#. modules: tender_flow, purchase_allocation_report, procurement_request, supplier_catalogue, consumption_calculation, kit, purchase_compare_rfq, msf_supply_doc_export
-#: report:addons/consumption_calculation/report/report_incoming_consumption_xls.mako:69
-#: report:product.likely.expire.report_pdf:0
-#: code:addons/kit/wizard/kit_mass_import.py:131
-#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:68
-#: report:addons/msf_supply_doc_export/report/report_real_composition_kit_xls.mako:65
-#: report:addons/msf_supply_doc_export/report/stock_inventory_xls.mako:59
-#: report:procurement.request.report:0
-#: field:purchase.order.line.allocation.report,product_code:0
-#: field:wizard.compare.rfq.line,product_code:0
-#: report:addons/supplier_catalogue/report/report_supplier_catalogue_lines_xls.mako:70
-#: field:purchase.report,product_code:0
-#, python-format
-msgid "Product Code"
-msgstr "Product Code"
-
 #. module: msf_profile
 #: view:email.configuration:0
 msgid "Send a test email"
@@ -83021,15 +82937,6 @@ msgstr "\n"
 #: selection:base.setup.company,ship_country_id:0
 msgid "United States"
 msgstr "États-Unis"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:58
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:65
-#: field:wizard.simu.import.po.line,import_product_code:0
-#: field:wizard.simu.import.po.line,initial_product_code:0
-#, python-format
-msgid "Product Code"
-msgstr "Code du produit"
 
 #. module: msf_partner
 #: field:res.partner.address,office_name:0
@@ -86402,16 +86309,6 @@ msgstr "G/L account"
 msgid "Delivery Confirmed Date is a mandatory field."
 msgstr "La Date de Livraison Confirmée est un champ obligatoire"
 
-#. modules: product_attributes, msf_instance, sync_client, account_period_closing_level, kit
-#: field:account.period,active:0
-#: code:addons/kit/wizard/kit_mass_import.py:129
-#: view:msf.instance:0
-#: field:product.heat_sensitive,active:0
-#: field:sync.client.message_rule,active:0
-#, python-format
-msgid "Active"
-msgstr "Active"
-
 #. module: base
 #: model:res.country,name:base.km
 msgid "Comoros"
@@ -88934,11 +88831,6 @@ msgstr "Process Node"
 msgid "Field Mappings"
 msgstr "Correspondances de Champ"
 
-#. module: msf_supply_doc_export
-#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:77
-msgid "Source Location"
-msgstr "Zone source"
-
 #. module: sale
 #: report:msf.report_reception_in:0
 msgid "Qty backorder"
@@ -90620,13 +90512,6 @@ msgstr "Outgoing delivery Dest. Loc."
 #: help:wizard.account.invoice,internal_number:0
 msgid "Unique number of the invoice, computed automatically when the invoice is created."
 msgstr "Numéro unique de la facture, calculé automatiquement lorsque la facture est créée."
-
-#. modules: purchase_compare_rfq, product_list
-#: field:old.product.list.line,desc:0
-#: field:product.list.line,desc:0
-#: field:wizard.compare.rfq.line,product_name:0
-msgid "Product Description"
-msgstr "Product Description"
 
 #. module: product
 #: field:product.template,uom_po_id:0
