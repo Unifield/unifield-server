@@ -91,7 +91,7 @@
                     <field name="partner_id"/>
                     <field name="user_id" />
                     <field name="picked_rate" widget="progressbar"/>
-                    <field name="invoiced_rate" widget="progressbar"/>
+                    <!-- <field name="invoiced_rate" widget="progressbar"/> -->
                     <field name="amount_total" sum="Total Tax Included"/>
                     <field name="currency_id" />
                     <field name="state" invisible="True" />
@@ -174,7 +174,7 @@
                                             <group colspan="4" col="5" groups="base.group_extended">
                                                 <separator colspan="5" string="States"/>
                                                 <field name="state"/>
-                                                <field name="invoiced"/>
+                                                <field name="invoiced" invisible="1"/>
                                                 <group attrs="{'invisible':[('invoiced','=',True)]}">
                                                  </group>
                                             </group>

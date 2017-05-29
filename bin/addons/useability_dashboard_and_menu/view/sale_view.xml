@@ -17,11 +17,11 @@
         </record>
         
         <!-- We remove "invoiced_rate" as it is N/A -->
-        <record id="sale.view_order_tree" model="ir.ui.view">
+<!--         <record id="sale.view_order_tree" model="ir.ui.view">
             <field name="name">sale.order.tree</field>
             <field name="model">sale.order</field>
             <field name="type">tree</field>
-            <field name="priority">2</field>
+            <field name="priority">3</field>
             <field name="arch" type="xml">
                 <tree string="Sales Orders" colors="grey:state=='cancel';blue:state in ('waiting_date','manual');red:state in ('invoice_except','shipping_except')">
                     <field name="vat_ok" invisible="1" />
@@ -31,15 +31,12 @@
                     <field name="partner_id"/>
                     <field name="user_id" />
                     <field name="picked_rate" widget="progressbar"/>
-                    <!-- WAS
-                    <field name="invoiced_rate" widget="progressbar"/>
-                     -->
                     <field name="amount_untaxed" sum="Total Tax Excluded" attrs="{'invisible': [('vat_ok', '=', False)]}" />
                     <field name="amount_total" sum="Total Tax Included"/>
                     <field name="state"/>
                 </tree>
             </field>
-        </record>
+        </record> -->
         
     </data>
 </openerp>
