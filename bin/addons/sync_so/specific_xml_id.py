@@ -663,12 +663,9 @@ class product_product(osv.osv):
     _inherit = 'product.product'
 
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-        product = self.read(cr, uid, res_id, ['xmlid_code', 'default_code'])
+        product = self.read(cr, uid, res_id, ['xmlid_code'])
         if product['xmlid_code'] and not product['xmlid_code'].startswith(RANDOM_XMLID_CODE_PREFIX):
             return get_valid_xml_name('product', product['xmlid_code'])
-
-        if product['default_code']:
-            return get_valid_xml_name('product', product['default_code'])
 
         return super(product_product, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
 

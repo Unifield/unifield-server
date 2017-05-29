@@ -526,25 +526,6 @@ product and can't be deleted"""),
         return super(product_product, self).search(cr, uid, args, offset,
                                                    limit, order, context, count)
 
-    def write(self, cr, uid, ids, value, context=None):
-        if not ids:
-            return True
-        single = False
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-            single = True
-        if value.get('default_code') and value['default_code'] != 'XXX':
-            # do we have any ids with default_code set to 'XXX'
-            xxx_ids = self.search(cr, uid, [
-                ('id', 'in', ids),
-                ('default_code', '=', 'XXX'),
-            ], order='NO_ORDER', context=context)
-            if xxx_ids:
-                self.write(cr, uid, xxx_ids, {
-                    'xmlid_code': value['default_code'],
-                }, context=context)
-        return super(product_product, self).\
-            write(cr, uid, single and ids[0] or ids, value, context=context)
 
 product_product()
 

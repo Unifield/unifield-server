@@ -766,11 +766,13 @@ class product_product(osv.osv):
             new_vals = {}
         if 'msfid' not in new_vals:
             new_vals['msfid'] = False
+        if 'xmlid_code' not in new_vals:
+            new_vals['xmlid_code'] = False
         res = super(product_product, self).copy(cr, uid, old_id, new_vals, context=context)
         if new_vals.get('default_code', None) == 'XXX':
             # Delete the translations linked to this new product
             tr_obj = self.pool.get('ir.translation')
-            tr_ids = tr_obj.search(cr, uid, [('xml_id', '=', 'product_XXX')], context=context)
+            tr_ids = tr_obj.search(cr, uid, [('name', '=', 'product.template,name'), ('res_id', '=', res)], context=context)
             if tr_ids:
                 tr_obj.unlink(cr, uid, tr_ids, context=context)
 
@@ -818,25 +820,18 @@ class product_product(osv.osv):
          3. manually creation: the default code must be new (no duplication), xmlid_code = valid default_code
          4. duplication from GUI: the default code XXX is saved, then modify in the write
         '''
-        to_overwrite = False
         # The first 2 cases: dup of default_code/xmlid_code not allow
         if context.get('from_import_menu') or context.get('sync_update_execution', False):
             if not default_code or not vals.get('xmlid_code', False):
                 raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
-        elif default_code:  # cases 3, 4
+        if not vals.get('xmlid_code'):
             vals['xmlid_code'] = RANDOM_XMLID_CODE_PREFIX + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(14))
-        else:
-            # not default_code, as this is a mandatory field a default_value will be set later in the code
-            to_overwrite = 1
 
         sale._setNomenclatureInfo(cr, uid, vals, context)
 
         res = super(product_product, self).create(cr, uid, vals, context=context)
 
         prod_default_code = default_code or self.read(cr, uid, res, ['default_code'], context=context)['default_code']
-        if to_overwrite:
-            self.write(cr, uid, res, {'xmlid_code': prod_default_code}, context=context)
-
         if prod_default_code != 'XXX':
             return res
 
