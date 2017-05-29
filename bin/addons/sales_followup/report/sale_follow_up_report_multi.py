@@ -160,7 +160,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     if ppl:
                         packing = move.picking_id.previous_step_id.name or ''
                         shipment = move.picking_id.shipment_id.name or ''
-                        eta = datetime.strptime(move.picking_id.shipment_id.shipment_expected_date[0:10], '%Y-%m-%d')
+                        eta = datetime.strptime(move.picking_id.shipment_id.shipment_actual_date[0:10], '%Y-%m-%d')
                         eta += timedelta(days=line.order_id.partner_id.supplier_lt or 0.00)
                         is_delivered = move.picking_id.shipment_id.state == 'delivered'
 
