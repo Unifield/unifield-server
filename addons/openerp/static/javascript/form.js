@@ -102,6 +102,7 @@ function openRecord(id, src, target, readonly){
         'id': id || 'False',
         'ids': openobject.dom.get(prefix + '_terp_ids').value,
         'view_ids': openobject.dom.get(prefix + '_terp_view_ids').value,
+        'traget_action_id': openobject.dom.get(prefix + '_terp_target_action_id').value,
         'view_mode': openobject.dom.get(prefix + '_terp_view_mode').value,
         'view_type': openobject.dom.get(prefix + '_terp_view_type').value,
         'domain': openobject.dom.get(prefix + '_terp_domain').value,
