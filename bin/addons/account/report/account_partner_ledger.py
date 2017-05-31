@@ -317,7 +317,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             if len(journal_ids) == nb_journals:
                 return [_('All Journals')]
         instance_ids = instance_ids or data.get('form', False) and data['form'].get('instance_ids', False)
-        return super(third_party_ledger, self)._get_journal(data, instance_ids)
+        journal_list = super(third_party_ledger, self)._get_journal(data, instance_ids)
+        return set(journal_list)  # exclude duplications
 
 # PDF report with one partner per page
 report_sxw.report_sxw('report.account.third_party_ledger', 'res.partner',
