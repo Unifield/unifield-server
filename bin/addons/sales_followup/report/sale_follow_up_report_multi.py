@@ -118,19 +118,17 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             if not cdd and line.order_id.delivery_confirmed_date:
                 cdd = line.order_id.delivery_confirmed_date
 
+            packing_save = '' # saved values from moves, to be integrated in data dict ...
+            shipment_save = '' 
             for move in line.move_ids:
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
                 ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and move.location_dest_id.usage == 'customer'
                 s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
 
-                # if move.picking_subtype == 'ppl':
-                #     data.update({
-                #         'packing': move.picking_id.name,
-                #     })
-                # if move.pick_shipment_id:
-                #     data.update({
-                #         'shipment': move.pick_shipment_id.name,
-                #     })
+                if move.picking_subtype == 'ppl':
+                    packing_save = move.picking_id.name
+                if move.pick_shipment_id:
+                    shipment_save = move.pick_shipment_id.name
 
                 if m_type and (ppl or s_out):
                     bo_qty -= self.pool.get('product.uom')._compute_qty(
@@ -201,6 +199,11 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                                 'shipment': shipment,
                             })
 
+                    if not data.get('packing', False):
+                        data['packing'] = packing_save
+                    if not data.get('shipment', False):
+                        data['shipment'] = shipment_save
+
                     if key in keys:
                         for rline in lines:
                             if rline['packing'] == key[0] and rline['shipment'] == key[1] and rline['delivered_uom'] == key[2]:
@@ -229,6 +232,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'delivered_uom': '',
                     'backordered_qty': line.product_uom_qty,
                     'cdd': cdd,
+                    'packing': packing_save,
+                    'shipment': shipment_save,
                 }
                 lines.append(data)
 
