@@ -98522,46 +98522,46 @@ msgstr "Ligne %s. Compte %s non trouvé !"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:162
 #, python-format
-msgid "Line %s. Account %s is donation type which is forbidden."
-msgstr "Ligne %s. Le compte %s est de type donation ce qui est interdit."
+msgid "Line %s. Account %s is 'Donations' type which is forbidden."
+msgstr "Ligne %s. Le compte %s est de type 'Donations' ce qui est interdit."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:174
 #, python-format
 msgid "Line %s: Some restrictions prevent account %s to be used to import this line:\n"
-"- the account cannot be of type view or liquidity\n"
-"- account cannot be corrected on HQ entries\n"
-"- 'Type for specific treatment' cannot be 'donation'\n"
-"- 'Internal Type' should be different from 'other' OR 'User Type Code' should be different from 'stock'\n"
-"- 'User Type Code' should be different from 'expense' OR 'P&L / BS Category' not None."
+"- the account cannot be of type 'View' or 'Liquidity'\n"
+"- account can not be corrected on HQ entries\n"
+"- 'Type for specific treatment' cannot be 'Donations'\n"
+"- 'Internal Type' should be different from 'Regular' OR 'Account Type' should be different from 'Stock'\n"
+"- 'Account Type' should be different from 'Expense' OR 'P&L / BS Category' not None."
 msgstr "Ligne %s: Des restrictions empêchent le compte %s d'être utilisé pour importer cette ligne :\n"
 "- le compte ne peut pas être de type 'Vue' ou 'Liquidités'\n"
 "- compte impossible à corriger dans les entrées HQ\n"
-"- 'Type pour traitement spécifique' ne peut pas être 'Liquidités'\n"
-"- 'Type Interne' doit être différent de 'Autre' ou 'Utilisateur - Type de Code' doit être différent de 'Stock'\n"
-"- 'Utilisateur - Type de Code' doit être différent de 'expense' ou 'Catégorie Bilan/Cte de Résultat' ne doit pas être vide."
+"- 'Type pour traitement spécifique' ne peut pas être 'Donations'\n"
+"- 'Type Interne' doit être différent de 'Normal' OU 'Type de Compte' doit être différent de 'Stock'\n"
+"- 'Type de Compte' doit être différent de 'Expense' OU 'Catégorie Bilan/Cte de Résultat' ne doit pas être vide."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:168
 #, python-format
 msgid "Line %s: Some restrictions prevent account %s to be used to import this line:\n"
-"- the account cannot be of type view\n"
-"- account cannot be corrected on HQ entries\n"
-"- 'User Type Code' should be in ('expense', 'income', 'receivables')\n"
+"- the account cannot be of type 'View'\n"
+"- account can not be corrected on HQ entries\n"
+"- 'Account Type' should be in ('expense', 'income', 'receivables')\n"
 "- 'P&L / BS Category' cannot be None."
 msgstr "Ligne %s: Des restrictions empêchent le compte %s d'être utilisé pour importer cette ligne :\n"
 "- le compte ne peut pas être de type 'Vue'\n"
 "- compte impossible à corriger dans les entrées HQ\n"
-"- 'Utilisateur - Type de Code' doit être de type 'expense', 'income' ou 'receivables'\n"
+"- 'Type de Compte' doit être de type 'expense', 'income' ou 'receivables'\n"
 "- 'Catégorie Bilan/Cte de Résultat' ne doit pas être vide."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:184
 #, python-format
 msgid "\n"
-"- 'User Type Code' should be in ('expense', 'income', 'receivables')."
+"- 'Account Type' should be in ('expense', 'income', 'receivables')."
 msgstr "\n"
-"- 'Utilisateur - Type de Code' doit être de type 'expense', 'income' ou 'receivables'."
+"- 'Type de Compte' doit être de type 'expense', 'income' ou 'receivables'."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:275
