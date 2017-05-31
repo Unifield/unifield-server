@@ -98691,3 +98691,9 @@ msgstr "Solde calculé (théorique)"
 #, python-format
 msgid "Liquidity Balances"
 msgstr "Balances de trésorie"
+
+#. module: account
+#: code:addons/account/wizard/account_report_common_partner.py:89
+#, python-format
+msgid "Only dates of the selected Fiscal Year can be chosen."
+msgstr "Seules des dates de l'exercice comptable sélectionné peuvent être choisies."
