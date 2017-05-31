@@ -111,7 +111,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             bo_qty = line.product_uom_qty
             po_name = ''
             cdd = False
-            data = {}
+            # data = {}
             if line.procurement_id and line.procurement_id.purchase_id:
                 po_name = line.procurement_id.purchase_id.name
                 cdd = line.procurement_id.purchase_id.delivery_confirmed_date
@@ -123,14 +123,14 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and move.location_dest_id.usage == 'customer'
                 s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
 
-                if move.picking_subtype == 'ppl':
-                    data.update({
-                        'packing': move.picking_id.name,
-                    })
-                if move.pick_shipment_id:
-                    data.update({
-                        'shipment': move.pick_shipment_id.name,
-                    })
+                # if move.picking_subtype == 'ppl':
+                #     data.update({
+                #         'packing': move.picking_id.name,
+                #     })
+                # if move.pick_shipment_id:
+                #     data.update({
+                #         'shipment': move.pick_shipment_id.name,
+                #     })
 
                 if m_type and (ppl or s_out):
                     bo_qty -= self.pool.get('product.uom')._compute_qty(
@@ -140,14 +140,14 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         move.product_qty,
                         line.product_uom.id,
                     )
-                    data.update({
+                    data = {
                         'po_name': po_name,
                         'cdd': cdd,
                         'line_number': line.line_number,
                         'product_name': line.product_id.name,
                         'product_code': line.product_id.code,
                         'is_delivered': False,
-                    })
+                    }
                     if first_line:
                         data.update({
                             'uom_id': line.product_uom.name,
@@ -163,6 +163,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         eta = datetime.strptime(move.picking_id.shipment_id.shipment_actual_date[0:10], '%Y-%m-%d')
                         eta += timedelta(days=line.order_id.partner_id.supplier_lt or 0.00)
                         is_delivered = move.picking_id.shipment_id.state == 'delivered'
+                        is_shipment_done = move.picking_id.shipment_id.state == 'done'
 
                         if not grouped:
                             key = (packing, shipment, move.product_uom.name)
@@ -172,8 +173,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'packing': packing,
                             'shipment': shipment,
                             'is_delivered': is_delivered,
-                            'delivered_qty': not only_bo and move.product_qty or 0.00,
-                            'delivered_uom': not only_bo and move.product_uom.name or 0.00,
+                            'delivered_qty': not only_bo and is_shipment_done and move.product_qty or 0.00,
+                            'delivered_uom': not only_bo and is_shipment_done and move.product_uom.name or '',
                             'rts': not only_bo and move.picking_id.shipment_id.shipment_expected_date[0:10] or '',
                             'eta': not only_bo and eta.strftime('%Y-%m-%d'),
                             'transport': not only_bo and move.picking_id.shipment_id.transport_type or '',
@@ -182,8 +183,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
                             packing = move.picking_id.previous_step_id.name
                             shipment = move.picking_id.shipment_id.name or ''
+                            is_shipment_done = move.picking_id.shipment_id.state == 'done'
                         else:
                             shipment = move.picking_id.name or ''
+                            is_shipment_done = move.picking_id.state == 'done'
                             packing = ''
                         if not grouped:
                             key = (packing, False, move.product_uom.name)
@@ -192,8 +195,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         if not only_bo:
                             data.update({
                                 'packing': packing,
-                                'delivered_qty': move.product_qty,
-                                'delivered_uom': move.product_uom.name,
+                                'delivered_qty': is_shipment_done and move.product_qty or 0.00,
+                                'delivered_uom': is_shipment_done and move.product_uom.name or '',
                                 'rts': line.order_id.ready_to_ship_date,
                                 'shipment': shipment,
                             })
@@ -214,7 +217,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
             # No move found
             if first_line:
-                data.update({
+                data = {
                     'line_number': line.line_number,
                     'po_name': po_name,
                     'product_code': line.product_id.default_code,
@@ -226,7 +229,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'delivered_uom': '',
                     'backordered_qty': line.product_uom_qty,
                     'cdd': cdd,
-                })
+                }
                 lines.append(data)
 
             # Put the backorderd qty on the first line
