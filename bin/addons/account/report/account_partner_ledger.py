@@ -45,11 +45,11 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             'get_start_date': self._get_start_date,
             'get_end_date': self._get_end_date,
             'get_fiscalyear': self._get_fiscalyear,
-            'get_journal': self._get_journal,
+            'get_journals_str': self._get_journals_str,
             'get_partners':self._get_partners,
             'get_target_move': self._get_target_move,
-            'get_instances': self._get_instances_from_data,
-            'get_accounts': self._get_accounts,
+            'get_instances_str': self._get_instances_str,
+            'get_accounts_str': self._get_accounts_str,
             'format_entry_label': self._format_entry_label,
         })
 
@@ -317,7 +317,29 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             if len(journal_ids) == nb_journals:
                 return [_('All Journals')]
         instance_ids = instance_ids or data.get('form', False) and data['form'].get('instance_ids', False)
-        return super(third_party_ledger, self)._get_journal(data, instance_ids)
+        journal_list = super(third_party_ledger, self)._get_journal(data, instance_ids)
+        return set(journal_list)  # exclude duplications
+
+    def _get_journals_str(self, data):
+        """
+        Returns the list of journals as a String (cut if > 300 characters)
+        """
+        journals_str = ', '.join([journal or '' for journal in self._get_journal(data)])
+        return (len(journals_str) <= 300) and journals_str or ("%s%s" % (journals_str[:297], '...'))
+
+    def _get_instances_str(self, data):
+        """
+        Returns the list of instances as a String (cut if > 300 characters)
+        """
+        instances_str = ', '.join([inst or '' for inst in self._get_instances_from_data(data)])
+        return (len(instances_str) <= 300) and instances_str or ("%s%s" % (instances_str[:297], '...'))
+
+    def _get_accounts_str(self, data):
+        """
+        Returns the list of accounts as a String (cut if > 300 characters)
+        """
+        accounts_str = ', '.join([acc or '' for acc in self._get_accounts(data)])
+        return (len(accounts_str) <= 300) and accounts_str or ("%s%s" % (accounts_str[:297], '...'))
 
 # PDF report with one partner per page
 report_sxw.report_sxw('report.account.third_party_ledger', 'res.partner',

@@ -324,7 +324,7 @@ header_col_merge_count = col_count - 1
      <Data ss:Type="String">${(get_account(data) or '')|x}&#10;&#10;${(get_fiscalyear(data) or '')|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
-     <Data ss:Type="String">${(', '.join([ journal or '' for journal in get_journal(data) ]))|x}</Data>
+     <Data ss:Type="String">${ get_journals_str(data)|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${(display_account or '')|x}</Data>
@@ -339,10 +339,10 @@ header_col_merge_count = col_count - 1
      <Data ss:Type="String">${company.currency_id.name|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${(', '.join([ inst or '' for inst in get_prop_instances(data) ]))|x}</Data>
+     <Data ss:Type="String">${ get_prop_instances_str(data)|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
-    <Data ss:Type="String">${(', '.join([ acc or '' for acc in get_accounts(data) ]))|x}</Data>
+    <Data ss:Type="String">${ get_accounts_str(data)|x}</Data>
  </Cell>
 </Row>
 ## separation line after header

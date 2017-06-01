@@ -231,13 +231,13 @@ else:
     <Data ss:Type="String">${ get_fiscalyear(data) or ''|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
-    <Data ss:Type="String">${ ', '.join([ lt or '' for lt in get_journal(data) ])|x}</Data>
+    <Data ss:Type="String">${ get_journals_str(data)|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
     <Data ss:Type="String">${ get_partners()|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
-    <Data ss:Type="String">${ ', '.join([ acc or '' for acc in get_accounts(data) ])|x}</Data>
+    <Data ss:Type="String">${ get_accounts_str(data)|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
     <Data ss:Type="String">${ filter|x}</Data>
@@ -246,7 +246,7 @@ else:
     <Data ss:Type="String">${ get_target_move(data)|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
-    <Data ss:Type="String">${ ', '.join([ inst or '' for inst in get_instances(data) ])|x}</Data>
+    <Data ss:Type="String">${ get_instances_str(data)|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
     <Data ss:Type="String">${ company.currency_id.name |x}</Data>
