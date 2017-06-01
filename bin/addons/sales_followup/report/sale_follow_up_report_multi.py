@@ -89,6 +89,16 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
         raise StopIteration
 
+    def is_returned(self, move):
+        '''
+        Is the given move returned at shipment level ?
+        '''
+        for pack_fam_mem in move.picking_id.shipment_id.pack_family_memory_ids:
+            for m in pack_fam_mem.move_lines:
+                if m.not_shipped and m.id == move.id:
+                    return True
+        return False
+
     def _get_lines(self, order_id, grouped=False, only_bo=False):
         '''
         Get all lines with OUT/PICK for an order
@@ -119,7 +129,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
             for move in line.move_ids:
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
-                ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id # and is returned ?
+                ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self.is_returned(move)
                 s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
 
                 if m_type and (ppl or s_out):
@@ -225,7 +235,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             # Put the backorderd qty on the first line
             if not lines:
                 continue
-            if not only_bo and abs(bo_qty) != abs(line.product_uom_qty) and not first_line and line.order_id.state != 'cancel':
+            if not only_bo and bo_qty and abs(bo_qty) != abs(line.product_uom_qty) and not first_line and line.order_id.state != 'cancel':
                 lines.append({
                     'po_name': po_name,
                     'cdd': cdd,
