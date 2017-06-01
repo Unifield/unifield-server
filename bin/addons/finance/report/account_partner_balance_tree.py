@@ -36,7 +36,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             # header
             'get_account': self._get_account,
             'get_fiscalyear': self._get_fiscalyear,
-            'get_journal': self._get_journal,
+            'get_journals_str': self._get_journals_str,
             'get_filter': self._get_filter,
             'get_filter_info': self._get_filter_info,
             'get_start_date':self._get_start_date,
@@ -44,9 +44,9 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_start_period': self.get_start_period,
             'get_end_period': self.get_end_period,
             'get_target_move': self._get_target_move,
-            'get_prop_instances': self._get_prop_instances,
+            'get_prop_instances_str': self._get_prop_instances_str,
             'get_type_of_accounts': self._get_type_of_accounts,
-            'get_accounts': self._get_accounts,
+            'get_accounts_str': self._get_accounts_str,
             'get_display_ib': self._get_display_ib,
 
             # data
@@ -185,6 +185,13 @@ class account_partner_balance_tree(report_sxw.rml_parse):
                                                        fields_to_fetch=['code'], context=data.get('context', {}))]
         return [_('All Accounts')]
 
+    def _get_accounts_str(self, data):
+        """
+        Returns the list of accounts as a String (cut if > 300 characters)
+        """
+        accounts_str = ', '.join([acc or '' for acc in self._get_accounts(data)])
+        return (len(accounts_str) <= 300) and accounts_str or ("%s%s" % (accounts_str[:297], '...'))
+
     def _get_filter(self, data):
         if data.get('form', False) and data['form'].get('filter', False):
             if data['form']['filter'] == 'filter_date':
@@ -215,6 +222,13 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             codes = [x for x, in self.cr.fetchall()]
         return set(codes)  # exclude duplications
 
+    def _get_journals_str(self, data):
+        """
+        Returns the list of journals as a String (cut if > 300 characters)
+        """
+        journals_str = ', '.join([journal or '' for journal in self._get_journal(data)])
+        return (len(journals_str) <= 300) and journals_str or ("%s%s" % (journals_str[:297], '...'))
+
     def _get_prop_instances(self, data):
         """
         Returns the codes of the instances selected (or "All Instances") 
@@ -223,6 +237,20 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             self.cr.execute('select code from msf_instance where id IN %s',(tuple(data['form']['instance_ids']),))
             return [lt or '' for lt, in self.cr.fetchall()]
         return [_('All Instances')]
+
+    def _get_prop_instances_str(self, data, pdf=False):
+        """
+        Returns the list of instances as a String (cut if > 300 characters)
+        """
+        if pdf:
+            # in the PDF version instances are listed one below the other and instance names are cut if > 20 characters
+            instances_str = ',\n'.join([(len(inst) <= 20) and inst or ("%s%s" % (inst[:17], '...'))
+                                        for inst in self._get_prop_instances(data)])
+        else:
+            # otherwise instances are simply separated by a comma
+            instances_str = ', '.join([inst or '' for inst in self._get_prop_instances(data)])
+        return (len(instances_str) <= 300) and instances_str or ("%s%s" % (instances_str[:297], '...'))
+
 
 class account_partner_balance_tree_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):

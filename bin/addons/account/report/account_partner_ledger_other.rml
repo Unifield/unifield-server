@@ -347,13 +347,13 @@
                     <para style="terp_default_Centre_8">[[ get_fiscalyear(data) or '' ]]</para>
                 </td>
                 <td>
-                    <para style="terp_default_Centre_8">[[', '.join([ lt or '' for lt in get_journal(data) ]) ]]</para>
+                    <para style="terp_default_Centre_8">[[ get_journals_str(data) ]]</para>
                 </td>
                 <td>
                     <para style="terp_default_Centre_8">[[ get_partners() ]]</para>
                 </td>
                 <td>
-                  <para style="terp_default_Centre_8">[[', '.join([ acc or '' for acc in get_accounts(data) ]) ]]</para>
+                  <para style="terp_default_Centre_8">[[ get_accounts_str(data) ]]</para>
                 </td>
                 <td>
                     <para style="terp_default_Centre_8">[[ get_filter(data)==translate('No Filter') and get_filter(data) or removeParentNode('para') ]]</para>
@@ -405,7 +405,7 @@
                     <para style="terp_default_Centre_8">[[ get_target_move(data) ]]</para>
                 </td>
                 <td>
-                  <para style="terp_default_Centre_8">[[', '.join([ inst or '' for inst in get_instances(data) ]) ]]</para>
+                  <para style="terp_default_Centre_8">[[ get_instances_str(data) ]]</para>
                 </td>
             </tr>
         </blockTable>
