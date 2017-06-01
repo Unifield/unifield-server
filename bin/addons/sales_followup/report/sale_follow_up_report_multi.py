@@ -111,7 +111,6 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             bo_qty = line.product_uom_qty
             po_name = ''
             cdd = False
-            # data = {}
             if line.procurement_id and line.procurement_id.purchase_id:
                 po_name = line.procurement_id.purchase_id.name
                 cdd = line.procurement_id.purchase_id.delivery_confirmed_date
@@ -120,7 +119,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
             for move in line.move_ids:
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
-                ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id
+                ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id # and is returned ?
                 s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
 
                 if m_type and (ppl or s_out):
@@ -143,7 +142,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         data.update({
                             'uom_id': line.product_uom.name,
                             'ordered_qty': line.product_uom_qty,
-                            'backordered_qty': '',
+                            'backordered_qty': 0.00,
                             'first_line': True,
                         })
                         first_line = False
@@ -171,7 +170,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'transport': not only_bo and move.picking_id.shipment_id.transport_type or '',
                         })
                     else:
-                        if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
+                        if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing': # useless ?
                             packing = move.picking_id.previous_step_id.name
                             shipment = move.picking_id.shipment_id.name or ''
                             is_shipment_done = move.picking_id.shipment_id.state == 'done'
@@ -226,7 +225,19 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             # Put the backorderd qty on the first line
             if not lines:
                 continue
-            lines[fl_index]['backordered_qty'] = bo_qty if line.order_id.state != 'cancel' else 0.00
+            if not only_bo and abs(bo_qty) != abs(line.product_uom_qty) and not first_line and line.order_id.state != 'cancel':
+                lines.append({
+                    'po_name': po_name,
+                    'cdd': cdd,
+                    'line_number': line.line_number,
+                    'product_name': line.product_id.name,
+                    'product_code': line.product_id.code,
+                    'is_delivered': False,
+                    'backordered_qty': bo_qty if line.order_id.state != 'cancel' else 0.00,
+                })
+            elif only_bo:
+                lines[fl_index]['backordered_qty'] = bo_qty if line.order_id.state != 'cancel' else 0.00
+
             for line in lines:
                 if only_bo and line.get('backordered_qty', 0.00) <= 0.00:
                     continue
