@@ -1,10 +1,19 @@
 import os
 import re
 import sys
-import glob
 
 from setuptools import setup
 from setup_py2exe_custom import custom_py2exe, fixup_data_pytz_zoneinfo
+
+# To make pyflakes happy
+version = None
+name = None
+description = None
+long_description = None
+author = None
+author_email = None
+url = None
+download_url = None
 
 execfile(os.path.join("openobject", "release.py"))
 
@@ -13,6 +22,8 @@ if 'bdist_rpm' in sys.argv:
     version_dash_incompatible = True
 try:
     import py2exe
+    assert py2exe
+
     from py2exe_utils import opts
     opts['options'].setdefault('py2exe',{})
     opts['options']['py2exe'].setdefault('includes',[])
@@ -30,6 +41,20 @@ try:
         optimize=0,
         collected_libs_dir='libs',
         collected_libs_data_relocate='babel,pytz',
+        packages=[
+            "Queue",
+            "appdirs",
+            "pkg_resources._vendor.packaging",
+            "pyparsing",
+            "email.mime.application",
+            "email.mime.audio",
+            "email.mime.base",
+            "email.mime.image",
+            "email.mime.message",
+            "email.mime.multipart",
+            "email.mime.nonmultipart",
+            "email.mime.text",
+        ],
     )
     opts.setdefault('data_files', []).extend(fixup_data_pytz_zoneinfo())
     opts.update(cmdclass={'py2exe': custom_py2exe},)
@@ -56,13 +81,6 @@ def find_data_files(source, patterns=FILE_PATTERNS):
 
     return out
 
-if os.name == 'nt':
-    sys.path.append("C:\Microsoft.VC90.CRT")
-    opts.setdefault('data_files',[]).extend([
-        ("Microsoft.VC90.CRT", glob.glob('C:\Microsoft.VC90.CRT\*.*')),
-        (os.path.join('service', "Microsoft.VC90.CRT"), glob.glob('C:\Microsoft.VC90.CRT\*.*')),
-    ])
-
 setup(
     name=name,
     version=version,
@@ -73,14 +91,16 @@ setup(
     url=url,
     download_url=download_url,
     license=license,
+    python_requires = ">=2.7.13",
     install_requires=[
-        "CherryPy == 3.1.2",
-        "Mako >= 0.2.4",
-        "Babel >= 0.9.4",
-        "FormEncode >= 1.2.2",
-        "simplejson >= 2.0.9",
-        "python-dateutil >= 1.4.1",
-        "pytz >= 2009j"
+        "CherryPy==10.2.1",
+        "Mako==1.0.6",
+        "Babel==2.4.0",
+        "formencode==1.3.1",
+        "simplejson==3.10.0",
+        "python-dateutil==2.6.0",
+        "pytz==2017.2",
+        "appdirs==1.4.3",
     ],
     zip_safe=False,
     packages=[
