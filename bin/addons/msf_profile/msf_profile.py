@@ -51,7 +51,11 @@ class patch_scripts(osv.osv):
         remove all translations, and then re-import them
         so that the {*}_MF.po files are authoratative
         '''
-        cr.execute("delete from ir_translation where lang = 'fr_MF' and type != 'model';")
+        cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
+            select id from ir_translation where lang = 'fr_MF' and type != 'model'
+            )
+        """)
+        cr.execute("delete from ir_translation where lang = 'fr_MF' and type != 'model'")
         irmm = self.pool.get('ir.module.module')
         msf_profile_id = irmm.search(cr, uid, [('name', '=', 'msf_profile')])
         irmm.update_translations(cr, uid, msf_profile_id)
