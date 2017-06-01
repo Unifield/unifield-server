@@ -39,8 +39,9 @@ setup(service=["OpenERPServerService"],
                          "skip_archive": 1,
                          "bundle_files": 3, 
                          "optimize": 0,
-                         "compressed": 0}}
-      )
+                         "compressed": 0,
+                         "dll_excludes": [ 'w9xpopen.exe' ],
+                         }})
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

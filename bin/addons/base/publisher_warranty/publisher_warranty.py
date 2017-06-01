@@ -25,7 +25,6 @@ OpenERP.
 
 import datetime
 import logging
-import sys
 import urllib
 import urllib2
 
@@ -89,22 +88,22 @@ class publisher_warranty_contract(osv.osv):
             email = user.email
 
             msg = {'contract_name': valid_contract.name,
-                'tb': tb,
-                'explanations': explanations,
-                'remarks': remarks,
-                'origin': origin,
-                'dbname': cr.dbname,
-                'dbuuid': dbuuid,
-                'db_create_date': db_create_date,
-                'issue_name': issue_name,
-                'email': email,
-                'user_name': user_name,
-            }
+                   'tb': tb,
+                   'explanations': explanations,
+                   'remarks': remarks,
+                   'origin': origin,
+                   'dbname': cr.dbname,
+                   'dbuuid': dbuuid,
+                   'db_create_date': db_create_date,
+                   'issue_name': issue_name,
+                   'email': email,
+                   'user_name': user_name,
+                   }
 
 
-            add_arg = {"timeout":30} if sys.version_info >= (2,6) else {}
+            add_arg = {"timeout":30}
             uo = urllib2.urlopen(config.get("publisher_warranty_url"),
-                                    urllib.urlencode({'arg0': msg, "action": "send",}),**add_arg)
+                                 urllib.urlencode({'arg0': msg, "action": "send",}),**add_arg)
             try:
                 submit_result = uo.read()
             finally:
@@ -189,19 +188,19 @@ class publisher_warranty_contract(osv.osv):
             limit_date = (datetime.datetime.now() - _PREVIOUS_LOG_CHECK).strftime(misc.DEFAULT_SERVER_DATETIME_FORMAT)
             for message in result["messages"]:
                 ids = self.pool.get("res.log").search(cr, uid, [("res_model", "=", "publisher_warranty.contract"),
-                                                          ("create_date", ">=", limit_date),
-                                                          ("name", "=", message)])
+                                                                ("create_date", ">=", limit_date),
+                                                                ("name", "=", message)])
                 if ids:
                     continue
                 self.pool.get('res.log').create(cr, uid,
-                        {
-                            'name': message,
-                            'res_model': "publisher_warranty.contract",
-                            "read": True,
-                            "user_id": False,
-                        },
-                        context=context
-                )
+                                                {
+                                                    'name': message,
+                                                    'res_model': "publisher_warranty.contract",
+                                                    "read": True,
+                                                    "user_id": False,
+                                                },
+                                                context=context
+                                                )
         except Exception:
             if cron_mode:
                 return False # we don't want to see any stack trace in cron
@@ -216,7 +215,7 @@ class publisher_warranty_contract(osv.osv):
         @rtype: list of tuples(int,string)
         """
         ids = self.pool.get('res.log').search(cr, uid, [("res_model", "=", "publisher_warranty.contract")]
-                                        , order="create_date desc", limit=limit)
+                                              , order="create_date desc", limit=limit)
         if not ids:
             return []
         messages = [(x.id, x.name) for x in self.pool.get('res.log').browse(cr, uid, ids)]
@@ -236,7 +235,7 @@ class publisher_warranty_contract(osv.osv):
         'date_start' : fields.date('Starting Date', readonly=True),
         'date_stop' : fields.date('Ending Date', readonly=True),
         'state' : fields.selection([('unvalidated', 'Unvalidated'), ('valid', 'Valid')
-                            , ('terminated', 'Terminated'), ('canceled', 'Canceled')], string="State", readonly=True),
+                                    , ('terminated', 'Terminated'), ('canceled', 'Canceled')], string="State", readonly=True),
         'kind' : fields.char('Kind', size=64, readonly=True),
         "check_support": fields.boolean("Support Level 1", readonly=True),
         "check_opw": fields.boolean("OPW", readonly=True, help="Checked if this is an OpenERP Publisher's Warranty contract (versus older contract types"),
@@ -262,7 +261,7 @@ class maintenance_contract(osv.osv_memory):
 
     def send(self, cr, uid, tb, explanations, remarks=None, issue_name=None):
         return self.pool.get("publisher_warranty.contract").send(cr, uid, tb,
-                        explanations, remarks, issue_name)
+                                                                 explanations, remarks, issue_name)
 
 maintenance_contract()
 
@@ -331,7 +330,7 @@ def get_sys_logs(cr, uid):
         "language": user.context_lang,
     }
 
-    add_arg = {"timeout":30} if sys.version_info >= (2,6) else {}
+    add_arg = {"timeout":30}
     arguments = {'arg0': msg, "action": "update",}
     arguments_raw = urllib.urlencode(arguments)
     url = config.get("publisher_warranty_url")
