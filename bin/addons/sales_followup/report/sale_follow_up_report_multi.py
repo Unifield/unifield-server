@@ -93,6 +93,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         '''
         Is the given move returned at shipment level ?
         '''
+        if not move.picking_id or not move.picking_id.shipment_id:
+            return False
         for pack_fam_mem in move.picking_id.shipment_id.pack_family_memory_ids:
             for m in pack_fam_mem.move_lines:
                 if m.not_shipped and m.id == move.id:
