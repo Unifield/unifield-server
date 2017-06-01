@@ -239,7 +239,6 @@ class stock_mission_report(osv.osv):
         'full_view': lambda *a: False,
         'export_state': lambda *a: 'draft',
         'export_error_msg': lambda *a: False,
-        #'export_ok': False,
     }
 
     def create(self, cr, uid, vals, context=None):

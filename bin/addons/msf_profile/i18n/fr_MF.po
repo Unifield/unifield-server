@@ -6076,24 +6076,6 @@ msgstr "Lines Not imported.xls"
 msgid "Display your company chart of accounts per fiscal year and filter by period. Have a complete tree view of all journal items per account code by clicking on an account."
 msgstr "Affiche votre plan comptable de société par exercice comptable et filtré par période. Cliquer sur un compte pour obtenir une vue arborescente complète de toutes les écritures comptables par code de compte."
 
-#. modules: delivery_mechanism, mission_stock, msf_tools, sale_override, kit
-#: code:addons/delivery_mechanism/delivery_mechanism.py:80
-#: code:addons/delivery_mechanism/delivery_mechanism.py:81
-#: code:addons/delivery_mechanism/delivery_mechanism.py:82
-#: code:addons/delivery_mechanism/delivery_mechanism.py:83
-#: code:addons/delivery_mechanism/delivery_mechanism.py:84
-#: selection:kit.mass.import,state:0
-#: code:addons/mission_stock/wizard/mission_stock_wizard.py:97
-#: code:addons/msf_tools/automated_import_job.py:81
-#: code:addons/sale_override/sale.py:149
-#: code:addons/sale_override/sale.py:150
-#: code:addons/sale_override/sale.py:364
-#: code:addons/sale_override/sale.py:365
-#: code:addons/sale_override/sale.py:366
-#, python-format
-msgid "Not started"
-msgstr "Not started"
-
 #. modules: register_accounting, sync_client
 #: field:account.direct.invoice.wizard,create_date:0
 #: field:account.direct.invoice.wizard.line,create_date:0
@@ -8366,7 +8348,7 @@ msgstr "Requested Date"
 msgid "Either there are no moves linked to the picking or Accounting Journals are misconfigured!"
 msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de mouvement connexe à ce prélèvement !"
 
-#. modules: tender_flow, financing_contract, account_voucher, account_override, purchase_allocation_report, register_accounting, msf_accrual, return_claim, res_currency_tables, procurement_request, stock_forecast, analytic, msf_doc_import, analytic_distribution, msf_order_date, account_payment, msf_homere_interface, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_tools, msf_budget, account_corrections, account, msf_outgoing, sale_override, sale, sales_followup, procurement, purchase, msf_audittrail, stock
+#. modules: tender_flow, financing_contract, account_voucher, account_override, purchase_allocation_report, register_accounting, msf_accrual, return_claim, res_currency_tables, procurement_request, stock_forecast, analytic, msf_doc_import, analytic_distribution, msf_order_date, account_payment, msf_homere_interface, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_tools, msf_budget, account_corrections, account, msf_outgoing, sale_override, sale, sales_followup, procurement, purchase, msf_audittrail, stock, mission_stock
 #: view:account.bank.statement:0
 #: selection:account.bank.statement,state:0
 #: view:account.invoice:0
@@ -8475,6 +8457,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:tender,state:0
 #: selection:tender.line,state:0
 #: selection:wizard.import.invoice.line,state:0
+#: selection:mission.stock.wizard,processed_state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -8636,11 +8619,6 @@ msgstr "la DI provient d'un BC annulé"
 #, python-format
 msgid "Line %s in the Excel file was added to the file of the lines with errors. Details: No product found."
 msgstr "Line %s in the Excel file was added to the file of the lines with errors. Details: No product found."
-
-#. module: mission_stock
-#: field:mission.stock.wizard,processed_value:0
-msgid "Processing"
-msgstr "Processing"
 
 #. module: transport_mgmt
 #: field:purchase.order,func_total_price_include_transport:0
@@ -42545,7 +42523,7 @@ msgstr "Biens de soutien humanitaire"
 msgid "Total:"
 msgstr "Total:"
 
-#. modules: sales_followup, register_accounting, reason_types_moves, order_types, msf_tools, msf_doc_import, return_claim
+#. modules: sales_followup, register_accounting, reason_types_moves, order_types, msf_tools, msf_doc_import, return_claim, mission_stock
 #: selection:msf.doc.import.accounting,state:0
 #: selection:wizard.import.fo.line,state:0
 #: selection:wizard.import.ir.line,state:0
@@ -42564,9 +42542,11 @@ msgstr "Total:"
 #: selection:return.claim,state:0
 #: code:addons/sales_followup/sale_followup.py:437
 #: selection:export.report.inconsistencies,state:0
+#: selection:stock.mission.report,export_state:0
+#: selection:mission.stock.wizard,processed_state:0
 #, python-format
 msgid "In Progress"
-msgstr "En Cours"
+msgstr "En cours"
 
 #. module: msf_outgoing
 #: field:shipment,shipment_actual_date:0
@@ -42619,9 +42599,10 @@ msgstr "Brouillon de Bons de Commande"
 
 #. module: mission_stock
 #: code:addons/mission_stock/wizard/mission_stock_wizard.py:133
+#: selection:mission.stock.wizard,processed_state:0
 #, python-format
 msgid "No report selected"
-msgstr "No report selected"
+msgstr "Aucun rapport sélectionné"
 
 #. modules: purchase, product, product_nomenclature, stock_override, sale, account, account_voucher, board, stock
 #: view:account.entries.report:0
@@ -53679,7 +53660,7 @@ msgstr "Certificat ?"
 #. module: mission_stock
 #: view:mission.stock.wizard:0
 msgid "Open XLS file"
-msgstr "Open XLS file"
+msgstr "Ovrir le fichier XLS"
 
 #. module: hr
 #: field:hr.employee,bank_account_id:0
@@ -61592,9 +61573,24 @@ msgstr "Convertir en Bon de Picking"
 msgid "UoM Category"
 msgstr "UdM - Catégorie"
 
-#. module: msf_doc_import
+#. modules: msf_doc_import, delivery_mechanism, mission_stock, msf_tools, sale_override, kit
 #: selection:abstract.wizard.import,state:0
 #: selection:wizard.import.batch,state:0
+#: code:addons/delivery_mechanism/delivery_mechanism.py:80
+#: code:addons/delivery_mechanism/delivery_mechanism.py:81
+#: code:addons/delivery_mechanism/delivery_mechanism.py:82
+#: code:addons/delivery_mechanism/delivery_mechanism.py:83
+#: code:addons/delivery_mechanism/delivery_mechanism.py:84
+#: selection:kit.mass.import,state:0
+#: code:addons/mission_stock/wizard/mission_stock_wizard.py:97
+#: selection:mission.stock.wizard,processed_state:0
+#: code:addons/msf_tools/automated_import_job.py:81
+#: code:addons/sale_override/sale.py:149
+#: code:addons/sale_override/sale.py:150
+#: code:addons/sale_override/sale.py:364
+#: code:addons/sale_override/sale.py:365
+#: code:addons/sale_override/sale.py:366
+#, python-format
 msgid "Not started"
 msgstr "Non démarré"
 
@@ -71983,6 +71979,7 @@ msgstr "Date Prévue de Colisage"
 #: field:allocation.stock.setup,error_po_ok:0
 #: field:restrictive.country.setup,error:0
 #: field:restrictive.country.setup,error_msg:0
+#: selection:mission.stock.wizard,processed_state:0
 #, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -74995,6 +74992,7 @@ msgstr "Zone de Transit pour les transferts inter-sociétés"
 #: selection:sync.monitor,state:0
 #: selection:tender.line,line_state:0
 #: selection:stock.mission.report,export_state:0
+#: selection:mission.stock.wizard,processed_state:0
 #, python-format
 msgid "Done"
 msgstr "Fait"
@@ -79542,7 +79540,7 @@ msgstr "Ceci va réinitialiser votre recherche."
 #. module: mission_stock
 #: view:mission.stock.wizard:0
 msgid "Open CSV file"
-msgstr "Open CSV file"
+msgstr "Ouvrir le fichier CSV"
 
 #. module: partner_modification
 #: selection:res.partner,po_by_project:0
@@ -98480,11 +98478,6 @@ msgstr "Erreur"
 msgid "Error message"
 msgstr "Message d'erreur"
 
-#. module: mission_stock
-#: selection:stock.mission.report,export_state:0
-msgid "In Progress"
-msgstr "En cours"
-
 #. modules: finance, msf_profile
 #: model:ir.actions.act_window,name:finance.account_board_commitment_voucher
 #: view:board.board:0
@@ -98697,3 +98690,18 @@ msgstr "Balances de trésorie"
 #, python-format
 msgid "Only dates of the selected Fiscal Year can be chosen."
 msgstr "Seules des dates de l'exercice comptable sélectionné peuvent être choisies."
+
+#. module: mission_stock
+#: field:mission.stock.wizard,processed_state:0
+msgid "Processing"
+msgstr "En traitement..."
+
+#. module: mission_stock
+#: view:mission.stock.wizard:0
+msgid "Updating..."
+msgstr "Mise à jour ..."
+
+#. module: mission_stock
+#: field:mission.stock.wizard,processed_start_date:0
+msgid "since"
+msgstr "depuis"
