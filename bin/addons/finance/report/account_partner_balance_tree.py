@@ -218,9 +218,9 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             return [_('All Journals')]
         codes = []
         if data.get('form', False) and data['form'].get('journal_ids', False):
-            self.cr.execute('select code from account_journal where id IN %s',(tuple(data['form']['journal_ids']),))
+            self.cr.execute('select distinct(code) from account_journal where id IN %s', (tuple(data['form']['journal_ids']),))
             codes = [x for x, in self.cr.fetchall()]
-        return set(codes)  # exclude duplications
+        return codes
 
     def _get_journals_str(self, data):
         """
