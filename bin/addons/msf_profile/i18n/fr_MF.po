@@ -98694,3 +98694,8 @@ msgstr "En traitement..."
 #: view:mission.stock.wizard:0
 msgid "Updating..."
 msgstr "Mise à jour ..."
+
+#. module: mission_stock
+#: field:mission.stock.wizard,processed_start_date:0
+msgid "since"
+msgstr "depuis"
