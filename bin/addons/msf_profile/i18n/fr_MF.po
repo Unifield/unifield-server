@@ -3326,7 +3326,6 @@ msgstr "Saint Lucia"
 #: report:account.general.ledger_landscape:0
 #: field:account.journal.period,fiscalyear_id:0
 #: report:account.journal.period.print:0
-#: report:account.partner.balance:0
 #: field:account.period,fiscalyear_id:0
 #: field:account.sequence.fiscalyear,fiscalyear_id:0
 #: report:account.third_party_ledger:0
@@ -3340,6 +3339,11 @@ msgstr "Saint Lucia"
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:281
 msgid "Fiscal Year"
 msgstr "Exercice Comptable"
+
+#. module: account
+#: report:account.partner.balance:0
+msgid "Fiscal Year"
+msgstr "Exercice Compt."
 
 #. module: register_accounting
 #: selection:cashbox.write.off,choice:0
