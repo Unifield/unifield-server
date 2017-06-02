@@ -19,7 +19,7 @@
                 <field name="page_split"/>
                 <field name="tax" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
                 <field name="only_active_partners"/>
-                <field name="instance_ids">
+                <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
                     <tree noteditable="1">
                         <field name="code"/>
                         <field name="name"/>

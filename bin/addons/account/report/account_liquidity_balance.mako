@@ -143,7 +143,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="270" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
