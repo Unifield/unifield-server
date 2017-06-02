@@ -136,6 +136,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
 
                 if m_type and (ppl or s_out or ppl_not_shipped):
+                    # bo_qty < 0 if we receipt (IN) more quantities then expected (FO):
                     bo_qty -= self.pool.get('product.uom')._compute_qty(
                         self.cr,
                         self.uid,
@@ -185,7 +186,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'is_delivered': is_delivered,
                             'delivered_qty': not only_bo and (is_shipment_done or is_delivered) and move.product_qty or 0.00,
                             'delivered_uom': not only_bo and (is_shipment_done or is_delivered) and move.product_uom.name or '',
-                            'backordered_qty': not is_shipment_done and not is_delivered and move.product_qty or 0.00,
+                            'backordered_qty': not is_shipment_done and not is_delivered and move.product_qty and line.order_id.state != 'cancel' or 0.00,
                             'rts': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.shipment_expected_date[0:10] or '',
                             'eta': not only_bo and eta and eta.strftime('%Y-%m-%d'),
                             'transport': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.transport_type or '',
@@ -238,7 +239,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date or '',
                     'delivered_qty': 0.00,
                     'delivered_uom': '',
-                    'backordered_qty': line.product_uom_qty,
+                    'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' else 0.00,
                     'cdd': cdd,
                 }
                 lines.append(data)
@@ -246,7 +247,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             # Put the backorderd qty on the first line
             if not lines:
                 continue
-            if not only_bo and bo_qty and not first_line and line.order_id.state != 'cancel':
+            if not only_bo and bo_qty and bo_qty > 0 and not first_line and line.order_id.state != 'cancel':
                 lines.append({
                     'po_name': po_name,
                     'cdd': cdd,
@@ -256,7 +257,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'is_delivered': False,
                     'backordered_qty': bo_qty if line.order_id.state != 'cancel' else 0.00,
                 })
-            elif only_bo:
+            elif only_bo or bo_qty < 0:
                 lines[fl_index]['backordered_qty'] = bo_qty if line.order_id.state != 'cancel' else 0.00
 
             for ln in lines:

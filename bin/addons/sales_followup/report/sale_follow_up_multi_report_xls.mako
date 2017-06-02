@@ -276,7 +276,7 @@
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('packing', '')|x}</Data></Cell>
-                % if line.get('backordered_qty') and line.get('backordered_qty') >= 0:
+                % if line.get('backordered_qty', -1) >= 0:
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">0 (+${abs(line.get('backordered_qty', 0.00))|x})</Data></Cell>
