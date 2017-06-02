@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="wkf_sale_order_line" model="workflow">
+            <field name="name">sale.order..line.basic</field>
+            <field name="osv">sale.order.line</field>
+            <field name="on_create">True</field>
+        </record>
+
+        <!-- Activity -->
+        <record id="act_draft" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="flow_start">True</field>
+            <field name="name">draft</field>
+        </record>
+        <record id="act_validated" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="name">validated</field>
+        </record>
+        <record id="act_sourced" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="name">sourced</field>
+        </record>
+        <record id="act_confirmed" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="name">confirmed</field>
+        </record>
+        <record id="act_cancel" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="flow_stop">True</field>
+            <field name="name">cancel</field>
+        </record>
+        <record id="act_done" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="name">done</field>
+            <field name="flow_stop">True</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'done'})</field>
+        </record>
+
+        <!-- Transitions -->
+        <record id="trans_daft_validated" model="workflow.transition">
+            <field name="act_from" ref="act_draft"/>
+            <field name="act_to" ref="act_validated"/>
+            <field name="signal">validate</field>
+        </record>
+        <record id="trans_validated_sourced" model="workflow.transition">
+            <field name="act_from" ref="act_validated"/>
+            <field name="act_to" ref="act_sourced"/>
+            <field name="signal">source</field>
+        </record>
+        <record id="trans_sourced_confirmed" model="workflow.transition">
+            <field name="act_from" ref="act_sourced"/>
+            <field name="act_to" ref="act_confirmed"/>
+            <field name="signal">confirm</field>
+        </record>
+        <record id="trans_confirmed_done" model="workflow.transition">
+            <field name="act_from" ref="act_confirmed"/>
+            <field name="act_to" ref="act_done"/>
+            <field name="signal">done</field>
+        </record>
+        <record id="trans_daft_cancel" model="workflow.transition">
+            <field name="act_from" ref="act_draft"/>
+            <field name="act_to" ref="act_cancel"/>
+            <field name="signal">cancel</field>
+        </record>
+
+
+    </data>
+</openerp>

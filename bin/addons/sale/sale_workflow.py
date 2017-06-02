@@ -7,6 +7,9 @@ class sale_order(osv.osv):
     _inherit = "sale.order"
 
     def wkf_validated(self, cr, uid, ids, context=None):
+        '''
+        Try to validate sale order lines
+        '''
         return True
 
     def wkf_split(self, cr, uid, ids, context=None):
