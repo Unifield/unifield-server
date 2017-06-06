@@ -14,7 +14,7 @@
                     <field name="ref"/>
                     <field name="supplier_invoice_ref"/>
                     <field name="account_id"/>
-                    <field name="partner_id" string="3rd Party"/>
+                    <field name="partner_id"/>
                     <field name="employee_id"/>
                     <field name="document_date"/>
                     <field name="date"/>
@@ -43,7 +43,7 @@
                                 <field name="ref"/>
                                 <field name="supplier_invoice_ref"/>
                                 <field name="account_id"/>
-                                <field name="partner_id" string="3rd Party"/>
+                                <field name="partner_id"/>
                                 <field name="employee_id"/>
                                 <field name="document_date"/>
                                 <field name="date"/>
