@@ -17,3 +17,11 @@ class sale_order(osv.osv):
 
     def wkf_split_done(self, cr, uid, ids, context=None):
         return True
+
+
+class sale_order_line(osv.osv):
+    _name = "sale.order.line"
+    _inherit = "sale.order.line"
+
+    def wkf_validated(self, cr, uid, ids, context=None):
+        return True

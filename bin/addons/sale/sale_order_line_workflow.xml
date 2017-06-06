@@ -9,30 +9,32 @@
 
         <!-- Activity -->
         <record id="act_draft" model="workflow.activity">
+            <field name="name">draft</field>
             <field name="wkf_id" ref="wkf_sale_order_line"/>
             <field name="flow_start">True</field>
-            <field name="name">draft</field>
         </record>
         <record id="act_validated" model="workflow.activity">
-            <field name="wkf_id" ref="wkf_sale_order_line"/>
             <field name="name">validated</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_validate()</field>
         </record>
         <record id="act_sourced" model="workflow.activity">
-            <field name="wkf_id" ref="wkf_sale_order_line"/>
             <field name="name">sourced</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
         </record>
         <record id="act_confirmed" model="workflow.activity">
-            <field name="wkf_id" ref="wkf_sale_order_line"/>
             <field name="name">confirmed</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
         </record>
         <record id="act_cancel" model="workflow.activity">
+            <field name="name">cancel</field>
             <field name="wkf_id" ref="wkf_sale_order_line"/>
             <field name="flow_stop">True</field>
-            <field name="name">cancel</field>
         </record>
         <record id="act_done" model="workflow.activity">
-            <field name="wkf_id" ref="wkf_sale_order_line"/>
             <field name="name">done</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
             <field name="flow_stop">True</field>
             <field name="kind">function</field>
             <field name="action">write({'state':'done'})</field>

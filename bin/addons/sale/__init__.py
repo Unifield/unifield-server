@@ -38,6 +38,7 @@ SALE_ORDER_STATE_SELECTION = [('draft', 'Draft'),
                               ]
 
 SALE_ORDER_LINE_STATE_SELECTION = [('draft', 'Draft'),
+                                   ('validated', 'Validated'),
                                    ('sourced', 'Sourced'),
                                    ('confirmed', 'Confirmed'),
                                    ('done', 'Done'),

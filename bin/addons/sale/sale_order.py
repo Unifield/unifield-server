@@ -2888,6 +2888,18 @@ class sale_order_line(osv.osv):
             wf_service.trg_write(uid, 'sale.order', line.order_id.id, cr)
         return res
 
+    def action_validate(self, cr, uid, ids, context=None):
+        '''
+        Workflow method called when trying to validate the sale.order.line
+        '''
+        return self.write(cr, uid, ids, {'state': 'validated'})
+
+    def action_draft(self, cr ,uid, ids, context=None):
+        '''
+        Workflow method called when trying to reset draft the sale.order.line
+        '''
+        return self.write(cr, uid, ids, {'state': 'draft'})
+
     def uos_change(self, cr, uid, ids, product_uos, product_uos_qty=0, product_id=None):
         product_obj = self.pool.get('product.product')
         if not product_id:
