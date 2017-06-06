@@ -66,6 +66,8 @@
         'sale_order_allocation_report.xml',
         "wizard/split_order_line_view.xml",
         "wizard/order_change_currency_view.xml",
+        'sale_order_workflow.xml',
+        'sale_order_line_workflow.xml',
     ],
     'demo_xml': ['sale_demo.xml'],
     'test': [
