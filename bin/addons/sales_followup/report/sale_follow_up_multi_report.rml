@@ -276,8 +276,8 @@
 	    			<para style="LinesBlue">[[ line.get('packing', '') ]]</para>
 	    		</td>
 	    		<td>
-                    <para style="LinesBlue">[[ line.get('backordered_qty', 0.00) &gt;= 0 and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para') ]]</para>
-                    <para style="LinesBlue">[[ line.get('backordered_qty', 0.00) &lt; 0 and '0' or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('backordered_qty', 0.00))) ]])</para>
+                    <para style="LinesBlue">[[ line.get('extra_qty', 0) == 0 and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para') ]]</para>
+                    <para style="LinesBlue">[[ line.get('extra_qty', 0) and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('extra_qty', 0.00))) ]])</para>
 	    		</td>
                 <td>
 	    			<para style="LinesBlue">[[ line.get('transport', '') and getSel(line['transport'], 'transport_type') or '' ]]</para>
