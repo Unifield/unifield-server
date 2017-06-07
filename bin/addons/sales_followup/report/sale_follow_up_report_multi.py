@@ -257,8 +257,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'is_delivered': False,
                     'backordered_qty': bo_qty if line.order_id.state != 'cancel' else 0.00,
                 })
-            elif only_bo or bo_qty < 0:
+            elif only_bo:
                 lines[fl_index]['backordered_qty'] = bo_qty if line.order_id.state != 'cancel' else 0.00
+            elif bo_qty < 0:
+                lines[fl_index]['extra_qty'] = abs(bo_qty) if line.order_id.state != 'cancel' else 0.00
 
             for ln in lines:
                 if only_bo and ln.get('backordered_qty', 0.00) <= 0.00:

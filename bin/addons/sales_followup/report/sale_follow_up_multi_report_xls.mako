@@ -276,10 +276,10 @@
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('packing', '')|x}</Data></Cell>
-                % if line.get('backordered_qty', -1) >= 0:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
+                % if line.get('extra_qty', False):
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('backordered_qty', 0.00)} (+${line.get('extra_qty', 0.00)|x})</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${abs(line.get('backordered_qty', 0.00)) + line.get('ordered_qty', 0.00) - line.get('delivered_qty', 0.00)} (+${abs(line.get('backordered_qty', 0.00))|x})</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
                 % endif
                 % if o.transport_type and o.transport_type not in (False, 'False', ''):
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'transport_type')|x}</Data></Cell>
