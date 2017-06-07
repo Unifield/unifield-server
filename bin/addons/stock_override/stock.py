@@ -379,15 +379,17 @@ class stock_picking(osv.osv):
 
 
     def on_change_ext_cu(self, cr, uid, ids, ext_cu, context=None):
-        if self.pool.get('stock.move').search_exist(cr, uid, [('picking_id', 'in', ids)], context=context):
-            return {
+        context = context or {}
+        res = {}
+        for pick in self.browse(cr, uid, ids, context=context):
+            self.pool.get('stock.move').write(cr, uid, [move.id for move in pick.move_lines], {'location_id': ext_cu}, context=context)
+            res = {
                 'warning': {
                     'title': _('Warning'),
-                    'message': _('You are changing an External Consumption Unit, please check that source location of your stock moves are still consistent'),
+                    'message': _('The source location of lines has been changed to the same as header value'),
                 }
             }
-        return {}
-
+        return res
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         if default is None:
