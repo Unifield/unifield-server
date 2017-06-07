@@ -284,7 +284,7 @@ class purchase_order_line(osv.osv):
         # objects
         tools_obj = self.pool.get('sequence.tools')
 
-        if not context.get('skipResequencing', False):
+        if self._name == 'purchase.order.line' and not context.get('skipResequencing', False):
             # re sequencing only happen if purchase order is draft (behavior 1)
             # get ids with corresponding po at draft state
             draft_ids = self.allow_resequencing(cr, uid, ids, context=context)
