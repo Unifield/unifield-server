@@ -23,33 +23,23 @@
 # Init Sales
 #----------------------------------------------------------
 
-SALE_ORDER_STATE_SELECTION = [('draft', 'Draft'),
-                              ('waiting_date', 'Waiting Schedule'),
-                              ('validated', 'Validated'),
-                              ('sourced', 'Sourced'),
-                              ('manual', 'Confirmed'),
-                              ('progress', 'Confirmed'),
-                              ('shipping_except', 'Shipping Exception'),
-                              ('invoice_except', 'Invoice Exception'),
-                              ('split_so', 'Split'),
-                              ('done', 'Closed'),
-                              ('cancel', 'Cancelled'),
-                              ('rw', 'RW'),
-                              ]
+SALE_ORDER_LINE_STATE_SELECTION = [
+     ('draft', 'Draft'),
+     ('validated', 'Validated'),
+     ('sourced', 'Sourced'),
+     ('confirmed', 'Confirmed'),
+     ('done', 'Done'),
+     ('cancel', 'Cancelled'),
+]
 
-SALE_ORDER_LINE_STATE_SELECTION = [('draft', 'Draft'),
-                                   ('validated', 'Validated'),
-                                   ('sourced', 'Sourced'),
-                                   ('confirmed', 'Confirmed'),
-                                   ('done', 'Done'),
-                                   ('cancel', 'Cancelled'),
-                                   ('exception', 'Exception'),
-                                   ]
+SALE_ORDER_STATE_SELECTION = SALE_ORDER_LINE_STATE_SELECTION
 
-SALE_ORDER_SPLIT_SELECTION = [('original_sale_order', 'Original'),
-                              ('esc_split_sale_order', '1'), # ESC
-                              ('stock_split_sale_order', '2'), # from Stock
-                              ('local_purchase_split_sale_order', '3')] # Local Purchase
+SALE_ORDER_SPLIT_SELECTION = [
+     ('original_sale_order', 'Original'),
+     ('esc_split_sale_order', '1'), # ESC
+     ('stock_split_sale_order', '2'), # from Stock
+     ('local_purchase_split_sale_order', '3'), # Local Purchase
+]
 
 import sale_order
 import stock
@@ -58,5 +48,6 @@ import wizard
 import report
 import company
 import res_partner
+import sale_workflow
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -451,16 +451,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'name': fields.char('Order Reference', size=64, required=True,
                             readonly=True, states={'draft': [('readonly', False)]}, select=True),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
-        'state': fields.selection([
-            ('draft', 'Quotation'),
-            ('waiting_date', 'Waiting Schedule'),
-            ('manual', 'Manual In Progress'),
-            ('progress', 'In Progress'),
-            ('shipping_except', 'Shipping Exception'),
-            ('invoice_except', 'Invoice Exception'),
-            ('done', 'Done'),
-            ('cancel', 'Cancelled')
-        ], 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
+        'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
         'date_order': fields.date('Ordered Date', required=True, readonly=True, select=True, states={'draft': [('readonly', False)]}),
         'create_date': fields.date('Creation Date', readonly=True, select=True, help="Date on which sales order is created."),
         'date_confirm': fields.date('Confirmation Date', readonly=True, select=True, help="Date on which sales order is confirmed."),
@@ -2887,18 +2878,6 @@ class sale_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             wf_service.trg_write(uid, 'sale.order', line.order_id.id, cr)
         return res
-
-    def action_validate(self, cr, uid, ids, context=None):
-        '''
-        Workflow method called when trying to validate the sale.order.line
-        '''
-        return self.write(cr, uid, ids, {'state': 'validated'})
-
-    def action_draft(self, cr ,uid, ids, context=None):
-        '''
-        Workflow method called when trying to reset draft the sale.order.line
-        '''
-        return self.write(cr, uid, ids, {'state': 'draft'})
 
     def uos_change(self, cr, uid, ids, product_uos, product_uos_qty=0, product_id=None):
         product_obj = self.pool.get('product.product')

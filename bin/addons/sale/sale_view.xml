@@ -196,8 +196,7 @@
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" 
                                             name="open_split_wizard" type="object" 
                                             attrs="{'invisible': [('state', 'in', ('sourced', 'confirmed', 'done', 'cancel', 'exception'))]}" />
-                                    <button string="Validate" icon="terp-check" name="action_validate" type="object" states="draft"/>
-                                    <button string="to draft" icon="terp-gtk-go-back-ltr" name="action_draft" type="object" states="validated"/>
+                                    <button string="Validate" icon="terp-check" name="validate" type="workflow" states="draft"/>
                                     <button string="Delete" icon="gtk-del" type="object" name="ask_unlink"
                                             confirm="Do you really want to delete selected record ?"
                                             attrs="{'invisible': [('state', 'in', ('sourced', 'confirmed', 'done', 'cancel', 'exception'))]}" />
