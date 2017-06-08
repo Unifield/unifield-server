@@ -48812,6 +48812,7 @@ msgstr "Claim Description"
 #: report:account.partner.balance:0
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 #: report:addons/account/report/account_partner_ledger.mako:258
+#: field:wizard.import.invoice.lines,partner_id:0
 #, python-format
 msgid "Partner"
 msgstr "Partenaire"
@@ -52761,8 +52762,6 @@ msgstr "Pas de catalogue trouvé pour ce fournisseur et cette devise durant cett
 
 #. module: register_accounting
 #: view:account.move.line:0
-#: view:wizard.import.invoice:0
-#: field:wizard.import.invoice.lines,partner_id:0
 msgid "3rd Party"
 msgstr "Tiers"
 
