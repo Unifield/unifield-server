@@ -84,8 +84,7 @@
 					<field name="priority" readonly="True" />
 					<field name="categ" readonly="True" />
 					<field name="line_number" readonly="True" />
-					<field name="sale_order_state" readonly="True" />
-					<field name="state" invisible="True" />
+					<field name="state" readonly="True" />
 					<field name="product_id" readonly="True" />
                     <field name="comment" readonly="True" />
 					<field name="product_uom_qty" string="Qty" attrs="{'readonly': []}" />

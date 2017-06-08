@@ -466,7 +466,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if args[0][1] != '=' or not args[0][2]:
             raise osv.except_osv(_('Error !'), _('Filter not implemented'))
 
-        return [('state', '=', 'draft'), ('sale_order_state', '=', 'validated')]
+        return [('state', '=', 'validated')]
 
     def _search_in_progress(self, cr, uid, obj, name, args, context=None):
         """
