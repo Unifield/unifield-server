@@ -50,6 +50,19 @@ class sale_order(osv.osv):
     _name = "sale.order"
     _inherit = "sale.order"
 
+    def validate_lines(self, cr, uid, ids, context=None):
+        """
+        Force SO lines validation
+        """
+        context = context or {}
+        wf_service = netsvc.LocalService('workflow')
+
+        for so in self.browse(cr, uid, ids, context=context):
+            for sol in so.order_line:
+                wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'validate', cr)
+
+        return True
+
     def get_less_advanced_sol_state(self, cr, uid, ids, context=None):
         """
         Get the less advanced state of the sale order lines
