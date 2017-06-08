@@ -37,7 +37,7 @@
         </record>
 
         <!-- Transitions -->
-        <record id="trans_so_daft_validated" model="workflow.transition">
+        <record id="trans_so_draft_validated" model="workflow.transition">
             <field name="act_from" ref="act_so_draft"/>
             <field name="act_to" ref="act_so_validated"/>
             <field name="condition">test_validated()</field>

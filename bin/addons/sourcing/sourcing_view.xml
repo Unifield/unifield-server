@@ -93,28 +93,27 @@
 						attrs="{'invisible': [('display_confirm_button', '=', False)]}" />
 					<field name="rts" readonly="True" />
 					<field name="type" string="Proc. Method" on_change="onChangeType(type, location_id, supplier)"
-						attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('loan_type', '=', True)]}" />
+						attrs="{'readonly': ['|', ('state', '!=', 'validated'), ('loan_type', '=', True)]}" />
 					<field name="po_cft"
 					    on_change="onChangePoCft(po_cft, order_id, supplier)" 
-                        attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_order')]}" />
+                        attrs="{'readonly': ['|', ('type', '=', 'make_to_stock'), ('state', '!=', 'validated')], 'required': [('type', '=', 'make_to_order')]}" />
 					<field name="related_sourcing_ok" invisible="1" />
                     <field name="related_sourcing_id"
-                        attrs="{'readonly': ['|', '|', '|', ('supplier', '=', False), ('related_sourcing_ok', '=', False), ('state', '!=', 'draft'), ('po_cft', 'not in', ['po', 'dpo'])]}" />
+                        attrs="{'readonly': ['|', '|', '|', ('supplier', '=', False), ('related_sourcing_ok', '=', False), ('state', '!=', 'validated'), ('po_cft', 'not in', ['po', 'dpo'])]}" />
                     <field name="location_id" 
                         widget="selection"
                         on_change="onChangeLocation(location_id, product_id, rts, order_id)"
                         domain="[('usage', '=', 'internal'), ('quarantine_location', '=', False), ('scrap_location', '=', False), ('destruction_location', '=', False), ('output_ok', '=', False), ('input_ok', '=', False)]"
-                        attrs="{'readonly': ['|', ('type', '!=', 'make_to_stock'), ('state', '!=', 'draft')], 'required': [('type', '=', 'make_to_stock')]}" />
+                        attrs="{'readonly': ['|', ('type', '!=', 'make_to_stock'), ('state', '!=', 'validated')], 'required': [('type', '=', 'make_to_stock')]}" />
 					<field name="real_stock" />
 					<field name="available_stock" />
                     <field name="virtual_stock" />
                     <field name="stock_uom_id" readonly="1" string="UoM Stock" />
-					<!-- do not work: attrs="{'readonly': ['|', '|', ('type', '=', 'make_to_stock'), '&amp;', ('type', '=', 'make_to_order'), ('po_cft', '=', 'cft'), ('state', '!=', 'draft')]}" -->
 					<field name="company_id" invisible="1" />
 					<field name="supplier" colspan="2"
 						domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft),('check_partner', '=', order_id)]"
                         context="{'product_id': product_id, 'choose_supplier': True, 'uom': product_uom, 'product_qty': product_uom_qty}"
-						attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), '|', ('type', '=', 'make_to_stock'), ('state', '!=', 'draft')]}"
+						attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), '|', ('type', '=', 'make_to_stock'), ('state', '!=', 'validated')]}"
 						on_change="onChangeSupplier(supplier, type)" />
 					<field name="customer" invisible="1" />
 					<field name="estimated_delivery_date" />

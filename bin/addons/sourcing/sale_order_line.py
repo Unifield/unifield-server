@@ -246,7 +246,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'procurement_request': line.order_id.procurement_request,
                 'loan_type': line.order_id.order_type == 'loan',
                 'estimated_delivery_date': self._get_date(cr, uid, line, context=context),
-                'display_confirm_button': line.state == 'draft' and line.order_id.state == 'validated',
+                'display_confirm_button': line.state == 'validated',
                 'sale_order_in_progress': line.order_id.sourcing_trace_ok,
                 'sale_order_state': self._get_sale_order_state(cr, uid, line.order_id, context=context),
             }

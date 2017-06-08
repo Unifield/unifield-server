@@ -52,14 +52,14 @@ class sale_order(osv.osv):
 
     def validate_lines(self, cr, uid, ids, context=None):
         """
-        Force SO lines validation
+        Force SO lines validation and update SO state
         """
         context = context or {}
         wf_service = netsvc.LocalService('workflow')
 
         for so in self.browse(cr, uid, ids, context=context):
-            for sol in so.order_line:
-                wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'validate', cr)
+            self.pool.get('sale.order.line').write(cr, uid, [sol.id for sol in so.order_line], {'state': 'validated'}, context=context)
+            self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True
 
