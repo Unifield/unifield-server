@@ -18,7 +18,9 @@ class sale_order_line(osv.osv):
         '''
         Workflow method called when validating the sale.order.line
         '''
-        context = context or {}
+        if context is None:
+            context = {}
+            
         wf_service = netsvc.LocalService('workflow')
 
         res = self.write(cr, uid, ids, {'state': 'validated'}, context=context)
@@ -32,7 +34,9 @@ class sale_order_line(osv.osv):
         '''
         Workflow method called when trying to reset draft the sale.order.line
         '''
-        context = context or {}
+        if context is None:
+            context = {}
+            
         wf_service = netsvc.LocalService('workflow')
 
         res = self.write(cr, uid, ids, {'state': 'draft'}, context=context)
@@ -54,7 +58,9 @@ class sale_order(osv.osv):
         """
         Force SO lines validation and update SO state
         """
-        context = context or {}
+        if context is None:
+            context = {}
+            
         wf_service = netsvc.LocalService('workflow')
 
         for so in self.browse(cr, uid, ids, context=context):
@@ -68,7 +74,9 @@ class sale_order(osv.osv):
         Get the less advanced state of the sale order lines
         Used to compute sale order state
         """
-        context = context or {}
+        if context is None:
+            context = {}
+            
         for so in self.browse(cr, uid, ids, context=context):
             sol_states = [line.state for line in so.order_line]
             if all([state == 'cancel' for state in sol_states]):
@@ -101,7 +109,9 @@ class sale_order(osv.osv):
         """
         Workflow method that test if SO can get 'validated' state
         """
-        context = context or {}
+        if context is None:
+            context = {}
+            
         print "FO: test_validated"
         for so in self.browse(cr, uid, ids, context=context):
             if not so.order_line:
@@ -115,7 +125,9 @@ class sale_order(osv.osv):
         """
         Workflow method that test if SO can get 'sourced' state
         """
-        context = context or {}
+        if context is None:
+            context = {}
+            
         print "FO: test_sourced"
         for so in self.browse(cr, uid, ids, context=context):
             if not so.order_line:
@@ -129,7 +141,9 @@ class sale_order(osv.osv):
         """
         Workflow method that test if SO can get 'confirmed' state
         """
-        context = context or {}
+        if context is None:
+            context = {}
+            
         print "FO: test_confirmed"
         for so in self.browse(cr, uid, ids, context=context):
             if not so.order_line:
@@ -143,7 +157,9 @@ class sale_order(osv.osv):
         """
         Workflow method that test if SO can get 'done' state
         """
-        context = context or {}
+        if context is None:
+            context = {}
+            
         print "FO: test_done"
         for so in self.browse(cr, uid, ids, context=context):
             if not so.order_line:
@@ -157,7 +173,9 @@ class sale_order(osv.osv):
         """
         Workflow method that test if SO can get 'cancel' state
         """
-        context = context or {}
+        if context is None:
+            context = {}
+            
         print "FO: test_cancel"
         for so in self.browse(cr, uid, ids, context=context):
             if not so.order_line:

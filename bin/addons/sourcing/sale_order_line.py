@@ -1321,12 +1321,75 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 _('You cannot confirm the sourcing of a line to an internal customer with an internal supplier.'),
             )
 
-        if not run_scheduler:
-            run_scheduler = po_auto_obj.get_po_automation(cr, uid, context=context)
-
-        self.check_confirm_order(cr, uid, ids, run_scheduler=run_scheduler, context=context)
+        self.source_line(cr, uid, ids, context=context)
 
         return True
+
+
+    def get_existing_po(self, cr, uid, ids, context=None):
+        """
+        Do we have to create new PO or use an existing one ?
+        If an axisting PO can be used, then returns his ID, else return False
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res_po_id = False
+        for sourcing_line in self.browse(cr, uid, ids, context=context):
+            res_po_id = self.pool.get('purchase.order').search(cr, uid, [
+                ('partner_id', '=', sourcing_line.supplier.id),
+                ('state', '!=', 'cancel'),
+            ], context=context)
+
+        #TODO better selection of the PO
+
+        return res_po_id
+
+
+    def source_line(self, cr, uid, ids, context=None):
+        """
+        From sale.order.line to purchase.order.line
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for sourcing_line in self.browse(cr, uid, ids, context=context):
+            po_to_use = self.get_existing_po(cr, uid, ids, context=context)
+            if not po_to_use: # then create new PO:
+                po_values = {
+                    'origin': sourcing_line.order_id.name,
+                    'partner_id': sourcing_line.supplier.id,
+                    'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [sourcing_line.supplier.id], ['default'])['default'],
+                    'location_id': self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0],
+                    'pricelist_id': sourcing_line.supplier.property_product_pricelist_purchase.id,
+                    'fiscal_position': sourcing_line.supplier.property_account_position and sourcing_line.supplier.property_account_position.id or False,
+                    'warehouse_id': sourcing_line.order_id.warehouse_id.id,
+                    'categ': sourcing_line.categ,
+                    'priority': sourcing_line.order_id.priority,
+                    'details': sourcing_line.order_id.details,
+                    'delivery_requested_date': sourcing_line.order_id.delivery_requested_date,
+                }
+                po_to_use = self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
+
+            # attach PO line:
+            po_line_values = {
+                'order_id': po_to_use,
+                'product_id': sourcing_line.product_id.id,
+                'product_uom': sourcing_line.product_id.uom_id.id,
+                'product_qty': sourcing_line.product_uom_qty,
+                'price_unit': sourcing_line.price_unit,
+                'partner_id': sourcing_line.supplier.id,
+                'origin': sourcing_line.order_id.name,
+                'sale_order_line_id': sourcing_line.id,
+            }
+            self.pool.get('purchase.order.line').create(cr, uid, po_line_values, context=context)
+
+        return True
+
 
     def check_confirm_order(self, cr, uid, ids, run_scheduler=False, context=None, update_lines=True):
         """

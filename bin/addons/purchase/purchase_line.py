@@ -539,15 +539,6 @@ class purchase_order_line(osv.osv):
         product_uom = vals.get('product_uom')
         order = po_obj.browse(cr, uid, order_id, context=context)
 
-        if order.from_yml_test:
-            vals.update({'change_price_manually': True})
-            if not vals.get('product_qty', False):
-                vals['product_qty'] = 1.00
-            # [imported and adapted from 'analytic_distribution_supply']
-            if not vals.get('price_unit', False):
-                vals['price_unit'] = 1.00
-            # [/]
-
         # Update the name attribute if a product is selected
         self._update_name_attr(cr, uid, vals, context=context)
 
@@ -578,8 +569,8 @@ class purchase_order_line(osv.osv):
         if (other_lines and stages and order.state != 'confirmed'):
             context.update({'change_price_ok': False})
 
-        if not context.get('offline_synchronization'):
-            vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
+        # if not context.get('offline_synchronization'):
+        #     vals = self._update_merged_line(cr, uid, False, vals, context=dict(context, skipResequencing=True))
 
         vals.update({'old_price_unit': vals.get('price_unit', False)})
 
