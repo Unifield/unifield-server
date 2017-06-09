@@ -222,7 +222,7 @@ class report_reception(report_sxw.rml_parse):
 
 
     def getActualReceiptDate(self,o):
-        if o.state == 'assigned':
+        if o.state != 'done':
             actual_receipt_date = ''
         elif not o.move_lines:
             ard = time.strptime(o.date, '%Y-%m-%d %H:%M:%S')
