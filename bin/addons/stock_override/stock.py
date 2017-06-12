@@ -379,7 +379,12 @@ class stock_picking(osv.osv):
 
 
     def on_change_ext_cu(self, cr, uid, ids, ext_cu, context=None):
-        context = context or {}
+        if context is None:
+            context = {}
+
+        if not ids:
+            return {}
+            
         for pick in self.browse(cr, uid, ids, context=context):
             moves = [move.id for move in pick.move_lines]
             if not moves:
