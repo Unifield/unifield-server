@@ -98073,10 +98073,22 @@ msgstr "Format incorrect pour la date d'expiration.\n"
 ""
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/initial_stock_inventory.py:730
+#: code:addons/msf_doc_import/initial_stock_inventory.py:798
 #, python-format
-msgid "Incorrect number format: %s"
-msgstr "Format de nombre incorrect: %s"
+msgid "Incorrect number format: %s. It has been reset to 0."
+msgstr "Format de nombre incorrect: %s. Il a été réinitialisé à 0."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:715
+#, python-format
+msgid "Wrong Initial Average Cost format. It has been reset to 1."
+msgstr "Coût moyen initial incorrect: %s. Il a été réinitialisé à 1."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:709
+#, python-format
+msgid "Product Cost cannot be < 0. It has been reset to 1."
+msgstr "Le coût du produit ne peut pas être < 0. Il a été réinitialisé à 1."
 
 #. module: spreadsheet_xml
 #: code:addons/spreadsheet_xml/spreadsheet_xml.py:152
