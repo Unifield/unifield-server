@@ -264,20 +264,17 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
 
             # Quantity
             p_qty = row.cells[5].data
-            if not p_qty:
-                product_qty = 0.00
-            else:
+            product_qty = 0.00
+            if p_qty:
                 if row.cells[5].type in ['int', 'float']:
                     product_qty = row.cells[5].data
                     if product_qty < 0:
                         comment += _('Product Qty cannot be < 0. It has been reset to 0.')
                         product_qty = 0.00
                         to_correct_ok = True
-                elif row.cells[5].type == 'int_error':
-                    comment += _('Incorrect number format: %s') % row.cells[5].data
-                    to_correct_ok = True
                 else:
-                    product_qty = 0.00
+                    comment += _('Incorrect number format: %s. It has been reset to 0.') % row.cells[5].data
+                    to_correct_ok = True
 
             if not location_id and not location_not_found:
                 comment += _('Location is missing.\n')
@@ -711,11 +708,14 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                         comment += _('Product Cost cannot be < 0. It has been reset to 1.')
                         product_cost = 1.00
                         to_correct_ok = True
-                elif product_id:
-                    product_cost = product_obj.browse(cr, uid, product_id).standard_price
                 else:
-                    product_cost = 1.00
-
+                    if product_id:
+                        product_cost = product_obj.browse(cr, uid, product_id).standard_price
+                        comment += _('Wrong Initial Average Cost format. It has been reset to the related product Cost Price.')
+                    else:
+                        comment += _('Wrong Initial Average Cost format. It has been reset to 1.')
+                        product_cost = 1.00
+                    to_correct_ok = True
 
             # Location
             loc_id = row.cells[3].data
@@ -786,20 +786,17 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
 
             # Quantity
             p_qty = row.cells[6].data
-            if not p_qty:
-                product_qty = 0.00
-            else:
+            product_qty = 0.00
+            if p_qty:
                 if row.cells[6].type in ['int', 'float']:
                     product_qty = row.cells[6].data
                     if product_qty < 0:
                         comment += _('Product Qty cannot be < 0. It has been reset to 0.')
                         product_qty = 0.00
                         to_correct_ok = True
-                elif row.cells[6].type == 'int_error':
-                    comment += _('Incorrect number format: %s') % row.cells[6].data
-                    to_correct_ok = True
                 else:
-                    product_qty = 0.00
+                    comment += _('Incorrect number format: %s. It has been reset to 0.') % row.cells[6].data
+                    to_correct_ok = True
 
             if not location_id and not location_not_found:
                 comment += _('Location is missing.\n')
