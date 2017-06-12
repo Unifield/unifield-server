@@ -162,8 +162,7 @@ class account_partner_balance_tree(osv.osv):
         self.initial_balance = data['form'].get('initial_balance', False)
         fiscalyear_id = data['form'].get('fiscalyear_id', False)
         if fiscalyear_id:
-            fy = obj_fy.read(cr, uid, [fiscalyear_id], ['date_start'],
-                             context=used_context)
+            fy = obj_fy.read(cr, uid, [fiscalyear_id], ['date_start'], context=used_context)
         else:
             # by default all FY taken into account
             used_context.update({'all_fiscalyear': True})

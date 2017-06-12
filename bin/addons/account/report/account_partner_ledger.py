@@ -74,7 +74,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         if self.fiscalyear_id:
             fy = obj_fy.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'], context=used_context)
         else:
-            # all FY selected by default
+            # by default all FY taken into account
             used_context.update({'all_fiscalyear': True})
         self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=used_context)
 
