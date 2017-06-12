@@ -57,7 +57,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         obj_move = self.pool.get('account.move.line')
         obj_partner = self.pool.get('res.partner')
         obj_fy = self.pool.get('account.fiscalyear')
-        self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=data['form'].get('used_context', {}))
+        used_context = data['form'].get('used_context', {})
         self.reconcil = data['form'].get('reconcil', False)
         self.result_selection = data['form'].get('result_selection', 'customer_supplier')
         self.target_move = data['form'].get('target_move', 'all')
@@ -72,8 +72,11 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             move_state = ['posted']
         self.fiscalyear_id = data['form'].get('fiscalyear_id', False)
         if self.fiscalyear_id:
-            fy = obj_fy.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'],
-                             context=data['form'].get('used_context', {}))
+            fy = obj_fy.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'], context=used_context)
+        else:
+            # all FY selected by default
+            used_context.update({'all_fiscalyear': True})
+        self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=used_context)
 
         #+ To have right partner balance, we have to take all next lines after a specific date.
         #+ To do that, we need to make requests regarding a date. So first we take date_from
