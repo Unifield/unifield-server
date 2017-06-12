@@ -1356,45 +1356,56 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         """
         From sale.order.line to purchase.order.line
         """
-        wf_service = netsvc.LocalService('workflow')
-
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        wf_service = netsvc.LocalService('workflow')
+        
         for sourcing_line in self.browse(cr, uid, ids, context=context):
-            po_to_use = self.get_existing_po(cr, uid, ids, context=context)
-            if not po_to_use: # then create new PO:
-                po_values = {
-                    'origin': sourcing_line.order_id.name,
-                    'partner_id': sourcing_line.supplier.id,
-                    'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [sourcing_line.supplier.id], ['default'])['default'],
-                    'location_id': self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0],
-                    'pricelist_id': sourcing_line.supplier.property_product_pricelist_purchase.id,
-                    'fiscal_position': sourcing_line.supplier.property_account_position and sourcing_line.supplier.property_account_position.id or False,
-                    'warehouse_id': sourcing_line.order_id.warehouse_id.id,
-                    'categ': sourcing_line.categ,
-                    'priority': sourcing_line.order_id.priority,
-                    'details': sourcing_line.order_id.details,
-                    'delivery_requested_date': sourcing_line.order_id.delivery_requested_date,
-                }
-                po_to_use = self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
+            if sourcing_line.type == 'make_to_stock':
+                pass
+            elif sourcing_line.type == 'make_to_order':
+                if sourcing_line.po_cft == 'po': # Purchase Order
+                    po_to_use = self.get_existing_po(cr, uid, ids, context=context)
+                    if not po_to_use: # then create new PO:
+                        po_values = {
+                            'origin': sourcing_line.order_id.name,
+                            'partner_id': sourcing_line.supplier.id,
+                            'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [sourcing_line.supplier.id], ['default'])['default'],
+                            'location_id': self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0],
+                            'pricelist_id': sourcing_line.supplier.property_product_pricelist_purchase.id,
+                            'fiscal_position': sourcing_line.supplier.property_account_position and sourcing_line.supplier.property_account_position.id or False,
+                            'warehouse_id': sourcing_line.order_id.warehouse_id.id,
+                            'categ': sourcing_line.categ,
+                            'priority': sourcing_line.order_id.priority,
+                            'details': sourcing_line.order_id.details,
+                            'delivery_requested_date': sourcing_line.order_id.delivery_requested_date,
+                        }
+                        po_to_use = self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
 
-            # attach PO line:
-            po_line_values = {
-                'order_id': po_to_use,
-                'product_id': sourcing_line.product_id.id,
-                'product_uom': sourcing_line.product_id.uom_id.id,
-                'product_qty': sourcing_line.product_uom_qty,
-                'price_unit': sourcing_line.price_unit,
-                'partner_id': sourcing_line.supplier.id,
-                'origin': sourcing_line.order_id.name,
-                'sale_order_line_id': sourcing_line.id,
-            }
-            self.pool.get('purchase.order.line').create(cr, uid, po_line_values, context=context)
+                    # attach PO line:
+                    po_line_values = {
+                        'order_id': po_to_use,
+                        'product_id': sourcing_line.product_id.id,
+                        'product_uom': sourcing_line.product_id.uom_id.id,
+                        'product_qty': sourcing_line.product_uom_qty,
+                        'price_unit': sourcing_line.price_unit,
+                        'partner_id': sourcing_line.supplier.id,
+                        'origin': sourcing_line.order_id.name,
+                        'sale_order_line_id': sourcing_line.id,
+                    }
+                    self.pool.get('purchase.order.line').create(cr, uid, po_line_values, context=context)
 
-            wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
+                    wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
+                elif sourcing_line.po_cft == 'dpo': # Direct Purchase Order
+                    pass
+                elif sourcing_line.po_cft == 'cft': # Tender
+                    pass
+                elif sourcing_line.po_cft == 'rfq': # Request for Quotation
+                    pass
+
 
         return True
 
