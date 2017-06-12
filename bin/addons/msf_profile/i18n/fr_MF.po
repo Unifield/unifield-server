@@ -98079,10 +98079,16 @@ msgid "Incorrect number format: %s. It has been reset to 0."
 msgstr "Format de nombre incorrect: %s. Il a été réinitialisé à 0."
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/initial_stock_inventory.py:715
+#: code:addons/msf_doc_import/initial_stock_inventory.py:714
+#, python-format
+msgid "Wrong Initial Average Cost format. It has been reset to the related product Cost Price."
+msgstr "Coût moyen initial incorrect. Il a été réinitialisé au Prix Coûtant du produit lié."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:716
 #, python-format
 msgid "Wrong Initial Average Cost format. It has been reset to 1."
-msgstr "Coût moyen initial incorrect: %s. Il a été réinitialisé à 1."
+msgstr "Coût moyen initial incorrect. Il a été réinitialisé à 1."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/initial_stock_inventory.py:709

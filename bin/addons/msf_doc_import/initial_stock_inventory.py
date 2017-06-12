@@ -708,13 +708,14 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                         comment += _('Product Cost cannot be < 0. It has been reset to 1.')
                         product_cost = 1.00
                         to_correct_ok = True
-                elif product_id:
-                    product_cost = product_obj.browse(cr, uid, product_id).standard_price
                 else:
-                    comment += _('Wrong Initial Average Cost format. It has been reset to 1.')
-                    product_cost = 1.00
+                    if product_id:
+                        product_cost = product_obj.browse(cr, uid, product_id).standard_price
+                        comment += _('Wrong Initial Average Cost format. It has been reset to the related product Cost Price.')
+                    else:
+                        comment += _('Wrong Initial Average Cost format. It has been reset to 1.')
+                        product_cost = 1.00
                     to_correct_ok = True
-
 
             # Location
             loc_id = row.cells[3].data
