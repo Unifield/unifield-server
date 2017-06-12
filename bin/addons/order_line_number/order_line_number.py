@@ -18,15 +18,8 @@
 #
 ##############################################################################
 
-from datetime import datetime, timedelta, date
-from dateutil.relativedelta import relativedelta, relativedelta
 from osv import osv, fields
-from osv.orm import browse_record, browse_null
 from tools.translate import _
-
-import decimal_precision as dp
-import netsvc
-import pooler
 import time
 
 
@@ -284,7 +277,7 @@ class purchase_order_line(osv.osv):
         # objects
         tools_obj = self.pool.get('sequence.tools')
 
-        if not context.get('skipResequencing', False):
+        if self._name == 'purchase.order.line' and not context.get('skipResequencing', False):
             # re sequencing only happen if purchase order is draft (behavior 1)
             # get ids with corresponding po at draft state
             draft_ids = self.allow_resequencing(cr, uid, ids, context=context)
@@ -397,8 +390,8 @@ class supplier_catalogue_line(osv.osv):
     _inherit = 'supplier.catalogue.line'
     _description = 'Supplier Catalogue Line'
     _columns = {
-                'line_number': fields.integer(string='Line', required=True),
-                }
+        'line_number': fields.integer(string='Line', required=True),
+    }
     _order = 'line_number'
 
     def create(self, cr, uid, vals, context=None):
