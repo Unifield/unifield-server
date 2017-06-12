@@ -368,33 +368,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         }
         audit_line_obj.create(cr, uid, vals, context=context)
 
-    def _vals_get_sale_override(self, cr, uid, ids, fields, arg, context=None):
-        '''
-        get function values
-        '''
-        result = {}
-        if context is None:
-            context = {}
 
-        for obj in self.browse(cr, uid, ids, context=context):
-            result[obj.id] = {}
-            for f in fields:
-                result[obj.id].update({f:False})
 
-            # state_hidden_sale_order
-            result[obj.id]['state_hidden_sale_order'] = obj.state
-            if obj.state == 'done' and obj.split_type_sale_order == 'original_sale_order' and not obj.procurement_request:
-                result[obj.id]['state_hidden_sale_order'] = 'split_so'
-
-            if obj.state_hidden_sale_order != result[obj.id]['state_hidden_sale_order'] and \
-                    (not obj.original_so_id_sale_order or obj.state_hidden_sale_order not in (False, 'draft')):
-                real_uid = context.get('computed_for_uid', uid)
-                self.add_audit_line(cr, real_uid, obj.id,
-                                    obj.state_hidden_sale_order,
-                                    result[obj.id]['state_hidden_sale_order'],
-                                    context=context)
-
-        return result
 
     def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -445,13 +420,58 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             return False
 
         return True
-    
+
+    def _get_state_hidden(self, cr, uid, ids, field_name, arg, context=None):
+        '''
+        get function values
+        '''
+        if context is None:
+            context = {}
+
+        result = {}
+        for so in self.browse(cr, uid, ids, context=context):
+            result[so.id] = so.state
+
+        return result
+
+    def _get_less_advanced_sol_state(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Get the less advanced state of the sale order lines
+        Used to compute sale order state
+        """
+        if context is None:
+            context = {}
+            
+        res = {}
+        for so in self.browse(cr, uid, ids, context=context):
+            sol_states = [line.state for line in so.order_line]
+            if all([state == 'cancel' for state in sol_states]):
+                res[so.id] = 'cancel'
+            elif 'draft' in sol_states:
+                res[so.id] = 'draft'
+            elif 'validated' in sol_states:
+                res[so.id] = 'validated'
+            elif 'sourced' in sol_states:
+                res[so.id] = 'sourced'
+            elif 'confirmed' in sol_states:
+                res[so.id] = 'confirmed'
+            elif 'done' in sol_states:
+                res[so.id] = 'done'
+
+        return res
+
 
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True,
                             readonly=True, states={'draft': [('readonly', False)]}, select=True),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
-        'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
+        'state': fields.function(_get_less_advanced_sol_state, string='Order State', method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True,
+            store = {
+                'sale.order.line': (_get_order, ['state'], 10),    
+            },
+            select=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'."
+        ),
+        'state_hidden_sale_order': fields.function(_get_state_hidden, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State'),
         'date_order': fields.date('Ordered Date', required=True, readonly=True, select=True, states={'draft': [('readonly', False)]}),
         'create_date': fields.date('Creation Date', readonly=True, select=True, help="Date on which sales order is created."),
         'date_confirm': fields.date('Confirmation Date', readonly=True, select=True, help="Date on which sales order is confirmed."),
@@ -529,8 +549,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
         'active': fields.boolean('Active', readonly=True),
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
-        'state_hidden_sale_order': fields.function(_vals_get_sale_override, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State', multi='get_vals_sale_override',
-                                                   store={'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['state', 'split_type_sale_order'], 10)}),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),

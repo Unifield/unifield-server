@@ -1330,6 +1330,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         """
         Do we have to create new PO or use an existing one ?
         If an axisting PO can be used, then returns his ID, else return False
+        @return ID (int) of PO to use or False
         """
         if context is None:
             context = {}
@@ -1344,14 +1345,19 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             ], context=context)
 
         #TODO better selection of the PO
+        
+        if res_po_id and isinstance(res_po_id, list):
+            res_po_id = res_po_id[0]
 
-        return res_po_id
+        return res_po_id or False
 
 
     def source_line(self, cr, uid, ids, context=None):
         """
         From sale.order.line to purchase.order.line
         """
+        wf_service = netsvc.LocalService('workflow')
+
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -1388,7 +1394,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             }
             self.pool.get('purchase.order.line').create(cr, uid, po_line_values, context=context)
 
+            wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
+
         return True
+
 
 
     def check_confirm_order(self, cr, uid, ids, run_scheduler=False, context=None, update_lines=True):

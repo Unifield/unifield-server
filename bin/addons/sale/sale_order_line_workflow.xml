@@ -22,6 +22,8 @@
         <record id="act_sol_sourced" model="workflow.activity">
             <field name="name">sourced</field>
             <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">write({'state':'sourced'})</field>
         </record>
         <record id="act_sol_confirmed" model="workflow.activity">
             <field name="name">confirmed</field>
@@ -44,17 +46,17 @@
         <record id="trans_sol_daft_validated" model="workflow.transition">
             <field name="act_from" ref="act_sol_draft"/>
             <field name="act_to" ref="act_sol_validated"/>
-            <field name="signal">validate</field>
+            <field name="signal">validated</field>
         </record>
         <record id="trans_sol_validated_sourced" model="workflow.transition">
             <field name="act_from" ref="act_sol_validated"/>
             <field name="act_to" ref="act_sol_sourced"/>
-            <field name="signal">source</field>
+            <field name="signal">sourced</field>
         </record>
         <record id="trans_sol_sourced_confirmed" model="workflow.transition">
             <field name="act_from" ref="act_sol_sourced"/>
             <field name="act_to" ref="act_sol_confirmed"/>
-            <field name="signal">confirm</field>
+            <field name="signal">confirmed</field>
         </record>
         <record id="trans_sol_confirmed_done" model="workflow.transition">
             <field name="act_from" ref="act_sol_confirmed"/>

@@ -353,7 +353,6 @@ class procurement_request(osv.osv):
             'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
         },
             multi='by_type', help="The amount of lines sourced from stock"),
-        'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
         'is_ir_from_po_cancel': fields.boolean('Is IR from a PO cancelled', invisible=True),  # UFTP-82: flagging we are in an IR and its PO is cancelled
     }

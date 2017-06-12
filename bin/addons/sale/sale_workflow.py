@@ -20,15 +20,8 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-            
-        wf_service = netsvc.LocalService('workflow')
 
-        res = self.write(cr, uid, ids, {'state': 'validated'}, context=context)
-
-        for so_id in set([sol.order_id.id for sol in self.browse(cr, uid, ids, context=context)]):
-            wf_service.trg_write(uid, 'sale.order', so_id, cr)
-
-        return res
+        return self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
     def action_draft(self, cr ,uid, ids, context=None):
         '''
@@ -37,14 +30,7 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
             
-        wf_service = netsvc.LocalService('workflow')
-
-        res = self.write(cr, uid, ids, {'state': 'draft'}, context=context)
-
-        for so_id in set([sol.order_id.id for sol in self.browse(cr, uid, ids, context=context)]):
-            wf_service.trg_write(uid, 'sale.order', so_id, cr)
-
-        return res
+        return self.write(cr, uid, ids, {'state': 'draft'}, context=context)
 
 sale_order_line()
 
@@ -65,7 +51,7 @@ class sale_order(osv.osv):
 
         for so in self.browse(cr, uid, ids, context=context):
             self.pool.get('sale.order.line').write(cr, uid, [sol.id for sol in so.order_line], {'state': 'validated'}, context=context)
-            self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True
 
