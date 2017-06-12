@@ -134,12 +134,16 @@ class wizard_import_invoice_line(osv.osv_memory):
                     continue
                 try:
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, row)
+                    missing_required = False
                     # check the required fields are present
                     for mandatory_field in mandatory_fields:
                         cell_nb = header_index[_(mandatory_field)]
                         if not line[cell_nb]:
-                            self.error_list.append(_('Line %s. %s was not set. This field is mandatory.') % (line_num, _(mandatory_field)))
-                            break
+                            add_error(_('Line %s. %s was not set. This field is mandatory.') % (line_num, _(mandatory_field)))
+                            missing_required = True
+
+                    if missing_required:
+                        continue
 
                     ## Cell 0: Description
                     desc_value = line[header_index[_('Description')]]
@@ -195,64 +199,60 @@ class wizard_import_invoice_line(osv.osv_memory):
                     analytic_obj = self.pool.get('account.analytic.account')
                     if account.is_analytic_addicted:
                         # Check Destination
-                        if not line[header_index[_('Destination')]]:
-                            add_error(_('Line %s. No destination specified!') % (line_num,))
-                            continue
-                        destination_ids = analytic_obj.search(cr, uid, [('category', '=', 'DEST'),
-                                                                        '|', ('name', '=', line[header_index[_('Destination')]]),
-                                                                        ('code', '=', line[header_index[_('Destination')]])])
-                        if not destination_ids:
-                            add_error(_('Line %s. Destination %s not found!') % (line_num,
-                                                                                 line[header_index[_('Destination')]],))
-                            continue
-                        r_destination = destination_ids[0]
+                        destination = line[header_index[_('Destination')]]
+                        r_destination = False  # US-3022 Destination is not mandatory
+                        if destination:
+                            destination_ids = analytic_obj.search(cr, uid, [('category', '=', 'DEST'),
+                                                                            '|', ('name', '=', destination),
+                                                                            ('code', '=', destination)])
+                            if destination_ids:
+                                r_destination = destination_ids[0]
+
                         # Check Cost Center
-                        if not line[header_index[_('Cost Center')]]:
-                            add_error(_('Line %s. No cost center specified!') % (line_num,))
-                            continue
-                        # If necessary cast the CC into a string, otherwise the below search would crash
-                        if not isinstance(line[header_index[_('Cost Center')]], basestring):
-                            line[header_index[_('Cost Center')]] = '%s' % (line[header_index[_('Cost Center')]])
-                        cc_ids = analytic_obj.search(cr, uid, [('category', '=', 'OC'),
-                                                               '|', ('name', '=', line[header_index[_('Cost Center')]]),
-                                                               ('code', '=', line[header_index[_('Cost Center')]])])
-                        if not cc_ids:
-                            add_error(_('Line %s. Cost Center %s not found!') % (line_num, line[header_index[_('Cost Center')]]))
-                            continue
-                        r_cc = cc_ids[0]
-                        # Check Cost Center type
-                        cc = analytic_obj.browse(cr, uid, r_cc, context)
-                        if cc.type == 'view':
-                            add_error(_('Line %s. %s is a VIEW type Cost Center!') % (line_num, line[header_index[_('Cost Center')]]))
-                            continue
+                        cost_center = line[header_index[_('Cost Center')]]
+                        r_cc = False  # US-3022 Cost Center is not mandatory
+                        if cost_center:
+                            # If necessary cast the CC into a string, otherwise the below search would crash
+                            if not isinstance(cost_center, basestring):
+                                cost_center = '%s' % (cost_center)
+                            cc_ids = analytic_obj.search(cr, uid, [('category', '=', 'OC'),
+                                                                   '|', ('name', '=', cost_center),
+                                                                   ('code', '=', cost_center)])
+                            if cc_ids:
+                                r_cc = cc_ids[0]
+                                # Check Cost Center type
+                                cc = analytic_obj.browse(cr, uid, r_cc, context)
+                                if cc.type == 'view':
+                                    r_cc = False
+
                         # Check Funding Pool
                         r_fp = msf_fp_id
-                        if line[header_index[_('Funding Pool')]]:
+                        funding_pool = line[header_index[_('Funding Pool')]]
+                        if funding_pool:
                             fp_ids = analytic_obj.search(cr, uid, [('category', '=', 'FUNDING'),
-                                                                   '|', ('name', '=', line[header_index[_('Funding Pool')]]),
-                                                                   ('code', '=', line[header_index[_('Funding Pool')]])])
-                            if not fp_ids:
-                                add_error(_('Line %s. Funding Pool %s not found!') % (line_num, line[header_index[_('Funding Pool')]]))
-                                continue
-                            r_fp = fp_ids[0]
+                                                                   '|', ('name', '=', funding_pool),
+                                                                   ('code', '=', funding_pool)])
+                            if fp_ids:
+                                r_fp = fp_ids[0]
 
                         invoice = self.pool.get('account.invoice').browse(cr,
                                                                           uid, wiz.invoice_id.id, context=context)
 
-                        distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
-                        common_vals = {
-                            'distribution_id': distrib_id,
-                            'currency_id': invoice.currency_id.id,
-                            'percentage': 100.0,
-                            'date': invoice.date_invoice,
-                            'source_date': invoice.date_invoice,
-                            'destination_id': r_destination,
-                        }
-                        common_vals.update({'analytic_id': r_cc})
-                        self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
-                        common_vals.update({'analytic_id':r_fp, 'cost_center_id': r_cc})
-                        self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
-                        to_write.update({'analytic_distribution_id': distrib_id})
+                        if r_destination and r_cc:
+                            distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context)
+                            common_vals = {
+                                'distribution_id': distrib_id,
+                                'currency_id': invoice.currency_id.id,
+                                'percentage': 100.0,
+                                'date': invoice.date_invoice,
+                                'source_date': invoice.date_invoice,
+                                'destination_id': r_destination,
+                            }
+                            common_vals.update({'analytic_id': r_cc})
+                            self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
+                            common_vals.update({'analytic_id':r_fp, 'cost_center_id': r_cc})
+                            self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
+                            to_write.update({'analytic_distribution_id': distrib_id})
 
                     to_write.update(
                         {
