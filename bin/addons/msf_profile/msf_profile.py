@@ -46,6 +46,28 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2257_patch(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        partner_obj = self.pool.get('res.partner')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'section':
+            intermission_ids = partner_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('partner_type', '=', 'intermission')])
+            address_ids = []
+            if intermission_ids:
+                address_ids = self.pool.get('res.partner.address').search(cr, uid, [('partner_id', 'in', intermission_ids)])
+                self._logger.warn('touch %d partners, %d addresses' % (len(intermission_ids), len(address_ids)))
+                cr.execute("update ir_model_data set touched='[''name'']', last_modification=now() where model='res.partner' and module='sd' and res_id in %s" , (tuple(intermission_ids), ))
+                if address_ids:
+                    cr.execute("update ir_model_data set touched='[''name'']', last_modification=now() where model='res.partner.address' and module='sd' and res_id in %s" , (tuple(address_ids), ))
+
+        return True
+
     def us_2730_patch(self, cr, uid, *a, **b):
         '''
         remove all translations, and then re-import them
