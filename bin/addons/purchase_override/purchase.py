@@ -1113,7 +1113,7 @@ class purchase_order(osv.osv):
                 # Raise an error if no analytic distribution found
                 if not distrib:
                     # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
-                    if po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind') and po.push_fo:
+                    if po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind') or po.push_fo:
                         # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
                         return True
                     if create_missing and po.partner_id and po.partner_id.partner_type == 'intermission':
