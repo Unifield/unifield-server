@@ -633,8 +633,10 @@ class purchase_order_sync(osv.osv):
 
         default = {}
         default.update(header_result)
-
         self.write(cr, uid, po_id, default, context=context)
+        if partner_type == 'intermission':
+            self.check_analytic_distribution(cr, uid, [po_id], context=context, create_missing=True)
+
         if so_info.original_so_id_sale_order:
             wf_service = netsvc.LocalService("workflow")
             if so_info.state == 'validated':

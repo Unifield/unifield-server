@@ -623,7 +623,7 @@ class ir_translation(osv.osv):
                             AND xml_id=%s''',
                                    (lang, tt, name, xml_id))
                         for value in cr.fetchall():
-                            res[id] = value
+                            res[id] = value[0]
         return res
 
     def get_xml_id(self, cr, uid, vals, context=None):

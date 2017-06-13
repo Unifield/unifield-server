@@ -379,15 +379,30 @@ class stock_picking(osv.osv):
 
 
     def on_change_ext_cu(self, cr, uid, ids, ext_cu, context=None):
-        if self.pool.get('stock.move').search_exist(cr, uid, [('picking_id', 'in', ids)], context=context):
-            return {
-                'warning': {
-                    'title': _('Warning'),
-                    'message': _('You are changing an External Consumption Unit, please check that source location of your stock moves are still consistent'),
-                }
-            }
-        return {}
+        if context is None:
+            context = {}
 
+        if not ids:
+            return {}
+            
+        for pick in self.browse(cr, uid, ids, context=context):
+            moves = [move.id for move in pick.move_lines]
+            if not moves:
+                return {}
+            if ext_cu:
+                self.pool.get('stock.move').write(cr, uid, [move.id for move in pick.move_lines], {'location_id': ext_cu}, context=context)
+                message =  _('The source location of lines has been changed to the same as header value')
+            else: # not ext_cu set defualt location because source location of stock.move is a mandatory field:
+                other_supplier_location = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_suppliers')
+                self.pool.get('stock.move').write(cr, uid, [move.id for move in pick.move_lines], {'location_id': other_supplier_location[1]}, context=context)
+                message = _("Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!")
+
+        return {
+            'warning': {
+                'title': _('Warning'),
+                'message': message,
+            }
+        }
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         if default is None:

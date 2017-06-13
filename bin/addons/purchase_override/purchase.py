@@ -1075,7 +1075,7 @@ class purchase_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
         return dest_ok
 
-    def check_analytic_distribution(self, cr, uid, ids, context=None):
+    def check_analytic_distribution(self, cr, uid, ids, context=None, create_missing=False):
         """
         Check analytic distribution validity for given PO.
         Also check that partner have a donation account (is PO is in_kind)
@@ -1113,11 +1113,19 @@ class purchase_order(osv.osv):
                 # Raise an error if no analytic distribution found
                 if not distrib:
                     # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
-                    if po.order_type not in ('loan', 'donation_st', 'donation_exp', 'in_kind') and not po.push_fo:
+                    if po.order_type in ('loan', 'donation_st', 'donation_exp', 'in_kind') or po.push_fo:
+                        # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
+                        return True
+                    if create_missing and po.partner_id and po.partner_id.partner_type == 'intermission':
+                        # intermission push flow, new line added: AD needed
+                        destination_id = pol.account_4_distribution and pol.account_4_distribution.default_destination_id and pol.account_4_distribution.default_destination_id.id or False
+                        ad_obj.create(cr, uid, {
+                            'purchase_line_ids': [(4, pol.id)],
+                            'cost_center_lines': [(0, 0, {'destination_id': destination_id, 'analytic_id': intermission_cc , 'percentage':'100', 'currency_id': po.currency_id.id})]
+                        })
+                    else:
                         raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
 
-                    # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
-                    return True
                 elif pol.analytic_distribution_state != 'valid':
                     id_ad = ad_obj.create(cr, uid, {})
                     ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines

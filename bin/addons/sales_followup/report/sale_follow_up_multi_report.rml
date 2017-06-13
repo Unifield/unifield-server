@@ -66,6 +66,7 @@
         <paraStyle name="Lines" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
         <paraStyle name="UnderLines" fontName="Helvetica-Bold" fontSize="6.0" alignment="LEFT" leading="7.0" />
         <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="LinesGreen" textColor="green" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
         
     </stylesheet>
 
@@ -275,14 +276,15 @@
 	    			<para style="LinesBlue">[[ line.get('packing', '') ]]</para>
 	    		</td>
 	    		<td>
-                    <para style="LinesBlue">[[ line.get('backordered_qty', 0.00) &gt;= 0 and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para') ]]</para>
-                    <para style="LinesBlue">[[ line.get('backordered_qty', 0.00) &lt; 0 and '0' or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('backordered_qty', 0.00))) ]])</para>
+                    <para style="LinesBlue">[[ line.get('extra_qty', 0) == 0 and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para') ]]</para>
+                    <para style="LinesBlue">[[ line.get('extra_qty', 0) and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('extra_qty', 0.00))) ]])</para>
 	    		</td>
                 <td>
 	    			<para style="LinesBlue">[[ line.get('transport', '') and getSel(line['transport'], 'transport_type') or '' ]]</para>
 	    		</td>
                 <td>
-	    			<para style="LinesBlue">[[ line.get('shipment', '') ]]</para>
+                    <para style="LinesBlue">[[ not line.get('is_delivered') and line.get('shipment', '') or removeParentNode('para') ]]</para>
+	    			<para style="LinesGreen">[[ line.get('is_delivered') and line.get('shipment', '') or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('eta', '') and formatLang(line['eta'], date=True) or 'N/A' ]]</para>
