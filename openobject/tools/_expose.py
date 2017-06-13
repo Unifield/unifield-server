@@ -221,7 +221,8 @@ def expose(format='html', template=None, content_type=None, allow_json=False, me
                                 jset.add(script)
 
                     return render_template(_template, res).encode("utf-8")
-            if isinstance(res, types.GeneratorType) and hasattr(res, '__name__') and res.__name__ == 'file_generator':
+            if isinstance(res, cherrypy.lib.file_generator):
+                # generator: i.e download backup
                 return res
             if not isinstance(res, basestring):
                 return unicode(res).encode("utf-8")
