@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <form string="FX rates by currency">
                     <group colspan="4" col="6">
-                        <field name="currency_id"/>
+                        <field name="currency_id" default_focus="1"/>
                         <field name="start_period_id" widget="selection"/>
                         <field name="end_period_id" widget="selection"/>
                     </group>
