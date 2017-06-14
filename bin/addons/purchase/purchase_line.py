@@ -8,7 +8,7 @@ from osv import osv, fields
 import netsvc
 from tools.translate import _
 import decimal_precision as dp
-from purchase_override import PURCHASE_ORDER_STATE_SELECTION
+from purchase_override import PURCHASE_ORDER_STATE_SELECTION, PURCHASE_ORDER_LINE_STATE_SELECTION
 from workflow.wkf_expr import _eval_expr
 
 
@@ -186,7 +186,7 @@ class purchase_order_line(osv.osv):
         'order_id': fields.many2one('purchase.order', 'Order Reference', select=True, required=True, ondelete='cascade'),
         'account_analytic_id':fields.many2one('account.analytic.account', 'Analytic Account',),
         'company_id': fields.related('order_id','company_id',type='many2one',relation='res.company',string='Company', store=True, readonly=True),
-        'state': fields.selection([('draft', 'Draft'), ('confirmed', 'Confirmed'), ('done', 'Done'), ('cancel', 'Cancelled')], 'State', required=True, readonly=True,
+        'state': fields.selection(PURCHASE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True,
                                   help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
                                        \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                                        \n* The \'Done\' state is set automatically when purchase order is set as done. \
