@@ -113,7 +113,7 @@ def find(path):
 
 def rmtree(files, path=None, verbose=False):
     """Python free rmtree"""
-    if path is None and isinstance(files, str):
+    if path is None and isinstance(files, basestring):
         path, files = files, find(files)
     for f in reversed(files):
         target = os.path.join(path, f) if path is not None else f
