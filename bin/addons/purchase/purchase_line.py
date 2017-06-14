@@ -1160,7 +1160,7 @@ class purchase_order_line(osv.osv):
             for l in self.read(cr, uid, other_lines, ['product_qty']):
                 all_qty += l['product_qty']
 
-        res = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, all_qty, uom,
+        res = self.product_id_change(cr, uid, ids, pricelist, product, all_qty, uom,
                                                                  partner_id, date_order, fiscal_position,
                                                                  date_planned, name, price_unit, notes)
 
