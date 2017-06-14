@@ -36,11 +36,8 @@ from setuptools.command.install import install
 from distutils.sysconfig import get_python_lib
 from setup_py2exe_custom import custom_py2exe, fixup_data_pytz_zoneinfo
 
-has_py2exe = False
 py2exe_keywords = {}
 if os.name == 'nt':
-    import py2exe
-    has_py2exe = True
     py2exe_keywords['console'] = [
         { "script": join("bin", "openerp-server.py"),
           "icon_resources": [(1, join("pixmaps","openerp-icon.ico"))]
@@ -54,30 +51,47 @@ if os.name == 'nt':
             "collected_libs_dir": "libs",
             "collected_libs_data_relocate": "pytz",
             "package_build_extra_dirs": join(os.path.abspath(os.path.dirname(__file__)), "bin"),
-            "dist_dir": 'dist',
             "packages": [
                 "lxml", "lxml.builder", "lxml._elementpath", "lxml.etree",
                 "lxml.objectify", "decimal", "xml", "xml", "xml.dom",
                 "encodings", "dateutil", "wizard", "pychart", "PIL", "pyparsing",
-                "pydot", "asyncore","asynchat", "reportlab", "vobject",
+                "pydot", "asyncore","asynchat", "reportlab",
                 "HTMLParser", "select", "mako", "poplib",
-                "imaplib", "smtplib", "email", "yaml", "DAV",
+                "imaplib", "smtplib", "email", "yaml",
                 "uuid", "commands", "mx.DateTime", "json",
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
             ],
-            "excludes" : ["Tkconstants","Tkinter","tcl"],
+            'dist_dir': 'dist',
+            'excludes' : ["Tkconstants","Tkinter","tcl"],
+            'dll_excludes': [
+                'w9xpopen.exe', 'PSAPI.dll', 'CRYPT32.dll', 'MPR.dll',
+                'Secur32.dll', 'SHFOLDER.dll',
+                'api-ms-win-core-delayload-l1-1-1.dll',
+                'api-ms-win-core-errorhandling-l1-1-1.dll',
+                'api-ms-win-core-heap-obsolete-l1-1-0.dll',
+                'api-ms-win-core-libraryloader-l1-2-0.dll',
+                'api-ms-win-core-processthreads-l1-1-2.dll',
+                'api-ms-win-core-profile-l1-1-0.dll',
+                'api-ms-win-core-string-obsolete-l1-1-0.dll',
+                'api-ms-win-core-sysinfo-l1-2-1.dll',
+                'api-ms-win-security-activedirectoryclient-l1-1-0.dll',
+            ],
         }
     }
 
 sys.path.append(join(os.path.abspath(os.path.dirname(__file__)), "bin"))
 
+# The following are all overridden in release.py
+name = None
+description = None
+long_desc = None
+url = None
+author = None
+author_email = None
+classifiers = None
+version = None
+
 execfile(join('bin', 'release.py'))
-
-if 'bdist_rpm' in sys.argv:
-    version = version.split('-')[0]
-
-# get python short version
-py_short_version = '%s.%s' % sys.version_info[:2]
 
 # backports os.walk with followlinks from python 2.6
 def walk_followlinks(top, topdown=True, onerror=None, followlinks=False):
@@ -107,9 +121,6 @@ def walk_followlinks(top, topdown=True, onerror=None, followlinks=False):
                 yield x
     if not topdown:
         yield top, dirs, nondirs
-
-if sys.version_info < (2, 6):
-    os.walk = walk_followlinks
 
 def find_addons():
     for root, _, names in os.walk(join('bin', 'addons'), followlinks=True):
@@ -152,8 +163,6 @@ def data_files():
         #for root, _, names in os.walk('pixmaps'):
         #    files.append((root, [join(root, name) for name in names]))
         files.append(('.', [join('bin', 'import_xml.rng'),]))
-        files.append(("Microsoft.VC90.CRT", glob.glob('C:\Microsoft.VC90.CRT\*.*')))
-        files.append((join('service','Microsoft.VC90.CRT'), glob.glob('C:\Microsoft.VC90.CRT\*.*')))
         files.extend(fixup_data_pytz_zoneinfo())
     else:
         man_directory = join('share', 'man')
@@ -170,11 +179,6 @@ def data_files():
         openerp_site_packages = join(get_python_lib(prefix=''), 'openerp-server')
 
         files.append((openerp_site_packages, [join('bin', 'import_xml.rng'),]))
-
-        if sys.version_info[0:2] == (2,5):
-            files.append((openerp_site_packages, [ join('python25-compat','BaseHTTPServer.py'),
-                                                   join('python25-compat','SimpleXMLRPCServer.py'),
-                                                   join('python25-compat','SocketServer.py')]))
 
         for addonname, add_path in find_addons():
             addon_path = join(get_python_lib(prefix=''), 'openerp-server','addons', addonname)
@@ -213,8 +217,6 @@ class openerp_server_install(install):
         install.run(self)
 
 
-
-
 setup(name             = name,
       version          = version,
       description      = description,
@@ -239,23 +241,22 @@ setup(name             = name,
           '': ['*.yml', '*.xml', '*.po', '*.pot', '*.csv'],
       },
       package_dir      = find_package_dirs(),
+      python_requires = ">=2.7.13",
       install_requires = [
           'lxml==3.7.3',
-          'mako==0.2.5',
-          'python-dateutil==2.5.3',
-          'psycopg2==2.0.13',
-          'pydot==1.0.2',
-          'pytz==2010b0',
-          'reportlab==2.4',
+          'mako==1.0.6',
+          'python-dateutil==2.6.0',
+          'psycopg2==2.7.1',
+          'pydot==1.2.3',
+          'pytz==2017.2',
+          'pylzma==0.4.8',
+          'reportlab==3.4.0',
           'pyyaml==3.12',
           'egenix-mx-base==3.2.9',
-          'passlib==1.6.5',
-          'bcrypt==3.1.1',
-          'xlwt==1.1.2',
+          'passlib==1.7.1',
+          'bcrypt==3.1.3',
+          'xlwt==1.2.0',
       ],
-      extras_require={
-          'SSL' : ['pyopenssl'],
-      },
       **py2exe_keywords
       )
 

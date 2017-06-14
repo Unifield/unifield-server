@@ -818,6 +818,7 @@ class product_attributes(osv.osv):
                 ('phase_out', 'Phase Out'),
                 ('stopped', 'Stopped'),
                 ('archived', 'Archived'),
+                ('forbidden', 'Forbidden'),
             ],
             string='UniData Status',
             readonly=True,
@@ -940,8 +941,8 @@ class product_attributes(osv.osv):
 
     def default_get(self, cr, uid, fields, context=None):
         res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
-
-        res['heat_sensitive_item'] = self._get_default_sensitive_item(cr, uid, context=context)
+        if 'heat_sensitive_item' in fields or not fields:
+            res['heat_sensitive_item'] = self._get_default_sensitive_item(cr, uid, context=context)
 
         return res
 
@@ -1248,7 +1249,7 @@ class product_attributes(osv.osv):
                         _('Error'),
                         _('White spaces are not allowed in product code'),
                     )
-        if 'xmlid_code' in vals:
+        if vals.get('xmlid_code'):
             if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
                 raise osv.except_osv(
                     _('Error'),
@@ -1296,7 +1297,7 @@ class product_attributes(osv.osv):
         smrl_obj = self.pool.get('stock.mission.report.line')
         prod_status_obj = self.pool.get('product.status')
         int_stat_obj = self.pool.get('product.international.status')
-
+        
         if context is None:
             context = {}
 
@@ -1382,7 +1383,6 @@ class product_attributes(osv.osv):
                 category_id = product.uom_id.category_id.id
                 if category_id not in product_uom_categ:
                     product_uom_categ.append(category_id)
-
         if 'heat_sensitive_item' in vals:
             if not vals.get('heat_sensitive_item'):
                 heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]

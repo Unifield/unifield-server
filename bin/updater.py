@@ -12,11 +12,9 @@ from datetime import datetime
 from base64 import b64decode
 from StringIO import StringIO
 import logging
-
-if sys.version_info >= (2, 6, 6):
-    from zipfile import ZipFile
-else:
-    from zipfile266 import ZipFile
+import subprocess
+import base64
+from zipfile import ZipFile
 
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
@@ -166,6 +164,30 @@ def base_module_upgrade(cr, pool, upgrade_now=False):
         logger.info("--------------- STARTING BASE UPGRADE PROCESS -----------------")
         pool.get('base.module.upgrade').upgrade_module(cr, 1, [])
 
+def process_deletes(update_dir, webpath):
+    delfile = os.path.join(update_dir, 'delete.txt')
+    if not os.path.exists(delfile):
+        return
+
+    with open(delfile) as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("web/"):
+                src = os.path.join(webpath, line[4:])
+                dest = os.path.join(webpath, 'backup', line[4:])
+            else:
+                src = line
+                dest = os.path.join('backup', line)                
+
+            destdir = os.path.dirname(dest)
+            if not os.path.exists(destdir):
+                warn("Making new destdir: %s" % destdir)
+                os.makedirs(destdir)
+            if os.path.exists(src):
+                warn("Delete: %s" % src)
+                os.rename(src, dest)
+            else:
+                warn("File to delete %s not found." % src)
 
 def do_update():
     """Real update of the server (before normal OpenERP execution).
@@ -210,7 +232,7 @@ def do_update():
                     warn("webmode registry key not found")
                     regval = "c:\Program Files (x86)\msf\Unifield\Web\service\libs\servicemanager.pyd"
 
-                res = re.match("^(.*)\\service\\libs\\servicemanager.pyd", regval)
+                res = re.match("^(.*)\\\\service\\\\libs\\\\servicemanager.pyd", regval)
                 if res:
                     webpath = res.group(1)
                 else:
@@ -229,6 +251,10 @@ def do_update():
             ## Update Files
             warn("Updating...")
             for f in files:
+                # The delete list is handled last.
+                if f == 'delete.txt':
+                    continue
+
                 webfile = re.match("^web[\\\/](.*)", f)
                 warn("Filename : `%s'" % (f))
                 if webfile:
@@ -265,6 +291,20 @@ def do_update():
                             os.rename(f, bak)
                         warn("`%s' -> `%s'" % (target, f))
                         os.rename(target, f)
+
+            # Read and apply the deleted.txt file.
+            process_deletes(update_dir, webpath)
+
+            # Clean out the PYC files so that they can be recompiled
+            # by the (potentially) updated pythonXX.dll.
+            for d in [ '.', webpath ]:
+                for root, dirs, files in os.walk(d):
+                    for file in files:
+                        if file.endswith('.pyc'):
+                            file = os.path.join(root, file)
+                            warn('Purge pyc: %s' % file)
+                            os.unlink(file)
+
             add_versions([(x['md5sum'], x['date'],
                            x['name']) for x in revisions])
             warn("Update successful.")
@@ -275,7 +315,6 @@ def do_update():
             #Restart web server
             if webupdated and os.name == "nt":
                 try:
-                    import subprocess
                     subprocess.call('net stop "OpenERP Web 6.0"')
                     subprocess.call('net start "OpenERP Web 6.0"')
                 except OSError, e:
@@ -449,7 +488,6 @@ def reconnect_sync_server():
     import tools
     credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
     if os.path.isfile(credential_filepath):
-        import base64
         import pooler
         f = open(credential_filepath, 'r')
         lines = f.readlines()

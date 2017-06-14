@@ -21,6 +21,7 @@
                         </group>
                         <field name="activity_id" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
                         <button name="export_rac" colspan="3" string="Export lines" icon="terp-mail-forward" type="object" />
+                        <field name="categ" on_change="onchange_categ(categ)" />
                         <separator colspan="6" string="Period of consumption" />
                         <field name="period_from" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
                         <field name="period_to" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}" colspan="3"/>
@@ -37,7 +38,7 @@
                     <field colspan="4" name="line_ids" mode="tree" nolabel="1" widget="one2many_list" attrs="{'readonly': ['|', ('state', '=', 'cancel'), ('created_ok', '=', True)]}"
                     context="{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}">
                         <tree string="Products" editable="top" colors="red: consumed_qty>0 and (inactive_product or to_correct_ok or consumed_qty > product_qty or (batch_mandatory and not prodlot_id) or (date_mandatory and not expiry_date));blue: not prodlot_id and consumed_qty>product_qty and not to_correct_ok and not inactive_product">
-                            <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id)"
+                            <field name="product_id" on_change="product_onchange(product_id, parent.cons_location_id, uom_id, prodlot_id, parent.categ)"
                                 context="{'location': parent.cons_location_id, 'compute_child': False, 'available_for_restriction': 'consumption', 'search_default_not_restricted': 1}" />
                             <!-- domain="[('list_ids', '=', parent.sublist_id)]" /> -->
                             <field name="uom_id" 
@@ -313,6 +314,7 @@
             <field name="name">stock.location.search.without_buttons</field>
             <field name="model">stock.location</field>
             <field name="type">search</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <search string="Stock Locations">
                     <field name="name" />

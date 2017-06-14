@@ -231,11 +231,14 @@ class stock_mission_report(osv.osv):
         'last_update': fields.datetime(string='Last update'),
         'move_ids': fields.many2many('stock.move', 'mission_move_rel', 'mission_id', 'move_id', string='Noves'),
         'export_ok': fields.boolean(string='Export file possible ?'),
+        'export_state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done'), ('error', 'Error')], string="Export state"),
+        'export_error_msg': fields.text('Error message', readonly=True)
     }
 
     _defaults = {
         'full_view': lambda *a: False,
-        #'export_ok': False,
+        'export_state': lambda *a: 'draft',
+        'export_error_msg': lambda *a: False,
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -256,7 +259,7 @@ class stock_mission_report(osv.osv):
     def xls_write_header(self, sheet, cell_list, style):
         column_count = 0
         for column in cell_list:
-            sheet.write(0, column_count, _(column), style)
+            sheet.write(2, column_count, _(column), style)
             column_count += 1
 
     def xls_write_row(self, sheet, cell_list, row_count, style):
@@ -353,16 +356,6 @@ class stock_mission_report(osv.osv):
                 align: wrap on, vert center, horiz center;
             """)
         header_style.borders = borders
-
-        book = Workbook()
-        sheet = book.add_sheet('Sheet 1')
-        sheet.row_default_height = 60*20
-        header_row = [_(column_name) for column_name, colum_property in header]
-        self.xls_write_header(sheet, header_row, header_style)
-
-        sheet.row(0).height_mismatch = True
-        sheet.row(0).height = 45*20
-
         # this style is done to be the same than previous mako configuration
         row_style = easyxf("""
                 font: height 220;
@@ -371,8 +364,27 @@ class stock_mission_report(osv.osv):
             """)
         row_style.borders = borders
 
+        book = Workbook()
+        sheet = book.add_sheet('Sheet 1')
+        sheet.row_default_height = 60*20
+
+        sheet.write(0, 0, _("Generating instance"), row_style)
+        instance_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.name
+        sheet.write(0, 1, instance_name, row_style)
+        sheet.write(1, 0, _("Instance selection"), row_style)
+        report_name = self.read(cr, uid, report_id, ['name'])['name']
+        sheet.write(1, 1, report_name, row_style)
+
+        header_row = [_(column_name) for column_name, colum_property in header]
+        self.xls_write_header(sheet, header_row, header_style)
+
+        # tab header bigger height:
+        sheet.row(2).height_mismatch = True
+        sheet.row(2).height = 45*20
+
+
         # write the lines
-        row_count = 1
+        row_count = 3
         for row in request_result:
             try:
                 product_amc = 0.00
@@ -441,6 +453,7 @@ class stock_mission_report(osv.osv):
                 return
 
             logging.getLogger('MSR').info("""____________________ Start the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
+            msr_in_progress._delete_all(cr, uid, context)  # delete previously generated before to start
             self.update(cr, uid, ids=[], context=context)
             msr_in_progress._delete_all(cr, uid, context)
             cr.commit()
@@ -456,18 +469,17 @@ class stock_mission_report(osv.osv):
         '''
         Create lines if new products exist or update the existing lines
         '''
-        if not context:
+        if context is None:
             context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         msr_in_progress = self.pool.get('msr_in_progress')
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
 
         report_ids = self.search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
         full_report_ids = self.search(cr, uid, [('full_view', '=', True)], context=context)
-
-        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
 
         # Create a local report if no exist
         if not report_ids and context.get('update_mode', False) not in ('update', 'init') and instance_id:
@@ -545,60 +557,81 @@ class stock_mission_report(osv.osv):
     def check_new_product_and_create_export(self, cr, uid, report_ids, product_values, context=None):
         if context is None:
             context = {}
+        logger = logging.getLogger('MSR')
 
         line_obj = self.pool.get('stock.mission.report.line')
+        self.write(cr, uid, report_ids, {'export_state': 'in_progress',
+                                         'export_error_msg': False}, context=context)
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
-            # Create one line by product
-            cr.execute('''SELECT p.id, ps.code, p.active, p.state_ud, pis.code
-                          FROM product_product p
-                          INNER JOIN product_template pt ON p.product_tmpl_id = pt.id
-                          LEFT JOIN product_status ps on pt.state = ps.id
-                          LEFT JOIN product_international_status pis on p.international_status = pis.id
-                          WHERE
-                          NOT EXISTS (
-                            SELECT product_id
-                            FROM
-                            stock_mission_report_line smrl WHERE mission_report_id = %s
-                            AND p.id = smrl.product_id)
-                        ''' % report['id'])
-            for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
-                line_obj.create(cr, uid, {
-                    'product_id': product, 
-                    'mission_report_id': report['id'],
-                    'product_active': prod_active,
-                    'state_ud': prod_state_ud,
-                    'international_status_code': prod_creator,
-                    'product_state': prod_state or '',
-                }, context=context)
+            try:
+                self.write(cr, uid, report['id'], {'report_ok': False},
+                           context=context)
 
-            # Don't update lines for full view or non local reports
-            if not report['local_report']:
-                continue
+                # Create one line by product
+                cr.execute('''SELECT p.id, ps.code, p.active, p.state_ud, pis.code
+                              FROM product_product p
+                              INNER JOIN product_template pt ON p.product_tmpl_id = pt.id
+                              LEFT JOIN product_status ps on pt.state = ps.id
+                              LEFT JOIN product_international_status pis on p.international_status = pis.id
+                              WHERE
+                              NOT EXISTS (
+                                SELECT product_id
+                                FROM
+                                stock_mission_report_line smrl WHERE mission_report_id = %s
+                                AND p.id = smrl.product_id)
+                            ''' % report['id'])
+                for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
+                    line_obj.create(cr, uid, {
+                        'product_id': product,
+                        'mission_report_id': report['id'],
+                        'product_active': prod_active,
+                        'state_ud': prod_state_ud,
+                        'international_status_code': prod_creator,
+                        'product_state': prod_state or '',
+                    }, context=context)
 
-            msr_in_progress = self.pool.get('msr_in_progress')
-            #US-1218: If this report is previously processed, then do not redo it again for this transaction!
-            if msr_in_progress._already_processed(cr, uid, report['id'], context):
-                continue
+                # Don't update lines for full view or non local reports
+                if not report['local_report']:
+                    continue
 
-            logging.getLogger('MSR').info("""___ updating the report lines of the report: %s, at %s (this may take very long time!)""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
-            if context.get('update_full_report'):
-                full_view = self.search(cr, uid, [('full_view', '=', True)])
-                if full_view:
-                    line_obj.update_full_view_line(cr, uid, context=context)
-            elif not report['full_view']:
-                # Update all lines
-                self.update_lines(cr, uid, [report['id']])
+                msr_in_progress = self.pool.get('msr_in_progress')
+                #US-1218: If this report is previously processed, then do not redo it again for this transaction!
+                if msr_in_progress._already_processed(cr, uid, report['id'], context):
+                    continue
 
-            logging.getLogger('MSR').info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
-            self._get_export(cr, uid, report['id'], product_values,
-                             context=context)
+                logger.info("""___ updating the report lines of the report: %s, at %s (this may take very long time!)""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
+                if context.get('update_full_report'):
+                    full_view = self.search(cr, uid, [('full_view', '=', True)])
+                    if full_view:
+                        line_obj.update_full_view_line(cr, uid, context=context)
+                elif not report['full_view']:
+                    # Update all lines
+                    self.update_lines(cr, uid, [report['id']])
 
-            msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
-            msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
+                logger.info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
+                self._get_export(cr, uid, report['id'], product_values,
+                                 context=context)
 
-            # Update the update date on report
-            self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
-            logging.getLogger('MSR').info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
+                msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
+                msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
+                self.write(cr, uid, [report['id']], {'export_state': 'done',
+                                                     'export_error_msg': False}, context=context)
+
+                # Update the update date on report
+                self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+                logger.info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
+            except Exception as e:
+                cr.rollback()
+                # in case of error delete previously generated attachments
+                self.delete_previous_reports_attachments(cr, uid, report['id'])
+                logger.error('Error: %s' % e, exc_info=True)
+                import traceback
+                error_vals = {
+                    'export_state': 'error',
+                        'export_error_msg': traceback.format_exc(),
+                }
+                self.write(cr, uid, [report['id']], error_vals, context=context)
+            cr.commit()
 
     def update_lines(self, cr, uid, report_ids, context=None):
         location_obj = self.pool.get('stock.location')
@@ -743,6 +776,38 @@ class stock_mission_report(osv.osv):
                     line_obj.write(cr, uid, line.id, vals)
         return True
 
+    def delete_previous_reports_attachments(self, cr, uid, ids, context=None):
+        '''
+        delete previously generated report attachments. That mean in case of report
+        generation failure, no report are available (instead of a not updated
+        report that could mixup things)
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ir_attachment_obj = self.pool.get('ir.attachment')
+        logger = logging.getLogger('MSR')
+        logger.info('___ Delete all previous generated reports...')
+        for report_id in ids:
+            # delete previously generated reports
+            for report_type in HEADER_DICT.keys():
+                csv_file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.csv')
+                xml_file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.xls')
+                file_name_list = [csv_file_name, xml_file_name]
+                attachment_ids = ir_attachment_obj.search(cr, uid,
+                                                          [('datas_fname', 'in', file_name_list)],
+                                                          context=context)
+                ir_attachment_obj.unlink(cr, uid, attachment_ids)
+                try:
+                    # in case reports are stored on file system, delete them
+                    attachments_path = self.pool.get('ir.attachment').get_root_path(cr, uid)
+                    for file_name in file_name_list:
+                        complete_path = os.path.join(attachments_path,
+                                                     file_name)
+                        if os.path.isfile(complete_path):
+                            os.remove(complete_path)
+                except:
+                    pass
+
     def _get_export(self, cr, uid, ids, product_values, context=None):
         '''
         Get the CSV files of the stock mission report.
@@ -758,7 +823,6 @@ class stock_mission_report(osv.osv):
         logger = logging.getLogger('MSR')
 
         # check attachments_path
-
         attachments_path = None
         attachment_obj = self.pool.get('ir.attachment')
         try:
@@ -778,7 +842,7 @@ class stock_mission_report(osv.osv):
             request_result = cr.dictfetchall()
 
             logger.info('___ Start CSV and XLS generation...')
-            for report_type in ('ns_nv_vals', 'ns_v_vals', 's_nv_vals', 's_v_vals'):
+            for report_type in HEADER_DICT.keys():
                 params = {
                     'report_id': report_id,
                     'report_type': report_type,

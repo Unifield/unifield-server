@@ -22,6 +22,7 @@
 from osv import fields, osv
 from tools.translate import _
 import logging
+from tools.safe_eval import safe_eval
 from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
 
 
@@ -471,7 +472,7 @@ class account_period(osv.osv):
             context = {}
         return self.register_view(cr, uid, ids, 'cash', context=context)
 
-    def invoice_view(self, cr, uid, ids, name=_('Invoices'), domain=[], module='account', view_name='invoice_tree', context=None):
+    def invoice_view(self, cr, uid, ids, action_xmlid=None, context=None):
         """
         Open an invoice tree view with the given domain for the period in ids
         """
@@ -481,81 +482,103 @@ class account_period(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # Search invoices
-        for period in self.browse(cr, uid, ids, context=context):
-            # prepare view
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
-            view_id = view_id and view_id[1] or False
-            domain += [('date_invoice', '>=', period.date_start), ('date_invoice', '<=', period.date_stop), ('state', 'in', ['draft', 'open'])]
-            context.update({'search_default_draft': 0})
-            return {
-                'type': 'ir.actions.act_window',
-                'res_model': 'account.invoice',
-                'view_type': 'form',
-                'view_mode': 'tree,form',
-                'view_id': [view_id],
-                'target': 'current',
-                'domain': domain,
-                'context': context,
-                'name': name,
-            }
+        # to get action_xmlid:
+        # 1/ on the web interface get id of ir.ui.menu menu
+        # 2/ get id of ir.actions.act_window:
+        #        select value from ir_values where model='ir.ui.menu' and res_id=<menu_id>;
+        # 3/ get xmlid:
+        #    select module||'.'||name from ir_model_data where res_id=<act_id> and module!='sd' and model='ir.actions.act_window';
+        module, xmlid = action_xmlid.split('.', 1)
+        act_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
+        keys = ['display_menu_tip', 'help', 'type', 'domain', 'res_model', 'view_id', 'search_view_id', 'view_mode', 'view_ids', 'context', 'name', 'views', 'view_type']
+        act = self.pool.get('ir.actions.act_window').read(cr, uid, act_id, keys, context=context)
+        act_domain = act.get('domain', "[]") or "[]"
+        act_context = act.get('context', "{}") or "{}"
+        globals_dict = {'uid': uid}
+        if 'active_id' in context:
+            globals_dict['active_id'] = context['active_id']
+        eval_domain = safe_eval(act_domain, globals_dict)
+
+        model_obj = self.pool.get(act['res_model'])
+        if 'date_invoice' in model_obj._columns or\
+                'date_invoice' in model_obj._inherit_fields:
+            period = self.read(cr, uid, ids[0], ['date_stop'], context=context)
+            eval_domain += [('date_invoice', '<=', period['date_stop']), ('state', 'in', ['draft', 'open'])]
+
+        eval_context = safe_eval(act_context, globals_dict)
+        eval_context['search_default_draft'] = 0
+        act['context'] = eval_context
+        act['domain'] = eval_domain
+        act['target'] = 'current'
+        return act
 
     # Stock transfer voucher
     def button_stock_transfer_vouchers(self, cr, uid, ids, context=None):
         """
         Create a new tab with Open stock transfer vouchers from given period.
         """
-        return self.invoice_view(cr, uid, ids, _('Stock Transfer Vouchers'), [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', False)], context={'type':'out_invoice', 'journal_type': 'sale'})
+        return self.invoice_view(cr, uid, ids, action_xmlid='account.action_invoice_tree1', context=context)
 
     def button_customer_refunds(self, cr, uid, ids, context=None):
         """
         Create a new tab with Customer refunds from given period.
         """
-        return self.invoice_view(cr, uid, ids, _('Customer Refunds'), [('type', '=', 'out_refund'), ('is_debit_note', '=', False)], context=context)
+        return self.invoice_view(cr, uid, ids, action_xmlid='account.action_invoice_tree3', context=context)
 
     # Debit note
     def button_debit_note(self, cr, uid, ids, context=None):
-        return self.invoice_view(cr, uid, ids, _('Debit Note'), [('type','=','out_invoice'), ('is_debit_note', '!=', False), ('is_inkind_donation', '=', False)], context={'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True})
+        return self.invoice_view(cr, uid, ids,
+                                 action_xmlid='account_override.action_debit_note',
+                                 context=context)
 
     # Intermission voucher OUT
     def button_intermission_out(self, cr, uid, ids, context=None):
-        domain_ivo = [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]
-        context_ivo = {'type':'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out'}
-        return self.invoice_view(cr, uid, ids, _('Intermission Voucher OUT'), domain=domain_ivo, context=context_ivo)
+        return self.invoice_view(cr, uid, ids,
+                                 action_xmlid='account_override.action_intermission_out',
+                                 context=context)
 
     def button_supplier_refunds(self, cr, uid, ids, context=None):
         """
         Open a view that display Supplier invoices for given period
         """
-        return self.invoice_view(cr, uid, ids, _('Supplier Refunds'), [('type', '=', 'in_refund')], context={'type':'in_refund', 'journal_type': 'purchase_refund'})
+        return self.invoice_view(cr, uid, ids,
+                                 action_xmlid='account.action_invoice_tree4', context=context)
 
     # Supplier direct invoices
     def button_supplier_direct_invoices(self, cr, uid, ids, context=None):
         """
         Open a view that display Direct invoices for this period
         """
-        return self.invoice_view(cr, uid, ids, _('Supplier Direct Invoices'), [('type','=','in_invoice'), ('register_line_ids', '!=', False)], context={'type':'in_invoice', 'journal_type': 'purchase'})
+        return self.invoice_view(cr, uid, ids,
+                                 action_xmlid='register_accounting.action_direct_invoice',
+                                 context=context)
 
     # In-kind donation
     def button_donation(self, cr, uid, ids, context=None):
         """
         Open a view that display Inkind donation for this period
         """
-        return self.invoice_view(cr, uid, ids, _('Donation'), [('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', True)], context={'type':'in_invoice', 'journal_type': 'inkind'})
+        return self.invoice_view(cr, uid, ids,
+                                 action_xmlid='account_override.action_inkind_donation',
+                                 context=context)
 
     # Intermission voucher IN
     def button_intermission_in(self, cr, uid, ids, context=None):
         """
         Open a view that display intermission voucher in for this period
         """
-        return self.invoice_view(cr, uid, ids, _('Intermission Voucher IN'), [('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)], context={'type':'in_invoice', 'journal_type': 'intermission'})
+        return self.invoice_view(cr, uid, ids,
+                                 action_xmlid='account_override.action_intermission_in',
+                                 context=context)
 
     # Supplier invoice
     def button_supplier_invoices(self, cr, uid, ids, context=None):
         """
         Open a view that display supplier invoices for this period
         """
-        return self.invoice_view(cr, uid, ids, _('Supplier Invoices'), [('type','=','in_invoice'), ('register_line_ids', '=', False), ('is_inkind_donation', '=', False), ('is_debit_note', "=", False), ('is_intermission', '=', False)], context={'type':'in_invoice', 'journal_type': 'purchase'})
+        return self.invoice_view(cr, uid, ids,
+                                 action_xmlid='account.action_invoice_tree2',
+                                 context=context)
 
     def button_close_field_period(self, cr, uid, ids, context=None):
         if not context:
@@ -609,38 +632,22 @@ class account_period(osv.osv):
 
     def button_recurring(self, cr, uid, ids, context=None):
         """
-        Open all recurring models
+        Open all recurring lines
         """
-        if not context:
-            context = {}
-        return {
-            'name': _('Reccuring lines'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.model',
-            'target': 'current',
-            'view_mode': 'tree,form',
-            'view_type': 'form',
-            'context': context,
-        }
+        res =  self.invoice_view(cr, uid, ids,
+                                 action_xmlid='account.action_subscription_form',
+                                 context=context)
+        # open the sidebar by default
+        res['sidebar_open'] = True
+        return res
 
     def button_payrolls(self, cr, uid, ids, context=None):
         """
         Open payroll entries list
         """
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        return {
-            'name': _('Payroll entries'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'hr.payroll.msf',
-            'target': 'current',
-            'view_mode': 'tree,form',
-            'view_type': 'form',
-            'context': context,
-            'domain': [('state', '=', 'draft'), ('period_id', 'in', ids), ('account_id.is_analytic_addicted', '=', True)]
-        }
+        return self.invoice_view(cr, uid, ids,
+                                 action_xmlid='msf_homere_interface.action_payroll_tree',
+                                 context=context)
 
     def button_open_entries(self, cr, uid, ids, context=None):
         """
@@ -650,16 +657,20 @@ class account_period(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Search reconciliable accounts
-        account_ids = self.pool.get('account.account').search(cr, uid, [('reconcile', '=', True)],context=context)
+
+        period_ids = []
+        period = self.read(cr, uid, ids[0], ['date_stop'], context=context)
+        period_domain = [('date_stop', '<=', period['date_stop'])]
+        period_ids = self.pool.get('account.period').search(cr, uid, period_domain,
+                                                            context=context)
+
         # Create a filter for G/L selector
         vals = {
             'reconciled': 'unreconciled',
             'display_account': True,
-            'account_ids': [(6, 0, account_ids)],
             'description': _('Journal items that are on reconciliable accounts but that are not reconciled.'),
             'display_period': True,
-            'period_ids': [(6, 0, ids)]
+            'period_ids': [(6, 0, period_ids)]
         }
         res_id = self.pool.get('account.mcdb').create(cr, uid, vals, context=context)
         module = 'account_mcdb'
@@ -686,6 +697,12 @@ class account_period(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        period_ids = []
+        period = self.read(cr, uid, ids[0], ['date_stop'], context=context)
+        period_domain = [('date_stop', '<=', period['date_stop'])]
+        period_ids = self.pool.get('account.period').search(cr, uid, period_domain,
+                                                            context=context)
         # Update context to set "Except Done" button by default
         context.update({'search_default_exceptdone': 1, 'search_default_draft': 0, 'search_default_open': 0, 'search_default_done': 0})
         return {
@@ -696,7 +713,7 @@ class account_period(osv.osv):
             'view_mode': 'tree,form',
             'view_type': 'form',
             'context': context,
-            'domain': [('state', 'in', ['draft', 'open']), ('period_id', 'in', ids)]
+            'domain': [('state', '!=', 'done'), ('period_id', 'in', period_ids)]
         }
 
     def button_revaluation(self, cr, uid, ids, context=None):

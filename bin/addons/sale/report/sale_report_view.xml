@@ -169,6 +169,7 @@
          <field name="name">sales.by.partner.graph</field>
          <field name="model">sale.report</field>
          <field name="type">graph</field>
+        <field name="priority">17</field>
          <field name="arch" type="xml">
              <graph string="Sales by Partner" type="bar">
                  <field name="partner_id" />
@@ -191,6 +192,7 @@
          <field name="name">sales.by.salesman.graph</field>
          <field name="model">sale.report</field>
          <field name="type">graph</field>
+        <field name="priority">18</field>
          <field name="arch" type="xml">
              <graph string="Sales by Salesman" type="bar">
                  <field name="user_id" />
@@ -213,6 +215,7 @@
          <field name="name">sold.product.total.price.graph</field>
          <field name="model">sale.report</field>
          <field name="type">graph</field>
+        <field name="priority">19</field>
          <field name="arch" type="xml">
              <graph string="Sales by Product Category" type="bar">
                  <field name="categ_id" />

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-##############################################################################
+# 
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2004-2010 Tiny SPRL (<http://tiny.be>).
@@ -17,14 +17,14 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-##############################################################################
+# 
 
 import tools
 import time
 import threading
 
 from report import report_sxw
-from osv import fields,osv
+from osv import fields, osv
 from decimal_precision import decimal_precision as dp
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
@@ -46,8 +46,8 @@ class report_stock_move(osv.osv):
         for report in self.browse(cr, uid, ids, context=context):
             move = report.move
             res[report.id] = {'order_priority': False,
-                            'order_category': False,
-                            'order_type': False}
+                              'order_category': False,
+                              'order_type': False}
             order = False
             
             if move.purchase_line_id and move.purchase_line_id.id:
@@ -70,27 +70,27 @@ class report_stock_move(osv.osv):
         'date': fields.date('Date', readonly=True),
         'year': fields.char('Year', size=4, readonly=True),
         'day': fields.char('Day', size=128, readonly=True),
-        'month':fields.selection([('01','January'), ('02','February'), ('03','March'), ('04','April'),
-            ('05','May'), ('06','June'), ('07','July'), ('08','August'), ('09','September'),
-            ('10','October'), ('11','November'), ('12','December')], 'Month',readonly=True),
-        'partner_id':fields.many2one('res.partner', 'Partner', readonly=True),
-        'product_id':fields.many2one('product.product', 'Product', readonly=True),
+        'month': fields.selection([('01', 'January'), ('02', 'February'), ('03', 'March'), ('04', 'April'),
+                                  ('05', 'May'), ('06', 'June'), ('07', 'July'), ('08', 'August'), ('09', 'September'),
+                                  ('10', 'October'), ('11', 'November'), ('12', 'December')], 'Month', readonly=True),
+        'partner_id': fields.many2one('res.partner', 'Partner', readonly=True),
+        'product_id': fields.many2one('product.product', 'Product', readonly=True),
         'product_uom': fields.many2one('product.uom', 'UoM', readonly=True),
-        'company_id':fields.many2one('res.company', 'Company', readonly=True),
-        'picking_id':fields.many2one('stock.picking', 'Reference', readonly=True),
+        'company_id': fields.many2one('res.company', 'Company', readonly=True),
+        'picking_id': fields.many2one('stock.picking', 'Reference', readonly=True),
         'type': fields.selection([('out', 'Sending Goods'), ('in', 'Getting Goods'), ('internal', 'Internal'), ('other', 'Others')], 'Shipping Type', required=True, select=True, help="Shipping type specify, goods coming in or going out."),
         'location_id': fields.many2one('stock.location', 'Source Location', readonly=True, select=True, help="Sets a location if you produce at a fixed location. This can be a partner location if you subcontract the manufacturing operations."),
         'location_dest_id': fields.many2one('stock.location', 'Dest. Location', readonly=True, select=True, help="Location where the system will stock the finished products."),
         'state': fields.selection([('draft', 'Draft'), ('waiting', 'Waiting'), ('confirmed', 'Not Available'), ('assigned', 'Available'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'State', readonly=True, select=True),
-        'product_qty':fields.integer('Quantity',readonly=True),
+        'product_qty': fields.integer('Quantity', readonly=True),
         'categ_id': fields.many2one('product.nomenclature', 'Family', ),
-        'product_qty_in':fields.float('In Qty',readonly=True),
-        'product_qty_out':fields.float('Out Qty',readonly=True),
-        'value' : fields.float('Total Value', required=True),
-        'day_diff2':fields.float('Lag (Days)',readonly=True,  digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
-        'day_diff1':fields.float('Planned Lead Time (Days)',readonly=True, digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
-        'day_diff':fields.float('Execution Lead Time (Days)',readonly=True,  digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
-        'stock_journal': fields.many2one('stock.journal','Stock Journal', select=True),
+        'product_qty_in': fields.float('In Qty', readonly=True),
+        'product_qty_out': fields.float('Out Qty', readonly=True),
+        'value': fields.float('Total Value', required=True),
+        'day_diff2': fields.float('Lag (Days)', readonly=True, digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
+        'day_diff1': fields.float('Planned Lead Time (Days)', readonly=True, digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
+        'day_diff': fields.float('Execution Lead Time (Days)', readonly=True, digits_compute=dp.get_precision('Shipping Delay'), group_operator="avg"),
+        'stock_journal': fields.many2one('stock.journal', 'Stock Journal', select=True),
         'order_type': fields.function(_get_order_information, method=True, string='Order Type', type='selection',
                                       selection=[('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                                  ('donation_st', 'Standard donation'), ('loan', 'Loan'),
@@ -99,7 +99,7 @@ class report_stock_move(osv.osv):
         'comment': fields.char(size=128, string='Comment'),
         'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Batch number is used to put a serial number on the production", select=True),
         'tracking_id': fields.many2one('stock.tracking', 'Pack', select=True, states={'done': [('readonly', True)]}, help="Logistical shipping unit: pallet, box, pack ..."),
-        'origin': fields.related('picking_id','origin',type='char', size=512, relation="stock.picking", string="Origin", store=True),
+        'origin': fields.related('picking_id', 'origin', type='char', size=512, relation="stock.picking", string="Origin", store=True),
         'move': fields.many2one('stock.move', string='Move'),
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type'),
         'currency_id': fields.many2one('res.currency', string='Currency'),
@@ -335,7 +335,7 @@ from/to this location will be shown.""",
 
     _defaults = {
         'state': 'draft',
-        'company_id': lambda s,cr,uid,c: s.pool.get('res.company').\
+        'company_id': lambda s, cr, uid, c: s.pool.get('res.company').\
                 _company_default_get(
                     cr, uid, 'export.report.stock.move', context=c)
     }
@@ -348,7 +348,6 @@ from/to this location will be shown.""",
         Select the good lines on the report.stock.move table
         """
         rsm_obj = self.pool.get('stock.move')
-        lot_obj = self.pool.get('stock.production.lot')
         data_obj = self.pool.get('ir.model.data')
 
         if context is None:
@@ -357,15 +356,13 @@ from/to this location will be shown.""",
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        loc_usage = ['supplier', 'customer', 'internal']
+        loc_usage = ['supplier', 'customer', 'internal', 'inventory', 'procurement', 'production']
         for report in self.browse(cr, uid, ids, context=context):
             domain = [
                 ('location_id.usage', 'in', loc_usage),
                 ('location_dest_id.usage', 'in', loc_usage),
                 ('state', '=', 'done'),
-#                '|',
                 ('product_qty', '!=', 0),
-#                ('product_qty_out', '!=', 0),
             ]
             if report.partner_id:
                 domain.append(('partner_id', '=', report.partner_id.id))
@@ -567,7 +564,7 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             }
             if move.type in ('in', 'out') and (
                 move.location_id.usage in ['customer', 'supplier'] or
-                move.location_dest_id.usage in ['customer', 'supplier']):
+                    move.location_dest_id.usage in ['customer', 'supplier']):
                 if move.type == 'in':
                     move_vals['qty_in'] = move.product_qty
                 else:

@@ -16,7 +16,7 @@
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page[@string='General Information']/field[@name='move_lines']" position="attributes" >
-                        <attribute name="default_get">{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'address_in_id': address_id, 'date_expected': min_date} </attribute>
+                        <attribute name="default_get">{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'address_in_id': address_id, 'date_expected': min_date, 'ext_cu': ext_cu} </attribute>
                     </xpath>
                 </data>
             </field>

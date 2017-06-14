@@ -1,20 +1,47 @@
                     <separator string="General" colspan="4"/>
                     <field name="description" colspan="4"/>
                     <field name="analytic_axis" attrs="{'invisible': [('model', '=', 'account.move.line')], 'required': [('model', '=', 'account.analytic.line')]}" colspan="4" on_change="onchange_analytic_axis(analytic_axis)"/>
-                    <separator string="Instances" colspan="3"/>
-                    <field name="display_instance" colspan="1" nolabel="1"/>
-                    <group col="4" colspan="4" attrs="{'invisible': [('display_instance', '=', False)]}">
-                            <group col="4" colspan="4">
-                                <button name="button_instance_clear" type="object" string="Remove all Instances" icon="gtk-clear" colspan="2"/>
-                                <button name="button_instance_add" type="object" string="Add all Instances" icon="gtk-add" colspan="2"/>
+                    <group col="4" colspan="4">
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Instances" colspan="3"/>
+                                <field name="display_instance" colspan="1" nolabel="1" on_change="onchange_display_instance(display_instance, display_top_prop_instance)"/>
                             </group>
-                            <field name="rev_instance_ids" colspan="4"/>
-                            <field name="instance_ids" colspan="4" nolabel="1" domain="[('instance_to_display_ids','=',True)]">
-                                <tree string="Proprietary Instances">
-                                    <field name="code"/>
-                                    <field name="name"/>
-                                </tree>
-                            </field>
+                            <group col="2" colspan="2" attrs="{'invisible': [('display_instance', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_instance_clear" type="object" string="Remove all Instances" icon="gtk-clear" colspan="2"/>
+                                    <button name="button_instance_add" type="object" string="Add all Instances" icon="gtk-add" colspan="2"/>
+                                </group>
+                                <field name="rev_instance_ids" colspan="4"/>
+                                <field name="instance_ids" colspan="4" nolabel="1" domain="[('instance_to_display_ids','=',True)]">
+                                    <tree string="Proprietary Instances">
+                                        <field name="code"/>
+                                        <field name="mission"/>
+                                        <field name="name"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Top prop Instances" colspan="3"/>
+                                <field name="display_top_prop_instance" colspan="1" nolabel="1" on_change="onchange_display_prop_instance(display_instance, display_top_prop_instance)"/>
+                            </group>
+                            <group col="2" colspan="2" attrs="{'invisible': [('display_top_prop_instance', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_prop_instance_clear" type="object" string="Remove Prop Instances" icon="gtk-clear" colspan="2"/>
+                                    <button name="button_prop_instance_add" type="object" string="Add Prop Instances" icon="gtk-add" colspan="2"/>
+                                </group>
+                                <field name="rev_top_prop_instance_ids" colspan="4"/>
+                                <field name="top_prop_instance_ids" colspan="4" nolabel="1" domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]">
+                                    <tree string="Proprietary Instances">
+                                        <field name="code"/>
+                                        <field name="mission"/>
+                                        <field name="name"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
                     </group>
                     <group colspan="2" col="2">
                         <html>
@@ -32,3 +59,4 @@
                         <field name="posting_date_to" string="to"/>
                         <field name="document_state" colspan="1" attrs="{'invisible': [('model', '!=', 'account.move.line')]}"/>
                     </group>
+

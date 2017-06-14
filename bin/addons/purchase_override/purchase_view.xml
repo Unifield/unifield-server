@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
-
-
-        
-        
-
         <!-- REWORK THE PURCHASE MENU − SEE UF-657 - ERGONOMIC REQUIREMENTS -->
         <!-- Purchase Management -->
         <menuitem id="purchase.menu_purchase_form_action" 

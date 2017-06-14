@@ -228,6 +228,7 @@
             <field name="name">related.sourcing.search.view</field>
             <field name="model">related.sourcing</field>
             <field name="type">form</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <search string="Related sourcing group">
                     <field name="name" />
