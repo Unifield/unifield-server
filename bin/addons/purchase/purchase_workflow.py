@@ -9,6 +9,21 @@ class purchase_order(osv.osv):
     _name = "purchase.order"
     _inherit = "purchase.order"
 
+    def validate_lines(self, cr, uid, ids, context=None):
+        """
+        Force FO lines validation and update FO state
+        """
+        if context is None:
+            context = {}
+            
+        wf_service = netsvc.LocalService('workflow')
+
+        for po in self.browse(cr, uid, ids, context=context):
+            self.pool.get('purchase.order.line').write(cr, uid, [pol.id for pol in po.order_line], {'state': 'validated'}, context=context)
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+
+        return True
+
     def wkf_picking_done(self, cr, uid, ids, context=None):
         '''
         Change the shipped boolean and the state of the PO
