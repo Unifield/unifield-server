@@ -56881,11 +56881,6 @@ msgstr "Invalid prefix or suffix for sequence '%s'"
 msgid "Book. Amount"
 msgstr "Book. Amount"
 
-#. module: account_mcdb
-#: field:account.mcdb,rev_instance_ids:0
-msgid "Exclude instance selection"
-msgstr "Excluir selección de instancias"
-
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/analytic_account.py:390
 #, python-format

@@ -24,19 +24,18 @@ import re
 from report import report_sxw
 from common_report_header import common_report_header
 import pooler
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+from tools.translate import _
 
 class third_party_ledger(report_sxw.rml_parse, common_report_header):
 
     def __init__(self, cr, uid, name, context=None):
         super(third_party_ledger, self).__init__(cr, uid, name, context=context)
-        self.init_bal_sum = 0.0
         self.localcontext.update({
             'time': time,
             'lines': self.lines,
             'sum_debit_partner': self._sum_debit_partner,
             'sum_credit_partner': self._sum_credit_partner,
-#            'sum_debit': self._sum_debit,
-#            'sum_credit': self._sum_credit,
             'get_currency': self._get_currency,
             'comma_me': self.comma_me,
             'get_start_period': self.get_start_period,
@@ -46,63 +45,69 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             'get_start_date': self._get_start_date,
             'get_end_date': self._get_end_date,
             'get_fiscalyear': self._get_fiscalyear,
-            'get_journal': self._get_journal,
+            'get_journals_str': self._get_journals_str,
             'get_partners':self._get_partners,
-            'get_intial_balance':self._get_intial_balance,
-            'display_initial_balance':self._display_initial_balance,
-            'display_currency':self._display_currency,
             'get_target_move': self._get_target_move,
+            'get_instances_str': self._get_instances_str,
+            'get_accounts_str': self._get_accounts_str,
+            'format_entry_label': self._format_entry_label,
         })
 
     def set_context(self, objects, data, ids, report_type=None):
         obj_move = self.pool.get('account.move.line')
         obj_partner = self.pool.get('res.partner')
-        self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=data['form'].get('used_context', {}))
-        ctx2 = data['form'].get('used_context',{}).copy()
-        ctx2.update({'initial_bal': True})
-        self.init_query = obj_move._query_get(self.cr, self.uid, obj='l', context=ctx2)
-        self.reconcil = data['form'].get('reconcil', True)
-        self.initial_balance = data['form'].get('initial_balance', True)
-        self.result_selection = data['form'].get('result_selection', 'customer')
-        self.amount_currency = data['form'].get('amount_currency', False)
+        obj_fy = self.pool.get('account.fiscalyear')
+        used_context = data['form'].get('used_context', {})
+        self.reconcil = data['form'].get('reconcil', False)
+        self.result_selection = data['form'].get('result_selection', 'customer_supplier')
         self.target_move = data['form'].get('target_move', 'all')
-        self.fiscalyear_id = data['form'].get('fiscalyear_id', False)
         self.period_id = data['form'].get('period_from', False)
         self.date_from = data['form'].get('date_from', False)
         self.exclude_tax = data['form'].get('tax', False)
+        self.instance_ids = data['form'].get('instance_ids', False)
+        self.account_ids = data['form'].get('account_ids', False)
         PARTNER_REQUEST = ''
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted']
+        self.fiscalyear_id = data['form'].get('fiscalyear_id', False)
+        if self.fiscalyear_id:
+            fy = obj_fy.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'], context=used_context)
+        else:
+            # by default all FY taken into account
+            used_context.update({'all_fiscalyear': True})
+        self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=used_context)
 
-        # UFTP-312, UFTP-63: To have right initial balance, we have to fetch previous lines before a specific date.
         #+ To have right partner balance, we have to take all next lines after a specific date.
         #+ To do that, we need to make requests regarding a date. So first we take date_from
         #+  then period_from (if no date_from)
         #+  finally fisalyear_id (if no period)
         #+ If no date, the report is wrong.
-        self.DATE_TO = ' '
-        self.DATE_FROM = ' '
-        pool =  pooler.get_pool(self.cr.dbname)
+        pool = pooler.get_pool(self.cr.dbname)
+        self.DATE_FROM = ''
         if self.fiscalyear_id or self.period_id or self.date_from:
             if self.date_from:
-                self.DATE_TO = "AND l.date < '%s'" % self.date_from
                 self.DATE_FROM = "AND l.date >= '%s'" % self.date_from
             elif self.period_id:
                 period_obj = pool.get('account.period')
                 period = period_obj.read(self.cr, self.uid, [self.period_id], ['date_start'])
-                self.DATE_TO = "AND l.date < '%s'" % period[0].get('date_start')
                 self.DATE_FROM = "AND l.date >= '%s'" % period[0].get('date_start')
             elif self.fiscalyear_id:
-                fy_obj = pool.get('account.fiscalyear')
-                fy = fy_obj.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'])
-                self.DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
                 self.DATE_FROM = "AND l.date >= '%s'" % fy[0].get('date_start')
 
         # UFTP-312: Exclude tax if user ask it
-        self.TAX_REQUEST = ' '
+        self.TAX_REQUEST = ''
         if self.exclude_tax is True:
             self.TAX_REQUEST = "AND t.code != 'tax'"
+
+        # Create the part of the request concerning instances
+        if not self.instance_ids:
+            # select all instances by default
+            self.instance_ids = self.pool.get('msf.instance').search(self.cr, self.uid, [], order='NO_ORDER')
+        if len(self.instance_ids) == 1:
+            self.INSTANCE_REQUEST = "AND l.instance_id = %s" % self.instance_ids[0]
+        else:
+            self.INSTANCE_REQUEST = "AND l.instance_id IN %s" % (tuple(self.instance_ids),)
 
         if (data['model'] == 'res.partner'):
             ## Si on imprime depuis les partenaires
@@ -115,39 +120,48 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         else:
             self.ACCOUNT_TYPE = ['payable','receivable']
 
-        self.cr.execute(
-            "SELECT a.id " \
-            "FROM account_account a " \
-            "LEFT JOIN account_account_type t " \
-                "ON (a.user_type=t.id) " \
-                'WHERE a.type IN %s' \
-                " " + self.TAX_REQUEST + " " \
-                "AND a.active", (tuple(self.ACCOUNT_TYPE), ))
-        self.account_ids = [a for (a,) in self.cr.fetchall()]
-        partner_to_use = []
-        self.cr.execute(
-                "SELECT DISTINCT l.partner_id " \
-                "FROM account_move_line AS l, account_account AS account, " \
-                " account_move AS am " \
-                "WHERE l.partner_id IS NOT NULL " \
-                    "AND l.account_id = account.id " \
-                    "AND am.id = l.move_id " \
+        # get the account list (if some accounts have been specifically selected use them directly)
+        if not self.account_ids:
+            self.cr.execute(
+                "SELECT a.id " \
+                "FROM account_account a " \
+                "LEFT JOIN account_account_type t " \
+                    "ON (a.user_type=t.id) " \
+                    'WHERE a.type IN %s' \
+                    " " + self.TAX_REQUEST + " " \
+                    "AND a.active", (tuple(self.ACCOUNT_TYPE), ))
+            self.account_ids = [a for (a,) in self.cr.fetchall()]
+        if data['form'].get('partner_ids', False):
+            new_ids = data['form']['partner_ids']  # some partners are specifically selected
+        else:
+            # by default display the report only for the partners linked to entries having the requested state
+            partner_to_use = []
+            # check if we should display all partners or only active ones
+            active_selection = data['form'].get('only_active_partners') and ('t',) or ('t', 'f')
+            self.cr.execute(
+                "SELECT DISTINCT l.partner_id, rp.name "
+                    "FROM account_move_line AS l, account_account AS account, "
+                    "account_move AS am, res_partner AS rp "
+                    "WHERE l.partner_id IS NOT NULL "
+                    "AND l.account_id = account.id "
+                    "AND am.id = l.move_id "
                     "AND am.state IN %s"
-#                    "AND " + self.query +" " \
-                    "AND l.account_id IN %s " \
-                    " " + PARTNER_REQUEST + " " \
-                    "AND account.active ",
-                (tuple(move_state), tuple(self.account_ids),))
-
-        res = self.cr.dictfetchall()
-        for res_line in res:
-            partner_to_use.append(res_line['partner_id'])
-        new_ids = partner_to_use
+                    "AND l.partner_id = rp.id "
+                    "AND l.account_id IN %s "
+                    " " + self.INSTANCE_REQUEST + " "
+                    " " + PARTNER_REQUEST + " "
+                    "AND rp.active IN %s "
+                    "AND account.active "
+                    "ORDER BY rp.name",
+                    (tuple(move_state), tuple(self.account_ids), active_selection,))
+            res = self.cr.dictfetchall()
+            for res_line in res:
+                partner_to_use.append(res_line['partner_id'])
+            new_ids = partner_to_use
         self.partner_ids = new_ids
         objects = obj_partner.browse(self.cr, self.uid, new_ids)
         res = super(third_party_ledger, self).set_context(objects, data, new_ids, report_type)
         common_report_header._set_context(self, data)
-
         if data['model'] == 'ir.ui.menu':
             # US-324: use of user LG instead of each partner in the report
             lang_dict = self.pool.get('res.users').read(self.cr,self.uid,self.uid,['context_lang'])
@@ -161,7 +175,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         else:
             amount = str(amount)
         if (amount == '0'):
-             return ' '
+            return ' '
         orig = amount
         new = re.sub("^(-?\d+)(\d{3})", "\g<1>'\g<2>", amount)
         if orig == new:
@@ -169,18 +183,31 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         else:
             return self.comma_me(new)
 
+    def _format_entry_label(self, label, index):
+        """
+        Formats the entry label:
+        adds a line break every (index) character
+        """
+        x = 0
+        parts = []
+        while x < len(label):
+            parts.append(label[x:x+index])
+            x += index
+        return "\n".join(parts)
+
     def lines(self, partner):
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted']
 
-        full_account = []
         if self.reconcil:
             RECONCILE_TAG = " "
         else:
             RECONCILE_TAG = "AND l.reconcile_id IS NULL"
         self.cr.execute(
-            "SELECT l.id, l.date, j.code, acc.code as a_code, acc.name as a_name, l.ref, m.name as move_name, l.name, COALESCE(l.debit, 0) as debit, COALESCE(l.credit, 0) as credit, l.amount_currency,l.currency_id, c.symbol AS currency_code " \
+            "SELECT l.id, l.date, j.code, acc.code as a_code, acc.name as a_name, l.ref, m.name as move_name, l.name, "
+            "COALESCE(l.debit_currency, 0) as debit, COALESCE(l.credit_currency, 0) as credit, "
+            "l.debit - l.credit as total_functional, l.amount_currency, l.currency_id, c.name AS currency_code "
             "FROM account_move_line l " \
             "LEFT JOIN account_journal j " \
                 "ON (l.journal_id = j.id) " \
@@ -193,42 +220,10 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 "AND m.state IN %s " \
                 " " + RECONCILE_TAG + " "\
                 " " + self.DATE_FROM + " "\
+                " " + self.INSTANCE_REQUEST + " "
                 "ORDER BY l.date",
                 (partner.id, tuple(self.account_ids), tuple(move_state)))
-        res = self.cr.dictfetchall()
-        sum = 0.0
-        if self.initial_balance:
-            sum = self.init_bal_sum
-        for r in res:
-            sum += r['debit'] - r['credit']
-            r['progress'] = sum
-            full_account.append(r)
-        return full_account
-
-    def _get_intial_balance(self, partner):
-        move_state = ['draft','posted']
-        if self.target_move == 'posted':
-            move_state = ['posted']
-        if self.reconcil:
-            RECONCILE_TAG = " "
-        else:
-            RECONCILE_TAG = "AND l.reconcile_id IS NULL"
-
-        self.cr.execute(
-            "SELECT COALESCE(SUM(l.debit),0.0), COALESCE(SUM(l.credit),0.0), COALESCE(sum(debit-credit), 0.0) " \
-            "FROM account_move_line AS l,  " \
-                "account_move AS m " \
-            "WHERE l.partner_id = %s " \
-            "AND m.id = l.move_id " \
-            "AND m.state IN %s " \
-            "AND account_id IN %s" \
-            " " + RECONCILE_TAG + " "\
-            "AND " + self.init_query + "  "\
-            " " + self.DATE_TO + " ",
-            (partner.id, tuple(move_state), tuple(self.account_ids)))
-        res = self.cr.fetchall()
-        self.init_bal_sum = res[0][2]
-        return res
+        return self.cr.dictfetchall()
 
     def _sum_debit_partner(self, partner):
         move_state = ['draft','posted']
@@ -236,32 +231,13 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             move_state = ['posted']
 
         result_tmp = 0.0
-        result_init = 0.0
         if self.reconcil:
             RECONCILE_TAG = " "
         else:
             RECONCILE_TAG = "AND reconcile_id IS NULL"
-        if self.initial_balance:
-            self.cr.execute(
-                    "SELECT sum(debit) " \
-                    "FROM account_move_line AS l, " \
-                    "account_move AS m "\
-                    "WHERE l.partner_id = %s" \
-                        "AND m.id = l.move_id " \
-                        "AND m.state IN %s "\
-                        "AND account_id IN %s" \
-                        " " + RECONCILE_TAG + " " \
-                        " " + self.DATE_TO + " "\
-                        "AND " + self.init_query + " ",
-                    (partner.id, tuple(move_state), tuple(self.account_ids)))
-            contemp = self.cr.fetchone()
-            if contemp != None:
-                result_init = contemp[0] or 0.0
-            else:
-                result_init = result_tmp + 0.0
 
         self.cr.execute(
-                "SELECT sum(debit) " \
+            "SELECT sum(debit) " \
                 "FROM account_move_line AS l, " \
                 "account_move AS m "
                 "WHERE l.partner_id = %s " \
@@ -270,6 +246,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                     "AND account_id IN %s" \
                     " " + RECONCILE_TAG + " " \
                     " " + self.DATE_FROM + " " \
+                    " " + self.INSTANCE_REQUEST + " "
                     "AND " + self.query + " ",
                 (partner.id, tuple(move_state), tuple(self.account_ids),))
 
@@ -278,8 +255,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             result_tmp = contemp[0] or 0.0
         else:
             result_tmp = result_tmp + 0.0
-
-        return result_tmp  + result_init
+        return result_tmp
 
     def _sum_credit_partner(self, partner):
         move_state = ['draft','posted']
@@ -287,32 +263,13 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             move_state = ['posted']
 
         result_tmp = 0.0
-        result_init = 0.0
         if self.reconcil:
             RECONCILE_TAG = " "
         else:
             RECONCILE_TAG = "AND reconcile_id IS NULL"
-        if self.initial_balance:
-            self.cr.execute(
-                    "SELECT sum(credit) " \
-                    "FROM account_move_line AS l, " \
-                    "account_move AS m  "
-                    "WHERE l.partner_id = %s" \
-                        "AND m.id = l.move_id " \
-                        "AND m.state IN %s "
-                        "AND account_id IN %s" \
-                        " " + RECONCILE_TAG + " " \
-                        " " + self.DATE_TO + " " \
-                        "AND " + self.init_query + " ",
-                    (partner.id, tuple(move_state), tuple(self.account_ids)))
-            contemp = self.cr.fetchone()
-            if contemp != None:
-                result_init = contemp[0] or 0.0
-            else:
-                result_init = result_tmp + 0.0
 
         self.cr.execute(
-                "SELECT sum(credit) " \
+            "SELECT sum(credit) " \
                 "FROM account_move_line AS l, " \
                 "account_move AS m "
                 "WHERE l.partner_id=%s " \
@@ -321,6 +278,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                     "AND account_id IN %s" \
                     " " + RECONCILE_TAG + " " \
                     " " + self.DATE_FROM + " " \
+                    " " + self.INSTANCE_REQUEST + " "\
                     "AND " + self.query + " ",
                 (partner.id, tuple(move_state), tuple(self.account_ids),))
 
@@ -329,15 +287,15 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             result_tmp = contemp[0] or 0.0
         else:
             result_tmp = result_tmp + 0.0
-        return result_tmp  + result_init
+        return result_tmp
 
     def _get_partners(self):
         if self.result_selection == 'customer':
-            return 'Receivable Accounts'
+            return _('Receivable Accounts')
         elif self.result_selection == 'supplier':
-            return 'Payable Accounts'
+            return _('Payable Accounts')
         elif self.result_selection == 'customer_supplier':
-            return 'Receivable and Payable Accounts'
+            return _('Receivable and Payable Accounts')
         return ''
 
     def _sum_currency_amount_account(self, account, form):
@@ -351,22 +309,50 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             currency_total = self.tot_currency = 0.0
             return currency_total
 
-    def _display_initial_balance(self, data):
-         if self.initial_balance:
-             return True
-         return False
+    def _get_journal(self, data, instance_ids=False):
+        """
+        If all journals have been selected: display "All Journals" instead of listing all of them
+        """
+        journal_ids = data.get('form', False) and data['form'].get('journal_ids', False)
+        if journal_ids:
+            journal_obj = pooler.get_pool(self.cr.dbname).get('account.journal')
+            nb_journals = journal_obj.search(self.cr, self.uid, [], order='NO_ORDER', count=True, context=data.get('context', {}))
+            if len(journal_ids) == nb_journals:
+                return [_('All Journals')]
+        instance_ids = instance_ids or data.get('form', False) and data['form'].get('instance_ids', False)
+        journal_list = super(third_party_ledger, self)._get_journal(data, instance_ids)
+        return set(journal_list)  # exclude duplications
 
-    def _display_currency(self, data):
-         if self.amount_currency:
-             return True
-         return False
+    def _get_journals_str(self, data):
+        """
+        Returns the list of journals as a String (cut if > 300 characters)
+        """
+        journals_str = ', '.join([journal or '' for journal in self._get_journal(data)])
+        return (len(journals_str) <= 300) and journals_str or ("%s%s" % (journals_str[:297], '...'))
 
+    def _get_instances_str(self, data):
+        """
+        Returns the list of instances as a String (cut if > 300 characters)
+        """
+        instances_str = ', '.join([inst or '' for inst in self._get_instances_from_data(data)])
+        return (len(instances_str) <= 300) and instances_str or ("%s%s" % (instances_str[:297], '...'))
+
+    def _get_accounts_str(self, data):
+        """
+        Returns the list of accounts as a String (cut if > 300 characters)
+        """
+        accounts_str = ', '.join([acc or '' for acc in self._get_accounts(data)])
+        return (len(accounts_str) <= 300) and accounts_str or ("%s%s" % (accounts_str[:297], '...'))
+
+# PDF report with one partner per page
 report_sxw.report_sxw('report.account.third_party_ledger', 'res.partner',
-        'addons/account/report/account_partner_ledger.rml',parser=third_party_ledger,
-        header='internal')
-
+                      'addons/account/report/account_partner_ledger.rml',parser=third_party_ledger,
+                      header='internal landscape')
+# PDF report with partners displayed one after another
 report_sxw.report_sxw('report.account.third_party_ledger_other', 'res.partner',
-        'addons/account/report/account_partner_ledger_other.rml',parser=third_party_ledger,
-        header='internal')
-
+                      'addons/account/report/account_partner_ledger_other.rml',parser=third_party_ledger,
+                      header='internal landscape')
+# XLS report
+SpreadsheetReport('report.account.third_party_ledger_xls', 'res.partner',
+                  'addons/account/report/account_partner_ledger.mako', parser=third_party_ledger)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -39,9 +39,9 @@ class expression(object):
         OPS = ('=', '!=', '<>', '<=', '<', '>', '>=', '=?', '=like', '=ilike', 'like', 'not like', 'ilike', 'not ilike', 'in', 'not in', 'child_of')
         INTERNAL_OPS = OPS + ('inselect',)
         return (isinstance(element, tuple) or isinstance(element, list)) \
-           and len(element) == 3 \
-           and (((not internal) and element[1] in OPS) \
-                or (internal and element[1] in INTERNAL_OPS))
+            and len(element) == 3 \
+            and (((not internal) and element[1] in OPS) \
+                 or (internal and element[1] in INTERNAL_OPS))
 
     def __execute_recursive_in(self, cr, s, f, w, ids, op, type):
         # todo: merge into parent query as sub-query
@@ -49,8 +49,8 @@ class expression(object):
         if ids:
             if op in ['<','>','>=','<=']:
                 cr.execute('SELECT "%s"'    \
-                               '  FROM "%s"'    \
-                               ' WHERE "%s" %s %%s' % (s, f, w, op), (ids[0],))
+                           '  FROM "%s"'    \
+                           ' WHERE "%s" %s %%s' % (s, f, w, op), (ids[0],))
                 res.extend([r[0] for r in cr.fetchall()])
             else:
                 for i in range(0, len(ids), cr.IN_MAX):
@@ -61,7 +61,7 @@ class expression(object):
                     res.extend([r[0] for r in cr.fetchall()])
         else:
             cr.execute('SELECT distinct("%s")'    \
-                           '  FROM "%s" where "%s" is not null'  % (s, f, s)),
+                       '  FROM "%s" where "%s" is not null'  % (s, f, s)),
             res.extend([r[0] for r in cr.fetchall()])
         return res
 
@@ -95,13 +95,15 @@ class expression(object):
                         doms.insert(0, '|')
                     doms += ['&', ('parent_left', '<', o.parent_right), ('parent_left', '>=', o.parent_left)]
                 if prefix:
-                    return [(left, 'in', table.search(cr, uid, doms, context=context))]
+                    return [(left, 'in', table.search(cr, uid, doms,
+                                                      order='NO_ORDER', context=context))]
                 return doms
             else:
                 def rg(ids, table, parent):
                     if not ids:
                         return []
-                    ids2 = table.search(cr, uid, [(parent, 'in', ids)], context=context)
+                    ids2 = table.search(cr, uid, [(parent, 'in', ids)],
+                                        order='NO_ORDER', context=context)
                     return ids + rg(ids2, table, parent)
                 return [(left, 'in', rg(ids, table, parent or table._parent_name))]
 
@@ -142,15 +144,18 @@ class expression(object):
             field_obj = table.pool.get(field._obj)
             if len(fargs) > 1:
                 if field._type == 'many2one':
-                    right = field_obj.search(cr, uid, [(fargs[1], operator, right)], context=context)
+                    right = field_obj.search(cr, uid, [(fargs[1], operator,
+                                                        right)], order='NO_ORDER', context=context)
                     if right == []:
                         self.__exp[i] = ( 'id', '=', 0 )
                     else:
                         self.__exp[i] = (fargs[0], 'in', right)
                 # Making search easier when there is a left operand as field.o2m or field.m2m
                 if field._type in ['many2many','one2many']:
-                    right = field_obj.search(cr, uid, [(fargs[1], operator, right)], context=context)
-                    right1 = table.search(cr, uid, [(fargs[0],'in', right)], context=context)
+                    right = field_obj.search(cr, uid, [(fargs[1], operator,
+                                                        right)], order='NO_ORDER', context=context)
+                    right1 = table.search(cr, uid, [(fargs[0],'in', right)],
+                                          order='NO_ORDER', context=context)
                     if right1 == []:
                         self.__exp[i] = ( 'id', '=', 0 )
                     else:
@@ -292,12 +297,12 @@ class expression(object):
                 else:
                     def _get_expression(field_obj,cr, uid, left, right, operator, context=None):
                         if context is None:
-                            context = {}                        
+                            context = {}
                         c = context.copy()
                         c['active_test'] = False
                         #Special treatment to ill-formed domains
                         operator = ( operator in ['<','>','<=','>='] ) and 'in' or operator
-                        
+
                         dict_op = {'not in':'!=','in':'=','=':'in','!=':'not in','<>':'not in'}
                         if isinstance(right,tuple):
                             right = list(right)
@@ -307,7 +312,7 @@ class expression(object):
                             operator = dict_op[operator]
                         res_ids = field_obj.name_search(cr, uid, right, [], operator, limit=None, context=c)
                         if not res_ids:
-                           return ('id','=',0)
+                            return ('id','=',0)
                         else:
                             right = map(lambda x: x[0], res_ids)
                             return (left, 'in', right)
@@ -319,7 +324,7 @@ class expression(object):
                         elif isinstance(right,(list,tuple)):
                             m2o_str = True
                             for ele in right:
-                                if not isinstance(ele, basestring): 
+                                if not isinstance(ele, basestring):
                                     m2o_str = False
                                     break
                     elif right == []:
@@ -335,7 +340,7 @@ class expression(object):
                             new_op = '!='
                         #Is it ok to put 'left' and not 'id' ?
                         self.__exp[i] = (left,new_op,False)
-                        
+
                     if m2o_str:
                         self.__exp[i] = _get_expression(field_obj,cr, uid, left, right, operator, context=context)
             else:
@@ -369,14 +374,14 @@ class expression(object):
                     if operator in ['in','not in']:
                         instr = ','.join(['%s'] * len(right))
                         query1 += '     AND value ' + operator +  ' ' +" (" + instr + ")"   \
-                             ') UNION ('                \
-                             '  SELECT id'              \
-                             '    FROM "' + working_table._table + '"'       \
-                             '   WHERE "' + left + '" ' + operator + ' ' +" (" + instr + ")" \
-                             '     AND id NOT IN ' + query1 + "))"
+                            ') UNION ('                \
+                            '  SELECT id'              \
+                            '    FROM "' + working_table._table + '"'       \
+                            '   WHERE "' + left + '" ' + operator + ' ' +" (" + instr + ")" \
+                            '     AND id NOT IN ' + query1 + "))"
                     else:
                         query1 += '     AND value ' + operator + instr +   \
-                             ') UNION ('                \
+                            ') UNION ('                \
                              '  SELECT id'              \
                              '    FROM "' + working_table._table + '"'       \
                              '   WHERE "' + left + '" ' + operator + instr + "" \
@@ -390,7 +395,7 @@ class expression(object):
                               working_table._name + ',' + left,
                               context.get('lang', False) or 'en_US',
                               'model',
-                             ]
+                              ]
 
                     self.__exp[i] = ('id', 'inselect', (query1, query2))
 
@@ -445,12 +450,12 @@ class expression(object):
                 if (right is False or right is None):
                     return ( 'TRUE',[])
                 if left in table._columns:
-                        format = table._columns[left]._symbol_set[0]
-                        query = '(%s.%s %s %s)' % (table._table, left, op, format)
-                        params = table._columns[left]._symbol_set[1](right)
+                    format = table._columns[left]._symbol_set[0]
+                    query = '(%s.%s %s %s)' % (table._table, left, op, format)
+                    params = table._columns[left]._symbol_set[1](right)
                 else:
-                        query = "(%s.%s %s '%%s')" % (table._table, left, op)
-                        params = right
+                    query = "(%s.%s %s '%%s')" % (table._table, left, op)
+                    params = right
 
             else:
                 if left == 'id':
@@ -515,4 +520,3 @@ class expression(object):
         return ['"%s"' % t._table for t in self.__all_tables]
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-

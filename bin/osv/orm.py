@@ -2342,7 +2342,12 @@ class orm_memory(orm_template):
                 upd_todo.append(field)
         for object_id in ids:
             self._check_access(user, object_id, mode='write')
-            self.datas[object_id].update(vals2)
+            try:
+                self.datas[object_id].update(vals2)
+            except KeyError:
+                error_message = _('Object id \'%s\' not found in \'%s\'. You may try to access a deleted temporary object (ie. wizard)')
+                error_message = error_message % (object_id, self._name)
+                raise except_orm(_('Error'), error_message)
             self.datas[object_id]['internal.date_access'] = time.time()
             for field in upd_todo:
                 self._columns[field].set_memory(cr, self, object_id, field, vals[field], user, context)
@@ -2715,8 +2720,9 @@ class orm(orm_template):
         parent_table_name = parent_model._table
         quoted_parent_table_name = '"%s"' % parent_table_name
         if quoted_parent_table_name not in query.tables:
-            query.tables.append(quoted_parent_table_name)
-            query.where_clause.append('("%s".%s = %s.id)' % (self._table, inherits_field, parent_table_name))
+            query.join([self._table, parent_table_name, inherits_field, 'id'], outer=True)
+            # Use query.join() instead of just put new table and new where clause elements because
+            # to be able to sort on translated values, we need JOIN between tables
 
     def _inherits_join_calc(self, field, query):
         """
@@ -3783,6 +3789,9 @@ class orm(orm_template):
             # Step 2. Marching towards the real deletion of referenced records
             pool_model_data.unlink(cr, uid, referenced_ids, context=context)
 
+            if context.get('avoid_sdref_deletion') and hasattr(self, '_unlink_sdref') and self._unlink_sdref:
+                cr.execute("DELETE FROM ir_model_data WHERE model=%s AND res_id in %s AND module='sd'", (self._name, sub_ids))
+
             # For the same reason, removing the record relevant to ir_values
             ir_value_ids = pool_ir_values.search(cr, uid,
                                                  ['|',('value','in',['%s,%s' % (self._name, sid) for sid in sub_ids]),'&',('res_id','in',list(sub_ids)),('model','=',self._name)],
@@ -4571,51 +4580,88 @@ class orm(orm_template):
         return map(qualify, m2o_order) if isinstance(m2o_order, list) else qualify(m2o_order)
 
 
-    def _generate_order_by(self, order_spec, query):
+    def _generate_order_by(self, order_spec, query, context=None):
         """
         Attempt to consruct an appropriate ORDER BY clause based on order_spec, which must be
         a comma-separated list of valid field names, optionally followed by an ASC or DESC direction.
 
         :raise" except_orm in case order_spec is malformed
         """
+        if context is None:
+            context = {}
         order_by_clause = self._order
+
+        if not order_spec:
+            order_spec = self._order
+
+        from_order_clause = []
+        translation = 0
         if order_spec:
             order_by_elements = []
             self._check_qorder(order_spec)
             for order_part in order_spec.split(','):
+                translatable = False
                 order_split = order_part.strip().split(' ')
                 order_field = order_split[0].strip()
                 order_direction = order_split[1].strip() if len(order_split) == 2 else ''
                 inner_clause = None
+                end_inner_clause = []
                 if order_field == 'id':
-                    inner_clause = '"%s"."%s"' % (self._table, order_field)
+                    end_inner_clause = '"%s"."%s"' % (self._table, order_field)
                 elif order_field in self._columns:
                     order_column = self._columns[order_field]
+                    translatable = order_column.translate
+                    if translatable:
+                        translation += 1
+                        trans_name = '"ir_translation%s"' % translation
+                        end_inner_clause.append('%s."value"' % trans_name)
+                        left_join_clause = 'LEFT JOIN "ir_translation" %s' % trans_name
+                        on_clause = 'ON %s.res_id = "%s".id AND %s.name = \'%s,%s\' AND %s.type = \'model\' AND %s.lang = \'%s\'' % (
+                            trans_name, self._table, trans_name, self._name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
+                        from_order_clause.append('%s %s' % (left_join_clause, on_clause))
                     if order_column._classic_read:
                         inner_clause = '"%s"."%s"' % (self._table, order_field)
                     elif order_column._type == 'many2one':
                         inner_clause = self._generate_m2o_order_by(order_field, query)
                     else:
                         continue # ignore non-readable or "non-joinable" fields
+
+                    if isinstance(inner_clause, list):
+                        end_inner_clause.extend(inner_clause)
+                    else:
+                        end_inner_clause.append(inner_clause)
                 elif order_field in self._inherit_fields:
                     parent_obj = self.pool.get(self._inherit_fields[order_field][3])
                     order_column = parent_obj._columns[order_field]
+                    translatable = order_column.translate
+                    if translatable:
+                        translation += 1
+                        trans_name = '"ir_translation%s"' % translation
+                        end_inner_clause.append('%s."value"' % trans_name)
+                        left_join_clause = 'LEFT JOIN "ir_translation" %s' % trans_name
+                        on_clause = 'ON %s.res_id = "%s".id AND %s.name = \'%s,%s\' AND %s.type = \'model\' AND %s.lang = \'%s\'' % (
+                            trans_name, parent_obj._table, trans_name, parent_obj._name, order_field, trans_name, trans_name, context.get('lang', 'en_US'))
+                        from_order_clause.append('%s %s' % (left_join_clause, on_clause))
                     if order_column._classic_read:
                         inner_clause = self._inherits_join_calc(order_field, query)
                     elif order_column._type == 'many2one':
                         inner_clause = self._generate_m2o_order_by(order_field, query)
                     else:
                         continue # ignore non-readable or "non-joinable" fields
-                if inner_clause:
                     if isinstance(inner_clause, list):
-                        for clause in inner_clause:
+                        end_inner_clause.extend(inner_clause)
+                    else:
+                        end_inner_clause.append(inner_clause)
+                if end_inner_clause:
+                    if isinstance(end_inner_clause, list):
+                        for clause in end_inner_clause:
                             order_by_elements.append("%s %s" % (clause, order_direction))
                     else:
-                        order_by_elements.append("%s %s" % (inner_clause, order_direction))
+                        order_by_elements.append("%s %s" % (end_inner_clause, order_direction))
             if order_by_elements:
                 order_by_clause = ",".join(order_by_elements)
 
-        return order_by_clause and (' ORDER BY %s ' % order_by_clause) or ''
+        return order_by_clause and (' ORDER BY %s ' % order_by_clause) or '', from_order_clause
 
     def _search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False, access_rights_uid=None):
         """
@@ -4635,10 +4681,13 @@ class orm(orm_template):
         self._apply_ir_rules(cr, user, query, 'read', context=context)
         if order == 'NO_ORDER':
             order_by=''
+            from_order_clause = []
         else:
-            order_by = self._generate_order_by(order, query)
+            order_by, from_order_clause = self._generate_order_by(order, query,
+                                                                  context=context)
 
         from_clause, where_clause, where_clause_params = query.get_sql()
+        from_clause = from_clause + ' '.join(from_order_clause)
 
         limit_str = limit and ' LIMIT %d' % limit or ''
         offset_str = offset and ' OFFSET %d' % offset or ''

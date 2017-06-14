@@ -87,12 +87,21 @@ class product_list_add_products(osv.osv_memory):
             for line in wiz.list_id.product_ids:
                 products.append(line.name.id)
 
+            already_in_product_list = set()
             for product in wiz.product_ids:
                 if product.id not in products:
                     line_obj.create(cr, uid, {
                         'name': product.id,
                         'list_id': wiz.list_id.id,
                     }, context=context)
+                else:
+                    already_in_product_list.add(product)
+
+            if already_in_product_list:
+                raise osv.except_osv(
+                    _('Warning'), 
+                    _('product(s) %s already exist(s) in the product list and so cannot be added') % ', '.join([prod.default_code for prod in already_in_product_list])
+                )
 
             context.update({'active_id': wiz.list_id.id})
 

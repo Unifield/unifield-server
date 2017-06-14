@@ -316,6 +316,11 @@
                     <field name="check_total" position="after">
                         <field name="supplier_reference"/>
                     </field>
+                    <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='invoice_line']" position="before" >
+                        <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        </group>
+                    </xpath>
                     <field name="journal_id" position="replace">
                         <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"
                                on_change="onchange_journal_id(journal_id)"/>
@@ -333,14 +338,16 @@
                         <page string="Down Payments">
                             <field name="down_payment_ids" nolabel="1" colspan="4">
                                 <tree string="Down Payment">
-                                    <field name="statement_id" string="Register"/>
-                                    <field name="date"/>
+                                    <field name="move_id"/>
                                     <field name="name" string="Description"/>
-                                    <field name="account_id"/>
-                                    <field name="amount_currency" string="Amount" sum="Total Amount"/>
-                                    <field name="down_payment_amount" string="Expended amount"/>
-                                    <field name="currency_id"/>
+                                    <field name="ref"/>
+                                    <field name="date"/>
+                                    <field name="partner_type"/>
                                     <field name="reconcile_txt"/>
+                                    <field name="debit_currency"/>
+                                    <field name="credit_currency"/>
+                                    <field name="amount_currency" sum="Total Amount"/>
+                                    <field name="currency_id"/>
                                 </tree>
                             </field>
                         </page>

@@ -450,7 +450,7 @@ class hq_entries(osv.osv):
         # Otherway: delete FP
         else:
             res = {'value': {'analytic_id': False}}
-        # If destination given, search if given 
+        # If destination given, search if given
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -459,6 +459,8 @@ class hq_entries(osv.osv):
         """
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if context is None:
             context={}
 

@@ -330,6 +330,7 @@
             <field name="name">purchase.order.rfq.list.select</field>
             <field name="model">purchase.order</field>
             <field name="type">search</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <search string="Search Purchase Order">
                   <group col='10' colspan='4'>
@@ -567,6 +568,7 @@
             <field name="name">rfq.line.unlink.wizard.form.view</field>
             <field name="model">purchase.order.line.unlink.wizard</field>
             <field name="type">form</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <form string="Request for quotation line cancelation">
                     <field name="last_line" invisible="1" />
@@ -611,7 +613,7 @@
             <field name="name">rfq.cancel.wizard.form.view</field>
             <field name="model">purchase.order.cancel.wizard</field>
             <field name="type">form</field>
-            <field name="priority" eval="99" />
+            <field name="priority" eval="101" />
             <field name="arch" type="xml">
                 <form string="Cancel Request for Quotation">
                     <group colspan="4" col="1">
@@ -631,7 +633,7 @@
             <field name="name">ask.rfq.cancel.wizard.form.view</field>
             <field name="model">purchase.order.cancel.wizard</field>
             <field name="type">form</field>
-            <field name="priority" eval="99" />
+            <field name="priority" eval="100" />
             <field name="arch" type="xml">
                 <form string="Cancel Request for Quotation">
                     <group colspan="4" col="1">

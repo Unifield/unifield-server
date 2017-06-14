@@ -1318,8 +1318,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if len(order.order_line) < 1:
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
 
-            # 3/ Check of line procurement method in case of loan PO
-            if order.order_type == 'loan':
+            # 3/ Check of line procurement method in case of loan/donation PO
+            if order.order_type in ['loan', 'donation_st', 'donation_exp']:
                 non_mts_line = line_obj.search(cr, uid, [
                     ('order_id', '=', order.id),
                     ('type', '!=', 'make_to_stock'),
@@ -1917,8 +1917,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'product_qty': line.product_uom_qty,
             'product_uom': line.product_uom.id,
             'product_uos_qty': line.product_uos_qty,
-            'product_uos': (line.product_uos and line.product_uos.id)\
-            or line.product_uom.id,
+            'product_uos': (line.product_uos and line.product_uos.id) or line.product_uom.id,
             'product_packaging': line.product_packaging.id,
             'address_id': line.address_allotment_id.id or order.partner_shipping_id.id,
             'location_id': location_id,
@@ -1926,7 +1925,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'sale_line_id': line.id,
             'tracking_id': False,
             'state': 'draft',
-            # 'state': 'waiting',
             'note': line.notes,
             'company_id': order.company_id.id,
             'reason_type_id': self._get_reason_type(cr, uid, order),

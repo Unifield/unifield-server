@@ -106,7 +106,7 @@ class wiz_common_import(osv.osv_memory):
                         continue  # 'Delivery requested date' tolerated (for Rfq vs 'Delivery Requested Date' of PO_COLUMNS_HEADER_FOR_IMPORT)
                 vals = {'state': 'draft',
                         'message': _('The column "%s" is not taken into account. Please correct it. The list of columns accepted is: %s'
-                                     ) % (k, ','.join(translated_headers))}
+                                     ) % (k, ', '.join(translated_headers))}
                 return False, vals
         return True, True
 
@@ -697,6 +697,8 @@ class stock_move(osv.osv):
 
         if picking.partner_id and picking.type == 'in':
             location_id = picking.partner_id.property_stock_supplier.id
+        elif picking.ext_cu and picking.type == 'in':
+            location_id = picking.ext_cu.id
         elif picking.type == 'in':
             location_id = get_ref(cr, uid, 'stock', 'stock_location_suppliers')[1]
         else:
@@ -721,7 +723,9 @@ class stock_move(osv.osv):
                       'reason_type_id': picking.reason_type_id.id,
                       'location_id': location_id,
                       'location_dest_id': location_dest_id,
-                      'name': p_data['name'],}
+                      'name': p_data['name'],
+                      'is_ext_cu': True if picking.ext_cu else False,
+                      }
 
             values.update(self.onchange_product_id(cr, uid, False, p_data['id'], location_id, location_dest_id, picking.address_id and picking.address_id.id or False, picking.type, False).get('value', {}))
 

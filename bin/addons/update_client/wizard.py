@@ -1,25 +1,19 @@
 from __future__ import with_statement
-import sys
 import os
 import logging
 import urllib2
 import threading
 from base64 import b64decode
-import hashlib
 from StringIO import StringIO
 import tarfile
 
 from osv import osv, fields
 from tools.translate import _
-import tools
 import base64
 from tools import config
-from updater import *
+import updater
 
 from version import IMPORT_PATCH_SUCCESS, IMPORT_PATCH_INVALID, IMPORT_PATCH_UNKNOWN, IMPORT_PATCH_IGNORED
-
-assert sys.version_info >= (2, 6), \
-    "timeout argument of urllib2.urlopen() needs Python >= 2.6"
 
 th_local = threading.local()
 
@@ -46,7 +40,7 @@ class upgrade(osv.osv_memory):
 
     def restart(self, cr, uid, ids, context=None):
         os.chdir( config['root_path'] )
-        restart_server()
+        updater.restart_server()
         return {'type': 'ir.actions.act_window_close'}
 
     def _get_error(self, cr, uid, context=None):
@@ -87,7 +81,7 @@ class upgrade(osv.osv_memory):
         """Actualy, prepare the upgrade to be done at server restart"""
         # backup before patching
         self.pool.get('backup.config').exp_dump_for_state(cr, uid,
-                'beforepatching', context=context, force=True)
+                                                          'beforepatching', context=context, force=True)
 
         connection_module = self.pool.get("sync.client.sync_server_connection")
         proxy = connection_module.get_connection(cr, uid, "sync.server.sync_manager")
@@ -95,7 +89,7 @@ class upgrade(osv.osv_memory):
         # SYNC_SERVER connection credentials to be able to automatically
         # reconnect to the SYNC_SERVER after an upgrade
         automatic_patching = sync_type=='automatic' and\
-                connection_module.is_automatic_patching_allowed(cr, uid)
+            connection_module.is_automatic_patching_allowed(cr, uid)
         if automatic_patching:
             password = connection_module._get_password(cr, uid, [proxy], None, None, None).values()[0]
             password = base64.encodestring(password)
@@ -118,7 +112,7 @@ class upgrade(osv.osv_memory):
                 }, context=context)
         next_revisions = self.pool.get('sync_client.version')._get_next_revisions(cr, uid, context=context)
         ## Prepare
-        (status, message, values) = do_prepare(cr, next_revisions)
+        (status, message, values) = updater.do_prepare(cr, next_revisions)
         wiz_value = {'message':_(message)}
         if status in ('corrupt','missing'):
             wiz_value['state'] = 'need-download'
@@ -150,7 +144,7 @@ class upgrade(osv.osv_memory):
                     tar = tarfile.open(fileobj=StringIO(b64decode(wiz.patch)))
                     for content in (fh.read() for fh in (tar.extractfile(name) for name in tar.getnames()) if fh):
                         status = revisions.import_patch(cr, uid,
-                            decoded=content, context=context)
+                                                        decoded=content, context=context)
                         cr.commit()
                         if status == IMPORT_PATCH_SUCCESS: count += 1
                         elif status == IMPORT_PATCH_INVALID: pass
@@ -179,10 +173,10 @@ class upgrade(osv.osv_memory):
             self.write(cr, uid, ids, {'message':text}, context=context)
         else:
             self.write(cr, uid, ids, {
-                    'message' : _("%d revision(s) has been imported.") % count + \
-                                "\n\n" + self._generate(cr, uid, context=context),
-                    'state' : self._get_state(cr, uid, context=context),
-                }, context=context)
+                'message' : _("%d revision(s) has been imported.") % count + \
+                "\n\n" + self._generate(cr, uid, context=context),
+                'state' : self._get_state(cr, uid, context=context),
+            }, context=context)
 
         return {}
 
@@ -204,8 +198,8 @@ class upgrade(osv.osv_memory):
             text += _("No revision has been applied yet.")
         text += "\n"
         next_revisions = revisions.browse(cr, uid,
-            revisions._get_next_revisions(cr, uid, context=context),
-            context=context)
+                                          revisions._get_next_revisions(cr, uid, context=context),
+                                          context=context)
         if next_revisions:
             text += "\n"
             if len(next_revisions) == 1:
@@ -246,20 +240,20 @@ class upgrade(osv.osv_memory):
             entity = self.pool.get('sync.client.entity').get_entity(cr, uid)
             if entity.usb_instance_type == 'remote_warehouse':
                 return True
-        except Exception, e:
+        except Exception:
             pass
         return False
 
     _columns = {
         'message' : fields.text("Caption", readonly=True),
         'state' : fields.selection([
-                ('need-provide-manually','Need To Provide Manually The Files'),
-                ('need-download','Need Download'),
-                ('up-to-date','Up-To-Date'),
-                ('need-install','Need Install'),
-                ('need-restart','Need Restart'),
-                ('blocked','Blocked')
-            ], string="Status"),
+            ('need-provide-manually','Need To Provide Manually The Files'),
+            ('need-download','Need Download'),
+            ('up-to-date','Up-To-Date'),
+            ('need-install','Need Install'),
+            ('need-restart','Need Restart'),
+            ('blocked','Blocked')
+        ], string="Status"),
         'patch' : fields.binary("Patch"),
         'error': fields.text('Error', readonly="1"),
     }

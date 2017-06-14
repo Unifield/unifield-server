@@ -47,6 +47,15 @@ class account_invoice_refund(osv.osv_memory):
         journal = obj_journal.search(cr, uid, args)
         return journal and journal[0] or False
 
+    def _get_document_date(self, cr, uid, context=None):
+        active_ids = context.get('active_ids', [])
+        if active_ids:
+            invoice_module = self.pool.get('account.invoice')
+            doc_date = invoice_module.read(cr, uid, active_ids[0], ['document_date'],
+                                           context=context)['document_date']
+            return doc_date
+        return time.strftime('%Y-%m-%d')
+
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
         journal_obj = self.pool.get('account.journal')
         res = super(account_invoice_refund,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
@@ -68,7 +77,8 @@ class account_invoice_refund(osv.osv_memory):
     }
 
     _defaults = {
-        'document_date': lambda *a: time.strftime('%Y-%m-%d'),
+        'document_date': _get_document_date,
+        'date': lambda *a: time.strftime('%Y-%m-%d'),
         #UTP-961: refund DI: only refund option is available
         'filter_refund': 'refund',
         'journal_id': _get_journal,  # US-193
@@ -105,7 +115,7 @@ class account_invoice_refund(osv.osv_memory):
         """
         if form.get('document_date', False):
             self.pool.get('finance.tools').check_document_date(cr, uid,
-                form['document_date'], date)
+                                                               form['document_date'], date)
             return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, form['document_date'])
         else:
             return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id)
@@ -116,7 +126,7 @@ class account_invoice_refund(osv.osv_memory):
         """
         if form.get('document_date', False) and form.get('date', False):
             self.pool.get('finance.tools').check_document_date(cr, uid,
-                form['document_date'], form['date'])
+                                                               form['document_date'], form['date'])
             data.update({'document_date': form['document_date']})
         return super(account_invoice_refund, self)._hook_create_invoice(cr, uid, data, form)
 

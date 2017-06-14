@@ -61,6 +61,7 @@
             <field name="name">sale.order.followup.progress.view</field>
             <field name="model">sale.order.followup</field>
             <field name="type">form</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <form string="Order follow up">
                     <separator colspan="4" string="General Information" />
@@ -268,6 +269,7 @@
             <field name="name">sale.order.line.follow.choose.view</field>
             <field name="model">sale.order.followup</field>
             <field name="type">form</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <form string="Choose the view type">
                     <separator colspan="4" string="Type of view" />

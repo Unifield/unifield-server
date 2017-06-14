@@ -33,8 +33,7 @@
                     <group colspan="4" expand="1">
                         <separator string="Payable and Receivables" colspan="4"/>
                         <field name="line_ids"
-                            domain="[('journal_id', '=', journal_id),
-                            ('currency_id', '=', currency_id), ('reconcile_id', '=', False), ('is_cheque', '=', True),
+                            domain="[('currency_id', '=', currency_id), ('reconcile_id', '=', False), ('is_cheque', '=', statement_id),
                             ('from_import_cheque_id', '=', False), ('move_id.state', '=', 'posted')]"
                             context="{'from': 'wizard_import_cheque'}" nolabel="1" colspan="4"/>
                         <newline/>
@@ -68,7 +67,7 @@
                    </group>
                    <field name="currency_id" invisible="1"/>
                    <field name="period_id" invisible="1"/>
-                   <field name="journal_id" invisible="1"/>
+                   <field name="statement_id" invisible="1"/>
                    <field name="state" invisible="1"/>
                </form>
             </field>

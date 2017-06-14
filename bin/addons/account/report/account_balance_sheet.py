@@ -227,7 +227,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                             # register debit to result account
                             pl_dict['level'] = account['level'] + 1
                             accounts_temp.append(pl_dict)
-                    elif account.id == data['form']['bs_credit_account_id']:
+                    if account.id == data['form']['bs_credit_account_id']:
                         if pl_dict['balance'] < 0:
                             # register credit to result account
                             pl_dict['level'] = account['level'] + 1

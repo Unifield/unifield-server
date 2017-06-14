@@ -55,7 +55,7 @@ class msf_doc_import_accounting(osv.osv_memory):
 
     def create_entries(self, cr, uid, ids, journal_id, context=None):
         """
-        Create journal entry 
+        Create journal entry
         """
         # Checks
         if not context:
@@ -433,7 +433,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                                              _('The date chosen in the wizard is not in the same period as the imported entries.'))
                     period = period_obj.browse(
                         cr, uid, period_ids[0], context=context)
-                    if period.state in ('created', 'done'):
+                    if period.state != 'draft':
                         raise osv.except_osv(_('Warning'), _('%s is not open!') % (period.name, ))
 
                     # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.

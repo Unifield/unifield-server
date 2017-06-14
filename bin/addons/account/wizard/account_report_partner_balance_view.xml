@@ -11,7 +11,7 @@
             <data>
             <xpath expr="/form/label[@string='']" position="replace">
                 <separator string="Partner Balance" colspan="4"/>
-                <label nolabel="1" colspan="4" string="This report is an analysis done by a partner. It is a PDF report containing one line per partner representing the cumulative credit balance"/>
+                <label nolabel="1" colspan="4" string="This report is an analysis done by partner. It is a report containing one line per partner representing the cumulative credit balance."/>
             </xpath>
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="result_selection"/>

@@ -109,6 +109,7 @@
             <field name="name">payroll.import.error</field>
             <field name="model">hr.payroll.import.confirmation</field>
             <field name="type">form</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <form string="Import Errors">
                     <field name="filename"/>

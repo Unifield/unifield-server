@@ -15,7 +15,7 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
@@ -88,7 +88,7 @@ class TinySocketClientThread(threading.Thread, netsvc.OpenERPDispatcher):
                     tb_s = "".join(traceback.format_exception(*tb))
                     logging.getLogger('web-services').debug("netrpc: communication-level exception", exc_info=True)
                     ts.mysend(e, exception=True, traceback=tb_s)
-                except Exception, ex:
+                except Exception:
                     #terminate this channel if we can't properly send back the error
                     logging.getLogger('web-services').exception("netrpc: cannot deliver exception message to client")
                     break
@@ -106,15 +106,15 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
         threading.Thread.__init__(self, name="NetRPCDaemon-%d"%port)
         netsvc.Server.__init__(self)
         self.__port = port
-        self.__interface = interface
+        self.__interface = interface or '127.0.0.1'
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((self.__interface, self.__port))
         self.socket.listen(5)
         self.threads = []
 
-        netsvc.Logger().notifyChannel("web-services", netsvc.LOG_INFO, 
-                         "starting NET-RPC service at %s port %d" % (interface or '0.0.0.0', port,))
+        netsvc.Logger().notifyChannel("web-services", netsvc.LOG_INFO,
+                                      "starting NET-RPC service at %s port %d" % (self.__interface, port,))
         self.is_gzip = is_gzip
 
     def run(self):
@@ -131,10 +131,10 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
                 ct.start()
                 lt = len(self.threads)
                 if (lt > 10) and (lt % 10 == 0):
-                     # Not many threads should be serving at the same time, so log
-                     # their abuse.
-                     netsvc.Logger().notifyChannel("web-services", netsvc.LOG_DEBUG,
-                        "Netrpc: %d threads" % len(self.threads))
+                    # Not many threads should be serving at the same time, so log
+                    # their abuse.
+                    netsvc.Logger().notifyChannel("web-services", netsvc.LOG_DEBUG,
+                                                  "Netrpc: %d threads" % len(self.threads))
             self.socket.close()
         except Exception, e:
             logging.getLogger('web-services').warning("Netrpc: closing because of exception %s" % str(e))
@@ -172,7 +172,7 @@ def init_servers():
     global netrpcd
     if tools.config.get('netrpc', False) or tools.config.get('netrpc_gzip', False):
         netrpcd = TinySocketServerThread(
-            tools.config.get('netrpc_interface', ''), 
+            tools.config.get('netrpc_interface', ''),
             int(tools.config.get('netrpc_port', 8070)),
             is_gzip=tools.config.get('netrpc_gzip'),
         )
