@@ -26,7 +26,7 @@
 * version 4 of Chrome (shipped in 2010)."
 */
 
-$.ctrl = function(key, callback, args) {
+$.ctrlshift = function(key, callback, args) {
     $(document).keydown(function(e) {
         if(!args) args=[]; // IE barks when args is null
         if((e.keyCode == key.charCodeAt(0) || e.keyCode == key) && e.ctrlKey && e.shiftKey) {
@@ -36,7 +36,6 @@ $.ctrl = function(key, callback, args) {
         }
     });
 };
-
 
 fake_click = function(button) {
     if($(button).parents('div:hidden').length == 0){
@@ -50,7 +49,7 @@ fake_click = function(button) {
 };
 
 //Save the current object
-$.ctrl('S', function() {
+$.ctrlshift('S', function() {
     var saved = false;
     $('.oe_form_button_save_line').each(function() {
         if($(this).parents('div:hidden').length == 0){
@@ -70,7 +69,7 @@ $.ctrl('S', function() {
 });
 
 //Save & Edit the current object
-$.ctrl('E', function() {
+$.ctrlshift('E', function() {
     $('.oe_form_button_save_edit').each(function() {
         fake_click(this);
     });
@@ -80,21 +79,21 @@ $.ctrl('E', function() {
 });
 
 //Delete the current object
-$.ctrl('46', function() {
+$.ctrlshift('46', function() {
     $('.oe_form_button_delete').each(function() {
         fake_click(this);
     });
 });
 
 //Cancel the modifiactions
-$.ctrl('Z', function() {
+$.ctrlshift('Z', function() {
     $('.oe_form_button_cancel').each(function() {
         fake_click(this);
     });
 });
 
 //New object
-$.ctrl('C', function() {
+$.ctrlshift('C', function() {
     $('.oe_form_button_create').each(function() {
         fake_click(this);
     });
@@ -104,57 +103,56 @@ $.ctrl('C', function() {
 });
 
 //Duplicate the current object
-$.ctrl('D', function() {
+$.ctrlshift('D', function() {
     $('.oe_form_button_duplicate').each(function() {
         fake_click(this);
     });
 });
 
 //Search (enter)
-$.ctrl('13', function() {
+$.ctrlshift('13', function() {
     $('.oe_form_button_search').each(function() {
         fake_click(this);
     });
 });
 
 //Clear search
-$.ctrl('R', function() {
+$.ctrlshift('R', function() {
     $('.oe_form_button_clear').each(function() {
         fake_click(this);
     });
 });
 
 //First object (arrow up)
-$.ctrl('38', function(event) {
+$.ctrlshift('38', function(event) {
     $('.oe_button_pager[action="first"]').each(function() {
         fake_click(this);
     });
 });
 
 //Previous object (arrow right)
-$.ctrl('37', function() {
+$.ctrlshift('37', function() {
     $('.oe_button_pager[action="previous"]').each(function() {
         fake_click(this);
     });
 });
 
 //Next object (arrow left)
-$.ctrl('39', function() {
+$.ctrlshift('39', function() {
     $('.oe_button_pager[action="next"]').each(function() {
         fake_click(this);
     });
 });
 
 //Last object (arrow down)
-$.ctrl('40', function() {
+$.ctrlshift('40', function() {
     $('.oe_button_pager[action="last"]').each(function() {
         fake_click(this);
     });
 });
 
-
-//Close (escape)
-$.ctrl('27', function() {
+//Close ('Q')
+$.ctrlshift('Q', function() {
     $('.oe_form_button_close').each(function() {
         fake_click(this);
     });
