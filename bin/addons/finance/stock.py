@@ -86,7 +86,10 @@ class stock_picking(osv.osv):
             invoice_vals['date_invoice'] = time.strftime('%Y-%m-%d',time.localtime())
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind'),
                                                                         ('is_current_instance', '=', True)])
-        if picking and picking.purchase_id and picking.purchase_id.order_type == "in_kind":
+        # From US-2391 Donations before expiry and Standard donations linked to an intersection partner generate a Donation
+        donation_intersection = picking and picking.purchase_id and picking.purchase_id.order_type in ['donation_exp', 'donation_st'] \
+                                and picking.partner_id and picking.partner_id.partner_type == 'section'
+        if picking and picking.purchase_id and picking.purchase_id.order_type == "in_kind" or donation_intersection:
             if not journal_ids:
                 raise osv.except_osv(_('Error'), _('No In-kind donation journal found!'))
             account_id = picking.partner_id and picking.partner_id.donation_payable_account and picking.partner_id.donation_payable_account.id or False
