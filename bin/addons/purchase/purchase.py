@@ -385,6 +385,33 @@ class purchase_order(osv.osv):
         return res
 
 
+    def _get_less_advanced_pol_state(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Get the less advanced state of the purchase order lines
+        Used to compute sale order state
+        """
+        if context is None:
+            context = {}
+            
+        res = {}
+        for po in self.browse(cr, uid, ids, context=context):
+            pol_states = [line.state for line in po.order_line]
+            if all([state == 'cancel' for state in pol_states]):
+                res[po.id] = 'cancel'
+            elif 'draft' in pol_states:
+                res[po.id] = 'draft'
+            elif 'validated' in pol_states:
+                res[po.id] = 'validated'
+            elif 'sourced' in pol_states:
+                res[po.id] = 'sourced'
+            elif 'confirmed' in pol_states:
+                res[po.id] = 'confirmed'
+            elif 'done' in pol_states:
+                res[po.id] = 'done'
+
+        return res
+
+
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),
@@ -458,7 +485,13 @@ class purchase_order(osv.osv):
         'warehouse_id': fields.many2one('stock.warehouse', 'Warehouse', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'location_id': fields.many2one('stock.location', 'Destination', required=True, domain=[('usage','<>','view')]),
         'pricelist_id':fields.many2one('product.pricelist', 'Pricelist', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
-        'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, 'State', readonly=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.", select=True),
+        'state': fields.function(_get_less_advanced_pol_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,
+            store = {
+                'purchase.order.line': (_get_order, ['state'], 10),    
+            },
+            select=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception."
+        ),
+
         'validator' : fields.many2one('res.users', 'Validated by', readonly=True),
         'notes': fields.text('Notes'),
         'picking_ids': fields.one2many('stock.picking', 'purchase_id', 'Picking List', readonly=True, help="This is the list of picking list that have been generated for this purchase"),
