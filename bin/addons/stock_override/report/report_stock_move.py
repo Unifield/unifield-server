@@ -538,7 +538,7 @@ class parser_report_stock_move_xls(report_sxw.rml_parse):
             self.cr, self.uid, self.uid).company_id.partner_id.id
 
         def get_src_dest(m, f='location_id'):
-            if m[f].usage in ('supplier', 'customer') and m.picking_id and m.picking_id.partner_id.id != company_id:
+            if m[f].usage in ('supplier', 'customer') and m.picking_id and m.picking_id.partner_id and m.picking_id.partner_id.id != company_id:
                 return m.picking_id.partner_id.name
             else:
                 return m[f].name
