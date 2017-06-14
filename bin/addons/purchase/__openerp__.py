@@ -52,6 +52,7 @@
         #'process/purchase_process.xml',
         'report/purchase_report_view.xml',
         'board_purchase_view.xml',
+        'purchase_line_workflow.xml',
     ],
     'test': [
         'test/purchase_from_order.yml',

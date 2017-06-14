@@ -43,7 +43,7 @@
         </record>
 
         <!-- Transitions -->
-        <record id="trans_sol_daft_validated" model="workflow.transition">
+        <record id="trans_sol_draft_validated" model="workflow.transition">
             <field name="act_from" ref="act_sol_draft"/>
             <field name="act_to" ref="act_sol_validated"/>
             <field name="signal">validated</field>

@@ -1149,7 +1149,7 @@ class purchase_order(osv.osv):
 
         partner_obj = self.pool.get('res.partner')
         product_obj = self.pool.get('product.product')
-        partner = partner_obj.read(cr, uid, part, ['partner_type'])
+        partner = partner_obj.read(cr, uid, part.id, ['partner_type'])
         if ids:
             # Check the restrction of product in lines
             for order in self.browse(cr, uid, ids):
