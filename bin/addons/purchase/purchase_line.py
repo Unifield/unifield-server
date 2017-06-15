@@ -1391,14 +1391,23 @@ class purchase_order_line_state(osv.osv):
     ]
 
     def get_less_advanced_state(self, cr, uid, ids, states, context=None):
+        '''
+        Return the less advanced state of gives purchase order line states
+        @param states: a list of string
+        '''
+        if not states:
+            return False
+
         cr.execute("""
             SELECT name
             FROM purchase_order_line_state
             WHERE name IN %s
             ORDER BY sequence;
         """, (tuple(states),))
-        
-        return cr.fetchone()
+
+        min_state = cr.fetchone()
+
+        return min_state[0] if min_state else False
 
 
 purchase_order_line_state()

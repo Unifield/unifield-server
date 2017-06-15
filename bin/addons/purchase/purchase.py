@@ -392,22 +392,16 @@ class purchase_order(osv.osv):
         """
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
             
         res = {}
         for po in self.browse(cr, uid, ids, context=context):
             pol_states = [line.state for line in po.order_line]
-            if all([state == 'cancel' for state in pol_states]):
+            if all([s == 'cancel' for s in pol_states]): # if all lines are cancelled then the PO is cancelled
                 res[po.id] = 'cancel'
-            elif 'draft' in pol_states:
-                res[po.id] = 'draft'
-            elif 'validated' in pol_states:
-                res[po.id] = 'validated'
-            elif 'sourced' in pol_states:
-                res[po.id] = 'sourced'
-            elif 'confirmed' in pol_states:
-                res[po.id] = 'confirmed'
-            elif 'done' in pol_states:
-                res[po.id] = 'done'
+            else:
+                res[po.id] = self.pool.get('purchase.order.line.state').get_less_advanced_state(cr, uid, ids, pol_states, context=context)
 
         return res
 

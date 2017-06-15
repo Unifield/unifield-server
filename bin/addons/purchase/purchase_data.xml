@@ -40,7 +40,7 @@
 
         <record id="pol_state_cancel" model="purchase.order.line.state">
             <field name="name">cancel</field>
-            <field name="sequence">1</field>
+            <field name="sequence">100</field>
         </record>
         <record id="pol_state_draft" model="purchase.order.line.state">
             <field name="name">draft</field>
