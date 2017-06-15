@@ -25,11 +25,15 @@ class sale_order_line(osv.osv):
             ids = [ids]
 
         for sol in self.browse(cr, uid, ids, context=context):
-            if not sol.analytic_distribution_id:
+            # check analytic distribution before validating the line:
+            if not sol.analytic_distribution_id and not sol.order_id.analytic_distribution_id:
                 raise osv.except_osv(
                     _('Error'),
-                    _('You cannot validate a line without analytic distribution (line #%s)') % sol.line_number
+                    _('You cannot validate lines without analytic distribution')
                 )
+            elif not sol.analytic_distribution_id: # we copy and pull header AD in the line:
+                new_ad = self.pool.get('analytic.distribution').copy(cr, uid, sol.order_id.analytic_distribution_id.id, context=context)
+                self.write(cr, uid, sol.id, {'analytic_distribution_id': new_ad}, context=context)
 
         return self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
