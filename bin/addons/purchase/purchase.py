@@ -689,7 +689,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
 
-        update_values = self._hook_copy_name(cr, uid, [id], context=context, default=default)
+        update_values = self._hook_copy_name(cr, uid, [p_id], context=context, default=default)
         default.update(update_values)
         # if the copy comes from the button duplicate
         if context.get('from_button'):

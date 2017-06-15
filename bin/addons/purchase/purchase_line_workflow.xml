@@ -17,7 +17,7 @@
             <field name="name">validated</field>
             <field name="wkf_id" ref="wkf_purchase_order_line"/>
             <field name="kind">function</field>
-            <field name="action">write({'state':'validated'})</field>
+            <field name="action">action_validate()</field>
         </record>
         <record id="act_pol_confirmed" model="workflow.activity">
             <field name="name">confirmed</field>

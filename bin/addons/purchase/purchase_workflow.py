@@ -5,6 +5,33 @@ import netsvc
 from tools.translate import _
 import time
 
+
+class purchase_order_line(osv.osv):
+    _name = "purchase.order.line"
+    _inherit = "purchase.order.line"
+
+    def action_validate(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            # check analytic distribution before validating the line:
+            if not pol.analytic_distribution_id and not pol.order_id.analytic_distribution_id:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You cannot validate lines without analytic distribution')
+                )
+            elif not pol.analytic_distribution_id: # we copy and pull header AD in the line:
+                new_ad = self.pool.get('analytic.distribution').copy(cr, uid, pol.order_id.analytic_distribution_id.id, context=context)
+                self.write(cr, uid, pol.id, {'analytic_distribution_id': new_ad}, context=context)
+
+        return self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+
+purchase_order_line()
+
+
 class purchase_order(osv.osv):
     _name = "purchase.order"
     _inherit = "purchase.order"
@@ -15,11 +42,12 @@ class purchase_order(osv.osv):
         """
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
             
-        wf_service = netsvc.LocalService('workflow')
-
         for po in self.browse(cr, uid, ids, context=context):
-            self.pool.get('purchase.order.line').write(cr, uid, [pol.id for pol in po.order_line], {'state': 'validated'}, context=context)
+            self.pool.get('purchase.order.line').action_validate(cr, uid, [pol.id for pol in po.order_line], context=context)
+
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True

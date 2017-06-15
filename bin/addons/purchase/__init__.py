@@ -20,8 +20,8 @@
 ##############################################################################
 
 import purchase
-import purchase_workflow
 import purchase_line
+import purchase_workflow
 import partner
 import stock
 import wizard
