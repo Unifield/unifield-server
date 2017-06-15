@@ -1375,3 +1375,30 @@ class purchase_order_line(osv.osv):
                     'context': context}
 
 purchase_order_line()
+
+
+class purchase_order_line_state(osv.osv):
+    _name = "purchase.order.line.state"
+    _description = "States of a purchase order line"
+
+    _columns = {
+        'name': fields.text(string='PO state', store=True),
+        'sequence': fields.integer(string='Sequence'),
+    }
+
+    _sql_constraints = [
+        ('sequence_uniq', 'unique(sequence)', 'PO line state sequence must be unique !'),
+    ]
+
+    def get_less_advanced_state(self, cr, uid, ids, states, context=None):
+        cr.execute("""
+            SELECT name
+            FROM purchase_order_line_state
+            WHERE name IN %s
+            ORDER BY sequence;
+        """, (tuple(states),))
+        
+        return cr.fetchone()
+
+
+purchase_order_line_state()
