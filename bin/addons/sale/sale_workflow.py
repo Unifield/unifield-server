@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 
 from osv import osv, fields
+from tools.translate import _
 import netsvc
 from . import SALE_ORDER_STATE_SELECTION
 
@@ -20,6 +21,15 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for sol in self.browse(cr, uid, ids, context=context):
+            if not sol.analytic_distribution_id:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You cannot validate a line without analytic distribution (line #%s)') % sol.line_number
+                )
 
         return self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
@@ -47,10 +57,9 @@ class sale_order(osv.osv):
         if context is None:
             context = {}
             
-        wf_service = netsvc.LocalService('workflow')
-
         for so in self.browse(cr, uid, ids, context=context):
-            self.pool.get('sale.order.line').write(cr, uid, [sol.id for sol in so.order_line], {'state': 'validated'}, context=context)
+            self.pool.get('sale.order.line').action_validate(cr, uid, [sol.id for sol in so.order_line], context=context)
+
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True
