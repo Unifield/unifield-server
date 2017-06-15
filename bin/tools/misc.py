@@ -172,7 +172,7 @@ def pg_dump(db_name, outfile=False):
         return res
     except Exception:
         _logger.error('Dump', exc_info=1)
-        raise
+        return -1
 
 def find_pg_tool(name):
     path = None
