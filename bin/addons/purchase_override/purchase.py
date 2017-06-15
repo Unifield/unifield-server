@@ -3606,7 +3606,7 @@ class purchase_order_line(osv.osv):
 
             # In case of a PO line is created to source a FO/IR but the corresponding
             # FO/IR line will be created when the PO will be confirmed
-            if not line['procurement_id'] and line['origin']:
+            if not context.get('from_del_wizard') and not line['procurement_id'] and line['origin']:
                 wiz_id = wiz_obj.create(cr, uid, {'line_id': line['id']}, context=context)
                 return wiz_obj.just_cancel(cr, uid, [wiz_id], context=context)
 
