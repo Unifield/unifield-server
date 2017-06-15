@@ -22,5 +22,29 @@
 
         <function eval="('default',False,'shop_id', [('sale.order', False)], shop, True, False, False, False, True)" id="sale_default_set" model="ir.values" name="set"/>
 
+    <record id="sol_state_cancel" model="sale.order.line.state">
+        <field name="name">cancel</field>
+        <field name="sequence">100</field>
+    </record>
+    <record id="sol_state_draft" model="sale.order.line.state">
+        <field name="name">draft</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="sol_state_validated" model="sale.order.line.state">
+        <field name="name">validated</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="sol_state_sourced" model="sale.order.line.state">
+        <field name="name">sourced</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="sol_state_confirmed" model="sale.order.line.state">
+        <field name="name">confirmed</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="sol_state_done" model="sale.order.line.state">
+        <field name="name">done</field>
+        <field name="sequence">50</field>
+    </record>
     </data>
 </openerp>

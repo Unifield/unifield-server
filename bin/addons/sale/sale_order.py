@@ -441,22 +441,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         """
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
             
         res = {}
         for so in self.browse(cr, uid, ids, context=context):
             sol_states = [line.state for line in so.order_line]
-            if all([state == 'cancel' for state in sol_states]):
+            if all([s == 'cancel' for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
-            elif 'draft' in sol_states:
-                res[so.id] = 'draft'
-            elif 'validated' in sol_states:
-                res[so.id] = 'validated'
-            elif 'sourced' in sol_states:
-                res[so.id] = 'sourced'
-            elif 'confirmed' in sol_states:
-                res[so.id] = 'confirmed'
-            elif 'done' in sol_states:
-                res[so.id] = 'done'
+            else: # else compute the less advanced state:
+                res[so.id] = self.pool.get('sale.order.line.state').get_less_advanced_state(cr, uid, ids, sol_states, context=context)
 
         return res
 
@@ -4481,6 +4475,40 @@ class sale_order_leave_close(osv.osv_memory):
 sale_order_leave_close()
 
 
-### SALE_OVERRIDE END
+class sale_order_line_state(osv.osv):
+    _name = "sale.order.line.state"
+    _description = "States of a sale order line"
+
+    _columns = {
+        'name': fields.text(string='FO state', store=True),
+        'sequence': fields.integer(string='Sequence'),
+    }
+
+    _sql_constraints = [
+        ('sequence_uniq', 'unique(sequence)', 'FO line state sequence must be unique !'),
+    ]
+
+    def get_less_advanced_state(self, cr, uid, ids, states, context=None):
+        '''
+        Return the less advanced state of gives sale order line states
+        @param states: a list of string
+        '''
+        if not states:
+            return False
+
+        cr.execute("""
+            SELECT name
+            FROM sale_order_line_state
+            WHERE name IN %s
+            ORDER BY sequence;
+        """, (tuple(states),))
+
+        min_state = cr.fetchone()
+
+        return min_state[0] if min_state else False
+
+
+sale_order_line_state()
+
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
