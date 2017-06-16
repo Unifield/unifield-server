@@ -1104,7 +1104,9 @@ class purchase_order(osv.osv):
             except ValueError:
                 intermission_cc = 0
 
-            if po.order_type == 'in_kind' and not po.partner_id.donation_payable_account:
+            donation_intersection = po.order_type in ['donation_exp', 'donation_st'] and po.partner_type \
+                                    and po.partner_type == 'section'
+            if po.order_type == 'in_kind' or donation_intersection:
                 if not po.partner_id.donation_payable_account:
                     raise osv.except_osv(_('Error'), _('No donation account on this partner: %s') % (po.partner_id.name or '',))
 
