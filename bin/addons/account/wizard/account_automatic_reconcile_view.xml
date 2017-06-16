@@ -58,6 +58,7 @@
              <field name="name">Automatic reconcile unreconcile</field>
              <field name="model">account.automatic.reconcile</field>
              <field name="type">form</field>
+             <field name="priority" eval="17"/>
              <field name="arch" type="xml">
                 <form string="Reconciliation result">
                     <field name="reconciled"/>

@@ -41,7 +41,6 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
             'time': time,
             'get_lines': self.get_lines,
             'get_lines_another': self.get_lines_another,
-            'get_company': self._get_company,
             'get_currency': self._get_currency,
             'sum_dr': self.sum_dr,
             'sum_cr': self.sum_cr,
@@ -185,7 +184,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                                 'asset',
                                 'stock',
                                 'receivables',  # added US-1318
-                                )) or False
+                            )) or False
                 elif  typ == 'liability':
                     # US-227/1, breakdown in liability:
                     # - Internal type Payable
@@ -197,7 +196,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                                 'debt',
                                 'equity',
                                 'payables',  # added US-1318
-                                )) or False
+                            )) or False
                 if register_account:
                     account_dict = {
                         'id': account.id,
@@ -222,12 +221,13 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                     # US-227/2bis
                     # Account from company configuration
                     # "Debit Account for P&L>0 (B/S account)" or "Credit Account P&L<0 (B/S account)"
+                    # => add the "Net Profit" or "Net Loss" line below the appropriate account
                     if account.id == data['form']['bs_debit_account_id']:
                         if pl_dict['balance'] >= 0:
                             # register debit to result account
                             pl_dict['level'] = account['level'] + 1
                             accounts_temp.append(pl_dict)
-                    elif account.id == data['form']['bs_credit_account_id']:
+                    if account.id == data['form']['bs_credit_account_id']:
                         if pl_dict['balance'] < 0:
                             # register credit to result account
                             pl_dict['level'] = account['level'] + 1
@@ -241,7 +241,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
             for i in range(0,max(len(cal_list['liability']),len(cal_list['asset']))):
                 if i < len(cal_list['liability']) and i < len(cal_list['asset']):
                     temp={
-                          'code': cal_list['liability'][i]['code'],
+                        'code': cal_list['liability'][i]['code'],
                           'name': cal_list['liability'][i]['name'],
                           'level': cal_list['liability'][i]['level'],
                           'balance':cal_list['liability'][i]['balance'],
@@ -249,12 +249,12 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                           'name1': cal_list['asset'][i]['name'],
                           'level1': cal_list['asset'][i]['level'],
                           'balance1':cal_list['asset'][i]['balance'],
-                          }
+                    }
                     self.result_temp.append(temp)
                 else:
                     if i < len(cal_list['asset']):
                         temp={
-                              'code': '',
+                            'code': '',
                               'name': '',
                               'level': False,
                               'balance':False,
@@ -262,11 +262,11 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                               'name1': cal_list['asset'][i]['name'],
                               'level1': cal_list['asset'][i]['level'],
                               'balance1':cal_list['asset'][i]['balance'],
-                          }
+                        }
                         self.result_temp.append(temp)
                     if  i < len(cal_list['liability']):
                         temp={
-                              'code': cal_list['liability'][i]['code'],
+                            'code': cal_list['liability'][i]['code'],
                               'name': cal_list['liability'][i]['name'],
                               'level': cal_list['liability'][i]['level'],
                               'balance':cal_list['liability'][i]['balance'],
@@ -274,7 +274,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                               'name1': '',
                               'level1': False,
                               'balance1':False,
-                          }
+                        }
                         self.result_temp.append(temp)
         return None
 
@@ -286,8 +286,6 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
 
     def get_display_info(self, data):
         info_data = []
-        yes_str = _('Yes')
-        no_str = _('No')
         all_str = _('All')
 
         display_account = all_str
@@ -331,28 +329,28 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         if data.get('form', False):
             if data['form'].get('instance_ids', False):
                 self.cr.execute('select code from msf_instance where id IN %s',
-                    (tuple(data['form']['instance_ids']),))
+                                (tuple(data['form']['instance_ids']),))
                 instances = [x for x, in self.cr.fetchall()]
             else:
                 # US-1166: mission only instances if none provided
                 instances = self._get_instances(get_code=True,
-                    mission_filter=True)
+                                                mission_filter=True)
         return ', '.join(instances)
 
 report_sxw.report_sxw('report.account.balancesheet.horizontal', 'account.account',
-    'addons/account/report/account_balance_sheet_horizontal.rml',parser=report_balancesheet_horizontal,
-    header='internal landscape')
+                      'addons/account/report/account_balance_sheet_horizontal.rml',parser=report_balancesheet_horizontal,
+                      header='internal landscape')
 
 report_sxw.report_sxw('report.account.balancesheet', 'account.account',
-    'addons/account/report/account_balance_sheet.rml',parser=report_balancesheet_horizontal,
-    header='internal')
+                      'addons/account/report/account_balance_sheet.rml',parser=report_balancesheet_horizontal,
+                      header='internal')
 
 
 class balance_sheet_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
-        header='external', store=False):
+                 header='external', store=False):
         super(balance_sheet_xls, self).__init__(name, table, rml=rml,
-            parser=parser, header=header, store=store)
+                                                parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
         #ids = getIds(self, cr, uid, ids, context)
@@ -360,7 +358,7 @@ class balance_sheet_xls(SpreadsheetReport):
         return (a[0], 'xls')
 
 balance_sheet_xls('report.account.balance.sheet_xls', 'account.account',
-    'addons/account/report/account_balance_sheet_xls.mako',
-    parser=report_balancesheet_horizontal, header='internal')
+                  'addons/account/report/account_balance_sheet_xls.mako',
+                  parser=report_balancesheet_horizontal, header='internal')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

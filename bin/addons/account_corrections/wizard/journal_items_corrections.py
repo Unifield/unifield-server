@@ -71,7 +71,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         for line_br in self.browse(cr, uid, ids, context=context):
             res[line_br.id] = True
             if line_br.move_line_id \
-                and line_br.move_line_id.last_cor_was_only_analytic:
+                    and line_br.move_line_id.last_cor_was_only_analytic:
                 res[line_br.id] = False
             elif line_br.account_id and line_br.account_id.is_not_hq_correctible:
                 res[line_br.id] = False
@@ -94,12 +94,12 @@ class journal_items_corrections_lines(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Book. Curr.", readonly=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution", readonly=True),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
-            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'is_analytic_target': fields.function(_get_is_analytic_target, type='boolean', string='Is analytic target', method=True, invisible=True),
         'is_account_correctible': fields.function(_get_is_account_correctible,
-            type='boolean', string='Is account correctible',
-            method=True, invisible=True),
+                                                  type='boolean', string='Is account correctible',
+                                                  method=True, invisible=True),
     }
 
     _defaults = {
@@ -171,7 +171,7 @@ class journal_items_corrections_lines(osv.osv_memory):
         })
         # Open it!
         return {
-                'name': _('Analytic distribution'),
+            'name': _('Analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
@@ -256,7 +256,7 @@ class journal_items_corrections(osv.osv_memory):
                 'partner_id': move_line.partner_id and move_line.partner_id.id or None,
                 'employee_id': move_line.employee_id and move_line.employee_id.id or None,
                 'transfer_journal_id': move_line.transfer_journal_id and move_line.transfer_journal_id.id or None,
-#                'partner_type_mandatory': move_line.partner_type_mandatory or None,
+                #                'partner_type_mandatory': move_line.partner_type_mandatory or None,
                 'analytic_distribution_id': move_line.analytic_distribution_id and move_line.analytic_distribution_id.id or None,
             }
             self.pool.get('wizard.journal.items.corrections.lines').create(cr, uid, corrected_line_vals, context=context)
@@ -295,7 +295,7 @@ class journal_items_corrections(osv.osv_memory):
         if cmp(old_distrib, new_distrib):
             # UFTP-1187
             if old_line.account_id.is_analytic_addicted and \
-                new_account.account_id.is_analytic_addicted:
+                    new_account.account_id.is_analytic_addicted:
                 # tolerate this diff (no +4)
                 # if we correct an account with no AD required to a new account
                 # with AD required or from AD required to no AD
@@ -324,6 +324,40 @@ class journal_items_corrections(osv.osv_memory):
 #        # Do reverse
 #        res, move_ids = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
 #        return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
+
+    def _check_account_partner_compatibility(self, cr, uid, account, aml, context):
+        """
+        Check the compatibility between the account and the aml Third Party: raise a warning if they are not compatible.
+        :param account: new account selected in the Correction Wizard
+        :param aml: Journal Item to be corrected
+        """
+        acc_obj = self.pool.get('account.account')
+        acc_type = account.type_for_register
+        if acc_type != 'none':
+            # Check the compatibility with the "Type For Specific Treatment" of the account
+            if acc_type in ['transfer', 'transfer_same']:
+                partner_journal = aml.transfer_journal_id
+                is_liquidity = partner_journal and partner_journal.type in ['cash', 'bank', 'cheque'] and partner_journal.currency
+                if acc_type == 'transfer_same' and (not is_liquidity or partner_journal.currency.id != aml.currency_id.id):
+                    raise osv.except_osv(_('Warning'),
+                                         _('The account "%s - %s" is only compatible with a Liquidity Journal Third Party\n'
+                                           'having the same currency as the booking one.') % (account.code, account.name))
+                elif acc_type == 'transfer' and (not is_liquidity or partner_journal.currency.id == aml.currency_id.id):
+                    raise osv.except_osv(_('Warning'),
+                                         _('The account "%s - %s" is only compatible with a Liquidity Journal Third Party\n'
+                                           'having a currency different from the booking one.') % (account.code, account.name))
+            elif acc_type == 'advance' and not aml.employee_id:
+                raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
+                                                     'with an Employee Third Party.') % (account.code, account.name))
+            elif acc_type in ['down_payment', 'payroll'] and not aml.partner_id:
+                raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
+                                                     'with a Partner Third Party.') % (account.code, account.name))
+        else:
+            # Check the compatibility with the Allowed Partner Types
+            # (according to US-1307 this check is done only when the account has no "Type For Specific Treatment")
+            acc_obj.is_allowed_for_thirdparty(cr, uid, [account.id], partner_type=aml.partner_type or False, partner_txt=aml.partner_txt or False,
+                                              employee_id=aml.employee_id or False, transfer_journal_id=aml.transfer_journal_id or False,
+                                              partner_id=aml.partner_id or False, raise_it=True, context=context)
 
     def action_confirm(self, cr, uid, ids, context=None, distrib_id=False):
         """
@@ -361,6 +395,7 @@ class journal_items_corrections(osv.osv_memory):
         res = [] # no result yet
         # Correct account
         if comparison == 1:
+            self._check_account_partner_compatibility(cr, uid, new_lines[0].account_id, old_line, context)
             res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id, context=context)
             if not res:
                 raise osv.except_osv(_('Error'), _('No account changed!'))
@@ -370,7 +405,7 @@ class journal_items_corrections(osv.osv_memory):
                 res = aml_obj.correct_partner_id(cr, uid, [old_line.id], wizard.date, new_lines[0].partner_id.id, context=context)
                 if not res:
                     raise osv.except_osv(_('Error'),
-                        _('No partner changed! Verify that the Journal Entries attached to this line was not modify previously.'))
+                                         _('No partner changed! Verify that the Journal Entries attached to this line was not modify previously.'))
         elif comparison == 4:
             raise osv.except_osv('Warning', 'Do analytic distribution reallocation here!')
         elif comparison in [3, 5, 7]:

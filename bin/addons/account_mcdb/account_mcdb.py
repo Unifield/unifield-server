@@ -32,7 +32,8 @@ class account_mcdb(osv.osv):
     _columns = {
         'description': fields.char("Query name", required=False, readonly=False, size=255),
         'journal_ids': fields.many2many(obj='account.journal', rel='account_journal_mcdb', id1='mcdb_id', id2='journal_id', string="Journal Code", domain="[('code', '!=', 'IB')]"),  # exclude year closing initial balance journal
-        'instance_ids': fields.many2many('msf.instance', 'instance_mcdb', 'mcdb_id', 'instance_id', string="Proprietary instance"),
+        'instance_ids': fields.many2many('msf.instance', 'instance_mcdb', 'mcdb_id', 'instance_id', string="Proprietary instances"),
+        'top_prop_instance_ids': fields.many2many('msf.instance', 'instance_top_mcdb', 'mcdb_id', 'instance_id', string="Top Proprietary instances"),
         'analytic_journal_ids': fields.many2many(obj='account.analytic.journal', rel='account_analytic_journal_mcdb', id1='mcdb_id', id2='analytic_journal_id', string="Analytic journal code"),
         'abs_id': fields.many2one('account.bank.statement', string="Register name"), # Change into many2many ?
         'posting_date_from': fields.date('First posting date'),
@@ -58,7 +59,7 @@ class account_mcdb(osv.osv):
         'amount_from': fields.float('Begin amount in given currency type'),
         'amount_to': fields.float('Ending amount in given currency type'),
         'account_type_ids': fields.many2many(obj='account.account.type', rel='account_account_type_mcdb', id1='mcdb_id', id2='account_type_id',
-            string="Account type"),
+                                             string="Account type"),
         'reconcile_id': fields.many2one('account.move.reconcile', string="Reconcile Reference"),
         'reconcile_date': fields.date("Reconciled at"),
         'ref': fields.char(string='Reference', size=255),
@@ -68,16 +69,16 @@ class account_mcdb(osv.osv):
         'display_in_output_currency': fields.many2one('res.currency', string='Display in output currency'),
         'fx_table_id': fields.many2one('res.currency.table', string="FX Table"),
         'analytic_account_cc_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_cc_mcdb", id1="mcdb_id", id2="analytic_account_id",
-            string="Cost Center"),
+                                                    string="Cost Center"),
         'rev_analytic_account_cc_ids': fields.boolean('Exclude Cost Center selection'),
         'analytic_account_fp_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_fp_mcdb", id1="mcdb_id", id2="analytic_account_id",
-            string="Funding Pool"),
+                                                    string="Funding Pool"),
         'rev_analytic_account_fp_ids': fields.boolean('Exclude Funding Pool selection'),
         'analytic_account_f1_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_f1_mcdb", id1="mcdb_id", id2="analytic_account_id",
-            string="Free 1"),
+                                                    string="Free 1"),
         'rev_analytic_account_f1_ids': fields.boolean('Exclude free 1 selection'),
         'analytic_account_f2_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_f2_mcdb", id1="mcdb_id", id2="analytic_account_id",
-            string="Free 2"),
+                                                    string="Free 2"),
         'rev_analytic_account_f2_ids': fields.boolean('Exclude free 2 selection'),
         'reallocated': fields.selection([('reallocated', 'Reallocated'), ('unreallocated', 'NOT reallocated')], string='Reallocated?'),
         'reversed': fields.selection([('reversed', 'Reversed'), ('notreversed', 'NOT reversed')], string='Reversed?'),
@@ -85,14 +86,16 @@ class account_mcdb(osv.osv):
         'rev_period_ids': fields.boolean('Exclude period selection'),
         'rev_account_type_ids': fields.boolean('Exclude account type selection'),
         'rev_analytic_journal_ids': fields.boolean('Exclude analytic journal selection'),
-        'rev_instance_ids': fields.boolean('Exclude instance selection'),
+        'rev_instance_ids': fields.boolean('Exclude instances selection'),
+        'rev_top_prop_instance_ids': fields.boolean('Exclude top prop instances selection'),
         'analytic_axis': fields.selection([('fp', 'Funding Pool'), ('f1', 'Free 1'), ('f2', 'Free 2')], string='Display'),
         'rev_analytic_account_dest_ids': fields.boolean('Exclude Destination selection'),
         'analytic_account_dest_ids': fields.many2many(obj='account.analytic.account', rel="account_analytic_dest_mcdb", id1="mcdb_id", id2="analytic_account_id",
-            string="Destination"),
+                                                      string="Destination"),
         'display_journal': fields.boolean('Display journals?'),
         'display_period': fields.boolean('Display periods?'),
         'display_instance': fields.boolean('Display instances?'),
+        'display_top_prop_instance': fields.boolean('Display Top prop instances?'),
         'display_account': fields.boolean('Display accounts?'),
         'display_analytic_account': fields.boolean('Display analytic accounts?'),
         'display_type': fields.boolean('Display account types?'),
@@ -116,6 +119,7 @@ class account_mcdb(osv.osv):
         'display_journal': lambda *a: False,
         'display_period': lambda *a: False,
         'display_instance': lambda *a: False,
+        'display_top_prop_instance': lambda *a: False,
         'display_account': lambda *a: False,
         'display_analytic_account': lambda *a: False,
         'display_type': lambda *a: False,
@@ -217,6 +221,33 @@ class account_mcdb(osv.osv):
         vals.update({'analytic_account_fp_ids': False, 'analytic_account_cc_ids': False, 'analytic_account_dest_ids': False, 'analytic_account_f1_ids': False, 'analytic_account_f2_ids': False})
         return {'value': vals}
 
+    def onchange_display_instance(self, cr, uid, ids, display_instance, display_top_prop_instance, context=None):
+        if display_instance and display_top_prop_instance:
+            warning = {
+                'title': _('Warning'),
+                'message': _('You cannot select \'Instances\' because \'Top prop Instances\' is already selected.')
+            }
+            value = {'display_instance': False}
+            return {
+                'warning': warning,
+                'value': value
+            }
+        return {}
+
+    def onchange_display_prop_instance(self, cr, uid, ids, display_instance, display_top_prop_instance, context=None):
+        if display_instance and display_top_prop_instance:
+            warning = {
+                'title': _('Warning'),
+                'message': _('You cannot select \'Top prop Instances\' because \'Instances\' is already selected.')
+            }
+            value = {'display_top_prop_instance': False}
+
+            return {
+                'warning': warning,
+                'value': value
+            }
+        return {}
+
     def button_validate(self, cr, uid, ids, context=None):
         """
         Validate current forms and give result
@@ -233,10 +264,18 @@ class account_mcdb(osv.osv):
         if res_model:
             # Prepare domain values
             # First MANY2MANY fields
-            m2m_fields = [('period_ids', 'period_id'), ('journal_ids', 'journal_id'), ('analytic_journal_ids', 'journal_id'),
-                ('analytic_account_fp_ids', 'account_id'), ('analytic_account_cc_ids', 'cost_center_id'),
-                ('analytic_account_f1_ids', 'account_id'), ('analytic_account_f2_ids', 'account_id'), ('analytic_account_dest_ids', 'destination_id'),
-                ('instance_ids', 'instance_id')]
+            m2m_fields = [
+                ('period_ids', 'period_id'),
+                ('journal_ids', 'journal_id'),
+                ('analytic_journal_ids', 'journal_id'),
+                ('analytic_account_fp_ids', 'account_id'),
+                ('analytic_account_cc_ids', 'cost_center_id'),
+                ('analytic_account_f1_ids', 'account_id'),
+                ('analytic_account_f2_ids', 'account_id'),
+                ('analytic_account_dest_ids', 'destination_id'),
+                ('instance_ids', 'instance_id'),
+                ('top_prop_instance_ids', 'instance_id'),
+            ]
             if res_model == 'account.analytic.line':
                 m2m_fields.append(('account_ids', 'general_account_id'))
                 m2m_fields.append(('account_type_ids', 'general_account_id.user_type'))
@@ -245,40 +284,50 @@ class account_mcdb(osv.osv):
                 m2m_fields.append(('account_type_ids', 'account_id.user_type'))
             for m2m in m2m_fields:
                 if getattr(wiz, m2m[0]):
+
+                    # do not add domain if the block have not been selected
+                    # (because they are using same field relation m2m)
+                    if m2m[0] == 'instance_ids' and not wiz.display_instance:
+                        continue
+                    if m2m[0] == 'top_prop_instance_ids' and not wiz.display_top_prop_instance:
+                        continue
+
                     operator = 'in'
                     # Special fields
                     # account_ids with reversal
                     if m2m[0] == 'account_ids' and wiz.rev_account_ids:
                         operator = 'not in'
                     # analytic_account_fp_ids with reversal
-                    if m2m[0] == 'analytic_account_fp_ids' and wiz.rev_analytic_account_fp_ids:
+                    elif m2m[0] == 'analytic_account_fp_ids' and wiz.rev_analytic_account_fp_ids:
                         operator = 'not in'
                     # analytic_account_cc_ids with reversal
-                    if m2m[0] == 'analytic_account_cc_ids' and wiz.rev_analytic_account_cc_ids:
+                    elif m2m[0] == 'analytic_account_cc_ids' and wiz.rev_analytic_account_cc_ids:
                         operator = 'not in'
                     # analytic_account_f1_ids with reversal
-                    if m2m[0] == 'analytic_account_f1_ids' and wiz.rev_analytic_account_f1_ids:
+                    elif m2m[0] == 'analytic_account_f1_ids' and wiz.rev_analytic_account_f1_ids:
                         operator = 'not in'
                     # analytic_account_f2_ids with reversal
-                    if m2m[0] == 'analytic_account_f2_ids' and wiz.rev_analytic_account_f2_ids:
+                    elif m2m[0] == 'analytic_account_f2_ids' and wiz.rev_analytic_account_f2_ids:
                         operator = 'not in'
                     # analytic_account_dest_ids with reversal
-                    if m2m[0] == 'analytic_account_dest_ids' and wiz.rev_analytic_account_dest_ids:
+                    elif m2m[0] == 'analytic_account_dest_ids' and wiz.rev_analytic_account_dest_ids:
                         operator = 'not in'
                     # period_ids with reversal
-                    if m2m[0] == 'period_ids' and wiz.rev_period_ids:
+                    elif m2m[0] == 'period_ids' and wiz.rev_period_ids:
                         operator = 'not in'
                     # journal_ids with reversal
-                    if m2m[0] == 'journal_ids' and wiz.rev_journal_ids:
+                    elif m2m[0] == 'journal_ids' and wiz.rev_journal_ids:
                         operator = 'not in'
                     # account_type_ids with reversal
-                    if m2m[0] == 'account_type_ids' and wiz.rev_account_type_ids:
+                    elif m2m[0] == 'account_type_ids' and wiz.rev_account_type_ids:
                         operator = 'not in'
                     # analytic_journal_ids with reversal
-                    if m2m[0] == 'analytic_journal_ids' and wiz.rev_analytic_journal_ids:
+                    elif m2m[0] == 'analytic_journal_ids' and wiz.rev_analytic_journal_ids:
                         operator = 'not in'
                     # instance_ids with reversal
-                    if m2m[0] == 'instance_ids' and wiz.rev_instance_ids:
+                    elif m2m[0] == 'instance_ids' and wiz.rev_instance_ids:
+                        operator = 'not in'
+                    elif m2m[0] == 'top_prop_instance_ids' and wiz.rev_top_prop_instance_ids:
                         operator = 'not in'
                     # Search if a view account is given
                     if m2m[0] in ['account_ids', 'analytic_account_fp_ids', 'analytic_account_cc_ids', 'analytic_account_f1_ids', 'analytic_account_f2_ids']:
@@ -298,10 +347,16 @@ class account_mcdb(osv.osv):
                             # Create domain and NEXT element (otherwise this give a bad domain)
                             domain.append((m2m[1], operator, tuple(account_ids)))
                             continue
-                    domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
+                    if m2m[0] == 'top_prop_instance_ids':
+                        instance_obj = self.pool.get('msf.instance')
+                        child_list = instance_obj.get_child_ids(cr, uid, [x.id for x in getattr(wiz, m2m[0])])
+                        id_list = child_list + [x.id for x in getattr(wiz, m2m[0])]
+                        domain.append((m2m[1], operator, tuple(id_list)))
+                    else:
+                        domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
             # Then MANY2ONE fields
             for m2o in [('abs_id', 'statement_id'), ('partner_id', 'partner_id'), ('employee_id', 'employee_id'),
-                ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id')]:
+                        ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
             # Finally others fields
@@ -848,8 +903,33 @@ class account_mcdb(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Return default behaviour with 'period_ids' field
         return self.button_clear(cr, uid, ids, field='instance_ids', context=context)
+
+    def button_prop_instance_clear(self, cr, uid, ids, context=None):
+        """
+        Delete top_prop_instance_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        return self.button_clear(cr, uid, ids, field='top_prop_instance_ids', context=context)
+
+    def button_prop_instance_add(self, cr, uid, ids, context=None):
+        """
+        Add all instances in top_prop_instance_ids field content
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        obj = 'msf.instance'
+        args = [('level', '=', 'coordo')]
+        field = 'top_prop_instance_ids'
+        return self._button_add(cr, uid, ids, obj, field, args, context=context)
 
     def button_instance_add(self, cr, uid, ids, context=None):
         """

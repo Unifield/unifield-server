@@ -76,9 +76,9 @@ class account_commitment(osv.osv):
         'date': fields.date(string="Commitment Date", readonly=True, required=True, states={'draft': [('readonly', False)], 'open': [('readonly', False)]}),
         'line_ids': fields.one2many('account.commitment.line', 'commit_id', string="Commitment Voucher Lines"),
         'total': fields.function(_get_total, type='float', method=True, digits_compute=dp.get_precision('Account'), readonly=True, string="Total",
-            store={
-                'account.commitment.line': (_get_cv, ['amount'],10),
-        }),
+                                 store={
+                                 'account.commitment.line': (_get_cv, ['amount'],10),
+                                 }),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')], string="Type", readonly=True),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
@@ -251,7 +251,7 @@ class account_commitment(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Global analytic distribution'),
+            'name': _('Global analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',
@@ -351,7 +351,7 @@ class account_commitment(osv.osv):
                 # Verify that analytic distribution is present
                 if cl.analytic_distribution_state != 'valid':
                     raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for account "%s %s".') %
-                        (cl.account_id and cl.account_id.code, cl.account_id and cl.account_id.name))
+                                         (cl.account_id and cl.account_id.code, cl.account_id and cl.account_id.name))
                 # Take analytic distribution either from line or from commitment voucher
                 distrib_id = cl.analytic_distribution_id and cl.analytic_distribution_id.id or c.analytic_distribution_id and c.analytic_distribution_id.id or False
                 if not distrib_id:
@@ -361,9 +361,9 @@ class account_commitment(osv.osv):
                 if not al_ids:
                     # Create engagement journal lines
                     self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], c.name, c.date,
-                        cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.date or False,
-                        (c.purchase_id and c.purchase_id.name) or c.name or False, c.date, cl.account_id and cl.account_id.id or False, False, False,
-                        cl.id, context=context)
+                                                                                 cl.amount, c.journal_id and c.journal_id.id, c.currency_id and c.currency_id.id, c.date or False,
+                                                                                 (c.purchase_id and c.purchase_id.name) or c.name or False, c.date, cl.account_id and cl.account_id.id or False, False, False,
+                                                                                 cl.id, context=context)
         return True
 
     def action_commitment_open(self, cr, uid, ids, context=None):
@@ -397,7 +397,7 @@ class account_commitment(osv.osv):
             res = self.pool.get('account.analytic.line').unlink(cr, uid, search_ids, context=context)
             # And finally update commitment voucher state and lines amount
             if not res:
-                raise osv.except_osv(_('Error'), _('An error occured on engagement lines deletion.'))
+                raise osv.except_osv(_('Error'), _('An error occurred on engagement lines deletion.'))
             self.pool.get('account.commitment.line').write(cr, uid, [x.id for x in c.line_ids], {'amount': 0}, context=context)
             self.write(cr, uid, [c.id], {'state':'done'}, context=context)
         return True
@@ -456,14 +456,14 @@ class account_commitment_line(osv.osv):
         'commit_id': fields.many2one('account.commitment', string="Commitment Voucher", on_delete="cascade"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
-            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
-            string='Header Distrib.?'),
+                                                                  string='Header Distrib.?'),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'analytic_lines': fields.one2many('account.analytic.line', 'commitment_line_id', string="Analytic Lines"),
         'first': fields.boolean(string="Is not created?", help="Useful for onchange method for views. Should be False after line creation.",
-            readonly=True),
+                                readonly=True),
     }
 
     _defaults = {
@@ -503,8 +503,8 @@ class account_commitment_line(osv.osv):
                 self.pool.get('account.analytic.line').unlink(cr, uid, analytic_line_ids, context=context)
                 ref = cl.commit_id and cl.commit_id.purchase_id and cl.commit_id.purchase_id.name or False
                 self.pool.get('analytic.distribution').create_analytic_lines(cr, uid, [distrib_id], cl.commit_id and cl.commit_id.name or 'Commitment voucher line', cl.commit_id.date, amount,
-                    cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, cl.commit_id and cl.commit_id.date or False,
-                    ref, cl.commit_id.date, account_id or cl.account_id.id, move_id=False, invoice_line_id=False, commitment_line_id=cl.id, context=context)
+                                                                             cl.commit_id.journal_id.id, cl.commit_id.currency_id.id, cl.commit_id and cl.commit_id.date or False,
+                                                                             ref, cl.commit_id.date, account_id or cl.account_id.id, move_id=False, invoice_line_id=False, commitment_line_id=cl.id, context=context)
         return True
 
     def create(self, cr, uid, vals, context=None):
@@ -640,7 +640,7 @@ class account_commitment_line(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Analytic distribution'),
+            'name': _('Analytic distribution'),
                 'type': 'ir.actions.act_window',
                 'res_model': 'analytic.distribution.wizard',
                 'view_type': 'form',

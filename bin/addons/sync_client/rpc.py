@@ -10,10 +10,10 @@ import socket
 import zlib
 import xmlrpclib
 from timeout_transport import TimeoutTransport
-from gzip_xmlrpclib import GzipTransport, GzipSafeTransport
 from osv import osv
 from tools.translate import _
 import tools
+import ssl
 
 try:
     import cPickle as pickle
@@ -26,9 +26,6 @@ except:
     import StringIO
 
 import logging
-#import logging.config
-
-#logging.config.fileConfig('logging.cfg')
 
 GZIP_MAGIC = '\x78\xda' # magic when max compression used
 NB_RETRY = 10
@@ -93,6 +90,8 @@ class XmlRPCConnector(Connector):
     def send(self, service_name, method, *args):
         url = '%s/%s' % (self.url, service_name)
         transport = TimeoutTransport(timeout=self.timeout)
+        # Enable gzip on all payloads
+        transport.encode_threshold = 0
         service = xmlrpclib.ServerProxy(url, allow_none=1, transport=transport)
         return self._send(service, method, *args)
 
@@ -113,36 +112,6 @@ class XmlRPCConnector(Connector):
             raise osv.except_osv(_('Error!'), "Unable to proceed for the following reason:\n%s" % (e.faultCode if hasattr(e, 'faultCode') else tools.ustr(e)))
 
 
-"""Modified version of xmlrcpclib.Transport.request (same in Python 2.4, 2.5, 2.6)
-   to workaround Python bug http://bugs.python.org/issue1223
-   for Python versions before 2.6
-   This patch is inspired by http://www.cherrypy.org/ticket/743.
-   See LP bug https://bugs.launchpad.net/openobject-client/+bug/673775
-"""
-def fixed_request(self, host, handler, request_body, verbose=0):
-    h = self.make_connection(host)
-    if verbose:
-        h.set_debuglevel(1)
-    self.send_request(h, handler, request_body)
-    self.send_host(h, host)
-    self.send_user_agent(h)
-    self.send_content(h, request_body)
-    errcode, errmsg, headers = h.getreply()
-    if errcode != 200:
-        raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg,
-                                      headers)
-    self.verbose = verbose
-    # below we make sure to call parse_response() and
-    # not _parse_response(), and don't pass the socket,
-    # so it will have to use the file instead, and avoid
-    # the problem of the original code.
-    return self.parse_response(h.getfile())
-
-# Rude monkey-patch to fix the SSL connection error in Python 2.5-,
-# as last resort solution to fix it all at once.
-if sys.version_info < (2,6):
-    xmlrpclib.SafeTransport.request = fixed_request
-
 class SecuredXmlRPCConnector(XmlRPCConnector):
     """
     This class supports the XmlRPC protocol over HTTPS
@@ -155,33 +124,13 @@ class SecuredXmlRPCConnector(XmlRPCConnector):
 
     def send(self, service_name, method, *args):
         url = '%s/%s' % (self.url, service_name)
-        service = xmlrpclib.ServerProxy(url, allow_none=1)
+        # Decide whether to accept self-signed certificates
+        ctx = ssl.create_default_context()
+        if not tools.config.get('secure_verify', True):
+            ctx.check_hostname = False
+            ctx.verify_mode = ssl.CERT_NONE
+        service = xmlrpclib.ServerProxy(url, allow_none=1, context=ctx)
         return self._send(service, method, *args)
-
-class GzipXmlRPCConnector(XmlRPCConnector):
-    """
-    This class supports the XmlRPC protocol with gzipped payload
-    """
-    PROTOCOL = 'gzipxmlrpc'
-
-    def send(self, service_name, method, *args):
-        url = '%s/%s' % (self.url, service_name)
-        gzip_transport = GzipTransport(timeout=self.timeout)
-        service = xmlrpclib.ServerProxy(url, allow_none=1, transport=gzip_transport)
-        return self._send(service, method, *args)
-
-class GzipXmlRPCSConnector(GzipXmlRPCConnector):
-    PROTOCOL = 'gzipxmlrpcs'
-
-    def __init__(self, hostname, port=8069, *args, **kwargs):
-        GzipXmlRPCConnector.__init__(self, hostname, port, *args, **kwargs)
-        self.url = 'https://%s:%s/xmlrpc' % (self.hostname, self.port)
-
-    def send(self, service_name, method, *args):
-        url = '%s/%s' % (self.url, service_name)
-        gzip_safe_transport = GzipSafeTransport(timeout=self.timeout)
-        service = xmlrpclib.ServerProxy(url, allow_none=1, transport=gzip_safe_transport)
-        return getattr(service, method)(*args)
 
 class NetRPC_Exception(Exception):
     def __init__(self, faultCode, faultString):
@@ -217,11 +166,7 @@ class NetRPC:
         #self._logger.debug("rpc message : %s", msg)
         msg = pickle.dumps([msg,traceback])
         if self.is_gzip:
-            #raw_size = len(msg)
             msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
-            #gzipped_size = len(msg)
-            #saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
-            #self._logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
         size = len(msg)
         self.sock.send('%8d' % size)
         self.sock.send(exception and "1" or "0")
@@ -252,11 +197,7 @@ class NetRPC:
                 raise RuntimeError, "socket connection broken"
             msg = msg + chunk
         if msg.startswith(GZIP_MAGIC):
-            #gzipped_size = len(msg)
             msg = zlib.decompress(msg)
-            #raw_size = len(msg)
-            #saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
-            #self._logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
         res = SafeUnpickler.loads(msg)
 
         if isinstance(res[0],Exception):

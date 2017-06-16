@@ -6,6 +6,7 @@
         <field name="name">destruction.locationstock.tree</field>
         <field name="model">stock.move</field>
         <field name="type">tree</field>
+        <field name="priority">18</field>
         <field name="arch" type="xml">
             <tree string="Destruction Location">
                 <field name="name"/>
@@ -28,6 +29,7 @@
         <field name="name">report.destruction.location.search</field>
         <field name="model">stock.move</field>
         <field name="type">search</field>
+        <field name="priority">18</field>
         <field name="arch" type="xml">
             <search string="Destruction Location">
                 <group>

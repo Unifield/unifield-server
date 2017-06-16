@@ -43,7 +43,8 @@ class wizard_import_invoice_lines(osv.osv_memory):
         return res
 
     _columns = {
-        'partner_id': fields.many2one('res.partner', string='3rd Party', readonly=True),
+        'partner_id': fields.many2one('res.partner', string='Partner', readonly=True),
+        'employee_id': fields.many2one('hr.employee', string='Employee', readonly=True),
         'ref': fields.char('Ref.', size=64, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", readonly=True),
         'date': fields.date('Posting Date', readonly=False, required=True),
@@ -190,6 +191,7 @@ class wizard_import_invoice(osv.osv_memory):
             new_lines.append({
                 'line_ids': [(6, 0, [x.id for x in ordered_lines[key]])],
                 'partner_id': ordered_lines[key][0].partner_id.id or None,
+                'employee_id': ordered_lines[key][0].employee_id.id or None,
                 'ref': ' / '.join([x.ref and x.ref or '' for x in ordered_lines[key]])[:size] or False,
                 'account_id': ordered_lines[key][0].account_id.id or None,
                 'date': wizard.date or time.strftime('%Y-%m-%d'),
@@ -256,6 +258,7 @@ class wizard_import_invoice(osv.osv_memory):
                     'statement_id': st_id,
                     'account_id': line.account_id.id,
                     'partner_id': line.partner_id.id,
+                    'employee_id': line.employee_id.id,
                     'amount': line.amount_currency < 0 and -line.amount or line.amount,
                     'imported_invoice_line_ids': [(4, x.id) for x in line.line_ids],
                 }

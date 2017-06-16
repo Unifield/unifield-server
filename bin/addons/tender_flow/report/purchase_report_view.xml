@@ -5,6 +5,7 @@
             <field name="name">purchase.order.tree</field>
             <field name="model">purchase.report</field>
             <field name="type">tree</field>
+            <field name="priority">21</field>
             <field name="arch" type="xml">
                 <tree string="Purchase Orders Statistics">
                     <field name="date" invisible="1"/>

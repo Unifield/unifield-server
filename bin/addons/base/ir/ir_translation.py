@@ -46,7 +46,7 @@ class ir_translation(osv.osv):
     def _get_language(self, cr, uid, context):
         lang_obj = self.pool.get('res.lang')
         lang_ids = lang_obj.search(cr, uid, [],
-                context=context)
+                                   context=context)
         langs = lang_obj.read(cr, uid, lang_ids, ['code', 'name'], context=context)
         res = [(lang['code'], lang['name']) for lang in langs]
         for lang_dict in tools.scan_languages():
@@ -64,7 +64,7 @@ class ir_translation(osv.osv):
         # These two columns map to ir_model_data.module and ir_model_data.name.
         # They are used to resolve the res_id above after loading is done.
         'module': fields.char('Module', size=64, help='Maps to the ir_model_data for which this translation is provided.'),
-        'xml_id': fields.char('XML Id', size=128, help='Maps to the ir_model_data for which this translation is provided.'),
+        'xml_id': fields.char('XML Id', size=128, help='Maps to the ir_model_data for which this translation is provided.', select=True),
     }
 
     def _auto_init(self, cr, context={}):
@@ -97,12 +97,12 @@ class ir_translation(osv.osv):
         translations = dict.fromkeys(ids, False)
         if ids:
             cr.execute('SELECT res_id,value ' \
-                    'FROM ir_translation ' \
-                    'WHERE lang=%s ' \
-                        'and type=%s ' \
-                        'and name=%s ' \
-                        'and res_id IN %s',
-                    (lang,tt,name,tuple(ids)))
+                       'FROM ir_translation ' \
+                       'WHERE lang=%s ' \
+                       'and type=%s ' \
+                       'and name=%s ' \
+                       'and res_id IN %s',
+                       (lang,tt,name,tuple(ids)))
             for res_id, value in cr.fetchall():
                 translations[res_id] = value
         return translations
@@ -112,12 +112,12 @@ class ir_translation(osv.osv):
         translation_dict = dict.fromkeys(ids, None)
         if ids:
             cr.execute('SELECT id, res_id,value ' \
-                    'FROM ir_translation ' \
-                    'WHERE lang=%s ' \
-                        'and type=%s ' \
-                        'and name=%s ' \
-                        'and res_id IN %s',
-                    (lang,tt,name,tuple(ids)))
+                       'FROM ir_translation ' \
+                       'WHERE lang=%s ' \
+                       'and type=%s ' \
+                       'and name=%s ' \
+                       'and res_id IN %s',
+                       (lang,tt,name,tuple(ids)))
             for ir_trans_id, res_id, value in cr.fetchall():
                 translation_dict[res_id] = {'ir_trans_id':ir_trans_id, 'value':value}
         return translation_dict
@@ -131,7 +131,7 @@ class ir_translation(osv.osv):
             for res_id in ids:
                 if translation_dict[res_id]:
                     self._get_source.clear_cache(cr.dbname, uid, name, tt,
-                            lang, translation_dict[res_id]['value'])
+                                                 lang, translation_dict[res_id]['value'])
             self._get_source.clear_cache(cr.dbname, uid, name, tt, lang)
             self._get_ids.clear_cache(cr.dbname, uid, name, tt, lang, ids)
             self._get_ids_dict.clear_cache(cr.dbname, uid, name, tt, lang, ids)
@@ -141,13 +141,13 @@ class ir_translation(osv.osv):
             if translation_dict[obj_id] is not None:
                 if not value or value==src or lang=='en_US':
                     self.unlink(cr, uid,
-                            translation_dict[obj_id]['ir_trans_id'],
-                            clear=clear, context=context)
+                                translation_dict[obj_id]['ir_trans_id'],
+                                clear=clear, context=context)
                 else:
                     values = {'value': value, 'src': src}
                     self.write(cr, uid,
-                            translation_dict[obj_id]['ir_trans_id'],
-                            values, clear=clear, context=context)
+                               translation_dict[obj_id]['ir_trans_id'],
+                               values, clear=clear, context=context)
             elif value!=src:
                 self.create(cr, uid, {
                     'lang': lang,
@@ -156,7 +156,7 @@ class ir_translation(osv.osv):
                     'res_id': obj_id,
                     'value': value,
                     'src': src,
-                    },
+                },
                     clear=clear,
                     context=context)
         return len(ids)
@@ -200,7 +200,7 @@ class ir_translation(osv.osv):
                           WHERE lang=%s
                            AND type in %s
                            AND name=%s""",
-                    (lang or '', types, tools.ustr(name)))
+                       (lang or '', types, tools.ustr(name)))
         res = cr.fetchone()
         trad = res and res[0] or u''
         if source and not trad:
@@ -226,13 +226,13 @@ class ir_translation(osv.osv):
                 wv for wv in wanted_other_vals if not wv in vals ]
             if fields_to_load:
                 r = self.read(cursor, user, [id], fields_to_load,
-                    context=context)[0]
+                              context=context)[0]
                 for ftl in fields_to_load:
                     other_vals[ftl] = r[ftl]
 
         # truncate value if required
         if ',' in other_vals['name'] and other_vals.get('type') == 'model' \
-            and vals.get('value'):
+                and vals.get('value'):
                 model_name = other_vals['name'].split(",")[0]
                 field = other_vals['name'].split(",")[1]
                 if field:
@@ -258,8 +258,8 @@ class ir_translation(osv.osv):
                 self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
                 self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
                 self._get_ids_dict.clear_cache(cursor.dbname, user,
-                        trans_obj['name'], trans_obj['type'],
-                        trans_obj['lang'], [trans_obj['res_id']])
+                                               trans_obj['name'], trans_obj['type'],
+                                               trans_obj['lang'], [trans_obj['res_id']])
         return ids
 
     def write(self, cursor, user, ids, vals, clear=True, context=None):
@@ -294,8 +294,8 @@ class ir_translation(osv.osv):
                 self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
                 self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
                 self._get_ids_dict.clear_cache(cursor.dbname, user,
-                        trans_obj['name'], trans_obj['type'],
-                        trans_obj['lang'], [trans_obj['res_id']])
+                                               trans_obj['name'], trans_obj['type'],
+                                               trans_obj['lang'], [trans_obj['res_id']])
         return result
 
     def unlink(self, cursor, user, ids, clear=True, context=None):
@@ -308,8 +308,8 @@ class ir_translation(osv.osv):
                 self._get_source.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], source=trans_obj['src'])
                 self._get_ids.clear_cache(cursor.dbname, user, trans_obj['name'], trans_obj['type'], trans_obj['lang'], [trans_obj['res_id']])
                 self._get_ids_dict.clear_cache(cursor.dbname, user,
-                        trans_obj['name'], trans_obj['type'],
-                        trans_obj['lang'], [trans_obj['res_id']])
+                                               trans_obj['name'], trans_obj['type'],
+                                               trans_obj['lang'], [trans_obj['res_id']])
         result = super(ir_translation, self).unlink(cursor, user, ids, context=context)
         return result
 

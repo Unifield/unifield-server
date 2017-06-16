@@ -818,6 +818,7 @@ class product_attributes(osv.osv):
                 ('phase_out', 'Phase Out'),
                 ('stopped', 'Stopped'),
                 ('archived', 'Archived'),
+                ('forbidden', 'Forbidden'),
             ],
             string='UniData Status',
             readonly=True,
@@ -913,7 +914,7 @@ class product_attributes(osv.osv):
         ),
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
-        'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity'),
+        'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity', help="Standard Ordering Quantity. Quantity according to which the product should be ordered. The SoQ is usually determined by the typical packaging of the product."),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'uf_write_date': fields.datetime(_('Write date')),
         'uf_create_date': fields.datetime(_('Creation date')),
@@ -940,8 +941,8 @@ class product_attributes(osv.osv):
 
     def default_get(self, cr, uid, fields, context=None):
         res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
-
-        res['heat_sensitive_item'] = self._get_default_sensitive_item(cr, uid, context=context)
+        if 'heat_sensitive_item' in fields or not fields:
+            res['heat_sensitive_item'] = self._get_default_sensitive_item(cr, uid, context=context)
 
         return res
 
@@ -1241,13 +1242,14 @@ class product_attributes(osv.osv):
                     }, context=context)
 
         if 'default_code' in vals:
-            vals['default_code'] = vals['default_code'].strip()
-            if not context.get('sync_update_execution') and ' ' in vals['default_code']:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('White spaces are not allowed in product code'),
-                )
-        if 'xmlid_code' in vals:
+            if not context.get('sync_update_execution'):
+                vals['default_code'] = vals['default_code'].strip()
+                if ' ' in vals['default_code']:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('White spaces are not allowed in product code'),
+                    )
+        if vals.get('xmlid_code'):
             if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
                 raise osv.except_osv(
                     _('Error'),
@@ -1295,7 +1297,7 @@ class product_attributes(osv.osv):
         smrl_obj = self.pool.get('stock.mission.report.line')
         prod_status_obj = self.pool.get('product.status')
         int_stat_obj = self.pool.get('product.international.status')
-
+        
         if context is None:
             context = {}
 
@@ -1310,19 +1312,20 @@ class product_attributes(osv.osv):
                 vals['perishable'] = True
         if 'default_code' in vals:
             if vals['default_code'] == 'XXX':
-                vals.update({'duplicate_ok': True})
+                vals['duplicate_ok'] = True
             else:
-                vals.update({
-                    'duplicate_ok': False,
-                    'default_code': vals['default_code'].strip(),
-                })
-            if not context.get('sync_update_execution') and ' ' in vals['default_code']:
-                # Check if the old code was 'XXX'
-                if any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('White spaces are not allowed in product code'),
-                    )
+                vals['duplicate_ok'] = False
+            if not context.get('sync_update_execution'):
+                vals['default_code'] = vals['default_code'].strip()
+                if ' ' in vals['default_code']:
+                    # Check if the old code was 'XXX'
+                    # in case there is, it mean it is a duplicate and spaces
+                    # are not allowed.
+                    if any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('White spaces are not allowed in product code'),
+                        )
 
         # update local stock mission report lines :
         if 'state' in vals:
@@ -1380,7 +1383,6 @@ class product_attributes(osv.osv):
                 category_id = product.uom_id.category_id.id
                 if category_id not in product_uom_categ:
                     product_uom_categ.append(category_id)
-
         if 'heat_sensitive_item' in vals:
             if not vals.get('heat_sensitive_item'):
                 heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]

@@ -270,10 +270,12 @@ class purchase_order(osv.osv):
         # Check if we are in the case of update of sent RfQ
         po = self.browse(cr, uid, [ids[0]], context=context)[0]
         columns = columns_for_po_line_import
+        columns_header = [(_(f[0]), f[1]) for f in columns_header_for_po_line_import]
+        # if PO is not a RfQ, then we doesn't take in account the first column (Line Number):
         if not po.rfq_ok or po.state != 'rfq_sent':
             columns = columns_for_po_line_import[1:]
+            columns_header = columns_header[1:]
 
-        columns_header = [(_(f[0]), f[1]) for f in columns_header_for_po_line_import]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.po.line').create(cr, uid, {'file': file,

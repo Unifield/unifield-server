@@ -766,35 +766,47 @@ class procurement_request_line(osv.osv):
         return True
 
 
-    def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, context=None):
+    def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, categ=False, context=None):
         '''
         Fills automatically the product_uom_id field and the name on the line when the
         product is changed.
         Add a domain on the product_uom when a product is selected.
+        Check consistency of product according to the selected order category
         '''
         if context is None:
             context = {}
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
 
-        value = {}
-        domain = {}
+        vals = {}
+        vals.setdefault('value', {})
+        vals.setdefault('domain', {})
         if not product_id:
-            value = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False, 'cost_price': False, 'price_subtotal': False, 'product_uom_qty': 0.00, 'product_uos_qty': 0.00}
-            domain = {'product_uom':[], 'supplier': [('partner_type', 'in', ['internal', 'section', 'intermission'])]}
+            vals['value'] = {'product_uom': False, 'supplier': False, 'name': '', 'type':'make_to_order', 'comment_ok': False, 'cost_price': False, 'price_subtotal': False, 'product_uom_qty': 0.00, 'product_uos_qty': 0.00}
+            vals['domain'] = {'product_uom':[], 'supplier': [('partner_type', 'in', ['internal', 'section', 'intermission'])]}
         elif product_id:
             product = product_obj.browse(cr, uid, product_id)
             # Test the compatibility of the product with a consumption report
-            res, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values={'value': value}, vals={'constraints': 'consumption'}, context=context)
+            res, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values={'value': vals['value']}, vals={'constraints': 'consumption'}, context=context)
             if test:
                 return res
-            value = {'product_uom': product.uom_id.id, 'name': '[%s] %s' % (product.default_code, product.name),
-                     'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price, }
-            if value['type'] != 'make_to_stock':
-                value.update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
+            vals['value'] = {'product_uom': product.uom_id.id, 'name': '[%s] %s' % (product.default_code, product.name),
+                             'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price, }
+            if vals['value']['type'] != 'make_to_stock':
+                vals['value'].update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
             uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])
-            domain = {'product_uom':[('category_id', '=', uom_val[0]['category_id'][0])]}
-        return {'value': value, 'domain': domain}
+            vals['domain'] = {'product_uom':[('category_id', '=', uom_val[0]['category_id'][0])]}
+
+        # Check consistency of product according to the selected order category:
+        if categ and product_id:
+            consistency_message = product_obj.check_consistency(cr, uid, product_id, categ, context=context)
+            if consistency_message:
+                vals.setdefault('warning', {})
+                vals['warning'].setdefault('title', _('Warning'))
+                vals['warning'].setdefault('message', '')
+                vals['warning']['message'] = '%s \n %s' % (vals.get('warning', {}).get('message', ''), consistency_message)
+
+        return vals
 
 
     def requested_type_change(self, cr, uid, ids, product_id, type, context=None):

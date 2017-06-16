@@ -296,6 +296,32 @@ class product_list_line(osv.osv):
         ),
     }
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+
+        # check if product already exists in the product list:
+        if self._name != 'old.product.list.line' and not context.get('sync_update_execution') and vals.get('name', False):
+            for line in self.browse(cr, uid, ids, context=context):
+                if self.search_exist(cr, uid, [('name', '=', vals['name']), ('list_id', '=', line.list_id.id)], context=context):
+                    raise osv.except_osv(
+                        _('Warning'),
+                        _('This product cannot be added as it already exists in this list.')
+                    )
+        return super(product_list_line, self).write(cr, uid, ids, vals, context=context)
+
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        # check if product already exists in the product list:
+        if self._name != 'old.product.list.line' and not context.get('sync_update_execution') and self.search_exist(cr, uid, [('list_id', '=', vals['list_id']), ('name', '=', vals['name'])], context=context):
+            raise osv.except_osv(
+                _('Warning'),
+                _('This product cannot be added as it already exists in this list.')
+            )
+        return super(product_list_line, self).create(cr, uid, vals, context)
+
     def unlink(self, cr, uid, ids, context=None):
         '''
         Create old product list line on product list line deletion
@@ -505,25 +531,6 @@ product and can't be deleted"""),
         return super(product_product, self).search(cr, uid, args, offset,
                                                    limit, order, context, count)
 
-    def write(self, cr, uid, ids, value, context=None):
-        if not ids:
-            return True
-        single = False
-        if isinstance(ids, (long, int)):
-            ids = [ids]
-            single = True
-        if value.get('default_code') and value['default_code'] != 'XXX':
-            # do we have any ids with default_code set to 'XXX'
-            xxx_ids = self.search(cr, uid, [
-                ('id', 'in', ids),
-                ('default_code', '=', 'XXX'),
-            ], order='NO_ORDER', context=context)
-            if xxx_ids:
-                self.write(cr, uid, xxx_ids, {
-                    'xmlid_code': value['default_code'],
-                }, context=context)
-        return super(product_product, self).\
-            write(cr, uid, single and ids[0] or ids, value, context=context)
 
 product_product()
 

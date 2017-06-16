@@ -42,102 +42,257 @@ class account_partner_balance_tree(osv.osv):
         'debit': fields.float('Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Credit', digits_compute=dp.get_precision('Account')),
         'balance': fields.float('Balance', digits_compute=dp.get_precision('Account')),
+        'ib_debit': fields.float('Initial Balance Debit', digits_compute=dp.get_precision('Account')),
+        'ib_credit': fields.float('Initial Balance Credit', digits_compute=dp.get_precision('Account')),
+        'ib_balance': fields.float('IB Balance', digits_compute=dp.get_precision('Account')),
     }
 
     _order = "account_type, partner_id"
+
+    def __init__(self, pool, cr):
+        super(account_partner_balance_tree, self).__init__(pool, cr)
+        self.total_debit_credit_balance = {}
+        self.move_line_ids = {}
+
+    def _get_initial_balance(self, cr):
+        """
+        Returns the initial balances by partner and account TYPE
+        """
+        ACCOUNT_TYPE_REQUEST = self.account_type and "AND ac.type IN %s" % self.account_type or ""
+        cr.execute(
+            "SELECT p.id as partner_id, ac.type as account_type, p.ref as partner_ref, ac.name AS account_name, "
+            "ac.code AS code, p.name as partner_name, COALESCE(SUM(l.debit), 0.0) as ib_debit, "
+            "COALESCE(SUM(l.credit), 0.0) as ib_credit, "
+            "COALESCE(sum(debit-credit), 0.0) as ib_balance "
+            "FROM account_move_line AS l INNER JOIN account_move am ON am.id = l.move_id "
+            "INNER JOIN res_partner p ON l.partner_id = p.id "
+            "INNER JOIN account_account ac ON l.account_id = ac.id "
+            "INNER JOIN account_account_type at ON ac.user_type = at.id "
+            "WHERE am.state IN %s"
+            " " + ACCOUNT_TYPE_REQUEST + " "
+            " " + self.ACCOUNT_REQUEST + " "
+            " " + self.RECONCILE_REQUEST + " "
+            " " + self.INSTANCE_REQUEST + " "
+            " " + self.PARTNER_REQUEST + " "
+            " " + self.TAX_REQUEST + " "
+            " " + self.IB_JOURNAL_REQUEST + " "
+            " " + self.IB_DATE_TO + " "
+            "GROUP BY ac.type, p.id, p.ref, p.name, ac.name, ac.code "
+            "ORDER BY ac.type, p.name ",
+            (tuple(self.ib_move_state_list),))
+        return cr.dictfetchall()
+
+    def _cmp_account_type_partner(self, a, b):
+        """
+        Comparison function to sort by account TYPE and then partner name 
+        """
+        if a['account_type'] > b['account_type']:
+            return 1
+        elif a['account_type'] < b['account_type']:
+            return -1
+        else:
+            if a['partner_name'] > b['partner_name']:
+                return 1
+            elif a['partner_name'] < b['partner_name']:
+                return -1
+        return 0
+
+    def _add_initial_balances(self, cr, full_account):
+        """
+        Add the initial balances values to the report lines
+        """
+        if self.initial_balance:
+            initial_balances = self._get_initial_balance(cr)
+            for ib in initial_balances:
+                found = False
+                # update the result lines with the corresponding IB result
+                for fa in full_account:
+                    if ib['partner_id'] == fa['partner_id'] and ib['account_type'] == fa['account_type']:
+                        # add up the values to the existing ones
+                        fa.update({'ib_debit': fa.get('ib_debit', 0.0) + ib['ib_debit'],
+                                   'ib_credit': fa.get('ib_credit', 0.0) + ib['ib_credit'],
+                                   'ib_balance': fa.get('ib_balance', 0.0) + ib['ib_balance'],
+                                   })
+                        found = True
+                        break
+                # use case: IB lines existing for an "account-partner" association where no "standard value" found:
+                # put the standard values to zero
+                if not found:
+                    ib.update({
+                        'debit': 0,
+                        'credit': 0,
+                        'sdebit': 0,
+                        'scredit': 0,
+                    })
+                    full_account.append(ib)
+            # sort the elements of the list per account and partner
+            full_account.sort(self._cmp_account_type_partner)
+        # use case: "standard values" existing for an "account-partner" association where no IB value found
+        # OR "IB" tickbox not ticked:
+        # put the IB values to zero
+        for fa in full_account:
+            if 'ib_balance' not in fa.keys():
+                fa.update({
+                    'ib_debit': 0,
+                    'ib_credit': 0,
+                    'ib_balance': 0,
+                })
 
     def _execute_query_partners(self, cr, uid, data):
         """
         return res, account_type, move_state
         """
         obj_move = self.pool.get('account.move.line')
-        where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
+        obj_journal = self.pool.get('account.journal')
+        obj_fy = self.pool.get('account.fiscalyear')
+        used_context = data['form'].get('used_context', {})
 
         result_selection = data['form'].get('result_selection', '')
         if (result_selection == 'customer'):
-            account_type = "('receivable')"
+            self.account_type = "('receivable')"
         elif (result_selection == 'supplier'):
-            account_type = "('payable')"
+            self.account_type = "('payable')"
         else:
-            account_type = "('payable', 'receivable')"
+            self.account_type = "('payable', 'receivable')"
 
         move_state = "('draft','posted')"
         if data['form'].get('target_move', 'all') == 'posted':
             move_state = "('posted')"
 
+        self.initial_balance = data['form'].get('initial_balance', False)
+        fiscalyear_id = data['form'].get('fiscalyear_id', False)
+        if fiscalyear_id:
+            fy = obj_fy.read(cr, uid, [fiscalyear_id], ['date_start'], context=used_context)
+        else:
+            # by default all FY taken into account
+            used_context.update({'all_fiscalyear': True})
+
+        where = obj_move._query_get(cr, uid, obj='l', context=used_context) or ''
+
+        # if "Initial Balance" and FY are selected, store data for the IB calculation whatever the dates or periods selected
+        self.IB_DATE_TO = ''
+        self.IB_JOURNAL_REQUEST = ''
+        if self.initial_balance and fiscalyear_id:
+            self.IB_DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
+            # all journals by default
+            journal_ids = data['form'].get('journal_ids',
+                                           obj_journal.search(cr, uid, [], order='NO_ORDER',
+                                                              context=data.get('context', {})))
+            if len(journal_ids) == 1:
+                self.IB_JOURNAL_REQUEST = "AND l.journal_id = %s" % journal_ids[0]
+            else:
+                self.IB_JOURNAL_REQUEST = "AND l.journal_id IN %s" % (tuple(journal_ids),)
+        # state filter
+        self.ib_move_state_list = data['form'].get('target_move', 'all') == 'posted' and ['posted'] or ['draft', 'posted']
+        # reconciliation filter
+        self.RECONCILE_REQUEST = ''
+        if not data['form'].get('include_reconciled_entries', False):
+            self.RECONCILE_REQUEST = 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
         # proprietary instances filter
-        instance_ids = data['form']['instance_ids']
+        self.INSTANCE_REQUEST = ''
+        instance_ids = data['form'].get('instance_ids', False)
         if instance_ids:
-            # we add instance filter in 'where'
-            if where:
-                where += " AND "
-            where += "l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
+            self.INSTANCE_REQUEST = " AND l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
 
         # UFTP-312: take tax exclusion in account if user asked for it
-        TAX_REQUEST = ' '
+        self.TAX_REQUEST = ''
         if data['form'].get('tax', False):
-            TAX_REQUEST = "AND at.code != 'tax'"
+            self.TAX_REQUEST = "AND at.code != 'tax'"
+
+        self.PARTNER_REQUEST = 'AND l.partner_id IS NOT NULL'
+        if data['form'].get('partner_ids', False):  # some partners are specifically selected
+            partner_ids = data['form']['partner_ids']
+            if len(partner_ids) == 1:
+                self.PARTNER_REQUEST = 'AND p.id = %s' % partner_ids[0]
+            else:
+                self.PARTNER_REQUEST = 'AND p.id IN %s' % (tuple(partner_ids),)
+        elif data['form'].get('only_active_partners'):  # check if we should include only active partners
+            self.PARTNER_REQUEST = "AND p.active = 't'"
+
+        self.ACCOUNT_REQUEST = ''
+        if data['form'].get('account_ids', False):  # some accounts are specifically selected
+            self.ACCOUNT_REQUEST = " AND ac.id IN (%s)" % (",".join(map(str, data['form']['account_ids'])))
 
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
+        where = where and 'AND %s' % where or ''
         query = "SELECT ac.type as account_type," \
             " p.id as partner_id, p.ref as partner_ref, p.name as partner_name," \
             " COALESCE(sum(debit),0) AS debit, COALESCE(sum(credit), 0) AS credit," \
             " CASE WHEN sum(debit) > sum(credit) THEN sum(debit) - sum(credit) ELSE 0 END AS sdebit," \
             " CASE WHEN sum(debit) < sum(credit) THEN sum(credit) - sum(debit) ELSE 0 END AS scredit" \
-            " FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id)" \
+            " FROM account_move_line l INNER JOIN res_partner p ON (l.partner_id=p.id)" \
             " JOIN account_account ac ON (l.account_id = ac.id)" \
             " JOIN account_move am ON (am.id = l.move_id)" \
             " JOIN account_account_type at ON (ac.user_type = at.id)" \
-            " WHERE ac.type IN " + account_type + "" \
+            " WHERE ac.type IN " + self.account_type + "" \
             " AND am.state IN " + move_state + "" \
-            " AND " + where + "" \
-            " " + TAX_REQUEST + " " \
+            " " + where + "" \
+            " " + self.INSTANCE_REQUEST + " " \
+            " " + self.TAX_REQUEST + " " \
+            " " + self.PARTNER_REQUEST + " " \
+            " " + self.ACCOUNT_REQUEST + " " \
+            " " + self.RECONCILE_REQUEST + " " \
             " GROUP BY ac.type,p.id,p.ref,p.name" \
             " ORDER BY ac.type,p.name"
         cr.execute(query)
         res = cr.dictfetchall()
+
         if data['form'].get('display_partner', '') == 'non-zero_balance':
             res2 = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]
         else:
             res2 = [r for r in res]
-        return res2, account_type, move_state
+        # add the initial balances if requested
+        self._add_initial_balances(cr, res2)
+        return res2, self.account_type, move_state
 
     def _execute_query_selected_partner_move_line_ids(self, cr, uid, account_type, partner_id, data):
-        obj_move = self.pool.get('account.move.line')
-        where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
+        # if this method is re-called with the same arguments don't recompute the result
+        if not self.move_line_ids or account_type != self.move_line_ids['account_type'] \
+                or partner_id != self.move_line_ids['partner_id'] or data != self.move_line_ids['data']:
+            obj_move = self.pool.get('account.move.line')
+            where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context', {})) or ''
 
-        move_state = "('draft','posted')"
-        if data['form'].get('target_move', 'all') == 'posted':
-            move_state = "('posted')"
+            move_state = "('draft','posted')"
+            if data['form'].get('target_move', 'all') == 'posted':
+                move_state = "('posted')"
 
-        query = "SELECT l.id FROM account_move_line l" \
-            " JOIN account_account ac ON (l.account_id = ac.id)" \
-            " JOIN account_move am ON (am.id = l.move_id)" \
-            " JOIN account_account_type at ON (ac.user_type = at.id) WHERE "
-        if partner_id:
-            query += "l.partner_id = " + str(partner_id) + "" \
-                " AND ac.type = '" + account_type + "'" \
-                " AND am.state IN " + move_state + ""
-        else:
-            query += "ac.type = '" + account_type + "'" \
-                " AND am.state IN " + move_state + ""
-        # UFTP-312: Filtering regarding tax account (if user asked it)
-        if data['form'].get('tax', False):
-            query += " AND at.code != 'tax' "
+            query = "SELECT l.id FROM account_move_line l" \
+                " JOIN account_account ac ON (l.account_id = ac.id)" \
+                " JOIN account_move am ON (am.id = l.move_id)" \
+                " JOIN account_account_type at ON (ac.user_type = at.id) WHERE "
+            if partner_id:
+                query += "l.partner_id = " + str(partner_id) + "" \
+                    " AND ac.type = '" + account_type + "'" \
+                    " AND am.state IN " + move_state + ""
+            else:
+                query += "ac.type = '" + account_type + "'" \
+                    " AND am.state IN " + move_state + ""
+            # UFTP-312: Filtering regarding tax account (if user asked it)
+            if data['form'].get('tax', False):
+                query += " AND at.code != 'tax' "
+            if not data['form'].get('include_reconciled_entries', False):
+                query += ' AND l.reconcile_id IS NULL'  # include only non-reconciled entries
+            if data['form'].get('instance_ids', False):
+                query += " AND l.instance_id in(%s)" % (",".join(map(str, data['form']['instance_ids'])))
+            if data['form'].get('account_ids', False):  # some accounts are specifically selected
+                query += " AND ac.id IN (%s)" % (",".join(map(str, data['form']['account_ids'])))
+            if where:
+                query += " AND " + where + ""
 
-        if where:
-            query += " AND " + where + ""
-
-        cr.execute(query)
-        res = cr.fetchall()
-        if res:
-            res2 = []
-            for r in res:
-                res2.append(r[0])
-            return res2
-        else:
-            return False
+            cr.execute(query)
+            res = cr.fetchall()
+            if res:
+                res2 = []
+                for r in res:
+                    res2.append(r[0])
+                self.move_line_ids['res'] = res2
+            else:
+                self.move_line_ids['res'] = False
+            self.move_line_ids['account_type'] = account_type
+            self.move_line_ids['partner_id'] = partner_id
+            self.move_line_ids['data'] = data
+        return self.move_line_ids['res']
 
     def _delete_previous_data(self, cr, uid, context=None):
         """ delete older user request than 15 days"""
@@ -158,7 +313,6 @@ class account_partner_balance_tree(osv.osv):
         data
         {'model': 'ir.ui.menu', 'ids': [494], 'build_ts': build_timestamp,
          'form': {
-            'output_currency': 1,
             'display_partner': 'non-zero_balance', 'chart_account_id': 1,
             'result_selection': 'customer', 'date_from': False,
             'period_to': False,
@@ -177,14 +331,11 @@ class account_partner_balance_tree(osv.osv):
         context['data'] = data
         self._delete_previous_data(cr, uid, context=context)
 
-        comp_currency_id = self._get_company_currency(cr, uid, context=context)
-        output_currency_id = data['form'].get('output_currency', comp_currency_id)
-
         res = self._execute_query_partners(cr, uid, data)
 
         for r in res[0]:
-            if not r.get('partner_name', False):
-                r.update({'partner_name': _('Unknown Partner')})
+            debit = r['debit'] + (self.initial_balance and r['ib_debit'] or 0.0)
+            credit = r['credit'] + (self.initial_balance and r['ib_credit'] or 0.0)
             vals = {
                 'uid': uid,
                 'build_ts': data['build_ts'],
@@ -192,87 +343,55 @@ class account_partner_balance_tree(osv.osv):
                 'partner_id': r['partner_id'],
                 'name': r['partner_name'],
                 'partner_ref': r['partner_ref'],
-                'debit': self._currency_conv(cr, uid, r['debit'], comp_currency_id, output_currency_id),
-                'credit': self._currency_conv(cr, uid, r['credit'], comp_currency_id, output_currency_id),
-                'balance': self._currency_conv(cr, uid, r['debit'] - r['credit'], comp_currency_id, output_currency_id),
+                'debit': debit,
+                'credit': credit,
+                'balance': debit - credit,
+                'ib_debit': r['ib_debit'] or 0.0,
+                'ib_credit': r['ib_credit'] or 0.0,
+                'ib_balance': r['ib_balance'] or 0.0,
             }
             self.create(cr, uid, vals, context=context)
 
     def open_journal_items(self, cr, uid, ids, context=None):
         # get related partner
         res = {}
-        if not ids:
-            return res
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        r = self.read(cr, uid, ids, ['account_type', 'partner_id'], context=context)
-        if r and r[0] and r[0]['partner_id']:
-            if context and 'data' in context and 'form' in context['data']:
-                move_line_ids = self._execute_query_selected_partner_move_line_ids(
-                    cr, uid,
-                    r[0]['account_type'].lower(),
-                    r[0]['partner_id'][0],
-                    context['data'])
-                if move_line_ids:
-                    new_context = {}
-                    if context:
-                        ctx_key_2copy = ('lang', 'tz', 'department_id', 'client', 'name')
-                        for k in ctx_key_2copy:
-                            if k in context:
-                                new_context[k] = context[k]
-                        comp_currency_id = self._get_company_currency(cr, uid, context=context)
-                        output_currency_id = context['data']['form'].get('output_currency', comp_currency_id)
-                        if comp_currency_id and output_currency_id \
-                                and comp_currency_id != output_currency_id:
-                            # output currency in action context
-                            new_context['output_currency_id'] = output_currency_id
-                    view_id = self.pool.get('ir.model.data').get_object_reference(
-                        cr, uid, 'finance',
-                        'view_account_partner_balance_tree_move_line_tree')[1]
-                    res = {
-                        'name': 'Journal Items',
-                        'type': 'ir.actions.act_window',
-                        'res_model': 'account.move.line',
-                        'view_mode': 'tree,form',
-                        'view_type': 'form',
-                        'domain': [('id','in',tuple(move_line_ids))],
-                        'context': new_context,
-                    }
-                    if view_id:
-                        res['view_id'] = [view_id]
-                return res
-        return res
-
-    def _get_company_currency(self, cr, uid, context=None):
-        res = False
-        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
-        if user and user[0] and user[0].company_id:
-            res = user[0].company_id.currency_id.id
+        if context is None:
+            context = {}
+        if ids:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            r = self.read(cr, uid, ids, ['account_type', 'partner_id'], context=context)
+            if r and r[0] and r[0]['partner_id']:
+                if context and 'data' in context and 'form' in context['data']:
+                    move_line_ids = self._execute_query_selected_partner_move_line_ids(
+                        cr, uid,
+                        r[0]['account_type'].lower(),
+                        r[0]['partner_id'][0],
+                        context['data'])
+                    if move_line_ids:
+                        new_context = {}
+                        if context:
+                            ctx_key_2copy = ('lang', 'tz', 'department_id', 'client', 'name')
+                            for k in ctx_key_2copy:
+                                if k in context:
+                                    new_context[k] = context[k]
+                        view_id = self.pool.get('ir.model.data').get_object_reference(
+                            cr, uid, 'finance',
+                            'view_account_partner_balance_tree_move_line_tree')[1]
+                        res = {
+                            'name': 'Journal Items',
+                            'type': 'ir.actions.act_window',
+                            'res_model': 'account.move.line',
+                            'view_mode': 'tree,form',
+                            'view_type': 'form',
+                            'domain': [('id','in',tuple(move_line_ids))],
+                            'context': new_context,
+                        }
+                        if view_id:
+                            res['view_id'] = [view_id]
         if not res:
-            raise osv.except_osv(_('Error !'), _('Company has no default currency'))
+            raise osv.except_osv(_('Warning !'), _('No Journal Items to show.'))
         return res
-
-    def _currency_conv(self, cr, uid, amount,
-                       comp_currency_id, output_currency_id,
-                       date=False):
-        if not amount or amount == 0.:
-            return 0.
-        if not comp_currency_id or not output_currency_id \
-                or comp_currency_id == output_currency_id:
-            # unset currencies or ouput currency == company currency
-            return amount
-        if date:
-            context={'date': date}
-        else:
-            context=None
-        amount = self.pool.get('res.currency').compute(cr, uid,
-                                                       comp_currency_id,
-                                                       output_currency_id,
-                                                       amount,
-                                                       context=context)
-        if not amount:
-            amount = 0.
-        return amount
 
     def get_partner_data(self, cr, uid, account_types, data, context=None):
         """ browse with account_type filter 'payable' or 'receivable'"""
@@ -282,7 +401,8 @@ class account_partner_balance_tree(osv.osv):
         ]
         if account_types:
             domain += [('account_type', 'in', account_types)]
-        ids = self.search(cr, uid, domain, context=context)
+        # get the ids in the order in which the entries have been created (to keep the sorting criteria used)
+        ids = self.search(cr, uid, domain, context=context, order='id')
         if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
@@ -297,7 +417,7 @@ class account_partner_balance_tree(osv.osv):
         if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
-            sql = """SELECT a.code as account, SUM(aml.debit) as deb, SUM(aml.credit) as cred, ABS(SUM(debit) - SUM(credit)) as total
+            sql = """SELECT a.code as account, SUM(aml.debit) as deb, SUM(aml.credit) as cred, SUM(debit) - SUM(credit) as total
                     FROM account_move_line as aml, account_account as a
                     WHERE aml.id in %s
                     AND aml.account_id = a.id
@@ -307,20 +427,51 @@ class account_partner_balance_tree(osv.osv):
             return res
         return []
 
+    def get_lines_per_currency(self, cr, uid, account_type, partner_id, data, account_code):
+        """
+        Returns a list of dicts, each containing the subtotal per currency for the given partner and account
+        """
+        res = []
+        if account_type and partner_id and data and account_code:
+            # the subtotal lines for the selected partner must be limited to the ids corresponding to
+            # the criteria selected in the wizard
+            ids = self._execute_query_selected_partner_move_line_ids(cr, uid, account_type, partner_id, data)
+            if ids:
+                sql = """SELECT c.name as currency_booking,
+                        SUM(aml.debit_currency) as debit_booking, SUM(aml.credit_currency) as credit_booking, 
+                        SUM(debit_currency) - SUM(credit_currency) as total_booking,
+                        SUM(aml.debit) - SUM(aml.credit) as total_functional
+                        FROM account_move_line AS aml
+                        INNER JOIN account_account AS a ON aml.account_id = a.id
+                        INNER JOIN res_currency AS c ON aml.currency_id = c.id
+                        WHERE aml.id in %s
+                        AND a.code = %s
+                        GROUP BY a.code, c.name
+                        ORDER BY c.name;"""
+                cr.execute(sql, (tuple(ids), account_code))
+                res = cr.dictfetchall()
+        return res
+
     def get_partners_total_debit_credit_balance_by_account_type(self, cr, uid, account_type, data):
         """Compute all partners total debit/credit from self data
         for given account_types (tuple) payable/receivable or both
         return total_debit, total_credit (tuple)
         """
-        query = "SELECT" \
-            " sum(debit) AS debit, sum(credit) AS credit, sum(balance) as balance" \
-            " FROM account_partner_balance_tree" \
-            " WHERE account_type IN ('" + account_type + "')" \
-            " AND uid = " + str(uid) + "" \
-            " AND build_ts='" + data['build_ts'] + "'"
-        cr.execute(query)
-        res = cr.dictfetchall()
-        return res[0]['debit'], res[0]['credit'], res[0]['balance']
+        # recalculate the result only if the criteria have changed
+        if not self.total_debit_credit_balance or account_type != self.total_debit_credit_balance['account_type'] \
+                or data != self.total_debit_credit_balance['data']:
+            query = "SELECT" \
+                " sum(debit) AS debit, sum(credit) AS credit, sum(balance) as balance" \
+                " FROM account_partner_balance_tree" \
+                " WHERE account_type IN ('" + account_type + "')" \
+                " AND uid = " + str(uid) + "" \
+                " AND build_ts='" + data['build_ts'] + "'"
+            cr.execute(query)
+            res = cr.dictfetchall()
+            self.total_debit_credit_balance['account_type'] = account_type
+            self.total_debit_credit_balance['data'] = data
+            self.total_debit_credit_balance['res'] = res[0]['debit'], res[0]['credit'], res[0]['balance']
+        return self.total_debit_credit_balance['res']
 account_partner_balance_tree()
 
 
@@ -337,9 +488,15 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
                                               'With balance is not equal to 0'),
                                              ('all', 'All Partners')]
                                             ,'Display Partners'),
-        'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
+        'partner_ids': fields.many2many('res.partner', 'account_partner_balance_partner_rel', 'wizard_id', 'partner_id',
+                                        string='Partners', help='Display the report for specific partners only'),
+        'only_active_partners': fields.boolean('Only active partners', help='Display the report for active partners only'),
+        'account_ids': fields.many2many('account.account', 'account_partner_balance_account_rel', 'wizard_id', 'account_id',
+                                        string='Accounts', help='Display the report for specific accounts only'),
+        'include_reconciled_entries': fields.boolean('Include Reconciled Entries', help='Take reconciled entries into account'),
+        'initial_balance': fields.boolean('Include initial balances'),
     }
 
     def _get_journals(self, cr, uid, context=None):
@@ -349,18 +506,14 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
 
     _defaults = {
         'display_partner': 'non-zero_balance',
-        'result_selection': 'supplier',
+        'result_selection': 'customer_supplier',
+        'account_domain': "[('type', 'in', ['payable', 'receivable'])]",
         'journal_ids': _get_journals,
         'tax': False,
+        'only_active_partners': False,
+        'include_reconciled_entries': False,
+        'fiscalyear_id': False,
     }
-
-    def default_get(self, cr, uid, fields, context=None):
-        res = super(wizard_account_partner_balance_tree, self).default_get(cr, uid, fields, context=context)
-        # get company default currency
-        user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
-        if user and user[0] and user[0].company_id:
-            res['output_currency'] = user[0].company_id.currency_id.id
-        return res
 
     def _get_data(self, cr, uid, ids, context=None):
         """return data, account_type (tuple)"""
@@ -372,7 +525,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data['ids'] = context.get('active_ids', [])
         data['model'] = context.get('active_model', 'ir.ui.menu')
         data['build_ts'] = datetime.datetime.now().strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
-        data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from', 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner', 'output_currency', 'instance_ids', 'tax'])[0]
+        data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from',
+                                                'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner',
+                                                'instance_ids', 'tax', 'partner_ids', 'initial_balance',
+                                                'only_active_partners', 'account_ids', 'include_reconciled_entries'])[0]
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
             if default_journals:
@@ -399,6 +555,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         self.pool.get('account.partner.balance.tree').build_data(cr,
                                                                  uid, data,
                                                                  context=context)
+        self._check_dates_fy_consistency(cr, uid, data, context)
         return {
             'type': 'ir.actions.act_window',
             'name': 'Partner Balance ' + account_type,
@@ -419,6 +576,8 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             context = {}
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
+        self._check_dates_fy_consistency(cr, uid, data, context)
+        self.pool.get('account.partner.balance.tree').build_data(cr, uid, data, context=context)
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.partner.balance',
@@ -430,6 +589,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             context = {}
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
+        self._check_dates_fy_consistency(cr, uid, data, context)
         self.pool.get('account.partner.balance.tree').build_data(cr,
                                                                  uid, data,
                                                                  context=context)

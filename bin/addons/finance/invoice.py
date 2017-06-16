@@ -21,6 +21,12 @@
 
 from osv import osv
 from osv import fields
+import base64
+from tools.translate import _
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
+from msf_doc_import.wizard import ACCOUNT_INVOICE_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_account_line_import
+from msf_doc_import.wizard import ACCOUNT_INVOICE_COLUMNS_FOR_IMPORT as columns_for_account_line_import
+from msf_doc_import import GENERIC_MESSAGE
 
 class account_invoice(osv.osv):
     _name = 'account.invoice'
@@ -30,8 +36,42 @@ class account_invoice(osv.osv):
         'supplier_reference': fields.char('Supplier reference', size=128),
         'picking_id': fields.many2one('stock.picking', string="Picking"),
         'purchase_ids': fields.many2many('purchase.order', 'purchase_invoice_rel', 'invoice_id', 'purchase_id', 'Purchase Order',
-            help="Purchase Order from which invoice have been generated"),
+                                         help="Purchase Order from which invoice have been generated"),
     }
+
+    def wizard_import_si_line(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to import lines from a file
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        context.update({'active_id': ids[0]})
+        columns = columns_for_account_line_import
+
+        columns_header = [(_(f[0]), f[1]) for f in columns_header_for_account_line_import]
+        default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
+        imported_file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        view_name = context.get('_terp_view_name', 'Import Lines')
+        filename_template = _('%s_template.xls') % _(view_name).replace(' ', '_')
+        export_id = self.pool.get('wizard.import.invoice.line').create(cr, uid,
+                                                                       {
+                                                                       'file': imported_file,
+                                                                       'filename_template': filename_template,
+                                                                       'invoice_id': ids[0],
+                                                                       'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns]),),
+                                                                       'state': 'draft',
+                                                                       },
+                                                                       context)
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.invoice.line',
+                'res_id': export_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'same',
+                'context': context,
+                }
 
 account_invoice()
 
@@ -41,7 +81,7 @@ class account_invoice_line(osv.osv):
 
     _columns = {
         'order_line_id': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True,
-            help="Purchase Order Line from which this invoice line has been generated (when coming from a purchase order)."),
+                                         help="Purchase Order Line from which this invoice line has been generated (when coming from a purchase order)."),
     }
 
 account_invoice_line()

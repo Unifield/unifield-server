@@ -23,6 +23,7 @@ from mx.DateTime.DateTime import DateFrom, RelativeDateTime, Age, now
 import threading
 import time
 import logging
+from xml.sax.saxutils import escape
 
 from osv import fields
 from osv import osv
@@ -547,7 +548,7 @@ class weekly_forecast_report(osv.osv):
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(pipe_qty)s</Data></Cell>
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"Number\">%(exp_qty)s</Data></Cell>""" % {
                         'product_code': product['default_code'],
-                        'product_name': product['name'],
+                        'product_name': escape(product['name']),
                         'unit_price': product['standard_price'],
                         'consumption': cons,
                         'stock_qty': product['qty_available'],
@@ -651,7 +652,7 @@ class weekly_forecast_report(osv.osv):
             logging.getLogger('weekly.forecast.report').warn('Exception', exc_info=True)
             new_cr.rollback()
             progress_comment = """
-            An error occured during the processing of the report.\n
+            An error occurred during the processing of the report.\n
             Details of the error:\n
             %s
             """ % str(e)

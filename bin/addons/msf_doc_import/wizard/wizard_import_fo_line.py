@@ -86,7 +86,7 @@ class wizard_import_fo_line(osv.osv_memory):
             try:
                 fo_browse = wiz_browse.fo_id
                 if not fo_browse.pricelist_id \
-                    or not fo_browse.pricelist_id.currency_id:
+                        or not fo_browse.pricelist_id.currency_id:
                     raise osv.except_osv(_("Error!"), _("Order currency not found!"))
                 fo_id = fo_browse.id
 
@@ -134,10 +134,10 @@ class wizard_import_fo_line(osv.osv_memory):
                     error_list.append(msg)
                 else:
                     lines_to_correct = check_line.check_lines_currency(rows,
-                        currency_index, order_currency_code)
+                                                                       currency_index, order_currency_code)
                     if lines_to_correct > 0:
                         msg = _("You can not import this file because it contains" \
-                            " line(s) with currency (Column G) not of the order currency (%s)") % (
+                                " line(s) with currency (Column G) not of the order currency (%s)") % (
                             order_currency_code, )
                         error_list.append(msg)
 
@@ -230,7 +230,7 @@ class wizard_import_fo_line(osv.osv_memory):
                             # Cell 6: Currency
                             curr_value = {}
                             curr_value = check_line.compute_currency_value(cr, uid, cell_nb=6, browse_sale=fo_browse,
-                                                                currency_obj=currency_obj, row=row, to_write=to_write, context=context)
+                                                                           currency_obj=currency_obj, row=row, to_write=to_write, context=context)
                             to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
 
                             # Cell 7: Comment
@@ -316,7 +316,7 @@ class wizard_import_fo_line(osv.osv_memory):
                 # we reset the state of the FO to draft (initial state)
             except Exception as e:
                 self.write(cr, uid, ids, {
-                    'message': _('An unknow error occured, please contact the support team. Error message: %s') % tools.ustr(e),
+                    'message': _('An unknow error occurred, please contact the support team. Error message: %s') % tools.ustr(e),
                     'state': 'done',
                 }, context=context)
             finally:
@@ -402,17 +402,6 @@ Otherwise, you can continue to use Unifield.""")
         '''
         Return to the initial view
         '''
-        if isinstance(ids, (int, long)):
-            ids=[ids]
-        for wiz_obj in self.read(cr, uid, ids, ['fo_id']):
-            fo_id = wiz_obj['fo_id']
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'sale.order',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'target': 'crush',
-                'res_id': fo_id,
-                'context': context,
-                }
+        return self.cancel(cr, uid, ids, context=context)
 
 wizard_import_fo_line()

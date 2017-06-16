@@ -77,11 +77,12 @@
         'workflow/procurement_request_workflow.xml',
         'doc_import_report.xml',
         'wizard/wizard_import_batch_view.xml',
+        'wizard/wizard_import_invoice_line.xml',
     ],
     "demo_xml": [],
     "test": [
         'test/data.yml',
-# test for the import in English
+        # test for the import in English
         'test/import_ir.yml',
         'test/import_po.yml',
         'test/import_migration.yml',

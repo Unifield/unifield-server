@@ -101,6 +101,11 @@ class account_destination_link(osv.osv):
     }
 
     def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution'):
+            return super(account_destination_link, self).unlink(cr, uid, ids, context)
+
         self.write(cr, uid, ids, {'disabled': True}, context=context)
         return True
 
@@ -407,6 +412,8 @@ class account_move(osv.osv):
         if context is None:
             context = {}
         res = super(account_move, self).validate(cr, uid, ids, context)
+        if context.get('sync_update_execution'):
+            return res
         for m in self.browse(cr, uid, ids):
             if m.status and m.status == 'manu':
                 for ml in m.line_id:

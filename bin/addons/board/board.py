@@ -23,6 +23,7 @@ from osv import fields, osv
 import time
 import tools
 
+
 class board_board(osv.osv):
     """
     Board
@@ -116,7 +117,7 @@ class board_board(osv.osv):
         return id
 
     def fields_view_get(self, cr, user, view_id=None, view_type='form', context=None,\
-                         toolbar=False, submenu=False):
+                        toolbar=False, submenu=False):
         """
         Overrides orm field_view_get.
         @return: Dictionary of Fields, arch and toolbar.
@@ -124,10 +125,10 @@ class board_board(osv.osv):
 
         res = {}
         res = super(board_board, self).fields_view_get(cr, user, view_id, view_type,\
-                                 context, toolbar=toolbar, submenu=submenu)
+                                                       context, toolbar=toolbar, submenu=submenu)
 
         vids = self.pool.get('ir.ui.view.custom').search(cr, user,\
-                     [('user_id', '=', user), ('ref_id' ,'=', view_id)])
+                                                         [('user_id', '=', user), ('ref_id' ,'=', view_id)])
         if vids:
             view_id = vids[0]
             arch = self.pool.get('ir.ui.view.custom').browse(cr, user, view_id, context=context)
@@ -135,10 +136,9 @@ class board_board(osv.osv):
         res['arch'] = self._arch_preprocessing(cr, user, res['arch'], context=context)
         res['toolbar'] = {'print': [], 'action': [], 'relate': []}
         return res
-    
-    
+
     def _arch_preprocessing(self, cr, user, arch, context=None): 
-        from lxml import etree                               
+        from lxml import etree
         def remove_unauthorized_children(node):
             for child in node.iterchildren():
                 if child.tag=='action' and child.get('invisible'):
@@ -146,17 +146,14 @@ class board_board(osv.osv):
                 else:
                     child=remove_unauthorized_children(child)
             return node
-        
+
         def encode(s):
             if isinstance(s, unicode):
                 return s.encode('utf8')
             return s
-            
-        archnode = etree.fromstring(encode(arch))        
+
+        archnode = etree.fromstring(encode(arch))
         return etree.tostring(remove_unauthorized_children(archnode),pretty_print=True)
-        
-        
-    
 
     _columns = {
         'name': fields.char('Dashboard', size=64, required=True),
@@ -241,6 +238,7 @@ class board_note(osv.osv):
 
 board_note()
 
+
 class res_log_report(osv.osv):
     """ Log Report """
     _name = "res.log.report"
@@ -258,7 +256,7 @@ class res_log_report(osv.osv):
         'creation_date': fields.date('Creation Date', readonly=True),
         'res_model': fields.char('Object', size=128),
         'nbr': fields.integer('# of Entries', readonly=True)
-     }
+    }
 
     def init(self, cr):
         """

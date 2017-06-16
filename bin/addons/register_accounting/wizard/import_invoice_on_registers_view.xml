@@ -6,6 +6,7 @@
             <field name="name">account.statement.from.invoice.lines.tree</field>
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
+            <field name="priority" eval="15"/>
             <field name="arch" type="xml">
                 <tree string="Account Entry Lines" editable="top" noteditable="True" hide_new_button="1">
                     <field name="instance_id"/>
@@ -13,7 +14,8 @@
                     <field name="ref"/>
                     <field name="supplier_invoice_ref"/>
                     <field name="account_id"/>
-                    <field name="partner_id" string="3rd Party"/>
+                    <field name="partner_id"/>
+                    <field name="employee_id"/>
                     <field name="document_date"/>
                     <field name="date"/>
                     <field name="date_maturity"/>
@@ -29,6 +31,7 @@
             <field name="name">import.invoice.on.registers.lines.form</field>
             <field name="model">wizard.import.invoice</field>
             <field name="type">form</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <form string="Import Entries">
                     <group colspan="4" expand="1">
@@ -40,7 +43,8 @@
                                 <field name="ref"/>
                                 <field name="supplier_invoice_ref"/>
                                 <field name="account_id"/>
-                                <field name="partner_id" string="3rd Party"/>
+                                <field name="partner_id"/>
+                                <field name="employee_id"/>
                                 <field name="document_date"/>
                                 <field name="date"/>
                                 <field name="date_maturity"/>
@@ -63,6 +67,7 @@
                                 <field name="ref"/>
                                 <field name="account_id"/>
                                 <field name="partner_id"/>
+                                <field name="employee_id"/>
                                 <field name="document_date"/>
                                 <field name="date"/>
                                 <field name="amount" sum="Total"/>
@@ -87,6 +92,7 @@
             <field name="name">import.invoice.on.registers.lines.cheque.form</field>
             <field name="model">wizard.import.invoice</field>
             <field name="type">form</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <form string="Import Entries">
                     <group colspan="4" expand="1">

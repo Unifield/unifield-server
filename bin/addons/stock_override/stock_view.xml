@@ -268,6 +268,7 @@
             <field name="model">stock.location</field>
             <field name="type">tree</field>
             <field name="field_parent">child_ids</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" toolbar="1" expand_button="1">
                     <field name="name"/>
@@ -529,6 +530,7 @@
         	<field name="name">view.picking.in.form</field>
         	<field name="model">stock.picking</field>
         	<field name="type">form</field>
+            <field name="priority">22</field>
         	<field name="arch" type="xml">
         		<form string="Incoming Shipments">
                     <field name="progress_memory_not_done" invisible="1" />
@@ -559,11 +561,13 @@
                             </script>
                         </html>
                     </group>
+                    <field name="sale_id" invisible="1" />
                     <group colspan="4" col="6">
                         <group colspan="4" col="4">
                             <field name="name" readonly="1"/>
                             <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
-                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" required="0" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}"/>
+                            <field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)" required="0" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned']), ('ext_cu', '!=', False)]}"/>
+                            <field name="ext_cu" on_change="on_change_ext_cu(ext_cu)" attrs="{'readonly': ['|', '|', '|', ('partner_id2', '!=', False), ('sale_id', '!=', False), ('purchase_id', '!=', False), ('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" domain="[('location_category', '=', 'consumption_unit'), ('usage', 'in', ('customer', 'supplier'))]" />
                             <field name="address_id" invisible="1" />
                             <field name="backorder_id" readonly="1"/>
                             <field name="reason_type_id" widget="selection"
@@ -635,6 +639,7 @@
                                     <group colspan="2" col="4">
                                         <separator colspan="4" string="Move Information"/>
                                         <field name="from_wkf_line" invisible="1" />
+                                        <field name="is_ext_cu" invisible="1" />
                                         <field name="name" invisible="1" colspan="4"/>
                                         <field name="product_id"
                                         	context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"
@@ -664,9 +669,9 @@
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2"/>
                                         <field name="location_id"
-                                        	domain="[('usage', '!=', 'view'), ('usage', '=', 'supplier'), ('id', '!=', location_dest_id)]"
+                                        	domain="[('filter_partner_ext_cu', 'in', [parent.partner_id2, parent.ext_cu]), ('usage', '!=', 'view'), ('id', '!=', location_dest_id), '|', '&amp;', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit'), ('usage', '=', 'supplier')]"
                                         	context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
-                                        	attrs="{'readonly': [('from_wkf_line', '=', True)]}"
+                                        	attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('is_ext_cu', '=', True)]}"
                                         	 />
             							<field name="product_type" invisible="1"/>
                                         <field name="location_dest_id"
@@ -839,6 +844,7 @@
             <field name="name">view.picking.out.form</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
+            <field name="priority">23</field>
             <field name="arch" type="xml">
                 <form string="Delivery Orders">
                     <group col="6" colspan="4">
@@ -1166,7 +1172,7 @@
                      <field name="state"/>
                     </group>
                     <group col="3" colspan="2">
-                        <button name="action_cancel_inventary" states="draft,confirm,done" string="Cancel Inventory" type="object" icon="gtk-cancel"/>
+                        <button name="action_cancel_inventary" states="draft,confirm" string="Cancel Inventory" type="object" icon="gtk-cancel"/>
                         <button name="action_confirm" states="draft" string="Validate Inventory" type="object" icon="gtk-apply"/>
                         <button name="action_done" states="confirm" string="Confirm Inventory" type="object" icon="gtk-jump-to"/>
                         <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>

@@ -112,16 +112,16 @@ class wizard_import_ir_line(osv.osv_memory):
             rows.next()  # skip header line
             try:
                 lines_to_correct = check_line.check_lines_currency(rows,
-                    currency_index, order_currency_code)
+                                                                   currency_index, order_currency_code)
             except Exception as e:
                 lines_to_correct = -1
-                msg = "An error occured when the system was checking the "\
+                msg = "An error occurred when the system was checking the "\
                       "currency value of data. Error raised: %s" % str(e)
                 error_list.append(msg)
             if lines_to_correct > 0:
                 msg = "You can not import this file because it contains" \
                     " line(s) with currency not of the order currency (%s)" % (
-                    order_currency_code, )
+                        order_currency_code, )
                 error_list.append(msg)
 
             if not error_list:
@@ -142,10 +142,10 @@ class wizard_import_ir_line(osv.osv_memory):
                         'price_unit': 1,  # in case that the product is not found and we do not have price
                         'cost_price': 0,
                         'product_qty': 1,
-    #                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
-    #                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
-    #                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
-    #                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
+                        #                    'nomen_manda_0':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd0')[1],
+                        #                    'nomen_manda_1':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd1')[1],
+                        #                    'nomen_manda_2':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd2')[1],
+                        #                    'nomen_manda_3':  obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'nomen_tbd3')[1],
                         'proc_type': 'make_to_order',
                         'default_code': False,
                         'confirmed_delivery_date': False,
@@ -202,7 +202,7 @@ class wizard_import_ir_line(osv.osv_memory):
 
                         # Cell 5: Currency
                         curr_value = check_line.compute_currency_value(cr, uid, cell_nb=5, browse_sale=fo_browse,
-                                                            currency_obj=currency_obj, row=row, to_write=to_write, context=context)
+                                                                       currency_obj=currency_obj, row=row, to_write=to_write, context=context)
                         to_write.update({'functional_currency_id': curr_value['functional_currency_id'], 'warning_list': curr_value['warning_list']})
 
                         # Cell 6: Comment

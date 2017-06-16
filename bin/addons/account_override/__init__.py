@@ -79,6 +79,7 @@ ACCOUNT_RESTRICTED_AREA = {
     'invoice_lines': [
         ('type', 'not in', ['view', 'liquidity']), # Do not allow liquidity accounts
         ('is_not_hq_correctible', '!=', True),
+        ('type_for_register', '!=', 'donation'),
         '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
         '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Disallow extra-accounting expenses accounts
     ],

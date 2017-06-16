@@ -30,11 +30,10 @@ class account_partner_balance(osv.osv_memory):
     _description = 'Print Account Partner Balance'
     _columns = {
         'display_partner': fields.selection([('non-zero_balance', 'With balance is not equal to 0'), ('all', 'All Partners')]
-                                    ,'Display Partners'),
+                                            ,'Display Partners'),
     }
 
     _defaults = {
-#        'initial_balance': True,
         'display_partner': 'non-zero_balance',
     }
 
@@ -47,7 +46,7 @@ class account_partner_balance(osv.osv_memory):
             'type': 'ir.actions.report.xml',
             'report_name': 'account.partner.balance',
             'datas': data,
-    }
+        }
 
 account_partner_balance()
 
