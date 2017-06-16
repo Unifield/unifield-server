@@ -32,7 +32,7 @@ SALE_ORDER_LINE_STATE_SELECTION = [
      ('cancel', 'Cancelled'),
 ]
 
-SALE_ORDER_STATE_SELECTION = SALE_ORDER_LINE_STATE_SELECTION
+SALE_ORDER_STATE_SELECTION = SALE_ORDER_LINE_STATE_SELECTION + [('draft_partial', 'Draft-p')]
 
 SALE_ORDER_SPLIT_SELECTION = [
      ('original_sale_order', 'Original'),

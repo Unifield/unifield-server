@@ -452,6 +452,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             else: # else compute the less advanced state:
                 res[so.id] = self.pool.get('sale.order.line.state').get_less_advanced_state(cr, uid, ids, sol_states, context=context)
 
+                # set the draft-p state ?
+                draft_sequence = self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, 'draft', context=context)
+                # do we have a line further then draft in our FO ?
+                has_line_further = any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > draft_sequence for s in sol_states])
+                if res[so.id] == 'draft' and has_line_further:
+                    res[so.id] = 'draft_partial'
+
         return res
 
 
@@ -4503,10 +4510,26 @@ class sale_order_line_state(osv.osv):
             WHERE name IN %s
             ORDER BY sequence;
         """, (tuple(states),))
-
         min_state = cr.fetchone()
 
         return min_state[0] if min_state else False
+
+    def get_sequence(self, cr, uid, ids, state, context=None):
+        '''
+        return the sequence of the given state
+        @param state: the state's name as a string
+        '''
+        if not state:
+            return False
+
+        cr.execute("""
+            SELECT sequence
+            FROM sale_order_line_state
+            WHERE name = %s;
+        """, (state,))
+        sequence = cr.fetchone()
+
+        return sequence[0] if sequence else False
 
 
 sale_order_line_state()
