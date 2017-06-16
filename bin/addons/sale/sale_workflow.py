@@ -12,6 +12,15 @@ class sale_order_line(osv.osv):
     _inherit = "sale.order.line"
 
 
+    def _get_destination_ok(self, cr, uid, lines, context):
+        dest_ok = False
+        for line in lines:
+            dest_ok = line.account_4_distribution and line.account_4_distribution.destination_ids or False
+            if not dest_ok:
+                raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
+        return dest_ok
+        
+
     def analytic_distribution_checks(self, cr, uid, ids, context=None):
         """
         Check analytic distribution for each sale order line (except if we come from YAML tests)
