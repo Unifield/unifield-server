@@ -68,30 +68,6 @@ class sale_order(osv.osv):
 
         return True
 
-    def get_less_advanced_sol_state(self, cr, uid, ids, context=None):
-        """
-        Get the less advanced state of the sale order lines
-        Used to compute sale order state
-        """
-        if context is None:
-            context = {}
-            
-        for so in self.browse(cr, uid, ids, context=context):
-            sol_states = [line.state for line in so.order_line]
-            if all([state == 'cancel' for state in sol_states]):
-                return 'cancel'
-            elif 'draft' in sol_states:
-                return 'draft'
-            elif 'validated' in sol_states:
-                return 'validated'
-            elif 'sourced' in sol_states:
-                return 'sourced'
-            elif 'confirmed' in sol_states:
-                return 'confirmed'
-            elif 'done' in sol_states:
-                return 'done'
-        return None
-
     def wkf_validated(self, cr, uid, ids, context=None):
         """
         Try to validate sale order lines
