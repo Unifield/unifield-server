@@ -929,7 +929,12 @@ class orm_template(object):
                 if field_type not in ('one2many', 'many2one', 'many2many',
                                       'integer', 'boolean', 'float', 'selection',
                                       'reference'):
-                    res = value
+                    if field_type == 'char' and len(value.splitlines()) > 1:
+                        # US-2661 do not allowed newline character in char fields
+                        res = False
+                        warning += [_("New line in the field '%s' not allowed. Please fix entry :\n'%s'") % (field[len(prefix)], value)]
+                    else:
+                        res = value
                 elif field_type == 'one2many':
                     if field[len(prefix)] in done:
                         continue
@@ -1027,27 +1032,29 @@ class orm_template(object):
 
         from osv import except_osv
         position = 0
+        error_list = []
         while position<len(datas):
             res = {}
 
             (res, position, warning, res_id, xml_id) = \
                 process_liness(self, datas, [], current_module, self._name, fields_def, position=position)
             if len(warning):
-                cr.rollback()
-                return (-1, res, 'Line ' + str(position) +' : ' + '!\n'.join(warning), '')
+                error_list.append(_('Line %s: %s') % (str(position), '\n'.join(warning)))
+                continue
 
             try:
                 ir_model_data_obj._update(cr, uid, self._name,
                                           current_module, res, mode=mode, xml_id=xml_id,
                                           noupdate=noupdate, res_id=res_id, context=context)
             except except_osv, e:
-                cr.rollback()
-                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
+                error_list.append(_('Line %s: %s') % (str(position), tools.ustr(e.value)))
+                continue
             except Exception, e:
                 #US-88: If this from an import account analytic, and there is sql error, AND not sync context, then just clear the cache
                 if 'account.analytic.account' in self._name and not context.get('sync_update_execution', False):
                     cache.clean_caches_for_db(cr.dbname)
-                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
+                error_list.append(_('Line %s: %s') % (str(position), tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc())))
+                continue
 
             if config.get('import_partial', False) and filename and (not (position%100)):
                 data = pickle.load(file(config.get('import_partial')))
@@ -1056,6 +1063,9 @@ class orm_template(object):
                 if context.get('defer_parent_store_computation'):
                     self._parent_store_compute(cr)
                 cr.commit()
+        if error_list:
+            cr.rollback()
+            return (-1, {}, '\n'.join(error_list), '')
 
         if context.get('defer_parent_store_computation'):
             self._parent_store_compute(cr)

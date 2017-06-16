@@ -9695,3 +9695,15 @@ msgstr "Sri Lanka"
 #: selection:base.language.install,lang:0
 msgid "Russian / русский язык"
 msgstr "Russie / русский язык"
+
+#. module: base
+#: code:addons/orm.py:935
+#, python-format
+msgid "New line characters in the field '%s' not allowed. Please fix entry :\n'%s'"
+msgstr "Le caractère de retour à la ligne dans le champ '%s' est interdit. Veuillez corriger l'entrée:\n'%s'"
+
+#. module: base
+#: code:addons/orm.py:1042
+#, python-format
+msgid "Line %s: %s"
+msgstr "Ligne %s: %s"
