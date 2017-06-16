@@ -596,7 +596,7 @@ class ImpEx(SecuredController):
         d = ''
         for key,val in res[1].items():
             d+= ('%s: %s' % (ustr(key),ustr(val)))
-        msg = _('Error trying to import this record:%s. ErrorMessage:%s %s') % (d,res[2],res[3])
+        msg = _('Error trying to import this record:%s. ErrorMessage:\n%s %s') % (d,res[2],res[3])
         error = {'message':ustr(msg), 'title':_('ImportationError')}
 
         return self.imp(error=error, **kw)

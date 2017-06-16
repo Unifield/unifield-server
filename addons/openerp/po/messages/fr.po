@@ -440,9 +440,9 @@ msgstr "%d objets importés"
 
 #: controllers/impex.py:560
 #, python-format
-msgid "Error trying to import this record:%s. ErrorMessage:%s %s"
+msgid "Error trying to import this record:%s. ErrorMessage:\n%s %s"
 msgstr ""
-"Erreur pendant l'import de cet enregistrement:%s. Message d'erreur: %s %s"
+"Erreur pendant l'import de cet enregistrement:%s. Message d'erreur:\n%s %s"
 
 #: controllers/impex.py:561
 msgid "ImportationError"
