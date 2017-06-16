@@ -210,6 +210,77 @@ class purchase_order_line(osv.osv):
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
+
+    def _get_destination_ok(self, cr, uid, lines, context):
+        dest_ok = False
+        for line in lines:
+            is_inkind = line.order_id and line.order_id.order_type == 'in_kind' or False
+            dest_ok = line.account_4_distribution and line.account_4_distribution.destination_ids or False
+            if not dest_ok:
+                if is_inkind:
+                    raise osv.except_osv(_('Error'), _('No destination found. An In-kind Donation account is probably missing for this line: %s.') % (line.name or ''))
+                raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
+        return dest_ok
+        
+
+    def check_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Check analytic distribution validity for given PO line.
+        Also check that partner have a donation account (is PO is in_kind)
+        """
+        # Objects
+        ad_obj = self.pool.get('analytic.distribution')
+        ccdl_obj = self.pool.get('cost.center.distribution.line')
+        pol_obj = self.pool.get('purchase.order.line')
+        imd_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            po = pol.order_id
+            distrib = pol.analytic_distribution_id  or po.analytic_distribution_id  or False
+            # Raise an error if no analytic distribution found
+            if not distrib:
+                # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
+                if po.order_type not in ('loan', 'donation_st', 'donation_exp', 'in_kind') and not po.push_fo:
+                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+
+                # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
+                return True
+            elif pol.analytic_distribution_state != 'valid':
+                id_ad = ad_obj.create(cr, uid, {})
+                ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
+                bro_dests = self._get_destination_ok(cr, uid, [pol], context=context)
+                for line in ad_lines:
+                    # fetch compatible destinations then use on of them:
+                    # - destination if compatible
+                    # - else default destination of given account
+                    if line.destination_id in bro_dests:
+                        bro_dest_ok = line.destination_id
+                    else:
+                        bro_dest_ok = pol.account_4_distribution.default_destination_id
+                    # Copy cost center line to the new distribution
+                    ccdl_obj.copy(cr, uid, line.id, {
+                        'distribution_id': id_ad,
+                        'destination_id': bro_dest_ok.id,
+                        'partner_type': po.partner_id.partner_type,
+                    })
+                # Write result
+                pol_obj.write(cr, uid, [pol.id], {'analytic_distribution_id': id_ad})
+            else:
+                ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
+                line_ids_to_write = [line.id for line in ad_lines if not
+                                     line.partner_type]
+                ccdl_obj.write(cr, uid, line_ids_to_write, {
+                    'partner_type': pol.order_id.partner_id.partner_type,
+                })
+
+        return True
+
+
     def _hook_product_id_change(self, cr, uid, *args, **kwargs):
         '''
         Override the computation of product qty to order
