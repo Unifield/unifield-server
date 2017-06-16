@@ -11,7 +11,84 @@ class sale_order_line(osv.osv):
     _name = "sale.order.line"
     _inherit = "sale.order.line"
 
-    def wkf_validated(self, cr, uid, ids, context=None):
+
+    def analytic_distribution_checks(self, cr, uid, ids, context=None):
+        """
+        Check analytic distribution for each sale order line (except if we come from YAML tests)
+        Get a default analytic distribution if intermission.
+        Change analytic distribution if intermission.
+        """
+        # Objects
+        ana_obj = self.pool.get('analytic.distribution')
+        data_obj = self.pool.get('ir.model.data')
+        acc_obj = self.pool.get('account.account')
+        sol_obj = self.pool.get('sale.order.line')
+        distrib_line_obj = self.pool.get('cost.center.distribution.line')
+
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for line in self.browse(cr, uid, ids, context=context):
+            """
+            UFTP-336: Do not check AD on FO lines if the lines are
+                      created on a tender or a RfQ.
+                      The AD must be added on the PO line and update the
+                      AD at FO line at PO confirmation.
+            """
+            so = line.order_id
+            if line.created_by_tender or line.created_by_rfq:
+                continue
+            # Search intermission
+            intermission_cc = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_intermission')
+            # Check distribution presence
+            l_ana_dist_id = line.analytic_distribution_id and line.analytic_distribution_id.id
+            o_ana_dist_id = so.analytic_distribution_id and so.analytic_distribution_id.id
+            distrib_id = l_ana_dist_id or o_ana_dist_id or False
+
+            #US-830 : Remove the definition of a default AD for the inter-mission FO is no AD is defined
+            if not distrib_id and not so.from_yml_test and not so.order_type in ('loan', 'donation_st', 'donation_exp'):
+                raise osv.except_osv(
+                    _('Warning'),
+                    _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',),
+                )
+
+            # Check distribution state
+            if distrib_id and line.analytic_distribution_state != 'valid' and not so.from_yml_test:
+                # Raise an error if no analytic distribution on line and NONE on header (because no possibility to change anything)
+                if (not line.analytic_distribution_id or line.analytic_distribution_state == 'none') and \
+                   not so.analytic_distribution_id:
+                    # We don't raise an error for these types
+                    if so.order_type not in ('loan', 'donation_st', 'donation_exp'):
+                        raise osv.except_osv(
+                            _('Warning'),
+                            _('Analytic distribution is mandatory for this line: %s') % (line.name or '',),
+                        )
+                    else:
+                        continue
+
+                # Change distribution to be valid if needed by using those from header
+                id_ad = ana_obj.create(cr, uid, {}, context=context)
+                # Get the CC lines of the FO line if any, or the ones of the order
+                cc_lines = line.analytic_distribution_id and line.analytic_distribution_id.cost_center_lines
+                cc_lines = cc_lines or so.analytic_distribution_id.cost_center_lines
+                for x in cc_lines:
+                    # fetch compatible destinations then use one of them:
+                    # - destination if compatible
+                    # - else default destination of given account
+                    bro_dests = self._get_destination_ok(cr, uid, [line], context=context)
+                    if x.destination_id in bro_dests:
+                        bro_dest_ok = x.destination_id
+                    else:
+                        bro_dest_ok = line.account_4_distribution.default_destination_id
+                    # Copy cost center line to the new distribution
+                    distrib_line_obj.copy(cr, uid, x.id, {'distribution_id': id_ad, 'destination_id': bro_dest_ok.id}, context=context)
+                    # Write new distribution and link it to the line
+                    sol_obj.write(cr, uid, [line.id], {'analytic_distribution_id': id_ad}, context=context)
+                # UFTP-277: Check funding pool lines if missing
+                ana_obj.create_funding_pool_lines(cr, uid, [id_ad], context=context)
+
         return True
 
 
@@ -24,18 +101,11 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for sol in self.browse(cr, uid, ids, context=context):
-            # check analytic distribution before validating the line:
-            if not sol.analytic_distribution_id and not sol.order_id.analytic_distribution_id:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('You cannot validate lines without analytic distribution')
-                )
-            elif not sol.analytic_distribution_id: # we copy and pull header AD in the line:
-                new_ad = self.pool.get('analytic.distribution').copy(cr, uid, sol.order_id.analytic_distribution_id.id, context=context)
-                self.write(cr, uid, sol.id, {'analytic_distribution_id': new_ad}, context=context)
+        # check analytic distribution before validating the line:
+        self.analytic_distribution_checks(cr, uid, ids, context=context)
 
         return self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+
 
     def action_draft(self, cr ,uid, ids, context=None):
         '''
@@ -45,6 +115,7 @@ class sale_order_line(osv.osv):
             context = {}
             
         return self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+
 
 sale_order_line()
 

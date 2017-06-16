@@ -16,9 +16,8 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        for pol in self.browse(cr, uid, ids, context=context):
-            # check analytic distribution before validating the line:
-            self.check_analytic_distribution(cr, uid, ids, context=context)
+        # check analytic distribution before validating the line:
+        self.check_analytic_distribution(cr, uid, ids, context=context)
 
         return self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
