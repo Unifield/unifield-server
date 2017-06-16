@@ -35,12 +35,12 @@
                     </group>
                     <group colspan="4" attrs="{'invisible': [('show_warning', '=', False)]}">
                         <separator colspan="4" string="Warning messages" />
-                        <field name="warning_message" nolabel="1" colspan="4" />
+                        <field name="warning_message" nolabel="1" colspan="4" widget="full_text"/>
                     </group>
 
                     <group colspan="4" attrs="{'invisible': [('show_error', '=', False)]}">
                         <separator colspan="4" string="Error messages" />
-                        <field name="error_message" nolabel="1" colspan="4" />
+                        <field name="error_message" nolabel="1" colspan="4" widget="full_text"/>
                     </group>
                 </group>
             </form>
