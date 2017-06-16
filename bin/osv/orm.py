@@ -929,7 +929,7 @@ class orm_template(object):
                 if field_type not in ('one2many', 'many2one', 'many2many',
                                       'integer', 'boolean', 'float', 'selection',
                                       'reference'):
-                    if field_type == 'char' and isinstance(value, basestring)
+                    if field_type == 'char' and isinstance(value, basestring) \
                             and len(value.splitlines()) > 1:
                         # US-2661 do not allowed newline character in char fields
                         res = False
