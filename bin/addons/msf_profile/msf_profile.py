@@ -1625,7 +1625,8 @@ class communication_config(osv.osv):
 
         com_obj = self.read(cr, uid, ids[0], ['message', 'from_date',
                             'to_date'], context=context)
-        if not com_obj['message']:
+        if not com_obj['message']\
+                or com_obj['message'] == 'write your text here':
             return False
 
         if not com_obj['from_date'] and not com_obj['to_date']:
