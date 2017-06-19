@@ -100,6 +100,19 @@ class sale_order_line(osv.osv):
 
         return True
 
+    def action_sourced(self, cr, uid, ids, context=None):
+        '''
+        Workflow method called when sourcing the sale.order.line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'sourced'}, context=context)
+
+        return True
+
 
     def action_validate(self, cr, uid, ids, context=None):
         '''
@@ -113,7 +126,9 @@ class sale_order_line(osv.osv):
         # check analytic distribution before validating the line:
         self.analytic_distribution_checks(cr, uid, ids, context=context)
 
-        return self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+
+        return True
 
 
     def action_draft(self, cr ,uid, ids, context=None):
@@ -122,8 +137,12 @@ class sale_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-            
-        return self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        
+        self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+
+        return True
 
 
 sale_order_line()
@@ -144,8 +163,6 @@ class sale_order(osv.osv):
         for so in self.browse(cr, uid, ids, context=context):
             self.pool.get('sale.order.line').action_validate(cr, uid, [sol.id for sol in so.order_line], context=context)
 
-        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
-
         return True
 
     def wkf_validated(self, cr, uid, ids, context=None):
@@ -158,86 +175,6 @@ class sale_order(osv.osv):
         return True
 
     def wkf_split_done(self, cr, uid, ids, context=None):
-        return True
-
-    def test_validated(self, cr, uid, ids, context=None):
-        """
-        Workflow method that test if SO can get 'validated' state
-        """
-        if context is None:
-            context = {}
-            
-        print "FO: test_validated"
-        for so in self.browse(cr, uid, ids, context=context):
-            if not so.order_line:
-                return False
-            for sol in so.order_line:
-                if sol.state == 'draft':
-                    return False
-        return True
-
-    def test_sourced(self, cr, uid, ids, context=None):
-        """
-        Workflow method that test if SO can get 'sourced' state
-        """
-        if context is None:
-            context = {}
-            
-        print "FO: test_sourced"
-        for so in self.browse(cr, uid, ids, context=context):
-            if not so.order_line:
-                return False
-            for sol in so.order_line:
-                if sol.state in ('draft', 'validated'):
-                    return False
-        return True
-        
-    def test_confirmed(self, cr, uid, ids, context=None):
-        """
-        Workflow method that test if SO can get 'confirmed' state
-        """
-        if context is None:
-            context = {}
-            
-        print "FO: test_confirmed"
-        for so in self.browse(cr, uid, ids, context=context):
-            if not so.order_line:
-                return False
-            for sol in so.order_line:
-                if sol.state in ('draft', 'validated', 'sourced'):
-                    return False
-        return True
-        
-    def test_done(self, cr, uid, ids, context=None):
-        """
-        Workflow method that test if SO can get 'done' state
-        """
-        if context is None:
-            context = {}
-            
-        print "FO: test_done"
-        for so in self.browse(cr, uid, ids, context=context):
-            if not so.order_line:
-                return False
-            for sol in so.order_line:
-                if sol.state in ('draft', 'validated', 'sourced', 'confirmed'):
-                    return False
-        return True
-        
-    def test_cancel(self, cr, uid, ids, context=None):
-        """
-        Workflow method that test if SO can get 'cancel' state
-        """
-        if context is None:
-            context = {}
-            
-        print "FO: test_cancel"
-        for so in self.browse(cr, uid, ids, context=context):
-            if not so.order_line:
-                return False
-            for sol in so.order_line:
-                if sol.state != 'cancel':
-                    return False
         return True
 
 

@@ -23,7 +23,7 @@
             <field name="name">sourced</field>
             <field name="wkf_id" ref="wkf_sale_order_line"/>
             <field name="kind">function</field>
-            <field name="action">write({'state':'sourced'})</field>
+            <field name="action">action_sourced()</field>
         </record>
         <record id="act_sol_confirmed" model="workflow.activity">
             <field name="name">confirmed</field>

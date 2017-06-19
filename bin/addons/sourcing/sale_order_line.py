@@ -1347,7 +1347,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
     def get_existing_po(self, cr, uid, ids, context=None):
         """
         Do we have to create new PO or use an existing one ?
-        If an axisting PO can be used, then returns his ID, else return False
+        If an axisting PO can be used, then returns his ID, otherwise returns False
         @return ID (int) of PO to use or False
         """
         if context is None:
@@ -1357,12 +1357,11 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         res_po_id = False
         for sourcing_line in self.browse(cr, uid, ids, context=context):
+            # get existing open POs to the same supplier
             res_po_id = self.pool.get('purchase.order').search(cr, uid, [
                 ('partner_id', '=', sourcing_line.supplier.id),
-                ('state', '!=', 'cancel'),
+                ('state', 'in', ['draft', 'validated']),
             ], context=context)
-
-        #TODO better selection of the PO
         
         if res_po_id and isinstance(res_po_id, list):
             res_po_id = res_po_id[0]
@@ -1379,8 +1378,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        wf_service = netsvc.LocalService('workflow')
-        
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             if sourcing_line.type == 'make_to_stock':
                 pass
@@ -1415,8 +1412,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'sale_order_line_id': sourcing_line.id,
                     }
                     self.pool.get('purchase.order.line').create(cr, uid, po_line_values, context=context)
-
-                    wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
+                    self.pool.get('sale.order.line').action_sourced(cr, uid, sourcing_line.id, context=context)
                 elif sourcing_line.po_cft == 'dpo': # Direct Purchase Order
                     pass
                 elif sourcing_line.po_cft == 'cft': # Tender
