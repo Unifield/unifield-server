@@ -2370,6 +2370,7 @@ img.no_image {
 }
 
 #communication_banner {
+    font-weight: bold;
     font-size: 1.2em;
     height: 2em;
     text-align: center;
