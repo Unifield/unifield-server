@@ -1361,6 +1361,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             res_po_id = self.pool.get('purchase.order').search(cr, uid, [
                 ('partner_id', '=', sourcing_line.supplier.id),
                 ('state', 'in', ['draft', 'validated']),
+                ('related_sourcing_id', '=', sourcing_line.related_sourcing_id.id or False),
             ], context=context)
         
         if res_po_id and isinstance(res_po_id, list):
@@ -1397,6 +1398,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'priority': sourcing_line.order_id.priority,
                             'details': sourcing_line.order_id.details,
                             'delivery_requested_date': sourcing_line.order_id.delivery_requested_date,
+                            'related_sourcing_id': sourcing_line.related_sourcing_id.id or False,
                         }
                         po_to_use = self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
 
