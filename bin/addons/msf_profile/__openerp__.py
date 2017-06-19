@@ -125,6 +125,7 @@
         "data/patches.xml",
         'view/deleted_object_view.xml',
          "view/boad_accounting_view.xml",
+         'view/communication_config.xml',
     ],
     "demo_xml": [
     ],

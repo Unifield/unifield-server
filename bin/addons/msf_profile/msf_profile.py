@@ -1558,6 +1558,7 @@ class email_configuration(osv.osv):
     ]
 email_configuration()
 
+
 class ir_cron_linux(osv.osv_memory):
     _name = 'ir.cron.linux'
     _description = 'Start memory cleaning cron job from linux crontab'
@@ -1598,3 +1599,74 @@ class ir_cron_linux(osv.osv_memory):
         return True
 
 ir_cron_linux()
+
+
+class communication_config(osv.osv):
+    """ Communication configuration """
+    _name = "communication.config"
+    _description = "Communication configuration"
+
+    _columns = {
+        'message': fields.text('Message to display',
+                            help="Enter the message you want to display as a banner. Nothing more that information entered here will be displayed",
+                            required=True),
+        'from_date': fields.datetime('Broadcast start date', help='If defined, the display of the message will start at this date'),
+        'to_date': fields.datetime('Broadcast stop date', help='If defined, the display of the message will stop at this date'),
+    }
+
+    def display_banner(self, cr, uid, ids=None, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if ids is None:
+            ids = self.search(cr, uid, [], context=context)
+
+        com_obj = self.read(cr, uid, ids[0], ['message', 'from_date',
+                            'to_date'], context=context)
+        if not com_obj['message']:
+            return False
+
+        if not com_obj['from_date'] and not com_obj['to_date']:
+            return True
+
+        current_date = fields.datetime.now()
+        if not com_obj['from_date'] and com_obj['to_date']\
+                and com_obj['to_date'] > current_date:
+            return True
+
+        if com_obj['from_date'] and not com_obj['to_date']\
+                and com_obj['from_date'] < current_date:
+            return True
+
+        if com_obj['from_date'] and com_obj['to_date']\
+                and com_obj['from_date'] < current_date\
+                and com_obj['to_date'] > current_date:
+            return True
+
+        return False
+
+    def get_message(self, cr, uid, ids=None, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if ids is None:
+            ids = self.search(cr, uid, [], context=context)
+        return self.read(cr, uid, ids[0], ['message'],
+                context=context)['message']
+
+    def _check_only_one_obj(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        obj = self.search(cr, uid, [], context=context)
+        if len(obj) > 1:
+            return False
+        return True
+
+    _constraints = [
+        (_check_only_one_obj, 'You cannot have more than one Communication configuration', ['message']),
+    ]
+
+communication_config()
