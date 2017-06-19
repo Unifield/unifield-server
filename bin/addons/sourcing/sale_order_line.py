@@ -1401,6 +1401,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'related_sourcing_id': sourcing_line.related_sourcing_id.id or False,
                         }
                         po_to_use = self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
+                        po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
+                        self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                        self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+
 
                     # attach PO line:
                     po_line_values = {
