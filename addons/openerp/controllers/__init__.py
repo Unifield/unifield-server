@@ -15,6 +15,7 @@ import search
 import preferences
 import selection
 import shortcuts
+import banner
 import requests
 import unifield_version
 import openm2o
