@@ -10,6 +10,20 @@ class purchase_order_line(osv.osv):
     _name = "purchase.order.line"
     _inherit = "purchase.order.line"
 
+    def update_fo_lines(self, cr, uid, ids, context=None):
+        '''
+        Method called when validating the PO line in order to 
+        update corresponding FO line(s)
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        # TODO see method _hook_confirm_order_update_corresponding_so
+        
+        return True
+
     def action_validate(self, cr, uid, ids, context=None):
         '''
         wkf method to validate the PO line
@@ -21,6 +35,8 @@ class purchase_order_line(osv.osv):
 
         # check analytic distribution before validating the line:
         self.check_analytic_distribution(cr, uid, ids, context=context)
+
+        self.update_fo_lines(cr, uid, ids, context=context)
 
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
