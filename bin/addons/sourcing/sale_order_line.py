@@ -1425,6 +1425,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 po_values.update({
                     'order_type': 'direct',    
                     'customer_id': sourcing_line.order_id.partner_id.id,    
+                    'dest_partner_id': sourcing_line.order_id.partner_id.id,
                 })
             elif sourcing_line.po_cft == 'cft': # Tender
                 pass
