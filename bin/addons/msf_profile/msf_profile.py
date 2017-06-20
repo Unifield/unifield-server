@@ -1608,8 +1608,7 @@ class communication_config(osv.osv):
 
     _columns = {
         'message': fields.text('Message to display',
-                            help="Enter the message you want to display as a banner. Nothing more that information entered here will be displayed",
-                            required=True),
+                            help="Enter the message you want to display as a banner. Nothing more that information entered here will be displayed"),
         'from_date': fields.datetime('Broadcast start date', help='If defined, the display of the message will start at this date'),
         'to_date': fields.datetime('Broadcast stop date', help='If defined, the display of the message will stop at this date'),
     }
@@ -1625,8 +1624,7 @@ class communication_config(osv.osv):
 
         com_obj = self.read(cr, uid, ids[0], ['message', 'from_date',
                             'to_date'], context=context)
-        if not com_obj['message']\
-                or com_obj['message'] == 'write your text here':
+        if not com_obj['message']:
             return False
 
         if not com_obj['from_date'] and not com_obj['to_date']:
