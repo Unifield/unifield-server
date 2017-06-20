@@ -23,6 +23,7 @@ from osv import osv, fields
 from product._common import rounding
 
 from tools.translate import _
+import netsvc
 
 
 class split_sale_order_line_wizard(osv.osv_memory):
@@ -66,8 +67,10 @@ class split_sale_order_line_wizard(osv.osv_memory):
                 # Change the qty of the old line
                 line_obj.write(cr, uid, [split.sale_line_id.id], {'product_uom_qty': split.original_qty - split.new_line_qty}, context=context)
                 # copy data
-                so_copy_data = {'is_line_split': True, # UTP-972: Indicate that the line is split
-                                'product_uom_qty': split.new_line_qty}
+                so_copy_data = {
+                    'is_line_split': True, # UTP-972: Indicate that the line is split
+                    'product_uom_qty': split.new_line_qty,
+                }
                 # following new sequencing policy, we check if resequencing occur (behavior 1).
                 # if not (behavior 2), the split line keeps the same line number as original line
                 if not line_obj.allow_resequencing(cr, uid, [split.sale_line_id.id], context=context):
@@ -79,6 +82,10 @@ class split_sale_order_line_wizard(osv.osv_memory):
                     split.sale_line_id.id,
                     split.sale_line_id.line_number,
                 ))
+                # .. and validate it if needed:
+                if split.sale_line_id.state == 'validated':
+                    wf_service = netsvc.LocalService("workflow")
+                    wf_service.trg_validate(uid, 'sale.order.line', new_line_id, 'validated', cr)
 
         return {'type': 'ir.actions.act_window_close'}
 
