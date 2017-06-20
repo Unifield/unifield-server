@@ -22,6 +22,8 @@
         <record id="act_pol_confirmed" model="workflow.activity">
             <field name="name">confirmed</field>
             <field name="wkf_id" ref="wkf_purchase_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_confirmed()</field>
         </record>
         <record id="act_pol_cancel" model="workflow.activity">
             <field name="name">cancel</field>

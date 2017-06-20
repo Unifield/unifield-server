@@ -11,6 +11,9 @@ class purchase_order_line(osv.osv):
     _inherit = "purchase.order.line"
 
     def action_validate(self, cr, uid, ids, context=None):
+        '''
+        wkf method to validate the PO line
+        '''
         if context is None:
             context = {}
         if isinstance(ids, (int,long)):
@@ -19,7 +22,23 @@ class purchase_order_line(osv.osv):
         # check analytic distribution before validating the line:
         self.check_analytic_distribution(cr, uid, ids, context=context)
 
-        return self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+
+        return True
+
+    def action_confirmed(self, cr, uid, ids, context=None):
+        '''
+        wkf method to confirm the PO line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
+
+        return True
+
 
 purchase_order_line()
 
@@ -30,19 +49,21 @@ class purchase_order(osv.osv):
 
     def validate_lines(self, cr, uid, ids, context=None):
         """
-        Force FO lines validation and update FO state
+        Force PO lines validation and update PO state
         """
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        wf_service = netsvc.LocalService("workflow")
             
         for po in self.browse(cr, uid, ids, context=context):
-            self.pool.get('purchase.order.line').action_validate(cr, uid, [pol.id for pol in po.order_line], context=context)
-
-        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+            for pol_id in [pol.id for pol in po.order_line]:
+                wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'validated', cr)
 
         return True
+
 
     def wkf_picking_done(self, cr, uid, ids, context=None):
         '''
