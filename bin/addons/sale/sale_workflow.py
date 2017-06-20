@@ -159,9 +159,14 @@ class sale_order(osv.osv):
         """
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wf_service = netsvc.LocalService("workflow")
             
         for so in self.browse(cr, uid, ids, context=context):
-            self.pool.get('sale.order.line').action_validate(cr, uid, [sol.id for sol in so.order_line], context=context)
+            for sol_id in [sol.id for sol in so.order_line]:
+                wf_service.trg_validate(uid, 'sale.order.line', sol_id, 'validated', cr)
 
         return True
 
