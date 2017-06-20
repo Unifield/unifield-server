@@ -1608,7 +1608,7 @@ class communication_config(osv.osv):
 
     _columns = {
         'message': fields.text('Message to display',
-                            help="Enter the message you want to display as a banner. Nothing more that information entered here will be displayed"),
+                            help="Enter the message you want to display as a banner. Nothing more than the information entered here will be displayed."),
         'from_date': fields.datetime('Broadcast start date', help='If defined, the display of the message will start at this date'),
         'to_date': fields.datetime('Broadcast stop date', help='If defined, the display of the message will stop at this date'),
     }

@@ -98688,3 +98688,38 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. module: msf_profile
+#: field:communication.config,message:0
+msgid "Message to display"
+msgstr "Message à afficher"
+
+#. module: msf_profile
+#: help:communication.config,message:0
+msgid "Enter the message you want to display as a banner. Nothing more than the information entered here will be displayed."
+msgstr "Entrer le message que vous souhaitez afficher comme banière. Seules les informations entrées ici seront affichées."
+
+#. module: msf_profile
+#: field:communication.config,from_date:0
+msgid "Broadcast start date"
+msgstr "Date de début de diffusion"
+
+#. module: msf_profile
+#: field:communication.config,to_date:0
+msgid "Broadcast stop date"
+msgstr "Date de fin de diffusion"
+
+#. module: msf_profile
+#: help:communication.config,from_date:0
+msgid "If defined, the display of the message will start at this date"
+msgstr "Si défini, l'affichage du message démarrera à cette date"
+
+#. module: msf_profile
+#: help:communication.config,to_date:0
+msgid "If defined, the display of the message will stop at this date"
+msgstr "Si défini, l'affichage du message s'arrêtera à cette date"
+
+#. module: msf_profile
+#: constraint:communication.config:0
+msgid "You cannot have more than one Communication configuration"
+msgstr "Vous ne pouvez pas avoir plus d'une configuration Communication"
