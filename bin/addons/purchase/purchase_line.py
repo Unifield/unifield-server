@@ -812,8 +812,8 @@ class purchase_order_line(osv.osv):
             if line.order_id and not line.order_id.rfq_ok and (line.order_id.po_from_fo or line.order_id.po_from_ir):
                 new_vals['from_fo'] = True
 
-            if not context.get('update_merge'):
-                new_vals.update(self._update_merged_line(cr, uid, line.id, vals, context=dict(context, skipResequencing=True, noraise=True)))
+            # if not context.get('update_merge'):
+            #     new_vals.update(self._update_merged_line(cr, uid, line.id, vals, context=dict(context, skipResequencing=True, noraise=True)))
 
             res = super(purchase_order_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
