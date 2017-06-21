@@ -876,7 +876,8 @@ class account_move(osv.osv):
                 raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (vals['date'] or ''))
             period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
             # UF-2479: If the period is not open yet, raise exception for the move
-            if period and (period.state == 'created' or \
+            # US-2563: do not raise in case of duplicate
+            if not context.get('copy', False) and period and (period.state == 'created' or \
                            (manual_je and period.state != 'draft')):  # don't save manual JE in a non-open period
                 raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Journal Entry is created') % (period.name,))
 
