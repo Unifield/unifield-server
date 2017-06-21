@@ -120,7 +120,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         supplier = -1 # first location flag
         group = None
         for line in sol_obj.browse(cr, uid, active_ids, context=context):
-            if line.state == 'draft' and line.sale_order_state == 'validated':
+            if line.state == 'validated':
                 res['line_ids'].append(line.id)
             else:
                 res['error_on_lines'] = True

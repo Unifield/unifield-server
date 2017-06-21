@@ -54,8 +54,8 @@
             </record>
             <record id="trans_pol_validated_p_to_confirmed" model="workflow.transition">
                 <field name="act_from" ref="act_pol_validated_p"/>
-                <field name="act_to" ref="act_pol_confirmed"/>
-                <field name="signal">confirmed</field>
+                <field name="act_to" ref="act_pol_validated"/>
+                <field name="signal">validated</field>
             </record>
         <!-- end validated-p -->
         
