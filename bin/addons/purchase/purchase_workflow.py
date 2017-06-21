@@ -20,7 +20,54 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        # TODO dev (see method _hook_confirm_order_update_corresponding_so)
+        for pol in self.browse(cr, uid, ids, context=context):
+            if not pol.linked_sol_id:
+                return False
+            sol = pol.linked_sol_id
+            # convert from currency of pol to currency of sol
+            price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sol.currency_id.id, pol.price_unit or 0.0,
+                round=False, context={'date': pol.order_id.date_order})
+
+            if sol.order_id.order_type == 'regular' and price_unit_converted < 0.00001:
+                price_unit_converted = 0.00001
+
+            # date values
+            ship_lt = self.pool.get('fields.tools').get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
+            prep_lt = self.pool.get('fields.tools').get_field_from_company(cr, uid, object=self._name, field='preparation_lead_time', context=context)
+            db_date_format = self.pool.get('date.tools').get_db_date_format(cr, uid, context=context)
+
+            # compute confirmed date for line:
+            line_confirmed = False
+            if pol.confirmed_delivery_date:
+                line_confirmed = self.pool.get('purchase.order').compute_confirmed_delivery_date(cr, uid, pol.order_id, pol.confirmed_delivery_date,
+                    prep_lt, ship_lt, sol.order_id.est_transport_lead_time, db_date_format, context=context)
+
+            sol_values = {
+                'product_id': pol.product_id and pol.product_id.id or False,
+                'name': pol.name,
+                'default_name': pol.default_name,
+                'default_code': pol.default_code,
+                'product_uom_qty': pol.product_qty,
+                'product_uom': pol.product_uom and pol.product_uom.id or False,
+                'product_uos_qty': pol.product_qty,
+                'product_uos': pol.product_uom and pol.product_uom.id or False,
+                'price_unit': price_unit_converted,
+                'nomenclature_description': pol.nomenclature_description,
+                'nomenclature_code': pol.nomenclature_code,
+                'comment': pol.comment,
+                'nomen_manda_0': pol.nomen_manda_0 and pol.nomen_manda_0.id or False,
+                'nomen_manda_1': pol.nomen_manda_1 and pol.nomen_manda_1.id or False,
+                'nomen_manda_2': pol.nomen_manda_2 and pol.nomen_manda_2.id or False,
+                'nomen_manda_3': pol.nomen_manda_3 and pol.nomen_manda_3.id or False,
+                'nomen_sub_0': pol.nomen_sub_0 and pol.nomen_sub_0.id or False,
+                'nomen_sub_1': pol.nomen_sub_1 and pol.nomen_sub_1.id or False,
+                'nomen_sub_2': pol.nomen_sub_2 and pol.nomen_sub_2.id or False,
+                'nomen_sub_3': pol.nomen_sub_3 and pol.nomen_sub_3.id or False,
+                'nomen_sub_4': pol.nomen_sub_4 and pol.nomen_sub_4.id or False,
+                'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
+                'confirmed_delivery_date': line_confirmed,
+            }
+            self.pool.get('sale.order.line').write(cr, uid, sol.id, sol_values, context=context)
         
         return True
 
@@ -111,7 +158,6 @@ class purchase_order(osv.osv):
         return True
             
 
-
     def wkf_picking_done(self, cr, uid, ids, context=None):
         '''
         Change the shipped boolean and the state of the PO
@@ -129,6 +175,7 @@ class purchase_order(osv.osv):
         if other_id_list:
             self.write(cr, uid, other_id_list, {'shipped':1,'state':'approved'}, context=context)
         return True
+
 
     def wkf_confirm_order(self, cr, uid, ids, context=None):
         '''
@@ -216,6 +263,7 @@ class purchase_order(osv.osv):
 
         return True
 
+
     def common_code_from_wkf_approve_order(self, cr, uid, ids, context=None):
         '''
         delivery confirmed date at po level is mandatory
@@ -262,6 +310,7 @@ class purchase_order(osv.osv):
             po_line_obj.write(cr, uid, lines_to_update, {'confirmed_delivery_date': po['delivery_confirmed_date']}, context=context)
         # MOVE code for COMMITMENT into wkf_approve_order
         return True
+
 
     def wkf_confirm_wait_order(self, cr, uid, ids, context=None):
         """
@@ -341,6 +390,7 @@ class purchase_order(osv.osv):
 
         return True
 
+
     def wkf_confirm_trigger(self, cr, uid, ids, context=None):
         '''
         trigger corresponding so then po
@@ -399,6 +449,7 @@ class purchase_order(osv.osv):
             wf_service.trg_write(uid, 'purchase.order', po_id, cr)
 
         return True
+
 
     def wkf_approve_order(self, cr, uid, ids, context=None):
         '''
@@ -521,6 +572,7 @@ class purchase_order(osv.osv):
         self.write(cr, uid, ids, {'state': 'approved', 'date_approve': time.strftime('%Y-%m-%d')})
         return True
 
+
     def wkf_action_cancel_po(self, cr, uid, ids, context=None):
         """
         Cancel activity in workflow.
@@ -544,6 +596,7 @@ class purchase_order(osv.osv):
 
         self.pool.get('purchase.order.line').cancel_sol(cr, uid, line_ids, context=context)
         return self.write(cr, uid, ids, {'state':'cancel'}, context=context)
+
 
     def wkf_confirm_cancel(self, cr, uid, ids, context=None):
         """
@@ -578,6 +631,7 @@ class purchase_order(osv.osv):
             wf_service.trg_write(uid, 'purchase.order', po_id, cr)
 
         return True
+
 
     def action_done(self, cr, uid, ids, context=None):
         """
