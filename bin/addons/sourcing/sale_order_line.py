@@ -1472,7 +1472,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'linked_sol_id': sourcing_line.id,
                 }
                 self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
-                self.pool.get('sale.order.line').action_sourced(cr, uid, sourcing_line.id, context=context)
+                wf_service = netsvc.LocalService("workflow")
+                wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
 
         return True
 

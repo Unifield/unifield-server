@@ -22,7 +22,7 @@ class purchase_order_line(osv.osv):
 
         for pol in self.browse(cr, uid, ids, context=context):
             if not pol.linked_sol_id:
-                return False
+                continue
             sol = pol.linked_sol_id
             # convert from currency of pol to currency of sol
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sol.currency_id.id, pol.price_unit or 0.0,
@@ -67,7 +67,10 @@ class purchase_order_line(osv.osv):
                 'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
                 'confirmed_delivery_date': line_confirmed,
             }
+            # update FO line:
             self.pool.get('sale.order.line').write(cr, uid, sol.id, sol_values, context=context)
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'sourced_v', cr)
         
         return True
 
