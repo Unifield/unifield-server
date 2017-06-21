@@ -139,7 +139,7 @@ class purchase_order_line(osv.osv):
 
 
     _columns = {
-        # FROM PUCHASE OVER
+        'created_when_po_validated': fields.boolean(string='Has been created is a PO in validated state'),
         'is_line_split': fields.boolean(string='This line is a split line?'), # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=512, string='Origin'),
@@ -169,8 +169,6 @@ class purchase_order_line(osv.osv):
         'soq_updated': fields.boolean(string='SoQ updated', readonly=True),
         'red_color': fields.boolean(string='Red color'),
         'customer_ref': fields.function(_get_customer_ref, method=True, type="text", store=False, string="Customer ref."),
-
-        # PUCHASE OVER
         'name': fields.char('Description', size=256, required=True),
         'product_qty': fields.float('Quantity', required=True, digits=(16,2)),
         'date_planned': fields.date('Scheduled Date', required=True, select=True),
@@ -198,6 +196,7 @@ class purchase_order_line(osv.osv):
 
     }
     _defaults = {
+        'created_when_po_validated': lambda *a: False,
         'change_price_manually': lambda *a: False,
         'product_qty': lambda *a: 0.00,
         'price_unit': lambda *a: 0.00,
@@ -609,6 +608,11 @@ class purchase_order_line(osv.osv):
         product_id = vals.get('product_id')
         product_uom = vals.get('product_uom')
         order = po_obj.browse(cr, uid, order_id, context=context)
+
+        # if the PO line has been created when PO has status "validated" then new PO line gets specific state "validated-p" to mark the 
+        # line as non-really validated. It avoids the PO to go back in draft state.
+        if order.state == 'validated':
+            vals.update({'created_when_po_validated': True})
 
         # Update the name attribute if a product is selected
         self._update_name_attr(cr, uid, vals, context=context)

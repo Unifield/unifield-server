@@ -36,20 +36,20 @@
                         <group colspan="4" col="4">
                             <separator colspan="4" string="Dates" />
                             <group colspan="2" col="3">
-	                            <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}"
+	                            <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ('draft', 'validated'))]}"
 	                            	on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)" />
 	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent"
-	                            	attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
+	                            	attrs="{'invisible': [('state', 'not in', ('draft', 'validated'))]}" />
                             </group>
                             <group colspan="2" col="3">
-	                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
+	                            <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ('draft', 'validated'))]}" />
 	                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" 
-	                            	attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
+	                            	attrs="{'invisible': [('state', 'not in', ('draft', 'validated'))]}" />
                             </group>
                             <field name="transport_type"
                             	on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)"
-                            	attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
-                            <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
+                            	attrs="{'readonly': [('state', 'not in', ('draft', 'validated'))]}" />
+                            <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ('draft', 'validated'))]}" />
                             <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'in', ['split', 'sourced'])], 'invisible': [('partner_type', '=', 'external')]}" />
                             <field name="shipment_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'in', ['split', 'sourced'])], 'invisible': [('partner_type', '=', 'external')]}" />
                             <field name="arrival_date" attrs="{'readonly': ['|', ('shipped_rate', '!=', 0.0), ('state', '=', 'done')], 'invisible': [('internal_type', '!=', 'international')]}" />
@@ -60,7 +60,7 @@
 					<xpath expr="/form//field[@name='order_type']" position="replace">
 					    <field name="order_type"
                                on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id,delivery_requested_date)"
-                               attrs="{'readonly': ['|', ('push_fo', '=', True), ('state', 'not in', ['draft', 'confirmed'])]}"
+                               attrs="{'readonly': ['|', ('push_fo', '=', True), ('state', 'not in', ['draft', 'validated'])]}"
                         />
 					</xpath>
                     

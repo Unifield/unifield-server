@@ -20,8 +20,21 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        # TODO see method _hook_confirm_order_update_corresponding_so
+        # TODO dev (see method _hook_confirm_order_update_corresponding_so)
         
+        return True
+
+    def action_validated_p(self, cr, uid, ids, context=None):
+        '''
+        wkf method to validate the PO line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'validated_p'}, context=context)
+
         return True
 
     def action_validate(self, cr, uid, ids, context=None):
@@ -73,12 +86,30 @@ class purchase_order(osv.osv):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
-            
         for po in self.browse(cr, uid, ids, context=context):
             for pol_id in [pol.id for pol in po.order_line]:
                 wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'validated', cr)
 
         return True
+
+
+    def confirm_lines(self, cr, uid, ids, context=None):
+        """
+        Confirming all lines of the PO
+        validated -> confirmed
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        wf_service = netsvc.LocalService("workflow")
+        for po in self.browse(cr, uid, ids, context=context):
+            for pol_id in [pol.id for pol in po.order_line]:
+                wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'confirmed', cr)
+
+        return True
+            
 
 
     def wkf_picking_done(self, cr, uid, ids, context=None):

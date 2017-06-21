@@ -7,11 +7,18 @@
             <field name="on_create">True</field>
         </record>
 
-        <!-- Activity -->
+        <!-- ############## Activity ############## -->
+
         <record id="act_pol_draft" model="workflow.activity">
             <field name="name">draft</field>
             <field name="wkf_id" ref="wkf_purchase_order_line"/>
             <field name="flow_start">True</field>
+        </record>
+        <record id="act_pol_validated_p" model="workflow.activity">
+            <field name="name">validated_p</field>
+            <field name="wkf_id" ref="wkf_purchase_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_validated_p()</field>
         </record>
         <record id="act_pol_validated" model="workflow.activity">
             <field name="name">validated</field>
@@ -36,7 +43,22 @@
             <field name="flow_stop">True</field>
         </record>
 
-        <!-- Transitions -->
+
+        <!-- ############## Transitions ############## -->
+
+        <!-- specific transitions for validated-p lines -->
+            <record id="trans_pol_draft_validated_p" model="workflow.transition">
+                <field name="act_from" ref="act_pol_draft"/>
+                <field name="act_to" ref="act_pol_validated_p"/>
+                <field name="condition">created_when_po_validated == True</field>
+            </record>
+            <record id="trans_pol_validated_p_to_confirmed" model="workflow.transition">
+                <field name="act_from" ref="act_pol_validated_p"/>
+                <field name="act_to" ref="act_pol_confirmed"/>
+                <field name="signal">confirmed</field>
+            </record>
+        <!-- end validated-p -->
+        
         <record id="trans_pol_draft_validated" model="workflow.transition">
             <field name="act_from" ref="act_pol_draft"/>
             <field name="act_to" ref="act_pol_validated"/>
