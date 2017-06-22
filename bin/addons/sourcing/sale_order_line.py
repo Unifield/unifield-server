@@ -1460,7 +1460,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
 
                 # attach PO line:
-                po_line_values = {
+                pol_values = {
                     'order_id': po_to_use,
                     'product_id': sourcing_line.product_id.id,
                     'product_uom': sourcing_line.product_id.uom_id.id,
@@ -1469,9 +1469,12 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'partner_id': sourcing_line.supplier.id,
                     'origin': sourcing_line.order_id.name,
                     'sale_order_line_id': sourcing_line.id,
+                    'linked_sol_id': sourcing_line.id,
+                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context)
                 }
-                self.pool.get('purchase.order.line').create(cr, uid, po_line_values, context=context)
-                self.pool.get('sale.order.line').action_sourced(cr, uid, sourcing_line.id, context=context)
+                self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
+                wf_service = netsvc.LocalService("workflow")
+                wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
 
         return True
 

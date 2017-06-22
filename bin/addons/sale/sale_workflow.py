@@ -100,6 +100,24 @@ class sale_order_line(osv.osv):
 
         return True
 
+    def copy_analytic_distribution_on_lines(self, cr, uid, ids, context=None):
+        '''
+        If no AD is setted on the line, then we copy the header AD on it
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        # for each line get a new copy:
+        for sol in self.browse(cr, uid, ids, context=context):
+            if not sol.analytic_distribution_id and sol.order_id.analytic_distribution_id:
+                self.write(cr, uid, sol.id, {
+                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sol.order_id.analytic_distribution_id.id, {}, context=context),
+                })
+                
+        return True
+
     def action_sourced(self, cr, uid, ids, context=None):
         '''
         Workflow method called when sourcing the sale.order.line
@@ -110,6 +128,20 @@ class sale_order_line(osv.osv):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'sourced'}, context=context)
+
+        return True
+
+
+    def action_sourced_v(self, cr, uid, ids, context=None):
+        '''
+        Workflow method called when sourcing the sale.order.line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'sourced_v'}, context=context)
 
         return True
 
@@ -125,6 +157,7 @@ class sale_order_line(osv.osv):
 
         # check analytic distribution before validating the line:
         self.analytic_distribution_checks(cr, uid, ids, context=context)
+        self.copy_analytic_distribution_on_lines(cr, uid, ids, context=context)
 
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 

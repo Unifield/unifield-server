@@ -209,10 +209,9 @@ class purchase_order_line(osv.osv):
         'invoice_lines': fields.many2many('account.invoice.line', 'purchase_order_line_invoice_rel', 'order_line_id',
                                           'invoice_id', 'Invoice Lines', readonly=True),
         'invoiced': fields.boolean('Invoiced', readonly=True),
-        'partner_id': fields.related('order_id', 'partner_id', string='Partner', readonly=True, type="many2one",
-                                     relation="res.partner", store=True),
-        'date_order': fields.related('order_id', 'date_order', string='Order Date', readonly=True, type="date")
-
+        'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
+        'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
+        'linked_sol_id': fields.many2one('sale.order.line', 'Linked Sale Order line in case of PO from sourcing', readonly=True),
     }
     _defaults = {
         'created_when_po_validated': lambda *a: False,

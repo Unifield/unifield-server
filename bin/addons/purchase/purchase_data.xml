@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data noupdate="1">
-
         <record id="req_link_purchase_order" model="res.request.link">
             <field name="name">Purchase Order</field>
             <field name="object">purchase.order</field>
@@ -37,7 +36,9 @@
             id="purchase_default_set"
             model="ir.values"
             name="set"/>
+    </data>
 
+    <data noupdate="0">
         <record id="pol_state_cancel" model="purchase.order.line.state">
             <field name="name">cancel</field>
             <field name="sequence">100</field>
@@ -45,6 +46,10 @@
         <record id="pol_state_draft" model="purchase.order.line.state">
             <field name="name">draft</field>
             <field name="sequence">10</field>
+        </record>
+        <record id="pol_state_validated" model="purchase.order.line.state">
+            <field name="name">validated_p</field>
+            <field name="sequence">15</field>
         </record>
         <record id="pol_state_validated" model="purchase.order.line.state">
             <field name="name">validated</field>
@@ -58,6 +63,5 @@
             <field name="name">done</field>
             <field name="sequence">40</field>
         </record>
-        
     </data>
 </openerp>
