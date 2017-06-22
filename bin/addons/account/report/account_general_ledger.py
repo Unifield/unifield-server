@@ -185,11 +185,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         query = self.query
         if self.reconciled_filter:
             query += self.reconciled_filter
+        if self.target_move == 'posted':
+            query += " AND am.state = 'posted' "
+        else:
+            query += " AND am.state in ('draft', 'posted') "
 
-        move_states = [ 'posted', ] if self.target_move == 'posted' \
-            else [ 'draft', 'posted', ]
         self._drill = self.pool.get("account.drill").build_tree(self.cr,
-            self.uid, query, self.init_query, move_states=move_states,
+            self.uid, query, self.init_query,
             include_accounts=self.account_ids,
             account_report_types=self.account_report_types,
             with_balance_only=self.display_account == 'bal_solde',

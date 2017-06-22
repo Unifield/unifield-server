@@ -95,7 +95,7 @@ class AccountDrill(object):
         WHERE l.account_id = %s and per.number = 0{query}
         GROUP BY l.currency_id'''
 
-    def __init__(self, pool, cr, uid, query, query_ib, move_states=None,
+    def __init__(self, pool, cr, uid, query, query_ib,
         include_accounts=False, account_report_types=False,
         with_balance_only=False, reconcile_filter='', context=None):
         super(AccountDrill, self).__init__()
@@ -105,14 +105,11 @@ class AccountDrill(object):
         self.context = context
         if self.context is None:
             self.context = {}
-        if move_states is None:
-            move_states = []
         self.model = self.pool.get('account.account')
 
         # passed params
         self.query = query or ''
         self.query_ib = query_ib or ''
-        self.move_states = move_states or [ 'draft', 'posted', ]
         self.include_accounts = include_accounts
         self.account_report_types = account_report_types
         self.with_balance_only = with_balance_only
@@ -294,7 +291,7 @@ class AccountDrill(object):
 
             # regular query
             sql = prepare_sql(self.sql, self.query, node)
-            self.cr.execute(sql, (account_id, tuple(self.move_states), ))
+            self.cr.execute(sql)
             register_sql_result(self.cr, node)
 
             # initial balance
@@ -334,7 +331,7 @@ class account_drill(osv.osv):
     _name = "account.drill"
     _auto = False
 
-    def build_tree(self, cr, uid, query, query_ib, move_states=[],
+    def build_tree(self, cr, uid, query, query_ib,
         include_accounts=False, account_report_types=False,
         with_balance_only=False, reconcile_filter='',
         context=None):
@@ -353,7 +350,6 @@ class account_drill(osv.osv):
             accounts with a balance to zero)
         """
         ac = AccountDrill(self.pool, cr, uid, query, query_ib,
-            move_states=move_states,
             include_accounts=include_accounts,
             account_report_types=account_report_types,
             with_balance_only=with_balance_only,
