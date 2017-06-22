@@ -68,8 +68,6 @@ class account_line_csv_export(osv.osv_memory):
             head += [_('Output Debit'), _('Output Credit'), _('Output Currency')]
         head += [_('Reconcile'), _('State')]
         writer.writerow(map(lambda x: x.encode('utf-8'), head))
-        # Sort items
-        ids.sort()
         # Then write lines
         account_move_line_obj = self.pool.get('account.move.line')
         len_ids = len(ids)
