@@ -28,10 +28,9 @@ class purchase_order_line(osv.osv):
 
         return res
 
-
     def _amount_line(self, cr, uid, ids, prop, arg, context=None):
         res = {}
-        cur_obj=self.pool.get('res.currency')
+        cur_obj = self.pool.get('res.currency')
         tax_obj = self.pool.get('account.tax')
         for line in self.browse(cr, uid, ids, context=context):
             taxes = tax_obj.compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty)
@@ -49,8 +48,10 @@ class purchase_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = True
-            stages = self._get_stages_price(cr, uid, line.product_id.id, line.product_uom.id, line.order_id, context=context)
-            if line.merged_id and len(line.merged_id.order_line_ids) > 1 and line.order_id.state != 'confirmed' and stages and not line.order_id.rfq_ok:
+            stages = self._get_stages_price(cr, uid, line.product_id.id, line.product_uom.id, line.order_id,
+                                            context=context)
+            if line.merged_id and len(
+                    line.merged_id.order_line_ids) > 1 and line.order_id.state != 'confirmed' and stages and not line.order_id.rfq_ok:
                 res[line.id] = False
 
         return res
@@ -133,14 +134,15 @@ class purchase_order_line(osv.osv):
 
         res = {}
         for pol in self.browse(cr, uid, ids, context=context):
-            res[pol.id] = pol.procurement_id and pol.procurement_id.sale_id and pol.procurement_id.sale_id.client_order_ref or False
+            res[
+                pol.id] = pol.procurement_id and pol.procurement_id.sale_id and pol.procurement_id.sale_id.client_order_ref or False
 
         return res
 
-
     _columns = {
         'created_when_po_validated': fields.boolean(string='Has been created is a PO in validated state'),
-        'is_line_split': fields.boolean(string='This line is a split line?'), # UTP-972: Use boolean to indicate if the line is a split line
+        'is_line_split': fields.boolean(string='This line is a split line?'),
+    # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=512, string='Origin'),
         'link_so_id': fields.many2one('sale.order', string='Linked FO/IR', readonly=True),
@@ -148,11 +150,17 @@ class purchase_order_line(osv.osv):
         'change_price_ok': fields.function(_get_price_change_ok, type='boolean', method=True, string='Price changing'),
         'change_price_manually': fields.boolean(string='Update price manually'),
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
-        'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
+        'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State',
+                                      help='for internal use only'),
         # openerp bug: id is not given to onchanqge call if we are into one2many view
-        'fake_id':fields.function(_get_fake_id, type='integer', method=True, string='Id', help='for internal use only'),
-        'old_price_unit': fields.float(string='Old price', digits_compute=dp.get_precision('Purchase Price Computation')),
-        'order_state_purchase_order_line': fields.function(_vals_get, method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='State of Po', multi='get_vals_purchase_override', store=False, readonly=True),
+        'fake_id': fields.function(_get_fake_id, type='integer', method=True, string='Id',
+                                   help='for internal use only'),
+        'old_price_unit': fields.float(string='Old price',
+                                       digits_compute=dp.get_precision('Purchase Price Computation')),
+        'order_state_purchase_order_line': fields.function(_vals_get, method=True, type='selection',
+                                                           selection=PURCHASE_ORDER_STATE_SELECTION,
+                                                           string='State of Po', multi='get_vals_purchase_override',
+                                                           store=False, readonly=True),
 
         # This field is used to identify the FO PO line between 2 instances of the sync
         'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
@@ -165,31 +173,41 @@ class purchase_order_line(osv.osv):
         'from_fo': fields.boolean(string='From FO', readonly=True),
         'display_sync_ref': fields.boolean(string='Display sync. ref.'),
         'instance_sync_order_ref': fields.many2one('sync.order.label', string='Order in sync. instance'),
-        'link_sol_id': fields.function(_get_link_sol_id, method=True, type='many2one', relation='sale.order.line', string='Linked FO line', store=False),
+        'link_sol_id': fields.function(_get_link_sol_id, method=True, type='many2one', relation='sale.order.line',
+                                       string='Linked FO line', store=False),
         'soq_updated': fields.boolean(string='SoQ updated', readonly=True),
         'red_color': fields.boolean(string='Red color'),
-        'customer_ref': fields.function(_get_customer_ref, method=True, type="text", store=False, string="Customer ref."),
+        'customer_ref': fields.function(_get_customer_ref, method=True, type="text", store=False,
+                                        string="Customer ref."),
         'name': fields.char('Description', size=256, required=True),
-        'product_qty': fields.float('Quantity', required=True, digits=(16,2)),
+        'product_qty': fields.float('Quantity', required=True, digits=(16, 2)),
         'date_planned': fields.date('Scheduled Date', required=True, select=True),
         'taxes_id': fields.many2many('account.tax', 'purchase_order_taxe', 'ord_id', 'tax_id', 'Taxes'),
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=True, select=True),
-        'product_id': fields.many2one('product.product', 'Product', domain=[('purchase_ok','=',True)], change_default=True, select=True),
-        'move_ids': fields.one2many('stock.move', 'purchase_line_id', 'Reservation', readonly=True, ondelete='set null'),
+        'product_id': fields.many2one('product.product', 'Product', domain=[('purchase_ok', '=', True)],
+                                      change_default=True, select=True),
+        'move_ids': fields.one2many('stock.move', 'purchase_line_id', 'Reservation', readonly=True,
+                                    ondelete='set null'),
         'move_dest_id': fields.many2one('stock.move', 'Reservation Destination', ondelete='set null', select=True),
-        'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
-        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
-        'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Purchase Price')),
+        'price_unit': fields.float('Unit Price', required=True,
+                                   digits_compute=dp.get_precision('Purchase Price Computation')),
+        'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False,
+                                  readonly=True),
+        'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal',
+                                          digits_compute=dp.get_precision('Purchase Price')),
         'notes': fields.text('Notes'),
-        'order_id': fields.many2one('purchase.order', 'Order Reference', select=True, required=True, ondelete='cascade'),
-        'account_analytic_id':fields.many2one('account.analytic.account', 'Analytic Account',),
-        'company_id': fields.related('order_id','company_id',type='many2one',relation='res.company',string='Company', store=True, readonly=True),
+        'order_id': fields.many2one('purchase.order', 'Order Reference', select=True, required=True,
+                                    ondelete='cascade'),
+        'account_analytic_id': fields.many2one('account.analytic.account', 'Analytic Account', ),
+        'company_id': fields.related('order_id', 'company_id', type='many2one', relation='res.company',
+                                     string='Company', store=True, readonly=True),
         'state': fields.selection(PURCHASE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True,
                                   help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
                                        \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                                        \n* The \'Done\' state is set automatically when purchase order is set as done. \
                                        \n* The \'Cancelled\' state is set automatically when user cancel purchase order.'),
-        'invoice_lines': fields.many2many('account.invoice.line', 'purchase_order_line_invoice_rel', 'order_line_id', 'invoice_id', 'Invoice Lines', readonly=True),
+        'invoice_lines': fields.many2many('account.invoice.line', 'purchase_order_line_invoice_rel', 'order_line_id',
+                                          'invoice_id', 'Invoice Lines', readonly=True),
         'invoiced': fields.boolean('Invoiced', readonly=True),
         'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
         'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
@@ -201,14 +219,13 @@ class purchase_order_line(osv.osv):
         'product_qty': lambda *a: 0.00,
         'price_unit': lambda *a: 0.00,
         'change_price_ok': lambda *a: True,
-        'is_line_split': False, # UTP-972: by default not a split line
+        'is_line_split': False,  # UTP-972: by default not a split line
         'from_fo': lambda self, cr, uid, c: not c.get('rfq_ok', False) and c.get('from_fo', False),
         'soq_updated': False,
         'state': lambda *args: 'draft',
         'invoiced': lambda *a: 0,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
-
 
     def _get_destination_ok(self, cr, uid, lines, context):
         dest_ok = False
@@ -217,10 +234,11 @@ class purchase_order_line(osv.osv):
             dest_ok = line.account_4_distribution and line.account_4_distribution.destination_ids or False
             if not dest_ok:
                 if is_inkind:
-                    raise osv.except_osv(_('Error'), _('No destination found. An In-kind Donation account is probably missing for this line: %s.') % (line.name or ''))
+                    raise osv.except_osv(_('Error'), _(
+                        'No destination found. An In-kind Donation account is probably missing for this line: %s.') % (
+                                         line.name or ''))
                 raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
         return dest_ok
-        
 
     def check_analytic_distribution(self, cr, uid, ids, context=None):
         """
@@ -240,12 +258,13 @@ class purchase_order_line(osv.osv):
 
         for pol in self.browse(cr, uid, ids, context=context):
             po = pol.order_id
-            distrib = pol.analytic_distribution_id  or po.analytic_distribution_id  or False
+            distrib = pol.analytic_distribution_id or po.analytic_distribution_id or False
             # Raise an error if no analytic distribution found
             if not distrib:
                 # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
                 if po.order_type not in ('loan', 'donation_st', 'donation_exp', 'in_kind') and not po.push_fo:
-                    raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
+                    raise osv.except_osv(_('Warning'),
+                                         _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
 
                 # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
                 return True
@@ -272,13 +291,12 @@ class purchase_order_line(osv.osv):
             else:
                 ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
                 line_ids_to_write = [line.id for line in ad_lines if not
-                                     line.partner_type]
+                line.partner_type]
                 ccdl_obj.write(cr, uid, line_ids_to_write, {
                     'partner_type': pol.order_id.partner_id.partner_type,
                 })
 
         return True
-
 
     def _hook_product_id_change(self, cr, uid, *args, **kwargs):
         '''
@@ -295,33 +313,36 @@ class purchase_order_line(osv.osv):
             if s.name.id == partner_id:
                 seller_delay = s.delay
                 if s.product_uom:
-                    temp_qty = product_uom_pool._compute_qty(cr, uid, s.product_uom.id, s.min_qty, to_uom_id=prod.uom_id.id)
-                    uom = s.product_uom.id #prod_uom_po
-                temp_qty = s.min_qty # supplier _qty assigned to temp
-                if qty < temp_qty: # If the supplier quantity is greater than entered from user, set minimal.
+                    temp_qty = product_uom_pool._compute_qty(cr, uid, s.product_uom.id, s.min_qty,
+                                                             to_uom_id=prod.uom_id.id)
+                    uom = s.product_uom.id  # prod_uom_po
+                temp_qty = s.min_qty  # supplier _qty assigned to temp
+                if qty < temp_qty:  # If the supplier quantity is greater than entered from user, set minimal.
                     qty = temp_qty
-                    res.update({'warning': {'title': _('Warning'), 'message': _('The selected supplier has a minimal quantity set to %s, you cannot purchase less.') % qty}})
+                    res.update({'warning': {'title': _('Warning'), 'message': _(
+                        'The selected supplier has a minimal quantity set to %s, you cannot purchase less.') % qty}})
         qty_in_product_uom = product_uom_pool._compute_qty(cr, uid, uom, qty, to_uom_id=prod.uom_id.id)
         return res, qty_in_product_uom, qty, seller_delay
-
 
     def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
                           partner_id, date_order=False, fiscal_position=False, date_planned=False,
                           name=False, price_unit=False, notes=False):
         if not pricelist:
-            raise osv.except_osv(_('No Pricelist !'), _('You have to select a pricelist or a supplier in the purchase form !\nPlease set one before choosing a product.'))
-        if not  partner_id:
-            raise osv.except_osv(_('No Partner!'), _('You have to select a partner in the purchase form !\nPlease set one partner before choosing a product.'))
+            raise osv.except_osv(_('No Pricelist !'), _(
+                'You have to select a pricelist or a supplier in the purchase form !\nPlease set one before choosing a product.'))
+        if not partner_id:
+            raise osv.except_osv(_('No Partner!'), _(
+                'You have to select a partner in the purchase form !\nPlease set one partner before choosing a product.'))
         if not product:
             return {'value': {'price_unit': price_unit or 0.0, 'name': name or '',
-                              'notes': notes or'', 'product_uom' : uom or False}, 'domain':{'product_uom':[]}}
+                              'notes': notes or '', 'product_uom': uom or False}, 'domain': {'product_uom': []}}
         res = {}
-        prod= self.pool.get('product.product').browse(cr, uid, product)
+        prod = self.pool.get('product.product').browse(cr, uid, product)
 
-        lang=False
+        lang = False
         if partner_id:
-            lang=self.pool.get('res.partner').read(cr, uid, partner_id, ['lang'])['lang']
-        context={'lang':lang}
+            lang = self.pool.get('res.partner').read(cr, uid, partner_id, ['lang'])['lang']
+        context = {'lang': lang}
         context['partner_id'] = partner_id
 
         prod = self.pool.get('product.product').browse(cr, uid, product, context=context)
@@ -335,15 +356,18 @@ class purchase_order_line(osv.osv):
 
         prod_name = self.pool.get('product.product').name_get(cr, uid, [prod.id], context=context)[0][1]
 
-        res, qty_in_product_uom, qty, seller_delay = self._hook_product_id_change(cr, uid, product=prod, partner_id=partner_id,
-                                                                                  product_qty=qty, pricelist=pricelist, order_date=date_order, uom_id=uom, 
-                                                                                  seller_delay=seller_delay, res=res, context=context)
+        res, qty_in_product_uom, qty, seller_delay = self._hook_product_id_change(cr, uid, product=prod,
+                                                                                  partner_id=partner_id,
+                                                                                  product_qty=qty, pricelist=pricelist,
+                                                                                  order_date=date_order, uom_id=uom,
+                                                                                  seller_delay=seller_delay, res=res,
+                                                                                  context=context)
 
-        price = self.pool.get('product.pricelist').price_get(cr,uid,[pricelist],
+        price = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist],
                                                              product, qty_in_product_uom or 1.0, partner_id, {
-            'uom': uom,
-            'date': date_order,
-        })[pricelist]
+                                                                 'uom': uom,
+                                                                 'date': date_order,
+                                                             })[pricelist]
         if price is False:
             warning = {
                 'title': 'No valid pricelist line found !',
@@ -354,23 +378,23 @@ class purchase_order_line(osv.osv):
             res.update({'warning': warning})
         dt = (datetime.now() + relativedelta(days=int(seller_delay) or 0.0)).strftime('%Y-%m-%d %H:%M:%S')
 
-
         res.update({'value': {'price_unit': price, 'name': prod_name,
-                              'taxes_id':map(lambda x: x.id, prod.supplier_taxes_id),
-                              'date_planned': date_planned or dt,'notes': notes or prod.description_purchase,
+                              'taxes_id': map(lambda x: x.id, prod.supplier_taxes_id),
+                              'date_planned': date_planned or dt, 'notes': notes or prod.description_purchase,
                               'product_qty': qty,
                               'product_uom': uom}})
         domain = {}
 
-        taxes = self.pool.get('account.tax').browse(cr, uid,map(lambda x: x.id, prod.supplier_taxes_id))
+        taxes = self.pool.get('account.tax').browse(cr, uid, map(lambda x: x.id, prod.supplier_taxes_id))
         fpos = fiscal_position and self.pool.get('account.fiscal.position').browse(cr, uid, fiscal_position) or False
         res['value']['taxes_id'] = self.pool.get('account.fiscal.position').map_tax(cr, uid, fpos, taxes)
 
         res2 = self.pool.get('product.uom').read(cr, uid, [uom], ['category_id'])
         res3 = prod.uom_id.category_id.id
-        domain = {'product_uom':[('category_id','=',res2[0]['category_id'][0])]}
+        domain = {'product_uom': [('category_id', '=', res2[0]['category_id'][0])]}
         if res2[0]['category_id'][0] != res3:
-            raise osv.except_osv(_('Wrong Product UOM !'), _('You have to select a product UOM in the same category than the purchase UOM of the product'))
+            raise osv.except_osv(_('Wrong Product UOM !'), _(
+                'You have to select a product UOM in the same category than the purchase UOM of the product'))
 
         res['domain'] = domain
         return res
@@ -380,12 +404,15 @@ class purchase_order_line(osv.osv):
                            name=False, price_unit=False, notes=False):
         qty = 0.00
         res = self.product_id_change(cr, uid, ids, pricelist, product, qty, uom,
-                                     partner_id, date_order=date_order, fiscal_position=fiscal_position, date_planned=date_planned,
+                                     partner_id, date_order=date_order, fiscal_position=fiscal_position,
+                                     date_planned=date_planned,
                                      name=name, price_unit=price_unit, notes=notes)
         if 'product_uom' in res['value']:
             if uom and (uom != res['value']['product_uom']) and res['value']['product_uom']:
-                seller_uom_name = self.pool.get('product.uom').read(cr, uid, [res['value']['product_uom']], ['name'])[0]['name']
-                res.update({'warning': {'title': _('Warning'), 'message': _('The selected supplier only sells this product by %s') % seller_uom_name }})
+                seller_uom_name = \
+                self.pool.get('product.uom').read(cr, uid, [res['value']['product_uom']], ['name'])[0]['name']
+                res.update({'warning': {'title': _('Warning'), 'message': _(
+                    'The selected supplier only sells this product by %s') % seller_uom_name}})
             del res['value']['product_uom']
         if not uom:
             res['value']['price_unit'] = 0.0
@@ -427,7 +454,8 @@ class purchase_order_line(osv.osv):
             if order.state != 'confirmed' and stages and not order.rfq_ok:
                 c.update({'change_price_ok': False})
             # Update the associated merged line
-            res_merged = line_obj._update(cr, uid, merged_ids[0], False, product_qty, price_unit, context=c, no_update=False)
+            res_merged = line_obj._update(cr, uid, merged_ids[0], False, product_qty, price_unit, context=c,
+                                          no_update=False)
             vals['merged_id'] = res_merged[0]
             # Update unit price
             vals['price_unit'] = res_merged[1]
@@ -453,7 +481,7 @@ class purchase_order_line(osv.osv):
                               'merged_id',
                               'change_price_ok',
                               'price_unit',
-                              'order_id',],
+                              'order_id', ],
                              context=context)
 
             # Set default values if not pass in values
@@ -465,7 +493,8 @@ class purchase_order_line(osv.osv):
             line_product_id = line['product_id'] and line['product_id'][0] or False
             merged_id = line['merged_id'] and line['merged_id'][0] or False
             # If the user changed the product or the UoM or both on the PO line
-            if ('product_id' in vals and line_product_id != vals['product_id']) or ('product_uom' in vals and line['product_uom'][0] != vals['product_uom']):
+            if ('product_id' in vals and line_product_id != vals['product_id']) or (
+                    'product_uom' in vals and line['product_uom'][0] != vals['product_uom']):
                 # Need removing the merged_id link before update the merged line because the merged line
                 # will be removed if it hasn't attached PO line
                 change_price_ok = line['change_price_ok']
@@ -478,29 +507,41 @@ class purchase_order_line(osv.osv):
                     context.update({'import_in_progress': tmp_import_in_progress})
                 else:
                     del context['import_in_progress']
-                res_merged = merged_line_obj._update(cr, uid, merged_id, line['id'], -line['product_qty'], line['price_unit'], context=c)
+                res_merged = merged_line_obj._update(cr, uid, merged_id, line['id'], -line['product_qty'],
+                                                     line['price_unit'], context=c)
 
                 # Create or update an existing merged line with the new product
-                vals = self.link_merged_line(cr, uid, tmp_vals, tmp_vals.get('product_id', line_product_id), line['order_id'][0], tmp_vals.get('product_qty', line['product_qty']), tmp_vals.get('product_uom', line['product_uom'][0]), tmp_vals.get('price_unit', line['price_unit']), context=context)
+                vals = self.link_merged_line(cr, uid, tmp_vals, tmp_vals.get('product_id', line_product_id),
+                                             line['order_id'][0], tmp_vals.get('product_qty', line['product_qty']),
+                                             tmp_vals.get('product_uom', line['product_uom'][0]),
+                                             tmp_vals.get('price_unit', line['price_unit']), context=context)
 
             # If the quantity is changed
             elif 'product_qty' in vals and line['product_qty'] != vals['product_qty']:
-                res_merged = merged_line_obj._update(cr, uid, merged_id, line['id'], vals['product_qty']-line['product_qty'], line['price_unit'], context=context)
+                res_merged = merged_line_obj._update(cr, uid, merged_id, line['id'],
+                                                     vals['product_qty'] - line['product_qty'], line['price_unit'],
+                                                     context=context)
                 # Update the unit price
                 if res_merged and res_merged[1]:
                     vals.update({'price_unit': res_merged[1]})
 
             # If the price unit is changed and the product and the UoM is not modified
-            if 'price_unit' in tmp_vals and (line['price_unit'] != tmp_vals['price_unit'] or vals['price_unit'] != tmp_vals['price_unit']) and not (line_product_id != vals.get('product_id', False) or line['product_uom'][0] != vals.get('product_uom', False)):
+            if 'price_unit' in tmp_vals and (
+                    line['price_unit'] != tmp_vals['price_unit'] or vals['price_unit'] != tmp_vals[
+                'price_unit']) and not (
+                    line_product_id != vals.get('product_id', False) or line['product_uom'][0] != vals.get(
+                    'product_uom', False)):
                 # Give 0.00 to quantity because the _update should recompute the price unit with the same quantity
-                res_merged = merged_line_obj._update(cr, uid, merged_id, line['id'], 0.00, tmp_vals['price_unit'], context=context)
+                res_merged = merged_line_obj._update(cr, uid, merged_id, line['id'], 0.00, tmp_vals['price_unit'],
+                                                     context=context)
                 # Update the unit price
                 if res_merged and res_merged[1]:
                     vals.update({'price_unit': res_merged[1]})
         # If it's a new line
         elif not line_id:
             c = context.copy()
-            vals = self.link_merged_line(cr, uid, vals, vals.get('product_id'), vals['order_id'], vals['product_qty'], vals['product_uom'], vals['price_unit'], context=c)
+            vals = self.link_merged_line(cr, uid, vals, vals.get('product_id'), vals['order_id'], vals['product_qty'],
+                                         vals['product_uom'], vals['price_unit'], context=c)
         # If the line is removed
         elif not vals:
             line = self.read(cr, uid, line_id,
@@ -520,7 +561,8 @@ class purchase_order_line(osv.osv):
                 # Need removing the merged_id link before update the merged line because the merged line
                 # will be removed if it hasn't attached PO line
                 self.write(cr, uid, [line['id']], {'merged_id': False}, context=noraise_ctx)
-                res_merged = merged_line_obj._update(cr, uid, merged_id, line['id'], -line['product_qty'], line['price_unit'], context=c)
+                res_merged = merged_line_obj._update(cr, uid, merged_id, line['id'], -line['product_qty'],
+                                                     line['price_unit'], context=c)
 
         return vals
 
@@ -536,7 +578,8 @@ class purchase_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             if line.order_id and line.order_id.partner_id and line.order_id.state != 'done' and line.product_id:
-                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={'partner_id': line.order_id.partner_id.id}, context=context):
+                if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={
+                    'partner_id': line.order_id.partner_id.id}, context=context):
                     return False
 
         return True
@@ -548,27 +591,28 @@ class purchase_order_line(osv.osv):
         # recreate description because in readonly
         if ('product_id' in vals) and (vals['product_id']):
             # no nomenclature description
-            vals.update({'nomenclature_description':False})
+            vals.update({'nomenclature_description': False})
             # update the name (comment) of order line
             # the 'name' is no more the get_name from product, but instead
             # the name of product
-            product_obj = self.pool.get('product.product').read(cr, uid, vals['product_id'], ['name', 'default_code'], context=context)
-            vals.update({'name':product_obj['name']})
-            vals.update({'default_code':product_obj['default_code']})
-            vals.update({'default_name':product_obj['name']})
+            product_obj = self.pool.get('product.product').read(cr, uid, vals['product_id'], ['name', 'default_code'],
+                                                                context=context)
+            vals.update({'name': product_obj['name']})
+            vals.update({'default_code': product_obj['default_code']})
+            vals.update({'default_name': product_obj['name']})
             # erase the nomenclature - readonly
             self.pool.get('product.product')._resetNomenclatureFields(vals)
         elif ('product_id' in vals) and (not vals['product_id']):
             sale = self.pool.get('sale.order.line')
             sale._setNomenclatureInfo(cr, uid, vals, context)
             # erase default code
-            vals.update({'default_code':False})
-            vals.update({'default_name':False})
+            vals.update({'default_code': False})
+            vals.update({'default_name': False})
 
             if 'comment' in vals:
-                vals.update({'name':vals['comment']})
-        # clear nomenclature filter values
-        #self.pool.get('product.product')._resetNomenclatureFields(vals)
+                vals.update({'name': vals['comment']})
+                # clear nomenclature filter values
+                # self.pool.get('product.product')._resetNomenclatureFields(vals)
 
     def _update_name_attr(self, cr, uid, vals, context=None):
         """Update the name attribute in `vals` if a product is selected."""
@@ -687,9 +731,11 @@ class purchase_order_line(osv.osv):
 
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
-        if not vals.get('sync_order_line_db_id', False): #'sync_order_line_db_id' not in vals or vals:
+        if not vals.get('sync_order_line_db_id', False):  # 'sync_order_line_db_id' not in vals or vals:
             name = order.name
-            super(purchase_order_line, self).write(cr, uid, [po_line_id], {'sync_order_line_db_id': name + "_" + str(po_line_id),}, context=context)
+            super(purchase_order_line, self).write(cr, uid, [po_line_id],
+                                                   {'sync_order_line_db_id': name + "_" + str(po_line_id), },
+                                                   context=context)
 
         if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('procurement_id'):
             so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], context=context)
@@ -744,7 +790,7 @@ class purchase_order_line(osv.osv):
         if not default:
             default = {}
 
-        default.update({'state':'draft', 'move_ids':[],'invoiced':0,'invoice_lines':[]})
+        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': []})
         if 'origin' not in default:
             default.update({'origin': False})
 
@@ -785,7 +831,8 @@ class purchase_order_line(osv.osv):
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
 
-        if ('state' in vals and vals.get('state') != 'draft') or ('procurement_id' in vals and vals.get('procurement_id')):
+        if ('state' in vals and vals.get('state') != 'draft') or (
+                'procurement_id' in vals and vals.get('procurement_id')):
             exp_sol_ids = exp_sol_obj.search(cr, uid, [('po_line_id', 'in', ids)],
                                              order='NO_ORDER', context=context)
             exp_sol_obj.unlink(cr, uid, exp_sol_ids, context=context)
@@ -799,7 +846,7 @@ class purchase_order_line(osv.osv):
             # check qty
             if vals.get('product_qty', line.product_qty) <= 0.0 and \
                     not line.order_id.rfq_ok and \
-                    'noraise' not in context and line.state != 'cancel':
+                            'noraise' not in context and line.state != 'cancel':
                 raise osv.except_osv(
                     _('Error'),
                     _('You can not have an order line with a negative or zero quantity')
@@ -808,7 +855,8 @@ class purchase_order_line(osv.osv):
             if vals.get('origin', line.origin):
                 proc = False
                 if vals.get('procurement_id', line.procurement_id.id):
-                    proc = self.pool.get('procurement.order').browse(cr, uid, vals.get('procurement_id', line.procurement_id.id))
+                    proc = self.pool.get('procurement.order').browse(cr, uid,
+                                                                     vals.get('procurement_id', line.procurement_id.id))
                 if not proc or not proc.sale_id:
                     link_so_dict = self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context)
                     new_vals.update(link_so_dict)
@@ -821,7 +869,8 @@ class purchase_order_line(osv.osv):
 
             res = super(purchase_order_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
-            if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('procurement_id', line.procurement_id):
+            if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('procurement_id',
+                                                                                                  line.procurement_id):
                 so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], order='NO_ORDER', context=context)
                 for so_id in so_ids:
                     exp_sol_obj.create(cr, uid, {
@@ -847,7 +896,8 @@ class purchase_order_line(osv.osv):
 
         tmp_proc_context = context.get('procurement_request')
         context['procurement_request'] = True
-        so_ids = so_obj.search(cr, uid, [('name', '=', origin), ('state', 'in', ('sourced', 'progress', 'manual'))], context=context)
+        so_ids = so_obj.search(cr, uid, [('name', '=', origin), ('state', 'in', ('sourced', 'progress', 'manual'))],
+                               context=context)
         context['procurement_request'] = tmp_proc_context
         if so_ids:
             return {'link_so_id': so_ids[0]}
@@ -884,13 +934,17 @@ class purchase_order_line(osv.osv):
         if context.get('rfq_ok', False):
             view_id = data_obj.get_object_reference(cr, uid, 'tender_flow', 'rfq_line_unlink_wizard_form_view')[1]
         else:
-            view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'purchase_order_line_unlink_wizard_form_view')[1]
+            view_id = \
+            data_obj.get_object_reference(cr, uid, 'purchase_override', 'purchase_order_line_unlink_wizard_form_view')[
+                1]
 
         for line in self.read(cr, uid, ids, ['procurement_id', 'origin', 'move_dest_id'], context=context):
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line['id']], context=context)
             exp_sol_ids = self.get_exp_sol_ids_from_pol_ids(cr, uid, [line['id']], context=context)
             if (sol_ids or exp_sol_ids) and not context.get('from_del_wizard'):
-                wiz_id = wiz_obj.create(cr, uid, {'line_id': line['id'], 'only_exp': (not sol_ids and exp_sol_ids) and True or False}, context=context)
+                wiz_id = wiz_obj.create(cr, uid, {'line_id': line['id'],
+                                                  'only_exp': (not sol_ids and exp_sol_ids) and True or False},
+                                        context=context)
                 if sol_ids or wiz_obj.read(cr, uid, wiz_id, ['last_line'], context=context)['last_line']:
                     return {'type': 'ir.actions.act_window',
                             'res_model': 'purchase.order.line.unlink.wizard',
@@ -901,7 +955,7 @@ class purchase_order_line(osv.osv):
                             'target': 'new',
                             'context': context}
 
-            # In case of a PO line is created to source a FO/IR but the corresponding
+            #  In case of a PO line is created to source a FO/IR but the corresponding
             # FO/IR line will be created when the PO will be confirmed
             if not line['procurement_id'] and line['origin']:
                 wiz_id = wiz_obj.create(cr, uid, {'line_id': line['id']}, context=context)
@@ -914,7 +968,8 @@ class purchase_order_line(osv.osv):
                 proc_ids = proc_obj.search(cr, uid, [('move_id', '=', line['move_dest_id'][0])], context=context)
                 if proc_ids:
                     # Delete link between proc. order and min/max rule lines
-                    opl_ids = opl_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], order='NO_ORDER', context=context)
+                    opl_ids = opl_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], order='NO_ORDER',
+                                             context=context)
                     opl_obj.write(cr, uid, opl_ids, {'procurement_id': False}, context=context)
                     wf_service = netsvc.LocalService("workflow")
                     for proc_id in proc_ids:
@@ -956,7 +1011,8 @@ class purchase_order_line(osv.osv):
             if not sol_ids and line['origin']:
                 origin_ids = so_obj.search(cr, uid, [('name', '=', line['origin'])], context=context)
                 for origin in so_obj.read(cr, uid, origin_ids, ['order_line'], context=context):
-                    exp_sol_ids = exp_sol_obj.search(cr, uid, [('order_id', '=', origin['id']), ('po_line_id', '!=', line['id'])],
+                    exp_sol_ids = exp_sol_obj.search(cr, uid, [('order_id', '=', origin['id']),
+                                                               ('po_line_id', '!=', line['id'])],
                                                      limit=1, order='NO_ORDER', context=context)
                     if not origin['order_line'] and not exp_sol_ids:
                         so_to_cancel_ids.extend(origin_ids)
@@ -1036,7 +1092,7 @@ class purchase_order_line(osv.osv):
                                   context=context)
                 if ir_new_state:
                     so_obj.write(cr, uid, ir.id,
-                                 {'state':  ir_new_state}, context=context)
+                                 {'state': ir_new_state}, context=context)
 
         return so_to_cancel_ids
 
@@ -1088,10 +1144,10 @@ class purchase_order_line(osv.osv):
         proc_id_to_cancel = set()
         for proc_id in proc_ids:
             if not self.search_exist(cr, uid, [
-                    ('order_id.state', '!=', 'split'),
-                    ('id', 'not in', ids),
-                    ('procurement_id', '=', proc_id)],
-                    context=context):
+                ('order_id.state', '!=', 'split'),
+                ('id', 'not in', ids),
+                ('procurement_id', '=', proc_id)],
+                                     context=context):
                 proc_id_to_cancel.add(proc_id)
         if proc_id_to_cancel:
             proc_obj.action_cancel(cr, uid, list(proc_id_to_cancel))
@@ -1137,7 +1193,6 @@ class purchase_order_line(osv.osv):
 
         return res
 
-
     def _get_stages_price(self, cr, uid, product_id, uom_id, order, context=None):
         '''
         Returns True if the product/supplier couple has more than 1 line
@@ -1148,11 +1203,12 @@ class purchase_order_line(osv.osv):
                                                                     order='NO_ORDER', context=context)
         if suppinfo_ids:
             pricelist = self.pool.get('pricelist.partnerinfo').search(cr, uid,
-                                                                      [('currency_id', '=', order.pricelist_id.currency_id.id),
+                                                                      [('currency_id', '=',
+                                                                        order.pricelist_id.currency_id.id),
                                                                        ('suppinfo_id', 'in', suppinfo_ids),
-                                                                          ('uom_id', '=', uom_id),
-                                                                          '|', ('valid_till', '=', False),
-                                                                          ('valid_till', '>=', order.date_order)],
+                                                                       ('uom_id', '=', uom_id),
+                                                                       '|', ('valid_till', '=', False),
+                                                                       ('valid_till', '>=', order.date_order)],
                                                                       limit=2, order='NO_ORDER', context=context)
             if len(pricelist) > 1:
                 return True
@@ -1194,7 +1250,9 @@ class purchase_order_line(osv.osv):
                                                          limit=1, order='NO_ORDER', context=context)
             if not sale_id:
                 res['warning'] = {'title': _('Warning'),
-                                  'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with %s supplier. No FO/IR line will be created for this PO line') % (origin, o_type)}
+                                  'message': _(
+                                      'The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with %s supplier. No FO/IR line will be created for this PO line') % (
+                                             origin, o_type)}
                 res['value'] = {
                     'display_sync_ref': False,
                     'instance_sync_order_ref': '',
@@ -1205,8 +1263,6 @@ class purchase_order_line(osv.osv):
                 }
 
         return res
-
-
 
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
                              partner_id, date_order=False, fiscal_position=False, date_planned=False,
@@ -1236,8 +1292,8 @@ class purchase_order_line(osv.osv):
                 all_qty += l['product_qty']
 
         res = self.product_id_change(cr, uid, ids, pricelist, product, all_qty, uom,
-                                                                 partner_id, date_order, fiscal_position,
-                                                                 date_planned, name, price_unit, notes)
+                                     partner_id, date_order, fiscal_position,
+                                     date_planned, name, price_unit, notes)
 
         if res.get('warning', {}).get('title', '') == 'No valid pricelist line found !' or qty == 0.00:
             res.update({'warning': {}})
@@ -1250,7 +1306,8 @@ class purchase_order_line(osv.osv):
 
         if product and partner_id:
             # Test the compatibility of the product with a the partner of the order
-            res, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='product_id', values=res, vals={'partner_id': partner_id}, context=context)
+            res, test = product_obj._on_change_restriction_error(cr, uid, product, field_name='product_id', values=res,
+                                                                 vals={'partner_id': partner_id}, context=context)
             if test:
                 return res
 
@@ -1261,7 +1318,9 @@ class purchase_order_line(osv.osv):
             currency_id = self.pool.get('product.pricelist').read(cr, uid, pricelist, ['currency_id'])['currency_id'][0]
             tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
             info_prices = []
-            suppinfo_ids = self.pool.get('product.supplierinfo').search(cr, uid, [('name', '=', partner_id), ('product_id', '=', tmpl_id)], context=context)
+            suppinfo_ids = self.pool.get('product.supplierinfo').search(cr, uid, [('name', '=', partner_id),
+                                                                                  ('product_id', '=', tmpl_id)],
+                                                                        context=context)
             domain = [('uom_id', '=', uom),
                       ('suppinfo_id', 'in', suppinfo_ids),
                       '|', ('valid_from', '<=', date_order),
@@ -1272,28 +1331,35 @@ class purchase_order_line(osv.osv):
             domain_cur = [('currency_id', '=', currency_id)]
             domain_cur.extend(domain)
 
-            info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
+            info_prices = partner_price.search(cr, uid, domain_cur, order='sequence asc, min_quantity asc, id desc',
+                                               limit=1, context=context)
             if not info_prices:
-                info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity asc, id desc', limit=1, context=context)
+                info_prices = partner_price.search(cr, uid, domain, order='sequence asc, min_quantity asc, id desc',
+                                                   limit=1, context=context)
 
             if info_prices:
                 info_price = partner_price.browse(cr, uid, info_prices[0], context=context)
-                info_u_price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, currency_id, info_price.price, round=False, context=context)
+                info_u_price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, currency_id,
+                                                                     info_price.price, round=False, context=context)
                 res['value'].update({'old_price_unit': info_u_price, 'price_unit': info_u_price})
                 res.update({'warning': {'title': _('Warning'), 'message': _('The product unit price has been set ' \
-                                                                            'for a minimal quantity of %s (the min quantity of the price list), '\
+                                                                            'for a minimal quantity of %s (the min quantity of the price list), ' \
                                                                             'it might change at the supplier confirmation.') % info_price.min_quantity}})
-                if info_price.rounding and all_qty%info_price.rounding != 0:
+                if info_price.rounding and all_qty % info_price.rounding != 0:
                     message = _('A rounding value of %s UoM has been set for ' \
                                 'this product, you should than modify ' \
                                 'the quantity ordered to match the supplier criteria.') % info_price.rounding
                     message = '%s \n %s' % (res.get('warning', {}).get('message', ''), message)
                     res['warning'].update({'message': message})
             else:
-                old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, res['value']['price_unit'], round=False, context=context)
+                old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id,
+                                                                  res['value']['price_unit'], round=False,
+                                                                  context=context)
                 res['value'].update({'old_price_unit': old_price})
         else:
-            old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, res.get('value').get('price_unit'), round=False, context=context)
+            old_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id,
+                                                              res.get('value').get('price_unit'), round=False,
+                                                              context=context)
             res['value'].update({'old_price_unit': old_price})
 
         # Set the unit price with cost price if the product has no staged pricelist
@@ -1305,10 +1371,11 @@ class purchase_order_line(osv.osv):
             product_result = product_obj.read(cr, uid, product, ['uom_id', 'standard_price'])
             st_uom = product_result['uom_id'][0]
             st_price = product_result['standard_price']
-            st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price, round=False, context=context)
+            st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price, round=False,
+                                                             context=context)
             st_price = self.pool.get('product.uom')._compute_price(cr, uid, st_uom, st_price, uom)
 
-            if res.get('value', {}).get('price_unit', False) == False and (state and state == 'draft') or not state :
+            if res.get('value', {}).get('price_unit', False) == False and (state and state == 'draft') or not state:
                 res['value'].update({'price_unit': st_price, 'old_price_unit': st_price})
             elif state and state != 'draft' and old_price_unit:
                 res['value'].update({'price_unit': old_price_unit, 'old_price_unit': old_price_unit})
@@ -1329,7 +1396,8 @@ class purchase_order_line(osv.osv):
                 res['warning'].setdefault('title', 'Warning')
                 res['warning'].setdefault('message', '')
 
-                res['warning']['message'] = '%s \n %s' % (res.get('warning', {}).get('message', ''), consistency_message)
+                res['warning']['message'] = '%s \n %s' % (
+                res.get('warning', {}).get('message', ''), consistency_message)
 
         return res
 
@@ -1356,14 +1424,14 @@ class purchase_order_line(osv.osv):
         other_lines = self.search(cr, uid,
                                   [('id', '!=', fake_id),
                                    ('order_id', '=', order_id),
-                                      ('product_id', '=', product_id),
-                                      ('product_uom', '=', product_uom)],
+                                   ('product_id', '=', product_id),
+                                   ('product_uom', '=', product_uom)],
                                   limit=1, order='NO_ORDER', context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
 
         if not change_price_ok or (other_lines and stages and order.state != 'confirmed' and not context.get('rfq_ok')):
             res.update({'warning': {'title': 'Error',
-                                    'message': 'This product get stages prices for this supplier, you cannot change the price manually in draft state '\
+                                    'message': 'This product get stages prices for this supplier, you cannot change the price manually in draft state ' \
                                                'as you have multiple order lines (it is possible in "validated" state.'}})
             res['value'].update({'price_unit': old_price_unit})
         else:
@@ -1439,7 +1507,8 @@ class purchase_order_line(osv.osv):
 
         wizard = self.pool.get('split.purchase.order.line.wizard')
         for line in self.read(cr, uid, ids, ['product_qty'], context=context):
-            data = {'purchase_line_id': line['id'], 'original_qty': line['product_qty'], 'old_line_qty': line['product_qty']}
+            data = {'purchase_line_id': line['id'], 'original_qty': line['product_qty'],
+                    'old_line_qty': line['product_qty']}
             wiz_id = wizard.create(cr, uid, data, context=context)
             return {'type': 'ir.actions.act_window',
                     'res_model': 'split.purchase.order.line.wizard',
@@ -1448,6 +1517,7 @@ class purchase_order_line(osv.osv):
                     'target': 'new',
                     'res_id': wiz_id,
                     'context': context}
+
 
 purchase_order_line()
 

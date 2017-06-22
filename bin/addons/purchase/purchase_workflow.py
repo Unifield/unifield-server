@@ -111,13 +111,38 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # Create IN lines
+        po_obj = self.pool.get('purchase.order')
+        picking_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
+        po_line_obj = self.pool.get('purchase.order.line')
+        wkf_service = netsvc.LocalService("workflow")
+        for line in po_line_obj.browse(cr, uid, ids):
+            # Search existing picking for PO
+            picking_id = picking_obj.search(cr, uid, [
+                ('purchase_id', '=', line.order_id.id),
+                ('state', 'not in', ['done'])
+            ])
+            created = False
+            if len(picking_id) < 1:
+                picking_id = po_obj.create_picking(cr, uid, line.order_id, context)
+                created = True
+            else:
+                picking_id = picking_id[0]
+            move_id = po_obj.create_picking_line(cr, uid, picking_id, line, context)
+            if created:
+                wkf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
+            else:
+                move_obj.in_action_confirm(cr, uid, move_id, context)
+
+            # Confirm FO line
+            if line.link_sol_id:
+                wkf_service.trg_validate(uid, 'sale.order.line', line.link_sol_id.id, 'confirmed', cr)
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
-
         return True
-
 
 purchase_order_line()
 
