@@ -1062,6 +1062,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     if getattr(wiz, el[0], False):
                         obj_id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [obj_id], {'analytic_distribution_id': distrib_id}, context=context)
+
             # Finally do registration for each type
             new_distrib = False
             for line_type in ['cost.center', 'funding.pool', 'free.1', 'free.2']:
