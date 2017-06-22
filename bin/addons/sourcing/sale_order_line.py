@@ -1470,7 +1470,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'origin': sourcing_line.order_id.name,
                     'sale_order_line_id': sourcing_line.id,
                     'linked_sol_id': sourcing_line.id,
-                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context)
+                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context),
                 }
                 self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
                 wf_service = netsvc.LocalService("workflow")
