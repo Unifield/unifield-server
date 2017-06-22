@@ -2183,129 +2183,170 @@ stock moves which are already processed : '''
         # by default, we change the destination stock move if the destination stock move exists
         return order_line.move_dest_id
 
-    def action_picking_create(self,cr, uid, ids, context=None, *args):
+    def ensure_object(self, cr, uid, model, value):
+        if isinstance(value, (int, long)):
+            value = self.pool.get(model).browse(cr, uid, value)
+        return value
+
+    def get_reason_type_id(self, cr, uid, order, context=None):
+
+        def get_reference(reason):
+            return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', reason)[1]
+
+        order = self.ensure_object(cr, uid, 'purchase.order', order)
+
+        reason_type_id = False
+        if order.order_type in ('regular', 'purchase_list', 'direct') and \
+                        order.partner_id.partner_type in ('internal', 'intermission', 'section', 'esc'):
+            reason_type_id = get_reference('reason_type_internal_supply')
+        elif order.order_type in ('regular', 'purchase_list', 'direct'):
+            reason_type_id = get_reference('reason_type_external_supply')
+        elif order.order_type == 'loan':
+            reason_type_id = get_reference('reason_type_loan')
+        elif order.order_type == 'donation_st':
+            reason_type_id = get_reference('reason_type_donation')
+        elif order.order_type == 'donation_exp':
+            reason_type_id = get_reference('reason_type_donation_expiry')
+        elif order.order_type == 'in_kind':
+            reason_type_id = get_reference('reason_type_in_kind_donation')
+        return reason_type_id
+
+    def create_picking(self, cr, uid, order, context=None):
         if context is None:
             context = {}
+
+        order = self.ensure_object(cr, uid, 'purchase.order', order)
+
+        values = {
+            'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in'),
+            'origin': order.name + ((order.origin and (':' + order.origin)) or ''),
+            'type': 'in',
+            'partner_id2': order.partner_id.id,
+            'address_id': order.partner_address_id.id or False,
+            'invoice_state': '2binvoiced' if order.invoice_method == 'picking' else 'none',
+            'purchase_id': order.id,
+            'company_id': order.company_id.id,
+            'move_lines': [],
+        }
+
+        reason_type_id = self.get_reason_type_id(cr, uid, order, context)
+        if reason_type_id:
+            values.update({'reason_type_id': reason_type_id})
+
+        return self.pool.get('stock.picking').create(cr, uid, values, context=context)
+
+    def create_picking_line(self, cr, uid, picking_id, order_line, context=None):
+        if context is None:
+            context = {}
+
+        order_line = self.ensure_object(cr, uid, 'purchase.order.line', order_line)
+        if not order_line:
+            return False
+
+        picking_id = self.ensure_object(cr, uid, 'stock.picking', picking_id)
+        order = order_line.order_id
+        dest = order.location_id.id
+
         move_obj = self.pool.get('stock.move')
         line_obj = self.pool.get('purchase.order.line')
         sol_obj = self.pool.get('sale.order.line')
         data_obj = self.pool.get('ir.model.data')
 
-        input_loc = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+        # service with reception are directed to Service Location
+        if order_line.product_id.type == 'service_recep' and not order.cross_docking_ok:
+            dest = self.pool.get('stock.location').get_service_location(cr, uid)
+        else:
+            sol_ids = line_obj.get_sol_ids_from_pol_ids(cr, uid, [order_line.id], context=context)
+            for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+                if not (sol.order_id and sol.order_id.procurement_request):
+                    continue
+                if order_line.product_id.type == 'service_recep':
+                    dest = self.pool.get('stock.location').get_service_location(cr, uid)
+                    break
+                elif order_line.product_id.type == 'consu':
+                    dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+                    break
+                elif sol.order_id.location_requestor_id.usage != 'customer':
+                    dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+                    break
+
+        values = {
+            'name': ''.join((order.name, ': ', (order_line.name or ''))),
+            'product_id': order_line.product_id.id,
+            'product_qty': order_line.product_qty,
+            'product_uos_qty': order_line.product_qty,
+            'product_uom': order_line.product_uom.id,
+            'product_uos': order_line.product_uom.id,
+            'location_id': order.partner_id.property_stock_supplier.id,
+            'location_dest_id': dest,
+            'picking_id': picking_id.id,
+            'move_dest_id': order_line.move_dest_id.id,
+            'state': 'draft',
+            'purchase_line_id': order_line.id,
+            'company_id': order.company_id.id,
+            'price_currency_id': order.pricelist_id.currency_id.id,
+            'price_unit': order_line.price_unit,
+            'date': order_line.confirmed_delivery_date,
+            'date_expected': order_line.confirmed_delivery_date,
+            'line_number': order_line.line_number,
+            'comment': order_line.comment or '',
+        }
+
+        if picking_id.reason_type_id:
+            values.update({'reason_type_id': picking_id.reason_type_id.id})
+
+        ctx = context.copy()
+        ctx['bypass_store_function'] = [
+            ('stock.picking', ['dpo_incoming', 'dpo_out', 'overall_qty', 'line_state'])
+        ]
+
+        return move_obj.create(cr, uid, values, context=ctx)
+
+    def action_picking_create(self, cr, uid, ids, context=None, *args):
         picking_id = False
         for order in self.browse(cr, uid, ids):
-            moves_to_update = []
-            loc_id = order.partner_id.property_stock_supplier.id
-            istate = 'none'
-            reason_type_id = False
-            if order.invoice_method=='picking':
-                istate = '2binvoiced'
-
-            pick_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in')
-            picking_values = {
-                'name': pick_name,
-                'origin': order.name+((order.origin and (':'+order.origin)) or ''),
-                'type': 'in',
-                'partner_id2': order.partner_id.id,
-                'address_id': order.partner_address_id.id or False,
-                'invoice_state': istate,
-                'purchase_id': order.id,
-                'company_id': order.company_id.id,
-                'move_lines' : [],
-            }
-
-            if order.order_type in ('regular', 'purchase_list', 'direct') and order.partner_id.partner_type in ('internal', 'intermission', 'section', 'esc'):
-                reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_supply')[1]
-            elif order.order_type in ('regular', 'purchase_list', 'direct'):
-                reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1]
-            elif order.order_type == 'loan':
-                reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
-            elif order.order_type == 'donation_st':
-                reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
-            elif order.order_type == 'donation_exp':
-                reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
-            elif order.order_type == 'in_kind':
-                reason_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_in_kind_donation')[1]
-
-            if reason_type_id:
-                picking_values.update({'reason_type_id': reason_type_id})
-
             # US-917: Check if any IN exists for the given PO
             pick_obj = self.pool.get('stock.picking')
             if pick_obj.search_exist(cr, uid, [('purchase_id', 'in', [order.id])], context=context):
                 return
+            picking_id = self.create_picking(cr, uid, order, context)
 
-            picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values, context=context)
+            move_obj = self.pool.get('stock.move')
+            line_obj = self.pool.get('purchase.order.line')
             todo_moves = []
+            moves_to_update = []
+
             for order_line in order.order_line:
+
                 # Reload the data of the line because if the line comes from an ISR and it's a duplicate line,
                 # the move_dest_id field has been changed by the _hook_action_picking_create_modify_out_source_loc_check method
                 order_line = line_obj.browse(cr, uid, order_line.id, context=context)
                 if not order_line.product_id:
                     continue
-                dest = order.location_id.id
-                # service with reception are directed to Service Location
-                if order_line.product_id.type == 'service_recep' and not order.cross_docking_ok:
-                    dest = self.pool.get('stock.location').get_service_location(cr, uid)
-                else:
-                    sol_ids = line_obj.get_sol_ids_from_pol_ids(cr, uid, [order_line.id], context=context)
-                    for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
-                        if sol.order_id and sol.order_id.procurement_request:
-                            if order_line.product_id.type == 'service_recep':
-                                dest = self.pool.get('stock.location').get_service_location(cr, uid)
-                                break
-                            elif order_line.product_id.type == 'consu':
-                                dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
-                                break
-                            elif sol.order_id.location_requestor_id.usage != 'customer':
-                                dest = input_loc
-                                break
 
-                move_values = {
-                    'name': ''.join((order.name, ': ', (order_line.name or ''))),
-                    'product_id': order_line.product_id.id,
-                    'product_qty': order_line.product_qty,
-                    'product_uos_qty': order_line.product_qty,
-                    'product_uom': order_line.product_uom.id,
-                    'product_uos': order_line.product_uom.id,
-                    'location_id': loc_id,
-                    'location_dest_id': dest,
-                    'picking_id': picking_id,
-                    'move_dest_id': order_line.move_dest_id.id,
-                    'state': 'draft',
-                    'purchase_line_id': order_line.id,
-                    'company_id': order.company_id.id,
-                    'price_currency_id': order.pricelist_id.currency_id.id,
-                    'price_unit': order_line.price_unit,
-                    'date': order_line.confirmed_delivery_date,
-                    'date_expected': order_line.confirmed_delivery_date,
-                    'line_number': order_line.line_number,
-                    'comment': order_line.comment or '',
-                }
+                move = self.create_picking_line(cr, uid, picking_id, order_line, context=context)
 
-                if reason_type_id:
-                    move_values.update({'reason_type_id': reason_type_id})
-
-                ctx = context.copy()
-                ctx['bypass_store_function'] = [('stock.picking', ['dpo_incoming', 'dpo_out', 'overall_qty', 'line_state'])]
-                move = move_obj.create(cr, uid, move_values, context=ctx)
-                if self._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context=context, order_line=order_line, move_id=move):
+                if self._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context=context,
+                                                                                order_line=order_line, move_id=move):
                     moves_to_update.append(order_line.move_dest_id.id)
                 todo_moves.append(move)
-            # compute function fields
-            if todo_moves:
-                compute_store = move_obj._store_get_values(cr, uid, todo_moves, None, context)
-                compute_store.sort()
-                done = []
-                for null, store_object, store_ids, store_fields2 in compute_store:
-                    if store_fields2 in ('dpo_incoming', 'dpo_out', 'overall_qty', 'line_state') and not (store_object, store_ids, store_fields2) in done:
-                        self.pool.get(store_object)._store_set_values(cr, uid, store_ids, store_fields2, context)
-                        done.append((store_object, store_ids, store_fields2))
-            if moves_to_update:
-                move_obj.write(cr, uid, moves_to_update, {'location_id':order.location_id.id})
-            move_obj.confirm_and_force_assign(cr, uid, todo_moves)
-            wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
+                # compute function fields
+                if todo_moves:
+                    compute_store = move_obj._store_get_values(cr, uid, todo_moves, None, context)
+                    compute_store.sort()
+                    done = []
+                    for null, store_object, store_ids, store_fields2 in compute_store:
+                        if store_fields2 in ('dpo_incoming', 'dpo_out', 'overall_qty', 'line_state') and not (
+                                store_object, store_ids, store_fields2) in done:
+                            self.pool.get(store_object)._store_set_values(cr, uid, store_ids, store_fields2, context)
+                            done.append((store_object, store_ids, store_fields2))
+                if moves_to_update:
+                    move_obj.write(cr, uid, moves_to_update, {'location_id': order.location_id.id})
+                move_obj.confirm_and_force_assign(cr, uid, todo_moves)
+                wf_service = netsvc.LocalService("workflow")
+                wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
+                return picking_id
+
         return picking_id
 
     def _get_location_id(self, cr, uid, vals, warehouse_id=False, context=None):
