@@ -541,6 +541,31 @@ class account_move_line(osv.osv):
             args.append(('currency_id', '=', context.get('currency_id')))
         if context.get('move_state'):
             args.append(('move_state', '=', context.get('move_state')))
+        if context.get('account_id'):
+            args.append(('account_id', '=', context.get('account_id')))
+
+        if context.get('periods'):
+            period_ids = context.get('periods')
+            if isinstance(period_ids, (int, long)):
+                period_ids = [period_ids]
+            args.append(('period_id', 'in', period_ids))
+        elif context.get('fiscalyear'):
+            fy = context.get('fiscalyear')
+            period_obj = self.pool.get('account.period')
+            period_ids = period_obj.search(cr, uid,
+                                           [('fiscalyear_id', '=', fy)],
+                                           context=context)
+            args.append(('period_id', 'in', period_ids))
+        elif context.get('period_from') and context.get('period_to'):
+            p_from = context.get('period_from')
+            p_to = context.get('period_to')
+            period_obj = self.pool.get('account.period')
+            period_ids = period_obj.search(cr, uid,
+                                           [('id', '>=', period_from),
+                                            ('id', '<=', period_to)],
+                                           context=context)
+            args.append(('period_id', 'in', period_ids))
+
         return super(account_move_line, self).search(cr, uid, args, offset,
                                                      limit, order, context=context, count=count)
 
