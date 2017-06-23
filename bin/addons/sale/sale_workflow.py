@@ -146,6 +146,20 @@ class sale_order_line(osv.osv):
         return True
 
 
+    def action_confirmed(self, cr, uid, ids, context=None):
+        '''
+        Workflow method called when confirming the sale.order.line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
+
+        return True
+
+
     def action_validate(self, cr, uid, ids, context=None):
         '''
         Workflow method called when validating the sale.order.line

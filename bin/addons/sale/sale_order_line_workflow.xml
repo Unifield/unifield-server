@@ -34,6 +34,8 @@
         <record id="act_sol_confirmed" model="workflow.activity">
             <field name="name">confirmed</field>
             <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_confirmed()</field>
         </record>
         <record id="act_sol_cancel" model="workflow.activity">
             <field name="name">cancel</field>

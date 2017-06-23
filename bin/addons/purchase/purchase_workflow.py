@@ -139,8 +139,8 @@ class purchase_order_line(osv.osv):
                 move_obj.in_action_confirm(cr, uid, move_id, context)
 
             # Confirm FO line
-            if line.link_sol_id:
-                wkf_service.trg_validate(uid, 'sale.order.line', line.link_sol_id.id, 'confirmed', cr)
+            if line.linked_sol_id:
+                wkf_service.trg_validate(uid, 'sale.order.line', line.linked_sol_id.id, 'confirmed', cr)
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
         return True
 
