@@ -35,15 +35,15 @@
                             <field name="canceled_end" invisible="1" />
                             <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}"
                                 domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id, 'split_po': related_sourcing_id}),  ('check_partner_rfq', '=', tender_id), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]"
-                                attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" />
+                                attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'validated', 'confirmed_wait', 'confirmed', 'except_picking', 'except_invoice'])]}" />
                             <field name="partner_type"  />
-                            <field name="partner_address_id"  attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
-                            <field name="origin" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" widget="char"/>
+                            <field name="partner_address_id"  attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed_wait', 'confirmed', 'except_picking', 'except_invoice'])]}"/>
+                            <field name="origin" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'validated', 'confirmed_wait', 'confirmed', 'except_picking', 'except_invoice'])]}" widget="char"/>
                             <field name="internal_type" string="Zone"  />
                             <field name="customer_ref" widget="char" />
                             <label colspan="2"></label>
                             <field name="pricelist_id" string="Currency" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"
-                            colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                            colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'confirmed', 'except_picking', 'except_invoice'])]}"/>
                         </group>
                     </xpath>
                     <xpath expr="/form/notebook" position="after">
@@ -84,13 +84,13 @@
                             <field name="state" readonly="1"/>
                             <field name="from_procurement" invisible="1" />
                             <button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
-                                attrs="{'invisible': ['|', ('state', '!=', 'approved'), ('order_type', '!=', 'direct')]}" />
+                                attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}" />
                             <button name="purchase_cancel"  type="object"
-                            attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'validated', 'rfq_sent']), '&amp;',('partner_type', 'not in', ('external', 'esc')), ('state', '=', 'confirmed')]}" 
+                            attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'validated', 'rfq_sent']), '&amp;',('partner_type', 'not in', ('external', 'esc')), ('state', '=', 'validated')]}" 
                             string="Cancel" icon="gtk-cancel"/>
                             <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
                             <!-- UTP-469 − Remove the cancel button
-                                 <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['approved','except_picking','except_invoice','wait'])]}"/> -->
+                                 <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['confirmed','except_picking','except_invoice','wait'])]}"/> -->
                             <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
                             <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_invoice')]}"/>
                             <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
@@ -107,10 +107,10 @@
                         <group colspan="2" col="3">
                             <field name="no_line" invisible="1" />
                             <field name="pricelist_id" string="Currency" colspan="2" 
-                                   attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"
+                                   attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'confirmed', 'except_picking', 'except_invoice'])]}"
                                    domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]" />
                             <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" 
-                                    attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" />
+                                    attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'confirmed', 'except_picking', 'except_invoice'])]}" />
                             </group>
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                     </xpath>
