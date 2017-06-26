@@ -144,6 +144,21 @@ class purchase_order_line(osv.osv):
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
         return True
 
+
+    def action_done(self, cr, uid, ids, context=None):
+        '''
+        Workflow method called when POL is done
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'done'}, context=context)
+
+        return True
+
+
 purchase_order_line()
 
 

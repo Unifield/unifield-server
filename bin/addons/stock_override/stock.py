@@ -1130,9 +1130,19 @@ You cannot choose this supplier because some destination locations are not avail
         """
         Create automatically invoice or NOT (regarding some criteria in is_invoice_needed)
         """
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         res = super(stock_picking, self).action_done(cr, uid, ids, context=context)
+
+        # In case of processed IN, we close the linked PO lines:
+        wf_service = netsvc.LocalService("workflow")
+        for incoming_shipment in self.browse(cr, uid, ids, context=context):
+            if incoming_shipment.type == 'in': # ensure we deals with an IN
+                for stock_move in incoming_shipment.move_lines:
+                    if stock_move.purchase_line_id: # if there is a linked PO line we close it
+                        wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
 
         if res:
             for sp in self.browse(cr, uid, ids):
