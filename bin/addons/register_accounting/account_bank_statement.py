@@ -675,8 +675,8 @@ The starting balance will be proposed automatically and the closing balance is t
         """
         Returns a list containing the ids of the JIs matching the following criteria:
         - booked in the register(s) and in the account(s) in parameters
-        - either not reconciled or reconciled partially or totally with at least one entry having a posting date later
-          than the posting_date in parameter
+        - either not reconciled or reconciled partially or totally with at least one reconciliation leg having a
+          posting date later than the posting_date in parameter
         """
         if context is None:
             context = {}
