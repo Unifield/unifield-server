@@ -67,6 +67,8 @@ class bank_reconciliation(report_sxw.rml_parse):
             ids = abs_obj.search(self.cr, self.uid, abs_args, context=self.context)
 
             amvl_obj = self.pool.get('account.move.line')
+            # include in the report only the JIs that are either not reconciled,
+            # or reconciled (totally or partially) with at least one entry belonging to a later period
             amvl_ids = abs_obj.get_pending_cheque_ids(self.cr, self.uid, ids, account_ids, period.date_stop, context=self.context)
 
             # amount in booking currency

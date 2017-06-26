@@ -237,10 +237,9 @@ class report_liquidity_position3(report_sxw.rml_parse):
             # Search register lines
             journal = reg.journal_id
             account_ids = [journal.default_debit_account_id.id, journal.default_credit_account_id.id]
-            aml_ids = aml_obj.search(self.cr, self.uid, [('statement_id', '=', reg.id), ('is_reconciled', '=', False),
-                                                         ('account_id', 'in', account_ids),])
-            if isinstance(aml_ids, (int, long)):
-                aml_ids = [aml_ids]
+            # include in the report only the JIs that are either not reconciled,
+            # or reconciled (totally or partially) with at least one entry belonging to a later period
+            aml_ids = reg_obj.get_pending_cheque_ids(self.cr, self.uid, [reg.id], account_ids, self.getPeriod().date_stop)
             lines = aml_obj.browse(self.cr, self.uid, aml_ids)
 
             # Get the amounts in booking and functional currency
