@@ -41,7 +41,8 @@ class report_pending_cheque(report_sxw.rml_parse):
         pool = pooler.get_pool(self.cr.dbname)
         aml_obj = pool.get('account.move.line')
 
-        period_r = self.pool.get('account.period').read(self.cr, self.uid, register.period_id.id, ['date_start'])
+        period_r = self.pool.get('account.period').read(self.cr, self.uid, register.period_id.id,
+                                                        ['date_start', 'date_stop'])  # used not to format dates in the user language
         # Search for all registers with the same Journal, and the same period or a previous period
         period_ids = self.pool.get('account.period').\
             search(self.cr, self.uid, [('date_start', '<=', period_r['date_start'])])
@@ -49,10 +50,23 @@ class report_pending_cheque(report_sxw.rml_parse):
             search(self.cr, self.uid, ['&', ('journal_id', '=', journal.id), ('period_id', 'in', period_ids)])
 
         # Search register lines
-        aml_ids = aml_obj.search(self.cr, self.uid, [('statement_id', 'in', registers_ids), ('is_reconciled', '=', False), ('account_id', 'in', account_ids),], order='date DESC')
+        aml_ids = aml_obj.search(self.cr, self.uid, [('statement_id', 'in', registers_ids),
+                                                     ('account_id', 'in', account_ids), ], order='date DESC')
         if isinstance(aml_ids, (int, long)):
             aml_ids = [aml_ids]
-        return aml_obj.browse(self.cr, self.uid, aml_ids)
+        # include in the report only the JIs that are either not reconciled,
+        # or reconciled (totally or partially) with at least one entry belonging to a later period
+        aml_list = []
+        for aml in aml_obj.browse(self.cr, self.uid, aml_ids):
+            total_rec_ok = aml.reconcile_id and aml_obj.search_exist(self.cr, self.uid,
+                                                                  [('reconcile_id', '=', aml.reconcile_id.id),
+                                                                   ('date', '>', period_r['date_stop'])])
+            partial_rec_ok = aml.reconcile_partial_id and aml_obj.search_exist(self.cr, self.uid,
+                                                                  [('reconcile_partial_id', '=', aml.reconcile_partial_id.id),
+                                                                   ('date', '>', period_r['date_stop'])])
+            if not aml.is_reconciled or total_rec_ok or partial_rec_ok:
+                aml_list.append(aml)
+        return aml_list
 
     def getTotals(self, register):
         totals = {}
