@@ -79,21 +79,6 @@ class account_journal(osv.osv):
                 ('system', 'System'),
                 ]
 
-    def _get_has_register(self, cr, uid, ids, field_name, arg, context=None):
-        """
-        Returns True if a register is linked to the journal(s) whose id(s) is in parameter
-        """
-        if context is None:
-            context = {}
-        res = {}
-        if ids:
-            if isinstance(ids, (int, long)):
-                ids = [ids]
-            reg_obj = self.pool.get('account.bank.statement')
-            for journal_id in ids:
-                res[journal_id] = reg_obj.search_exist(cr, uid, [('journal_id', '=', journal_id)], context=context)
-        return res
-
     def _get_has_entries(self, cr, uid, ids, field_name, arg, context=None):
         def count_entries(journal_id):
             return am_obj.search(cr, uid, [('journal_id', '=', journal_id)],
@@ -115,7 +100,6 @@ class account_journal(osv.osv):
         'bank_journal_id': fields.many2one('account.journal', _("Corresponding bank journal"), domain="[('type', '=', 'bank'), ('currency', '=', currency)]"),
         'cheque_journal_id': fields.one2many('account.journal', 'bank_journal_id', 'Linked cheque'),
         'has_entries': fields.function(_get_has_entries, type='boolean', method=True, string='Has journal entries'),
-        'has_register': fields.function(_get_has_register, type='boolean', method=True, string='Has an associated register'),
     }
 
     _defaults = {
