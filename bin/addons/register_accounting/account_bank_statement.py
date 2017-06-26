@@ -686,7 +686,7 @@ The starting balance will be proposed automatically and the closing balance is t
                                  order='date DESC', context=context)
         aml_list = []
         for aml in aml_obj.browse(cr, uid, aml_ids,
-                                  fields_to_fetch=['is_reconciled', 'reconcile_id', 'reconcile_partial_id', 'date'], context=context):
+                                  fields_to_fetch=['is_reconciled', 'reconcile_id', 'reconcile_partial_id'], context=context):
             total_rec_ok = aml.reconcile_id and aml_obj.search_exist(cr, uid,
                                                                      [('reconcile_id', '=', aml.reconcile_id.id),
                                                                       ('date', '>', min_posting_date)], context=context)
