@@ -1079,7 +1079,7 @@ MochiKit.Base.update(ListView.prototype, {
         // (US-1290) JI and JE export: always exclude Initial Balance entries
         var domain = openobject.dom.get('_terp_search_domain').value;
         if(this.model == 'account.move.line' || this.model == 'account.move') {
-            if(domain != "None" && domain != "[]") {
+            if(domain != '[]' && domain.startsWith('[')) {
                 domain = domain.substring(0, domain.length-1);  // remove the last "]"
                 domain += ", ('period_id.number', '>', 0), ]";
             }
