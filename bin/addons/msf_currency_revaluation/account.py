@@ -106,7 +106,8 @@ class account_account(osv.osv):
         cr.execute(query, params)
         lines = cr.dictfetchall()
         lines_to_handle = []
-        last_day_of_fy = fy_obj.browse(cr, uid, fiscalyear_id, fields_to_fetch=['date_stop'], context=context).date_stop
+        last_day_of_fy = fiscalyear_id and fy_obj.browse(cr, uid, fiscalyear_id, fields_to_fetch=['date_stop'],
+                                                         context=context).date_stop
         for l in lines:
             '''
             US-2382 Include the line in the revaluation if at least one of the following conditions is met:
@@ -114,9 +115,9 @@ class account_account(osv.osv):
             - year-end reval and entry being either partially reconciled or not reconciled
             - year-end reval and entry reconciled with at least one leg of the rec. having a posting date later than the FY
             '''
+            domain_rec = [('reconcile_id', '=', l['reconcile_id']), ('date', '>', last_day_of_fy)]
             if len(period_ids) == 1 or not l['reconcile_id'] or \
-                (l['reconcile_id'] and aml_obj.search_exist(cr, uid, [('reconcile_id', '=', l['reconcile_id']),
-                                                                      ('date', '>', last_day_of_fy)], context=context)):
+                    (l['reconcile_id'] and last_day_of_fy and aml_obj.search_exist(cr, uid, domain_rec, context=context)):
                 lines_to_handle.append(l)
         for line in lines_to_handle:
             # generate a tree
