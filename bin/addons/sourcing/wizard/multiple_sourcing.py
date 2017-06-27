@@ -276,20 +276,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
             ids = [ids]
 
         lines_to_confirm = []
-        run_scheduler = True
-
         for wiz in self.browse(cr, uid, ids, context=context):
-            if wiz.run_scheduler:
-                run_scheduler = wiz.run_scheduler
-            else:
-                run_scheduler = po_auto_cfg_obj.get_po_automation(cr, uid, context=context)
-            for line in wiz.line_ids:
-                if line.order_id.procurement_request and wiz.po_cft == 'dpo':
-                    raise osv.except_osv(_('Error'), _(
-                        'You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
-                lines_to_confirm.append(line.id)
+            for sol in wiz.line_ids:
+                if sol.order_id.procurement_request and wiz.po_cft == 'dpo':
+                    raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
+                lines_to_confirm.append(sol.id)
 
-        line_obj.confirmLine(cr, uid, lines_to_confirm, run_scheduler=run_scheduler, context=context)
+        line_obj.confirmLine(cr, uid, lines_to_confirm, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 

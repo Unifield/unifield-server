@@ -1205,7 +1205,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         return result
 
-    def confirmLine(self, cr, uid, ids, context=None, run_scheduler=False):
+    def confirmLine(self, cr, uid, ids, context=None):
         """
         Set the line as confirmed and check if all lines
         of the FO/IR are confirmed. If yes, launch the
@@ -1214,8 +1214,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         :param cr: Cursor to the database
         :param uid: ID of the user that runs the method
         :param ids: List of IDs of sale.order.line to check
-        :param run_scheduler: If set to True, after all FO/IR are confirmed,
-                              run the Auto POs creation scheduler
         :param context: Context of the call
 
         :return Raise an error or True
@@ -1491,9 +1489,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             if sourcing_line.type == 'make_to_stock':
-                pick_to_use = self.get_existing_pick(cr, uid, ids, context=context)
+                pick_to_use = self.get_existing_pick(cr, uid, sourcing_line.id, context=context)
                 if not pick_to_use:
-                    pick_to_use = self.create_pick_from_sourcing_line(cr, uid, ids, context=context)    
+                    pick_to_use = self.create_pick_from_sourcing_line(cr, uid, sourcing_line.id, context=context)    
                     # log new picking ticket:
                     pick = self.pool.get('stock.picking').browse(cr, uid, pick_to_use, context=context)
                     msg = 'The Picking ticket, id:%s (%s) has been created' % (pick.id, pick.name)
@@ -1506,9 +1504,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
                     
             elif sourcing_line.type == 'make_to_order':
-                po_to_use = self.get_existing_po(cr, uid, ids, context=context)
+                po_to_use = self.get_existing_po(cr, uid, sourcing_line.id, context=context)
                 if not po_to_use: # then create new PO:
-                    po_to_use = self.create_po_from_sourcing_line(cr, uid, ids, context=context)
+                    po_to_use = self.create_po_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
 
                     # log new PO:
                     po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
