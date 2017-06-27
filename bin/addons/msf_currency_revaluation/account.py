@@ -72,7 +72,7 @@ class account_account(osv.osv):
     }
 
     def _revaluation_query(self, cr, uid, ids, revaluation_date, context=None):
-        query = ("SELECT l.account_id as id, l.currency_id, " +
+        query = ("SELECT l.account_id as id, l.currency_id, l.reconcile_id, " +
                    ', '.join(self._sql_mapping.values()) +
                    " FROM account_move_line l"
                    " inner join account_period p on p.id = l.period_id"
@@ -81,7 +81,7 @@ class account_account(osv.osv):
                    " l.currency_id IS NOT NULL AND"
                    " l.state <> 'draft' AND"
                    " p.number != 0"  # US-1251 exclude IB entries period 0 for monthly and yearly
-                   " GROUP BY l.account_id, l.currency_id")
+                   " GROUP BY l.account_id, l.currency_id, l.reconcile_id")
         params = {'revaluation_date': revaluation_date,
                   'account_ids': tuple(ids)}
         return query, params
@@ -92,6 +92,8 @@ class account_account(osv.osv):
         if context is None:
             context = {}
         accounts = {}
+        aml_obj = self.pool.get('account.move.line')
+        fy_obj = self.pool.get('account.fiscalyear')
 
         # Compute for each account the balance/debit/credit from the move lines
         ctx_query = context.copy()
@@ -103,7 +105,20 @@ class account_account(osv.osv):
             context=ctx_query)
         cr.execute(query, params)
         lines = cr.dictfetchall()
-        for line in lines:
+        lines_to_handle = []
+        last_day_of_fy = fy_obj.browse(cr, uid, fiscalyear_id, fields_to_fetch=['date_stop'], context=context).date_stop
+        for l in lines:
+            '''
+            US-2382 Include the line in the revaluation if at least one of the following conditions is met:
+            - month-end reval
+            - year-end reval and entry being either partially reconciled or not reconciled
+            - year-end reval and entry reconciled with at least one leg of the rec. having a posting date later than the FY
+            '''
+            if len(period_ids) == 1 or not l['reconcile_id'] or \
+                (l['reconcile_id'] and aml_obj.search_exist(cr, uid, [('reconcile_id', '=', l['reconcile_id']),
+                                                                      ('date', '>', last_day_of_fy)], context=context)):
+                lines_to_handle.append(l)
+        for line in lines_to_handle:
             # generate a tree
             # - account_id
             # -- currency_id
