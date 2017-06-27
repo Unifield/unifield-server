@@ -118,6 +118,21 @@ class sale_order_line(osv.osv):
                 
         return True
 
+
+    def action_done(self, cr, uid, ids, context=None):
+        '''
+        Workflow method called when SO line is done
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'done'}, context=context)
+
+        return True
+
+
     def action_sourced(self, cr, uid, ids, context=None):
         '''
         Workflow method called when sourcing the sale.order.line
@@ -154,6 +169,31 @@ class sale_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        for sol in self.browse(cr, uid, ids, context=context):
+            # create or update PICK:
+            pick_to_use = self.pool.get('stock.picking').search(cr, uid, [
+                ('type', '=', 'out'),
+                ('subtype', '=', 'picking'),
+                ('partner_id2', '=', sol.order_partner_id.id),
+                ('state', '=', 'draft'),
+            ], context=context)
+            if not pick_to_use:
+                picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context)
+                pick_to_use = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
+                pick_name = self.pool.get('stock.picking').read(cr, uid, pick_to_use, ['name'] ,context=context)['name']
+                self.infolog(cr, uid, "The Picking Ticket id:%s (%s) has been created from %s id:%s (%s)." % (
+                    pick_to_use,
+                    pick_name,
+                    sol.order_id.procurement_request and _('Internal request') or _('Field order'),
+                    sol.order_id.id,
+                    sol.order_id.name,
+                ))
+            if pick_to_use and isinstance(pick_to_use, list):
+                pick_to_use = pick_to_use[0]
+            # Get move data and create the move
+            move_data = self.pool.get('sale.order')._get_move_data(cr, uid, sol.order_id, sol, pick_to_use, context=context)
+            move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
 
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
 

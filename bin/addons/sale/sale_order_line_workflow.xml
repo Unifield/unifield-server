@@ -47,7 +47,7 @@
             <field name="wkf_id" ref="wkf_sale_order_line"/>
             <field name="flow_stop">True</field>
             <field name="kind">function</field>
-            <field name="action">write({'state':'done'})</field>
+            <field name="action">action_done()</field>
         </record>
 
         <!-- Transitions -->
