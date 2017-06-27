@@ -175,6 +175,7 @@ class sale_order_line(osv.osv):
             pick_to_use = self.pool.get('stock.picking').search(cr, uid, [
                 ('type', '=', 'out'),
                 ('subtype', '=', 'picking'),
+                ('sale_id', '=', sol.order_id.id),
                 ('partner_id2', '=', sol.order_partner_id.id),
                 ('state', '=', 'draft'),
             ], context=context)
