@@ -1368,7 +1368,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
             elif sourcing_line.po_cft == 'dpo':
                 domain.append(('order_type', '=', 'direct'))
-                domain.append(('customer_id', '=', sourcing_line.order_id.partner_id.id)) # experimental ???
 
             elif sourcing_line.po_cft == 'cft': # Tender
                 pass
@@ -1376,12 +1375,13 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             elif sourcing_line.po_cft == 'rfq': # Request for Quotation
                 pass
 
-            # if sourcing_line.supplier.po_by_project in ('project', 'category_project'): #or (sourcing_line.po_cft == 'dpo' and sourcing_line.supplier.po_by_project == 'all'):
-            #     domain.append(('customer_id', '=', sourcing_line.order_id.partner_id.id))
-            # elif sourcing_line.supplier.po_by_project == 'isolated': # Isolated requirements => One PO for one IR/FO:
-            #     domain.append(('unique_fo_id', '=', sourcing_line.order_id.id))
-            # elif sourcing_line.supplier.po_by_project in ('category_project', 'category'): # Category requirements => Search a PO with the same category than the IR/FO category
-            #     domain.append(('categ', '=', sourcing_line.order_id.categ))
+            # supplier's order creation mode:
+            if sourcing_line.supplier.po_by_project in ('project', 'category_project') or (sourcing_line.po_cft == 'dpo' and sourcing_line.supplier.po_by_project == 'all'):
+                domain.append(('customer_id', '=', sourcing_line.order_id.partner_id.id))
+            if sourcing_line.supplier.po_by_project == 'isolated': # Isolated requirements => One PO for one IR/FO:
+                domain.append(('unique_fo_id', '=', sourcing_line.order_id.id))
+            if sourcing_line.supplier.po_by_project in ('category_project', 'category'): # Category requirements => Search a PO with the same category than the IR/FO category
+                domain.append(('categ', '=', sourcing_line.order_id.categ))
             
             res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
         
@@ -1407,6 +1407,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'origin': sourcing_line.order_id.name,
                 'partner_id': sourcing_line.supplier.id,
                 'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [sourcing_line.supplier.id], ['default'])['default'],
+                'customer_id': sourcing_line.order_id.partner_id.id,    
                 'location_id': self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0],
                 'pricelist_id': sourcing_line.supplier.property_product_pricelist_purchase.id,
                 'fiscal_position': sourcing_line.supplier.property_account_position and sourcing_line.supplier.property_account_position.id or False,
@@ -1416,6 +1417,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'details': sourcing_line.order_id.details,
                 'delivery_requested_date': sourcing_line.order_id.delivery_requested_date,
                 'related_sourcing_id': sourcing_line.related_sourcing_id.id or False,
+                'unique_fo_id': sourcing_line.order_id.id if sourcing_line.supplier.po_by_project == 'isolated' else False,
             }
             if sourcing_line.po_cft == 'po': # Purchase Order
                 po_values.update({
@@ -1424,7 +1426,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             elif sourcing_line.po_cft == 'dpo': # Direct Purchase Order
                 po_values.update({
                     'order_type': 'direct',    
-                    'customer_id': sourcing_line.order_id.partner_id.id,    
                     'dest_partner_id': sourcing_line.order_id.partner_id.id,
                 })
             elif sourcing_line.po_cft == 'cft': # Tender
