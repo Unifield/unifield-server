@@ -417,14 +417,14 @@ class purchase_order(osv.osv):
         # we increase the size of the 'details' field from 30 to 86
         'details': fields.char(size=86, string='Details', states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'cancel':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', states={'validated':[('readonly',True)],'approved':[('readonly',True)],'done':[('readonly',True)]}),
-        'date_order':fields.date(string='Creation Date', readonly=True, required=True,
+        'date_order': fields.date(string='Creation Date', readonly=True, required=True,
                                  states={'draft':[('readonly',False)],}, select=True, help="Date on which this document has been created."),
         'name': fields.char('Order Reference', size=64, required=True, select=True, readonly=True,
                             help="unique number of the purchase order,computed automatically when the purchase order is created"),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
         'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft':[('readonly',False)], 'rfq_sent':[('readonly',False)], 'validated': [('readonly',False)]}),
-        'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'validated':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)],'cancel':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
-        'partner_address_id':fields.many2one('res.partner.address', 'Address', required=True,
+        'partner_id': fields.many2one('res.partner', 'Supplier', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)],'cancel':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
+        'partner_address_id': fields.many2one('res.partner.address', 'Address', required=True,
                                              states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
         'dest_partner_id': fields.many2one('res.partner', string='Destination partner', domain=[('partner_type', '=', 'internal')]),
         'invoice_address_id': fields.many2one('res.partner.address', string='Invoicing address', required=True,
@@ -626,10 +626,14 @@ class purchase_order(osv.osv):
             # overwrite vals
             break
 
+        # Fix bug invalid syntax for type date:
+        if 'valid_till' in vals and vals['valid_till'] == '':
+            vals['valid_till'] = False
+
         res = super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
         # Delete expected sale order line
-        if 'state' in vals and vals.get('state') not in ('draft', 'confirmed'):
+        if 'state' in vals and vals.get('state') not in ('draft', 'validated'):
             exp_sol_ids = self.pool.get('expected.sale.order.line').search(cr,
                                                                            uid, [('po_id', 'in', ids)], order='NO_ORDER', context=context)
             self.pool.get('expected.sale.order.line').unlink(cr, uid, exp_sol_ids, context=context)
