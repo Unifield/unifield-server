@@ -150,7 +150,7 @@
                     
                     <xpath expr="/form/notebook//field[@name='order_line']/form/notebook//field[@name='delay']" position="replace">
                     	<field name="so_state_stored" invisible="True" />
-                        <field name="date_planned" attrs="{'readonly': [('so_state_stored', 'not in', ['draft', 'validated'])]}" />
+                        <field name="date_planned" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
                         <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}" />
                     </xpath>
                     
