@@ -141,7 +141,12 @@ class purchase_order_line(osv.osv):
             # Confirm FO line
             if line.linked_sol_id:
                 wkf_service.trg_validate(uid, 'sale.order.line', line.linked_sol_id.id, 'confirmed', cr)
+
+        # update FO line with change on PO line
+        self.update_fo_lines(cr, uid, ids, context=context)
+
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
+
         return True
 
 
