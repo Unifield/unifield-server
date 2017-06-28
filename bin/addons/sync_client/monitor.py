@@ -24,7 +24,6 @@ import pooler
 import tools
 from tools.translate import _
 
-
 class MonitorLogger(object):
     def __init__(self, cr, uid, defaults={}, context=None):
         db, pool = pooler.get_db_and_pool(cr.dbname)
@@ -316,6 +315,10 @@ class sync_version_instance_monitor(osv.osv):
         'backup_path': fields.char('Backup Location', size=128),
         'backup_date': fields.datetime("Backup Date", readonly=True,
             required=True),
+        'instance_state': fields.related('instance_id', 'state', type='selection',
+                                         selection=[('draft', 'Draft'),
+                                                    ('active', 'Active'),
+                                                    ('inactive', 'Inactive')], string='Instance State', readonly=True,)
     }
 
     _defaults = {
