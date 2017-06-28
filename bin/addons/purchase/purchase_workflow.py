@@ -120,6 +120,10 @@ class purchase_order_line(osv.osv):
         move_obj = self.pool.get('stock.move')
         po_line_obj = self.pool.get('purchase.order.line')
         wkf_service = netsvc.LocalService("workflow")
+
+        # update FO line with change on PO line
+        self.update_fo_lines(cr, uid, ids, context=context)
+        
         for line in po_line_obj.browse(cr, uid, ids):
             # Search existing picking for PO
             picking_id = picking_obj.search(cr, uid, [
@@ -142,8 +146,6 @@ class purchase_order_line(osv.osv):
             if line.linked_sol_id:
                 wkf_service.trg_validate(uid, 'sale.order.line', line.linked_sol_id.id, 'confirmed', cr)
 
-        # update FO line with change on PO line
-        self.update_fo_lines(cr, uid, ids, context=context)
 
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
 
