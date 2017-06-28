@@ -1527,6 +1527,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context),
                 }
                 self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
+                self.pool.get('purchase.order').write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
 
         return True
