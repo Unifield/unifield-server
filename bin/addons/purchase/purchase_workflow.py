@@ -12,7 +12,7 @@ class purchase_order_line(osv.osv):
 
     def update_fo_lines(self, cr, uid, ids, context=None):
         '''
-        Method called when validating the PO line in order to 
+        Method called when validating/confirming the PO line in order to 
         update corresponding FO line(s)
         '''
         if context is None:
@@ -123,7 +123,7 @@ class purchase_order_line(osv.osv):
 
         # update FO line with change on PO line
         self.update_fo_lines(cr, uid, ids, context=context)
-        
+
         for line in po_line_obj.browse(cr, uid, ids):
             # Search existing picking for PO
             picking_id = picking_obj.search(cr, uid, [

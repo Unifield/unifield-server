@@ -896,8 +896,7 @@ class purchase_order_line(osv.osv):
 
         tmp_proc_context = context.get('procurement_request')
         context['procurement_request'] = True
-        so_ids = so_obj.search(cr, uid, [('name', '=', origin), ('state', 'in', ('sourced', 'progress', 'manual'))],
-                               context=context)
+        so_ids = so_obj.search(cr, uid, [('name', '=', origin), ('state', 'in', ['draft', 'draft_partial', 'validated', 'sourced'])], context=context)
         context['procurement_request'] = tmp_proc_context
         if so_ids:
             return {'link_so_id': so_ids[0]}
@@ -1233,36 +1232,6 @@ class purchase_order_line(osv.osv):
             },
         }
 
-    def on_change_origin(self, cr, uid, ids, origin, procurement_id=False, partner_type='external', context=None):
-        '''
-        Check if the origin is a known FO/IR
-        '''
-        res = {}
-        if not procurement_id and origin:
-            domain = [('name', '=', origin), ('state', 'in', ('sourced', 'progres', 'manual'))]
-            o_type = 'a Non-ESC'
-            if partner_type == 'esc':
-                o_type = 'an ESC'
-                domain.append(('split_type_sale_order', '=', 'esc_split_sale_order'))
-            else:
-                domain.append(('split_type_sale_order', '=', 'local_purchase_split_sale_order'))
-            sale_id = self.pool.get('sale.order').search(cr, uid, domain,
-                                                         limit=1, order='NO_ORDER', context=context)
-            if not sale_id:
-                res['warning'] = {'title': _('Warning'),
-                                  'message': _(
-                                      'The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with %s supplier. No FO/IR line will be created for this PO line') % (
-                                             origin, o_type)}
-                res['value'] = {
-                    'display_sync_ref': False,
-                    'instance_sync_order_ref': '',
-                }
-            else:
-                res['value'] = {
-                    'display_sync_ref': True,
-                }
-
-        return res
 
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
                              partner_id, date_order=False, fiscal_position=False, date_planned=False,

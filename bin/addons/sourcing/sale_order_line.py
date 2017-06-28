@@ -1525,6 +1525,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'sale_order_line_id': sourcing_line.id,
                     'linked_sol_id': sourcing_line.id,
                     'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context),
+                    'link_so_id': sourcing_line.order_id.id,
                 }
                 self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
                 self.pool.get('purchase.order').write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
