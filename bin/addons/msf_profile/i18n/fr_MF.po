@@ -98699,4 +98699,4 @@ msgstr "Un compte ne peut pas être à la fois lettrable et inclus dans la mise 
 #: code:addons/account_period_closing_level/account_year_end_closing.py:423
 #, python-format
 msgid "The yearly closure can't be processed due to one or several reconciled entries that are included in the move to 0."
-msgstr "La fermeture de l'année fiscale ne peut pas être effectuée car une ou plusieurs entrées lettrées sont déjà incluses dans la mise à zéro."
+msgstr "La fermeture de l'année fiscale ne peut pas être effectuée car une ou plusieurs entrées incluses dans la mise à zéro sont déjà lettrées."
