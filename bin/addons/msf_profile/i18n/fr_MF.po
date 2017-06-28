@@ -98688,3 +98688,15 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. module: account_override
+#: code:addons/account_override/account.py:524
+#, python-format
+msgid "An account can't be both reconcilable and included in the yearly move to 0."
+msgstr "Un compte ne peut pas être à la fois lettrable et inclus dans la mise à zéro annuelle."
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_year_end_closing.py:423
+#, python-format
+msgid "The yearly closure can't be processed due to one or several reconciled entries that are included in the move to 0."
+msgstr "La fermeture de l'année fiscale ne peut pas être effectuée car une ou plusieurs entrées lettrées sont déjà incluses dans la mise à zéro."

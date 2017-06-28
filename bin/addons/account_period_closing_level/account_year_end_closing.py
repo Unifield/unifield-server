@@ -400,14 +400,15 @@ class account_year_end_closing(osv.osv):
         sql = '''select ml.account_id as account_id, max(a.code) as account_code,
             ml.currency_id as currency_id, max(c.name) as currency_code,
             (sum(ml.debit_currency) - sum(ml.credit_currency)) as balance_currency,
-            (sum(ml.debit) - sum(ml.credit)) as balance
+            (sum(ml.debit) - sum(ml.credit)) as balance,
+            ml.reconcile_id, ml.reconcile_partial_id
             from account_move_line ml
             inner join account_move m on m.id = ml.move_id
             inner join account_account a on a.id = ml.account_id
             inner join res_currency c on c.id = ml.currency_id
             where ml.instance_id in %s and a.include_in_yearly_move = 't'
             and ml.date >= %s and ml.date <= %s and m.period_id != %s
-            group by ml.account_id, ml.currency_id
+            group by ml.account_id, ml.currency_id, ml.reconcile_id, ml.reconcile_partial_id
         '''
         cr.execute(sql, (tuple(instance_ids), fy_rec.date_start,
             fy_rec.date_stop, period_id, ))
@@ -416,7 +417,11 @@ class account_year_end_closing(osv.osv):
 
         je_by_acc_ccy = {}  # JE/ ACC/CCY, key: (acc_id, ccy_id), value: JE id
         for account_id, account_code, ccy_id, ccy_code, \
-            balance_currency, balance in cr.fetchall():
+            balance_currency, balance, reconcile_id, reconcile_partial_id in cr.fetchall():
+            if reconcile_id or reconcile_partial_id:
+                raise osv.except_osv(_('Warning'),
+                                     _("The yearly closure can't be processed due to one or several reconciled entries "
+                                       "that are included in the move to 0."))
             balance_currency = float(balance_currency)
             balance = float(balance)
 

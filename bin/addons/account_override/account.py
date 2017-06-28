@@ -497,9 +497,36 @@ class account_account(osv.osv):
                 'has_partner_type_section' in vals and not vals['has_partner_type_section']:
             raise osv.except_osv(_('Warning !'), _('At least one Allowed Partner type must be selected.'))
 
+    def _check_reconcile_status(self, cr, uid, vals, account_id=None, context=None):
+        """
+        Prevent an account from being set as reconcilable if it is included in the yearly move to 0.
+        """
+        if context is None:
+            context = {}
+        reconcile = False
+        include_in_yearly_move = False
+        account = False
+        # if one of the fields to check isn't in vals, use its current value if it exists
+        if 'reconcile' in vals:
+            reconcile = vals['reconcile']
+        elif account_id is not None:
+            account = self.browse(cr, uid, account_id,
+                                  fields_to_fetch=['reconcile', 'include_in_yearly_move'], context=context)
+            reconcile = account.reconcile
+        if 'include_in_yearly_move' in vals:
+            include_in_yearly_move = vals['include_in_yearly_move']
+        elif account_id is not None:
+            account = account or self.browse(cr, uid, account_id,
+                                             fields_to_fetch=['include_in_yearly_move'], context=context)
+            include_in_yearly_move = account.include_in_yearly_move
+        if reconcile and include_in_yearly_move:
+            raise osv.except_osv(_('Warning !'),
+                                 _("An account can't be both reconcilable and included in the yearly move to 0."))
+
     def create(self, cr, uid, vals, context=None):
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
+        self._check_reconcile_status(cr, uid, vals, context=context)
         return super(account_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -507,6 +534,8 @@ class account_account(osv.osv):
             return True
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
+        for account_id in ids:
+            self._check_reconcile_status(cr, uid, vals, account_id=account_id, context=context)
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
