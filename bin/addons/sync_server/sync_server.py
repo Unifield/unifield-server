@@ -179,6 +179,13 @@ class entity(osv.osv):
             res[activity.entity_id]['last_dateactivity'] = activity.datetime
         return res
 
+    def set_pg_version(self, cr, uid, identifier, hardware_id, pg_version, context=None):
+        ids_to_set = self.search(cr, uid,
+                                 [('identifier', '=', identifier),
+                                  ('hardware_id', '=', hardware_id)],
+                                 context=context)
+        self.write(cr, 1, ids_to_set, {'pgversion_id': pg_version}, context=context)
+
     def set_activity(self, cr, uid, entity, activity, wait=False, context=None):
         if context is None:
             context = {}
@@ -230,6 +237,7 @@ class entity(osv.osv):
         'mission': fields.char('Mission', size=64),
         'latitude': fields.float('Latitude',digits=(16,6)),
         'longitude': fields.float('Longitude', digits=(16,6)),
+        'pgversion_id': fields.char('Postgres Version', size=64),
     }
     _defaults = {
         'version': lambda *a: 0,
