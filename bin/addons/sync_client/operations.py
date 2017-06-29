@@ -25,6 +25,7 @@ from osv import osv, fields
 import logging
 import threading
 from histogram import Histogram
+from datetime import datetime
 
 LINUX_PROCESS_LIST = ['openerp-server.py', 'openerp-web.py']
 WINDOWS_PROCESS_LIST = ['openerp-server.exe', 'openerp-web.exe', 'postgres.exe', 'revprox.exe']
@@ -186,14 +187,29 @@ class operations_event(osv.osv, ratelimit):
                                       ('process', '=', proc_name)],
                                      order='time',
                                      context=context)
-        mem_dict = mem_usg_obj.read(cr, uid, mem_ids, ['memory_usage'], context=context)
-        mem_list = [x['memory_usage'] for x in mem_dict]
+        mem_read = mem_usg_obj.read(cr, uid, mem_ids, ['memory_usage', 'time'], context=context)
+        mem_list = [x['memory_usage'] for x in mem_read]
         avg_mem = float(sum(mem_list)/len(mem_list))/1024/1024
-        max_mem = float(max(mem_list))/1024/1024
+        max_mem = 0
+        max_mem_date = ''
+        for mem in mem_read:
+            if mem['memory_usage'] >= max_mem:
+                max_mem = mem['memory_usage']
+                max_mem_date = mem['time']
+
+        max_mem = float(max_mem)/1024/1024
+        # format the date for an easier parsing, ie 20170629_09_31_18 for
+        # 29/06/2017 09h31m18s
+        try:
+            max_mem_date = datetime.strptime(max_mem_date, '%Y-%m-%d %H:%M:%S').strftime('%Y%m%d_%H_%M_%S')
+        except ValueError:
+            # if max_mem_date is '', do not raise
+            pass
 
         # current memory usage is the last one
         cur_men = float(mem_list[-1])/1024/1024
-        return 'avg_mem:%s|max_mem:%s|cur_mem:%s' % (round(avg_mem, 2), round(max_mem, 2), round(cur_men, 2))
+        return 'avg_mem:%s|max_mem:%s|max_mem_date:%s|cur_mem:%s' % \
+            (round(avg_mem, 2), round(max_mem, 2), max_mem_date, round(cur_men, 2))
 
     def log_memory_usage(self, cr, uid, context=None):
         """Add an entry in operation.event with data related the memory usage
@@ -219,7 +235,7 @@ class operations_event(osv.osv, ratelimit):
                 'data': mem_info
             }
             self.create(cr, uid, vals, context=context)
-        self.pool.get('memory.usage').purge(cr, uid, instance=instance, until=now)
+        self.pool.get('memory.usage').purge(cr, uid, instance=instance)
 
 operations_event()
 
@@ -411,7 +427,7 @@ class memory_usage(osv.osv, ratelimit):
         if until is None:
             until = fields.datetime.now()
         self._logger.info("Memory usage purge")
-        cr.execute("DELETE FROM memory_usage WHERE instance=%s AND time < %s;",
+        cr.execute("DELETE FROM memory_usage WHERE instance=%s AND time <= %s;",
                 (instance, until))
         self._rl = self._rl_max
 
