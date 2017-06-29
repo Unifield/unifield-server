@@ -140,8 +140,10 @@ class purchase_order_line(osv.osv):
             }
             # create FO line:
             new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
-            # wf_service = netsvc.LocalService("workflow")
-            # wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'sourced_v', cr)
+            wf_service = netsvc.LocalService("workflow")
+            wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
+            wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'sourced', cr)
+            wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'confirmed', cr)
         
         return new_sol_id
 
