@@ -4,6 +4,8 @@ from osv import osv
 import netsvc
 from tools.translate import _
 import time
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 
 class purchase_order_line(osv.osv):
@@ -73,6 +75,75 @@ class purchase_order_line(osv.osv):
             wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'sourced_v', cr)
         
         return True
+
+
+    def create_sol_from_pol(self, cr, uid, ids, fo_id, context=None):
+        '''
+        Method called when confirming a newly created PO line in a PO linked to a FO (normal flow)
+        So we have to create the sale.order.line from the given purchase.order.line
+        @param fo_id: id of sale.order (int)
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        if not fo_id or not isinstance(fo_id, (int,long)):
+            return False
+
+        sale_order = self.pool.get('sale.order').browse(cr, uid, fo_id, context=context)
+        new_sol_id = False
+        for pol in self.browse(cr, uid, ids, context=context):
+            # convert from currency of pol to currency of sol
+            price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
+                round=False, context={'date': pol.order_id.date_order})
+
+            if sale_order.order_type == 'regular' and price_unit_converted < 0.00001:
+                price_unit_converted = 0.00001
+
+            # date values
+            ship_lt = self.pool.get('fields.tools').get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
+            prep_lt = self.pool.get('fields.tools').get_field_from_company(cr, uid, object=self._name, field='preparation_lead_time', context=context)
+            db_date_format = self.pool.get('date.tools').get_db_date_format(cr, uid, context=context)
+
+            # compute confirmed date for line:
+            line_confirmed = False
+            if pol.confirmed_delivery_date:
+                line_confirmed = self.pool.get('purchase.order').compute_confirmed_delivery_date(cr, uid, pol.order_id, pol.confirmed_delivery_date,
+                    prep_lt, ship_lt, sale_order.est_transport_lead_time, db_date_format, context=context)
+
+            sol_values = {
+                'order_id': fo_id,
+                'product_id': pol.product_id and pol.product_id.id or False,
+                'name': pol.name,
+                'default_name': pol.default_name,
+                'default_code': pol.default_code,
+                'product_uom_qty': pol.product_qty,
+                'product_uom': pol.product_uom and pol.product_uom.id or False,
+                'product_uos_qty': pol.product_qty,
+                'product_uos': pol.product_uom and pol.product_uom.id or False,
+                'price_unit': price_unit_converted,
+                'nomenclature_description': pol.nomenclature_description,
+                'nomenclature_code': pol.nomenclature_code,
+                'comment': pol.comment,
+                'nomen_manda_0': pol.nomen_manda_0 and pol.nomen_manda_0.id or False,
+                'nomen_manda_1': pol.nomen_manda_1 and pol.nomen_manda_1.id or False,
+                'nomen_manda_2': pol.nomen_manda_2 and pol.nomen_manda_2.id or False,
+                'nomen_manda_3': pol.nomen_manda_3 and pol.nomen_manda_3.id or False,
+                'nomen_sub_0': pol.nomen_sub_0 and pol.nomen_sub_0.id or False,
+                'nomen_sub_1': pol.nomen_sub_1 and pol.nomen_sub_1.id or False,
+                'nomen_sub_2': pol.nomen_sub_2 and pol.nomen_sub_2.id or False,
+                'nomen_sub_3': pol.nomen_sub_3 and pol.nomen_sub_3.id or False,
+                'nomen_sub_4': pol.nomen_sub_4 and pol.nomen_sub_4.id or False,
+                'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
+                'confirmed_delivery_date': line_confirmed,
+                'date_planned': (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d'),
+            }
+            # create FO line:
+            new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
+            # wf_service = netsvc.LocalService("workflow")
+            # wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'sourced_v', cr)
+        
+        return new_sol_id
 
     def action_validated_p(self, cr, uid, ids, context=None):
         '''
@@ -146,6 +217,16 @@ class purchase_order_line(osv.osv):
             if line.linked_sol_id:
                 wkf_service.trg_validate(uid, 'sale.order.line', line.linked_sol_id.id, 'confirmed', cr)
 
+            # if line created in PO, then create a FO line that match with it:
+            if not line.linked_sol_id and line.origin:
+                fo_id = self.update_origin_link(cr, uid, line.origin, context=context)
+                fo_id = fo_id['link_so_id'] if fo_id else False
+                if fo_id:
+                    new_sol_id = self.create_sol_from_pol(cr, uid, line.id, fo_id, context=context)
+                    self.write(cr, uid, line.id, {
+                        'link_so_id': fo_id,
+                        'linked_sol_id': new_sol_id,
+                    }, context=context)
 
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
 

@@ -665,7 +665,7 @@ class purchase_order_line(osv.osv):
         if order.rfq_ok:
             vals.update({'change_price_manually': True})
         else:
-            if order.po_from_fo or order.po_from_ir:
+            if order.po_from_fo or order.po_from_ir or vals.get('link_so_id', False):
                 vals['from_fo'] = True
             if vals.get('product_qty', 0.00) == 0.00 and not context.get('noraise'):
                 raise osv.except_osv(
@@ -1218,20 +1218,15 @@ class purchase_order_line(osv.osv):
         '''
         Fill the origin field if a FO is selected
         '''
-        so_obj = self.pool.get('sale.order')
         if fo_id:
-            fo = so_obj.read(cr, uid, fo_id, ['name', 'sourced_references'], context=context)
-            res = {'value': {'origin': fo['name'],
-                             'display_sync_ref': len(fo['sourced_references']) and True or False,
-                             'select_fo': False}}
-            return res
-
-        return {
-            'value': {
-                'display_sync_ref': False,
-            },
-        }
-
+            fo = self.pool.get('sale.order').read(cr, uid, fo_id, ['name', 'sourced_references'], context=context)
+            return {
+                'value': {
+                    'origin': fo['name'], 
+                    'display_sync_ref': len(fo['sourced_references']) and True or False,
+                }
+            }
+        return {}
 
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
                              partner_id, date_order=False, fiscal_position=False, date_planned=False,
