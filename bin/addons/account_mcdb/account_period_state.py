@@ -145,6 +145,56 @@ class account_fiscalyear_state(osv.osv):
 
         return super(account_fiscalyear_state, self).create(cr, uid, vals, context=context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        When the "FY HQ-closure" update is received via sync in coordo: if during FY mission-closure "Balance move to 0" lines
+        had been generated, the system will reconcile each of these lines together with the lines there have balanced
+        """
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        year_end_closing_obj = self.pool.get('account.year.end.closing')
+        user_obj = self.pool.get('res.users')
+        journal_code = 'EOY'
+        period_number = 16
+        company_instance = user_obj.browse(cr, uid, [uid], fields_to_fetch=['company_id', 'level'],
+                                           context=context)[0].company_id.instance_id
+        instance_ids = year_end_closing_obj._get_mission_ids_from_coordo(cr, uid, company_instance.id, context=context)
+        if context.get('sync_update_execution', False) and vals.get('state', False) == 'done' and company_instance.level == 'coordo':
+            sql = '''SELECT ml.id
+                     FROM account_move_line ml
+                     INNER JOIN account_move m ON m.id = ml.move_id
+                     WHERE ml.instance_id in %s
+                     AND ml.date >= %s AND ml.date <= %s AND m.period_id != %s
+                     AND ml.account_id = %s AND ml.currency_id = %s;
+                  '''
+            for fy_state_id in ids:
+                fy = self.browse(cr, uid, fy_state_id, fields_to_fetch=['fy_id'], context=context).fy_id
+                period_id = year_end_closing_obj._get_period_id(cr, uid, fy.id, period_number, context=context)
+                if not period_id:
+                    raise osv.except_osv(_('Error'), _("FY 'Period %d' not found") % (period_number,))
+                balance_line_domain = [('journal_id.code', '=', journal_code),
+                                       ('period_id.number', '=', period_number),
+                                       ('period_id.fiscalyear_id', '=', fy.id),
+                                       ('account_id.include_in_yearly_move', '=', True)]
+                balance_line_ids = aml_obj.search(cr, uid, balance_line_domain, context=context, order='NO_ORDER')
+                # get the entries balanced by each "Balance move to 0" line
+                for balance_line in aml_obj.browse(cr, uid, balance_line_ids,
+                                                   fields_to_fetch=['account_id', 'currency_id'], context=context):
+                    cr.execute(sql, (tuple(instance_ids), fy.date_start, fy.date_stop, period_id,
+                                     balance_line.account_id.id,  balance_line.currency_id.id,))
+                    aml_ids = map(lambda x: x[0], cr.fetchall())
+                    aml_ids.append(balance_line.id)
+                    # with 'fy_hq_closing' in context we don't check if the account is reconcilable
+                    # (but the check that no entry is already reconciled is kept)
+                    context['fy_hq_closing'] = True
+                    aml_obj.reconcile(cr, uid, aml_ids, context=context)
+        return super(account_fiscalyear_state, self).write(cr, uid, ids, vals, context=context)
+
     def get_fy(self, cr, uid, ids, context=None):
         mod_obj = self.pool.get('ir.model.data')
         view_id = mod_obj.get_object_reference(cr, uid, 'account_mcdb',

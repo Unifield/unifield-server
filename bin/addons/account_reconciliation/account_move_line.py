@@ -256,12 +256,16 @@ class account_move_line(osv.osv):
         if not unrec_lines:
             raise osv.except_osv(_('Error'), _('Entry is already reconciled'))
         account = account_obj.browse(cr, uid, account_id, context=context)
-        if not context.get('fy_closing', False) and not account.reconcile:
+        if not context.get('fy_closing', False) and not context.get('fy_hq_closing', False) and not account.reconcile:
             raise osv.except_osv(_('Error'), _('The account is not defined to be reconciled !'))
         if r[0][1] != None:
             raise osv.except_osv(_('Error'), _('Some entries are already reconciled !'))
 
         if abs(func_balance) > 10**-3: # FIX UF-1903 problem
+            if context.get('fy_hq_closing', False):
+                raise osv.except_osv(_('Error'),
+                                     _("The entries included in the yearly move to zero can't be reconciled together "
+                                       "because they are unbalanced."))
             partner_line_id = self.create_addendum_line(cr, uid, [x.id for x in unrec_lines], func_balance)
             if partner_line_id:
                 # Add partner_line to do total reconciliation
