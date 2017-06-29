@@ -161,8 +161,7 @@ class account_fiscalyear_state(osv.osv):
         user_obj = self.pool.get('res.users')
         journal_code = 'EOY'
         period_number = 16
-        company_instance = user_obj.browse(cr, uid, [uid], fields_to_fetch=['company_id', 'level'],
-                                           context=context)[0].company_id.instance_id
+        company_instance = user_obj.browse(cr, uid, [uid], fields_to_fetch=['company_id'], context=context)[0].company_id.instance_id
         instance_ids = year_end_closing_obj._get_mission_ids_from_coordo(cr, uid, company_instance.id, context=context)
         if context.get('sync_update_execution', False) and vals.get('state', False) == 'done' and company_instance.level == 'coordo':
             sql = '''SELECT ml.id
