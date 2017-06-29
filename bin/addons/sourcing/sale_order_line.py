@@ -1502,6 +1502,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 move_data = self.pool.get('sale.order')._get_move_data(cr, uid, sourcing_line.order_id, sourcing_line, pick_to_use, context=context)
                 self.pool.get('stock.move').create(cr, uid, move_data, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
+                wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'confirmed', cr)
                     
             elif sourcing_line.type == 'make_to_order':
                 po_to_use = self.get_existing_po(cr, uid, sourcing_line.id, context=context)
