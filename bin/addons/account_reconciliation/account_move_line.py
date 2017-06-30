@@ -263,12 +263,12 @@ class account_move_line(osv.osv):
             raise osv.except_osv(_('Error'), _('Some entries are already reconciled !'))
 
         if context.get('fy_hq_closing', False):
-            if abs(func_balance) > 10 ** -3 or abs(book_balance) > 10**-3:
+            if abs(func_balance) > 10**-3 or abs(book_balance) > 10**-3:
                 # yearly move to zero entries should be balanced in functional and booking currency
                 raise osv.except_osv(_('Error'),
                                      _("The entries included in the yearly move to zero can't be reconciled together "
                                        "because they are unbalanced."))
-        elif abs(func_balance) > 10**-3: # FIX UF-1903 problem
+        elif abs(func_balance) > 10**-3:  # FIX UF-1903 problem
             partner_line_id = self.create_addendum_line(cr, uid, [x.id for x in unrec_lines], func_balance)
             if partner_line_id:
                 # Add partner_line to do total reconciliation
