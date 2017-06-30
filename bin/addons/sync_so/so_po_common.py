@@ -57,7 +57,10 @@ class so_po_common(osv.osv_memory):
         if not context:
             context = {}
         context.update({'active_test': False})
-        ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', partner_name)], context=context)
+        ids = self.pool.get('res.partner').search(cr, uid,
+                                                  [('name', '=', partner_name)
+                                                   ('partner_type', '!=', 'intermission')],
+                                                  context=context)
         if not ids:
             raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
         return ids[0]

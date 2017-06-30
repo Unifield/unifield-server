@@ -108,7 +108,7 @@ def _lang_get(self, cr, uid, context={}):
 class res_partner(osv.osv):
     _description='Partner'
     _name = "res.partner"
-    _order = "name"
+    _order = "name, id"
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True),
         'date': fields.date('Date', select=1),
