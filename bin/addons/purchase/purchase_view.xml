@@ -177,6 +177,7 @@
                         <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection"/>
                         <field name="partner_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'validated'])]}"/>
                         <field name="shipped"/>
+                        <field name="push_fo" invisible="1"/>
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" />
                         <field name="priority" />
                         <newline />
