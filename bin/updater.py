@@ -15,6 +15,7 @@ import logging
 import subprocess
 import base64
 from zipfile import ZipFile
+import bsdifftree
 
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
@@ -549,3 +550,294 @@ def check_mako_xml():
                         logger.warning('ExpandedColumnCount is present in file %s line %s.' % (full_path, line_number))
     logger.info("Check mako and xml files finished.")
 
+#
+# Functions related to upgrading PostgreSQL.
+#
+
+def _find_pg_patch():
+    """
+    Looks in the cwd for a file matching pgsql-*-*-patch.
+    Returns the filename of the patch, the oldVer and the newVer.
+    """
+    import glob
+    pfiles = glob.glob('pgsql-*-*-patch')
+    if len(pfiles) == 0:
+        return None, None, None
+    if len(pfiles) != 1:
+        warn("Too many PostgreSQL patch files: %s" % pfiles)
+        warn("PostgreSQL will not be updated.")
+        return None, None, None
+
+    (oldVer, newVer) = pfiles[0].split('-')[1:3]
+
+    # Check version format: 8.4.14 or 10.1
+    if not re.match('\d+\.\d+(\.\d+)?', oldVer) or \
+       not re.match('\d+\.\d+(\.\d+)?', newVer):
+        return None, None, None
+
+    return pfiles[0], oldVer, newVer
+
+def _is_major(oldVer, newVer):
+    oldVer = oldVer.split('.')
+    newVer = newVer.split('.')
+    if oldVer[0] != newVer[0]:
+        return True
+    if oldVer[0] >= 10:
+        # for 10.x and onward, second position indicates minor
+        # version: https://www.postgresql.org/support/versioning/
+        return False
+    if oldVer[1] != newVer[1]:
+        return True
+    return False
+
+def _no_log(*x):
+    pass
+
+def _archive_patch(pf):
+    """
+    Put away the patch file in order to indicate that it has
+    already been applied and PG update should not be attempted
+    again.
+    """
+    warn('Archiving patch file %s' % pf)
+    if not os.path.exists('backup'):
+        os.mkdir('backup')
+    os.rename(pf, os.path.join('backup', pf))
+
+def do_pg_update():
+    """
+    This function is run on every server start (see openerp-server.py).
+    If the conditions are not right for a PostgreSQL update, it
+    immeditately returns, so that the server can start up (the common case).
+    If an update is required, then it attempts the update. If the
+    update fails, it must leave the server in the same condition it
+    started, i.e. with the original Postgres up and running.
+    """
+
+    # Postgres updates are only done on Windows.
+    if os.name != "nt":
+        return
+
+    # We need to open this here because do_update only
+    # opens it once it starts to work, not if there is no
+    # update to apply.
+    global log
+    try:
+        log = open(log_file, 'a')
+    except Exception as e:
+        log = os.stderr
+        warn("Could not open %s correctly: %s" % (log_file, e))
+
+    # If there is no patch file available, then there's no
+    # update to do.
+    pf, oldVer, newVer = _find_pg_patch()
+    if pf is None:
+        return
+
+    # TODO: Disk space check
+
+    try:
+        with open(pf, 'rb') as f:
+            pdata = f.read()
+    except Exception as e:
+        warn("Could not read patch file %s: %s" % (pf, e))
+        _archive_patch(pf)
+        return
+
+    # Minor update:
+    # 1. check that the patch will apply
+    # 2. stop server
+    # 3. patch the binaries in place, nuke patch to show it is done
+    # 4. start server
+    #
+    # Minor updates will only happen after the 8.4->9.6.x transition,
+    # so things are much easier, with more fixed items (PG inst location,
+    # service name).
+    if not _is_major(oldVer, newVer):
+        if oldVer.startswith("8.4."):
+            warn("Minor patch from 8.4.x not supported.")
+            return
+        warn("Postgres minor update from %s to %s" % (oldVer, newVer))
+        try:
+            bsdifftree.applyPatch(pdata, r'..\pgsql', doIt=False, log=_no_log)
+        except Exception as e:
+            warn("Patch is unusable: %s" % e)
+            return
+
+        try:
+            subprocess.call('net stop Postgres')
+            bsdifftree.applyPatch(pdata, r'..\pgsql', log=warn)
+            _archive_patch(pf)
+        except Exception as e:
+            warn("Could not apply patch: %s" % e)
+        finally:
+            subprocess.call('net start Postgres')
+        # minor update done
+        return
+
+    # Major upgrade
+    #
+    # 1. figure out where the old PG is and copy it to pgsql-next
+    # 2. patch pgsql-next, nuke patch file
+    # 3. prepare new db dir using new initdb, old user/pass.
+    # 4. stop server
+    # 5. pg_upgrade -> if fail, clean db dir, goto 8
+    # 6. commit to new bin dir, put it in '..\pgsql'
+    # 7. if old was 8.4, change service entry
+    # 8. start server
+
+    warn("Postgres major update from %s to %s" % (oldVer, newVer))
+    import tools
+
+    stopped = False
+    try:
+        # 1
+        if oldVer == '8.4.14':
+            svc = 'PostgreSQL_For_OpenERP'
+            pg_old = r'D:\MSF data\Unifield\PostgreSQL'
+            pg_new = r'..\pgsql'
+        else:
+            svc = 'Postgres'
+            pg_old = r'..\pgsql'
+            pg_new = r'..\pgsql-next'
+        if not os.path.exists(pg_old):
+            raise RuntimeError('PostgreSQL install directory %s not found.' % pg_old)
+        if os.path.exists(pg_new):
+            raise RuntimeError('New PostgreSQL install directory %s already exists' % pg_new)
+        shutil.copytree(pg_old, pg_new)
+
+        # 2: patch the pg exes
+        warn('Patching %s' % pg_new)
+        bsdifftree.applyPatch(pdata, pg_new, log=warn)
+        _archive_patch(pf)
+
+        # 3: prepare the new db
+        pg_old_db = r'D:\MSF data\Unifield\PostgreSQL\data'
+        if not os.exist(pg_old_db):
+            raise RuntimeError('Could not find existing PostgreSQL data in %s' % pg_old_db)
+        pg_new_db = pg_old_db + '-new'
+        if os.path.exist(pg_new_db):
+            raise RuntimeError('New data directory %s already exists.' % pg_new_db)
+        pwf = tempfile.NamedTemporaryFile()
+        pwf.write(tools.config.get('db_password'))
+        pwf.flush()
+        cmd = [ os.path.join(pg_new, 'bin', 'initdb'),
+                '--pwfile', pwf.name,
+                '-U', tools.config.get('db_user'),
+                '--locale', 'English_United States',
+                '-E', 'UTF8', pg_new_db
+                ]
+        rc = subprocess.call(cmd, stdout=log, stderr=log)
+        if rc != 0:
+            raise RuntimeError("initdb returned %d" % rc)
+        pwf.close()
+
+        # 4: stop old service
+        subprocess.call('net stop %s' % svc)
+        stopped = True
+
+        # 5: pg_upgrade
+        env = os.envion
+        if tools.config.get('db_user'):
+            env['PGUSER'] = tools.config['db_user']
+        if tools.config.get('db_password'):
+            env['PGPASSWORD'] = tools.config['db_password']
+        cmd = [ os.path.join(pg_new, 'bin', 'pg_upgrade'),
+                '-b', os.path.join(pg_old, 'bin'),
+                '-B', os.path.join(pg_new, 'bin'),
+                '-d', pg_old_db, '-D', pg_new_db, '-k', '-v',
+                ]
+        rc = subprocess.call(cmd, stdout=log, stderr=log, env=env)
+        if rc != 0:
+            raise RuntimeError("pg_upgrade returned %d" % rc)
+        # The pg_upgrade went ok, so we are committed now. Nuke the
+        # old db directory and move the upgraded one into place.
+        shutil.rmtree(pg_old_db)
+        os.rename(pg_new_db, pg_old_db)
+
+        # 6: commit to new bin dir
+        if oldVer == '8.4.14':
+            # For 8.4->9.9.x transition, nuke 8.4 install
+            cmd = [ os.path.join(pg_old, 'uninstall-postgresql.exe'),
+                    '--mode', 'unattended',
+                    ]
+            rc = subprocess.call(cmd, stdout=log, stderr=log)
+            if rc != 0:
+                warn("postgres 8.4 uninstall returned %d" % rc)
+            # Move pg_new to it's final name.
+            os.rename(pg_new, r'..\pgsql')
+        else:
+            warn("Remove %s and rename %s to %s." % (pg_old, pg_new, pg_old))
+            shutil.rmtree(pg_old)
+            os.rename(pg_new, pg_old)
+
+        # 7: change service entry to the correct install location
+        if oldVer == '8.4.14':
+            pg_dir = os.path.normpath(r'..\pgsql')
+            cmd = [
+                os.path.join(pg_dir, 'bin', 'pg_ctl'),
+                'register', '-N', 'Postgres',
+                '-U', 'openpgsvc',
+                '-P', '0p3npgsvcPWD',
+                '-D', pg_old_db,
+            ]
+            rc = subprocess.call(cmd, stdout=log, stderr=log)
+            if rc != 0:
+                raise RuntimeError("pg_ctl returned %d" % rc)
+            svc = 'Postgres'
+
+    except Exception as e:
+        warn('Failed to update Postgres.')
+        warn(e)
+    finally:
+        # 8. start service (either the old one or the new one)
+        if stopped:
+            warn('Starting service %s' % svc)
+            subprocess.call('net start %s' % svc)
+        # clean up a failed db dir upgrade
+        if os.path.exists(pg_new_db):
+            warn("Removing failed DB upgrade directory %s" % pg_new_db)
+            shutil.rmtree(pg_new_db)
+
+    return
+
+#
+# Unit tests follow
+#
+if __name__ == '__main__':
+    import tempfile, shutil
+    d = tempfile.mkdtemp()
+    print 'testing in', d
+    os.chdir(d)
+
+    # no file
+    pf, oldVer, newVer = _find_pg_patch()
+    assert pf == None
+
+    # one good file
+    with open('pgsql-8.4-9.6.3-patch', 'wb') as f:
+        f.write('Fake patch for testing.')
+    pf, oldVer, newVer = _find_pg_patch()
+    assert oldVer == '8.4'
+    assert newVer == '9.6.3'
+    assert 'Fake' in pf
+
+    # two files: oops
+    warn("Expect 2 messages on stderr after this:")
+    with open('pgsql-wat-huh-patch', 'wb') as f:
+        f.write('Second fake patch for testing.')
+    pf, oldVer, newVer = _find_pg_patch()
+    assert pf == None
+
+    # one file with wrong version format
+    os.remove('pgsql-8.4-9.6.3-patch')
+    pf, oldVer, newVer = _find_pg_patch()
+    assert pf == None
+
+    assert _is_major('8.4.14', '9.6.3')
+    assert not _is_major('8.4.14', '8.4.15')
+    assert _is_major('9.6.9', '10.1')
+    assert not _is_major('10.1', '10.2')
+    assert _is_major('21.9', '22.1')
+
+    shutil.rmtree(d)

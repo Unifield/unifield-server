@@ -40,36 +40,37 @@ def _read_file(fn):
 # directory old into new. Using the output of mkpatch
 # with applyPatch(old, "a-new-dir") should result in "a-new-dir"
 # containing precisely the same files as "new" does.
-def mkPatch(old, new):
+def mkPatch(old, new, log=_defaultLog):
     patch = {
         # All filenames are relative to old.
         # Deletions: A list of files to delete
         'delete': [],
-        # Additions: bz2 compressed copies of the files to add.
+        # Additions: key = filename -> value = data of files
         'add': {},
-        # Patches: key = filename, value = tuple of:
+        # Patches: key = filename -> value = tuple of:
         #   (old-file-SHA1, patch, new-file-SHA1)
         # The SHA before is to make sure that we are applying the patch
         # to the correct base file. The SHA after is to be sure that bsdiff4
         # did his job correctly.
         'patch': {},
     }
+    seen = {}
 
     # walk old, looking for things that were deleted in new,
     # or that will be patched.
     for (dirpath, dirnames, filenames) in os.walk(old):
         relpath = dirpath.replace(old, '')
-        if len(relpath) > 0 and relpath[0] == '/':
+        if len(relpath) > 0 and relpath[0] == os.path.sep:
             relpath = relpath[1:]
         for f in filenames:
             oldf = os.path.join(dirpath, f)
             newf = os.path.join(new, relpath, f)
             dest = os.path.join(relpath, f)
+            seen[dest] = True
             if not os.path.exists(newf):
-                #print "del %s" % dest
+                log("del %s" % dest)
                 patch['delete'].append(dest)
             elif not filecmp.cmp(oldf, newf, False):
-                #print "write mod %s" % dest
                 oldData = _read_file(oldf)
                 before = hashlib.sha1()
                 before.update(oldData)
@@ -77,20 +78,19 @@ def mkPatch(old, new):
                 newData = _read_file(newf)
                 after = hashlib.sha1()
                 after.update(newData)
-
-                patch['patch'][dest] = (before.digest(), bsdiff4.diff(oldData, newData), after.digest())
+                thePatch = bsdiff4.diff(oldData, newData)
+                log("write mod %s (len=%d)" % (dest, len(thePatch)))
+                patch['patch'][dest] = (before.digest(), thePatch, after.digest())
         for d in dirnames:
             if not os.path.exists(os.path.join(new, relpath, d)):
                 # a name in the delete list with a trailing slash
                 # means, "delete this directory and everything in it"
-                #print "del dir %s" % d
+                log("del dir %s" % d)
                 patch['delete'].append(d + '/')
                 dirnames.remove(d)
 
     # Now walk new looking for things we have not yet made a
-    # patch for. These are adds, so add them, compressed.
-    # The output of bsdiff4.diff() above is already bz2-format,
-    # so we'd get almost no benefit from bzipping the pickle.
+    # patch for.
     for (dirpath, dirnames, filenames) in os.walk(new):
         relpath = dirpath.replace(new, '')
         if len(relpath) > 0 and relpath[0] == '/':
@@ -98,16 +98,20 @@ def mkPatch(old, new):
         for f in filenames:
             newf = os.path.join(new, relpath, f)
             dest = os.path.join(relpath, f)
-            if dest in patch['patch']:
+            if dest in seen:
                 continue
-            #print "add %s" % dest
-            patch['add'][dest] = bz2.compress(_read_file(newf))
+            log("add %s" % dest)
+            patch['add'][dest] = _read_file(newf)
 
-    return cPickle.dumps(patch)
+    return bz2.compress(cPickle.dumps(patch))
 
 # todir is expected to exist, because it should have any base
 # files in it that will be needed for patching.
-def applyPatch(patchdata, todir, log=_defaultLog):
+# Note: files that exist in todir, but which are not mentioned
+# in the patch will continue existing after the patch is applied.
+# TODO: Figure out if this is dangerous, fix it?
+def applyPatch(patchdata, todir, doIt=True, log=_defaultLog):
+    patchdata = bz2.decompress(patchdata)
     unpickler = cPickle.Unpickler(cStringIO.StringIO(patchdata))
     unpickler.find_global = None
     patch = unpickler.load()
@@ -116,11 +120,13 @@ def applyPatch(patchdata, todir, log=_defaultLog):
             fn = fn[0:-1]
             x = os.path.join(todir, fn)
             log("delete tree", x)
-            shutil.rmtree(x)
+            if doIt:
+                shutil.rmtree(x)
         else:
             x = os.path.join(todir, fn)
             log("delete", x)
-            os.remove(x)
+            if doIt:
+                os.remove(x)
     for fn,sumpatch in patch.get('patch', {}).items():
         (sumBefore, filepatch, sumAfter) = sumpatch
         fn = os.path.join(todir, fn)
@@ -138,21 +144,27 @@ def applyPatch(patchdata, todir, log=_defaultLog):
         if h.digest() != sumAfter:
             raise RuntimeError("SHA mismatch after patching file %s" % fn)
 
-        with open(fn, 'wb') as outf:
-            outf.write(outData)
+        if doIt:
+            with open(fn, 'wb') as outf:
+                outf.write(outData)
         log('patched', fn)
 
     for fn,outData in patch.get('add', {}).items():
         fn = os.path.join(todir, fn)
         dirname = os.path.dirname(fn)
-        #print "making dir ", dirname
-        os.makedirs(dirname)
-        outData = bz2.decompress(outData)
-        with open(fn, 'wb') as outf:
-            outf.write(outData)
+        if doIt:
+            os.makedirs(dirname)
+            with open(fn, 'wb') as outf:
+                outf.write(outData)
         log('added', fn)
 
 if __name__ == '__main__':
+    # Example code for how to make a patch:
+    #import sys
+    #with open("patch", "wb") as f:
+    #    f.write(mkPatch('pgsql-8.4', 'pgsql-9.6.3'))
+    #sys.exit(1)
+
     import tempfile, shutil
 
     d = tempfile.mkdtemp()
