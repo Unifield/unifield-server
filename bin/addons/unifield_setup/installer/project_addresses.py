@@ -80,7 +80,9 @@ class project_addresses(osv.osv_memory):
             for field in ['country_id','state_id']:
                 if address[field]:
                     res[field] = address[field].id
-                    
+            if address['name']:
+                res['contact_name'] = address['name']
+
         if delivery_id:
             address = self.pool.get('res.partner.address').browse(cr, uid, delivery_id, context=context)
             for field in ['street','street2','zip','city','email','phone']:
