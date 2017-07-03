@@ -1475,7 +1475,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         return self.pool.get('stock.picking').create(cr, uid, pick_values, context=context)
         
 
-
     def source_line(self, cr, uid, ids, context=None):
         """
         From sale.order.line to purchase.order.line
@@ -1499,8 +1498,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     self.pool.get('stock.picking').infolog(cr, uid, msg)
 
                 # create the stock.picking line from the sourcing line:
-                move_data = self.pool.get('sale.order')._get_move_data(cr, uid, sourcing_line.order_id, sourcing_line, pick_to_use, context=context)
-                self.pool.get('stock.move').create(cr, uid, move_data, context=context)
+                # move_data = self.pool.get('sale.order')._get_move_data(cr, uid, sourcing_line.order_id, sourcing_line, pick_to_use, context=context)
+                # self.pool.get('stock.move').create(cr, uid, move_data, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'confirmed', cr)
                     
