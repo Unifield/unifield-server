@@ -9769,7 +9769,7 @@ msgstr "Rapport/Modèle"
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2502
 #, python-format
-msgid "You cannot do an advance return in an Register which is in another state than \"open\"!"
+msgid "You cannot do an advance return in a Register which is in another state than \"open\"!"
 msgstr "Vous ne pouvez pas faire de retour d'avance dans un Registre qui se trouverait sous un statut autre que 'ouvert'."
 
 #. module: purchase_override

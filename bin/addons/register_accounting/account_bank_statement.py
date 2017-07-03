@@ -2510,7 +2510,7 @@ class account_bank_statement_line(osv.osv):
         if 'open_advance' in context:
             st = self.pool.get('account.bank.statement').browse(cr, uid, context.get('open_advance'), context=context)
         if st and st.state != 'open':
-            raise osv.except_osv(_('Error'), _('You cannot do an advance return in an Register which is in another state than "open"!'))
+            raise osv.except_osv(_('Error'), _('You cannot do an advance return in a Register which is in another state than "open"!'))
         statement_id = st.id
         amount = self.read(cr, uid, ids[0], ['amount']).get('amount', 0.0)
         if amount >= 0:
