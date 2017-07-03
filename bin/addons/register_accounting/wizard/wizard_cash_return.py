@@ -35,7 +35,7 @@ class account_bank_statement_line(osv.osv):
 
     _columns = {
         'cash_return_move_line_id': fields.many2one('account.move.line',
-            'Cash Return JI', required=False, readonly=True),  # BKLG-60 
+            'Cash Return JI', required=False, readonly=True),  # BKLG-60
     }
 
 account_bank_statement_line()
@@ -332,7 +332,7 @@ class wizard_cash_return(osv.osv_memory):
         'display_invoice': fields.boolean(string="Display Invoice"),
         'advance_st_line_id': fields.many2one('account.bank.statement.line', string='Advance Statement Line', required=True),
         'currency_id': fields.many2one('res.currency', string='Currency'),
-        'date': fields.date(string='Date for cash return', required=True),
+        'date': fields.date(string='Date for advance return', required=True),
         'reference': fields.char(string='Advance Return Reference', size=64),
         'advance_linked_po_auto_invoice': fields.boolean(string="Operational advance linked po invoices"),
         'comment': fields.text(string='Note'),
@@ -1118,7 +1118,7 @@ class wizard_cash_return(osv.osv_memory):
             # of the 'ok button with confirm' variant
             po = self.pool.get('purchase.order').browse(cr, uid, context['cash_register_op_advance_po_id'], context=context)
             if po:
-                msg_base = _("No invoice selected in the cash return wizard. The corresponding cash return has been linked with PO %s - Please confirm you wish to proceed.")
+                msg_base = _("No invoice selected in the advance return wizard. The corresponding advance return has been linked with PO %s - Please confirm you wish to proceed.")
                 msg = msg_base % (po.name,)
                 nodes = doc.xpath("//button[@name='action_confirm_cash_return2']")
                 for node in nodes:

@@ -9769,8 +9769,8 @@ msgstr "Rapport/Modèle"
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2502
 #, python-format
-msgid "You cannot do a cash return in Register which is in another state that \"open\"!"
-msgstr "Vous ne pouvez pas faire de retour de liquidités dans un Registre qui se trouverait sous un statut autre que 'ouvert'."
+msgid "You cannot do an advance return in an Register which is in another state than \"open\"!"
+msgstr "Vous ne pouvez pas faire de retour d'avance dans un Registre qui se trouverait sous un statut autre que 'ouvert'."
 
 #. module: purchase_override
 #: code:addons/purchase_override/purchase.py:925
@@ -17790,8 +17790,8 @@ msgstr "Justification - Description"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:1121
 #, python-format
-msgid "No invoice selected in the cash return wizard. The corresponding cash return has been linked with PO %s - Please confirm you wish to proceed."
-msgstr "No invoice selected in the cash return wizard. The corresponding cash return has been linked with PO %s - Please confirm you wish to proceed."
+msgid "No invoice selected in the advance return wizard. The corresponding advance return has been linked with PO %s - Please confirm you wish to proceed."
+msgstr "Pas de facture sélectionnée dans l'assistant Retour d'Avance. Le retour d'avance correspondant a été relié avec le BC %s - Veuillez confirmer que vous souhaitez continuer."
 
 #. module: sale_override
 #: field:sale.order.sourcing.progress,sourcing_start:0
@@ -22185,8 +22185,8 @@ msgstr "Le niveau de nomenclature sélectionné est '%s'. Doit être '%s' (Nivea
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:548
-msgid "Cash Return"
-msgstr "Cash Return"
+msgid "Advance Return"
+msgstr "Retour d'Avance"
 
 #. module: account_corrections
 #: code:addons/account_corrections/account_move_line.py:733
@@ -39333,10 +39333,11 @@ msgstr "Chart of Accounts"
 msgid "res.widget"
 msgstr "res.widget"
 
-#. module: register_accounting
+#. modules: register_accounting,analytic_distribution
 #: view:wizard.cash.return:0
-msgid "Cash Return- Wizard"
-msgstr "Retour d'Espèce - Assistant"
+#: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:1235
+msgid "Advance Return - Wizard"
+msgstr "Retour d'Avance - Assistant"
 
 #. module: base
 #: model:ir.actions.act_window,name:base.res_request_link-act
@@ -59804,11 +59805,6 @@ msgstr "wizard.currency.revaluation"
 msgid "Please, enter some stock moves before changing the source location to CROSS DOCKING"
 msgstr "Veuillez entrer quelques mouvements de stock avant de changer la localisation de la source pour le TRANSBORDEMENT"
 
-#. module: register_accounting
-#: view:wizard.cash.return:0
-msgid "Cash Return Wizard will help you book advances return."
-msgstr "Assistant Retour d'Espèce vous aidera à comptabiliser les retours d'avances."
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/check_line.py:394
 #, python-format
@@ -64000,8 +63996,8 @@ msgstr "No Donation Payable account for this partner: %s"
 
 #. module: register_accounting
 #: field:wizard.cash.return,date:0
-msgid "Date for cash return"
-msgstr "Date de retour d'espèce"
+msgid "Date for advance return"
+msgstr "Date du retour d'avance"
 
 #. modules: register_accounting, analytic_distribution, account_subscription
 #: field:account.model.line,is_allocatable:0
