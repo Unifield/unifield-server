@@ -25,6 +25,7 @@ import cPickle
 import cStringIO
 import bz2
 import os
+import shutil
 import filecmp
 import hashlib
 
@@ -82,18 +83,19 @@ def mkPatch(old, new, log=_defaultLog):
                 log("write mod %s (len=%d)" % (dest, len(thePatch)))
                 patch['patch'][dest] = (before.digest(), thePatch, after.digest())
         for d in dirnames:
+            dest = os.path.join(relpath, d)
             if not os.path.exists(os.path.join(new, relpath, d)):
                 # a name in the delete list with a trailing slash
                 # means, "delete this directory and everything in it"
-                log("del dir %s" % d)
-                patch['delete'].append(d + '/')
+                log("del dir %s" % dest)
+                patch['delete'].append(dest + '/')
                 dirnames.remove(d)
 
     # Now walk new looking for things we have not yet made a
     # patch for.
     for (dirpath, dirnames, filenames) in os.walk(new):
         relpath = dirpath.replace(new, '')
-        if len(relpath) > 0 and relpath[0] == '/':
+        if len(relpath) > 0 and relpath[0] == os.path.sep:
             relpath = relpath[1:]
         for f in filenames:
             newf = os.path.join(new, relpath, f)
@@ -153,19 +155,26 @@ def applyPatch(patchdata, todir, doIt=True, log=_defaultLog):
         fn = os.path.join(todir, fn)
         dirname = os.path.dirname(fn)
         if doIt:
-            os.makedirs(dirname)
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
             with open(fn, 'wb') as outf:
                 outf.write(outData)
         log('added', fn)
 
 if __name__ == '__main__':
-    # Example code for how to make a patch:
-    #import sys
-    #with open("patch", "wb") as f:
-    #    f.write(mkPatch('pgsql-8.4', 'pgsql-9.6.3'))
-    #sys.exit(1)
+    import sys, tempfile
 
-    import tempfile, shutil
+    # To make a patch run this script with mkpatch as an argument.
+    if len(sys.argv) >= 2 and sys.argv[1] == 'mkpatch':
+        if len(sys.argv) != 5:
+            print('Expected args: mkpatch <from> <to> <patch>')
+            sys.exit(1)
+        with open(sys.argv[4], 'wb') as f:
+            f.write(mkPatch(sys.argv[2], sys.argv[3]))
+        print("Patch saved into:", sys.argv[4])
+        sys.exit(0)
+
+    # Otherwise run the unit tests.
 
     d = tempfile.mkdtemp()
     old = os.path.join(d, 'old')
@@ -176,8 +185,8 @@ if __name__ == '__main__':
     os.makedirs(os.path.join(old, 'a'))
     with open(os.path.join(old, 'delete'), 'w') as f:
         f.write("to be deleted")
-    os.makedirs(os.path.join(old, 'deldir'))
-    with open(os.path.join(old, 'deldir', 'delete'), 'w') as f:
+    os.makedirs(os.path.join(old, 'a', 'deldir'))
+    with open(os.path.join(old, 'a', 'deldir', 'delete'), 'w') as f:
         f.write("to be deleted")
     with open(os.path.join(old, 'a', 'change'), 'w') as f:
         f.write('from this')
@@ -233,3 +242,4 @@ if __name__ == '__main__':
             pass
 
     shutil.rmtree(d)
+    print("test ok")

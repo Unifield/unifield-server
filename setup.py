@@ -256,6 +256,7 @@ setup(name             = name,
           'passlib==1.7.1',
           'bcrypt==3.1.3',
           'xlwt==1.2.0',
+          'bsdiff4==1.1.4',
       ],
       **py2exe_keywords
       )

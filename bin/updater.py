@@ -6,7 +6,9 @@ Beware that we expect to be in the bin/ directory to proceed!!
 from __future__ import with_statement
 import re
 import os
+import tempfile
 import sys
+import shutil
 from hashlib import md5
 from datetime import datetime
 from base64 import b64decode
@@ -602,7 +604,10 @@ def _archive_patch(pf):
     warn('Archiving patch file %s' % pf)
     if not os.path.exists('backup'):
         os.mkdir('backup')
-    os.rename(pf, os.path.join('backup', pf))
+    bf = os.path.join('backup', pf)
+    if os.path.exists(bf):
+        os.remove(bf)
+    os.rename(pf, bf)
 
 def do_pg_update():
     """
@@ -658,25 +663,23 @@ def do_pg_update():
             warn("Minor patch from 8.4.x not supported.")
             return
         warn("Postgres minor update from %s to %s" % (oldVer, newVer))
+        
         try:
             bsdifftree.applyPatch(pdata, r'..\pgsql', doIt=False, log=_no_log)
-        except Exception as e:
-            warn("Patch is unusable: %s" % e)
-            return
-
-        try:
-            subprocess.call('net stop Postgres')
+            subprocess.call('net stop Postgres', stdout=log, stderr=log)
             bsdifftree.applyPatch(pdata, r'..\pgsql', log=warn)
             _archive_patch(pf)
         except Exception as e:
-            warn("Could not apply patch: %s" % e)
+            s = str(e) or type(e)
+            warn("Could not apply patch:", s)
         finally:
-            subprocess.call('net start Postgres')
-        # minor update done
+            subprocess.call('net start Postgres', stdout=log, stderr=log)
+        warn("Minor update done.")
         return
 
     # Major upgrade
     #
+    # 0. find out if tablespaces are in use, if so abort
     # 1. figure out where the old PG is and copy it to pgsql-next
     # 2. patch pgsql-next, nuke patch file
     # 3. prepare new db dir using new initdb, old user/pass.
@@ -690,37 +693,69 @@ def do_pg_update():
     import tools
 
     stopped = False
+    pg_new_db = None
     try:
-        # 1
+        env = os.environ
+        if tools.config.get('db_user'):
+            env['PGUSER'] = tools.config['db_user']
+        if tools.config.get('db_password'):
+            env['PGPASSWORD'] = tools.config['db_password']
+            
+        pg_new = r'..\pgsql-next'
         if oldVer == '8.4.14':
             svc = 'PostgreSQL_For_OpenERP'
             pg_old = r'D:\MSF data\Unifield\PostgreSQL'
-            pg_new = r'..\pgsql'
         else:
             svc = 'Postgres'
             pg_old = r'..\pgsql'
-            pg_new = r'..\pgsql-next'
         if not os.path.exists(pg_old):
             raise RuntimeError('PostgreSQL install directory %s not found.' % pg_old)
-        if os.path.exists(pg_new):
-            raise RuntimeError('New PostgreSQL install directory %s already exists' % pg_new)
-        shutil.copytree(pg_old, pg_new)
 
-        # 2: patch the pg exes
+        # 0: check for tablespaces (pg_upgrade seems to unify them
+        # into pg_default, which is not ok)
+        cmd = [ os.path.join(pg_old, 'bin', 'psql'), '-t', '-c',
+                'select count(*) > 2 from pg_tablespace;', 'postgres' ]
+        out = None
+        try:
+            out = subprocess.check_output(cmd, stderr=log, env=env)
+        except subprocess.CalledProcessError as e:
+            warn(e)
+            warn("out is", out)
+        if out is None or 'f' not in out:
+            raise RuntimeError("User-defined tablespaces might be in use. Upgrade needs human intervention.")
+            
+        # 1: use old PG install to make a new one to patch
+        if os.path.exists(pg_new):
+            warn("Removing previous %s directory" % pg_new)
+            shutil.rmtree(pg_new)
+            
+        if oldVer == '8.4.14':
+            warn("Creating %s by selective copy from %s" % (pg_new, pg_old))
+            os.mkdir(pg_new)
+            for d in ('bin', 'lib', 'share'):
+                shutil.copytree(os.path.join(pg_old, d),
+                                os.path.join(pg_new, d))
+        else:
+            shutil.copytree(pg_old, pg_new)
+
+        # 2: patch the pg exes -- no trial run here, because if applyPatch
+        # fails, we have only left pg_new unusable, and we will revert
+        # to pg_old. Compare to minor (in-place) upgrade, above.
         warn('Patching %s' % pg_new)
         bsdifftree.applyPatch(pdata, pg_new, log=warn)
         _archive_patch(pf)
 
         # 3: prepare the new db
         pg_old_db = r'D:\MSF data\Unifield\PostgreSQL\data'
-        if not os.exist(pg_old_db):
+        if not os.path.exists(pg_old_db):
             raise RuntimeError('Could not find existing PostgreSQL data in %s' % pg_old_db)
         pg_new_db = pg_old_db + '-new'
-        if os.path.exist(pg_new_db):
+        if os.path.exists(pg_new_db):
             raise RuntimeError('New data directory %s already exists.' % pg_new_db)
-        pwf = tempfile.NamedTemporaryFile()
+        pwf = tempfile.NamedTemporaryFile(delete=False)
         pwf.write(tools.config.get('db_password'))
-        pwf.flush()
+        pwf.close()
+        # TODO: apply same fix here for trust as in the AIO
         cmd = [ os.path.join(pg_new, 'bin', 'initdb'),
                 '--pwfile', pwf.name,
                 '-U', tools.config.get('db_user'),
@@ -730,18 +765,14 @@ def do_pg_update():
         rc = subprocess.call(cmd, stdout=log, stderr=log)
         if rc != 0:
             raise RuntimeError("initdb returned %d" % rc)
-        pwf.close()
+        os.remove(pwf.name)
 
         # 4: stop old service
-        subprocess.call('net stop %s' % svc)
+        subprocess.call('net stop %s' % svc, stdout=log, stderr=log)
         stopped = True
 
         # 5: pg_upgrade
-        env = os.envion
-        if tools.config.get('db_user'):
-            env['PGUSER'] = tools.config['db_user']
-        if tools.config.get('db_password'):
-            env['PGPASSWORD'] = tools.config['db_password']
+        run_analyze = False
         cmd = [ os.path.join(pg_new, 'bin', 'pg_upgrade'),
                 '-b', os.path.join(pg_old, 'bin'),
                 '-B', os.path.join(pg_new, 'bin'),
@@ -750,24 +781,34 @@ def do_pg_update():
         rc = subprocess.call(cmd, stdout=log, stderr=log, env=env)
         if rc != 0:
             raise RuntimeError("pg_upgrade returned %d" % rc)
+        
         # The pg_upgrade went ok, so we are committed now. Nuke the
         # old db directory and move the upgraded one into place.
-        shutil.rmtree(pg_old_db)
+        warn("pg_upgrade returned %d, commiting to new version" % rc)
+        run_analyze = True
+
+        # we do this with two renames since rmtree/rename sometimes
+        # failed (why? due to antivirus still holding files open?)
+        pg_old_db2 = pg_old_db + "-trash"
+        os.rename(pg_old_db, pg_old_db2)
         os.rename(pg_new_db, pg_old_db)
+        shutil.rmtree(pg_old_db2)
 
         # 6: commit to new bin dir
         if oldVer == '8.4.14':
+            # Move pg_new to it's final name.
+            os.rename(pg_new, r'..\pgsql')
             # For 8.4->9.9.x transition, nuke 8.4 install
+            warn("Removing stand-alone PostgreSQL 8.4 installation.")
             cmd = [ os.path.join(pg_old, 'uninstall-postgresql.exe'),
                     '--mode', 'unattended',
                     ]
             rc = subprocess.call(cmd, stdout=log, stderr=log)
             if rc != 0:
                 warn("postgres 8.4 uninstall returned %d" % rc)
-            # Move pg_new to it's final name.
-            os.rename(pg_new, r'..\pgsql')
         else:
             warn("Remove %s and rename %s to %s." % (pg_old, pg_new, pg_old))
+            
             shutil.rmtree(pg_old)
             os.rename(pg_new, pg_old)
 
@@ -787,27 +828,32 @@ def do_pg_update():
             svc = 'Postgres'
 
     except Exception as e:
-        warn('Failed to update Postgres.')
-        warn(e)
+        s = str(e) or type(e)
+        warn('Failed to update Postgres:', s)
     finally:
+        try:
+            if pg_new_db is not None and os.path.exists(pg_new_db):
+                warn("Removing failed DB upgrade directory %s" % pg_new_db)
+                shutil.rmtree(pg_new_db)
+        except Exception:
+            # don't know what went wrong, but we must not crash here
+            # or else OpenERP-Server will not start.
+            pass
         # 8. start service (either the old one or the new one)
         if stopped:
             warn('Starting service %s' % svc)
-            subprocess.call('net start %s' % svc)
-        # clean up a failed db dir upgrade
-        if os.path.exists(pg_new_db):
-            warn("Removing failed DB upgrade directory %s" % pg_new_db)
-            shutil.rmtree(pg_new_db)
-
+            subprocess.call('net start %s' % svc, stdout=log, stderr=log)
+        if run_analyze:
+            cmd = [ os.path.join(r'..\pgsql', 'bin', 'vacuumdb'),
+                    '--all', '--analyze-only' ]
+            subprocess.call(cmd, stdout=log, stderr=log, env=env)
     return
 
 #
 # Unit tests follow
 #
 if __name__ == '__main__':
-    import tempfile, shutil
     d = tempfile.mkdtemp()
-    print 'testing in', d
     os.chdir(d)
 
     # no file
@@ -815,12 +861,12 @@ if __name__ == '__main__':
     assert pf == None
 
     # one good file
-    with open('pgsql-8.4-9.6.3-patch', 'wb') as f:
+    with open('pgsql-8.4.14-9.6.3-patch', 'wb') as f:
         f.write('Fake patch for testing.')
     pf, oldVer, newVer = _find_pg_patch()
-    assert oldVer == '8.4'
+    assert oldVer == '8.4.14'
     assert newVer == '9.6.3'
-    assert 'Fake' in pf
+    assert pf == 'pgsql-8.4.14-9.6.3-patch'
 
     # two files: oops
     warn("Expect 2 messages on stderr after this:")
@@ -830,7 +876,7 @@ if __name__ == '__main__':
     assert pf == None
 
     # one file with wrong version format
-    os.remove('pgsql-8.4-9.6.3-patch')
+    os.remove('pgsql-8.4.14-9.6.3-patch')
     pf, oldVer, newVer = _find_pg_patch()
     assert pf == None
 
@@ -840,4 +886,5 @@ if __name__ == '__main__':
     assert not _is_major('10.1', '10.2')
     assert _is_major('21.9', '22.1')
 
+    os.chdir('..')
     shutil.rmtree(d)
