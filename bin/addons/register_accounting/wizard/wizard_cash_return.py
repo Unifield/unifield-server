@@ -35,7 +35,7 @@ class account_bank_statement_line(osv.osv):
 
     _columns = {
         'cash_return_move_line_id': fields.many2one('account.move.line',
-            'Cash Return JI', required=False, readonly=True),  # BKLG-60
+                                                    'Advance Return JI', required=False, readonly=True),  # BKLG-60
     }
 
 account_bank_statement_line()

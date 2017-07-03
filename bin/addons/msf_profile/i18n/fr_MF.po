@@ -94963,8 +94963,8 @@ msgstr "Taux"
 
 #. module: register_accounting
 #: field:account.bank.statement.line,cash_return_move_line_id:0
-msgid "Cash Return JI"
-msgstr "Cash Return JI"
+msgid "Advance Return JI"
+msgstr "Entrée compt. Retour d'Avance"
 
 #. module: msf_doc_import
 #: field:stock.picking,filetype:0
