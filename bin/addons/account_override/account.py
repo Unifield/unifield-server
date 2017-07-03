@@ -532,6 +532,10 @@ class account_account(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
         for account_id in ids:
