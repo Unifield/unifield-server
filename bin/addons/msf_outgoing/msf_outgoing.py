@@ -3388,6 +3388,8 @@ class stock_picking(osv.osv):
                     # Update the original move
                     move_obj.write(cr, uid, [move.id], values, context=context)
                     processed_moves.append(move.id)
+                    if move.sale_line_id:
+                        wf_service.trg_validate(uid, 'sale.order.line', move.sale_line_id.id, 'done', cr)
 
             if not len(move_data):
                 pick_type = 'Internal picking'
