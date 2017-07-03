@@ -65,6 +65,12 @@
             <lineStyle kind="GRID" colorName="#000000" />
         </blockTableStyle>
 
+        <blockTableStyle id="NoteTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
         <blockTableStyle id="FooterInfo">
             <blockAlignment value="CENTER" />
             <blockValign value="MIDDLE" />
@@ -267,6 +273,19 @@
         </blockTable>
 
         </section>
+
+        <para style="Header">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable style="NoteTable">
+            <tr>
+                <td>
+                    <para style="LHeader">Notes</para>
+                    <para style="Header">[[ picking.note or '-' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
 
         <para style="Header">
             <font color="white"> </font>
