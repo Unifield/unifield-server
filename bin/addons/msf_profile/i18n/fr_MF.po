@@ -28241,8 +28241,8 @@ msgstr "Calculer le Prix du Produit par unité selon cette version de liste de p
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2491
 #, python-format
-msgid "The attached journal is not a Cash Journal"
-msgstr "Le journal en pièce jointe est un journal de Trésorerie"
+msgid "The register journal is not compatible with an advance return."
+msgstr "Le journal du registre n'est pas compatible avec un retour d'avance."
 
 #. module: account
 #: field:account.tax,type:0
