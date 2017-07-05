@@ -922,8 +922,12 @@ class update_received(osv.osv,fv_formatter):
                         #US-2147: property_product_pricelist/id and
                         # property_product_pricelist_purchase/id are required
                         # fields, return False if the xmlid don't exists
-                        if field in ('property_product_pricelist/id',
-                                     'property_product_pricelist_purchase/id'):
+                        # US-2478 return False if a Cost Center is synched without its parent
+                        property_product_pricelist_missing = field in ('property_product_pricelist/id',
+                                                                       'property_product_pricelist_purchase/id')
+                        cc_parent_missing = 'account_analytic_account' in xmlid and 'category' in fields \
+                                            and values[fields.index('category')] == 'OC' and field == 'parent_id/id'
+                        if property_product_pricelist_missing or cc_parent_missing:
                             result['res'] = False
                             result['error_message'] = 'Cannot execute due to missing the %s' % field
                             return result
