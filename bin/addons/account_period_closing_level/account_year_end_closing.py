@@ -233,7 +233,7 @@ class account_year_end_closing(osv.osv):
 
         for pn in period_numbers:
             period_year_month = (fy_year, self._period_month_map[pn], )
-            code = "Period %d" % (pn, )
+            code = "Period %d_%s" % (pn, fy_year)
             if not period_obj.search(cr, uid, [('fiscalyear_id', '=', fy_id), ('number', '=', pn), ('active', 'in', ['t', 'f'])],
                     order='NO_ORDER', context=context):
                 vals = {

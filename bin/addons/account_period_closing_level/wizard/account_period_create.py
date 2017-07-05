@@ -75,8 +75,8 @@ class account_period_create(osv.osv_memory):
         for period_nb in (13, 14, 15):
             if not self.pool.get('account.period').name_search(cr, uid, 'Period %d' % (period_nb), [('fiscalyear_id', '=', fiscalyear_id)]):
                 self.pool.get('account.period').create(cr, uid, {
-                    'name': 'Period %d' % (period_nb),
-                    'code': 'Period %d' % (period_nb),
+                    'name': 'Period %d_%d' % (period_nb, start_date.year),
+                    'code': 'Period %d_%d' % (period_nb, start_date.year),
                     'date_start': '%d-12-01' % (start_date.year),
                     'date_stop': '%d-12-31' % (start_date.year),
                     'fiscalyear_id': fiscalyear_id,
