@@ -1273,6 +1273,18 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_1562_rename_special_periods(self, cr, uid, *a, **b):
+        """
+        Update the name and code of the special Periods from "Period xx" to "Period xx YYYY" (ex: Period 13 2017)
+        """
+        update_name_and_code = """
+            UPDATE account_period
+            SET name = name || ' ' || (SELECT SUBSTR(code, 3, 4) FROM account_fiscalyear WHERE account_period.fiscalyear_id = account_fiscalyear.id),
+            code = code || ' ' || (SELECT SUBSTR(code, 3, 4) FROM account_fiscalyear WHERE account_period.fiscalyear_id = account_fiscalyear.id)
+            WHERE name like 'Period %';
+            """
+        cr.execute(update_name_and_code)
+
 
 patch_scripts()
 
