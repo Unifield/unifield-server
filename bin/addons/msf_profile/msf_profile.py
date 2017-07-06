@@ -69,44 +69,52 @@ class patch_scripts(osv.osv):
                 ('type', '=', 'default'),
             ])[0]
 
-            cr.execute("SELECT name FROM stock_picking WHERE partner_id = %s;", (intermission_partner_id,))
+            cr.execute("SELECT name FROM stock_picking WHERE partner_id = %s AND state not in ('done', 'cancel');", (intermission_partner_id,))
             updated_doc += [x[0] for x in cr.fetchall()]
             cr.execute("""
                 UPDATE stock_picking
                 SET partner_id = %s, partner_id2 = %s, address_id = %s, partner_type_stock_picking = 'internal', invoice_state = 'none'
-                WHERE partner_id = %s;
+                WHERE partner_id = %s
+                AND state not in ('done', 'cancel');
             """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id) )
             cr.execute("""
                 UPDATE stock_move
                 SET partner_id = %s, partner_id2 = %s, address_id = %s
-                WHERE partner_id = %s
-                OR partner_id2 = %s;
+                WHERE (partner_id = %s OR partner_id2 = %s) AND state not in ('done', 'cancel');
             """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id, intermission_partner_id) )
 
-            cr.execute("SELECT name FROM purchase_order WHERE partner_id = %s;", (intermission_partner_id,))
+            cr.execute("SELECT name FROM purchase_order WHERE partner_id = %s AND state not in ('done', 'cancel');", (intermission_partner_id,))
             updated_doc += [x[0] for x in cr.fetchall()]
             cr.execute("""
                 UPDATE purchase_order
                 SET partner_id = %s, partner_address_id = %s, partner_type = 'internal'
-                WHERE partner_id = %s;
+                WHERE partner_id = %s
+                AND state not in ('done', 'cancel');
             """, (internal_partner_id, address_id, intermission_partner_id) )
             cr.execute("""
-                UPDATE purchase_order_line
+                UPDATE purchase_order_line pol
                 SET partner_id = %s
-                WHERE partner_id = %s;
+                FROM purchase_order po
+                WHERE pol.order_id = po.id
+                AND pol.partner_id = %s
+                AND po.state not in ('done', 'cancel');
             """, (internal_partner_id, intermission_partner_id) )
 
-            cr.execute("SELECT name FROM sale_order WHERE partner_id = %s;", (intermission_partner_id,))
+            cr.execute("SELECT name FROM sale_order WHERE partner_id = %s AND state not in ('done', 'cancel');", (intermission_partner_id,))
             updated_doc += [x[0] for x in cr.fetchall()]
             cr.execute("""
                 UPDATE sale_order
                 SET partner_id = %s, partner_invoice_id = %s, partner_order_id = %s, partner_shipping_id = %s, partner_type = 'internal'
-                WHERE partner_id = %s;
+                WHERE partner_id = %s
+                AND state not in ('done', 'cancel');
             """, (internal_partner_id, address_id, address_id, address_id, intermission_partner_id) )
             cr.execute("""
                 UPDATE sale_order_line sol
                 SET order_partner_id = %s
-                WHERE order_partner_id = %s;
+                FROM sale_order so
+                WHERE sol.order_id = so.id
+                AND sol.order_partner_id = %s
+                AND so.state not in ('done', 'cancel');
             """, (internal_partner_id, intermission_partner_id) )
 
             cr.execute("SELECT name FROM shipment WHERE partner_id = %s;", (intermission_partner_id,))
@@ -114,7 +122,8 @@ class patch_scripts(osv.osv):
             cr.execute("""
                 UPDATE shipment
                 SET partner_id = %s, partner_id2 = %s, address_id = %s
-                WHERE partner_id = %s;
+                WHERE partner_id = %s
+                AND state not in ('done', 'cancel', 'delivered');
             """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id) )
 
         self._logger.warn("Following documents have been updated with internal partner: %s" % ", ".join(updated_doc))
