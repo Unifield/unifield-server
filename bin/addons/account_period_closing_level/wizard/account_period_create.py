@@ -76,7 +76,7 @@ class account_period_create(osv.osv_memory):
         for period_nb in (13, 14, 15):
             if not period_obj.name_search(cr, uid, 'Period %d' % (period_nb),
                                           [('fiscalyear_id', '=', fiscalyear_id)], operator='ilike'):
-                self.pool.get('account.period').create(cr, uid, {
+                period_obj.create(cr, uid, {
                     'name': 'Period %d_%d' % (period_nb, start_date.year),
                     'code': 'Period %d_%d' % (period_nb, start_date.year),
                     'date_start': '%d-12-01' % (start_date.year),
