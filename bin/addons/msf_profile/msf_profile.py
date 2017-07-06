@@ -46,6 +46,81 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_3098_patch(self, cr, uid, *a, **b):
+        cr.execute("""
+            SELECT id, name
+            FROM res_partner
+            WHERE name IN (select name from res_partner where partner_type = 'internal')
+            AND name IN (select name from res_partner where partner_type = 'intermission')
+            AND partner_type = 'intermission';
+        """)
+        wrong_partners = cr.fetchall()
+
+        updated_doc = []
+        for partner in wrong_partners:
+            intermission_partner_id = partner[0]
+            partner_name = partner[1]
+            internal_partner_id = self.pool.get('res.partner').search(cr, uid, [
+                ('name', '=', partner_name),
+                ('partner_type', '=', 'internal'),
+            ])[0]
+            address_id = self.pool.get('res.partner.address').search(cr, uid, [
+                ('partner_id', '=', internal_partner_id),
+                ('type', '=', 'default'),
+            ])[0]
+
+            cr.execute("SELECT name FROM stock_picking WHERE partner_id = %s;", (intermission_partner_id,))
+            updated_doc += [x[0] for x in cr.fetchall()]
+            cr.execute("""
+                UPDATE stock_picking
+                SET partner_id = %s, partner_id2 = %s, address_id = %s, partner_type_stock_picking = 'internal', invoice_state = 'none'
+                WHERE partner_id = %s;
+            """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id) )
+            cr.execute("""
+                UPDATE stock_move
+                SET partner_id = %s, partner_id2 = %s, address_id = %s
+                WHERE partner_id = %s
+                OR partner_id2 = %s;
+            """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id, intermission_partner_id) )
+
+            cr.execute("SELECT name FROM purchase_order WHERE partner_id = %s;", (intermission_partner_id,))
+            updated_doc += [x[0] for x in cr.fetchall()]
+            cr.execute("""
+                UPDATE purchase_order
+                SET partner_id = %s, partner_address_id = %s, partner_type = 'internal'
+                WHERE partner_id = %s;
+            """, (internal_partner_id, address_id, intermission_partner_id) )
+            cr.execute("""
+                UPDATE purchase_order_line
+                SET partner_id = %s
+                WHERE partner_id = %s;
+            """, (internal_partner_id, intermission_partner_id) )
+
+            cr.execute("SELECT name FROM sale_order WHERE partner_id = %s;", (intermission_partner_id,))
+            updated_doc += [x[0] for x in cr.fetchall()]
+            cr.execute("""
+                UPDATE sale_order
+                SET partner_id = %s, partner_invoice_id = %s, partner_order_id = %s, partner_shipping_id = %s, partner_type = 'internal'
+                WHERE partner_id = %s;
+            """, (internal_partner_id, address_id, address_id, address_id, intermission_partner_id) )
+            cr.execute("""
+                UPDATE sale_order_line sol
+                SET order_partner_id = %s
+                WHERE order_partner_id = %s;
+            """, (internal_partner_id, intermission_partner_id) )
+
+            cr.execute("SELECT name FROM shipment WHERE partner_id = %s;", (intermission_partner_id,))
+            updated_doc += [x[0] for x in cr.fetchall()]
+            cr.execute("""
+                UPDATE shipment
+                SET partner_id = %s, partner_id2 = %s, address_id = %s
+                WHERE partner_id = %s;
+            """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id) )
+
+        self._logger.warn("Following documents have been updated with internal partner: %s" % ", ".join(updated_doc))
+
+        return True
+
     def us_2257_patch(self, cr, uid, *a, **b):
         context = {}
         user_obj = self.pool.get('res.users')
