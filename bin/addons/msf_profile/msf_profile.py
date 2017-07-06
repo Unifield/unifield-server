@@ -1278,9 +1278,9 @@ class patch_scripts(osv.osv):
         Update the name and code of the special Periods from "Period xx" to "Period xx YYYY" (ex: Period 13 2017)
         """
         update_name_and_code = """
-            UPDATE account_period
-            SET name = name || ' ' || (SELECT SUBSTR(code, 3, 4) FROM account_fiscalyear WHERE account_period.fiscalyear_id = account_fiscalyear.id),
-            code = code || ' ' || (SELECT SUBSTR(code, 3, 4) FROM account_fiscalyear WHERE account_period.fiscalyear_id = account_fiscalyear.id)
+            UPDATE account_period AS p
+            SET name = name || ' ' || (SELECT SUBSTR(code, 3, 4) FROM account_fiscalyear AS fy WHERE p.fiscalyear_id = fy.id),
+            code = code || ' ' || (SELECT SUBSTR(code, 3, 4) FROM account_fiscalyear AS fy WHERE p.fiscalyear_id = fy.id)
             WHERE name like 'Period %';
             """
         cr.execute(update_name_and_code)
