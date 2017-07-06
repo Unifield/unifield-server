@@ -60,7 +60,7 @@ class account_journal(osv.osv):
                 ('cash','Cash'),
                 ('cheque', 'Cheque'),
                 ('correction','Correction'),
-                ('cur_adj', 'Currency Adjustement'),
+                ('cur_adj', 'Currency Adjustment'),
                 ('depreciation', 'Depreciation'),
                 ('general', 'General'),
                 ('hq', 'HQ'),
@@ -306,7 +306,7 @@ class account_journal(osv.osv):
             account_id = vals['default_debit_account_id']
             user_type_code = self.pool.get('account.account').read(cr, uid, account_id, ['user_type_code']).get('user_type_code', False)
             if user_type_code != 'expense':
-                raise osv.except_osv(_('Warning'), _('Default Debit Account should be an expense account for Adjustement Journals!'))
+                raise osv.except_osv(_('Warning'), _('Default Debit Account should be an expense account for Adjustment Journals!'))
         return journal_id
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -330,7 +330,7 @@ class account_journal(osv.osv):
         res = super(account_journal, self).write(cr, uid, ids, vals, context=context)
         for j in self.browse(cr, uid, ids):
             if j.type == 'cur_adj' and j.default_debit_account_id.user_type_code != 'expense':
-                raise osv.except_osv(_('Warning'), _('Default Debit Account should be an expense account for Adjustement Journals!'))
+                raise osv.except_osv(_('Warning'), _('Default Debit Account should be an expense account for Adjustment Journals!'))
             self._create_linked_register(cr, uid, j.id, vals, context)
             # US-265: Check account bank statements if name change
             if not context.get('sync_update_execution'):
