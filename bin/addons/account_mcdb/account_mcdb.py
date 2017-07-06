@@ -952,7 +952,11 @@ class account_mcdb(osv.osv):
         """
         if not context:
             context = {}
-        to_clean = self.search(cr, uid, [('description', '=', False)])
+        cr.execute('''SELECT id FROM account_mcdb
+        WHERE description is NULL AND
+        create_date + interval '1' day < NOW();''')
+        res = cr.fetchall()
+        to_clean = [x[0] for x in res]
         self.unlink(cr, uid, to_clean)
         return True
 
