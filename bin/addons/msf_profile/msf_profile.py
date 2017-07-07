@@ -117,7 +117,7 @@ class patch_scripts(osv.osv):
                 AND so.state not in ('done', 'cancel');
             """, (internal_partner_id, intermission_partner_id) )
 
-            cr.execute("SELECT name FROM shipment WHERE partner_id = %s;", (intermission_partner_id,))
+            cr.execute("SELECT name FROM shipment WHERE partner_id = %s AND state not in ('done', 'cancel', 'delivered');", (intermission_partner_id,))
             updated_doc += [x[0] for x in cr.fetchall()]
             cr.execute("""
                 UPDATE shipment
