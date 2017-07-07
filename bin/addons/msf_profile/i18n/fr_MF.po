@@ -98688,3 +98688,20 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. module: account
+#: model:ir.actions.server,name:account.action_aml_related_entries
+msgid "Related Entries"
+msgstr "Ecritures associées"
+
+#. module: account
+#: code:addons/account/account_move_line.py:1369
+#, python-format
+msgid "Related entries: Entry Sequence %s"
+msgstr "Ecritures associées : Entrée Comptable %s"
+
+#. module: account
+#: code:addons/account/account_move_line.py:1330
+#, python-format
+msgid "The related entries feature can only be used with one Journal Item."
+msgstr "La fonctionnalité des écritures associées ne peut être utilisée qu'avec une seule ligne d'écriture comptable."

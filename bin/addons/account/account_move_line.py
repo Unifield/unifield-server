@@ -1312,6 +1312,71 @@ class account_move_line(osv.osv):
                 move_obj.button_validate(cr,uid, [vals['move_id']], context)
         return result
 
+    def get_related_entries(self, cr, uid, ids, context=None):
+        """
+        Returns a JI view with all the JIs related to the selected one, i.e.:
+        1) those having the same Entry Sequence as the selected JI (including the selected JI itself)
+        2) those having the same reference as one of the JIs found in 1)
+        3) those being partially or totally reconciled with one of the JIs found in 1)
+        4) those whose reference contains EXACTLY the Entry Sequence of the selected JI
+        5) those having the same Entry Sequence as one of the JIs found in 2), 3) or 4)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if len(ids) != 1:
+            raise osv.except_osv(_('Error'),
+                                 _('The related entries feature can only be used with one Journal Item.'))
+        move_obj = self.pool.get('account.move')
+        ir_model_obj = self.pool.get('ir.model.data')
+        related_amls = set()
+        selected_aml = self.browse(cr, uid, ids[0], fields_to_fetch=['move_id'], context=context)
+        selected_entry_seq = selected_aml.move_id.name
+
+        # get the ids of all the related JIs
+        # JIs having the same Entry Seq = JIs of the same JE
+        same_seq_ji_ids = self.search(cr, uid, [('move_id', '=', selected_aml.move_id.id)], order='NO_ORDER', context=context)
+        related_amls.update(same_seq_ji_ids)
+
+        # check on ref and reconciliation
+        list_of_refs = []
+        list_of_reconcile_ids = []
+        for aml in self.browse(cr, uid, same_seq_ji_ids,
+                               fields_to_fetch=['ref', 'reconcile_id', 'reconcile_partial_id'], context=context):
+            aml.ref and list_of_refs.append(aml.ref)
+            aml.reconcile_id and list_of_reconcile_ids.append(aml.reconcile_id.id)
+            aml.reconcile_partial_id and list_of_reconcile_ids.append(aml.reconcile_partial_id.id)
+
+        domain_related_jis = ['|', '|', '|',
+                              ('ref', 'in', list_of_refs),
+                              ('ref', '=', selected_entry_seq),
+                              ('reconcile_id', 'in', list_of_reconcile_ids),
+                              ('reconcile_partial_id', 'in', list_of_reconcile_ids)]
+        related_ji_ids = self.search(cr, uid, domain_related_jis, order='NO_ORDER', context=context)
+        related_amls.update(related_ji_ids)
+
+        # check on Entry Seq. (compared with those of the related JIs found)
+        seq_list = [am.move_id.name for am in self.browse(cr, uid, related_ji_ids, fields_to_fetch=['move_id'], context=context)]
+        seq_je_ids = move_obj.search(cr, uid, [('name', 'in', seq_list)], order='NO_ORDER', context=context)
+        same_seq_related_ji_ids = self.search(cr, uid, [('move_id', 'in', seq_je_ids)], order='NO_ORDER', context=context)
+        related_amls.update(same_seq_related_ji_ids)
+
+        domain = [('id', 'in', list(related_amls))]
+        search_view_id = ir_model_obj.get_object_reference(cr, uid, 'account_mcdb', 'mcdb_view_account_move_line_filter')
+        search_view_id = search_view_id and search_view_id[1] or False
+        return {
+            'name': _('Related entries: Entry Sequence %s') % selected_entry_seq,
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.move.line',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'search_view_id': [search_view_id],
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
+
 account_move_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
