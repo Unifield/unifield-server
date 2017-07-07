@@ -166,10 +166,13 @@ class stock_card_wizard(osv.osv_memory):
 
             in_qty, out_qty = 0.00, 0.00
             move_location = False
+            to_unit = False
+            if move.product_uom.id != move.product_id.uom_id.id:
+                to_unit = move.product_id.uom_id.id
             qty = uom_obj._compute_qty(cr, uid, move.product_uom.id,
                                                 move.product_qty,
-                                                move.product_id.uom_id.id)
-
+                                                to_unit)
+            
             if location_ids:
                 if move.location_dest_id.id in location_ids:
                     in_qty = qty
