@@ -1328,7 +1328,6 @@ class account_move_line(osv.osv):
         if len(ids) != 1:
             raise osv.except_osv(_('Error'),
                                  _('The related entries feature can only be used with one Journal Item.'))
-        move_obj = self.pool.get('account.move')
         ir_model_obj = self.pool.get('ir.model.data')
         related_amls = set()
         selected_aml = self.browse(cr, uid, ids[0], fields_to_fetch=['move_id'], context=context)
@@ -1340,26 +1339,25 @@ class account_move_line(osv.osv):
         related_amls.update(same_seq_ji_ids)
 
         # check on ref and reconciliation
-        list_of_refs = []
-        list_of_reconcile_ids = []
+        set_of_refs = set()
+        set_of_reconcile_ids = set()
         for aml in self.browse(cr, uid, same_seq_ji_ids,
                                fields_to_fetch=['ref', 'reconcile_id', 'reconcile_partial_id'], context=context):
-            aml.ref and list_of_refs.append(aml.ref)
-            aml.reconcile_id and list_of_reconcile_ids.append(aml.reconcile_id.id)
-            aml.reconcile_partial_id and list_of_reconcile_ids.append(aml.reconcile_partial_id.id)
+            aml.ref and set_of_refs.add(aml.ref)
+            aml.reconcile_id and set_of_reconcile_ids.add(aml.reconcile_id.id)
+            aml.reconcile_partial_id and set_of_reconcile_ids.add(aml.reconcile_partial_id.id)
 
         domain_related_jis = ['|', '|', '|',
-                              ('ref', 'in', list_of_refs),
+                              ('ref', 'in', list(set_of_refs)),
                               ('ref', '=', selected_entry_seq),
-                              ('reconcile_id', 'in', list_of_reconcile_ids),
-                              ('reconcile_partial_id', 'in', list_of_reconcile_ids)]
+                              ('reconcile_id', 'in', list(set_of_reconcile_ids)),
+                              ('reconcile_partial_id', 'in', list(set_of_reconcile_ids))]
         related_ji_ids = self.search(cr, uid, domain_related_jis, order='NO_ORDER', context=context)
         related_amls.update(related_ji_ids)
 
         # check on Entry Seq. (compared with those of the related JIs found)
-        seq_list = [am.move_id.name for am in self.browse(cr, uid, related_ji_ids, fields_to_fetch=['move_id'], context=context)]
-        seq_je_ids = move_obj.search(cr, uid, [('name', 'in', seq_list)], order='NO_ORDER', context=context)
-        same_seq_related_ji_ids = self.search(cr, uid, [('move_id', 'in', seq_je_ids)], order='NO_ORDER', context=context)
+        seq_je_ids = set(am.move_id.id for am in self.browse(cr, uid, related_ji_ids, fields_to_fetch=['move_id'], context=context))
+        same_seq_related_ji_ids = self.search(cr, uid, [('move_id', 'in', list(seq_je_ids))], order='NO_ORDER', context=context)
         related_amls.update(same_seq_related_ji_ids)
 
         domain = [('id', 'in', list(related_amls))]
