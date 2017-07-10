@@ -1483,6 +1483,57 @@ class purchase_order_line(osv.osv):
                     'context': context}
 
 
+    def create_or_update_commitment_voucher(self, cr, uid, ids, context=None):
+        '''
+        Update commitment voucher with current PO lines
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            # only create CV for external and ESC partners:
+            if pol.order_id.partner_id.partner_type not in ['external', 'esc']:
+                return False
+
+            commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id)], context=context)
+            if commitment_voucher_id:
+                commitment_voucher_id = commitment_voucher_id[0]
+            else: # create commitment voucher
+                commitment_voucher_id = self.pool.get('purchase.order').create_commitment_voucher_from_po(cr, uid, [pol.order_id.id], context=context)
+            
+            # group PO line by account_id:
+            expense_account = pol.account_4_distribution and pol.account_4_distribution.id or False
+            if not expense_account:
+                raise osv.except_osv(_('Error'), _('There is no expense account defined for this line: %s (id:%d)') % (pol.name or '', pol.id))
+
+            commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account), ], context=context)
+            if not commit_line_id: # create new commitment line:
+                commit_line_id = self.pool.get('account.commitment.line').create(cr, uid, {
+                    'commit_id': commitment_voucher_id,
+                    'account_id': expense_account,
+                    'amount': pol.price_subtotal,
+                    'initial_amount': pol.price_subtotal,
+                    'purchase_order_line_ids': [(4, pol.id)],
+                }, context=context)
+            else: # update existing commitment line:
+                commit_line_id = commit_line_id[0]
+                new_amount = self.pool.get('account.commitment.line').read(cr, uid, commit_line_id, ['amount'], context=context)['amount'] 
+                new_amount += pol.price_subtotal
+                self.pool.get('account.commitment.line').write(cr, uid, [commit_line_id], {
+                    'amount': new_amount,
+                    'initial_amount': new_amount,
+                    'purchase_order_line_ids': [(4, pol.id)], 
+                }, 
+                context=context)
+
+            # Create analytic distribution on this commitment line
+            self.pool.get('account.commitment.line').create_distribution_from_order_line(cr, uid, [pol.id], context=context)
+
+        return True
+
+
 purchase_order_line()
 
 

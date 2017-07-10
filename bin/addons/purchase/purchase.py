@@ -35,6 +35,8 @@ from mx.DateTime import Parser
 from mx.DateTime import RelativeDateTime
 from workflow.wkf_expr import _eval_expr
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
+from account_override.period import get_period_from_date
+from account_override.period import get_date_in_period
 
 
 class purchase_order(osv.osv):
@@ -2669,7 +2671,68 @@ stock moves which are already processed : '''
         wf_service.trg_validate(uid, 'purchase.order', ids[0], 'rfq_done', cr)
 
         return new_po_id
+
+
+    def create_commitment_voucher_from_po(self, cr, uid, ids, context=None):
+        '''
+        Create a new commitment voucher from the given PO
+        @param ids id of the Purchase order
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        commit_id = False
+        for po in self.pool.get('purchase.order').browse(cr, uid, ids, context=context):
+            engagement_ids = self.pool.get('account.analytic.journal').search(cr, uid, [
+                ('type', '=', 'engagement'),
+                ('instance_id', '=', self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id)
+            ], limit=1, context=context)
+
+            vals = {
+                'journal_id': engagement_ids and engagement_ids[0] or False,
+                'currency_id': po.currency_id and po.currency_id.id or False,
+                'partner_id': po.partner_id and po.partner_id.id or False,
+                'purchase_id': po.id or False,
+                'type': 'external' if po.partner_id.partner_type == 'external' else 'manual',
+            }
+            # prepare some values
+            today = time.strftime('%Y-%m-%d')
+            period_ids = get_period_from_date(self, cr, uid, po.delivery_confirmed_date or today, context=context)
+            period_id = period_ids and period_ids[0] or False
+            if not period_id:
+                raise osv.except_osv(_('Error'), _('No period found for given date: %s.') % (po.delivery_confirmed_date or today))
+            date = get_date_in_period(self, cr, uid, po.delivery_confirmed_date or today, period_id, context=context)
+            vals.update({
+                'date': date,
+                'period_id': period_id,
+            })
+            commit_id = self.pool.get('account.commitment').create(cr, uid, vals, context=context)
+
+            # Display a message to inform that a commitment was created
+            commit_data = self.pool.get('account.commitment').read(cr, uid, commit_id, ['name'], context=context)
+            message = _("Commitment Voucher %s has been created.") % commit_data.get('name', '')
+            view_ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'account_commitment_form')
+            self.pool.get('account.commitment').log(cr, uid, commit_id, message, context={'view_id': view_ids and view_ids[1] or False})
+            self.infolog(cr, uid, message)
+
+            # Add analytic distribution from purchase
+            if po.analytic_distribution_id:
+                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, po.analytic_distribution_id.id, {}, context=context)
+                # Update this distribution not to have a link with purchase but with new commitment
+                if new_distrib_id:
+                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id],
+                                                                 {'purchase_id': False, 'commitment_id': commit_id}, context=context)
+                    # Create funding pool lines if needed
+                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
+                    # Update commitment with new analytic distribution
+                    self.pool.get('account.commitment').write(cr, uid, [commit_id], {'analytic_distribution_id': new_distrib_id}, context=context)
+
+        return commit_id
+
 purchase_order()
+
 
 
 class stock_invoice_onshipping(osv.osv_memory):

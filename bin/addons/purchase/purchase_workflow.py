@@ -8,6 +8,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 
+
 class purchase_order_line(osv.osv):
     _name = "purchase.order.line"
     _inherit = "purchase.order.line"
@@ -147,6 +148,7 @@ class purchase_order_line(osv.osv):
         
         return new_sol_id
 
+
     def action_validated_p(self, cr, uid, ids, context=None):
         '''
         wkf method to validate the PO line
@@ -231,6 +233,9 @@ class purchase_order_line(osv.osv):
                     }, context=context)
 
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
+
+        # create or update the linked commitment voucher:
+        self.create_or_update_commitment_voucher(cr, uid, ids, context=context)
 
         return True
 
