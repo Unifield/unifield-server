@@ -30,7 +30,6 @@ class internal_move(report_sxw.rml_parse):
             'time': time,
             'get_selec': self.get_selection,
             'get_lines': self._get_lines,
-            'get_note': self.get_note,
         })
 
     def get_selection(self, o, field):
@@ -50,14 +49,6 @@ class internal_move(report_sxw.rml_parse):
         if not picking or not picking.move_lines:
             return []
         return [l for l in picking.move_lines if l.state and l.state != 'cancel']
-
-    def get_note(self):
-        """
-        Return the note value for the given field
-        @param field: Name of the field to retrieve
-        @return: The value of the note field
-        """
-        return [self.pool.get('note').default_get(self.cr, self.uid, [])]
 
 report_sxw.report_sxw('report.internal.move','stock.picking','addons/stock_override/report/internal_move.rml',parser=internal_move, header=False)
 

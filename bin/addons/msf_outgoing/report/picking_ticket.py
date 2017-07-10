@@ -71,7 +71,6 @@ class picking_ticket(report_sxw.rml_parse):
             'getLines': self.get_lines,
             'getShipper': self.get_shipper,
             'getConsignee': self.get_consignee,
-            'getNote': self.get_note,
         })
 
     def get_consignee(self, picking):
@@ -240,14 +239,6 @@ class picking_ticket(report_sxw.rml_parse):
             context=context).qty_available
 
         return qty_available
-
-    def get_note(self):
-        """
-        Return the note value for the given field
-        @param field: Name of the field to retrieve
-        @return: The value of the note field
-        """
-        return [self.pool.get('note').default_get(self.cr, self.uid, [])]
 
     def set_context(self, objects, data, ids, report_type=None):
         """
