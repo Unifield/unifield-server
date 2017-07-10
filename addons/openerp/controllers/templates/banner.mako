@@ -9,7 +9,5 @@ except:
     banner_message = ''
 %>
 % if display_banner:
-<td id="communication_banner" colspan="3">
-    ${banner_message | h}
-</td>
+<td id="communication_banner" colspan="3">${banner_message | h}</td>
 % endif
