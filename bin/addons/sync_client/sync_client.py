@@ -344,10 +344,8 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                                 self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'after%ssync' % context.get('sync_type', 'manual'), context=context)
                             except Exception, e:
                                 self._logger.exception("Can't create backup %s" % tools.ustr(e))
-                except:
+                finally:
                     sync_lock.release()
-                    raise
-                sync_lock.release()
                 if make_log:
                     logger.close()
                     if self.sync_cursor is not None:
