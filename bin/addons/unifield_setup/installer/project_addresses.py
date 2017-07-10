@@ -80,7 +80,9 @@ class project_addresses(osv.osv_memory):
             for field in ['country_id','state_id']:
                 if address[field]:
                     res[field] = address[field].id
-                    
+            if address['name']:
+                res['contact_name'] = address['name']
+
         if delivery_id:
             address = self.pool.get('res.partner.address').browse(cr, uid, delivery_id, context=context)
             for field in ['street','street2','zip','city','email','phone']:
@@ -140,7 +142,7 @@ class project_addresses(osv.osv_memory):
                 address_obj.write(cr, uid, ship_address[0], ship_address_data, context=context)
             else:
                 address_obj.create(cr, uid, dict(ship_address_data, partner_id=int(company.partner_id)),
-                        context=context)
+                                   context=context)
         else:
             ship_address = address_obj.search(cr, uid, [('type', '=', 'delivery'), ('partner_id', '=', company.partner_id.id)], context=context)
             if ship_address:
@@ -166,7 +168,7 @@ class project_addresses(osv.osv_memory):
                 address_obj.write(cr, uid, bill_address[0], bill_address_data, context=context)
             else:
                 address_obj.create(cr, uid, dict(bill_address_data, partner_id=int(company.partner_id)),
-                    context=context)
+                                   context=context)
         else:
             bill_address = address_obj.search(cr, uid, [('type', '=', 'invoice'), ('partner_id', '=', company.partner_id.id)], context=context)
             if bill_address:
