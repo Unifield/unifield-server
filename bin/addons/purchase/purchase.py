@@ -2262,19 +2262,16 @@ stock moves which are already processed : '''
         if order_line.product_id.type == 'service_recep' and not order.cross_docking_ok:
             dest = self.pool.get('stock.location').get_service_location(cr, uid)
         else:
-            sol_ids = line_obj.get_sol_ids_from_pol_ids(cr, uid, [order_line.id], context=context)
-            for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+            sol = order_line.linked_sol_id
+            if sol:
                 if not (sol.order_id and sol.order_id.procurement_request):
-                    continue
-                if order_line.product_id.type == 'service_recep':
+                    pass
+                elif order_line.product_id.type == 'service_recep':
                     dest = self.pool.get('stock.location').get_service_location(cr, uid)
-                    break
                 elif order_line.product_id.type == 'consu':
                     dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
-                    break
                 elif sol.order_id.location_requestor_id.usage != 'customer':
                     dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-                    break
 
         values = {
             'name': ''.join((order.name, ': ', (order_line.name or ''))),
