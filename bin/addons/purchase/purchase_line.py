@@ -896,7 +896,7 @@ class purchase_order_line(osv.osv):
 
         tmp_proc_context = context.get('procurement_request')
         context['procurement_request'] = True
-        so_ids = so_obj.search(cr, uid, [('name', '=', origin), ('state', 'in', ['draft', 'draft_partial', 'validated', 'sourced'])], context=context)
+        so_ids = so_obj.search(cr, uid, [('name', '=', origin), ('state', 'in', ['draft', 'draft_partial', 'validated', 'sourced', 'sourced_v'])], context=context)
         context['procurement_request'] = tmp_proc_context
         if so_ids:
             return {'link_so_id': so_ids[0]}
