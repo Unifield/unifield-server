@@ -98688,3 +98688,59 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. modules: msf_supply_doc_export, msf_outgoing, stock_override, stock
+#: field:create.picking.move.processor,comment:0
+#: report:empty.picking.ticket:0
+#: field:internal.move.processor,comment:0
+#: field:outgoing.delivery.move.processor,comment:0
+#: field:pack.family.memory,comment:0
+#: field:ppl.move.processor,comment:0
+#: field:return.pack.shipment.family.processor,comment:0
+#: field:return.ppl.move.processor,comment:0
+#: field:return.shipment.family.processor,comment:0
+#: field:shipment.family.processor,comment:0
+#: field:stock.move.in.processor,comment:0
+#: field:stock.move.processor,comment:0
+#: field:validate.move.processor,comment:0
+#: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:66
+#: report:addons/msf_supply_doc_export/report/stock_inventory_xls.mako:65
+#: report:stock.inventory.move:0
+#: report:internal.move:0
+msgid "Comment"
+msgstr "Commentaire"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:665
+#, python-format
+msgid "You should have exactly 7 columns in this order:\n"
+"Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, Expiry Date*, Quantity*, Comment*"
+msgstr "Vous devriez avoir 7 colonnes dans cet ordre:\n"
+"Code Produit*, Description Produit*, Coût Moyen Initial*, Emplacement*, Lot*, Date d'Expiration*, Commentaire."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:113
+#, python-format
+msgid "You should have exactly 7 columns in this order:\n"
+"Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*, Comment*"
+msgstr "Vous devriez avoir 7 colonnes dans cet ordre:\n"
+"Code Produit*, Description Produit*, Emplacement*, Lot, Date d'Expiration*, Quantité*, Commentaire*."
+
+#. module: msf_doc_import
+#: help:stock.inventory,file_to_import:0
+msgid "You can use the template of the export for the format that you need to use. \n"
+" The file should be in XML Spreadsheet 2003 format.\n"
+"                                        \n"
+" The columns should be in this order : Product Code*, Product Description*, Location*, Batch, Expiry Date, Quantity, Comment"
+msgstr Vous pouvez utiliser l'export type pour le format que vous avez besoin d utiliser.\n"
+"Le fichier doit être au format XML feuille de calcul 2003.\n"
+"                                        \n"
+" Les colonnes : Code Produit*, Description Produit*, Emplacement*, Lot, Date d'expiratin, Quantité, Commentaire"
+
+#. module: msf_doc_import
+#: field:initial.stock.inventory.line,inactive_error:0
+#: field:initial.stock.inventory.line,system_message:0
+#: field:stock.inventory.line,inactive_error:0
+#: field:stock.inventory.line,system_message:0
+msgid "System Message"
+msgstr "Message Système"

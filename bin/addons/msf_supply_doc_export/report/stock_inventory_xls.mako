@@ -62,6 +62,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry Date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
     </Row>
     ## we loop over the stock_initial_inventory_line
     % for line in o.inventory_line_id:
@@ -76,6 +77,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.comment or '')|x}</Data></Cell>
     </Row>
     % endfor
 </Table>

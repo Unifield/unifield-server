@@ -48,7 +48,7 @@ class stock_inventory(osv.osv):
     _columns = {
         'file_to_import': fields.binary(string='File to import', filters='*.xml',
                                         help="""You can use the template of the export for the format that you need to use. \n The file should be in XML Spreadsheet 2003 format.
-                                        \n The columns should be in this order : Product Code*, Product Description*, Location*, Batch, Expiry Date, Quantity"""),
+                                        \n The columns should be in this order : Product Code*, Product Description*, Location*, Batch, Expiry Date, Quantity, Comment"""),
         'import_error_ok':fields.function(_get_import_error,  method=True, type="boolean", string="Error in Import", store=False),
     }
 
@@ -109,9 +109,9 @@ class stock_inventory(osv.osv):
         for row in reader:
             line_num += 1
             # Check length of the row
-            if len(row) != 6:
+            if len(row) != 7:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
-Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"""))
+Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*, Comment*"""))
 
             # default values
             product_id = False
@@ -124,6 +124,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             product_qty = 0.00
             product_uom = False
             comment = ''
+            system_message = ''
             bad_expiry = None
             bad_batch_name = None
             to_correct_ok = False
@@ -200,19 +201,19 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     try:
                         expiry = row.cells[4].data.strftime('%Y-%m-%d')
                         if datetime.strptime(expiry, '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
-                            comment = _('You cannot set an expiry date before %s\n') % (
+                            system_message = _('You cannot set an expiry date before %s\n') % (
                                 datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
                             )
                             bad_expiry = True
                             to_correct_ok = True
                             expiry = False
                     except:
-                        comment += _('Incorrectly formatted expiry date. The '
+                        system_message += _('Incorrectly formatted expiry date. The '
                                      'expected date should be > 01/01/1900 in this format DD/MM/YYYY.\n')
                         bad_expiry = True
                         to_correct_ok = True
                 elif row.cells[4].type == 'datetime_error':
-                    comment = _('Incorrectly formatted expiry date: %s. The '
+                    system_message = _('Incorrectly formatted expiry date: %s. The '
                                 'expected date should be > 01/01/1900 in this format DD/MM/YYYY.\n') % row.cells[4].data
                     bad_expiry = True
                     to_correct_ok = True
@@ -220,27 +221,27 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     try:
                         expiry = DateTime.strptime(row.cells[4].data, '%d/%m/%Y')
                         if expiry < datetime(1900, 01, 01, 0, 0, 0):
-                            comment += _('You cannot set an expiry date before %s\n') % (
+                            system_message += _('You cannot set an expiry date before %s\n') % (
                                 datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
                             )
                             bad_expiry = True
                             to_correct_ok = True
                             expiry = False
                     except:
-                        comment += _('Incorrectly formatted expiry date. The expected'
+                        system_message += _('Incorrectly formatted expiry date. The expected'
                                      ' date should be > 01/01/1900 in this format DD/MM/YYYY.\n')
                         bad_expiry = True
                         to_correct_ok = True
                         expiry = False
                 else:
-                    comment += _('Incorrectly formatted expiry date. The '
+                    system_message += _('Incorrectly formatted expiry date. The '
                                  'expected date should be > 01/01/1900 in this format DD/MM/YYYY.\n')
                     bad_expiry = True
                     to_correct_ok = True
                 if expiry and not batch:
                     batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry)], context=context)
                     if batch_ids:
-                        comment += _('Other batch with the same expiry date exist.\n')
+                        system_message += _('Other batch with the same expiry date exist.\n')
                     if product.batch_management and batch_name:
                         batch = batch_obj.create(cr, uid, {
                             'product_id': product_id,
@@ -256,8 +257,8 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     if expiry != b_expiry:
                         if product.batch_management:
                             err_exp_message = _('Expiry date inconsistent with %s.\n') % row.cells[3].data
-                            comment += err_exp_message
-                            comment += '\n'
+                            system_message += err_exp_message
+                            system_message += '\n'
                             expiry = False
                         elif product.perishable:
                             batch = False
@@ -269,28 +270,28 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 if row.cells[5].type in ['int', 'float']:
                     product_qty = row.cells[5].data
                     if product_qty < 0:
-                        comment += _('Product Qty cannot be < 0. It has been reset to 0.')
+                        system_message += _('Product Qty cannot be < 0. It has been reset to 0.')
                         product_qty = 0.00
                         to_correct_ok = True
                 else:
-                    comment += _('Incorrect number format: %s. It has been reset to 0.') % row.cells[5].data
+                    system_message += _('Incorrect number format: %s. It has been reset to 0.') % row.cells[5].data
                     to_correct_ok = True
 
             if not location_id and not location_not_found:
-                comment += _('Location is missing.\n')
+                system_message += _('Location is missing.\n')
             elif location_not_found:
-                comment += _('Location not found.\n')
+                system_message += _('Location not found.\n')
             if product:
                 product_uom = product.uom_id.id
                 hidden_batch_management_mandatory = product.batch_management
                 hidden_perishable_mandatory = product.perishable
                 if hidden_batch_management_mandatory and not batch:
                     if batch_name:
-                        comment += _('Batch not found.\n')
+                        system_message += _('Batch not found.\n')
                     else:
-                        comment += _('Batch is missing.\n')
+                        system_message += _('Batch is missing.\n')
                 if hidden_perishable_mandatory and not expiry and not bad_expiry:
-                    comment += _('Expiry date is missing.\n')
+                    system_message += _('Expiry date is missing.\n')
                 if not hidden_perishable_mandatory and not hidden_batch_management_mandatory and (batch_name or batch or bad_batch_name):
                     batch = False
                     bad_batch_name = False
@@ -299,8 +300,8 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     # Remove the res.log that indicates errors on import
                     if to_correct_ok and location_id and not location_not_found:
                         to_correct_ok = False
-                        comment = ''
-                    comment += _('This product is not Batch Number managed.\n')
+                        system_message = ''
+                    system_message += _('This product is not Batch Number managed.\n')
                 if not hidden_perishable_mandatory and (expiry or bad_expiry):
                     batch = False
                     bad_batch_name = False
@@ -309,8 +310,8 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     # Remove the res.log that indicates errors on import
                     if to_correct_ok and location_id and not location_not_found:
                         to_correct_ok = False
-                        comment = ''
-                    comment += _('This product is not Expiry Date managed.\n')
+                        system_message = ''
+                    system_message += _('This product is not Expiry Date managed.\n')
             else:
                 product_uom = self.pool.get('product.uom').search(cr, uid, [], context=context)[0]
                 hidden_batch_management_mandatory = False
@@ -321,6 +322,15 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 product_qty = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, product_uom, product_qty)
 
             discrepancy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+
+            # Comment
+            p_comment = row.cells[6].data
+            if p_comment:
+                comment = row.cells[6].data
+                if len(comment) > 128:
+                    system_message += _('Product Comment cannot have more than 128 characters.')
+                    comment = ''
+                    to_correct_ok = True
 
             to_write = {
                 'product_id': product_id,
@@ -335,9 +345,10 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 'bad_batch_name': bad_batch_name,
                 'product_qty': product_qty,
                 'product_uom': product_uom,
+                'comment': comment,
                 'hidden_batch_management_mandatory': hidden_batch_management_mandatory,
                 'hidden_perishable_mandatory': hidden_perishable_mandatory,
-                'comment': comment,
+                'system_message': system_message,
                 'to_correct': to_correct_ok,
             }
 
@@ -406,8 +417,8 @@ class stock_inventory_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'inactive_product': False,
                             'inactive_error': ''}
-            if line.comment:
-                res[line.id].update({'inactive_error': line.comment})
+            if line.system_message:
+                res[line.id].update({'inactive_error': line.system_message})
             if line.inventory_id and line.inventory_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
                 res[line.id] = {
                     'inactive_product': True,
@@ -420,9 +431,10 @@ class stock_inventory_line(osv.osv):
         'batch_name': fields.char(size=128, string='Batch name'),
         'inv_expiry_date': fields.date(string='Invisible expiry date'),
         'to_correct_ok': fields.boolean('To correct'),
-        'comment': fields.text('Comment', readonly=True),
+        'comment': fields.char(size=128, string='Comment'),
+        'system_message': fields.text('System Message', readonly=True),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
-        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System Message', store=False, multi='inactive'),
     }
 
     _defaults = {
@@ -433,7 +445,7 @@ class stock_inventory_line(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
-        comment = ''
+        system_message = ''
         just_warn = False
         pl_obj = self.pool.get('stock.production.lot')
         hidden_batch_management_mandatory = False
@@ -468,43 +480,43 @@ class stock_inventory_line(osv.osv):
             del vals['bad_batch_name']
 
         if not location_id and not location_not_found:
-            comment += _('Location is missing.\n')
+            system_message += _('Location is missing.\n')
         elif location_not_found:
-            comment += _('Location not found.\n')
+            system_message += _('Location not found.\n')
 
         if hidden_batch_management_mandatory and not batch:
             if bad_batch_name:
-                comment += _('Incorrect batch number format.\n')
+                system_message += _('Incorrect batch number format.\n')
                 vals['expiry_date'] = False
             elif batch_name and not bad_expiry and expiry:
-                comment += _('Batch not found.\n')
+                system_message += _('Batch not found.\n')
             elif batch_name and not bad_expiry and not expiry:
-                comment += _('Expiry date is missing.\n')
+                system_message += _('Expiry date is missing.\n')
             elif batch_name and bad_expiry:
-                comment += _('Incorrectly formatted expiry date. The expected'
+                system_message += _('Incorrectly formatted expiry date. The expected'
                              ' date should be > 01/01/1900 in this format DD/MM/YYYY. Batch not created.\n')
                 vals['expiry_date'] = False
             else:
-                comment += _('Batch is missing.\n')
+                system_message += _('Batch is missing.\n')
                 vals['expiry_date'] = False
 
         if hidden_perishable_mandatory and not expiry and not batch and batch_name:
             if bad_batch_name:
-                comment += _('Incorrect batch number format.\n')
+                system_message += _('Incorrect batch number format.\n')
             elif bad_expiry:
-                comment += _('Incorrectly formatted expiry date.\n')
+                system_message += _('Incorrectly formatted expiry date.\n')
             else:
-                comment += _('Batch not found.\n')
+                system_message += _('Batch not found.\n')
         elif hidden_perishable_mandatory and not expiry:
             if not bad_expiry:
-                comment += _('Expiry date is missing.\n')
+                system_message += _('Expiry date is missing.\n')
             else:
-                comment += _('Incorrectly formatted expiry date.\n')
+                system_message += _('Incorrectly formatted expiry date.\n')
             vals['expiry_date'] = False
 
         #if hidden_perishable_mandatory and ((batch and expiry and pl_obj.read(cr, uid, batch, ['life_date'], context=context)['life_date'] != expiry) \
         #    or (not batch and expiry and not bad_expiry)):
-        #    comment += _('Expiry date will be created (with its internal batch).\n')
+        #    system_message += _('Expiry date will be created (with its internal batch).\n')
         #    just_warn = True
         #    vals.update({
         #        'prod_lot_id': False,
@@ -513,18 +525,18 @@ class stock_inventory_line(osv.osv):
 
         if hidden_batch_management_mandatory and batch and not expiry:
             expiry = pl_obj.read(cr, uid, batch, ['life_date'], context=context)['life_date']
-            comment += _('Please check Expiry Date is correct!.\n')
+            system_message += _('Please check Expiry Date is correct!.\n')
             vals['to_correct_ok'] = True
 
-        if not comment:
-            if vals.get('comment'):
-                comment = vals.get('comment')
-            vals.update({'comment': comment, 'to_correct_ok': False})
+        if not system_message:
+            if vals.get('system_message'):
+                system_message = vals.get('system_message')
+            vals.update({'system_message': system_message, 'to_correct_ok': False})
         elif context.get('import_in_progress'):
             if just_warn:
-                vals.update({'comment': comment, 'to_correct_ok': False})
+                vals.update({'system_message': system_message, 'to_correct_ok': False})
             else:
-                vals.update({'comment': comment, 'to_correct_ok': True})
+                vals.update({'system_message': system_message, 'to_correct_ok': True})
 
         res = super(stock_inventory_line, self).create(cr, uid, vals, context=context)
         return res
@@ -532,7 +544,7 @@ class stock_inventory_line(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        comment = ''
+        system_message = ''
 
         line = self.browse(cr, uid, ids[0], context=context)
 
@@ -552,19 +564,19 @@ class stock_inventory_line(osv.osv):
         vals['hidden_perishable_mandatory'] = hidden_perishable_mandatory
 
         if not location_id:
-            comment += _('Location is missing.\n')
+            system_message += _('Location is missing.\n')
         if hidden_batch_management_mandatory and not batch:
             if batch_name:
-                comment += _('Batch not found.\n')
+                system_message += _('Batch not found.\n')
             else:
-                comment += _('Batch is missing.\n')
+                system_message += _('Batch is missing.\n')
         if hidden_perishable_mandatory and not expiry:
-            comment += _('Expiry date is missing.\n')
+            system_message += _('Expiry date is missing.\n')
 
-        if not comment:
-            vals.update({'comment': comment, 'to_correct_ok': False})
+        if not system_message:
+            vals.update({'system_message': system_message, 'to_correct_ok': False})
         else:
-            vals.update({'comment': comment, 'to_correct_ok': True})
+            vals.update({'system_message': system_message, 'to_correct_ok': True})
 
         res = super(stock_inventory_line, self).write(cr, uid, ids, vals, context=context)
         return res
@@ -649,9 +661,9 @@ class initial_stock_inventory(osv.osv):
         for row in reader:
             line_num += 1
             # Check length of the row
-            if len(row) != 7:
+            if len(row) != 8:
                 raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
-Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, Expiry Date*, Quantity*"""))
+Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, Expiry Date*, Quantity*, Comment*"""))
 
             # default values
             product_id = False
@@ -667,6 +679,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             product_qty = 0.00
             product_uom = False
             comment = ''
+            system_message = ''
             to_correct_ok = False
 
             # Product code
@@ -705,15 +718,15 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 if row.cells[2].type in ('int', 'float'):
                     product_cost = cost
                     if product_cost < 0:
-                        comment += _('Product Cost cannot be < 0. It has been reset to 1.')
+                        system_message += _('Product Cost cannot be < 0. It has been reset to 1.')
                         product_cost = 1.00
                         to_correct_ok = True
                 else:
                     if product_id:
                         product_cost = product_obj.browse(cr, uid, product_id).standard_price
-                        comment += _('Wrong Initial Average Cost format. It has been reset to the related product Cost Price.')
+                        system_message += _('Wrong Initial Average Cost format. It has been reset to the related product Cost Price.')
                     else:
-                        comment += _('Wrong Initial Average Cost format. It has been reset to 1.')
+                        system_message += _('Wrong Initial Average Cost format. It has been reset to 1.')
                         product_cost = 1.00
                     to_correct_ok = True
 
@@ -746,14 +759,14 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     try:
                         expiry = DateTime.strptime(row.cells[5].data, '%d/%m/%Y')
                         if expiry < datetime(1900, 01, 01, 0, 0, 0):
-                            comment += _('You cannot set an expiry date before %s\n') % (
+                            system_message += _('You cannot set an expiry date before %s\n') % (
                                 datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
                             )
                             bad_expiry = True
                             to_correct_ok = True
                             expiry = False
                     except:
-                        comment += _('Incorrectly formatted expiry date. The expected'
+                        system_message += _('Incorrectly formatted expiry date. The expected'
                                      ' date should be > 01/01/1900 in this format DD/MM/YYYY.\n')
                         bad_expiry = True
                         to_correct_ok = True
@@ -763,7 +776,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     if expiry:
                         try:
                             if expiry < datetime(1900, 01, 01, 0, 0, 0):
-                                comment += _('You cannot set an expiry date before %s\n') % (
+                                system_message += _('You cannot set an expiry date before %s\n') % (
                                     datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
                                 )
                                 bad_expiry = True
@@ -772,15 +785,15 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                             else:
                                 expiry = expiry.strftime('%Y-%m-%d')
                         except:
-                            comment += _('Incorrectly formatted expiry date.\n')
+                            system_message += _('Incorrectly formatted expiry date.\n')
                             bad_expiry = True
                             to_correct_ok = True
                 elif row.cells[5].type == 'datetime_error':
-                    comment = _('Incorrectly formatted expiry date: %s\n') % row.cells[5].data
+                    system_message = _('Incorrectly formatted expiry date: %s\n') % row.cells[5].data
                     bad_expiry = True
                     to_correct_ok = True
                 else:
-                    comment += _('Incorrectly formatted expiry date.\n')
+                    system_message += _('Incorrectly formatted expiry date.\n')
                     bad_expiry = True
                     to_correct_ok = True
 
@@ -791,17 +804,17 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 if row.cells[6].type in ['int', 'float']:
                     product_qty = row.cells[6].data
                     if product_qty < 0:
-                        comment += _('Product Qty cannot be < 0. It has been reset to 0.')
+                        system_message += _('Product Qty cannot be < 0. It has been reset to 0.')
                         product_qty = 0.00
                         to_correct_ok = True
                 else:
-                    comment += _('Incorrect number format: %s. It has been reset to 0.') % row.cells[6].data
+                    system_message += _('Incorrect number format: %s. It has been reset to 0.') % row.cells[6].data
                     to_correct_ok = True
 
             if not location_id and not location_not_found:
-                comment += _('Location is missing.\n')
+                system_message += _('Location is missing.\n')
             elif location_not_found:
-                comment += _('Location not found.\n')
+                system_message += _('Location not found.\n')
             if product_id:
                 product = product_obj.browse(cr, uid, product_id)
                 product_uom = product.uom_id.id
@@ -814,11 +827,11 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
 
                 if hidden_batch_management_mandatory and not batch:
                     if batch_name:
-                        comment += _('Batch not found.\n')
+                        system_message += _('Batch not found.\n')
                     else:
-                        comment += _('Batch is missing.\n')
+                        system_message += _('Batch is missing.\n')
                 if hidden_perishable_mandatory and not expiry and not bad_expiry:
-                    comment += _('Expiry date is missing.\n')
+                    system_message += _('Expiry date is missing.\n')
                 if not hidden_perishable_mandatory and not hidden_batch_management_mandatory and (batch or bad_batch_name):
                     batch = False
                     bad_batch_name = False
@@ -827,8 +840,8 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     # Remove the res.log that indicates errors on import
                     if to_correct_ok and location_id and not location_not_found:
                         to_correct_ok = False
-                        comment = ''
-                    comment += _('This product is not Batch Number managed.\n')
+                        system_message = ''
+                    system_message += _('This product is not Batch Number managed.\n')
                 if not hidden_perishable_mandatory and (expiry or bad_expiry):
                     batch = False
                     bad_batch_name = False
@@ -837,8 +850,8 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     # Remove the res.log that indicates errors on import
                     if to_correct_ok and location_id and not location_not_found:
                         to_correct_ok = False
-                        comment = ''
-                    comment += _('This product is not Expiry Date managed.\n')
+                        system_message = ''
+                    system_message += _('This product is not Expiry Date managed.\n')
             else:
                 product_uom = self.pool.get('product.uom').search(cr, uid, [], context=context)[0]
                 hidden_batch_management_mandatory = False
@@ -847,6 +860,14 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             if product_uom and product_qty:
                 product_qty = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, product_uom, product_qty)
 
+            # Comment
+            p_comment = row.cells[7].data
+            if p_comment:
+                comment = row.cells[7].data
+                if len(comment) > 128:
+                    system_message += _('Product Comment cannot have more than 128 characters.')
+                    comment = ''
+                    to_correct_ok = True
 
             to_write = {
                 'product_id': product_id,
@@ -860,9 +881,10 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 'bad_batch_name': bad_batch_name,
                 'product_qty': product_qty,
                 'product_uom': product_uom,
+                'comment': comment,
                 'hidden_batch_management_mandatory': hidden_batch_management_mandatory,
                 'hidden_perishable_mandatory': hidden_perishable_mandatory,
-                'comment': comment,
+                'system_message': system_message,
                 'to_correct': to_correct_ok,
             }
 
@@ -933,8 +955,8 @@ class initial_stock_inventory_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'inactive_product': False,
                             'inactive_error': ''}
-            if line.comment:
-                res[line.id].update({'inactive_error': line.comment})
+            if line.system_message:
+                res[line.id].update({'inactive_error': line.system_message})
             if line.inventory_id and line.inventory_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
                 res[line.id] = {
                     'inactive_product': True,
@@ -945,9 +967,10 @@ class initial_stock_inventory_line(osv.osv):
 
     _columns = {
         'to_correct_ok': fields.boolean('To correct'),
-        'comment': fields.text('Comment', readonly=True),
+        'comment': fields.char(size=128, string='Comment'),
+        'system_message': fields.text('System Message', readonly=True),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
-        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System Message', store=False, multi='inactive'),
     }
 
     _defaults = {
@@ -957,7 +980,7 @@ class initial_stock_inventory_line(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         pl_obj = self.pool.get('stock.production.lot')
-        comment = ''
+        system_message = ''
         just_warn = False
         hidden_batch_management_mandatory = False
         hidden_perishable_mandatory = False
@@ -990,19 +1013,19 @@ class initial_stock_inventory_line(osv.osv):
             del vals['bad_batch_name']
 
         if not location_id and not location_not_found:
-            comment += _('Location is missing.\n')
+            system_message += _('Location is missing.\n')
         elif location_not_found:
-            comment += _('Location not found.\n')
+            system_message += _('Location not found.\n')
 
         if hidden_batch_management_mandatory and not batch:
             if bad_batch_name:
-                comment += _('Incorrect batch number format.\n')
+                system_message += _('Incorrect batch number format.\n')
             elif batch_name and not bad_expiry:
-                comment += _('Batch not found.\n')
+                system_message += _('Batch not found.\n')
             elif batch_name and bad_expiry:
-                comment += _('Incorrectly formatted expiry date. Batch not created.\n')
+                system_message += _('Incorrectly formatted expiry date. Batch not created.\n')
             else:
-                comment += _('Batch is missing.\n')
+                system_message += _('Batch is missing.\n')
         elif hidden_batch_management_mandatory and batch and expiry:
             batch_ids = pl_obj.search(cr, uid, [
                 ('product_id', '=', product.id),
@@ -1010,7 +1033,7 @@ class initial_stock_inventory_line(osv.osv):
                 ('name', '!=', batch),
             ], context=context)
             if batch_ids:
-                comment += _('Other batch exists for this expiry date')
+                system_message += _('Other batch exists for this expiry date')
                 just_warn = True
 
         if not product.batch_management and hidden_perishable_mandatory:
@@ -1034,29 +1057,29 @@ class initial_stock_inventory_line(osv.osv):
                 if batch_ids:
                     batch = False
                     vals['prodlot_name'] = False
-                    comment += _('Other batch exists for this expiry date')
+                    system_message += _('Other batch exists for this expiry date')
                     just_warn = True
 #            if expiry and not batch:
-#                comment += _('Expiry date will be created (with its internal batch).\n')
+#                system_message += _('Expiry date will be created (with its internal batch).\n')
 #                just_warn = True
 #                vals.update({
 #                    'to_correct_ok': False,
 #                    'prodlot_name': False,
 #                })
 #            if expiry and batch:
-#                comment += _('Expiry date selected (with its internal batch).\n')
+#                system_message += _('Expiry date selected (with its internal batch).\n')
 #                just_warn = True
             if not expiry:
                 if bad_expiry:
-                    comment += _('Incorrectly formatted expiry date.\n')
+                    system_message += _('Incorrectly formatted expiry date.\n')
                     vals['prodlot_name'] = False
                 else:
-                    comment += _('Expiry date is missing.\n')
+                    system_message += _('Expiry date is missing.\n')
 
         if hidden_batch_management_mandatory and batch and expiry:
             pl_ids = pl_obj.search(cr, uid, [('name', '=', batch), ('product_id', '=', vals.get('product_id'))], context=context)
             if pl_ids and pl_obj.read(cr, uid, pl_ids[0], ['life_date'], context=context)['life_date'] != expiry:
-                comment += _('Please check expiry date is correct.\n')
+                system_message += _('Please check expiry date is correct.\n')
                 vals.update({
                     'prod_lot_id': False,
                     'prodlot_name': '',
@@ -1064,15 +1087,15 @@ class initial_stock_inventory_line(osv.osv):
                     'to_correct_ok': True,
                 })
 
-        if not comment:
-            if vals.get('comment'):
-                comment = vals.get('comment')
-            vals.update({'comment': comment, 'to_correct_ok': False})
+        if not system_message:
+            if vals.get('system_message'):
+                system_message = vals.get('system_message')
+            vals.update({'system_message': system_message, 'to_correct_ok': False})
         elif context.get('import_in_progress'):
             if just_warn:
-                vals.update({'comment': comment, 'to_correct_ok': False})
+                vals.update({'system_message': system_message, 'to_correct_ok': False})
             else:
-                vals.update({'comment': comment, 'to_correct_ok': True})
+                vals.update({'system_message': system_message, 'to_correct_ok': True})
 
 
         res = super(initial_stock_inventory_line, self).create(cr, uid, vals, context=context)
@@ -1081,7 +1104,7 @@ class initial_stock_inventory_line(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        comment = ''
+        system_message = ''
 
         line = self.browse(cr, uid, ids[0], context=context)
 
@@ -1098,16 +1121,16 @@ class initial_stock_inventory_line(osv.osv):
         hidden_perishable_mandatory = product.perishable
 
         if not location_id:
-            comment += _('Location is missing.\n')
+            system_message += _('Location is missing.\n')
         if hidden_batch_management_mandatory and not batch:
-            comment += _('Batch is missing.\n')
+            system_message += _('Batch is missing.\n')
         if hidden_perishable_mandatory and not expiry:
-            comment += _('Expiry date is missing.\n')
+            system_message += _('Expiry date is missing.\n')
 
-        if not comment:
-            vals.update({'comment': comment, 'to_correct_ok': False})
+        if not system_message:
+            vals.update({'system_message': system_message, 'to_correct_ok': False})
         else:
-            vals.update({'comment': comment, 'to_correct_ok': True})
+            vals.update({'system_message': system_message, 'to_correct_ok': True})
 
         res = super(initial_stock_inventory_line, self).write(cr, uid, ids, vals, context=context)
         return res

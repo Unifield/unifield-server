@@ -12,8 +12,9 @@
                 <data>
                 <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='hidden_perishable_mandatory']" position="after">
                     <field name="to_correct_ok" invisible="1"/>
+                    <field name="comment" />
                     <field name="inactive_product" invisible="1" />
-                    <!-- <field name="comment" attrs="{'invisible': [('inactive_product', '=', False), ('to_correct_ok', '=', False)]'}" />-->
+                    <!-- <field name="system_message" attrs="{'invisible': [('inactive_product', '=', False), ('to_correct_ok', '=', False)]'}" />-->
                     <field name="inactive_error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
                 </xpath>
                 <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree" position="attributes" >
@@ -44,6 +45,7 @@
                     <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='comment']" position="replace">
                         <field name="to_correct_ok" invisible="1" />
                         <field name="inactive_product" invisible="1" />
+                        <field name="comment" />
                         <field name="inactive_error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=,' False)]}" />
                         <field name="inv_expiry_date" invisible="1" />
                 </xpath>
