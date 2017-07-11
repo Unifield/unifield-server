@@ -194,32 +194,32 @@ class purchase_order_line(osv.osv):
         picking_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
         po_line_obj = self.pool.get('purchase.order.line')
-        wkf_service = netsvc.LocalService("workflow")
+        wf_service = netsvc.LocalService("workflow")
 
         # update FO line with change on PO line
         self.update_fo_lines(cr, uid, ids, context=context)
 
         for line in po_line_obj.browse(cr, uid, ids):
-            # Search existing picking for PO
-            picking_id = picking_obj.search(cr, uid, [
+            # Search existing IN for PO line
+            in_id = picking_obj.search(cr, uid, [
                 ('purchase_id', '=', line.order_id.id),
                 ('state', 'not in', ['done'])
             ])
             created = False
-            if len(picking_id) < 1:
-                picking_id = po_obj.create_picking(cr, uid, line.order_id, context)
+            if len(in_id) < 1:
+                in_id = po_obj.create_picking(cr, uid, line.order_id, context)
                 created = True
             else:
-                picking_id = picking_id[0]
-            move_id = po_obj.create_picking_line(cr, uid, picking_id, line, context)
+                in_id = in_id[0]
+            move_id = po_obj.create_picking_line(cr, uid, in_id, line, context)
             if created:
-                wkf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
+                wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_confirm', cr)
             else:
                 move_obj.in_action_confirm(cr, uid, move_id, context)
 
             # Confirm FO line
             if line.linked_sol_id:
-                wkf_service.trg_validate(uid, 'sale.order.line', line.linked_sol_id.id, 'confirmed', cr)
+                wf_service.trg_validate(uid, 'sale.order.line', line.linked_sol_id.id, 'confirmed', cr)
 
             # if line created in PO, then create a FO line that match with it:
             if not line.linked_sol_id and line.origin:
