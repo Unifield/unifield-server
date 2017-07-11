@@ -1143,6 +1143,10 @@ You cannot choose this supplier because some destination locations are not avail
                 for stock_move in incoming_shipment.move_lines:
                     if stock_move.purchase_line_id: # if there is a linked PO line we close it
                         wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
+                        # check for a linked PICK and run "check availability" on it:
+                        if stock_move.purchase_line_id.linked_sol_id:
+                            linked_pick = self.pool.get('stock.picking').search(cr, uid, [('sale_id', '=', stock_move.purchase_line_id.linked_sol_id.order_id.id)], context=context)
+                            self.pool.get('stock.picking').action_assign(cr, uid, linked_pick, context=context)
 
         if res:
             for sp in self.browse(cr, uid, ids):
