@@ -190,29 +190,94 @@ class res_currency(osv.osv):
         purchase_obj = self.pool.get('purchase.order')
         sale_obj = self.pool.get('sale.order')
         property_obj = self.pool.get('ir.property')
+        acc_inv_obj = self.pool.get('account.invoice')
+        aml_obj = self.pool.get('account.move.line')
+        comm_voucher_obj = self.pool.get('account.commitment')
+        hq_entry_obj = self.pool.get('hq.entries')
+        payroll_obj = self.pool.get('hr.payroll.msf')
+        reg_obj = self.pool.get('account.bank.statement')
+        recurring_obj = self.pool.get('account.subscription')
+        accrual_line_obj = self.pool.get('msf.accrual.line')
+        keyword = _(keyword)
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids), ('active', 'in', ['t', 'f'])], context=context)
+        pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids), ('active', 'in', ['t', 'f'])],
+                                             order='NO_ORDER', context=context)
         if pricelist_ids:
             # Get all documents which disallow the deletion of the currency
-            purchase_ids = purchase_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids)], context=context)
-            sale_ids = sale_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids)], context=context)
-#            partner_ids = partner_obj.search(cr, uid, ['|', ('property_product_pricelist', 'in', pricelist_ids),
-#                                                       ('property_product_pricelist_purchase', 'in', pricelist_ids)], context=context)
+            # Raise an error if the currency is used in a transaction that isn't closed/paid/posted
+
+            # Check on POs
+            if purchase_obj.search_exist(cr, uid, [('pricelist_id', 'in', pricelist_ids), ('state', 'not in', ['done', 'cancel'])],
+                                         context=context):
+                raise osv.except_osv(_('Currency currently used!'), _(
+                    "The currency you want to %s is used in at least one "
+                    "Purchase Order which isn't Closed.") % keyword)
+
+            # Check on FOs
+            if sale_obj.search_exist(cr, uid, [('pricelist_id', 'in', pricelist_ids), ('state', 'not in', ['done', 'cancel'])],
+                                     context=context):
+                raise osv.except_osv(_('Currency currently used!'), _(
+                    "The currency you want to %s is used in at least one "
+                    "Field Order which isn't Closed.") % keyword)
+
+            # Check on Partner (forms)
             value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
-            partner_ids = property_obj.search(cr, uid, ['|', ('name', '=', 'property_product_pricelist'),
-                                                        ('name', '=', 'property_product_pricelist_purcahse'),
-                                                        ('value_reference', 'in', value_reference)])
+            property_ids = property_obj.search(cr, uid, ['|', ('name', '=', 'property_product_pricelist'),
+                                                        ('name', '=', 'property_product_pricelist_purchase'),
+                                                        ('value_reference', 'in', value_reference)], order='NO_ORDER', context=context)
+            for prop in property_obj.browse(cr, uid, property_ids, fields_to_fetch=['res_id'], context=context):
+                if prop.res_id and prop.res_id._table_name == 'res.partner' and prop.res_id.active:
+                    raise osv.except_osv(_('Currency currently used!'), _('The currency you want to %s is used '
+                                                                          'in at least one active partner form.') % keyword)
 
-            # Raise an error if the currency is used on partner form
-            if partner_ids:
-                raise osv.except_osv(_('Currency currently used !'), _('The currency you want to %s is currently used on at least one partner form.') % keyword)
+        # Check on account.invoice
+        if acc_inv_obj.search_exist(cr, uid, [('currency_id', 'in', ids), ('state', 'not in', ['paid', 'cancel'])], context=context):
+            raise osv.except_osv(_('Currency currently used!'), _('The currency you want to %s is used in at least '
+                                                                  'one document in Draft or Open state.') % keyword)
 
-            # Raise an error if the currency is used on sale or purchase order
-            if purchase_ids or sale_ids:
-                raise osv.except_osv(_('Currency currently used !'), _('The currency you want to %s is currently used on at least one sale order or purchase order.') % keyword)
+        # Check on Journal Items
+        if aml_obj.search_exist(cr, uid, ['|',
+                                          ('currency_id', 'in', ids),
+                                          ('functional_currency_id', 'in', ids),
+                                          ('move_state', '=', 'draft')], context=context):
+            raise osv.except_osv(_('Currency currently used!'), _('The currency you want to %s is used in at least '
+                                                                  'one Journal Item in Unposted state.') % keyword)
+        # Check on Commitment Vouchers
+        if comm_voucher_obj.search_exist(cr, uid, [('currency_id', 'in', ids), ('state', '!=', 'done')], context=context):
+            raise osv.except_osv(_('Currency currently used!'), _("The currency you want to %s is used in at least "
+                                                                  "one Commitment Voucher which isn't Done.") % keyword)
+        # Check on HQ Entries
+        if hq_entry_obj.search_exist(cr, uid, [('currency_id', 'in', ids), ('user_validated', '=', False)], context=context):
+            raise osv.except_osv(_('Currency currently used!'), _("The currency you want to %s is used in at least "
+                                                                  "one HQ Entry which isn't validated.") % keyword)
+
+        # Check on HR Payrolls
+        if payroll_obj.search_exist(cr, uid, [('currency_id', 'in', ids), ('state', '=', 'draft')], context=context):
+            raise osv.except_osv(_('Currency currently used!'), _("The currency you want to %s is used in at least "
+                                                                  "one Payroll Entry which isn't validated.") % keyword)
+
+        # Check on Registers
+        if reg_obj.search_exist(cr, uid, [('currency', 'in', ids), ('state', 'in', ['draft', 'open'])], context=context):
+            raise osv.except_osv(_('Currency currently used!'),
+                                 _("The currency you want to %s is used in at least "
+                                   "one Register in Draft or Open state.") % keyword)
+
+        # Check on Recurring Entries
+        if recurring_obj.search_exist(cr, uid, [('model_id.currency_id', 'in', ids), ('state', '!=', 'done')], context=context):
+            raise osv.except_osv(_('Currency currently used!'),
+                                 _("The currency you want to %s is used in at least "
+                                   "one Recurring Entry having a state not Done.") % keyword)
+
+        # Check on Accrual Lines
+        if accrual_line_obj.search_exist(cr, uid,
+                                         ['|', ('currency_id', 'in', ids), ('functional_currency_id', 'in', ids),
+                                               ('state', 'in', ('draft', 'partially_posted'))], context=context):
+            raise osv.except_osv(_('Currency currently used!'),
+                                 _("The currency you want to %s is used in at least "
+                                   "one Draft or Partially Posted Accrual Line.") % keyword)
 
         return pricelist_ids
 
@@ -229,7 +294,7 @@ class res_currency(osv.osv):
                                                                             ('currency_id','in',ids),
                                                                             ('functional_currency_id', 'in', ids)], context=context)
         if len(move_line_ids) > 0:
-            raise osv.except_osv(_('Currency currently used !'), _('The currency cannot be deleted as one or more journal items are currently using it!'))
+            raise osv.except_osv(_('Currency currently used!'), _('The currency cannot be deleted as one or more journal items are currently using it!'))
 
         pricelist_obj = self.pool.get('product.pricelist')
 
