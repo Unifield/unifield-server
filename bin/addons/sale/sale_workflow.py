@@ -210,6 +210,14 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        for sol in self.browse(cr, uid, ids, context=context):
+            # check unit price:
+            if not sol.price_unit or sol.price_unit <= 0:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Line #%s: You cannot validate a line with unit price as zero.' % sol.line_number)
+                )
+
         # check analytic distribution before validating the line:
         self.analytic_distribution_checks(cr, uid, ids, context=context)
         self.copy_analytic_distribution_on_lines(cr, uid, ids, context=context)
