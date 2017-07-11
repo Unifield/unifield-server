@@ -559,14 +559,7 @@ class account_move_line(osv.osv):
             p_from = context.get('period_from')
             p_to = context.get('period_to')
             period_obj = self.pool.get('account.period')
-            start_date = period_obj.read(cr, uid, p_from, ['date_start'],
-                                         context=context)['date_start']
-            stop_date = period_obj.read(cr, uid, p_to, ['date_stop'],
-                                        context=context)['date_stop']
-            period_ids = period_obj.search(cr, uid,
-                                           [('date_start', '>=', start_date),
-                                            ('date_stop', '<=', stop_date)],
-                                           context=context)
+            period_ids = period_obj.build_ctx_periods(cr, uid, p_from, p_to)
         if period_ids:
             args.append(('period_id', 'in', period_ids))
 
