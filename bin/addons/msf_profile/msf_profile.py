@@ -67,7 +67,13 @@ class patch_scripts(osv.osv):
             address_id = self.pool.get('res.partner.address').search(cr, uid, [
                 ('partner_id', '=', internal_partner_id),
                 ('type', '=', 'default'),
-            ])[0]
+            ])
+            if not address_id:
+                address_id = self.pool.get('res.partner.address').search(cr, uid, [
+                    ('partner_id', '=', internal_partner_id),
+                ])
+
+            address_id = address_id[0]
 
             cr.execute("SELECT name FROM stock_picking WHERE partner_id = %s AND state not in ('done', 'cancel');", (intermission_partner_id,))
             updated_doc += [x[0] for x in cr.fetchall()]
