@@ -208,10 +208,6 @@ class _rml_styles(object,):
 
     def _table_style_get(self, style_node):
         styles = []
-        # default these to 0, to match previous behavior before
-        # we upgraded reportlab for UF 6.0 (see US-3149)
-        styles.append(('LEFTPADDING', (0,0), (-1,-1), utils.unit_get("0")))
-        styles.append(('RIGHTPADDING', (0,0), (-1,-1), utils.unit_get("0")))
         for node in style_node:
             start = utils.tuple_int_get(node, 'start', (0,0) )
             stop = utils.tuple_int_get(node, 'stop', (-1,-1) )
