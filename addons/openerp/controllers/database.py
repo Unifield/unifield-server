@@ -40,7 +40,7 @@ def get_lang_list():
     langs = [('en_US', 'English (US)')]
     try:
         return langs + (rpc.session.execute_db('list_lang') or [])
-    except Exception, e:
+    except Exception:
         pass
     return langs
 
@@ -147,7 +147,7 @@ class FormRestore(DBForm):
     action = '/openerp/database/do_restore'
     submit_text = _('Restore')
     fields = [
-        FileField(name="filename", label=_('File:')),
+        FileField(name="filename", label=_('File:'), validator=openobject.validators.IteratorValidator()),
         ReplacePasswordField(name='password', label=_('Restore password:')),
         openobject.widgets.TextField(name='dbname', label=_('New database name:'), validator=formencode.validators.NotEmpty(), readonly=1, attrs={'readonly': ''})
     ]

@@ -20,7 +20,7 @@
 ###############################################################################
 import formencode
 
-__all__ = ['BaseValidator', 'DefaultValidator', 'Schema']
+__all__ = ['BaseValidator', 'DefaultValidator', 'Schema', 'IteratorValidator']
 
 class BaseValidator(formencode.api.FancyValidator):
     pass
@@ -29,6 +29,8 @@ class BaseValidator(formencode.api.FancyValidator):
 class DefaultValidator(BaseValidator):
     pass
 
+class IteratorValidator(BaseValidator):
+    accept_iterator = True
 
 class Schema(formencode.schema.Schema):
     """Modified Schema validator.
