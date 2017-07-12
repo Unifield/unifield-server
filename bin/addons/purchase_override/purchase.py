@@ -1174,27 +1174,6 @@ class purchase_order(osv.osv):
             self.write(cr, uid, other_id_list, {'shipped':1,'state':'approved'}, context=context)
         return True
 
-    def confirm_button_check(self, cr, uid, ids, po, confirm_type, context=None):
-        '''
-        Check a case where the user changes a stockable product
-        to a non-stockable one in a PO with a IR source and wants to validate or confirm
-        '''
-        if po.po_from_ir:
-            cr.execute("SELECT pol.line_number FROM purchase_order_line pol \
-                    LEFT JOIN sale_order_line sol ON sol.procurement_id = pol.procurement_id \
-                    LEFT JOIN product_product p1 ON p1.id = pol.product_id \
-                    LEFT JOIN product_product p2 ON p2.id = sol.product_id \
-                    LEFT JOIN product_template pt1 ON pt1.id = p1.product_tmpl_id \
-                    LEFT JOIN product_template pt2 ON pt2.id = p2.product_tmpl_id \
-                    WHERE sol.procurement_request = 't' \
-                    AND pt1.type!='product' AND pt2.type='product' \
-                    AND pol.order_id = %s", (po.id,))
-            product_line = cr.dictfetchall()
-            if len(product_line) != 0:
-                raise osv.except_osv(_('Error'),
-                        _("PO cannot be %s due to line %s product attributes being changed")%
-                        (str(confirm_type), product_line[0]['line_number']))
-
     def confirm_button(self, cr, uid, ids, context=None):
         '''
         check the supplier partner type (partner_type)
@@ -1214,9 +1193,6 @@ class purchase_order(osv.osv):
         kwargs = {}
 
         for obj in self.browse(cr, uid, ids, context=context):
-            #check if a product was changed to non-stockable before confirmation
-            self.confirm_button_check(cr, uid, ids, obj, 'confirmed', context=context)
-
             if obj.partner_id.partner_type in ('internal', 'section', 'intermission'):
                 # open the wizard
                 wiz_obj = self.pool.get('wizard')
@@ -1403,10 +1379,6 @@ stock moves which are already processed : '''
         stopped_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'status_3')[1]
         for po in self.browse(cr, uid, ids, context=context):
             line_error = []
-
-            # check if a product was changed to non-stockable before validation
-            self.confirm_button_check(cr, uid, ids, po, 'validated', context=context)
-
             if po.order_type == 'regular':
                 cr.execute('SELECT line_number FROM purchase_order_line WHERE (price_unit*product_qty < 0.00001 OR price_unit = 0.00) AND order_id = %s', (po.id,))
                 line_errors = cr.dictfetchall()
