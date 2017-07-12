@@ -208,19 +208,22 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
-            ids = [ids]
+            ids = [ids] 
 
         for sol in self.browse(cr, uid, ids, context=context):
-            # check unit price:
-            if not sol.price_unit or sol.price_unit <= 0:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('Line #%s: You cannot validate a line with unit price as zero.' % sol.line_number)
-                )
+            if not sol.procurement_request: # in case of FO
+                # check unit price:
+                if not sol.price_unit or sol.price_unit <= 0:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Line #%s: You cannot validate a line with unit price as zero.' % sol.line_number)
+                    )
+                # check analytic distribution before validating the line:
+                self.analytic_distribution_checks(cr, uid, [sol.id], context=context)
+                self.copy_analytic_distribution_on_lines(cr, uid, [sol.id], context=context)
 
-        # check analytic distribution before validating the line:
-        self.analytic_distribution_checks(cr, uid, ids, context=context)
-        self.copy_analytic_distribution_on_lines(cr, uid, ids, context=context)
+            elif sol.procurement_request: # in case of IR
+                pass
 
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 

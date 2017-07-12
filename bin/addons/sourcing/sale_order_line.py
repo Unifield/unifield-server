@@ -1514,18 +1514,23 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                     self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
 
+                # No AD on sourcing line if it comes from IR:
+                anal_dist = False
+                if not sourcing_line.procurement_request:
+                    anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context)
+
                 # attach PO line:
                 pol_values = {
                     'order_id': po_to_use,
                     'product_id': sourcing_line.product_id.id,
                     'product_uom': sourcing_line.product_id.uom_id.id,
                     'product_qty': sourcing_line.product_uom_qty,
-                    'price_unit': sourcing_line.price_unit,
+                    'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price,
                     'partner_id': sourcing_line.supplier.id,
                     'origin': sourcing_line.order_id.name,
                     'sale_order_line_id': sourcing_line.id,
                     'linked_sol_id': sourcing_line.id,
-                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context),
+                    'analytic_distribution_id': anal_dist,
                     'link_so_id': sourcing_line.order_id.id,
                 }
                 self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
