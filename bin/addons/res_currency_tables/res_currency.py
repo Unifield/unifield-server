@@ -260,7 +260,7 @@ class res_currency(osv.osv):
                                                                   "one Payroll Entry which isn't validated.") % keyword)
 
         # Check on Registers
-        if reg_obj.search_exist(cr, uid, [('currency', 'in', ids), ('state', 'in', ['draft', 'open'])], context=context):
+        if reg_obj.search_exist(cr, uid, [('journal_id.currency', 'in', ids), ('state', 'in', ['draft', 'open'])], context=context):
             raise osv.except_osv(_('Currency currently used!'),
                                  _("The currency you want to %s is used in at least "
                                    "one Register in Draft or Open state.") % keyword)
