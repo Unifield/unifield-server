@@ -82,6 +82,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('type_for_register', '!=', 'donation'),
         '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
         '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Disallow extra-accounting expenses accounts
+        ('type_for_register', 'not in', ['advance', 'transfer', 'transfer_same']),
     ],
     # LINES OF donation
     'donation_lines': [
@@ -107,6 +108,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('is_not_hq_correctible', '=', False),
         ('user_type_code', 'in', ['expense', 'income', 'receivables']),
         ('user_type.report_type', '!=', 'none'), # To only use Expense extra-accounting accounts
+        ('type_for_register', 'not in', ['advance', 'transfer', 'transfer_same']),
     ],
     # RECURRING MODELS
     'recurring_lines': [
