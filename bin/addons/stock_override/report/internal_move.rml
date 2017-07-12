@@ -281,7 +281,7 @@
         <blockTable style="NoteTable">
             <tr>
                 <td>
-                    <para style="LHeader">Notes</para>
+                    <para style="LHeader">Notes :</para>
                     <para style="Header">[[ picking.note or '-' ]]</para>
                 </td>
             </tr>

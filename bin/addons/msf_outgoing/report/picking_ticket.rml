@@ -466,7 +466,7 @@
         <blockTable style="NoteTable">
             <tr>
                 <td>
-                    <para style="HeaderInfosTitle">Notes</para>
+                    <para style="HeaderInfosTitle">Notes :</para>
                     <para style="HeaderInfosValue">[[ pt.note or '-' ]]</para>
                 </td>
             </tr>
