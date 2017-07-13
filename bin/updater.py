@@ -830,10 +830,10 @@ def do_pg_update():
         warn("Rename %s to %s." % (pg_new, pg_old))
         os.rename(pg_new, pg_old)
 
-        pg_old = os.path.normpath(pg_old)
-        if tools.config['pg_path'] != pg_old:
-            warn("Setting pg_path to %s." % pg_old)
-            tools.config['pg_path'] = pg_old
+        pgp = os.path.normpath(os.path.join(pg_old, 'bin'))
+        if tools.config['pg_path'] != pgp:
+            warn("Setting pg_path to %s." % pgp)
+            tools.config['pg_path'] = pgp
             tools.config.save()
 
         # 7: change service entry to the correct install location
