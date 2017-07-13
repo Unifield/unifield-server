@@ -24,6 +24,7 @@ from tools.translate import _
 import logging
 from tools.safe_eval import safe_eval
 from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
+from register_accounting import register_tools
 
 
 class account_period(osv.osv):
@@ -192,9 +193,29 @@ class account_period(osv.osv):
 
                 # first verify that all existent registers for this period are closed
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
+                linked_prev_reg_ids = []
                 for register in reg_obj.browse(cr, uid, reg_ids, context=context):
+                    register.prev_reg_id and linked_prev_reg_ids.append(register.prev_reg_id.id)
                     if register.state not in ['confirm']:
                         raise osv.except_osv(_('Warning'), _("The register '%s' is not closed. Please close it before closing period") % (register.name,))
+
+                # prevent period closing if one of the registers of the previous period
+                # has no corresponding register in the period to close AND has a non 0 balance.
+                prev_period_id = register_tools.previous_period_id(self, cr, uid, period.id, context=context, raise_error=False)
+                if prev_period_id:
+                    all_prev_reg_ids = reg_obj.search(cr, uid, [('period_id', '=', prev_period_id)], order='NO_ORDER', context=context)
+                    # get the registers of the previous period which are NOT linked to a register of the period to close
+                    orphan_prev_reg_ids = [reg_id for reg_id in all_prev_reg_ids if reg_id not in linked_prev_reg_ids]
+                    balance_not_null = False
+                    for reg in reg_obj.browse(cr, uid, orphan_prev_reg_ids,
+                                              fields_to_fetch=['balance_end', 'balance_end_real', 'balance_end_cash'], context=context):
+                        if abs(reg.balance_end) > 10**-3 or abs(reg.balance_end_real) > 10**-3 or abs(reg.balance_end_cash) > 10**-3:
+                            balance_not_null = True
+                            break
+                    if balance_not_null:
+                        raise osv.except_osv(_('Warning'), _("At least one of the registers of the previous period "
+                                                             "has a balance which isn't equal to 0."))
+
                 # check if subscriptions lines were not created for this period
                 sub_ids = sub_obj.search(cr, uid, [('date', '<', period.date_stop), ('move_id', '=', False)], context=context)
                 if len(sub_ids) > 0:

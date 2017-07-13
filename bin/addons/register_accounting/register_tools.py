@@ -207,7 +207,8 @@ def _get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):
         return period.date_stop
     return date
 
-def previous_period_id(self, cr, uid, period_id, context=None):
+
+def previous_period_id(self, cr, uid, period_id, context=None, raise_error=True):
     """
     Give previous period of those given
     """
@@ -228,8 +229,12 @@ def previous_period_id(self, cr, uid, period_id, context=None):
         previous_fiscalyear = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<', period.fiscalyear_id.date_start)],
             order="date_start desc", context=context)
         if not previous_fiscalyear:
-            raise osv.except_osv(_('Error'),
-                _('No previous fiscalyear found. Is your period the first one of a fiscalyear that have no previous fiscalyear ?'))
+            if raise_error:
+                raise osv.except_osv(_('Error'),
+                                     _('No previous fiscal year found. Is your period the first one of a fiscal year '
+                                       'that has no previous fiscal year?'))
+            else:
+                return False
         previous_period_ids = p_obj.search(cr, uid, [('fiscalyear_id', '=', previous_fiscalyear[0]), ('id', '!=', period_id), ('number', '<=', 12.0)],
             order='number desc') # this work only for msf because of the last period name which is "Period 13", "Period 14"
             # and "Period 15"

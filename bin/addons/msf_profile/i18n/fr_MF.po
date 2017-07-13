@@ -61885,8 +61885,8 @@ msgstr "Annuler"
 #. module: register_accounting
 #: code:addons/register_accounting/register_tools.py:232
 #, python-format
-msgid "No previous fiscalyear found. Is your period the first one of a fiscalyear that have no previous fiscalyear ?"
-msgstr "Pas d'exercice comptable trouvé. Est-ce que votre période est la première d'un exercice comptable qui n'ait pas d'exercice comptable antérieur?"
+msgid "No previous fiscal year found. Is your period the first one of a fiscal year that has no previous fiscal year?"
+msgstr "Pas d'exercice comptable trouvé. Est-ce que votre période est la première d'un exercice comptable qui n'ait pas d'exercice comptable antérieur ?"
 
 #. module: base
 #: view:workflow.activity:0
@@ -98688,3 +98688,9 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_period.py:214
+#, python-format
+msgid "At least one of the registers of the previous period has a balance which isn't equal to 0."
+msgstr "Au moins l'un des registres de la période précédente a un solde qui n'est pas égal à 0."
