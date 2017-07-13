@@ -655,7 +655,7 @@ def do_pg_update():
             if free < 1000:
                 warn("Less than 1 gb free on %s. Not attempting PostgreSQL upgrade." % root)
                 return
-                
+
     # Minor update:
     # 1. check that the patch will apply
     # 2. stop server
@@ -670,7 +670,7 @@ def do_pg_update():
             warn("Minor patch from 8.4.x not supported.")
             return
         warn("Postgres minor update from %s to %s" % (oldVer, newVer))
-        
+
         try:
             bsdifftree.applyPatch(pdata, r'..\pgsql', doIt=False, log=_no_log)
             subprocess.call('net stop Postgres', stdout=log, stderr=log)
@@ -707,7 +707,7 @@ def do_pg_update():
             env['PGUSER'] = tools.config['db_user']
         if tools.config.get('db_password'):
             env['PGPASSWORD'] = tools.config['db_password']
-            
+
         pg_new = r'..\pgsql-next'
         if oldVer == '8.4.14':
             svc = 'PostgreSQL_For_OpenERP'
@@ -730,12 +730,12 @@ def do_pg_update():
             warn("out is", out)
         if out is None or 'f' not in out:
             raise RuntimeError("User-defined tablespaces might be in use. Upgrade needs human intervention.")
-            
+
         # 1: use old PG install to make a new one to patch
         if os.path.exists(pg_new):
             warn("Removing previous %s directory" % pg_new)
             shutil.rmtree(pg_new)
-            
+
         if oldVer == '8.4.14':
             warn("Creating %s by selective copy from %s" % (pg_new, pg_old))
             os.mkdir(pg_new)
@@ -761,18 +761,26 @@ def do_pg_update():
             raise RuntimeError('New data directory %s already exists.' % pg_new_db)
         pwf = tempfile.NamedTemporaryFile(delete=False)
         pwf.write(tools.config.get('db_password'))
-        pwf.close()
         # TODO: apply same fix here for trust as in the AIO
         cmd = [ os.path.join(pg_new, 'bin', 'initdb'),
                 '--pwfile', pwf.name,
+                '--data-checksums', '-A', 'md5',
                 '-U', tools.config.get('db_user'),
                 '--locale', 'English_United States',
                 '-E', 'UTF8', pg_new_db
                 ]
         rc = subprocess.call(cmd, stdout=log, stderr=log)
+        pwf.close()
+        os.remove(pwf.name)
         if rc != 0:
             raise RuntimeError("initdb returned %d" % rc)
-        os.remove(pwf.name)
+
+        # modify the postgresql.conf file for best
+        # defaults
+        pgconf = os.path.join(pg_new_db, "postgresql.conf")
+        with open(pgconf, "a") as f:
+            f.write("listen_addresses = 'localhost'\n")
+            f.write("shared_buffers = 1024MB\n")
 
         # 4: stop old service
         subprocess.call('net stop %s' % svc, stdout=log, stderr=log)
@@ -788,12 +796,13 @@ def do_pg_update():
         rc = subprocess.call(cmd, stdout=log, stderr=log, env=env)
         if rc != 0:
             raise RuntimeError("pg_upgrade returned %d" % rc)
-        
+
         # The pg_upgrade went ok, so we are committed now. Nuke the
         # old db directory and move the upgraded one into place.
         warn("pg_upgrade returned %d, commiting to new version" % rc)
         run_analyze = True
 
+        warn("Rename %s to %s." % (pg_new_db, pg_old_db))
         # we do this with two renames since rmtree/rename sometimes
         # failed (why? due to antivirus still holding files open?)
         pg_old_db2 = pg_old_db + "-trash"
@@ -812,18 +821,25 @@ def do_pg_update():
                     ]
             rc = subprocess.call(cmd, stdout=log, stderr=log)
             if rc != 0:
-                warn("postgres 8.4 uninstall returned %d" % rc)
+                warn("PostgreSQL 8.4 uninstall returned %d" % rc)
+            pg_old = r'..\pgsql'
         else:
-            warn("Remove %s and rename %s to %s." % (pg_old, pg_new, pg_old))
-            
+            warn("Remove %s." % pg_old)
             shutil.rmtree(pg_old)
-            os.rename(pg_new, pg_old)
+
+        warn("Rename %s to %s." % (pg_new, pg_old))
+        os.rename(pg_new, pg_old)
+
+        pg_old = os.path.normpath(pg_old)
+        if tools.config['pg_path'] != pg_old:
+            warn("Setting pg_path to %s." % pg_old)
+            tools.config['pg_path'] = pg_old
+            tools.config.save()
 
         # 7: change service entry to the correct install location
         if oldVer == '8.4.14':
-            pg_dir = os.path.normpath(r'..\pgsql')
             cmd = [
-                os.path.join(pg_dir, 'bin', 'pg_ctl'),
+                os.path.join(pg_old, 'bin', 'pg_ctl'),
                 'register', '-N', 'Postgres',
                 '-U', 'openpgsvc',
                 '-P', '0p3npgsvcPWD',
