@@ -98690,12 +98690,6 @@ msgid "Warning, you have removed header value source location! The lines will be
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
 
 #. module: account_period_closing_level
-#: code:addons/account_period_closing_level/account_period.py:214
-#, python-format
-msgid "At least one of the registers of the previous period has a balance which isn't equal to 0."
-msgstr "Au moins l'un des registres de la période précédente a un solde qui n'est pas égal à 0."
-
-#. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:217
 #, python-format
 msgid "One or several registers have not been generated for the period to close and have a balance which isn't equal to 0:\n"
