@@ -98694,3 +98694,11 @@ msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source
 #, python-format
 msgid "At least one of the registers of the previous period has a balance which isn't equal to 0."
 msgstr "Au moins l'un des registres de la période précédente a un solde qui n'est pas égal à 0."
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_period.py:217
+#, python-format
+msgid "One or several registers have not been generated for the period to close and have a balance which isn't equal to 0:\n"
+"%s"
+msgstr "Un ou plusieurs registres n'ont pas été générés pour la période à fermer et ont un solde qui n'est pas égal à 0 :\n"
+"%s"
