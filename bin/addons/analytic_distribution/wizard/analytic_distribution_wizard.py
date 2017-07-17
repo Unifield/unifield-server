@@ -492,10 +492,10 @@ class analytic_distribution_wizard(osv.osv_memory):
         for el in self.browse(cr, uid, ids, context=context):
             res[el.id] = True
             # verify purchase state
-            if el.purchase_id and el.purchase_id.state not in ['draft', 'validated']:
+            if el.purchase_id and el.purchase_id.state not in ['draft', 'validated_p', 'validated']:
                 res[el.id] = False
             # verify purchase line state
-            if el.purchase_line_id and el.purchase_line_id.order_id and el.purchase_line_id.order_id.state not in ['draft', 'validated']:
+            if el.purchase_line_id and el.purchase_line_id.order_id and el.purchase_line_id.order_id.state not in ['draft', 'validated_p', 'validated']:
                 res[el.id] = False
             # verify invoice state
             if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
@@ -513,10 +513,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.accrual_line_id and el.accrual_line_id.state != 'draft':
                 res[el.id] = False
             # verify sale order state
-            if el.sale_order_id and el.sale_order_id.state not in ['draft', 'validated']:
+            if el.sale_order_id and el.sale_order_id.state not in ['draft', 'draft_partial', 'validated']:
                 res[el.id] = False
             # verify sale order line state
-            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'validated']:
+            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'draft_partial', 'validated']:
                 res[el.id] = False
             # verify move state
             # UFTP-363: Do not edit any element of JI or JE if the JE is imported
