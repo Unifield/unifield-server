@@ -230,7 +230,7 @@ class entity(osv.osv):
         'mission': fields.char('Mission', size=64),
         'latitude': fields.float('Latitude',digits=(16,6)),
         'longitude': fields.float('Longitude', digits=(16,6)),
-        'pgversion_id': fields.char('Postgres Version', size=64),
+        'pgversion': fields.char('Postgres Version', size=64),
     }
     _defaults = {
         'version': lambda *a: 0,
@@ -481,12 +481,13 @@ class entity(osv.osv):
         return (True, "Instance %s are now invalidated" % ", ".join(uuid_list))
 
     @check_validated
-    def set_pg_version(self, cr, uid, identifier, hardware_id, pg_version, context=None):
+    def set_pg_version(self, cr, uid, entity, pg_version, context=None):
         ids_to_set = self.search(cr, uid,
-                                 [('identifier', '=', identifier),
-                                  ('hardware_id', '=', hardware_id)],
+                                 [('identifier', '=', entity.identifier),
+                                  ('hardware_id', '=', entity.hardware_id)],
                                  context=context)
-        self.write(cr, 1, ids_to_set, {'pgversion_id': pg_version}, context=context)
+        self.write(cr, 1, ids_to_set, {'pgversion': pg_version}, context=context)
+        return True
 
     def validate_action(self, cr, uid, ids, context=None):
         if not context:
