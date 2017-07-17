@@ -131,12 +131,22 @@ class res_partner(osv.osv):
         'customer': fields.boolean('Customer', help="Check this box if the partner is a customer."),
         'supplier': fields.boolean('Supplier', help="Check this box if the partner is a supplier. If it's not checked, purchase people will not see it when encoding a purchase order."),
         'city': fields.related('address', 'city', type='char', string='City'),
+        'zip': fields.related('address', 'zip', string='Zip'),
+        'street': fields.related('address', 'street', type='char', string='Street'),
+        'street2': fields.related('address', 'street2', type='char', string='Street2'),
         'phone': fields.related('address', 'phone', type='char', string='Phone'),
         'mobile': fields.related('address', 'mobile', type='char', string='Mobile'),
+        'fax': fields.related('address', 'fax', type='char', string='Fax'),
+        'state_id': fields.related('address', 'state_id', type='many2one', relation='res.country.state', string='Fed. State'),
         'country': fields.related('address', 'country_id', type='many2one', relation='res.country', string='Country'),
         'employee': fields.boolean('Employee', help="Check this box if the partner is an Employee."),
         'email': fields.related('address', 'email', type='char', size=240, string='E-mail'),
         'company_id': fields.many2one('res.company', 'Company', select=1),
+        'function': fields.related('address', 'function', type='char', string='Function'),
+        'partner_id': fields.related('address', 'partner_id', type='many2one', relation='res.partner', string='Partner Name'),
+        'type': fields.related('address', 'type', type='char', string='Address Type'),
+        'contact_name': fields.related('address', 'name', type='char', string='Contact Name'),
+        'address_title': fields.related('address', 'title', type='many2one', relation='res.partner.title', string='Title'),
     }
 
     def _default_category(self, cr, uid, context={}):

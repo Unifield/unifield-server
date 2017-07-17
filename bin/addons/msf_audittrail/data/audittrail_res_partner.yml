@@ -1,0 +1,46 @@
+-
+  For Partner, rule for the CREATE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'PARTNER CREATE WRITE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'res.partner')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['active', 'address_title', 'city', 'comment', 'country', 'credit_limit', 'customer', 'customer_lt', 'email', 'fax', 'function', 'lang', 'manufacturer', 'mobile', 'name', 'partner_type', 'phone', 'po_by_project', 'procurement_lt', 'property_account_payable', 'property_account_position', 'property_account_receivable', 'property_payment_term', 'property_product_pricelist', 'property_product_pricelist_purchase', 'property_stock_customer', 'property_stock_supplier', 'ref', 'split_po', 'state_id', 'street', 'street2', 'supplier', 'supplier_lt', 'title', 'transport_0', 'transport_0_lt', 'transport_1', 'transport_1_lt', 'transport_2', 'transport_2_lt', 'transporter', 'type', 'zip', 'zone']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'res.partner'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': True,
+                'log_write': True,
+                'log_unlink': False,
+                'field_ids': [(6, 0, fields_ids)],
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
+-
+  For PARTNER, rule for the DELETE of objects with the list of fields to track
+-
+  !python {model: audittrail.rule}: |
+    name = 'PARTNER DELETE'
+    object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'res.partner')], context=context)
+    rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
+    if object_ids:
+        fields = ['name']
+        fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'res.partner'), ('name', 'in', fields)], context=context)
+        vals = {'name': name,
+                'object_id': object_ids[0],
+                'log_create': False,
+                'log_write': False,
+                'log_unlink': True,
+                'field_ids': [(6, 0, fields_ids)],
+                }
+        if not rule_id:
+            rule_id = self.create(cr, uid, vals, context=context)
+        elif rule_id:
+            self.write(cr, uid, rule_id, vals, context=context)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
