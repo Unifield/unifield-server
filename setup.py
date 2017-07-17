@@ -93,35 +93,6 @@ version = None
 
 execfile(join('bin', 'release.py'))
 
-# backports os.walk with followlinks from python 2.6
-def walk_followlinks(top, topdown=True, onerror=None, followlinks=False):
-    from os.path import join, isdir, islink
-    from os import listdir, error
-
-    try:
-        names = listdir(top)
-    except error, err:
-        if onerror is not None:
-            onerror(err)
-        return
-
-    dirs, nondirs = [], []
-    for name in names:
-        if isdir(join(top, name)):
-            dirs.append(name)
-        else:
-            nondirs.append(name)
-
-    if topdown:
-        yield top, dirs, nondirs
-    for name in dirs:
-        path = join(top, name)
-        if followlinks or not islink(path):
-            for x in walk_followlinks(path, topdown, onerror, followlinks):
-                yield x
-    if not topdown:
-        yield top, dirs, nondirs
-
 def find_addons():
     for root, _, names in os.walk(join('bin', 'addons'), followlinks=True):
         if '__openerp__.py' in names or '__terp__.py' in names:
@@ -241,7 +212,7 @@ setup(name             = name,
           '': ['*.yml', '*.xml', '*.po', '*.pot', '*.csv'],
       },
       package_dir      = find_package_dirs(),
-      python_requires = ">=2.7.13",
+      python_requires = ">=2.7.12",
       install_requires = [
           'lxml==3.7.3',
           'mako==1.0.6',
