@@ -171,16 +171,16 @@ class sale_order_line(osv.osv):
             ids = [ids]
 
         for sol in self.browse(cr, uid, ids, context=context):
-            # create or update PICK:
+            # create or update PICK/OUT:
+            picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context)
             pick_to_use = self.pool.get('stock.picking').search(cr, uid, [
-                ('type', '=', 'out'),
-                ('subtype', '=', 'picking'),
-                ('sale_id', '=', sol.order_id.id),
+                ('type', '=', picking_data['type']),
+                ('subtype', '=', picking_data['subtype']),
+                ('sale_id', '=', picking_data['sale_id']),
                 ('partner_id2', '=', sol.order_partner_id.id),
                 ('state', '=', 'draft'),
             ], context=context)
             if not pick_to_use:
-                picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context)
                 pick_to_use = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
                 pick_name = self.pool.get('stock.picking').read(cr, uid, pick_to_use, ['name'] ,context=context)['name']
                 self.infolog(cr, uid, "The Picking Ticket id:%s (%s) has been created from %s id:%s (%s)." % (

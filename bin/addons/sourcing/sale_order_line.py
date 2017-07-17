@@ -1478,7 +1478,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
     def source_line(self, cr, uid, ids, context=None):
         """
-        From sale.order.line to purchase.order.line
+        Source a sale.order.line
         """
         if context is None:
             context = {}
@@ -1489,20 +1489,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             if sourcing_line.type == 'make_to_stock':
-                pick_to_use = self.get_existing_pick(cr, uid, sourcing_line.id, context=context)
-                if not pick_to_use:
-                    pick_to_use = self.create_pick_from_sourcing_line(cr, uid, sourcing_line.id, context=context)    
-                    # log new picking ticket:
-                    pick = self.pool.get('stock.picking').browse(cr, uid, pick_to_use, context=context)
-                    msg = 'The Picking ticket, id:%s (%s) has been created' % (pick.id, pick.name)
-                    self.pool.get('stock.picking').log(cr, uid, pick_to_use, msg)
-                    self.pool.get('stock.picking').infolog(cr, uid, msg)
-
-                # create the stock.picking line from the sourcing line:
-                # move_data = self.pool.get('sale.order')._get_move_data(cr, uid, sourcing_line.order_id, sourcing_line, pick_to_use, context=context)
-                # self.pool.get('stock.move').create(cr, uid, move_data, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
-                wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'confirmed', cr)
+                wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'confirmed', cr) # confirmation create pick/out
                     
             elif sourcing_line.type == 'make_to_order':
                 po_to_use = self.get_existing_po(cr, uid, sourcing_line.id, context=context)
