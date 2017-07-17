@@ -50,7 +50,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('type', '!=', 'view'),
         # Either Payable/Payables accounts or Regular / Debt accounts
         '|', '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'), '&', ('type', '=', 'other'), ('user_type_code', 'in', ['debt','cash','income']),
-        ('type_for_register', '!=', 'donation'),
+        ('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
     ],
     # HEADER OF:
     #+ Stock Transfer Voucher
@@ -61,6 +61,7 @@ ACCOUNT_RESTRICTED_AREA = {
         # Either Receivable/Receivables or Receivable/Cash or Regular/Cash or Regular/Income accounts
         '|', '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables','cash']),
         '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
+        ('type_for_register', 'not in', ['advance', 'transfer', 'transfer_same']),
     ],
     # HEADER OF donation
     'donation_header': [
