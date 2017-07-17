@@ -179,13 +179,6 @@ class entity(osv.osv):
             res[activity.entity_id]['last_dateactivity'] = activity.datetime
         return res
 
-    def set_pg_version(self, cr, uid, identifier, hardware_id, pg_version, context=None):
-        ids_to_set = self.search(cr, uid,
-                                 [('identifier', '=', identifier),
-                                  ('hardware_id', '=', hardware_id)],
-                                 context=context)
-        self.write(cr, 1, ids_to_set, {'pgversion_id': pg_version}, context=context)
-
     def set_activity(self, cr, uid, entity, activity, wait=False, context=None):
         if context is None:
             context = {}
@@ -486,6 +479,14 @@ class entity(osv.osv):
         self.write(cr, 1, ids_to_validate, {'state': 'invalidated'}, context=context)
         self._send_invalidation_email(cr, uid, entity, ids_to_validate, context=context)
         return (True, "Instance %s are now invalidated" % ", ".join(uuid_list))
+
+    @check_validated
+    def set_pg_version(self, cr, uid, identifier, hardware_id, pg_version, context=None):
+        ids_to_set = self.search(cr, uid,
+                                 [('identifier', '=', identifier),
+                                  ('hardware_id', '=', hardware_id)],
+                                 context=context)
+        self.write(cr, 1, ids_to_set, {'pgversion_id': pg_version}, context=context)
 
     def validate_action(self, cr, uid, ids, context=None):
         if not context:
