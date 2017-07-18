@@ -37,6 +37,36 @@ class purchase_order_line_sync(osv.osv):
         'dest_partner_id': fields.related('order_id', 'dest_partner_id', string='Destination partner', readonly=True, type='many2one', relation='res.partner', store=True),
     }
 
+    def validated_sol_update_original_pol(self, cr, uid, source, line_info, context=None):
+        # {'analytic_distribution_id': {'id': u'sd.4a38d456-4489-11e7-9f1f-00163e623489/analytic_distribution/3'},
+        #  'cancel_split_ok': False,
+        #  'comment': False,
+        #  'confirmed_delivery_date': '2017-07-20',
+        #  'date_planned': '2017-07-18',
+        #  'default_code': u'ADAPCABL1S-',
+        #  'default_name': u'(computer) CABLE, SERIAL interface for two PC (fem/fem)',
+        #  'have_analytic_distribution_from_header': False,
+        #  'is_line_split': False,
+        #  'line_number': 1,
+        #  'name': u'(computer) CABLE, SERIAL interface for two PC (fem/fem)',
+        #  'nomen_manda_0': False,
+        #  'nomen_manda_1': False,
+        #  'nomen_manda_2': False,
+        #  'nomen_manda_3': False,
+        #  'nomenclature_description': False,
+        #  'notes': False,
+        #  'price_unit': 1.0,
+        #  'product_id': {'id': u'sd.msf_sync_data_hq_product_computer_cable_serial_interface_for_two_pc_femfem',
+        #                 'name': u'(computer) CABLE, SERIAL interface for two PC (fem/fem)'},
+        #  'product_uom': u'PCE',
+        #  'product_uom_qty': 12.0}
+        if context is None:
+            context = {}
+
+        import pdb; pdb.set_trace()
+
+        return True
+
     def confirmed_dpo_service_lines_update_in_po(self, cr, uid, source, line_info, context=None):
         """
         Each DPO line with service products update IN lines
