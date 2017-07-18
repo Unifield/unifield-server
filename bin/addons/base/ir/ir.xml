@@ -741,8 +741,7 @@
             <field name="act_window_id" ref="action_res_users"/>
         </record>
 
-        <menuitem action="action_res_users" id="menu_action_res_users" parent="base.menu_users"
-            groups="base.group_extended"/>
+        <menuitem action="action_res_users" id="menu_action_res_users" parent="base.menu_users"/>
 
         <record id="view_users_white_list_tree" model="ir.ui.view">
             <field name="name">res.users.tree</field>
