@@ -61,6 +61,7 @@
         'sale_view.xml',
         'sale_installer.xml',
         'report/sale_report_view.xml',
+        'wizard/sale_donation_stock_moves_view.xml',
         'sale_report.xml',
         'stock_view.xml',
         'board_sale_view.xml',
