@@ -1620,9 +1620,9 @@ class communication_config(osv.osv):
             ids = [ids]
 
         if ids is None:
-            ids = self.search(cr, uid, [], context=context)
+            ids = self.search(cr, 1, [], context=context)
 
-        com_obj = self.read(cr, uid, ids[0], ['message', 'from_date',
+        com_obj = self.read(cr, 1, ids[0], ['message', 'from_date',
                             'to_date'], context=context)
         if not com_obj['message']:
             return False
@@ -1652,14 +1652,14 @@ class communication_config(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if ids is None:
-            ids = self.search(cr, uid, [], context=context)
-        return self.read(cr, uid, ids[0], ['message'],
+            ids = self.search(cr, 1, [], context=context)
+        return self.read(cr, 1, ids[0], ['message'],
                 context=context)['message']
 
     def _check_only_one_obj(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        obj = self.search(cr, uid, [], context=context)
+        obj = self.search(cr, 1, [], context=context)
         if len(obj) > 1:
             return False
         return True
