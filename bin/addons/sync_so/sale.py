@@ -34,6 +34,12 @@ class sale_order_line_sync(osv.osv):
         'source_sync_line_id': fields.text(string='Sync DB id of the PO origin line'),
     }
 
+    def create_so_line(self, cr, uid, source, line_info, context=None):
+        if context is None:
+            context = {}
+        info_dict = line_info.to_dict()
+        import pdb; pdb.set_trace()
+
 sale_order_line_sync()
 
 
