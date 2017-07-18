@@ -365,6 +365,133 @@ class so_po_common(osv.osv_memory):
 
         return False
 
+    def from_pol_to_sol(self, cr, uid, source, pol, context=None):
+        '''
+        Create a sale.order.line from synced purchase.order.line
+        '''
+        if context is None:
+            context = {}
+        sol_values = {}
+        pol_values = pol.to_dict()
+        split_cancel_line = {}
+        msg_err_not_found = "" # prod received by sync but not in our DB
+
+        if pol_values.get('product_uom'):
+            sol_values['product_uom'] = self.get_uom_id(cr, uid, pol.product_uom, context=context)
+
+        if pol_values.get('have_analytic_distribution_from_header'):
+            sol_values['have_analytic_distribution_from_header'] = pol.have_analytic_distribution_from_header
+
+        if pol_values.get('line_number'):
+            sol_values['line_number'] = pol.line_number
+
+        if pol_values.get('notes'):
+            sol_values['notes'] = pol.notes
+
+        if pol_values.get('comment'):
+            sol_values['comment'] = pol.comment
+
+        # UTP-972: send also the flat is line is a split line
+        if pol_values.get('is_line_split'):
+            sol_values['is_line_split'] = pol.is_line_split
+
+        if pol_values.get('product_uom_qty'): # come from the SO
+            sol_values['product_qty'] = pol.product_uom_qty
+            sol_values['product_uom_qty'] = pol.product_uom_qty
+
+        if pol_values.get('product_qty'): # come from the PO
+            sol_values['product_uom_qty'] = pol.product_qty
+            sol_values['product_qty'] = pol.product_qty
+
+        if pol_values.get('date_planned'):
+            sol_values['date_planned'] = pol.date_planned
+
+        if pol_values.get('confirmed_delivery_date'):
+            sol_values['confirmed_delivery_date'] = pol.confirmed_delivery_date
+
+        if pol_values.get('nomenclature_description'):
+            sol_values['nomenclature_description'] = pol.nomenclature_description
+
+        if pol_values.get('price_unit'):
+            sol_values['price_unit'] = pol.price_unit
+        else:
+            sol_values['price_unit'] = 0 # This case is for the line that has price unit False (actually 0 but OpenERP converted to False)
+
+        #US-172: Added the cost_price to IR, for FO line it's not required.
+        if pol_values.get('cost_price'):
+            sol_values['cost_price'] = pol.cost_price
+
+        if pol_values.get('product_id'):
+            rec_id = self.get_product_id(cr, uid, pol.product_id, context=context)
+            if rec_id:
+                sol_values['product_id'] = rec_id
+                sol_values['name'] = pol.product_id.name
+
+                product_obj = self.pool.get('product.product')
+                product = product_obj.browse(cr, uid, [rec_id], context=context)[0]
+                procure_method = product.procure_method
+                sol_values['type'] = procure_method
+            else:
+                sol_values['name'] = pol.comment
+        else:
+            sol_values['name'] = pol.comment
+
+        if pol_values.get('procurement_id'): # replicating procurement for RW instance
+            rec_id = self.pool.get('procurement.order').find_sd_ref(cr, uid, xmlid_to_sdref(pol.procurement_id.id), context=context)
+            if rec_id:
+                sol_values['procurement_id'] = rec_id
+
+        if pol_values.get('nomen_manda_0'):
+            rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(pol.nomen_manda_0.id), context=context)
+            if rec_id:
+                sol_values['nomen_manda_0'] = rec_id
+
+        if not sol_values.get('nomen_manda_0') and not sol_values.get('product_id'):
+            if not msg_err_not_found:
+                msg_err_not_found += "Order could not be created as product not recognised, not existing in current database?\n"
+            msg_err_not_found += "Product '%s' (line %s) with code %s not recognised.\n" % (pol.name, pol.line_number, pol.default_code)
+
+        if pol_values.get('nomen_manda_1'):
+            rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(pol.nomen_manda_1.id), context=context)
+            if rec_id:
+                sol_values['nomen_manda_1'] = rec_id
+
+        if pol_values.get('nomen_manda_2'):
+            rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(pol.nomen_manda_2.id), context=context)
+            if rec_id:
+                sol_values['nomen_manda_2'] = rec_id
+
+        if pol_values.get('nomen_manda_3'):
+            rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(pol.nomen_manda_3.id), context=context)
+            if rec_id:
+                sol_values['nomen_manda_3'] = rec_id
+
+        if pol_values.get('sync_sourced_origin'):
+            sol_values['origin'] = pol_values.get('sync_sourced_origin')
+            so_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', sol_values['origin']), ('state', 'in', ('sourced', 'progress', 'manual')), ('procurement_request', 'in', ('t', 'f'))], context=context)
+            if so_ids:
+                sol_values['link_so_id'] = so_ids[0]
+
+        if pol_values.get('cancel_split_ok'):
+            if pol_values.get('line_number'):
+                split_cancel_line.setdefault(pol_values.get('line_number'), [])
+                split_cancel_line[pol_values.get('line_number')].append(pol_values.get('cancel_split_ok'))
+
+        if pol_values.get('id'): # Only used for Remote Warehouse when creating a new order line, this xmlid will be used and not the local one 
+            sol_values['rw_xmlid'] = pol.id.replace('sd.','')
+
+        # UTP-952: set empty AD for lines if the partner is intermission or section
+        partner_type = self.get_partner_type(cr, uid, source, context)
+        if partner_type not in ['section', 'intermission'] and pol_values.get('analytic_distribution_id'):
+            sol_values['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, pol_values, context)
+
+        if pol_values.get('source_sync_line_id'):
+            sol_values['original_purchase_line_id'] = pol_values['source_sync_line_id']
+
+        return sol_values
+
+
+
     def get_lines(self, cr, uid, source, line_values, po_id, so_id, for_update, so_called, context):
         line_result = []
         update_lines = []

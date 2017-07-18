@@ -29,6 +29,7 @@ from sync_client import get_sale_purchase_logger
 
 class sale_order_line_sync(osv.osv):
     _inherit = "sale.order.line"
+    _logger = logging.getLogger('------sync.sale.order.line')
 
     _columns = {
         'source_sync_line_id': fields.text(string='Sync DB id of the PO origin line'),
@@ -37,8 +38,23 @@ class sale_order_line_sync(osv.osv):
     def create_so_line(self, cr, uid, source, line_info, context=None):
         if context is None:
             context = {}
-        info_dict = line_info.to_dict()
-        import pdb; pdb.set_trace()
+        pol_dict = line_info.to_dict()
+
+        # search for the parent sale.order:
+        sale_order_ids = self.pool.get('sale.order').search(cr, uid, [('client_order_ref', '=', '%s.%s' % (source, pol_dict['order_id']['name']))])
+        if not sale_order_ids:
+            raise Exception, "Cannot find the parent sale order of the line"
+        so_name = self.pool.get('sale.order').read(cr, uid, sale_order_ids[0], ['name'], context=context)['name'] or ''
+
+        # from purchase.order.line to sale.order.line:
+        sol_values = self.pool.get('so.po.common').from_pol_to_sol(cr, uid, source, line_info, context)
+        sol_values['order_id'] = sale_order_ids[0]
+        new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
+
+        message = " New line #%s (id:%s) added to Sale Order %s" % (pol_dict['line_number'], new_sol_id, so_name)
+        self._logger.info(message)
+
+        return message
 
 sale_order_line_sync()
 
