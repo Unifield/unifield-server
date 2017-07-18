@@ -65,5 +65,10 @@
             groups="base.group_erp_manager"/>
         <menuitem id="sync_client.main_menu"
             groups="base.group_erp_manager"/>
+        <menuitem id="menu_action_res_users"
+            groups="base.group_extended,sync_common.sync_read_group"/>
+        <menuitem id="menu_action_res_groups"
+            groups="base.group_extended,sync_common.sync_read_group"/>
+
     </data>
 </openerp>
