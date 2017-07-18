@@ -482,11 +482,7 @@ class entity(osv.osv):
 
     @check_validated
     def set_pg_version(self, cr, uid, entity, pg_version, context=None):
-        ids_to_set = self.search(cr, uid,
-                                 [('identifier', '=', entity.identifier),
-                                  ('hardware_id', '=', entity.hardware_id)],
-                                 context=context)
-        self.write(cr, 1, ids_to_set, {'pgversion': pg_version}, context=context)
+        self.write(cr, 1, entity.id, {'pgversion': pg_version}, context=context)
         return True
 
     def validate_action(self, cr, uid, ids, context=None):
