@@ -318,7 +318,9 @@ class sync_version_instance_monitor(osv.osv):
         'instance_state': fields.related('instance_id', 'state', type='selection',
                                          selection=[('draft', 'Draft'),
                                                     ('active', 'Active'),
-                                                    ('inactive', 'Inactive')], string='Instance State', readonly=True,)
+                                                    ('inactive', 'Inactive')],
+                                         string='Instance State',
+                                         readonly=True, store=True)
     }
 
     _defaults = {
