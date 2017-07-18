@@ -31,8 +31,17 @@ class sale_order_line_sync(osv.osv):
     _inherit = "sale.order.line"
     _logger = logging.getLogger('------sync.sale.order.line')
 
+    def _get_fake_id(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for i in ids:
+            ret[i] = i
+        return ret
+
     _columns = {
         'source_sync_line_id': fields.text(string='Sync DB id of the PO origin line'),
+        'fake_id': fields.function(_get_fake_id, type='integer', method=True, string='ID', help='for internal use only'),
     }
 
     def create_so_line(self, cr, uid, source, line_info, context=None):
