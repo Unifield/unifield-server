@@ -1325,7 +1325,8 @@ class account_move_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if len(ids) != 1:
+        active_ids = context.get('active_ids', [])  # to detect if the user has selected several JIs
+        if len(ids) != 1 or len(active_ids) > 1:
             raise osv.except_osv(_('Error'),
                                  _('The related entries feature can only be used with one Journal Item.'))
         ir_model_obj = self.pool.get('ir.model.data')
