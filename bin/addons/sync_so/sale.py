@@ -42,6 +42,7 @@ class sale_order_line_sync(osv.osv):
     _columns = {
         'source_sync_line_id': fields.text(string='Sync DB id of the PO origin line'),
         'fake_id': fields.function(_get_fake_id, type='integer', method=True, string='ID', help='for internal use only'),
+        'sync_linked_pol': fields.integer(string='Linked purchase order line at synchro'),
     }
 
     def create_so_line(self, cr, uid, source, line_info, context=None):
@@ -58,6 +59,7 @@ class sale_order_line_sync(osv.osv):
         # from purchase.order.line to sale.order.line:
         sol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, line_info, context)
         sol_values['order_id'] = sale_order_ids[0]
+        sol_values['sync_linked_pol'] =  pol_dict.get('fake_id', False)
         new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
 
         message = ": New line #%s (id:%s) added to Sale Order %s ::" % (pol_dict['line_number'], new_sol_id, so_name)

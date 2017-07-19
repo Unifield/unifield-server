@@ -35,39 +35,39 @@ class purchase_order_line_sync(osv.osv):
     _columns = {
         'original_purchase_line_id': fields.text(string='Original purchase line id'),
         'dest_partner_id': fields.related('order_id', 'dest_partner_id', string='Destination partner', readonly=True, type='many2one', relation='res.partner', store=True),
+        'sync_linked_sol': fields.integer(string='Linked sale order line at synchro'),
     }
 
     def validated_sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
-        # {'analytic_distribution_id': {'id': u'sd.4a38d456-4489-11e7-9f1f-00163e623489/analytic_distribution/3'},
-        #  'cancel_split_ok': False,
-        #  'comment': False,
-        #  'confirmed_delivery_date': '2017-07-20',
-        #  'date_planned': '2017-07-18',
-        #  'default_code': u'ADAPCABL1S-',
-        #  'default_name': u'(computer) CABLE, SERIAL interface for two PC (fem/fem)',
-        #  'have_analytic_distribution_from_header': False,
-        #  'is_line_split': False,
-        #  'line_number': 1,
-        #  'name': u'(computer) CABLE, SERIAL interface for two PC (fem/fem)',
-        #  'nomen_manda_0': False,
-        #  'nomen_manda_1': False,
-        #  'nomen_manda_2': False,
-        #  'nomen_manda_3': False,
-        #  'nomenclature_description': False,
-        #  'notes': False,
-        #  'price_unit': 1.0,
-        #  'product_id': {'id': u'sd.msf_sync_data_hq_product_computer_cable_serial_interface_for_two_pc_femfem',
-        #                 'name': u'(computer) CABLE, SERIAL interface for two PC (fem/fem)'},
-        #  'product_uom': u'PCE',
-        #  'product_uom_qty': 12.0}
+        '''
+        Update the original PO (project) when validating the FO (coordo)
+        '''
         if context is None:
             context = {}
 
         sol_dict = sol_info.to_dict()
 
-        import pdb; pdb.set_trace()
+        # search for the parent purchase.order:
+        po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', '%s.%s' % (source, sol_dict['order_id']['name']))])
+        if not po_ids:
+            raise Exception, "Cannot find the parent Purchase Order of the line"
 
-        return True
+        # update the linked PO line:
+        pol_to_update = sol_dict.get('sync_linked_pol', False)
+        if not pol_to_update:
+            raise Exception, "Cannot find the linked Purchase Order to update"
+        if isinstance(pol_to_update, (int,long)):
+            pol_to_update = [pol_to_update]
+        pol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, sol_info, context)
+        pol_values['order_id'] = po_ids[0]
+        self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
+
+        po_name = self.pool.get('purchase.order').read(cr, uid, po_ids[0], ['name'], context=context)['name'] or ''
+        message = "+++ Purchase Order %s: line number %s (id:%s) has been updated +++" % (po_name, pol_values['line_number'], pol_to_update[0])
+        logging.getLogger('------sync.purchase.order.line').info(message)
+
+        return message
+
 
     def confirmed_dpo_service_lines_update_in_po(self, cr, uid, source, line_info, context=None):
         """
