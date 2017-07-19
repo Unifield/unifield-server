@@ -48,6 +48,9 @@
                             <button name="button_wiz_import_cheques" states="open" string="Import Cheques" type="object" icon="gtk-dnd"/>
                             <button name="button_wiz_import_invoices" states="open" string="Pending Payments" type="object" icon="gtk-save"/>
                             <label string="" colspan="1"/>
+                            <group colspan="4">
+                                <button name="button_open_advances" string="List of Open Advances" type="object" icon="gtk-justify-fill"/>
+                            </group>
                         </group>
                         <notebook colspan="4">
                             <page string="Transaction" name="statement_line_ids">
