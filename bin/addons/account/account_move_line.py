@@ -1349,7 +1349,7 @@ class account_move_line(osv.osv):
             aml.reconcile_partial_id and set_of_reconcile_ids.add(aml.reconcile_partial_id.id)
 
         domain_related_jis = ['|', '|', '|',
-                              ('ref', 'in', list(set_of_refs)),
+                              '&', ('ref', 'in', list(set_of_refs)), ('ref', '!=', ''),
                               ('ref', '=', selected_entry_seq),
                               ('reconcile_id', 'in', list(set_of_reconcile_ids)),
                               ('reconcile_partial_id', 'in', list(set_of_reconcile_ids))]
