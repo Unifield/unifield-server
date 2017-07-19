@@ -513,11 +513,11 @@ class WebKitParser(report_sxw):
                                       namespaces=namespaces)
         for cell in number_cells:
             # if space in the in Numbers, remove them
-            forbidden_chars = [' ', u'\xa0']
+            forbidden_chars = [' ', u'\xc2\xa0', u'\xa0']
             for char in forbidden_chars:
-                if isinstance(cell.text, str) and char in cell.text:
+                if isinstance(cell.text, basestring) and char in cell.text:
                     error_message = 'Line %s of document %s is corrupted, a '\
-                        'Number cannot contain characters or spaces: %s' % \
+                        'Number cannot contain characters or spaces: %r' % \
                             (cell.sourceline, report_name, cell.text)
                     logger.warning(error_message)
                     cell.text = cell.text.replace(char, '')
