@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from osv import osv
+from osv import osv, fields
 import netsvc
 from tools.translate import _
 import time
@@ -260,6 +260,26 @@ purchase_order_line()
 class purchase_order(osv.osv):
     _name = "purchase.order"
     _inherit = "purchase.order"
+
+
+    def _get_has_validated_line(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        If the PO have at least one validated line, then return True, else return False
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for po in self.browse(cr, uid, ids, context=context):
+            res[po.id] = any([pol.state == 'validated' for pol in po.order_line])
+            
+        return res
+
+
+    _columns = {
+        'has_validated_line': fields.function(_get_has_validated_line, method=True, string='Has the PO at least one validated line ?', type='boolean'),
+    }
 
     def validate_lines(self, cr, uid, ids, context=None):
         """

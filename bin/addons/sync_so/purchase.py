@@ -37,7 +37,7 @@ class purchase_order_line_sync(osv.osv):
         'dest_partner_id': fields.related('order_id', 'dest_partner_id', string='Destination partner', readonly=True, type='many2one', relation='res.partner', store=True),
     }
 
-    def validated_sol_update_original_pol(self, cr, uid, source, line_info, context=None):
+    def validated_sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
         # {'analytic_distribution_id': {'id': u'sd.4a38d456-4489-11e7-9f1f-00163e623489/analytic_distribution/3'},
         #  'cancel_split_ok': False,
         #  'comment': False,
@@ -62,6 +62,8 @@ class purchase_order_line_sync(osv.osv):
         #  'product_uom_qty': 12.0}
         if context is None:
             context = {}
+
+        sol_dict = sol_info.to_dict()
 
         import pdb; pdb.set_trace()
 
