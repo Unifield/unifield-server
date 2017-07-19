@@ -82656,11 +82656,6 @@ msgstr "Suivi d'un mouvement"
 msgid "Load"
 msgstr "Charger"
 
-#. module: sync_client
-#: view:sync.client.register_entity:0
-msgid "Generate a new UUID"
-msgstr "Générer un nouvel Identificateur d'utilisateur unique"
-
 #. module: transport_mgmt
 #: selection:international.transport.cost.report,transport_mode:0
 #: selection:purchase.order,transport_mode:0
