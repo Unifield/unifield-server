@@ -408,7 +408,25 @@ class purchase_order(osv.osv):
         return res
 
 
+    def _get_has_validated_line(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        If the PO have at least one validated line, then return True, else return False
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for po in self.browse(cr, uid, ids, context=context):
+            res[po.id] = any([pol.state == 'validated' for pol in po.order_line])
+
+        return res
+
+
     _columns = {
+        'has_validated_line': fields.function(_get_has_validated_line, method=True, string='Has the PO at least one validated line ?', type='boolean', 
+            store = {'purchase.order.line': (_get_order, ['state'], 10)}),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),
                                         ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),

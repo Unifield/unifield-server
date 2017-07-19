@@ -262,25 +262,6 @@ class purchase_order(osv.osv):
     _inherit = "purchase.order"
 
 
-    def _get_has_validated_line(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        If the PO have at least one validated line, then return True, else return False
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        res = {}
-        for po in self.browse(cr, uid, ids, context=context):
-            res[po.id] = any([pol.state == 'validated' for pol in po.order_line])
-            
-        return res
-
-
-    _columns = {
-        'has_validated_line': fields.function(_get_has_validated_line, method=True, string='Has the PO at least one validated line ?', type='boolean'),
-    }
-
     def validate_lines(self, cr, uid, ids, context=None):
         """
         Force PO lines validation and update PO state
