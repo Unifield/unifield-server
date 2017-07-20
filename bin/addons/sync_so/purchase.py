@@ -244,15 +244,15 @@ class purchase_order_sync(osv.osv):
     _inherit = "purchase.order"
     _logger = logging.getLogger('------sync.purchase.order')
 
-    def _is_confirmed_and_synced(self, cr, uid, ids, field_name, arg, context=None):
-        """fields.function 'is_confirmed_and_synced'."""
+    def _is_validated_and_synced(self, cr, uid, ids, field_name, arg, context=None):
+        """fields.function 'is_validated_and_synced'."""
         if context is None:
             context = {}
         res = {}
         sync_msg_obj = self.pool.get('sync.client.message_to_send')
         for po in self.browse(cr, uid, ids, context=context):
             res[po.id] = False
-            if po.state == 'confirmed' \
+            if po.state == 'validated' \
                     and po.partner_id and po.partner_id.partner_type != 'esc':  # uftp-88 PO for ESC partner are never to synchronised, no warning msg in PO form
                 po_identifier = self.get_sd_ref(cr, uid, po.id, context=context)
                 sync_msg_ids = sync_msg_obj.search(
@@ -271,17 +271,17 @@ class purchase_order_sync(osv.osv):
         'from_sync': fields.boolean('Updated by synchronization', readonly=False),
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
         'fo_sync_date': fields.datetime(string='FO sync. date', readonly=True),
-        'is_confirmed_and_synced': fields.function(
-            _is_confirmed_and_synced, method=True,
+        'is_validated_and_synced': fields.function(
+            _is_validated_and_synced, method=True,
             type='boolean',
-            string=u"Confirmed and Synced"),
+            string=u"Validated and Synced"),
     }
 
     _defaults = {
         'push_fo': False,
         'sended_by_supplier': True,
         'po_updated_by_sync': False,
-        'is_confirmed_and_synced': False,
+        'is_validated_and_synced': False,
     }
 
     def manage_split_po_lines(self, cr, uid, po_id, context=None):
