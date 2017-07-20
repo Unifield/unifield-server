@@ -452,12 +452,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             else: # else compute the less advanced state:
                 res[so.id] = self.pool.get('sale.order.line.state').get_less_advanced_state(cr, uid, ids, sol_states, context=context)
 
-                # set the draft-p state ?
-                draft_sequence = self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, 'draft', context=context)
-                # do we have a line further then draft in our FO ?
-                has_line_further = any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > draft_sequence for s in sol_states])
-                if res[so.id] == 'draft' and has_line_further:
-                    res[so.id] = 'draft_partial'
+                if res[so.id] == 'draft': # set the draft-p state ?
+                    draft_sequence = self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, 'draft', context=context)
+                    # do we have a line further then draft in our FO ?
+                    if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > draft_sequence for s in sol_states]):
+                        res[so.id] = 'draft_partial'
+                elif res[so.id] == 'sourced': # set the source-p state ?
+                    sourced_sequence = self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, 'sourced', context=context)
+                    # do we have a line further then draft in our FO ?
+                    if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > sourced_sequence for s in sol_states]):
+                        res[so.id] = 'sourced_partial'
 
         return res
 
