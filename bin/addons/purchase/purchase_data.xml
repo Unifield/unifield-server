@@ -55,13 +55,17 @@
             <field name="name">validated</field>
             <field name="sequence">20</field>
         </record>
+        <record id="pol_state_sourced" model="purchase.order.line.state">
+            <field name="name">sourced</field>
+            <field name="sequence">30</field>
+        </record>
         <record id="pol_state_confirmed" model="purchase.order.line.state">
             <field name="name">confirmed</field>
-            <field name="sequence">30</field>
+            <field name="sequence">40</field>
         </record>
         <record id="pol_state_done" model="purchase.order.line.state">
             <field name="name">done</field>
-            <field name="sequence">40</field>
+            <field name="sequence">50</field>
         </record>
     </data>
 </openerp>
