@@ -45,6 +45,7 @@ class purchase_order_line_sync(osv.osv):
         if context is None:
             context = {}
 
+        wf_service = netsvc.LocalService("workflow")
         sol_dict = sol_info.to_dict()
 
         # search for the parent purchase.order:
@@ -55,15 +56,21 @@ class purchase_order_line_sync(osv.osv):
         # update the linked PO line:
         pol_to_update = sol_dict.get('sync_linked_pol', False)
         if not pol_to_update:
-            raise Exception, "Cannot find the linked Purchase Order to update"
+            raise Exception, "Cannot find the linked Purchase Order line to update"
         if isinstance(pol_to_update, (int,long)):
             pol_to_update = [pol_to_update]
         pol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, sol_info, context)
         pol_values['order_id'] = po_ids[0]
-        self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
+        pol_updated = False
+        if sol_dict['is_line_split']: # if line has been split in FO 
+            pol_updated = self.pool.get('purchase.order.line').copy(cr, uid, pol_to_update[0], pol_values, context=context)
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'validated', cr)
+        else: # regular update
+            self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
+            pol_updated = pol_to_update[0]
 
         po_name = self.pool.get('purchase.order').read(cr, uid, po_ids[0], ['name'], context=context)['name'] or ''
-        message = "+++ Purchase Order %s: line number %s (id:%s) has been updated +++" % (po_name, pol_values['line_number'], pol_to_update[0])
+        message = "+++ Purchase Order %s: line number %s (id:%s) has been updated +++" % (po_name, pol_values['line_number'], pol_updated)
         logging.getLogger('------sync.purchase.order.line').info(message)
 
         return message
