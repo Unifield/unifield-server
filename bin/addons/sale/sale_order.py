@@ -462,6 +462,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     # do we have a line further then sourced in our FO ?
                     if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > sourced_sequence for s in sol_states]):
                         res[so.id] = 'sourced_partial'
+                elif res[so.id] == 'confirmed': # set the source-p state ?
+                    confirmed_sequence = self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, 'confirmed', context=context)
+                    # do we have a line further then confirmed in our FO ?
+                    if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in sol_states]):
+                        res[so.id] = 'confirmed_partial'
+
 
         return res
 
