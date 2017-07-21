@@ -93,7 +93,6 @@ class account_account(osv.osv):
             context = {}
         accounts = {}
         aml_obj = self.pool.get('account.move.line')
-        fy_obj = self.pool.get('account.fiscalyear')
 
         # Compute for each account the balance/debit/credit from the move lines
         ctx_query = context.copy()
