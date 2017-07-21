@@ -140,8 +140,10 @@ class purchase_order_line(osv.osv):
         return res
 
     _columns = {
-        'created_when_po_validated': fields.boolean(string='Has been created is a PO in validated state'),
+        'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
+        'created_when_po_validated': fields.boolean(string='Created when PO validated', help='Has been created in a PO in validated state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
+        'linked_sol_id': fields.many2one('sale.order.line', 'Linked Sale Order line in case of PO from sourcing', readonly=True),
     # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=512, string='Origin'),
@@ -211,9 +213,9 @@ class purchase_order_line(osv.osv):
         'invoiced': fields.boolean('Invoiced', readonly=True),
         'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
         'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
-        'linked_sol_id': fields.many2one('sale.order.line', 'Linked Sale Order line in case of PO from sourcing', readonly=True),
     }
     _defaults = {
+        'set_as_sourced_n': lambda *a: False,
         'created_when_po_validated': lambda *a: False,
         'change_price_manually': lambda *a: False,
         'product_qty': lambda *a: 0.00,

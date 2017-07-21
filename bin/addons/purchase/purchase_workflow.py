@@ -180,6 +180,49 @@ class purchase_order_line(osv.osv):
 
         return True
 
+
+    def action_sourced_s(self, cr, uid, ids, context=None):
+        '''
+        wkf method when PO line get the sourced_s state
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'sourced_s'}, context=context)
+
+        return True
+        
+        
+    def action_sourced_v(self, cr, uid, ids, context=None):
+        '''
+        wkf method when PO line get the sourced_v state
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'sourced_v'}, context=context)
+
+        return True
+
+
+    def action_sourced_n(self, cr, uid, ids, context=None):
+        '''
+        wkf method when PO line get the sourced_n state
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'sourced_n'}, context=context)
+
+        return True
+
+
     def action_confirmed(self, cr, uid, ids, context=None):
         '''
         wkf method to confirm the PO line
