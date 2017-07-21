@@ -76,6 +76,18 @@ class purchase_order_line_sync(osv.osv):
         return message
 
 
+    def update_pol_state(self, cr, uid, source, sol_info, context=None):
+        '''
+        Update the PO line state according to the given FO line state
+        '''
+        if context is None:
+            context = {}
+
+        #TODO dev
+
+        return True
+        
+
     def confirmed_sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
         '''
         Update the original PO (project) when confirming the FO (coordo)
