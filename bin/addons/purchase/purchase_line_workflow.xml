@@ -26,6 +26,24 @@
             <field name="kind">function</field>
             <field name="action">action_validate()</field>
         </record>
+        <record id="act_pol_sourced_s" model="workflow.activity">
+            <field name="name">sourced_s</field>
+            <field name="wkf_id" ref="wkf_purchase_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_sourced_s()</field>
+        </record>
+        <record id="act_pol_sourced_v" model="workflow.activity">
+            <field name="name">sourced_v</field>
+            <field name="wkf_id" ref="wkf_purchase_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_sourced_v()</field>
+        </record>
+        <record id="act_pol_sourced_n" model="workflow.activity">
+            <field name="name">sourced_n</field>
+            <field name="wkf_id" ref="wkf_purchase_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_sourced_n()</field>
+        </record>
         <record id="act_pol_confirmed" model="workflow.activity">
             <field name="name">confirmed</field>
             <field name="wkf_id" ref="wkf_purchase_order_line"/>
@@ -48,6 +66,12 @@
 
         <!-- ############## Transitions ############## -->
 
+        <record id="trans_pol_draft_validated" model="workflow.transition">
+            <field name="act_from" ref="act_pol_draft"/>
+            <field name="act_to" ref="act_pol_validated"/>
+            <field name="signal">validated</field>
+        </record>
+
         <!-- specific transitions for validated-p lines -->
             <record id="trans_pol_draft_validated_p" model="workflow.transition">
                 <field name="act_from" ref="act_pol_draft"/>
@@ -60,12 +84,48 @@
                 <field name="signal">validated</field>
             </record>
         <!-- end validated-p -->
-        
-        <record id="trans_pol_draft_validated" model="workflow.transition">
-            <field name="act_from" ref="act_pol_draft"/>
-            <field name="act_to" ref="act_pol_validated"/>
-            <field name="signal">validated</field>
-        </record>
+
+        <!-- specific transitions for sourced-XXX -->
+            <record id="trans_pol_validated_sourced_s" model="workflow.transition">
+                <field name="act_from" ref="act_pol_validated"/>
+                <field name="act_to" ref="act_pol_sourced_s"/>
+                <field name="signal">sourced_s</field>
+            </record>
+            <record id="trans_pol_validated_sourced_v" model="workflow.transition">
+                <field name="act_from" ref="act_pol_validated"/>
+                <field name="act_to" ref="act_pol_sourced_v"/>
+                <field name="signal">sourced_v</field>
+            </record>
+            <record id="trans_pol_sourced_s_sourced_v" model="workflow.transition">
+                <field name="act_from" ref="act_pol_sourced_s"/>
+                <field name="act_to" ref="act_pol_sourced_v"/>
+                <field name="signal">sourced_v</field>
+            </record>
+            <record id="trans_pol_sourced_s_confirmed" model="workflow.transition">
+                <field name="act_from" ref="act_pol_sourced_s"/>
+                <field name="act_to" ref="act_pol_confirmed"/>
+                <field name="signal">confirmed</field>
+            </record>
+            <record id="trans_pol_sourced_v_confirmed" model="workflow.transition">
+                <field name="act_from" ref="act_pol_sourced_v"/>
+                <field name="act_to" ref="act_pol_confirmed"/>
+                <field name="signal">confirmed</field>
+            </record>
+        <!-- end sourced-XXX -->
+
+        <!-- specific transitions for sourced-n lines -->
+            <record id="trans_pol_draft_sourced_n" model="workflow.transition">
+                <field name="act_from" ref="act_pol_draft"/>
+                <field name="act_to" ref="act_pol_sourced_n"/>
+                <field name="condition">set_as_sourced_n == True</field>
+            </record>
+            <record id="trans_pol_sourced_n_confirmed" model="workflow.transition">
+                <field name="act_from" ref="act_pol_sourced_n"/>
+                <field name="act_to" ref="act_pol_confirmed"/>
+                <field name="signal">confirmed</field>
+            </record>
+        <!-- end sourced-n -->
+
         <record id="trans_pol_validated_confirmed" model="workflow.transition">
             <field name="act_from" ref="act_pol_validated"/>
             <field name="act_to" ref="act_pol_confirmed"/>
