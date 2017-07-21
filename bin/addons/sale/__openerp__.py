@@ -61,12 +61,13 @@
         'sale_view.xml',
         'sale_installer.xml',
         'report/sale_report_view.xml',
-        'wizard/sale_donation_stock_moves_view.xml',
         'sale_report.xml',
         'stock_view.xml',
         'board_sale_view.xml',
         'sale_order_allocation_report.xml',
         # 'process/sale_process.xml',
+        'wizard/sale_donation_stock_moves_view.xml',
+        'report/sale_donation_stock_moves_report.xml'
     ],
     'demo_xml': ['sale_demo.xml'],
     'test': [
