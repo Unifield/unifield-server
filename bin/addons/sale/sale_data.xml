@@ -26,7 +26,7 @@
     <data noupdate="0">
         <record id="sol_state_cancel" model="sale.order.line.state">
             <field name="name">cancel</field>
-            <field name="sequence">100</field>
+            <field name="sequence">1000</field>
         </record>
         <record id="sol_state_draft" model="sale.order.line.state">
             <field name="name">draft</field>
@@ -40,17 +40,25 @@
             <field name="name">sourced</field>
             <field name="sequence">30</field>
         </record>
+        <record id="sol_state_sourced_s" model="sale.order.line.state">
+            <field name="name">sourced_s</field>
+            <field name="sequence">40</field>
+        </record>
         <record id="sol_state_sourced_v" model="sale.order.line.state">
             <field name="name">sourced_v</field>
-            <field name="sequence">35</field>
+            <field name="sequence">50</field>
+        </record>
+        <record id="sol_state_sourced_n" model="sale.order.line.state">
+            <field name="name">sourced_n</field>
+            <field name="sequence">60</field>
         </record>
         <record id="sol_state_confirmed" model="sale.order.line.state">
             <field name="name">confirmed</field>
-            <field name="sequence">40</field>
+            <field name="sequence">70</field>
         </record>
         <record id="sol_state_done" model="sale.order.line.state">
             <field name="name">done</field>
-            <field name="sequence">50</field>
+            <field name="sequence">80</field>
         </record>
     </data>
 </openerp>
