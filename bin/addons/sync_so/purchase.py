@@ -83,7 +83,15 @@ class purchase_order_line_sync(osv.osv):
         if context is None:
             context = {}
 
-        #TODO dev
+        wf_service = netsvc.LocalService("workflow")
+        sol_dict = sol_info.to_dict()
+
+        pol_to_update = sol_dict['sync_linked_pol']
+
+        if sol_dict['state'] == 'sourced':
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update, 'sourced_s', cr)
+        elif sol_dict['state'] == 'sourced_v':
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update, 'sourced_v', cr)
 
         return True
         

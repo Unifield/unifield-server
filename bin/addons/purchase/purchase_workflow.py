@@ -189,8 +189,13 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
 
         self.write(cr, uid, ids, {'state': 'sourced_s'}, context=context)
+
+        # update linked sol (same instance) to sourced-s
+        for po in self.browse(cr, uid, ids, context=context):
+            wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_s', cr)
 
         return True
         
@@ -203,8 +208,13 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
 
         self.write(cr, uid, ids, {'state': 'sourced_v'}, context=context)
+
+        #update linked sol (same instance) to sourced-v
+        for po in self.browse(cr, uid, ids, context=context):
+            wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_v', cr)
 
         return True
 
