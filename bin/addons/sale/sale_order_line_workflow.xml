@@ -31,6 +31,18 @@
             <field name="kind">function</field>
             <field name="action">action_sourced_v()</field>
         </record>
+        <record id="act_sol_sourced_s" model="workflow.activity">
+            <field name="name">sourced_s</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_sourced_s()</field>
+        </record>
+        <record id="act_sol_sourced_n" model="workflow.activity">
+            <field name="name">sourced_n</field>
+            <field name="wkf_id" ref="wkf_sale_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_sourced_n()</field>
+        </record>
         <record id="act_sol_confirmed" model="workflow.activity">
             <field name="name">confirmed</field>
             <field name="wkf_id" ref="wkf_sale_order_line"/>
@@ -62,18 +74,33 @@
             <field name="signal">sourced</field>
         </record>
 
-        <!-- specific transition for sourced-v state -->
+        <!-- specific transition for sourced-XXX state -->
+            <record id="trans_sol_sourced_to_sourced_s" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced"/>
+                <field name="act_to" ref="act_sol_sourced_s"/>
+                <field name="signal">sourced_s</field>
+            </record>
             <record id="trans_sol_sourced_to_sourced_v" model="workflow.transition">
                 <field name="act_from" ref="act_sol_sourced"/>
                 <field name="act_to" ref="act_sol_sourced_v"/>
                 <field name="signal">sourced_v</field>
+            </record>
+            <record id="trans_sol_sourced_s_to_sourced_v" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_s"/>
+                <field name="act_to" ref="act_sol_sourced_v"/>
+                <field name="signal">sourced_v</field>
+            </record>
+            <record id="trans_sol_sourced_s_to_confirmed" model="workflow.transition"> <!-- may be useless depending on the way we generate sync msg ...-->
+                <field name="act_from" ref="act_sol_sourced_s"/>
+                <field name="act_to" ref="act_sol_confirmed"/>
+                <field name="signal">confirmed</field>
             </record>
             <record id="trans_sol_sourced_v_to_confirmed" model="workflow.transition">
                 <field name="act_from" ref="act_sol_sourced_v"/>
                 <field name="act_to" ref="act_sol_confirmed"/>
                 <field name="signal">confirmed</field>
             </record>
-        <!-- end sourced-v -->
+        <!-- end sourced-XXX -->
 
         <record id="trans_sol_sourced_confirmed" model="workflow.transition">
             <field name="act_from" ref="act_sol_sourced"/>
