@@ -105,7 +105,6 @@ class account_account(osv.osv):
             context=ctx_query)
         cr.execute(query, params)
         lines = cr.dictfetchall()
-        lines_to_handle = []
         for l in lines:
             '''
             US-2382 Include the line in the revaluation if at least one of the following conditions is met:
@@ -113,19 +112,33 @@ class account_account(osv.osv):
             - year-end reval and entry being either partially reconciled or not reconciled
             - year-end reval and entry reconciled with at least one leg of the rec. having a posting date later than the FY
             '''
-            domain_rec = [('reconcile_id', '=', l['reconcile_id']), ('date', '>', revaluation_date)]
-            if len(period_ids) == 1 or not l['reconcile_id'] or \
-                    (l['reconcile_id'] and aml_obj.search_exist(cr, uid, domain_rec, context=context)):
-                lines_to_handle.append(l)
-        for line in lines_to_handle:
-            # generate a tree
-            # - account_id
-            # -- currency_id
-            # ----- balances
-            account_id, currency_id = line['id'], line['currency_id']
-            accounts.setdefault(account_id, {})
-            accounts[account_id].setdefault(currency_id, {})
-            accounts[account_id][currency_id] = line
+            line_to_keep = False
+            if len(period_ids) == 1 or not l['reconcile_id']:
+                line_to_keep = True
+            elif l['reconcile_id']:
+                # get the JIs with the same reconcile_id
+                aml_list = aml_obj.search(cr, uid, [('reconcile_id', '=', l['reconcile_id'])], order='NO_ORDER', context=context)
+                # check that at least one of them has a posting date later than the FY
+                if aml_obj.search_exist(cr, uid, [('id', 'in', aml_list), ('date', '>', revaluation_date)], context=context):
+                    line_to_keep = True
+            if line_to_keep:
+                # generate a tree
+                # - account_id
+                # -- currency_id
+                # ----- balances
+                if l['id'] not in accounts:
+                    accounts[l['id']] = {}
+                if l['currency_id'] not in accounts[l['id']]:
+                    accounts[l['id']][l['currency_id']] = {
+                        'foreign_balance': 0,
+                        'credit': 0,
+                        'debit': 0,
+                        'balance': 0,
+                    }
+                accounts[l['id']][l['currency_id']]['foreign_balance'] += l['foreign_balance']
+                accounts[l['id']][l['currency_id']]['credit'] += l['credit']
+                accounts[l['id']][l['currency_id']]['debit'] += l['debit']
+                accounts[l['id']][l['currency_id']]['balance'] += l['balance']
 
         return accounts
 
