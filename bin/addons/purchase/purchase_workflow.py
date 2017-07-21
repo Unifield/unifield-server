@@ -193,9 +193,10 @@ class purchase_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'sourced_s'}, context=context)
 
-        # update linked sol (same instance) to sourced-s
+        # update linked sol (same instance) to sourced-s (if has)
         for po in self.browse(cr, uid, ids, context=context):
-            wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_s', cr)
+            if po.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_s', cr)
 
         return True
         
@@ -212,9 +213,10 @@ class purchase_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'sourced_v'}, context=context)
 
-        #update linked sol (same instance) to sourced-v
+        #update linked sol (same instance) to sourced-v (if has)
         for po in self.browse(cr, uid, ids, context=context):
-            wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_v', cr)
+            if po.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_v', cr)
 
         return True
 

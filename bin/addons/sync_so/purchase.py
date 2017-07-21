@@ -89,11 +89,17 @@ class purchase_order_line_sync(osv.osv):
         pol_to_update = sol_dict['sync_linked_pol']
 
         if sol_dict['state'] == 'sourced':
+            new_state = 'sourced_s'
             wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update, 'sourced_s', cr)
         elif sol_dict['state'] == 'sourced_v':
+            new_state = 'sourced_v'
             wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update, 'sourced_v', cr)
 
-        return True
+        # build return message:
+        pol = self.browse(cr, uid, pol_to_update, context=context)
+        message = "%s has his line #%s updated with new state %s" % (pol.order_id.name, pol.line_number, new_state)
+
+        return message
         
 
     def confirmed_sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
