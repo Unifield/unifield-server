@@ -446,7 +446,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             
         res = {}
         for so in self.browse(cr, uid, ids, context=context):
-            sol_states = [line.state for line in so.order_line]
+            sol_states = set([line.state for line in so.order_line])
             if all([s == 'cancel' for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
             else: # else compute the less advanced state:

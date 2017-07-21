@@ -399,17 +399,22 @@ class purchase_order(osv.osv):
             
         res = {}
         for po in self.browse(cr, uid, ids, context=context):
-            pol_states = [line.state for line in po.order_line]
+            pol_states = set([line.state for line in po.order_line])
             if all([s == 'cancel' for s in pol_states]): # if all lines are cancelled then the PO is cancelled
                 res[po.id] = 'cancel'
             else: # else compute the less advanced state:
                 res[po.id] = self.pool.get('purchase.order.line.state').get_less_advanced_state(cr, uid, ids, pol_states, context=context)
 
                 if res[po.id] == 'sourced': # set the sourced-p state ?
-                    sourced_sequence = self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, 'sourced', context=context)
+                    sourced_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'sourced', context=context)
                     # do we have a line further then sourced in our FO ?
-                    if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > sourced_sequence for s in pol_states]):
+                    if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > sourced_sequence for s in pol_states]):
                         res[po.id] = 'sourced_partial'
+                if res[po.id] == 'confirmed': # set the confirmed-p state ?
+                    confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'confirmed', context=context)
+                    # do we have a line further then confirmed in our FO ?
+                    if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in pol_states]):
+                        res[po.id] = 'confirmed_partial'
 
         return res
 

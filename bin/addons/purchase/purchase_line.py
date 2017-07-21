@@ -1569,5 +1569,23 @@ class purchase_order_line_state(osv.osv):
 
         return min_state[0] if min_state else False
 
+        
+    def get_sequence(self, cr, uid, ids, state, context=None):
+        '''
+        return the sequence of the given state
+        @param state: the state's name as a string
+        '''
+        if not state:
+            return False
+
+        cr.execute("""
+            SELECT sequence
+            FROM purchase_order_line_state
+            WHERE name = %s;
+        """, (state,))
+        sequence = cr.fetchone()
+
+        return sequence[0] if sequence else False
+
 
 purchase_order_line_state()
