@@ -38,13 +38,12 @@ class purchase_order_line_sync(osv.osv):
         'sync_linked_sol': fields.integer(string='Linked sale order line at synchro'),
     }
 
-    def validated_sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
+    def sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
         '''
-        Update the original PO (project) when validating the FO (coordo)
+        Update original PO lines from remote SO lines
         '''
         if context is None:
             context = {}
-
         wf_service = netsvc.LocalService("workflow")
         sol_dict = sol_info.to_dict()
 
@@ -53,14 +52,18 @@ class purchase_order_line_sync(osv.osv):
         if not po_ids:
             raise Exception, "Cannot find the parent Purchase Order of the line"
 
-        # update the linked PO line:
+        # search for the PO line to update:
         pol_to_update = sol_dict.get('sync_linked_pol', False)
         if not pol_to_update:
             raise Exception, "Cannot find the linked Purchase Order line to update"
         if isinstance(pol_to_update, (int,long)):
             pol_to_update = [pol_to_update]
+
+        # retrieve data:
         pol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, sol_info, context)
         pol_values['order_id'] = po_ids[0]
+
+        # update PO line:
         pol_updated = False
         if sol_dict['is_line_split']: # if line has been split in FO 
             pol_updated = self.pool.get('purchase.order.line').copy(cr, uid, pol_to_update[0], pol_values, context=context)
@@ -69,68 +72,17 @@ class purchase_order_line_sync(osv.osv):
             self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
             pol_updated = pol_to_update[0]
 
-        po_name = self.pool.get('purchase.order').read(cr, uid, po_ids[0], ['name'], context=context)['name'] or ''
-        message = "+++ Purchase Order %s: line number %s (id:%s) has been updated +++" % (po_name, pol_values['line_number'], pol_updated)
-        logging.getLogger('------sync.purchase.order.line').info(message)
-
-        return message
-
-
-    def update_pol_state(self, cr, uid, source, sol_info, context=None):
-        '''
-        Update the PO line state according to the given FO line state
-        '''
-        if context is None:
-            context = {}
-
-        wf_service = netsvc.LocalService("workflow")
-        sol_dict = sol_info.to_dict()
-
-        pol_to_update = sol_dict['sync_linked_pol']
-
+        # update PO line state:
         if sol_dict['state'] == 'sourced':
-            new_state = 'sourced_s'
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update, 'sourced_s', cr)
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'sourced_s', cr)
         elif sol_dict['state'] == 'sourced_v':
-            new_state = 'sourced_v'
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update, 'sourced_v', cr)
-
-        # build return message:
-        pol = self.browse(cr, uid, pol_to_update, context=context)
-        message = "%s has his line #%s updated with new state %s" % (pol.order_id.name, pol.line_number, new_state)
-
-        return message
-        
-
-    def confirmed_sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
-        '''
-        Update the original PO (project) when confirming the FO (coordo)
-        '''
-        if context is None:
-            context = {}
-
-        sol_dict = sol_info.to_dict()
-
-        # search for the parent purchase.order:
-        po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', '%s.%s' % (source, sol_dict['order_id']['name']))])
-        if not po_ids:
-            raise Exception, "Cannot find the parent Purchase Order of the line"
-
-        # update the linked PO line:
-        pol_to_update = sol_dict.get('sync_linked_pol', False)
-        if not pol_to_update:
-            raise Exception, "Cannot find the linked Purchase Order to update"
-        if isinstance(pol_to_update, (int,long)):
-            pol_to_update = [pol_to_update]
-        pol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, sol_info, context)
-        pol_values['order_id'] = po_ids[0]
-        self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
-        wf_service = netsvc.LocalService("workflow")
-        wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'confirmed', cr)
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'sourced_v', cr)
+        elif sol_dict['state'] == 'confirmed':
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'confirmed', cr)
 
         # log me:
         po_name = self.pool.get('purchase.order').read(cr, uid, po_ids[0], ['name'], context=context)['name'] or ''
-        message = "+++ Purchase Order %s: line number %s (id:%s) has been updated +++" % (po_name, pol_values['line_number'], pol_to_update[0])
+        message = "+++ Purchase Order %s: line number %s (id:%s) has been updated +++" % (po_name, pol_values['line_number'], pol_updated)
         logging.getLogger('------sync.purchase.order.line').info(message)
 
         return message

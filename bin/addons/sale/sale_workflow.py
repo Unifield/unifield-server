@@ -143,6 +143,12 @@ class sale_order_line(osv.osv):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'sourced'}, context=context)
+        
+        # generate update POL state sync message manually if needed:
+        return_info = {}
+        for sol_id in ids:
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+                'purchase.order.line.sol_update_original_pol', self._logger, identifier_suffix='sourced', context=context)
 
         return True
 
@@ -157,6 +163,12 @@ class sale_order_line(osv.osv):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'sourced_v'}, context=context)
+
+        # generate update POL state sync message
+        return_info = {}
+        for sol_id in ids:
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+                'purchase.order.line.sol_update_original_pol', self._logger, identifier_suffix='sourced_v', context=context)
 
         return True
 
@@ -185,6 +197,12 @@ class sale_order_line(osv.osv):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'sourced_n'}, context=context)
+
+        # generate update POL state sync message manually if needed:
+        return_info = {}
+        for sol_id in ids:
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+                'purchase.order.line.sol_update_original_pol', self._logger, identifier_suffix='sourced_n', context=context)
 
         return True
 
@@ -226,6 +244,12 @@ class sale_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
 
+        # generate update POL state sync message:
+        return_info = {}
+        for sol_id in ids:
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+                'purchase.order.line.sol_update_original_pol', self._logger, identifier_suffix='confirmed', context=context)
+
         return True
 
 
@@ -254,6 +278,12 @@ class sale_order_line(osv.osv):
                 pass
 
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+
+        # generate update POL state sync message:
+        return_info = {}
+        for sol_id in ids:
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+                'purchase.order.line.sol_update_original_pol', self._logger, identifier_suffix='validated', context=context)
 
         return True
 
