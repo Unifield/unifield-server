@@ -3711,7 +3711,7 @@ msgstr "Amériques/Dawson"
 msgid "Picking - available"
 msgstr "Picking - disponible"
 
-#. module: account, msf_audittrail
+#. modules: account, msf_audittrail
 #: selection:account.tax.template,applicable_type:0
 #: code:addons/msf_audittrail/audittrail.py:1064
 #, python-format
@@ -55753,7 +55753,7 @@ msgstr "Vous devez sélectionné un UdM produit de la même catégorie que l'UdM
 msgid "New Subscription"
 msgstr "Nouvel Abonnement"
 
-#. module: analytic_distribution_supply, finance, msf_profile
+#. modules: analytic_distribution_supply, finance, msf_profile
 #: field:purchase.order,commitment_ids:0
 #: model:ir.actions.act_window,name:finance.account_board_commitment_voucher
 #: view:board.board:0
