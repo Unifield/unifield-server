@@ -114,7 +114,7 @@ class account_move_line_compute_currency(osv.osv):
         j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj'),
                                        ('is_current_instance', '=', True)], order='id', context=context)
         if not j_ids:
-            raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
+            raise osv.except_osv(_('Error'), _('No Currency Adjustment journal found!'))
         journal_id = j_ids[0]
         # Get default debit and credit account for addendum_line (given by default credit/debit on journal)
         journal = j_obj.browse(cr, uid, journal_id)
@@ -283,7 +283,7 @@ class account_move_line_compute_currency(osv.osv):
         j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj'),
                                        ('is_current_instance', '=', True)], order='id', context=context)
         if not j_ids:
-            raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
+            raise osv.except_osv(_('Error'), _('No Currency Adjustment journal found!'))
         journal_id = j_ids[0]
         # Get default debit and credit account for addendum_line (given by default credit/debit on journal)
         journal = j_obj.browse(cr, uid, journal_id)

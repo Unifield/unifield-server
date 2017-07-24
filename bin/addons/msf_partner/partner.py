@@ -442,10 +442,15 @@ class res_partner(osv.osv):
         partner_id, partner_name = user_obj.get_current_company_partner_id(cr, uid)
 
         # remove partner which have same name than the current instance
-        read_result = self.read(cr, uid, ids, ['name'], context=context)
-        read_result = [(x['id'], x['name']) for x in read_result if x['name'] != partner_name]
+        read_result = self.read(cr, uid, ids, ['name', 'partner_type'], context=context)
+        read_result = [(x['id'], x['name'], x['partner_type']) for x in read_result if x['name'] != partner_name]
 
-        for partner_id, partner_name in read_result:
+        for partner_id, partner_name, partner_type in read_result:
+
+            # US-3166: the constraint do not apply to the internal partners
+            if partner_type == 'internal':
+                continue
+
             # check the current name is not already used by another section or
             # intermission partner
             name_exists = self.search_exist(cr, uid, [

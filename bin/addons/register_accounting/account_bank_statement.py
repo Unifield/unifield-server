@@ -671,6 +671,32 @@ The starting balance will be proposed automatically and the closing balance is t
             'target': 'current',
         }
 
+    def get_pending_cheque_ids(self, cr, uid, register_ids, account_ids, min_posting_date, context=None):
+        """
+        Returns a list containing the ids of the JIs matching the following criteria:
+        - booked in the register(s) and in the account(s) in parameters
+        - either not reconciled or reconciled partially or totally with at least one reconciliation leg having a
+          posting date later than the min_posting_date in parameter
+        """
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        aml_ids = aml_obj.search(cr, uid, [('statement_id', 'in', register_ids),
+                                           ('account_id', 'in', account_ids), ],
+                                 order='date DESC', context=context)
+        aml_list = []
+        for aml in aml_obj.browse(cr, uid, aml_ids,
+                                  fields_to_fetch=['is_reconciled', 'reconcile_id', 'reconcile_partial_id'], context=context):
+            total_rec_ok = aml.reconcile_id and aml_obj.search_exist(cr, uid,
+                                                                     [('reconcile_id', '=', aml.reconcile_id.id),
+                                                                      ('date', '>', min_posting_date)], context=context)
+            partial_rec_ok = aml.reconcile_partial_id and aml_obj.search_exist(cr, uid,
+                                                                               [('reconcile_partial_id', '=', aml.reconcile_partial_id.id),
+                                                                                ('date', '>', min_posting_date)], context=context)
+            if not aml.is_reconciled or total_rec_ok or partial_rec_ok:
+                aml_list.append(aml.id)
+        return aml_list
+
 account_bank_statement()
 
 class account_bank_statement_line(osv.osv):
