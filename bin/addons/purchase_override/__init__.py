@@ -14,7 +14,7 @@ ORDER_CATEGORY = [
 
 PURCHASE_ORDER_LINE_STATE_SELECTION = [
 	('draft', 'Draft'),
-	('validated_p', 'Validated-p'),
+	('validated_n', 'Validated-n'),
 	('validated', 'Validated'),
 	('sourced_s', 'Sourced-s'),
 	('sourced_v', 'Sourced-v'),

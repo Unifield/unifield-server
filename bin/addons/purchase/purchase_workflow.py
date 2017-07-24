@@ -158,7 +158,7 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'state': 'validated_p'}, context=context)
+        self.write(cr, uid, ids, {'state': 'validated_n'}, context=context)
 
         return True
 

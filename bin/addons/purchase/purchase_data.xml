@@ -48,7 +48,7 @@
             <field name="sequence">10</field>
         </record>
         <record id="pol_state_validated" model="purchase.order.line.state">
-            <field name="name">validated_p</field>
+            <field name="name">validated_n</field>
             <field name="sequence">15</field>
         </record>
         <record id="pol_state_validated" model="purchase.order.line.state">
