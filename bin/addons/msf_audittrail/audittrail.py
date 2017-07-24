@@ -1059,7 +1059,14 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         relation_model = field['relation']
         relation_model_pool = relation_model and pool.get(relation_model) or False
 
-        if field['ttype'] == 'many2one':
+        if field['ttype'] == 'boolean':
+            if values in ('True', 't', '1', 1, True):
+                res = 'True'
+            else:
+                res = 'False'
+            return res
+
+        elif field['ttype'] == 'many2one':
             res = False
             if values and values != '()':
                 values = values[1:-1].split(',')
