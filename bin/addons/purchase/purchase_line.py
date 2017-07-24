@@ -655,7 +655,7 @@ class purchase_order_line(osv.osv):
         product_uom = vals.get('product_uom')
         order = po_obj.browse(cr, uid, order_id, context=context)
 
-        # if the PO line has been created when PO has status "validated" then new PO line gets specific state "validated-p" to mark the 
+        # if the PO line has been created when PO has status "validated" then new PO line gets specific state "validated-n" to mark the 
         # line as non-really validated. It avoids the PO to go back in draft state.
         if order.state == 'validated':
             vals.update({'created_when_po_validated': True})

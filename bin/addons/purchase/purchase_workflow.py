@@ -162,6 +162,7 @@ class purchase_order_line(osv.osv):
 
         return True
 
+
     def action_validate(self, cr, uid, ids, context=None):
         '''
         wkf method to validate the PO line

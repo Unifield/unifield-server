@@ -1358,7 +1358,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             # common domain:
             domain = [
                 ('partner_id', '=', sourcing_line.supplier.id),
-                ('state', 'in', ['draft', 'validated']),
+                ('state', 'in', ['draft']),
                 ('related_sourcing_id', '=', sourcing_line.related_sourcing_id.id or False), # Column "Group"
             ]
             if sourcing_line.po_cft == 'po':
