@@ -32,9 +32,53 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 class sale_donation_stock_moves_report_parser(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(sale_donation_stock_moves_report_parser, self).__init__(cr, uid, name, context=context)
+        self.cr = cr
+        self.uid = uid
         self.localcontext.update({
             'time': time,
+            'getMoves': self._get_moves,
+            'isQtyOut': self._is_qty_out,
+            'getQty': self._get_qty,
+            'getInstance': self._get_instance,
         })
+
+    def _get_moves(self, report):
+        '''
+        Return the moves for the report
+        '''
+        for move in report.sm_ids:
+            yield self.pool.get('stock.move').browse(self.cr, self.uid, move)
+
+        raise StopIteration
+
+    def _is_qty_out(self, move):
+        '''
+        Check if the move is an in or an out
+        '''
+        out = False
+
+        if (move.location_id.usage == 'internal') and (move.location_dest_id and move.location_dest_id.usage in ('customer', 'supplier')):
+            out = True
+
+        return out
+
+    def _get_qty(self, move):
+        '''
+        Return the move's product quantity
+        '''
+        uom_obj = self.pool.get('product.uom')
+
+        qty = uom_obj._compute_qty(self.cr, self.uid, move.product_uom.id,
+                                   move.product_qty,
+                                   move.product_id.uom_id.id)
+
+        return qty
+
+    def _get_instance(self):
+        '''
+        Return user's current instance
+        '''
+        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.name
 
 class sale_donation_stock_moves_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,

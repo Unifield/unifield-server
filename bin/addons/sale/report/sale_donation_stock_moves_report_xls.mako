@@ -25,19 +25,6 @@
         <Alignment ss:Vertical="Top" ss:WrapText="1"/>
         <Font ss:Bold="1" />
     </Style>
-    <Style ss:ID="ssCellBlue">
-        <Alignment ss:Vertical="Top" ss:WrapText="1"/>
-        <Font ss:Color="#0000FF" />
-    </Style>
-
-    <!-- File header -->
-    <Style ss:ID="big_header">
-        <Font x:Family="Swiss" ss:Size="14" ss:Bold="1"/>
-    </Style>
-    <Style ss:ID="file_header">
-        <Font ss:Size="9" />
-        <Interior ss:Color="#C0C0C0" ss:Pattern="Solid"/>
-    </Style>
 
     <!-- Line header -->
     <Style ss:ID="line_header">
@@ -47,8 +34,8 @@
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <Font x:Family="Swiss" ss:Size="7" ss:Bold="1"/>
-        <Interior/>
+        <Font x:Family="Swiss" ss:Size="10"/>
+        <Interior ss:Color="#F79646" ss:Pattern="Solid"/>
     </Style>
 
     <!-- Lines -->
@@ -60,17 +47,7 @@
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <Font ss:Size="8" ss:Color="#0000FF"/>
-    </Style>
-    <Style ss:ID="line_left_green">
-        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
-        <Borders>
-            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-        </Borders>
-        <Font ss:Size="8" ss:Color="#1A721A"/>
+        <Font ss:Size="10"/>
     </Style>
     <Style ss:ID="line_right">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
@@ -80,7 +57,7 @@
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <Font ss:Size="8" ss:Color="#0000FF"/>
+        <Font ss:Size="10"/>
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
      <Style ss:ID="line_center">
@@ -91,25 +68,8 @@
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <Font ss:Size="8" ss:Color="#0000FF"/>
+        <Font ss:Size="10"/>
         <NumberFormat ss:Format="#,##0.00"/>
-    </Style>
-    <Style ss:ID="line_left_date">
-        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
-        <NumberFormat ss:Format="Short Date" />
-        <Borders>
-            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-        </Borders>
-        <Font ss:Size="8" ss:Color="#0000FF"/>
-    </Style>
-
-    <Style ss:ID="short_date">
-        <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
-        <NumberFormat ss:Format="Short Date" />
-        <Font ss:Color="#0000FF" />
     </Style>
  </Styles>
 
@@ -117,31 +77,31 @@
  <ss:Worksheet ss:Name="Donation Stock Moves">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Product Code
-        <Column ss:AutoFitWidth="1" ss:Width="122.5" />
+        <Column ss:AutoFitWidth="1" ss:Width="92.5" />
         ## Product Description
-        <Column ss:AutoFitWidth="1" ss:Width="291.5" />
+        <Column ss:AutoFitWidth="1" ss:Width="271.5" />
         ## Expense Account
-        <Column ss:AutoFitWidth="1" ss:Width="124.5" />
+        <Column ss:AutoFitWidth="1" ss:Width="59.25" />
         ## Movement Date
-        <Column ss:AutoFitWidth="1" ss:Width="107.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="87.25" />
         ## Order Type
-        <Column ss:AutoFitWidth="1" ss:Width="149.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="129.0" />
         ## Partner
-        <Column ss:AutoFitWidth="1" ss:Width="185.75" />
+        <Column ss:AutoFitWidth="1" ss:Width="135.75" />
         ## Partner Type
-        <Column ss:AutoFitWidth="1" ss:Width="126.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="96.0" />
         ## Qty In
-        <Column ss:AutoFitWidth="1" ss:Width="79.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="59.25" />
         ## Qty Out
-        <Column ss:AutoFitWidth="1" ss:Width="79.25"  />
+        <Column ss:AutoFitWidth="1" ss:Width="59.25"  />
         ## Unit Price
-        <Column ss:AutoFitWidth="1" ss:Width="87.25"  />
+        <Column ss:AutoFitWidth="1" ss:Width="57.25"  />
         ## Currency (FX)
-        <Column ss:AutoFitWidth="1" ss:Width="110.75"  />
+        <Column ss:AutoFitWidth="1" ss:Width="55.75"  />
         ## Total Value
-        <Column ss:AutoFitWidth="1" ss:Width="87.25"  />
+        <Column ss:AutoFitWidth="1" ss:Width="67.25"  />
         ## Instance
-        <Column ss:AutoFitWidth="1" ss:Width="107.25"  />
+        <Column ss:AutoFitWidth="1" ss:Width="97.25"  />
 
         <%
             headers_list = [
@@ -167,13 +127,31 @@
         % endfor
         </Row>
 
-        % for o in getOrders(r):
-            % for line in getLines(o, grouped=True):
-            <Row ss:Height="11.25">
-
+        % for o in getMoves(r):
+            <Row ss:Height="14.25">
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.product_id.default_code|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.product_id.name|x}</Data></Cell>
+                % if o.product_id.donation_expense_account.code:
+                <Cell ss:StyleID="line_right"><Data ss:Type="String">${o.product_id.donation_expense_account.code|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_right"><Data ss:Type="String">${o.product_id.categ_id.donation_expense_account.code|x}</Data></Cell>
+                % endif
+                <Cell ss:StyleID="line_right"><Data ss:Type="String">${formatLang(o.date[:10], date=True)|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.reason_type_id.name|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id.name|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id.partner_type|x}</Data></Cell>
+                % if isQtyOut(o):
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
+                % endif
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${o.product_id.standard_price}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.currency_id.name|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${o.product_id.standard_price * getQty(o)}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="String">${getInstance()|x}</Data></Cell>
             </Row>
-            % endfor
-
         % endfor
 
     </Table>
@@ -186,8 +164,7 @@
         <Selected/>
         <Panes>
             <Pane>
-                <Number>3</Number>
-                <ActiveRow>17</ActiveRow>
+                <ActiveRow>13</ActiveRow>
             </Pane>
         </Panes>
         <ProtectObjects>False</ProtectObjects>
