@@ -212,7 +212,7 @@ class account_period(osv.osv):
                                               context=context):
                         if abs(reg.balance_end) > 10**-3 or abs(reg.balance_end_real) > 10**-3 or abs(reg.balance_end_cash) > 10**-3:
                             reg_ko.append(reg)
-                    if len(reg_ko) > 1:
+                    if len(reg_ko) > 0:
                         raise osv.except_osv(_('Warning'),
                                              _("One or several registers have not been generated for the period "
                                                "to close and have a balance which isn't equal to 0:\n"
