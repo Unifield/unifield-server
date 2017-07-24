@@ -1061,9 +1061,9 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
 
         if field['ttype'] == 'boolean':
             if values in ('True', 't', '1', 1, True):
-                res = 'True'
+                res = _('True')
             else:
-                res = 'False'
+                res = _('False')
             return res
 
         elif field['ttype'] == 'many2one':
