@@ -149,7 +149,7 @@ class purchase_order_line(osv.osv):
         return new_sol_id
 
 
-    def action_validated_p(self, cr, uid, ids, context=None):
+    def action_validated_n(self, cr, uid, ids, context=None):
         '''
         wkf method to validate the PO line
         '''
