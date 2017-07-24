@@ -809,7 +809,9 @@ class purchase_order(osv.osv):
         for order in self.read(cr, uid, ids, ['partner_id', 'warehouse_id'], context=context):
             partner_type = res_partner_obj.read(cr, uid, vals.get('partner_id', order['partner_id'][0]), ['partner_type'], context=context)['partner_type']
             if vals.get('order_type'):
-                if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
+                if vals.get('order_type') in ['donation_exp', 'donation_st']:
+                    vals.update({'invoice_method': partner_type == 'section' and 'picking' or 'manual'})
+                elif vals.get('order_type') == 'loan':
                     vals.update({'invoice_method': 'manual'})
                 elif vals.get('order_type') in ['direct',] and partner_type != 'esc':
                     vals.update({'invoice_method': 'order'})
@@ -846,6 +848,7 @@ class purchase_order(osv.osv):
 #        d = {'partner_id': []}
         w = {}
         local_market = None
+        partner = partner_id and partner_obj.read(cr, uid, partner_id, ['partner_type']) or False
 
         if ids:
             order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
@@ -903,7 +906,9 @@ class purchase_order(osv.osv):
                         'warning': {'title': 'Error',
                                     'message': 'The Field orders feature is not activated on your system, so, you cannot create a Loan Purchase Order !'}}
 
-        if order_type in ['donation_exp', 'donation_st', 'loan']:
+        if order_type in ['donation_exp', 'donation_st']:
+            v['invoice_method'] = partner and partner['partner_type'] == 'section' and 'picking' or 'manual'
+        elif order_type == 'loan':
             v['invoice_method'] = 'manual'
         elif order_type in ['direct']:
             v['invoice_method'] = 'order'
@@ -923,8 +928,7 @@ class purchase_order(osv.osv):
             cp_address_id = self.pool.get('res.partner').address_get(cr, uid, company_id, ['delivery'])['delivery']
             v.update({'dest_address_id': cp_address_id, 'dest_partner_id': company_id})
 
-        if partner_id and partner_id != local_market:
-            partner = partner_obj.read(cr, uid, partner_id, ['partner_type'])
+        if partner and partner_id != local_market:
             if partner['partner_type'] in ('internal', 'esc') and order_type in ('regular', 'direct'):
                 v['invoice_method'] = 'manual'
             elif partner['partner_type'] not in ('external', 'esc') and order_type == 'direct':
@@ -1100,7 +1104,9 @@ class purchase_order(osv.osv):
             except ValueError:
                 intermission_cc = 0
 
-            if po.order_type == 'in_kind' and not po.partner_id.donation_payable_account:
+            donation_intersection = po.order_type in ['donation_exp', 'donation_st'] and po.partner_type \
+                and po.partner_type == 'section'
+            if po.order_type == 'in_kind' or donation_intersection:
                 if not po.partner_id.donation_payable_account:
                     raise osv.except_osv(_('Error'), _('No donation account on this partner: %s') % (po.partner_id.name or '',))
 
@@ -2224,8 +2230,11 @@ stock moves which are already processed : '''
             todo3 = []
             todo4 = {}
             to_invoice = set()
-            if order.partner_id.partner_type in ('internal', 'esc') and order.order_type == 'regular' or \
-                    order.order_type in ['donation_exp', 'donation_st', 'loan']:
+            regular_internal_esc = order.order_type == 'regular' and order.partner_id.partner_type in ('internal', 'esc')
+            loan = order.order_type == 'loan'
+            donation_not_intersection = order.order_type in ['donation_exp', 'donation_st'] \
+                and order.partner_id.partner_type != 'section'
+            if regular_internal_esc or loan or donation_not_intersection:
                 self.write(cr, uid, [order.id], {'invoice_method': 'manual'})
                 line_obj.write(cr, uid, [x.id for x in order.order_line], {'invoiced': 1})
 
@@ -2579,7 +2588,9 @@ stock moves which are already processed : '''
             context = {}
 
         if vals.get('order_type'):
-            if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
+            if vals.get('order_type') in ['donation_exp', 'donation_st']:
+                vals.update({'invoice_method': vals.get('partner_type', '') == 'section' and 'picking' or 'manual'})
+            elif vals.get('order_type') == 'loan':
                 vals.update({'invoice_method': 'manual'})
             elif vals.get('order_type') in ['direct']:
                 vals.update({'invoice_method': 'order'})

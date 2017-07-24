@@ -18705,8 +18705,8 @@ msgstr "Le Client passeur de commande"
 #: selection:account.move.line,journal_type:0
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
-msgid "Currency Adjustement"
-msgstr "Currency Adjustement"
+msgid "Currency Adjustment"
+msgstr "Ajustement de la Devise"
 
 #. module: msf_processes
 #: model:process.node,note:msf_processes.process_node_supplierdraftcommitment0
@@ -78633,7 +78633,7 @@ msgstr "Suivi du Mouvement de Stock"
 #: code:addons/account_journal/account_journal.py:319
 #: code:addons/account_journal/account_journal.py:341
 #, python-format
-msgid "Default Debit Account should be an expense account for Adjustement Journals!"
+msgid "Default Debit Account should be an expense account for Adjustment Journals!"
 msgstr "Compte de Débit par Défaut devrait être un compte de charge pour les journaux d'Ajustement !"
 
 #. modules: return_claim, msf_outgoing, stock_override, kit
@@ -93750,7 +93750,7 @@ msgstr "Réallocation"
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:117
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:286
 #, python-format
-msgid "No Currency Adjustement journal found!"
+msgid "No Currency Adjustment journal found!"
 msgstr "Pas de journal d'Ajustement de Devise trouvé !"
 
 #. module: msf_supply_doc_export
