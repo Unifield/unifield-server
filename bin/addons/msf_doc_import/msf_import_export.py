@@ -88,28 +88,6 @@ class msf_import_export(osv.osv_memory):
             file_name = _('%s_Export_%s') % (file_name, time.strftime('%Y%m%d'))
         return file_name
 
-    def get_fields_title_only(self, fields_tuple):
-        name_list = []
-        for field_tuple in fields_tuple:
-            if not isinstance(field_tuple, (tuple, list)):
-                field_name = field_tuple
-            else:
-                if len(field_tuple) == 2:
-                    tech_name, field_name = field_tuple
-            name_list.append(field_name)
-        return name_list
-
-    def get_fields_techname_only(self, fields_tuple):
-        name_list = []
-        for field_tuple in fields_tuple:
-            if not isinstance(field_tuple, (tuple, list)):
-                tech_name = field_tuple
-            else:
-                if len(field_tuple) == 2:
-                    tech_name, field_name = field_tuple
-            name_list.append(tech_name)
-        return name_list
-
     def generic_download(self, cr, uid, ids, template_only=False,
             nb_lines=None, context=None):
         """Mutualise the code of all download buttons in one place
@@ -132,7 +110,6 @@ class msf_import_export(osv.osv_memory):
                     _('The header_list for report \'%s\' is not'
                     ' defined. Please contact the support team.') % (selection))
         fields = MODEL_DATA_DICT[selection]['header_list']
-        fields = self.get_fields_techname_only(fields)
         domain = MODEL_DICT[selection].get('domain', [])
         context['translate_selection_field'] = True
         data = {
@@ -140,7 +117,6 @@ class msf_import_export(osv.osv_memory):
             'fields': fields,
             'nb_lines': nb_lines,
             'template_only': template_only,
-            'selection': selection,
             'domain': domain,
             'target_filename': self.get_filename(cr, uid, model, selection, template_only),
         }
@@ -221,11 +197,13 @@ class msf_import_export(osv.osv_memory):
         else:
             return field, model
 
-    def _get_headers(self, cr, uid, model, selection, rows=None, context=None):
+    def _get_headers(self, cr, uid, model, selection=None, field_list=None, rows=None, context=None):
         """Generate a list of ImportHeader objects using the data that retived
         from the field name.
         :param model: Model of the object imported/exported
         :param selection: requried to get the list of fields to compose the header
+        :param field_list: if known, the list of the fields to display in the
+        header can be passed
         :param rows: Data rows to export. In case of export, the size of the
         columns matter and can be determinied according to the data string length
         :param context: Context of the call, this is particularly important to
@@ -235,29 +213,35 @@ class msf_import_export(osv.osv_memory):
         if context is None:
             context = {}
         headers = []
-        field_list = MODEL_DATA_DICT[selection]['header_list']
+        if not field_list:
+            field_list = MODEL_DATA_DICT[selection]['header_list']
         model_obj = self.pool.get(model)
 
         fields_get_dict = {}  # keep fields_get result in cache
         fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
 
-        for field_index, field_tuple in enumerate(field_list):
-            if not isinstance(field_tuple, (tuple, list)):
-                tech_name = field_name = field_tuple
-            else:
-                if len(field_tuple) == 2:
-                    tech_name, field_name = field_tuple
-
-            res = {
-                    'tech_name': tech_name,
-                    'name': field_name,
-            }
-
-            if selection and tech_name in MODEL_DATA_DICT[selection]['required_field_list']:
+        for field_index, field in enumerate(field_list):
+            res = {'tech_name': field}
+            if selection and field in MODEL_DATA_DICT[selection]['required_field_list']:
                 res['required'] = True
-
-            child_field, child_model = self.get_child_field(cr, uid, tech_name, model,
+            child_field, child_model = self.get_child_field(cr, uid, field, model,
                     fields_get_dict, context=context)
+            first_part = field.split('.')[0]
+            if first_part not in fields_get_dict[model]:
+                raise osv.except_osv(_('Error'),
+                        _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                        % (first_part, model))
+            if first_part != child_field:
+                if child_field not in fields_get_dict[child_model]:
+                    raise osv.except_osv(_('Error'),
+                            _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                            % (child_field, child_model))
+                res['name'] = '%s / %s' % (fields_get_dict[model][first_part]['string'],
+                        fields_get_dict[child_model][child_field]['string'])
+            else:
+                res['name'] = fields_get_dict[model][first_part]['string']
+
+
             field_type = fields_get_dict[child_model][child_field]['type']
             if field_type == 'boolean':
                 res['ftype'] = 'Boolean'
@@ -373,17 +357,34 @@ class msf_import_export(osv.osv_memory):
 
         fields_get_dict = {}  # keep fields_get result in cache
         fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
+        fields_get_res = model_obj.fields_get(cr, uid,
+                [x.split('.')[0] for x in field_list], context=context)
         if len(field_list) != len(header_columns):
             raise osv.except_osv(_('Info'), _('The number of column is not same ' \
                 'than expected (get %s, expected %s). Check your import file and ' \
                 'the Object to import/export.') % (len(header_columns), len(field_list)))
 
-        field_list = self.get_fields_title_only(field_list)
-        if field_list != header_columns:
-            for field_index, column_name in enumerate(field_list):
-                if column_name.upper() != header_columns[field_index].upper():
-                    missing_columns.append(_('Column %s: get \'%s\' expected \'%s\'.')
-                            % (self.excel_col(field_index+1), header_columns[field_index], column_name))
+        for field_index, field in enumerate(field_list):
+            child_field, child_model = self.get_child_field(cr, uid, field, model,
+                    fields_get_dict, context=context)
+            first_part = field.split('.')[0]
+            if first_part not in fields_get_dict[model]:
+                raise osv.except_osv(_('Error'),
+                        _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                        % (first_part, model))
+            if first_part != child_field:
+                if child_field not in fields_get_dict[child_model]:
+                    raise osv.except_osv(_('Error'),
+                            _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                            % (child_field, child_model))
+                column_name = '%s / %s' % (fields_get_dict[model][first_part]['string'],
+                        fields_get_dict[child_model][child_field]['string'])
+            else:
+                column_name = fields_get_dict[model][first_part]['string']
+
+            if column_name.upper() != header_columns[field_index].upper():
+                missing_columns.append(_('Column %s: get \'%s\' expected \'%s\'.')
+                        % (self.excel_col(field_index+1), header_columns[field_index], column_name))
         if missing_columns:
             raise osv.except_osv(_('Info'), _('The following columns '
                 'are missing in the imported file:\n%s') % ',\n'.join(missing_columns))

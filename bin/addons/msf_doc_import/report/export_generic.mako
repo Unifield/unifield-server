@@ -96,7 +96,7 @@
         <Table x:FullColumns="1" x:FullRows="1">
 
             <% rows = getRows(data['model'], data['fields'], data.get('nb_lines'), data.get('domain'), data.get('template_only', False), data['context']) %>
-            <% headers = getHeaders(data['model'], rows, data['context'], data['selection']) %>
+            <% headers = getHeaders(data['model'], data['fields'], rows, data['context']) %>
             % for col in headers:
             <Column ss:AutoFitWidth="1" ss:Width="${col[2] or 70|x}" ss:StyleID="${col[1]|x}" />
             % endfor

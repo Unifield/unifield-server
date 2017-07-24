@@ -40,14 +40,14 @@ class report_generic_export_parser(report_sxw.rml_parse):
         })
         return
 
-    def getHeaders(self, model, rows, context=None, selection=None):
+    def getHeaders(self, model, field_list, rows, context=None):
         '''
         get the column names of the table. Set the type of the column and the
         size of it.
         '''
         import_export_obj = self.pool.get('msf.import.export')
         return import_export_obj._get_headers(self.cr, self.uid, model,
-                selection=selection, rows=rows, context=context)
+                selection=None, field_list=field_list, rows=rows, context=context)
 
     def getRows(self, model, fields, nb_lines=None, domain=None,
             template_only=False, context=None):
