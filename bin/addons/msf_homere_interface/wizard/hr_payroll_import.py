@@ -180,10 +180,12 @@ class hr_payroll_import(osv.osv_memory):
             credit = float(receipt[0])
         amount = round(debit - credit, 2)
         # Verify account type
-        # if view type, raise an error
+        # if view type or donation account, raise an error
         account = self.pool.get('account.account').browse(cr, uid, account_ids[0])
         if account.type == 'view':
             raise osv.except_osv(_('Warning'), _('This account is a view type account: %s') % (ustr(accounting_code[0]),))
+        elif account.type_for_register == 'donation':
+            raise osv.except_osv(_('Warning'), _('This account is a Donation account: %s') % (ustr(accounting_code[0]),))
         # Check if it's a payroll rounding line
         is_payroll_rounding = False
         if third and third[0] and ustr(third[0]) == 'SAGA_BALANCE' or accounting_code[0] == '67000':
