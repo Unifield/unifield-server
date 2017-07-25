@@ -116,7 +116,7 @@ class sale_donation_stock_moves(osv.osv_memory):
                     sm_domain.append(('partner_id', '=', wizard.partner_id.id))
 
                 if wizard.partner_type:
-                    sm_domain.append(('partner_type', '=', wizard.partner_type))
+                    sm_domain.append(('partner_id.partner_type', '=', wizard.partner_type))
 
                 if wizard.product_id:
                     sm_domain.append(('product_id', '=', wizard.product_id.id))
