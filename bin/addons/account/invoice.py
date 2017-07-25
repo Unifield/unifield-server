@@ -174,35 +174,35 @@ class account_invoice(osv.osv):
             if invoice.move_id:
                 # US-1882 The payments should only concern the "header line" of the SI on the counterpart account.
                 # For example the import of a tax line shouldn't be considered as a payment (out or in).
-                for m in [ml for ml in invoice.move_id.line_id if ml.account_id == invoice.account_id
-                          and abs(abs(invoice.amount_total) - abs(ml.amount_currency)) <= 10**-3]:
+                invoice_amls = [ml for ml in invoice.move_id.line_id if ml.account_id == invoice.account_id
+                                and abs(abs(invoice.amount_total) - abs(ml.amount_currency)) <= 10**-3]
+                for m in invoice_amls:
                     temp_lines = []
                     if m.reconcile_id:
                         temp_lines = map(lambda x: x.id, m.reconcile_id.line_id)
                     elif m.reconcile_partial_id:
                         temp_lines = map(lambda x: x.id, m.reconcile_partial_id.line_partial_ids)
-                    if temp_post_included:  # don't use 'elif' otherwise only hard-posted lines would be returned for a single doc
-                        invoice_amls = invoice.move_id.line_id or False
-                        invoice_aml_ids = invoice_amls and [inv_aml.id for inv_aml in invoice_amls]
-                        reg_line_ids = invoice_aml_ids and reg_line_obj.search(cr, uid,
-                                                                               [('imported_invoice_line_ids', 'in', invoice_aml_ids)],
-                                                                               order='NO_ORDER', context=context) or []
-                        for reg_line in reg_line_obj.browse(cr, uid, reg_line_ids,
-                                                            fields_to_fetch=['first_move_line_id', 'imported_invoice_line_ids'],
-                                                            context=context):
-                            # get the "Imported Invoice(s)" JI
-                            first_leg = reg_line.first_move_line_id
-                            other_leg_ids = first_leg and aml_obj.search(cr, uid,
-                                                                         [('move_id', '=', first_leg.move_id.id),
-                                                                          ('id', '!=', first_leg.id)],
-                                                                         order='NO_ORDER', context=context) or []
-                            # if the doc was imported with other account.invoices, get the JIs of these other docs
-                            other_doc_ids = [d.id for d in reg_line.imported_invoice_line_ids if
-                                             d.id not in invoice_aml_ids]
-                            temp_lines.extend(other_leg_ids)
-                            temp_lines.extend(other_doc_ids)
-                    lines += [x for x in temp_lines if x not in lines]
-                    src.append(m.id)
+                if temp_post_included:  # don't use 'elif' otherwise only hard-posted lines would be returned for a single doc
+                    invoice_aml_ids = invoice_amls and [inv_aml.id for inv_aml in invoice_amls]
+                    reg_line_ids = invoice_aml_ids and reg_line_obj.search(cr, uid,
+                                                                           [('imported_invoice_line_ids', 'in', invoice_aml_ids)],
+                                                                           order='NO_ORDER', context=context) or []
+                    for reg_line in reg_line_obj.browse(cr, uid, reg_line_ids,
+                                                        fields_to_fetch=['first_move_line_id', 'imported_invoice_line_ids'],
+                                                        context=context):
+                        # get the "Imported Invoice(s)" JI
+                        first_leg = reg_line.first_move_line_id
+                        other_leg_ids = first_leg and aml_obj.search(cr, uid,
+                                                                     [('move_id', '=', first_leg.move_id.id),
+                                                                      ('id', '!=', first_leg.id)],
+                                                                     order='NO_ORDER', context=context) or []
+                        # if the doc was imported with other account.invoices, get the JIs of these other docs
+                        other_doc_ids = [d.id for d in reg_line.imported_invoice_line_ids if
+                                         d.id not in invoice_aml_ids]
+                        temp_lines.extend(other_leg_ids)
+                        temp_lines.extend(other_doc_ids)
+                lines += [x for x in temp_lines if x not in lines]
+                src.append(m.id)
 
             lines = filter(lambda x: x not in src, lines)
             result[invoice.id] = lines
