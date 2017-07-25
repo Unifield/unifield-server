@@ -84,6 +84,7 @@ class sale_donation_stock_moves(osv.osv_memory):
     _defaults = {
     }
 
+
     def get_values(self, cr, uid, ids, context=None):
         '''
         Retrieve the data according to values in wizard
@@ -96,10 +97,12 @@ class sale_donation_stock_moves(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        type_donation_ids = self.pool.get('stock.picking')._get_type_donation_ids(cr, uid)
+
         for wizard in self.browse(cr, uid, ids, context=context):
             sm_domain = []
 
-            sm_domain.append(('reason_type_id', 'in', [9, 10, 11]))
+            sm_domain.append(('reason_type_id', 'in', type_donation_ids))
 
             if wizard.picking_id:
                 sm_domain.append(('picking_id', '=', wizard.picking_id))
@@ -186,9 +189,9 @@ class sale_donation_stock_moves(osv.osv_memory):
                 }
 
         if partner_id:
-            res['domain'] = {'picking_id': [('reason_type_id', 'in', [9, 10, 11]), ('partner_id', '=', partner_id)]}
+            res['domain'] = {'picking_id': [('is_donation', '=', True), ('partner_id', '=', partner_id)]}
         else:
-            res['domain'] = {'picking_id': [('reason_type_id', 'in', [9, 10, 11])]}
+            res['domain'] = {'picking_id': [('is_donation', '=', True)]}
 
         return res
 
