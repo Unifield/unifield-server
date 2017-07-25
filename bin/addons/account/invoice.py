@@ -151,9 +151,24 @@ class account_invoice(osv.osv):
             result[tax.invoice_id.id] = True
         return result.keys()
 
-    def _compute_lines(self, cr, uid, ids, name, args, context=None):
+    def _compute_lines_generic(self, cr, uid, ids, name, args, context=None, temp_post_included=False):
+        """
+        Returns a dict with key = id of the account.invoice, and value = list of the JIs corresponding to Payments of the doc
+        If temp_post_included is False:
+            - only the reconciled amounts are taken into account
+            - (amount of the doc) - (amount of the payment lines) matches with the residual amount on the doc
+        If temp_post_included is True, we get all the payment lines to display to the user:
+            - the register lines in temp-posted state are taken into account, too
+            - these temp-posted lines don't impact the residual amount
+            - for these lines we return ALL the lines related to the import made
+        """
+        if context is None:
+            context = {}
         result = {}
-        for invoice in self.browse(cr, uid, ids, context=context):
+        reg_line_obj = self.pool.get('account.bank.statement.line')
+        aml_obj = self.pool.get('account.move.line')
+        for invoice in self.browse(cr, uid, ids,
+                                   fields_to_fetch=['move_id', 'amount_total', 'account_id'], context=context):
             src = []
             lines = []
             if invoice.move_id:
@@ -166,12 +181,48 @@ class account_invoice(osv.osv):
                         temp_lines = map(lambda x: x.id, m.reconcile_id.line_id)
                     elif m.reconcile_partial_id:
                         temp_lines = map(lambda x: x.id, m.reconcile_partial_id.line_partial_ids)
+                    elif temp_post_included:
+                        invoice_amls = invoice.move_id.line_id or False
+                        invoice_aml_ids = invoice_amls and [inv_aml.id for inv_aml in invoice_amls]
+                        reg_line_ids = invoice_aml_ids and reg_line_obj.search(cr, uid,
+                                                                               [('imported_invoice_line_ids', 'in', invoice_aml_ids)],
+                                                                               order='NO_ORDER', context=context) or []
+                        for reg_line in reg_line_obj.browse(cr, uid, reg_line_ids,
+                                                            fields_to_fetch=['first_move_line_id', 'imported_invoice_line_ids'],
+                                                            context=context):
+                            # get the "Imported Invoice(s)" JI
+                            first_leg = reg_line.first_move_line_id
+                            other_leg_ids = first_leg and aml_obj.search(cr, uid,
+                                                                         [('move_id', '=', first_leg.move_id.id),
+                                                                          ('id', '!=', first_leg.id)],
+                                                                         order='NO_ORDER', context=context) or []
+                            # if the doc was imported with other account.invoices, get the JIs of these other docs
+                            other_doc_ids = [d.id for d in reg_line.imported_invoice_line_ids if
+                                             d.id not in invoice_aml_ids]
+                            temp_lines.extend(other_leg_ids)
+                            temp_lines.extend(other_doc_ids)
                     lines += [x for x in temp_lines if x not in lines]
                     src.append(m.id)
 
             lines = filter(lambda x: x not in src, lines)
             result[invoice.id] = lines
         return result
+
+    def _compute_lines(self, cr, uid, ids, name, args, context=None):
+        """
+        Get the reconciled payment lines (hard-posted register lines)
+        """
+        if context is None:
+            context = {}
+        return self._compute_lines_generic(cr, uid, ids, name, args, context, temp_post_included=False)
+
+    def _compute_lines_to_display(self, cr, uid, ids, name, args, context=None):
+        """
+        Get all the payment lines (hard-posted and temp-posted register lines)
+        """
+        if context is None:
+            context = {}
+        return self._compute_lines_generic(cr, uid, ids, name, args, context, temp_post_included=True)
 
     def _get_invoice_from_line(self, cr, uid, ids, context=None):
         move = {}
@@ -296,6 +347,8 @@ class account_invoice(osv.osv):
         },
             help="Remaining amount due."),
         'payment_ids': fields.function(_compute_lines, method=True, relation='account.move.line', type="many2many", string='Payments'),
+        'payment_to_display_ids': fields.function(_compute_lines_to_display, method=True, relation='account.move.line',
+                                                  type='many2many', string='Payments', store=False),
         'move_name': fields.char('Journal Entry', size=64, readonly=True, states={'draft':[('readonly',False)]}),
         'user_id': fields.many2one('res.users', 'Salesman', readonly=True, states={'draft':[('readonly',False)]}),
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position', readonly=True, states={'draft':[('readonly',False)]})
