@@ -536,33 +536,20 @@ class account_invoice(osv.osv):
         return new_id
 
 
-    def is_set_ref_from_partner(self, cr, uid, ids=None, vals=None, context=None):
-        '''if ids is present (case of write), read some properties to determine
-        if the invoice is a supplier invoice or supplier refund to be able to
-        set the reference from partner.
-        else, if vals is present, read the values from vals (case of create)
+    def is_set_ref_from_partner(self, cr, uid, vals, context=None):
+        '''read some properties to determine if the invoice is a supplier
+        invoice or supplier refund to be able to set the reference from partner.
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if ids is not None:
-            read_result = self.read(cr, uid, ids[0],
-                                    ['type', 'is_direct_invoice',
-                                     'is_inkind_donation', 'is_debit_note',
-                                     'is_intermission'], context=context)
-        elif vals is not None:
-            read_result = vals
-        else:
-            return False
 
-        is_supplier_invoice = read_result.get('type') == 'in_invoice'\
-                and not read_result.get('is_direct_invoice')\
-                and not read_result.get('is_inkind_donation')\
-                and not read_result.get('is_debit_note')\
-                and not read_result.get('is_intermission')
+        is_supplier_invoice = vals.get('type') == 'in_invoice'\
+                and not vals.get('is_direct_invoice')\
+                and not vals.get('is_inkind_donation')\
+                and not vals.get('is_debit_note')\
+                and not vals.get('is_intermission')
 
-        is_supplier_refund = read_result.get('type') == 'in_refund'
+        is_supplier_refund = vals.get('type') == 'in_refund'
 
         if is_supplier_invoice or is_supplier_refund:
             return True
@@ -626,15 +613,6 @@ class account_invoice(osv.osv):
                         if tax_ids:
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
-
-        #US-1686: set supplier reference from partner
-        if vals.get('partner_id') and 'supplier_reference' not in vals\
-                and self.is_set_ref_from_partner(cr, uid, ids=ids,
-                                                 context=context):
-            partner_obj = self.pool.get('res.partner')
-            ref = partner_obj.read(cr, uid, vals['partner_id'], ['ref'],
-                                   context=context)['ref']
-            vals['supplier_reference'] = ref
 
         res = super(account_invoice, self).write(cr, uid, ids, vals, context=context)
         self._check_document_date(cr, uid, ids)
