@@ -71913,6 +71913,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/unifield_setup/installer/project_leadtime.py:61
 #: code:addons/unifield_setup/installer/restrictive_country.py:138
 #: code:addons/unifield_setup/setup_configuration.py:110
+#: code:addons/account_mcdb/account_period_state.py:178
 #: view:allocation.stock.setup:0
 #: field:allocation.stock.setup,error_central_ok:0
 #: field:allocation.stock.setup,error_cross_ok:0
@@ -92566,12 +92567,13 @@ msgstr "Safety stock"
 msgid "Date start:"
 msgstr "Date start:"
 
-#. module: account_period_closing_level
+#. modules: account_period_closing_level, account_mcdb
 #: code:addons/account_period_closing_level/account_year_end_closing.py:393
 #: code:addons/account_period_closing_level/account_year_end_closing.py:533
+#: code:addons/account_mcdb/account_period_state.py:178
 #, python-format
 msgid "FY 'Period %d' not found"
-msgstr "FY 'Period %d' not found"
+msgstr "'Période %d' de l'année fiscale non trouvée"
 
 #. module: account
 #: model:ir.actions.report.xml,name:account.account_analytic_account_inverted_balance
@@ -98688,3 +98690,21 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. module: account_override
+#: code:addons/account_override/account.py:524
+#, python-format
+msgid "An account can't be both reconcilable and included in the yearly move to 0."
+msgstr "Un compte ne peut pas être à la fois lettrable et inclus dans la mise à zéro annuelle."
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_year_end_closing.py:423
+#, python-format
+msgid "The yearly closure can't be processed due to one or several reconciled entries that are included in the move to 0."
+msgstr "La fermeture de l'année fiscale ne peut pas être effectuée car une ou plusieurs écritures incluses dans la mise à zéro sont déjà lettrées."
+
+#. module: account_reconciliation
+#: code:addons/account_reconciliation/account_move_line.py:269
+#, python-format
+msgid "The entries included in the yearly move to zero can't be reconciled together because they are unbalanced."
+msgstr "Les écritures incluses dans la mise à zéro annuelle ne peuvent pas être lettrées ensemble car elles ne sont pas équilibrées."
