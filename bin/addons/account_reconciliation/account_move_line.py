@@ -322,7 +322,7 @@ class account_move_line(osv.osv):
         Returns a tuple with the date and the period to use for the reversal FX entry.
         Rules:
         - if the period of the original FXA is Open, the reversal FXA uses its posting date and Period
-        - if the period isn't Open, the posting date is the first date of the next open period. Period 13-16 are excluded.
+        - if the period isn't Open, the posting date is the first date of the next open period. Periods 0 and 16 are excluded.
         - note that the Document date is always the same as the Posting Date (to avoid FY differences)
         '''
         period_obj = self.pool.get('account.period')
@@ -332,10 +332,10 @@ class account_move_line(osv.osv):
         else:
             period_ids = period_obj.search(
                 cr, uid,
-                [('date_start', '>', fxa_period.date_start),
+                [('date_start', '>=', fxa_period.date_start),
                  ('state', '=', 'draft'),
-                 ('number', '>', 0), ('number', '<', 13)],
-                order='date_start', limit=1, context=context)
+                 ('number', 'not in', [0, 16])],
+                order='date_start, number', limit=1, context=context)
             if not period_ids:
                 raise osv.except_osv(_('Warning !'),
                                      _('There is no open period to book the reversal FX entry.'))
