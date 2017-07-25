@@ -76,5 +76,5 @@
         <field name="restart">never</field>
         <field name="state">skip</field>
     </record>
-  </ata>
+  </data>
 </openerp>
