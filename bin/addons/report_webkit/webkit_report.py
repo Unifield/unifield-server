@@ -517,11 +517,23 @@ class WebKitParser(report_sxw):
             for char in forbidden_chars:
                 if isinstance(cell.text, str) and char in cell.text:
                     error_message = 'Line %s of document %s is corrupted, a '\
-                        'Number cannot contain characters or spaces: %s' % \
+                        'Number cannot contain characters or spaces: %r' % \
                             (cell.sourceline, report_name, cell.text)
                     logger.warning(error_message)
                     cell.text = cell.text.replace(char, '')
                     xml_modified = True
+
+            # check the number is really a number, if not, set it to zero
+            try:
+                float(cell.text)
+            except ValueError:
+                error_message = 'Line %s of document %s is corrupted, a '\
+                    'Number cell contain other things than number: %r. '\
+                    'It has been replaced by 0.0.' % \
+                        (cell.sourceline, report_name, cell.text)
+                logger.warning(error_message)
+                cell.text = '0.0'
+                xml_modified = True
 
         if xml_modified:
             # return modified xml
