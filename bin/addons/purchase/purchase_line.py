@@ -143,7 +143,8 @@ class purchase_order_line(osv.osv):
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'created_when_po_validated': fields.boolean(string='Created when PO validated', help='Has been created in a PO in validated state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
-        'linked_sol_id': fields.many2one('sale.order.line', 'Linked Sale Order line in case of PO from sourcing', readonly=True),
+        'linked_sol_id': fields.many2one('sale.order.line', string='Linked SO line', help='Linked Sale Order line in case of PO from sourcing', readonly=True),
+        'sync_linked_sol': fields.integer(string='Linked FO line at synchro'),
     # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=512, string='Origin'),

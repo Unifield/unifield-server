@@ -62,12 +62,14 @@ class purchase_order_line_sync(osv.osv):
         # retrieve data:
         pol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, sol_info, context)
         pol_values['order_id'] = po_ids[0]
+        pol_values['sync_linked_sol'] = sol_dict['fake_id']
 
         # update PO line:
         pol_updated = False
         if sol_dict['is_line_split']: # if line has been split in FO 
-            pol_updated = self.pool.get('purchase.order.line').copy(cr, uid, pol_to_update[0], pol_values, context=context)
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'validated', cr)
+            if not self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['fake_id'])], limit=1, context=context): # ensure split has not already been created
+                pol_updated = self.copy(cr, uid, pol_to_update[0], pol_values, context=context)
+                wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'validated', cr)
         else: # regular update
             self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
             pol_updated = pol_to_update[0]
