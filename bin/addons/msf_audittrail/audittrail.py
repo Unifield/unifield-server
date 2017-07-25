@@ -78,6 +78,14 @@ class res_partner(osv.osv):
 res_partner()
 
 
+class res_partner_address(osv.osv):
+    _name = 'res.partner.address'
+    _inherit = 'res.partner.address'
+    _trace = True
+
+res_partner_address()
+
+
 class product_supplier(osv.osv):
     _name = 'product.supplierinfo'
     _inherit = 'product.supplierinfo'
