@@ -181,7 +181,7 @@ class account_invoice(osv.osv):
                         temp_lines = map(lambda x: x.id, m.reconcile_id.line_id)
                     elif m.reconcile_partial_id:
                         temp_lines = map(lambda x: x.id, m.reconcile_partial_id.line_partial_ids)
-                    elif temp_post_included:  # don't use 'elif' otherwise only hard-posted lines would be returned for a single doc
+                    if temp_post_included:  # don't use 'elif' otherwise only hard-posted lines would be returned for a single doc
                         invoice_amls = invoice.move_id.line_id or False
                         invoice_aml_ids = invoice_amls and [inv_aml.id for inv_aml in invoice_amls]
                         reg_line_ids = invoice_aml_ids and reg_line_obj.search(cr, uid,
