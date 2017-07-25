@@ -38,7 +38,7 @@
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <form string="Internal Request">
-                    <group colspan="6" attrs="{'invisible': [('state', '!=', 'validated')]}">
+                    <group colspan="6" attrs="{'invisible': [('state', 'not in', ['validated', 'validated_p'])]}">
                         <html>
                             <p style="text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
                                WARNING: This document has already been validated, are you sure you wish to modify after validation?
@@ -47,12 +47,12 @@
                     </group>
                     <group col="6" colspan="4" name="header">
                         <field name="name" />
-                        <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                        <field name="warehouse_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                        <field name="requestor" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                        <field name="location_requestor_id" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                        <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
-                        <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
+                        <field name="warehouse_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
+                        <field name="requestor" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
+                        <field name="location_requestor_id" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
+                        <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
+                        <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
                         <field name="functional_currency_id" />
                         <field name="categ" on_change="onchange_categ(categ)" />
                         <field name="fo_to_resource" invisible="1" />
@@ -61,7 +61,7 @@
                     <notebook colspan="5">
                         <page string="Products">
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}">
+                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}">
                                 <tree string="Products" editable="top" >
                                     <field name="product_id" on_change="requested_product_id_change(product_id, comment, parent.categ)" 
                                     context="available_for_restriction='consumption',search_default_not_restricted=1"
@@ -82,14 +82,14 @@
                                     <button name="open_order_line_to_correct" 
                                     string="Configurator" 
                                     type="object" 
-                                    attrs="{'invisible': ['|', ('product_id_ok', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])]}"
+                                    attrs="{'invisible': ['|', ('product_id_ok', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"
                                     icon="terp-go-week" />
                                     <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
                                     <field name="cost_price" string="Cost Price (FC)" />
                                     <field name="notes" />
                                     <field name="display_confirm_button" invisible="1" />
                                     <field name="type" on_change="requested_type_change(product_id, type)"
-                                           attrs="{'readonly': [('fake_state', 'not in', ['draft', 'draft_p', 'validated']), ('display_confirm_button', '=', False)]}"
+                                           attrs="{'readonly': [('fake_state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('display_confirm_button', '=', False)]}"
                                     />
                                     <field name="my_company_id" invisible="1" />
                                     <!-- utp-357: the supplier will be selected in the sourcing tool -->
@@ -122,7 +122,7 @@
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
-                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,draft_p,validated" context="{'noraise': True}" />
+                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" />
                                 <button name="validate_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('no_line', '=', True)]}" />
                             </group>
                         </page>

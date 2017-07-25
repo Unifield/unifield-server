@@ -405,12 +405,17 @@ class purchase_order(osv.osv):
             else: # else compute the less advanced state:
                 res[po.id] = self.pool.get('purchase.order.line.state').get_less_advanced_state(cr, uid, ids, pol_states, context=context)
 
-                if res[po.id] == 'sourced': # set the sourced-p state ?
+                if res[po.id] == 'validated': # set the validated-p state ?
+                    validated_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'validated', context=context)
+                    # do we have a line further then validated in our FO ?
+                    if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > validated_sequence for s in pol_states]):
+                        res[po.id] = 'validated_p'
+                elif res[po.id] == 'validated': # set the sourced-p state ?
                     sourced_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'sourced', context=context)
                     # do we have a line further then sourced in our FO ?
                     if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > sourced_sequence for s in pol_states]):
                         res[po.id] = 'sourced_p'
-                if res[po.id] == 'confirmed': # set the confirmed-p state ?
+                elif res[po.id] == 'confirmed': # set the confirmed-p state ?
                     confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'confirmed', context=context)
                     # do we have a line further then confirmed in our FO ?
                     if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in pol_states]):

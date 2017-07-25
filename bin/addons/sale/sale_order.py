@@ -457,6 +457,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     # do we have a line further then draft in our FO ?
                     if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > draft_sequence for s in sol_states]):
                         res[so.id] = 'draft_p'
+                elif res[so.id] == 'validated': # set the validated-p state ?
+                    validated_sequence = self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, 'validated', context=context)
+                    # do we have a line further then validated in our FO ?
+                    if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > validated_sequence for s in sol_states]):
+                        res[so.id] = 'validated_p'
                 elif res[so.id] == 'sourced': # set the source-p state ?
                     sourced_sequence = self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, 'sourced', context=context)
                     # do we have a line further then sourced in our FO ?
