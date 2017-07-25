@@ -24,7 +24,7 @@ PURCHASE_ORDER_LINE_STATE_SELECTION = [
 	('cancel', 'Cancelled'),
 ]
 
-PURCHASE_ORDER_STATE_SELECTION = PURCHASE_ORDER_LINE_STATE_SELECTION + [('sourced_partial', 'Sourced-p'), ('confirmed_partial', 'Confirmed-p')]
+PURCHASE_ORDER_STATE_SELECTION = PURCHASE_ORDER_LINE_STATE_SELECTION + [('sourced_p', 'Sourced-p'), ('confirmed_p', 'Confirmed-p')]
 
 
 import purchase

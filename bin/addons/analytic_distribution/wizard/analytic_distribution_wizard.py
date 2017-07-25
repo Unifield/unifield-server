@@ -513,10 +513,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.accrual_line_id and el.accrual_line_id.state != 'draft':
                 res[el.id] = False
             # verify sale order state
-            if el.sale_order_id and el.sale_order_id.state not in ['draft', 'draft_partial', 'validated']:
+            if el.sale_order_id and el.sale_order_id.state not in ['draft', 'draft_p', 'validated']:
                 res[el.id] = False
             # verify sale order line state
-            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'draft_partial', 'validated']:
+            if el.sale_order_line_id and el.sale_order_line_id.order_id and el.sale_order_line_id.order_id.state not in ['draft', 'draft_p', 'validated']:
                 res[el.id] = False
             # verify move state
             # UFTP-363: Do not edit any element of JI or JE if the JE is imported

@@ -409,12 +409,12 @@ class purchase_order(osv.osv):
                     sourced_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'sourced', context=context)
                     # do we have a line further then sourced in our FO ?
                     if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > sourced_sequence for s in pol_states]):
-                        res[po.id] = 'sourced_partial'
+                        res[po.id] = 'sourced_p'
                 if res[po.id] == 'confirmed': # set the confirmed-p state ?
                     confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'confirmed', context=context)
                     # do we have a line further then confirmed in our FO ?
                     if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in pol_states]):
-                        res[po.id] = 'confirmed_partial'
+                        res[po.id] = 'confirmed_p'
 
         return res
 
