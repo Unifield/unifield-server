@@ -94579,6 +94579,7 @@ msgstr "Ecritures Ouvertes"
 #. modules: account_override, account, register_accounting
 #: view:account.invoice:0
 #: field:account.invoice,payment_ids:0
+#: field:account.invoice,payment_to_display_ids:0
 #: selection:account.vat.declaration,based_on:0
 #: view:account.invoice:0
 #: view:account.invoice:0
