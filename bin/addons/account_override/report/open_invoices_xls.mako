@@ -241,7 +241,7 @@
     <Column ss:Width="46.5" ss:Span="1"/>
     <Column ss:Index="13" ss:Width="49.5"/>
     <Column ss:Width="39.75"/>
-    <Column ss:Width="45.5"/>
+    <Column ss:Width="80"/>
 
 
     <Row ss:AutoFitHeight="0" ss:Height="18">
@@ -358,12 +358,11 @@
         <Cell ss:StyleID="s39"/>
         <Cell ss:StyleID="s40"/>
         <Cell ss:StyleID="s40"/>
+        <Cell ss:StyleID="s40"/>
         <Cell ss:StyleID="s44"><Data ss:Type="String">${_('Subtotal')} =</Data></Cell>
         % if nb_line:
-            <Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${nb_line}]C:R[-1]C)"><Data ss:Type="Number" ></Data></Cell>
             <Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${nb_line}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>
         % else:
-            <Cell ss:StyleID="s49" />
             <Cell ss:StyleID="s49" />
         % endif
         <Cell ss:StyleID="s29"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>
