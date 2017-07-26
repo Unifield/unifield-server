@@ -144,11 +144,11 @@ class sale_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'sourced'}, context=context)
         
-        # generate update POL state sync message manually if needed:
+        # generate sync message manually :
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, identifier_suffix='sourced', context=context)
+                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
@@ -164,11 +164,11 @@ class sale_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'sourced_v'}, context=context)
 
-        # generate update POL state sync message
+        # generate sync message
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, identifier_suffix='sourced_v', context=context)
+                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
@@ -198,11 +198,11 @@ class sale_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'sourced_n'}, context=context)
 
-        # generate update POL state sync message manually if needed:
+        # generate sync message manually :
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, identifier_suffix='sourced_n', context=context)
+                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
@@ -244,11 +244,11 @@ class sale_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
 
-        # generate update POL state sync message:
+        # generate sync message:
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, identifier_suffix='confirmed', context=context)
+                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
@@ -279,11 +279,11 @@ class sale_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
-        # generate update POL state sync message:
+        # generate sync message:
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, identifier_suffix='validated', context=context)
+                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 

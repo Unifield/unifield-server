@@ -66,6 +66,12 @@ class split_sale_order_line_wizard(osv.osv_memory):
             else:
                 # Change the qty of the old line
                 line_obj.write(cr, uid, [split.sale_line_id.id], {'product_uom_qty': split.original_qty - split.new_line_qty}, context=context)
+
+                # generate sync message manually:
+                return_info = {}
+                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', split.sale_line_id.id, return_info, 
+                    'purchase.order.line.sol_update_original_pol', self.pool.get('sale.order.line')._logger, check_identifier=False, context=context)
+
                 # copy data
                 so_copy_data = {
                     'is_line_split': True, # UTP-972: Indicate that the line is split

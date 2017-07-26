@@ -68,8 +68,10 @@ class purchase_order_line_sync(osv.osv):
         pol_updated = False
         if sol_dict['is_line_split']: # if line has been split in FO 
             if not self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['fake_id'])], limit=1, context=context): # ensure split has not already been created
+                pol_values['origin'] = self.read(cr, uid, pol_to_update[0], ['origin'], context=context)['origin']
                 pol_updated = self.copy(cr, uid, pol_to_update[0], pol_values, context=context)
                 wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'validated', cr)
+
         else: # regular update
             self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
             pol_updated = pol_to_update[0]

@@ -111,7 +111,7 @@ class local_message_rule(osv.osv):
             return self.browse(cr, uid, rules, context=context)[0]
         return False
 
-    def _manual_create_sync_message(self, cr, uid, model_name, res_id, return_info, rule_method, logger, identifier_suffix='', context=None):
+    def _manual_create_sync_message(self, cr, uid, model_name, res_id, return_info, rule_method, logger, check_identifier=True, context=None):
         if context is None:
             context ={}
         if True:
@@ -142,9 +142,7 @@ class local_message_rule(osv.osv):
                 return
             # Still create the message if an existing message was already in the system, as the return action could be repeat
             xml_id = identifiers[res_id]
-            if identifier_suffix:
-                xml_id += '/%s' % identifier_suffix
-            if msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)], limit=1, order='NO_ORDER', context=context):
+            if check_identifier and msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)], limit=1, order='NO_ORDER', context=context):
                 return
             data = {
                     'identifier' : xml_id,
