@@ -60169,8 +60169,9 @@ msgstr "Erreur utilisateur!"
 msgid "Reconcile"
 msgstr "Lettrer"
 
-#. modules: account
+#. modules: account, account_override
 #: field:account.move.line,reconcile_txt:0
+#: report:addons/account_override/report/open_invoices_xls.mako:314
 msgid "Reconcile"
 msgstr "Lettrage"
 
@@ -98687,3 +98688,13 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:315
+msgid "Payment Sequence Number"
+msgstr "Numéro de séquence du paiement"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:316
+msgid "Down Payment Sequence Number"
+msgstr "Numéro de séquence de l'acompte"

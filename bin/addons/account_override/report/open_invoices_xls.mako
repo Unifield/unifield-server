@@ -241,6 +241,9 @@
     <Column ss:Index="12" ss:Width="49.5"/>
     <Column ss:Width="39.75"/>
     <Column ss:Width="80"/>
+    <Column ss:Width="110"/>
+    <Column ss:Width="180"/>
+    <Column ss:Width="180"/>
 
 
     <Row ss:AutoFitHeight="0" ss:Height="18">
@@ -283,6 +286,9 @@
     <Cell ss:StyleID="s24"/>
     <Cell ss:StyleID="s24"/>
     <Cell ss:StyleID="s25"/>
+    <Cell ss:StyleID="s25"/>
+    <Cell ss:StyleID="s25"/>
+    <Cell ss:StyleID="s25"/>
    </Row>
     <Row ss:AutoFitHeight="0" ss:Height="51" ss:StyleID="s26">
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
@@ -305,6 +311,9 @@
         <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Total amt func. ccy')}</Data></Cell>
         <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Func. Ccy')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('State')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Reconcile')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Payment Sequence Number')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Down Payment Sequence Number')}</Data></Cell>
     </Row>
 
 <% nb_line = 0 %>
@@ -340,6 +349,9 @@
         <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.amount_total, o.currency_id.id) or 0.0 )|x}</Data></Cell>
         <Cell ss:StyleID="s50"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.imported_state and getSelValue('account.invoice', 'imported_state', o.imported_state) or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String"></Data></Cell>
     </Row>
 % endfor
 % endif
