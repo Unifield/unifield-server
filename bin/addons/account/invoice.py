@@ -194,12 +194,13 @@ class account_invoice(osv.osv):
                                 first_leg = reg_line.first_move_line_id
                                 other_leg_ids = first_leg and aml_obj.search(cr, uid,
                                                                              [('move_id', '=', first_leg.move_id.id),
-                                                                              ('id', '!=', first_leg.id)],
+                                                                              ('id', '!=', first_leg.id),
+                                                                              ('reconcile_id', '=', False)],
                                                                              order='NO_ORDER', context=context) or []
                                 # if the doc was imported with other account.invoices, get the JIs of these other docs
                                 other_doc_ids = []
                                 for reg_aml in reg_line.imported_invoice_line_ids:
-                                    if reg_aml.id != m.id:
+                                    if reg_aml.id != m.id and not reg_aml.reconcile_id:
                                         other_doc_ids.append(reg_aml.id)
                                     if reg_aml.reconcile_partial_id:
                                         # covers this use case: SI 75 / SI 25 / group import 10 / group import 80 / hardpost 10
