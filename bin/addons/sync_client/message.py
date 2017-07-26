@@ -406,7 +406,15 @@ class message_received(osv.osv):
         context['lang'] = 'en_US'
         # get all ids if not specified
         if ids is None:
-            ids = self.search(cr, uid, [('run','=',False)], order='id asc', context=context)
+            cr.execute("""
+                SELECT rec.id
+                FROM sync_client_message_rule rule, sync_client_message_received rec
+                WHERE rule.remote_call = rec.remote_call
+                AND rec.run = 'false'
+                ORDER BY rule.sequence_number;
+            """)
+            ids = [id for (id,) in cr.fetchall()]
+
         if not ids: return 0
 
         execution_date = fields.datetime.now()
