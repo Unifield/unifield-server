@@ -113,8 +113,16 @@
    </Borders>
    <NumberFormat ss:Format="Standard"/>
   </Style>
-
-
+  <Style ss:ID="s33Wrap">
+   <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <NumberFormat ss:Format="Standard"/>
+  </Style>
   <Style ss:ID="s34">
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -242,8 +250,8 @@
     <Column ss:Width="39.75"/>
     <Column ss:Width="80"/>
     <Column ss:Width="110"/>
-    <Column ss:Width="180"/>
-    <Column ss:Width="180"/>
+    <Column ss:Width="200"/>
+    <Column ss:Width="200"/>
 
 
     <Row ss:AutoFitHeight="0" ss:Height="18">
@@ -349,9 +357,9 @@
         <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.amount_total, o.currency_id.id) or 0.0 )|x}</Data></Cell>
         <Cell ss:StyleID="s50"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.imported_state and getSelValue('account.invoice', 'imported_state', o.imported_state) or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.payment_ids and ", ".join(set([ p.reconcile_txt or '' for p in o.payment_ids])) or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.payment_ids and ", ".join([ p.move_id.name for p in o.payment_ids]) or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.down_payment_ids and ", ".join([ p.move_id.name for p in o.down_payment_ids]) or '')|x}</Data></Cell>
     </Row>
 % endfor
 % endif
