@@ -73,7 +73,8 @@ class purchase_order_line(osv.osv):
             # update FO line:
             self.pool.get('sale.order.line').write(cr, uid, sol.id, sol_values, context=context)
             wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'sourced_v', cr)
+            if pol.state == 'validated':
+                wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'sourced_v', cr)
         
         return True
 
