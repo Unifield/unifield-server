@@ -229,17 +229,16 @@
 
 <Worksheet ss:Name="${_('Open Invoices')}">
     <Table>
-    <Column ss:AutoFitWidth="0" ss:Width="70.5" ss:Span="1"/>
-    <Column ss:Index="3" ss:Width="88.5"/>
+    <Column ss:Width="88.5"/>
+    <Column ss:AutoFitWidth="0" ss:Width="75.5" ss:Span="1"/>
     <Column ss:Width="91.5"/>
     <Column ss:Width="108"/>
-    <Column ss:Width="63"/>
-    <Column ss:Width="53.25"/>
     <Column ss:Width="105.75"/>
+    <Column ss:Width="53.25"/>
     <Column ss:Width="51"/>
     <Column ss:Width="42.75"/>
     <Column ss:Width="46.5" ss:Span="1"/>
-    <Column ss:Index="13" ss:Width="49.5"/>
+    <Column ss:Index="12" ss:Width="49.5"/>
     <Column ss:Width="39.75"/>
     <Column ss:Width="80"/>
 
@@ -283,13 +282,12 @@
     <Cell ss:StyleID="s24"/>
     <Cell ss:StyleID="s24"/>
     <Cell ss:StyleID="s24"/>
-    <Cell ss:StyleID="s24"/>
     <Cell ss:StyleID="s25"/>
    </Row>
     <Row ss:AutoFitHeight="0" ss:Height="51" ss:StyleID="s26">
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
-        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
 % if type in ['out_invoice', 'out_refund']:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Customer')}</Data></Cell>
 % elif type in ['in_invoice', 'in_refund']:
@@ -298,9 +296,8 @@
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Partner')}</Data></Cell>
 % endif
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Description')}</Data></Cell>
-        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Responsible')}</Data></Cell>
-        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Due Date')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Source Document')}</Data></Cell>
+        <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Due Date')}</Data></Cell>
         <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Residual amt booking ccy')}</Data></Cell>
         <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Total amt booking ccy')}</Data></Cell>
         <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Booking Currency')}</Data></Cell>
@@ -316,6 +313,7 @@
 % for o in invoices[type]:
     <Row>
         <% nb_line += 1 %>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.move_id and o.move_id.name or '')|x}</Data></Cell>
         % if isDate(o.document_date):
             <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.document_date or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
@@ -327,16 +325,14 @@
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
         % endif
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.move_id and o.move_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.partner_id and o.partner_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.user_id and o.user_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.origin or '')|x}</Data></Cell>
         % if isDate(o.date_due):
             <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.date_due or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
         % endif
-        <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.origin or '')|x}</Data></Cell>
         <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.residual or 0.0)|x}</Data></Cell>
         <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.amount_total or 0.0)|x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data></Cell>
@@ -348,7 +344,6 @@
 % endfor
 % endif
     <Row ss:AutoFitHeight="0" ss:StyleID="s26">
-        <Cell ss:StyleID="s39"/>
         <Cell ss:StyleID="s39"/>
         <Cell ss:StyleID="s39"/>
         <Cell ss:StyleID="s39"/>

@@ -72235,8 +72235,7 @@ msgstr "Constraint error on Uom"
 msgid "Book. Currency"
 msgstr "Enreg.Devise"
 
-#. modules: account_override, vertical_integration, register_accounting
-#: report:addons/account_override/report/open_invoices_xls.mako:301
+#. modules: vertical_integration, register_accounting
 #: field:account.bank.statement,responsible_ids:0
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:295
 msgid "Responsible"
