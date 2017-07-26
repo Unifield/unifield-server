@@ -184,10 +184,9 @@ class account_invoice(osv.osv):
                         if m.reconcile_partial_id:
                             temp_lines = map(lambda x: x.id, m.reconcile_partial_id.line_partial_ids)
                         if temp_post_included:  # don't use 'elif' otherwise only hard-posted lines would be returned for a single doc
-                            invoice_aml_ids = invoice_amls and [inv_aml.id for inv_aml in invoice_amls]
-                            reg_line_ids = invoice_aml_ids and reg_line_obj.search(cr, uid,
-                                                                                   [('imported_invoice_line_ids', 'in', invoice_aml_ids)],
-                                                                                   order='NO_ORDER', context=context) or []
+                            reg_line_ids = reg_line_obj.search(cr, uid,
+                                                               [('imported_invoice_line_ids', '=', m.id)],
+                                                               order='NO_ORDER', context=context) or []
                             for reg_line in reg_line_obj.browse(cr, uid, reg_line_ids,
                                                                 fields_to_fetch=['first_move_line_id', 'imported_invoice_line_ids'],
                                                                 context=context):
@@ -200,7 +199,10 @@ class account_invoice(osv.osv):
                                 # if the doc was imported with other account.invoices, get the JIs of these other docs
                                 other_doc_ids = []
                                 for reg_aml in reg_line.imported_invoice_line_ids:
+                                    if reg_aml.id != m.id:
+                                        other_doc_ids.append(reg_aml.id)
                                     if reg_aml.reconcile_partial_id:
+                                        # covers this use case: SI 75 / SI 25 / group import 10 / group import 80 / hardpost 10
                                         for part_aml in reg_aml.reconcile_partial_id.line_partial_ids:
                                             if part_aml.id != reg_aml.id:
                                                 other_doc_ids.append(part_aml.id)
