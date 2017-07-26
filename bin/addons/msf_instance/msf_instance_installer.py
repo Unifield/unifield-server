@@ -33,6 +33,11 @@ class msf_instance_setup(osv.osv_memory):
     }
 
     def execute(self, cr, uid, ids, context=None):
+
+        # because the step to define the langage is now hidden, do the action
+        # done during this step here.
+        lang_setup = self.pool.get('lang.setup')
+        lang_setup.set_lang(cr, uid, 'en_MF', context=context)
         return {}
 
     def action_check(self, cr, uid, ids, context=None):
