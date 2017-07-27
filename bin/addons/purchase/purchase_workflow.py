@@ -70,10 +70,7 @@ class purchase_order_line(osv.osv):
                 'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
                 'confirmed_delivery_date': line_confirmed,
             }
-            # update FO line:
             self.pool.get('sale.order.line').write(cr, uid, sol.id, sol_values, context=context)
-            wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'sale.order.line', sol.id, 'sourced_v', cr)
         
         return True
 
@@ -171,13 +168,38 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
 
         # check analytic distribution before validating the line:
         self.check_analytic_distribution(cr, uid, ids, context=context)
 
+        # update FO lines:
         self.update_fo_lines(cr, uid, ids, context=context)
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_v', cr)
 
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+
+        return True
+
+
+    def action_cancel(self, cr, uid, ids, context=None):
+        '''
+        Wkf method called when getting the cancel state
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
+
+        # cancel the linked SO line too:
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
+
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
         return True
 

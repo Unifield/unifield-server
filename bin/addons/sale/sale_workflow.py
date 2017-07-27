@@ -281,7 +281,7 @@ class sale_order_line(osv.osv):
                 self.copy_analytic_distribution_on_lines(cr, uid, [sol.id], context=context)
 
             elif sol.procurement_request: # in case of IR
-                pass
+                pass #TODO
 
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
@@ -304,6 +304,26 @@ class sale_order_line(osv.osv):
             ids = [ids]
         
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+
+        return True
+
+
+    def action_cancel(self, cr, uid, ids, context=None):
+        '''
+        Workflow method called when SO line is getting the cancel state
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+
+        # generate sync message:
+        return_info = {}
+        for sol_id in ids:
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 

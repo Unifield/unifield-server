@@ -3195,35 +3195,18 @@ class sale_order_line(osv.osv):
 
     def ask_unlink(self, cr, uid, ids, context=None):
         '''
-        Call the user to know if the line must be re-sourced
+        Method to cancel a SO line
         '''
         if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        return self.ask_order_unlink(cr, uid, ids, context=context)
+        wf_service = netsvc.LocalService("workflow")
+        for sol_id in ids:
+            wf_service.trg_validate(uid, 'sale.order.line', sol_id, 'cancel', cr)
 
-    def ask_order_unlink(self, cr, uid, ids, context=None):
-        '''
-        Call the unlink method for lines and if the FO becomes empty,
-        ask the user if he wants to cancel the FO
-        '''
-        sale_ids = []
-        res = False
-        for line in self.read(cr, uid, ids, ['order_id'], context=context):
-            if line['order_id'][0] not in sale_ids:
-                sale_ids.append(line['order_id'][0])
-
-        self.unlink(cr, uid, ids, context=context)
-
-        for order in self.pool.get('sale.order').read(cr, uid, sale_ids, ['order_line'], context=context):
-            if len(order['order_line']) == 0:
-                res = self.pool.get('sale.order.unlink.wizard').ask_unlink(cr, uid, order['id'], context=context)
-
-        return res
-
+        return True
 
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''

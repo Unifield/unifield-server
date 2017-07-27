@@ -908,80 +908,18 @@ class purchase_order_line(osv.osv):
 
     def ask_unlink(self, cr, uid, ids, context=None):
         '''
-        Call the unlink method for lines and if the PO becomes empty
-        ask the user if he wants to cancel the PO
+        Method to cancel a PO line
         '''
-        # Objects
-        wiz_obj = self.pool.get('purchase.order.line.unlink.wizard')
-        proc_obj = self.pool.get('procurement.order')
-        data_obj = self.pool.get('ir.model.data')
-        wkf_act_obj = self.pool.get('workflow.activity')
-        opl_obj = self.pool.get('stock.warehouse.orderpoint.line')
-
-        # Variables initialization
         if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # Check if the line is not already removed
-        ids = self.search(cr, uid, [('id', 'in', ids)], context=context)
-        if not ids:
-            raise osv.except_osv(
-                _('Error'),
-                _('The line has been already deleted - Please refresh the page'),
-            )
+        wf_service = netsvc.LocalService("workflow")
+        for sol_id in ids:
+            wf_service.trg_validate(uid, 'purchase.order.line', sol_id, 'cancel', cr)
 
-        if context.get('rfq_ok', False):
-            view_id = data_obj.get_object_reference(cr, uid, 'tender_flow', 'rfq_line_unlink_wizard_form_view')[1]
-        else:
-            view_id = \
-            data_obj.get_object_reference(cr, uid, 'purchase_override', 'purchase_order_line_unlink_wizard_form_view')[
-                1]
-
-        for line in self.read(cr, uid, ids, ['procurement_id', 'origin', 'move_dest_id'], context=context):
-            sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line['id']], context=context)
-            exp_sol_ids = self.get_exp_sol_ids_from_pol_ids(cr, uid, [line['id']], context=context)
-            if (sol_ids or exp_sol_ids) and not context.get('from_del_wizard'):
-                wiz_id = wiz_obj.create(cr, uid, {'line_id': line['id'],
-                                                  'only_exp': (not sol_ids and exp_sol_ids) and True or False},
-                                        context=context)
-                if sol_ids or wiz_obj.read(cr, uid, wiz_id, ['last_line'], context=context)['last_line']:
-                    return {'type': 'ir.actions.act_window',
-                            'res_model': 'purchase.order.line.unlink.wizard',
-                            'view_type': 'form',
-                            'view_mode': 'form',
-                            'view_id': [view_id],
-                            'res_id': wiz_id,
-                            'target': 'new',
-                            'context': context}
-
-            #  In case of a PO line is created to source a FO/IR but the corresponding
-            # FO/IR line will be created when the PO will be confirmed
-            if not line['procurement_id'] and line['origin']:
-                wiz_id = wiz_obj.create(cr, uid, {'line_id': line['id']}, context=context)
-                return wiz_obj.just_cancel(cr, uid, [wiz_id], context=context)
-
-            # In case of a PO line is not created to source a FO/IR but from a
-            # replenishment rule, cancel the stock move and the procurement order
-            if line['move_dest_id']:
-                self.pool.get('stock.move').action_cancel(cr, uid, [line['move_dest_id'][0]], context=context)
-                proc_ids = proc_obj.search(cr, uid, [('move_id', '=', line['move_dest_id'][0])], context=context)
-                if proc_ids:
-                    # Delete link between proc. order and min/max rule lines
-                    opl_ids = opl_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], order='NO_ORDER',
-                                             context=context)
-                    opl_obj.write(cr, uid, opl_ids, {'procurement_id': False}, context=context)
-                    wf_service = netsvc.LocalService("workflow")
-                    for proc_id in proc_ids:
-                        wf_service.trg_delete(uid, 'procurement.order', proc_id, cr)
-                        wkf_id = data_obj.get_object_reference(cr, uid, 'procurement', 'act_cancel')[1]
-                        activity = wkf_act_obj.read(cr, uid, wkf_id, ['action'], context=context)
-                        _eval_expr(cr, [uid, 'procurement.order', proc_id], False, activity['action'])
-
-        context['from_del_wizard'] = False
-        return self.unlink(cr, uid, ids, context=context)
+        return True
 
     def cancel_sol(self, cr, uid, ids, context=None):
         '''

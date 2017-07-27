@@ -126,6 +126,7 @@ class local_message_rule(osv.osv):
 
             model_obj = self.pool.get(model_name)
             if res_id not in model_obj.search(cr, uid, eval(rule.domain), order='NO_ORDER', context=context):
+                logger.info("Trying to create a manual sync message but did not match rule's domain (rule: %s)" % rule.name)
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")

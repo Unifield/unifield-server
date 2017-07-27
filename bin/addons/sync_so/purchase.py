@@ -93,6 +93,8 @@ class purchase_order_line_sync(osv.osv):
             wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'confirmed', cr)
         elif sol_dict['state'] == 'done':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'done', cr)
+        elif sol_dict['state'] == 'cancel':
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'cancel', cr)
 
         # log me:
         po_name = self.pool.get('purchase.order').read(cr, uid, po_ids[0], ['name'], context=context)['name'] or ''
