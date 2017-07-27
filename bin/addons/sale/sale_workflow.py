@@ -130,6 +130,12 @@ class sale_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
 
+        # generate sync message manually :
+        return_info = {}
+        for sol_id in ids:
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+            
         return True
 
 
