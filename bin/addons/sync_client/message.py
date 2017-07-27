@@ -411,7 +411,7 @@ class message_received(osv.osv):
                 FROM sync_client_message_rule rule, sync_client_message_received rec
                 WHERE rule.remote_call = rec.remote_call
                 AND rec.run = 'false'
-                ORDER BY rule.sequence_number;
+                ORDER BY rule.sequence_number, rec.id;
             """)
             ids = [id for (id,) in cr.fetchall()]
 
