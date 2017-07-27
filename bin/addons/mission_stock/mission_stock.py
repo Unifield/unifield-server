@@ -898,6 +898,73 @@ class UnicodeWriter:
         for row in rows:
             self.writerow(row)
 
+class stock_mission_report_line_location(osv.osv):
+    _name = 'stock.mission.report.line.location'
+    _description = 'Stock level by product/location'
+    _order = 'id'
+
+    def init(self, cr):
+        #super(stock_mission_report_line_location, self).init(cr)
+
+        cr.execute('''CREATE OR REPLACE FUNCTION update_stock_level()
+  RETURNS trigger AS $stock_move$
+  DECLARE
+    changes_on_done boolean := false;
+  BEGIN
+  IF TG_OP = 'DELETE' OR ( TG_OP = 'UPDATE' AND OLD.state='done' AND NEW.state != 'done') THEN
+     -- stock.move deleted or state changed from done to something else: decrease stock
+     IF OLD.state = 'done' THEN
+          UPDATE stock_mission_report_line_location SET quantity = quantity-OLD.product_qty, last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_dest_id;
+          UPDATE stock_mission_report_line_location SET quantity = quantity+OLD.product_qty, last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_id;
+     END IF;
+     RETURN NEW;
+  END IF;
+
+  changes_on_done := TG_OP = 'UPDATE' AND OLD.state = 'done' AND NEW.state = 'done' AND (OLD.product_qty != NEW.product_qty OR OLD.product_id!=NEW.product_id OR OLD.location_id != NEW.location_id OR OLD.location_dest_id != NEW.location_dest_id);
+  IF NEW.state = 'done' AND (TG_OP = 'INSERT' OR COALESCE(OLD.state, 'draft') != 'done' OR changes_on_done) THEN
+        -- new done stock move or state change to done
+        UPDATE stock_mission_report_line_location SET quantity = quantity+NEW.product_qty, last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_dest_id;
+        IF NOT FOUND THEN
+            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date) VALUES (NEW.location_dest_id, NEW.product_id, NEW.product_qty, NOW());
+        END IF;
+
+        UPDATE stock_mission_report_line_location SET quantity = quantity-NEW.product_qty, last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_id;
+        IF NOT FOUND THEN
+            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date) VALUES (NEW.location_id, NEW.product_id, -NEW.product_qty, NOW());
+        END IF;
+  END IF;
+
+  IF changes_on_done THEN
+        -- done move updated: qty or location, update old data
+        UPDATE stock_mission_report_line_location SET quantity = quantity-OLD.product_qty, last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_dest_id;
+        UPDATE stock_mission_report_line_location SET quantity = quantity+OLD.product_qty, last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_id;
+  END IF;
+
+  RETURN NEW;
+  END;
+  $stock_move$
+  LANGUAGE plpgsql;
+''')
+        cr.execute("SELECT tgname FROM pg_trigger WHERE  tgname = 'update_stock_move'")
+        if not cr.fetchone():
+            cr.execute("CREATE TRIGGER update_stock_move AFTER INSERT OR UPDATE OR DELETE ON stock_move FOR EACH ROW EXECUTE PROCEDURE update_stock_level()")
+        # TODO TRUNCATE: remove all lines
+
+    _columns = {
+        'location_id': fields.many2one('stock.location', 'Location', select=1, required=1),
+        'product_id': fields.many2one('product.product', 'Product', select=1, required=1),
+        'quantity': fields.float('Quantity', required=True, digits=(16,4)),
+        'last_mod_date': fields.datetime('Last modification date'),
+
+        # TODO
+        # batch
+        # UoM
+        # instance_id ?
+    }
+
+stock_mission_report_line_location()
+
+
 class stock_mission_report_line(osv.osv):
     _name = 'stock.mission.report.line'
     _description = 'Mission stock report line'
