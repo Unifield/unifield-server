@@ -357,8 +357,8 @@
         <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.amount_total, o.currency_id.id) or 0.0 )|x}</Data></Cell>
         <Cell ss:StyleID="s50"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.imported_state and getSelValue('account.invoice', 'imported_state', o.imported_state) or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.payment_ids and ", ".join(set([ p.reconcile_txt or '' for p in o.payment_ids])) or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.payment_ids and ", ".join([ p.move_id.name for p in o.payment_ids]) or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.payment_to_display_ids and ", ".join(set([ p.reconcile_txt for p in o.payment_to_display_ids if p.reconcile_txt != False])) or '')|x}</Data></Cell>
+        <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.payment_to_display_ids and ", ".join([ p.move_id.name for p in o.payment_to_display_ids]) or '')|x}</Data></Cell>
         <Cell ss:StyleID="s33Wrap"><Data ss:Type="String">${(o.down_payment_ids and ", ".join([ p.move_id.name for p in o.down_payment_ids]) or '')|x}</Data></Cell>
     </Row>
 % endfor
