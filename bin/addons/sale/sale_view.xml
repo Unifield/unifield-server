@@ -199,7 +199,7 @@
                                     <button string="Validate" icon="terp-check" name="validated" type="workflow" states="draft"/>
                                     <button string="Delete" icon="gtk-del" type="object" name="ask_unlink"
                                             confirm="Do you really want to delete selected record ?"
-                                            attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}" />
+                                            attrs="{'invisible': [('fake_state', 'in', ('cancel', 'done'))]}" />
                                 </tree>
                             </field>
                             <newline/>
