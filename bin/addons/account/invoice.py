@@ -177,12 +177,12 @@ class account_invoice(osv.osv):
                 invoice_amls = [ml for ml in invoice.move_id.line_id if ml.account_id == invoice.account_id
                                 and abs(abs(invoice.amount_total) - abs(ml.amount_currency)) <= 10**-3]
                 for m in invoice_amls:
-                    temp_lines = []
+                    temp_lines = set()
                     if m.reconcile_id:
-                        temp_lines = map(lambda x: x.id, m.reconcile_id.line_id)
+                        temp_lines = set(map(lambda x: x.id, m.reconcile_id.line_id))
                     else:
                         if m.reconcile_partial_id:
-                            temp_lines = map(lambda x: x.id, m.reconcile_partial_id.line_partial_ids)
+                            temp_lines = set(map(lambda x: x.id, m.reconcile_partial_id.line_partial_ids))
                         if temp_post_included:  # don't use 'elif' otherwise only hard-posted lines would be returned for a single doc
                             reg_line_ids = reg_line_obj.search(cr, uid,
                                                                [('imported_invoice_line_ids', '=', m.id)],
@@ -207,8 +207,8 @@ class account_invoice(osv.osv):
                                         for part_aml in reg_aml.reconcile_partial_id.line_partial_ids:
                                             if part_aml.id != reg_aml.id:
                                                 other_doc_ids.append(part_aml.id)
-                                temp_lines.extend(other_leg_ids)
-                                temp_lines.extend(other_doc_ids)
+                                temp_lines.update(other_leg_ids)
+                                temp_lines.update(other_doc_ids)
                 lines += [x for x in temp_lines if x not in lines]
                 src.append(m.id)
 
