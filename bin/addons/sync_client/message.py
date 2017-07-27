@@ -125,8 +125,7 @@ class local_message_rule(osv.osv):
                 return
 
             model_obj = self.pool.get(model_name)
-            if res_id not in model_obj.search(cr, uid, eval(rule.domain),
-                    order='NO_ORDER', context=context):
+            if res_id not in model_obj.search(cr, uid, eval(rule.domain), order='NO_ORDER', context=context):
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")
@@ -359,19 +358,6 @@ class message_received(osv.osv):
 
     def unfold_package(self, cr, uid, package, context=None):
         for data in package:
-            ids = self.search(cr, uid, [('identifier', '=', data['id'])],
-                    order='NO_ORDER', context=context)
-            if ids:
-                sync_log(self, 'Message %s already in the database' % data['id'])
-                # SP-135/UF-1617: Write the message if there is modification, and set the "run" to false to be executed next time
-                self.write(cr, uid, ids, {
-                    'identifier' : data['id'],
-                    'remote_call' : data['call'],
-                    'arguments' : data['args'],
-                    'sequence' : data['sequence'],
-                    'run' : False, # SP-135: set the message to become not run, so it will be rerun if there is a modif from server
-                    'source' : data['source'] }, context=context)
-                continue
             self.create(cr, uid, {
                 'identifier' : data['id'],
                 'remote_call' : data['call'],
