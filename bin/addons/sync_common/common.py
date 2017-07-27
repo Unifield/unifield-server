@@ -145,6 +145,7 @@ WHITE_LIST_MODEL = [
     'tender.line',
     'threshold.value',
     'threshold.value.line',
+    'stock.mission.report.line.location',
 ]
 
 OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']

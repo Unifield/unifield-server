@@ -899,45 +899,70 @@ class UnicodeWriter:
             self.writerow(row)
 
 class stock_mission_report_line_location(osv.osv):
+    '''
+    Local instance records are managed only by psql trigger
+    '''
     _name = 'stock.mission.report.line.location'
     _description = 'Stock level by product/location'
     _order = 'id'
 
+
     def init(self, cr):
         #super(stock_mission_report_line_location, self).init(cr)
+
+        cr.execute('''CREATE OR REPLACE FUNCTION  update_ir_model_data(id integer) RETURNS void AS $$
+        BEGIN
+            UPDATE ir_model_data set last_modification=NOW(), touched='[''quantity'']' where res_id = $1 AND module='sd' AND model='stock.mission.report.line.location';
+        END;
+        $$ LANGUAGE plpgsql;
+        ''')
+
+        cr.execute("""CREATE OR REPLACE FUNCTION  create_ir_model_data(id integer) RETURNS void AS $$
+        DECLARE
+            instance_id varchar;
+            query varchar;
+        BEGIN
+            SELECT identifier INTO instance_id FROM sync_client_entity LIMIT 1;
+            EXECUTE format('INSERT INTO ir_model_data (name, module, model, touched, last_modification, res_id) VALUES (%L||''/stock_mission_report_line_location/''||%L, ''sd'', ''stock.mission.report.line.location'', ''[''''quantity'''']'', NOW(), %L)', instance_id, $1,$1);
+        END;
+        $$ LANGUAGE plpgsql;
+        """)
 
         cr.execute('''CREATE OR REPLACE FUNCTION update_stock_level()
   RETURNS trigger AS $stock_move$
   DECLARE
     changes_on_done boolean := false;
+    t_id integer;
   BEGIN
-  IF TG_OP = 'DELETE' OR ( TG_OP = 'UPDATE' AND OLD.state='done' AND NEW.state != 'done') THEN
-     -- stock.move deleted or state changed from done to something else: decrease stock
-     IF OLD.state = 'done' THEN
-          UPDATE stock_mission_report_line_location SET quantity = quantity-OLD.product_qty, last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_dest_id;
-          UPDATE stock_mission_report_line_location SET quantity = quantity+OLD.product_qty, last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_id;
-     END IF;
-     RETURN NEW;
-  END IF;
 
   changes_on_done := TG_OP = 'UPDATE' AND OLD.state = 'done' AND NEW.state = 'done' AND (OLD.product_qty != NEW.product_qty OR OLD.product_id!=NEW.product_id OR OLD.location_id != NEW.location_id OR OLD.location_dest_id != NEW.location_dest_id);
-  IF NEW.state = 'done' AND (TG_OP = 'INSERT' OR COALESCE(OLD.state, 'draft') != 'done' OR changes_on_done) THEN
-        -- new done stock move or state change to done
-        UPDATE stock_mission_report_line_location SET quantity = quantity+NEW.product_qty, last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_dest_id;
-        IF NOT FOUND THEN
-            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date) VALUES (NEW.location_dest_id, NEW.product_id, NEW.product_qty, NOW());
-        END IF;
-
-        UPDATE stock_mission_report_line_location SET quantity = quantity-NEW.product_qty, last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_id;
-        IF NOT FOUND THEN
-            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date) VALUES (NEW.location_id, NEW.product_id, -NEW.product_qty, NOW());
-        END IF;
+  IF TG_OP = 'DELETE' OR ( TG_OP = 'UPDATE' AND OLD.state='done' AND NEW.state != 'done') OR changes_on_done THEN
+     -- stock.move deleted or state changed from done to something else: decrease stock
+     IF OLD.state = 'done' THEN
+          UPDATE stock_mission_report_line_location SET quantity = quantity-OLD.product_qty, last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_dest_id RETURNING id INTO t_id;
+          PERFORM update_ir_model_data(t_id);
+          UPDATE stock_mission_report_line_location SET quantity = quantity+OLD.product_qty, last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_id RETURNING id INTO t_id;
+          PERFORM update_ir_model_data(t_id);
+     END IF;
   END IF;
 
-  IF changes_on_done THEN
-        -- done move updated: qty or location, update old data
-        UPDATE stock_mission_report_line_location SET quantity = quantity-OLD.product_qty, last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_dest_id;
-        UPDATE stock_mission_report_line_location SET quantity = quantity+OLD.product_qty, last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_id;
+  IF TG_OP in ('UPDATE', 'INSERT') AND NEW.state = 'done' AND (TG_OP = 'INSERT' OR COALESCE(OLD.state, 'draft') != 'done' OR changes_on_done) THEN
+        -- new done stock move or state change to done
+        UPDATE stock_mission_report_line_location SET quantity = quantity+NEW.product_qty, last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_dest_id RETURNING id INTO t_id;
+        IF NOT FOUND THEN
+            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date) VALUES (NEW.location_dest_id, NEW.product_id, NEW.product_qty, NOW()) RETURNING id INTO t_id;
+            PERFORM create_ir_model_data(t_id);
+        ELSE
+            PERFORM update_ir_model_data(t_id);
+        END IF;
+
+        UPDATE stock_mission_report_line_location SET quantity = quantity-NEW.product_qty, last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_id RETURNING id INTO t_id;
+        IF NOT FOUND THEN
+            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date) VALUES (NEW.location_id, NEW.product_id, -NEW.product_qty, NOW()) RETURNING id INTO t_id;
+            PERFORM create_ir_model_data(t_id);
+        ELSE
+            PERFORM update_ir_model_data(t_id);
+        END IF;
   END IF;
 
   RETURN NEW;
@@ -950,17 +975,50 @@ class stock_mission_report_line_location(osv.osv):
             cr.execute("CREATE TRIGGER update_stock_move AFTER INSERT OR UPDATE OR DELETE ON stock_move FOR EACH ROW EXECUTE PROCEDURE update_stock_level()")
         # TODO TRUNCATE: remove all lines
 
+    def _get_instance_loc(self, cr, uid, ids, field_name, args, context=None):
+        # compute instance and location name to generate sync updates
+        if not ids:
+            return {}
+
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id
+        cr.execute('''select line.id, loc.name from stock_mission_report_line_location line, stock_location loc
+            where line.location_id = loc.id and line.id in %s''', (tuple(ids), ))
+
+        res = {}
+        for x in cr.fetchall():
+            res[x[0]] = {
+                'instance_id': instance_id,
+                'location_name': x[1],
+            }
+
+        return res
+
+    def _set_instance_loc(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
+        # set instance and location name to process received updates
+        cr.execute('update stock_mission_report_line_location set remote_'+name+'=%s where id=%s', (value or 'NULL', id))
+        return True
+
     _columns = {
-        'location_id': fields.many2one('stock.location', 'Location', select=1, required=1),
+        'location_id': fields.many2one('stock.location', 'Location', select=1),
         'product_id': fields.many2one('product.product', 'Product', select=1, required=1),
         'quantity': fields.float('Quantity', required=True, digits=(16,4)),
         'last_mod_date': fields.datetime('Last modification date'),
 
+        'instance_id': fields.function(_get_instance_loc, string='Instance', type='many2one', relation='msf.instance', multi='instance_loc', method=1, fnct_inv=_set_instance_loc),
+        'location_name': fields.function(_get_instance_loc, string='Location Name', type='varchar', multi='instance_loc', method=1, fnct_inv=_set_instance_loc),
+
+        'remote_instance_id': fields.many2one('msf.instance', 'Instance', select=1),
+        'remote_location_name': fields.char('Location', size=128, select=1),
         # TODO
         # batch
         # UoM
-        # instance_id ?
     }
+
+    _sql_constraints = [
+        ('loc_prod_uniq', 'unique(location_id, product_id)', '(Location, Product) must be unique'),
+        ('location_id_on_local_line', 'check (remote_instance_id is not null or location_id is not null)', 'Local line must have a location_id, remote line must have a remote_instance_id'),
+    ]
+
 
 stock_mission_report_line_location()
 

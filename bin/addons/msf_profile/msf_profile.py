@@ -48,6 +48,7 @@ class patch_scripts(osv.osv):
 
     def set_stock_level(self, cr, uid, *a, **b):
         done = {}
+        cr.execute("delete from stock_mission_report_line_location");
         cr.execute("select distinct product_id, location_id, location_dest_id from stock_move where state='done'")
         prod_obj = self.pool.get('product.product')
         for x in cr.fetchall():
@@ -57,8 +58,10 @@ class patch_scripts(osv.osv):
                     continue
                 av = prod_obj.get_product_available(cr, uid, [x[0]], context={'states': ('done',), 'what': ('in', 'out'), 'location': loc})
                 cr.execute("""insert into stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date)
-                    values (%s, %s, %s, NOW())
+                    values (%s, %s, %s, NOW()) RETURNING id
                 """, (loc, x[0], av[x[0]]))
+                created_id = cr.fetchone()[0]
+                cr.execute("select create_ir_model_data(%s)", (created_id, ))
                 done[key] = True
 
     def us_3098_patch(self, cr, uid, *a, **b):
