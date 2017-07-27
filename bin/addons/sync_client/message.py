@@ -121,7 +121,6 @@ class local_message_rule(osv.osv):
 
             rule = self.get_rule_by_remote_call(cr, uid, rule_method, context)
             if not rule:
-                logger.info("Sorry, there is no message rule found for the method %s." % (rule_method)) 
                 return
 
             model_obj = self.pool.get(model_name)
