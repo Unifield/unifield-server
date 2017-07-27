@@ -189,5 +189,9 @@
         <record id="us_1359_update_move_shipment" model="patch.scripts">
             <field name="method">us_1359_update_move_shipment</field>
         </record>
+
+        <record id="set_stock_level" model="patch.scripts">
+            <field name="method">set_stock_level</field>
+        </record>
     </data>
 </openerp>

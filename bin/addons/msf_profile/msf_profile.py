@@ -46,6 +46,21 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def set_stock_level(self, cr, uid, *a, **b):
+        done = {}
+        cr.execute("select distinct product_id, location_id, location_dest_id from stock_move where state='done'")
+        prod_obj = self.pool.get('product.product')
+        for x in cr.fetchall():
+            for loc in (x[1], x[2]):
+                key = (x[0], loc)
+                if key in done:
+                    continue
+                av = prod_obj.get_product_available(cr, uid, [x[0]], context={'states': ('done',), 'what': ('in', 'out'), 'location': loc})
+                cr.execute("""insert into stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date)
+                    values (%s, %s, %s, NOW())
+                """, (loc, x[0], av[x[0]]))
+                done[key] = True
+
     def us_3098_patch(self, cr, uid, *a, **b):
         cr.execute("""
             SELECT id, name
