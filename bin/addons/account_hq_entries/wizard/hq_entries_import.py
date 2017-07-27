@@ -291,6 +291,9 @@ class hq_entries_import_wizard(osv.osv_memory):
         if not context:
             context = {}
 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         # Verify that an HQ journal exists
         journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'hq'),
                                                                         ('is_current_instance', '=', True)])
@@ -314,18 +317,20 @@ class hq_entries_import_wizard(osv.osv_memory):
                 errors.append('Line %s, %s' % (line_index, _(msg)))
 
         # Browse all given wizard
-        for wiz in self.browse(cr, uid, ids):
-            if not wiz.file:
+        read_result = self.read(cr, uid, ids, ['file', 'filename'],
+                                context=context)
+        for wiz in read_result:
+            if not wiz['file']:
                 raise osv.except_osv(_('Error'), _('Nothing to import.'))
             # Decode file string
             fileobj = NamedTemporaryFile('w+')
-            fileobj.write(decodestring(wiz.file))
+            fileobj.write(decodestring(wiz['file']))
             # now we determine the file format
             fileobj.seek(0)
             # Read CSV file
             try:
                 reader = csv.reader(fileobj, delimiter=',', quotechar='"')
-                filename = wiz.filename or ""
+                filename = wiz['filename'] or ""
             except:
                 fileobj.close()
                 raise osv.except_osv(_('Error'), _('Problem to read given file.'))

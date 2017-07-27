@@ -404,6 +404,7 @@ MODEL_DATA_DICT = {
             'destination_id',
             'analytic_id',
         ],
+        'csv_button': True,
     },
     'currency_rate': {
         'header_list': [
@@ -416,6 +417,7 @@ MODEL_DATA_DICT = {
             'rate',
             'currency_id.name',
         ],
+        'csv_button': True,
     },
 
 

@@ -42,6 +42,8 @@ from msf_doc_import.msf_import_export_conf import MODEL_DATA_DICT
 MIN_COLUMN_SIZE = 40
 MAX_COLUMN_SIZE = 400
 
+MODEL_HEADER_NOT_CHECKED = ['user.access.configurator', 'hr.employee', 'hq.entries', 'res.currency.rate']
+
 class msf_import_export(osv.osv_memory):
     _name = 'msf.import.export'
     _description = 'MSF Import Export'
@@ -65,7 +67,8 @@ class msf_import_export(osv.osv_memory):
         'import_file': fields.binary('File to import .xml'),
         'hide_download_3_entries': fields.boolean('Hide export 3 entries button'),
         'hide_download_all_entries': fields.boolean('Hide export all entries button'),
-        'display_test_import_button': fields.boolean('Display test import button'),
+        'display_import_buttons': fields.boolean('Display import buttons'),
+        'csv_button': fields.boolean('Import from CSV'),
     }
 
     _default = {
@@ -73,7 +76,8 @@ class msf_import_export(osv.osv_memory):
         'display_file_export': lambda *a: False,
         'hide_download_3_entries': lambda *a: False,
         'hide_download_all_entries': lambda *a: False,
-        'display_test_import_button': lambda *a: False,
+        'display_import_buttons': lambda *a: False,
+        'csv_button': lambda *a: False,
     }
 
     def get_filename(self, cr, uid, model, selection, template_only=False, context=None):
@@ -284,6 +288,8 @@ class msf_import_export(osv.osv_memory):
                 result['value']['hide_download_3_entries'] = hide_3
                 hide_all = MODEL_DATA_DICT[model_list_selection].get('hide_download_all_entries', False)
                 result['value']['hide_download_all_entries'] = hide_all
+                csv_button = MODEL_DATA_DICT[model_list_selection].get('csv_button', False)
+                result['value']['csv_button'] = csv_button
             else:
                 result['value']['hide_download_3_entries'] = False
                 result['value']['hide_download_all_entries'] = False
@@ -294,9 +300,9 @@ class msf_import_export(osv.osv_memory):
         """
         if context is None:
             context = {}
-        result = {'value': {'display_test_import_button': False}}
+        result = {'value': {'display_import_buttons': False}}
         if import_file:
-            result['value']['display_test_import_button'] = True
+            result['value']['display_import_buttons'] = True
         return result
 
     def check_xml_syntax(self, cr, uid, xml_string, context=None):
@@ -324,13 +330,13 @@ class msf_import_export(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
         fileobj = TemporaryFile('w+')
         try:
-            xml_string = base64.decodestring(obj['import_file'])
-            self.check_xml_syntax(cr, uid, xml_string, context=context)
             for wiz in self.browse(cr, uid, ids, context=context):
                 selection = wiz.model_list_selection
                 model = MODEL_DICT[selection]['model']
-                if model == 'user.access.configurator':
+                if model in MODEL_HEADER_NOT_CHECKED:
                     continue
+                xml_string = base64.decodestring(obj['import_file'])
+                self.check_xml_syntax(cr, uid, xml_string, context=context)
                 rows, nb_rows = self.read_file(wiz, context=context)
                 head = rows.next()
                 self.check_missing_columns(cr, uid, wiz, head, context=context)
@@ -385,9 +391,54 @@ class msf_import_export(osv.osv_memory):
             if column_name.upper() != header_columns[field_index].upper():
                 missing_columns.append(_('Column %s: get \'%s\' expected \'%s\'.')
                         % (self.excel_col(field_index+1), header_columns[field_index], column_name))
-        if missing_columns:
+        if missing_columns and model not in MODEL_HEADER_NOT_CHECKED:
             raise osv.except_osv(_('Info'), _('The following columns '
                 'are missing in the imported file:\n%s') % ',\n'.join(missing_columns))
+
+    def import_csv(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            selection = wiz.model_list_selection
+            model = MODEL_DICT[selection]['model']
+
+            if model == 'hq.entries':
+                hq_import = self.pool.get('hq.entries.import')
+                vals = {'file': wiz.import_file}
+                wizard_id = hq_import.create(cr, uid, vals, context=context)
+                self.write(cr, uid, [wiz.id], {
+                    'state': 'progress',
+                    'start_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'info_message': _('Import in progress in the specific wizard.'),
+                }, context=context)
+                res = hq_import.button_validate(cr, uid, wizard_id,
+                        context=context)
+            elif model == 'res.currency.rate':
+                cur_import = self.pool.get('import.currencies')
+                vals = {
+                    'import_file': wiz.import_file,
+                    'rate_date': time.strftime('%Y-%m-%d')
+                }
+                wizard_id = cur_import.create(cr, uid, vals, context=context)
+                self.write(cr, uid, [wiz.id], {
+                    'state': 'progress',
+                    'start_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'info_message': _('Import in progress in the specific wizard.'),
+                }, context=context)
+                res = cur_import.import_rates(cr, uid, wizard_id, context=context)
+            else:
+                raise osv.except_osv(_('Error'),
+                    _('The model \'%s\' is not made to be imported in CSV file.\n'
+                        'Please contact the support team.') % (model))
+            self.write(cr, uid, [wiz.id], {
+                'state': 'done',
+                'start_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'info_message': _('Import has been done via the specific wizard. The latter had to give information on the import.'),
+            }, context=context)
+            return res
 
     def import_xml(self, cr, uid, ids, context=None):
         """Create a thread to import the data after import checking
@@ -414,7 +465,7 @@ class msf_import_export(osv.osv_memory):
                 return model_obj.do_process_uac(cr, uid, [wizard_id], context=context)
 
             expected_headers = self._get_headers(cr, uid, model, selection=selection, context=context)
-            if model != 'user.access.configurator':
+            if model not in MODEL_HEADER_NOT_CHECKED:
                 self.check_headers(head, expected_headers, context=context)
 
             self.write(cr, uid, [wiz.id], {

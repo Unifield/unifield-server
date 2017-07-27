@@ -98950,3 +98950,34 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. module: msf_doc_import
+#: field:msf.import.export,csv_button:0
+msgid "Import from CSV"
+msgstr "Importer depuis un fichier CSV"
+
+#. module: msf_doc_import
+#: field:msf.import.export,display_import_buttons:0
+msgid "Display import buttons"
+msgstr "Afficher les boutons d'import"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:415
+#: code:addons/msf_doc_import/msf_import_export.py:429
+#, python-format
+msgid "Import in progress in the specific wizard."
+msgstr "Import en cours dans l'assistant spécifique."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:434
+#, python-format
+msgid "The model '%s' is not made to be imported in CSV file.\n"
+"Please contact the support team."
+msgstr "Le model '%s' n'est pas fait pour être imorté en fichier CSV.\n"
+"Veuillez contacter léquipe support."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:439
+#, python-format
+msgid "Import has been done via the specific wizard. The latter had to give information on the import."
+msgstr "L'import à été fait via l'assistant spécifique. Ce dernier à dû donnner les information concernant l'import."
