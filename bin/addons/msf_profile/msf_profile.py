@@ -48,7 +48,7 @@ class patch_scripts(osv.osv):
 
     def set_stock_level(self, cr, uid, *a, **b):
         done = {}
-        cr.execute("delete from stock_mission_report_line_location");
+        cr.execute("delete from stock_mission_report_line_location where location_id is not null");
         cr.execute("select distinct product_id, location_id, location_dest_id from stock_move where state='done'")
         prod_obj = self.pool.get('product.product')
         for x in cr.fetchall():

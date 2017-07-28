@@ -34,7 +34,7 @@ import csv
 import codecs
 import cStringIO
 import base64
-from xlwt import Workbook, easyxf, Borders
+from xlwt import Workbook, easyxf, Borders, add_palette_colour
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
@@ -117,7 +117,10 @@ GET_EXPORT_REQUEST = '''SELECT
         trim(to_char(l.cu_qty, '999999999999.999')) as l_cu_qty,
         trim(to_char(pt.standard_price, '999999999999.999')) as pt_standard_price,
         rc.name as rc_name,
-        trim(to_char((l.internal_qty * pt.standard_price), '999999999999.999')) as l_internal_qty_pt_price
+        trim(to_char((l.internal_qty * pt.standard_price), '999999999999.999')) as l_internal_qty_pt_price,
+        l.product_amc as product_amc,
+        l.product_consumption as product_consumption,
+        mission_report_id
     FROM stock_mission_report_line l
          LEFT JOIN product_product pp ON l.product_id = pp.id
          LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
@@ -125,8 +128,8 @@ GET_EXPORT_REQUEST = '''SELECT
          LEFT JOIN res_currency rc ON pp.currency_id = rc.id
          LEFT JOIN ir_translation trans ON trans.res_id = pt.id AND
              trans.name='product.template,name' AND lang = %s
-    WHERE l.mission_report_id = %s
-    ORDER BY l.default_code'''
+    WHERE l.mission_report_id in %s
+    ORDER BY l.default_code, l.mission_report_id'''
 
 class excel_semicolon(csv.excel):
     delimiter = CSV_DELIMITER
@@ -256,6 +259,12 @@ class stock_mission_report(osv.osv):
 
         return res
 
+    def xls_write_styled_header(self, sheet, cell_list):
+        column_count = 0
+        for style, column in cell_list:
+            sheet.write(2, column_count, _(column), style)
+            column_count += 1
+
     def xls_write_header(self, sheet, cell_list, style):
         column_count = 0
         for column in cell_list:
@@ -303,22 +312,10 @@ class stock_mission_report(osv.osv):
 
         for row in request_result:
             try:
-                product_amc = 0.00
-                reviewed_consumption = 0.00
-                if row['product_id'] in product_values and product_values[row['product_id']]:
-                    if product_values[row['product_id']].get('product_amc', False):
-                        product_amc = product_values[row['product_id']]['product_amc']
-                    if product_values[row['product_id']].get('product_consumption', False):
-                        reviewed_consumption = product_values[row['product_id']]['reviewed_consumption']
-
                 data_list = []
                 data_list_append = data_list.append
                 for columns_name, property_name in header:
-                    if property_name == 'product_amc':
-                        data_list_append(product_amc)
-                    elif property_name == 'product_consumption':
-                        data_list_append(reviewed_consumption)
-                    elif 'qty' in property_name:
+                    if 'qty' in property_name:
                         data_list_append(eval(row.get(property_name, False)))
                     else:
                         data_list_append(row.get(property_name, False))
@@ -338,6 +335,170 @@ class stock_mission_report(osv.osv):
             self.write_report_in_database(cr, uid, file_name, csv_file)
         # close file
         csv_file.close()
+
+    def generate_full_xls(self, cr, uid):
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        instance_obj = self.pool.get('msf.instance')
+        instance_ids = instance_obj.search(cr, uid, [])
+        instance_dict = {}
+        for x in instance_obj.read(cr, uid, instance_ids, ['name']):
+            instance_dict[x['id']] = x['name']
+
+
+        instance_loc = {}
+        cr.execute('select distinct remote_location_name, remote_instance_id from stock_mission_report_line_location where remote_instance_id is not null order by remote_location_name')
+        for x in cr.fetchall():
+            instance_loc.setdefault(x[1], []).append(x[0])
+
+        all_instances = instance_loc.keys()
+        all_instances.insert(0, local_instance.id)
+        cr.execute('select distinct location.name from stock_mission_report_line_location l, stock_location location where location.id=l.location_id and remote_instance_id is null order by location.name')
+        for x in cr.fetchall():
+            instance_loc.setdefault(local_instance.id, []).append(x[0])
+
+        borders = Borders()
+        borders.left = Borders.THIN
+        borders.right = Borders.THIN
+        borders.top = Borders.THIN
+        borders.bottom = Borders.THIN
+
+        header_style = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                pattern: pattern solid, fore_colour tan;
+                align: wrap on, vert center, horiz center;
+            """)
+        header_style.borders = borders
+        # this style is done to be the same than previous mako configuration
+        row_style = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                align: wrap on, vert center, horiz center;
+            """)
+
+        book = Workbook()
+        add_palette_colour("custom_colour", 0x21)
+        book.set_colour_RGB(0x21, 251, 228, 228)
+        header_style1 = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                pattern: pattern solid, fore_colour custom_colour;
+                align: wrap on, vert center, horiz center;
+            """)
+        header_style1.borders = borders
+
+        header_styles = [header_style, header_style1]
+        row_style.borders = borders
+
+        sheet = book.add_sheet('Sheet 1')
+        sheet.row_default_height = 60*20
+
+        sheet.write(0, 0, _("Generating instance"), row_style)
+        instance_name = local_instance.name
+        sheet.write(0, 1, instance_name, row_style)
+        sheet.write(1, 0, _("Instance selection"), row_style)
+        report_name = 'All loc'
+        sheet.write(1, 1, report_name, row_style)
+
+        fixed_data = [
+            ('Reference', 'default_code'),
+            ('Name', 'pt_name'),
+            ('UoM', 'pu_name'),
+            ('Cost Price', 'pt_standard_price'),
+            ('Func. Cur.', 'rc_name')
+        ]
+        repeated_data = [
+            ('Instance stock', 'l_internal_qty'),
+            ('Instance stock val.', 'l_internal_qty_pt_price'),
+            ('Stock Qty.', 'l_stock_qty'),
+            ('Unallocated Stock Qty.', 'l_central_qty'),
+            ('Cross-Docking Qty.', 'l_cross_qty'),
+            ('Secondary Stock Qty.', 'l_secondary_qty'),
+            ('Internal Cons. Unit Qty.', 'l_cu_qty'),
+            ('AMC', 'product_amc'),
+            ('FMC', 'product_consumption'),
+            ('In Pipe Qty', 'l_in_pipe_qty')
+        ]
+
+        header_row = []
+        i = 0
+        for x in fixed_data:
+            header_row.append((header_styles[i], _(x[0])))
+
+        for inst_id in all_instances:
+            for x in repeated_data:
+                if inst_id != local_instance.id:
+                    col_name = '%s %s' % (instance_dict[inst_id], _(x[0]))
+                else:
+                    col_name = _(x[0])
+                header_row.append((header_styles[i], col_name))
+            for x in instance_loc[inst_id]:
+                header_row.append((header_styles[i], '%s %s' % (instance_dict[inst_id], x)))
+            i = 1 - i
+
+        self.xls_write_styled_header(sheet, header_row)
+
+        # tab header bigger height:
+        sheet.row(2).height_mismatch = True
+        sheet.row(2).height = 45*20
+
+
+        report_id_by_instance_id = {}
+        r_ids = self.search(cr, uid, [('full_view', '=', False)])
+        for x in self.read(cr, uid, r_ids, ['instance_id']):
+            report_id_by_instance_id[x['instance_id'][0]] = x['id']
+
+        cr.execute(GET_EXPORT_REQUEST, ('en_MF', tuple(r_ids)))
+
+        cr1 = pooler.get_db(cr.dbname).cursor()
+        cr1.execute('''select p.default_code as default_code, s.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity from
+            stock_mission_report_line_location l
+            inner join product_product p on p.id = l.product_id
+            left join stock_location s on s.id = l.location_id
+            order by p.default_code''')
+
+        p_code = False
+        last_stock_level_line = cr1.dictfetchone()
+        row_count = 3
+        data = {}
+        srl = cr.dictfetchone()
+        while srl:
+            if not p_code or p_code == srl['default_code']:
+                data[srl['mission_report_id']] = srl
+                p_code = srl['default_code']
+            else:
+                stock_level_data = {}
+                while last_stock_level_line and last_stock_level_line['default_code'] == p_code:
+                    instance_id = last_stock_level_line['remote_instance_id'] or local_instance.id
+                    location_name = last_stock_level_line['remote_location_name'] or last_stock_level_line['local_location_name']
+                    stock_level_data.setdefault(instance_id, {}).update({location_name: last_stock_level_line['quantity']})
+                    last_stock_level_line = cr1.dictfetchone()
+                to_write = []
+                for name, key in fixed_data:
+                    to_write.append(data.get(report_id_by_instance_id[local_instance.id], {}).get(key))
+                for inst_id in all_instances:
+                    for name, key in repeated_data:
+                        num = data.get(report_id_by_instance_id[inst_id], {}).get(key)
+                        if num == '.000':
+                            num = None
+                        to_write.append(num)
+                    for x in instance_loc[inst_id]:
+                        to_write.append(stock_level_data.get(inst_id, {}).get(x))
+
+                self.xls_write_row(sheet, to_write, row_count, row_style)
+                row_count += 1
+
+
+                data = {srl['mission_report_id']: srl}
+                p_code = srl['default_code']
+            srl = cr.dictfetchone()
+
+
+        xls_file = open(os.path.join('/tmp', 'test.xls'), 'wb')
+        book.save(xls_file)
+        cr1.close(True)
+        return True
+
 
     def generate_xls_files(self, cr, uid, request_result, report_id, report_type,
                            attachments_path, header, write_attachment_in_db, product_values):
@@ -387,22 +548,10 @@ class stock_mission_report(osv.osv):
         row_count = 3
         for row in request_result:
             try:
-                product_amc = 0.00
-                reviewed_consumption = 0.00
-                if row['product_id'] in product_values and product_values[row['product_id']]:
-                    if product_values[row['product_id']].get('product_amc', False):
-                        product_amc = product_values[row['product_id']]['product_amc']
-                    if product_values[row['product_id']].get('product_consumption', False):
-                        reviewed_consumption = product_values[row['product_id']]['reviewed_consumption']
-
                 data_list = []
                 data_list_append = data_list.append
                 for columns_name, property_name in header:
-                    if property_name == 'product_amc':
-                        data_list_append(product_amc)
-                    elif property_name == 'product_consumption':
-                        data_list_append(reviewed_consumption)
-                    elif 'qty' in property_name:
+                    if 'qty' in property_name:
                         data_list_append(eval(row.get(property_name, False)))
                     else:
                         data_list_append(row.get(property_name, False))
@@ -534,7 +683,7 @@ class stock_mission_report(osv.osv):
 
         logging.getLogger('MSR').info("""___ Number of MSR lines to be updated: %s, at %s""" % (len(product_reviewed_ids) + len(product_amc_ids), time.strftime('%Y-%m-%d %H:%M:%S')))
 
-        product_values = dict.fromkeys(product_ids, None)
+        product_values = dict.fromkeys(product_ids, {})
 
         # Update the final dict with this results
         for product_dict in product_amc_result:
@@ -588,6 +737,8 @@ class stock_mission_report(osv.osv):
                         'state_ud': prod_state_ud,
                         'international_status_code': prod_creator,
                         'product_state': prod_state or '',
+                        'product_amc': product_values.get(product, {}).get('product_amc', 0),
+                        'product_consumption': product_values.get(product, {}).get('reviewed_consumption', 0),
                     }, context=context)
 
                 # Don't update lines for full view or non local reports
@@ -632,6 +783,7 @@ class stock_mission_report(osv.osv):
                 }
                 self.write(cr, uid, [report['id']], error_vals, context=context)
             cr.commit()
+        self.generate_full_xls(cr, uid)
 
     def update_lines(self, cr, uid, report_ids, context=None):
         location_obj = self.pool.get('stock.location')
@@ -838,7 +990,7 @@ class stock_mission_report(osv.osv):
         for report_id in ids:
             logger.info('___ Start export SQL request...')
             lang = context.get('lang')
-            cr.execute(GET_EXPORT_REQUEST, (lang, report_id))
+            cr.execute(GET_EXPORT_REQUEST, (lang, (report_id, )))
             request_result = cr.dictfetchall()
 
             logger.info('___ Start CSV and XLS generation...')
@@ -1144,8 +1296,11 @@ class stock_mission_report_line(osv.osv):
         'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
-        'product_amc': fields.related('product_id', 'product_amc', type='float', string='AMC'),
-        'reviewed_consumption': fields.related('product_id', 'reviewed_consumption', type='float', string='FMC'),
+        #'product_amc': fields.related('product_id', 'product_amc', type='float', string='AMC'),
+        #'reviewed_consumption': fields.related('product_id', 'reviewed_consumption', type='float', string='FMC'),
+        'product_amc': fields.float('AMC'),
+        'product_consumption': fields.float('FMC'),
+
         'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
         'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price'),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM',
