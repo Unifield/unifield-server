@@ -74,7 +74,7 @@
  </Styles>
 
  % for r in objects:
- <ss:Worksheet ss:Name="Donation Stock Moves">
+ <ss:Worksheet ss:Name="Donation Report">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Product Code
         <Column ss:AutoFitWidth="1" ss:Width="92.5" />
@@ -100,7 +100,7 @@
         <Column ss:AutoFitWidth="1" ss:Width="55.75"  />
         ## Total Value
         <Column ss:AutoFitWidth="1" ss:Width="67.25"  />
-        ## Instance
+        ## Instancemove_location
         <Column ss:AutoFitWidth="1" ss:Width="97.25"  />
 
         <%
@@ -142,14 +142,14 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id.partner_type|x}</Data></Cell>
                 % if isQtyOut(o):
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${o.product_id.standard_price}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.currency_id.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${o.product_id.standard_price * getQty(o)}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 2)|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.price_currency_id.name|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 2) * getQty(o)|x}</Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="String">${getInstance()|x}</Data></Cell>
             </Row>
         % endfor

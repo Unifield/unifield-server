@@ -98752,8 +98752,8 @@ msgstr "Import en cours"
 
 #. module: sale
 #: model:ir.actions.report.xml,name:sale.report_sale_donation_stock_moves_xls
-msgid "Donations Stock Moves Excel Export"
-msgstr "Export Excel des Mouvements de Stock des Dons"
+msgid "Donation Report"
+msgstr "Rapport des Dons"
 
 #. module: sale
 #: selection:sale.donation.stock.moves,state:0
@@ -98847,8 +98847,8 @@ msgstr "Annulé"
 #: model:ir.actions.act_window,name:sale.action_sale_donation_stock_moves
 #: model:ir.ui.menu,name:sale.menu_sale_donation_stock_moves
 #: view:sale.donation.stock.moves:0
-msgid "Donations Stock Moves"
-msgstr "Mouvements de Stock des Dons"
+msgid "Donation Report"
+msgstr "Rapport des Dons"
 
 #. module: sale
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:108

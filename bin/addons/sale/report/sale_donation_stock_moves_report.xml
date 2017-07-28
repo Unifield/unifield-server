@@ -5,7 +5,7 @@
             id="report_sale_donation_stock_moves_xls"
             name="sale.donation.stock.moves.report_xls"
             model="sale.donation.stock.moves"
-            string="Donations Stock Moves Excel Export"
+            string="Donation Report"
             file="sale/report/sale_donation_stock_moves_report_xls.mako"
             report_type="webkit"
             header="False"

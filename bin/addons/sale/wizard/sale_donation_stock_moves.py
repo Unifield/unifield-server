@@ -153,7 +153,7 @@ class sale_donation_stock_moves(osv.osv_memory):
         self.get_values(cr, uid, ids, context=context)
 
         background_id = self.pool.get('memory.background.report').create(cr, uid, {
-            'file_name': 'Donations Stock Moves',
+            'file_name': 'Donation Report',
             'report_name': 'sale.donation.stock.moves.report_xls',
         }, context=context)
         context['background_id'] = background_id

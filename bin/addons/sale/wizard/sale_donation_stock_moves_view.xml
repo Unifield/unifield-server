@@ -6,7 +6,7 @@
             <field name="model">sale.donation.stock.moves</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Donations Stock Moves">
+                <form string="Donation Report">
                     <separator colspan="4" string="Request parameters" />
                     <field name="start_date" />
                     <field name="end_date" />
@@ -22,7 +22,7 @@
         </record>
 
         <record id="action_sale_donation_stock_moves" model="ir.actions.act_window">
-            <field name="name">Donations Stock Moves</field>
+            <field name="name">Donation Report</field>
             <field name="res_model">sale.donation.stock.moves</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
