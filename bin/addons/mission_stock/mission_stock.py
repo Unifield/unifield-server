@@ -1093,7 +1093,7 @@ class UnicodeWriter:
         self.encoder = codecs.getincrementalencoder(encoding)()
 
     def writerow(self, row):
-        self.writer.writerow([not isinstance(s, (int, long, float)) and s.encode("utf-8") or s for s in row])
+        self.writer.writerow([not isinstance(s, (int, long, float, type(None))) and s.encode("utf-8") or s for s in row])
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
         data = data.decode("utf-8")
@@ -1226,7 +1226,6 @@ class stock_mission_report_line_location(osv.osv):
 
     _sql_constraints = [
         ('loc_prod_uniq', 'unique(location_id, product_id)', '(Location, Product) must be unique'),
-        ('location_id_on_local_line', 'check (remote_instance_id is not null or location_id is not null)', 'Local line must have a location_id, remote line must have a remote_instance_id'),
     ]
 
 
