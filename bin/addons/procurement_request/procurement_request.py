@@ -645,27 +645,6 @@ class procurement_request_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
 
-    def _amount_line(self, cr, uid, ids, field_name, arg, context=None):
-        '''
-        Override the method to return 0.0 if the line is a procurement request line
-        '''
-        res = {}
-        new_ids = []
-        cur_obj = self.pool.get('res.currency')
-        curr_browse = self.pool.get('res.users').browse(cr, uid, [uid], context)[0].company_id.currency_id
-        for line in self.browse(cr, uid, ids):
-            if line.order_id.procurement_request:
-                subtotal = line.cost_price * line.product_uom_qty
-                res[line.id] = cur_obj.round(cr, uid, curr_browse.rounding, subtotal)
-                if line.cost_price > 0 and res[line.id] < 0.01:
-                    res[line.id] = 0.01
-            else:
-                new_ids.append(line.id)
-
-        res.update(super(procurement_request_line, self)._amount_line(cr, uid, new_ids, field_name, arg, context=context))
-
-        return res
-
     def create(self, cr, uid, vals, context=None):
         '''
         Adds the date_planned value.
@@ -734,7 +713,6 @@ class procurement_request_line(osv.osv):
         'cost_price': fields.float(string='Cost price', digits_compute=dp.get_precision('Sale Price Computation')),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
-        'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute=dp.get_precision('Sale Price')),
         'my_company_id': fields.many2one('res.company', 'Company', select=1),
         'supplier': fields.many2one('res.partner', 'Supplier', domain="[('id', '!=', my_company_id)]"),
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
