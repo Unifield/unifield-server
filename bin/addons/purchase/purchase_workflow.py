@@ -29,6 +29,10 @@ class purchase_order_line(osv.osv):
             create_line = False
             if not pol.linked_sol_id:
                 so_id = self.pool.get('sale.order').search(cr, uid, [('name', '=', pol.order_id.origin)], context=context)
+                if not so_id:
+                    raise osv.except_osv(_('Error'), _('Sale Order with name %s not found') % pol.order_id.origin)
+                else:
+                    so_id = so_id[0]
                 sale_order = self.pool.get('sale.order').browse(cr, uid, so_id, context=context)
                 create_line = True
             elif pol.linked_sol_id:
@@ -81,6 +85,9 @@ class purchase_order_line(osv.osv):
                 'confirmed_delivery_date': line_confirmed,
             }
             if create_line:
+                sol_values.update({
+                    'order_id': so_id,    
+                })
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
             else: # update FO line
