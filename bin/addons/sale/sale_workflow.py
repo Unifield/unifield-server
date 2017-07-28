@@ -230,7 +230,7 @@ class sale_order_line(osv.osv):
                 ('subtype', '=', picking_data['subtype']),
                 ('sale_id', '=', picking_data['sale_id']),
                 ('partner_id2', '=', sol.order_partner_id.id),
-                ('state', '=', 'draft'),
+                ('state', 'in', ['draft', 'confirmed', 'assigned']),
             ], context=context)
             if not pick_to_use:
                 pick_to_use = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
@@ -247,6 +247,12 @@ class sale_order_line(osv.osv):
             # Get move data and create the move
             move_data = self.pool.get('sale.order')._get_move_data(cr, uid, sol.order_id, sol, pick_to_use, context=context)
             move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
+            self.pool.get('stock.move').action_confirm(cr, uid, [move_id], context=context)
+
+            # confirm the OUT if in draft state:
+            pick_state = self.pool.get('stock.picking').read(cr, uid, pick_to_use, ['state'] ,context=context)['state']
+            if picking_data['subtype'] == 'standard' and pick_state == 'draft':
+                self.pool.get('stock.picking').draft_force_assign(cr, uid, [pick_to_use], context=context)
 
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
 
