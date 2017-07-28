@@ -48,10 +48,12 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
 
     def create(self, cr, uid, ids, data, context=None):
 
-        report_id = data.get('report_id', None)
-        field_name = data.get('field_name', '')
+        file_name = data.get('file_name')
         file_format = data.get('file_format', '')
-        file_name = mission_stock.STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, field_name + '.%s' % file_format)
+        if not file_name:
+            report_id = data.get('report_id', None)
+            field_name = data.get('field_name', '')
+            file_name = mission_stock.STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, field_name + '.%s' % file_format)
 
         # get the attachment_path
         pool = pooler.get_pool(cr.dbname)

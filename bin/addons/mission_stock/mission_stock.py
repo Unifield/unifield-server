@@ -35,6 +35,8 @@ import codecs
 import cStringIO
 import base64
 from xlwt import Workbook, easyxf, Borders, add_palette_colour
+import tempfile
+import shutil
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
@@ -183,6 +185,7 @@ class stock_mission_report(osv.osv):
     _name = 'stock.mission.report'
     _description = 'Mission stock report'
 
+    logger = logging.getLogger('MSR') 
     def _get_local_report(self, cr, uid, ids, field_name, args, context=None):
         '''
         Check if the mission stock report is a local report or not
@@ -262,7 +265,7 @@ class stock_mission_report(osv.osv):
     def xls_write_styled_header(self, sheet, cell_list):
         column_count = 0
         for style, column in cell_list:
-            sheet.write(2, column_count, _(column), style)
+            sheet.write(3, column_count, _(column), style)
             column_count += 1
 
     def xls_write_header(self, sheet, cell_list, style):
@@ -276,6 +279,7 @@ class stock_mission_report(osv.osv):
         for column in cell_list:
             sheet.write(row_count, column_count, _(column), style)
             column_count += 1
+        sheet.row(row_count).height = 60*20
 
 
     def write_report_in_database(self, cr, uid, file_name, data):
@@ -286,12 +290,12 @@ class stock_mission_report(osv.osv):
         if attachment_ids:
             # overwrite existing
             ir_attachment_obj.write(cr, uid, attachment_ids[0],
-                                    {'datas': base64.encodestring(data.getvalue())})
+                                    {'datas': base64.encodestring(data)})
         else:
             ir_attachment_obj.create(cr, uid,
                                      {
                                          'name': file_name,
-                                         'datas': base64.encodestring(data.getvalue()),
+                                         'datas': base64.encodestring(data),
                                          'datas_fname': file_name,
                                      })
             del data
@@ -332,11 +336,11 @@ class stock_mission_report(osv.osv):
             if attachment_ids:
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
         else:
-            self.write_report_in_database(cr, uid, file_name, csv_file)
+            self.write_report_in_database(cr, uid, file_name, csv_file.getvalue())
         # close file
         csv_file.close()
 
-    def generate_full_xls(self, cr, uid):
+    def generate_full_xls(self, cr, uid, xls_name):
         local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         instance_obj = self.pool.get('msf.instance')
         instance_ids = instance_obj.search(cr, uid, [])
@@ -352,7 +356,16 @@ class stock_mission_report(osv.osv):
 
         all_instances = instance_loc.keys()
         all_instances.insert(0, local_instance.id)
-        cr.execute('select distinct location.name from stock_mission_report_line_location l, stock_location location where location.id=l.location_id and remote_instance_id is null order by location.name')
+        cr.execute("""
+            select distinct location.name from
+            stock_mission_report_line_location l,
+            stock_location location
+            where
+                location.id=l.location_id and
+                remote_instance_id is null and
+                (location.usage = 'internal' or location.location_category='consumption_unit')
+            order by location.name
+        """)
         for x in cr.fetchall():
             instance_loc.setdefault(local_instance.id, []).append(x[0])
 
@@ -377,17 +390,26 @@ class stock_mission_report(osv.osv):
             """)
 
         book = Workbook()
-        add_palette_colour("custom_colour", 0x21)
-        book.set_colour_RGB(0x21, 251, 228, 228)
+        add_palette_colour("custom_colour_1", 0x21)
+        book.set_colour_RGB(0x21, 255, 255, 0)
+        add_palette_colour("custom_colour_2", 0x22)
+        book.set_colour_RGB(0x22, 92, 208, 50)
         header_style1 = easyxf("""
                 font: height 220;
                 font: name Calibri;
-                pattern: pattern solid, fore_colour custom_colour;
+                pattern: pattern solid, fore_colour custom_colour_1;
                 align: wrap on, vert center, horiz center;
             """)
         header_style1.borders = borders
+        header_style2 = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                pattern: pattern solid, fore_colour custom_colour_2;
+                align: wrap on, vert center, horiz center;
+            """)
+        header_style2.borders = borders
 
-        header_styles = [header_style, header_style1]
+        header_styles = [header_style1, header_style2]
         row_style.borders = borders
 
         sheet = book.add_sheet('Sheet 1')
@@ -396,9 +418,11 @@ class stock_mission_report(osv.osv):
         sheet.write(0, 0, _("Generating instance"), row_style)
         instance_name = local_instance.name
         sheet.write(0, 1, instance_name, row_style)
+        sheet.col(0).width=5000
         sheet.write(1, 0, _("Instance selection"), row_style)
         report_name = 'All loc'
         sheet.write(1, 1, report_name, row_style)
+        sheet.col(1).width=5000
 
         fixed_data = [
             ('Reference', 'default_code'),
@@ -425,22 +449,30 @@ class stock_mission_report(osv.osv):
         for x in fixed_data:
             header_row.append((header_styles[i], _(x[0])))
 
+        begin = len(fixed_data)
+        for inst_id in all_instances:
+            max_size = begin + len(repeated_data) + len(instance_loc[inst_id]) - 1
+            sheet.write_merge(2, 2, begin, max_size, instance_dict[inst_id], style=header_styles[i])
+            begin = max_size + 1
+            i = 1 - i
+
+        i = 0
         for inst_id in all_instances:
             for x in repeated_data:
-                if inst_id != local_instance.id:
-                    col_name = '%s %s' % (instance_dict[inst_id], _(x[0]))
-                else:
-                    col_name = _(x[0])
-                header_row.append((header_styles[i], col_name))
+                header_row.append((header_styles[i], _(x[0])))
             for x in instance_loc[inst_id]:
-                header_row.append((header_styles[i], '%s %s' % (instance_dict[inst_id], x)))
+                header_row.append((header_styles[i], x))
             i = 1 - i
 
         self.xls_write_styled_header(sheet, header_row)
 
         # tab header bigger height:
         sheet.row(2).height_mismatch = True
+        sheet.row(0).height = 45*20
+        sheet.row(1).height = 45*20
         sheet.row(2).height = 45*20
+        sheet.row(3).height_mismatch = True
+        sheet.row(3).height = 45*20
 
 
         report_id_by_instance_id = {}
@@ -451,15 +483,17 @@ class stock_mission_report(osv.osv):
         cr.execute(GET_EXPORT_REQUEST, ('en_MF', tuple(r_ids)))
 
         cr1 = pooler.get_db(cr.dbname).cursor()
-        cr1.execute('''select p.default_code as default_code, s.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity from
+        cr1.execute('''select p.default_code as default_code, location.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity from
             stock_mission_report_line_location l
             inner join product_product p on p.id = l.product_id
-            left join stock_location s on s.id = l.location_id
+            left join stock_location location on location.id = l.location_id
+            where
+                (location.usage = 'internal' or location.location_category='consumption_unit' or location.id is null)
             order by p.default_code''')
 
         p_code = False
         last_stock_level_line = cr1.dictfetchone()
-        row_count = 3
+        row_count = 4
         data = {}
         srl = cr.dictfetchone()
         while srl:
@@ -479,7 +513,7 @@ class stock_mission_report(osv.osv):
                 for inst_id in all_instances:
                     for name, key in repeated_data:
                         num = data.get(report_id_by_instance_id[inst_id], {}).get(key)
-                        if num == '.000':
+                        if not num or num == '.000':
                             num = None
                         to_write.append(num)
                     for x in instance_loc[inst_id]:
@@ -494,10 +528,32 @@ class stock_mission_report(osv.osv):
             srl = cr.dictfetchone()
 
 
-        xls_file = open(os.path.join('/tmp', 'test.xls'), 'wb')
+        xls_file = tempfile.NamedTemporaryFile(delete=False)
         book.save(xls_file)
+        file_name = xls_file.name
+        xls_file.close()
+        self.save_file(cr, uid, file_name, xls_name)
+        os.remove(file_name)
         cr1.close(True)
         return True
+
+    def save_file(self, cr, uid, file_name, name):
+        attachments_path = None
+        attachment_obj = self.pool.get('ir.attachment')
+        try:
+            attachments_path = attachment_obj.get_root_path(cr, uid)
+        except:
+            self.logger.warning("___ attachments_path %s doesn't exists. The report will be stored in the database" % attachments_path)
+
+        fd = open(file_name, 'rb')
+        write_attachment_in_db = attachment_obj.store_data_in_db(cr, uid, ignore_migration=True)
+        if write_attachment_in_db:
+            fd.seek(0)
+            self.write_report_in_database(cr, uid, name, fd.read())
+        else:
+            dest_path = os.path.join(attachments_path, name)
+            shutil.copy(fd.name, dest_path)
+        fd.close()
 
 
     def generate_xls_files(self, cr, uid, request_result, report_id, report_type,
@@ -577,7 +633,7 @@ class stock_mission_report(osv.osv):
             if attachment_ids:
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
         else:
-            self.write_report_in_database(cr, uid, file_name, xls_file)
+            self.write_report_in_database(cr, uid, file_name, xls_file.getvalue())
         # close file
         xls_file.close()
 
@@ -701,6 +757,9 @@ class stock_mission_report(osv.osv):
         context.update({'update_full_report': True})
         self.check_new_product_and_create_export(cr, uid, full_report_ids, product_values, context=context)
 
+        if instance_id.level == 'coordo':
+            self.generate_full_xls(cr, uid, 'consolidate_mission_stock.xls')
+
         return True
 
     def check_new_product_and_create_export(self, cr, uid, report_ids, product_values, context=None):
@@ -783,7 +842,6 @@ class stock_mission_report(osv.osv):
                 }
                 self.write(cr, uid, [report['id']], error_vals, context=context)
             cr.commit()
-        self.generate_full_xls(cr, uid)
 
     def update_lines(self, cr, uid, report_ids, context=None):
         location_obj = self.pool.get('stock.location')

@@ -63,6 +63,30 @@ class patch_scripts(osv.osv):
                 created_id = cr.fetchone()[0]
                 cr.execute("select create_ir_model_data(%s)", (created_id, ))
                 done[key] = True
+        # reset stock mission report line
+        cr.execute('truncate mission_move_rel')
+        cr.execute("""
+            update stock_mission_report_line set
+                in_pipe_coor_val=0,
+                in_pipe_coor_qty=0,
+                in_pipe_val=0,
+                in_pipe_qty=0,
+                secondary_val=0,
+                cu_qty=0,
+                wh_qty=0,
+                cu_val=0,
+                stock_val=0,
+                central_qty=0,
+                cross_qty=0,
+                cross_val=0,
+                secondary_qty=0,
+                central_val=0,
+                internal_qty=0
+            where mission_report_id in 
+            (
+                select id from stock_mission_report where full_view='f' and export_ok='t'
+            )
+        """)
 
     def us_3098_patch(self, cr, uid, *a, **b):
         cr.execute("""
