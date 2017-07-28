@@ -228,7 +228,7 @@ class ir_cron(osv.osv, netsvc.Agent):
         delta = timedelta(0)
         while not sync_in_time_range and delta < timedelta(days=7):
             if nextcall and not connection.is_automatic_patching_allowed(cr,
-                    uid, nextcall, automatic_patching):
+                    uid, nextcall, automatic_patching, hour_from=patching_hour_from, hour_to=patching_hour_to):
                 nextcall = self.get_nextcall_date(cr, uid, nextcall, interval_type, interval_number)
             else:
                 sync_in_time_range = True

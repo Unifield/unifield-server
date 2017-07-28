@@ -1314,7 +1314,8 @@ class Connection(osv.osv):
                 result.setdefault('value', {}).update({name: 23.98}) # 23.98 == 23h59
         return result
 
-    def is_automatic_patching_allowed(self, cr, uid, date=None, automatic_patching=None, context=None):
+    def is_automatic_patching_allowed(self, cr, uid, date=None, automatic_patching=None,
+            hour_from=None, hour_to=None, context=None):
         """
         return True if the passed date is in the range of hour_from, hour_to
         False othewise
@@ -1329,10 +1330,15 @@ class Connection(osv.osv):
         if date is None:
             date = datetime.today()
 
-        hour_from = int(math.floor(abs(connection.automatic_patching_hour_from)))
-        min_from = int(round(abs(connection.automatic_patching_hour_from)%1+0.01,2) * 60)
-        hour_to = int(math.floor(abs(connection.automatic_patching_hour_to)))
-        min_to = int(round(abs(connection.automatic_patching_hour_to)%1+0.01,2) * 60)
+        if not hour_from:
+            hour_from = connection.automatic_patching_hour_from
+        if not hour_to:
+            hour_to = connection.automatic_patching_hour_tp
+
+        hour_from = int(math.floor(abs(hour_from)))
+        min_from = int(round(abs(hour_from)%1+0.01,2) * 60)
+        hour_to = int(math.floor(abs(hour_to)))
+        min_to = int(round(abs(hour_to)%1+0.01,2) * 60)
 
         from_date = datetime(date.year, date.month, date.day, hour_from, min_from)
         to_date = datetime(date.year, date.month, date.day, hour_to, min_to)
