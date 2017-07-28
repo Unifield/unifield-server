@@ -398,6 +398,7 @@ class analytic_account(osv.osv):
         name = '%s(copy)' % account['name'] or ''
         default['code'] = (account['code'] or '') + '(copy)'
         default['name'] = name
+        default['child_ids'] = [] # do not copy the child_ids
         default['tuple_destination_summary'] = []
         # code is deleted in copy method in addons
         new_id = super(analytic_account, self).copy(cr, uid, a_id, default, context=context)
