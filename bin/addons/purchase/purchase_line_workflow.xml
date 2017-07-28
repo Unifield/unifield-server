@@ -79,7 +79,7 @@
             <record id="trans_pol_draft_validated_n" model="workflow.transition">
                 <field name="act_from" ref="act_pol_draft"/>
                 <field name="act_to" ref="act_pol_validated_n"/>
-                <field name="condition">created_when_po_validated == True</field>
+                <field name="condition">set_as_validated_n == True</field>
             </record>
             <record id="trans_pol_validated_n_to_confirmed" model="workflow.transition">
                 <field name="act_from" ref="act_pol_validated_n"/>

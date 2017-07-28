@@ -28,9 +28,9 @@ class purchase_order_line(osv.osv):
             # => if yes update it, else create new
             create_line = False
             if not pol.linked_sol_id:
-                so_id = self.pool.get('sale.order').search(cr, uid, [('name', '=', pol.order_id.origin)], context=context)
+                so_id = self.pool.get('sale.order').search(cr, uid, [('name', '=', pol.origin)], context=context)
                 if not so_id:
-                    raise osv.except_osv(_('Error'), _('Sale Order with name %s not found') % pol.order_id.origin)
+                    continue # no sale order linked to our PO
                 else:
                     so_id = so_id[0]
                 sale_order = self.pool.get('sale.order').browse(cr, uid, so_id, context=context)

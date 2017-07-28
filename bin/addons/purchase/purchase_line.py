@@ -141,7 +141,7 @@ class purchase_order_line(osv.osv):
 
     _columns = {
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
-        'created_when_po_validated': fields.boolean(string='Created when PO validated', help='Has been created in a PO in validated state'),
+        'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
         'linked_sol_id': fields.many2one('sale.order.line', string='Linked SO line', help='Linked Sale Order line in case of PO from sourcing', readonly=True),
         'sync_linked_sol': fields.integer(string='Linked FO line at synchro'),
@@ -217,7 +217,7 @@ class purchase_order_line(osv.osv):
     }
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
-        'created_when_po_validated': lambda *a: False,
+        'set_as_validated_n': lambda *a: False,
         'change_price_manually': lambda *a: False,
         'product_qty': lambda *a: 0.00,
         'price_unit': lambda *a: 0.00,
@@ -659,7 +659,7 @@ class purchase_order_line(osv.osv):
         # if the PO line has been created when PO has status "validated" then new PO line gets specific state "validated-n" to mark the 
         # line as non-really validated. It avoids the PO to go back in draft state.
         if order.state == 'validated':
-            vals.update({'created_when_po_validated': True})
+            vals.update({'set_as_validated_n': True})
 
         # Update the name attribute if a product is selected
         self._update_name_attr(cr, uid, vals, context=context)
