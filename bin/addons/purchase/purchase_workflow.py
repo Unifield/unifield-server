@@ -24,14 +24,24 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         for pol in self.browse(cr, uid, ids, context=context):
+            # linked FO line already exists ?
+            # => if yes update it, else create new
+            create_line = False
             if not pol.linked_sol_id:
-                continue
-            sol = pol.linked_sol_id
+                so_id = self.pool.get('sale.order').search(cr, uid, [('name', '=', pol.order_id.origin)], context=context)
+                sale_order = self.pool.get('sale.order').browse(cr, uid, so_id, context=context)
+                create_line = True
+            elif pol.linked_sol_id:
+                sale_order = pol.linked_sol_id.order_id
+            else:
+                # case of PO line from scratch, nothing to update
+                continue 
+
             # convert from currency of pol to currency of sol
-            price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sol.currency_id.id, pol.price_unit or 0.0,
+            price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
                 round=False, context={'date': pol.order_id.date_order})
 
-            if sol.order_id.order_type == 'regular' and price_unit_converted < 0.00001:
+            if sale_order.order_type == 'regular' and price_unit_converted < 0.00001:
                 price_unit_converted = 0.00001
 
             # date values
@@ -43,7 +53,7 @@ class purchase_order_line(osv.osv):
             line_confirmed = False
             if pol.confirmed_delivery_date:
                 line_confirmed = self.pool.get('purchase.order').compute_confirmed_delivery_date(cr, uid, pol.order_id, pol.confirmed_delivery_date,
-                    prep_lt, ship_lt, sol.order_id.est_transport_lead_time, db_date_format, context=context)
+                    prep_lt, ship_lt, sale_order.est_transport_lead_time, db_date_format, context=context)
 
             sol_values = {
                 'product_id': pol.product_id and pol.product_id.id or False,
@@ -70,7 +80,11 @@ class purchase_order_line(osv.osv):
                 'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
                 'confirmed_delivery_date': line_confirmed,
             }
-            self.pool.get('sale.order.line').write(cr, uid, sol.id, sol_values, context=context)
+            if create_line:
+                new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
+                self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
+            else: # update FO line
+                self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
         
         return True
 
@@ -154,8 +168,16 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
 
         self.write(cr, uid, ids, {'state': 'validated_n'}, context=context)
+
+        # update FO lines:
+        self.update_fo_lines(cr, uid, ids, context=context)
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.linked_sol_id:
+                # set the boolean "set_as_sourced_n" to True in order to trigger workflow transition draft => sourced_n:
+                self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], {'set_as_sourced_n': True}, context=context)
 
         return True
 

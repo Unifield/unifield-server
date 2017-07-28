@@ -2796,11 +2796,8 @@ class sale_order_line(osv.osv):
             help='If the line has been canceled/removed on the splitted FO',
         ),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
-        'soq_updated': fields.boolean(
-                    string='SoQ updated',
-                    readonly=True,
-    ),
-
+        'soq_updated': fields.boolean(string='SoQ updated', readonly=True),
+        'set_as_sourced_n': fields.boolean(string='Sourced-n line', help='Line created in a further PO, so we have to create it back in the flow'), # used for wkf transition
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2817,6 +2814,7 @@ class sale_order_line(osv.osv):
         'is_line_split': False,  # UTP-972: By default set False, not split
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'soq_updated': False,
+        'set_as_sourced_n': False,
     }
 
     def invoice_line_create(self, cr, uid, ids, context=None):
