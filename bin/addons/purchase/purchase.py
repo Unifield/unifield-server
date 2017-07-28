@@ -405,7 +405,12 @@ class purchase_order(osv.osv):
             else: # else compute the less advanced state:
                 res[po.id] = self.pool.get('purchase.order.line.state').get_less_advanced_state(cr, uid, ids, pol_states, context=context)
 
-                if res[po.id] == 'validated': # set the validated-p state ?
+                if res[po.id] == 'draft': # set the draft-p state ?
+                    draft_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'draft', context=context)
+                    # do we have a line further then draft in our FO ?
+                    if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > draft_sequence for s in pol_states]):
+                        res[po.id] = 'draft_p'
+                elif res[po.id] == 'validated': # set the validated-p state ?
                     validated_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'validated', context=context)
                     # do we have a line further then validated in our FO ?
                     if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > validated_sequence for s in pol_states]):
