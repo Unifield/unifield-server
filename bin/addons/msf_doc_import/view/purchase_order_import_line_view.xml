@@ -52,8 +52,8 @@
                     <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': rfq_ok}"/>
                     <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
                 </group>
-                <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in' ['validated', 'validated_n', 'validated_p'])]}"/>
-                <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in' ['validated', 'validated_n', 'validated_p'])]}"/>
+                <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_n', 'validated_p'])]}"/>
+                <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_n', 'validated_p'])]}"/>
                 </xpath>
                 </data>
             </field>
