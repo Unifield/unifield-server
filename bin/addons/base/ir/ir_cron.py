@@ -20,12 +20,14 @@
 ##############################################################################
 
 import time
-from datetime import datetime
+import math
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import netsvc
 from tools.safe_eval import safe_eval as eval
 import pooler
 from osv import fields, osv
+from tools.translate import _
 
 def str2tuple(s):
     return eval('tuple(%s)' % (s or ''))
@@ -174,9 +176,93 @@ class ir_cron(osv.osv, netsvc.Agent):
         self.update_running_cron(cr)
         return res
 
+    def get_nextcall_date(self, cr, uid, nextcall, interval_type, interval_number):
+        '''
+        get the next nextcall datetime after nextcall parameter if nextcall > now.
+        If nextcall < now, get the next nextcall > now.
+
+        '''
+        now = datetime.now()
+        if nextcall > now:
+            # return only the next one
+            nextcall += _intervalTypes[interval_type](interval_number)
+        else:
+            while nextcall < now:
+                nextcall += _intervalTypes[interval_type](interval_number)
+        return nextcall
+
+    def check_upgrade_time_range(self, cr, uid, nextcall, interval_type,
+            interval_number, patching_hour_from=None, patching_hour_to=None,
+            automatic_patching=None, context=None):
+        '''
+        check that the automatic synchronization time is matching the silent
+        upgrade time range. If not matching check for the next nextcall until
+        the delta is bigger than 7 days.
+        For example, if the silent upgrade time range is from 18h00 to 20h00
+        and the user try to define a sync every hours starting today at 15h00,
+        it will work because there will be a maching time during the next 7
+        days.
+        '''
+        connection = self.pool.get("sync.client.sync_server_connection")
+        if not connection:
+            return
+        con_manager = connection._get_connection_manager(cr, uid)
+        if automatic_patching is None:
+            automatic_patching = con_manager.automatic_patching
+        if not automatic_patching:
+            return
+        if patching_hour_from is None:
+            patching_hour_from = con_manager.automatic_patching_hour_from
+        if patching_hour_to is None:
+            patching_hour_to = con_manager.automatic_patching_hour_to
+
+        if not nextcall:
+            return
+        nextcall = datetime.strptime(nextcall, '%Y-%m-%d %H:%M:%S')
+        now = datetime.now()
+        if nextcall < now:
+            # get the next nextcall
+            nextcall = self.get_nextcall_date(cr, uid, nextcall, interval_type, interval_number)
+
+        sync_in_time_range = False
+        delta = timedelta(0)
+        while not sync_in_time_range and delta < timedelta(days=7):
+            if nextcall and not connection.is_automatic_patching_allowed(cr,
+                    uid, nextcall, automatic_patching):
+                nextcall = self.get_nextcall_date(cr, uid, nextcall, interval_type, interval_number)
+            else:
+                sync_in_time_range = True
+            delta = nextcall - now
+        if not sync_in_time_range:
+            hour_from = int(math.floor(abs(patching_hour_from)))
+            min_from = int(round(abs(patching_hour_from)%1+0.01,2) * 60)
+            hour_to = int(math.floor(abs(patching_hour_to)))
+            min_to = int(round(abs(patching_hour_to)%1+0.01,2) * 60)
+            raise osv.except_osv(_('Error!'),
+                                 _('Automatic Synchronization must be executed '
+                                 'within Silent Upgrade time range (from %s:%.2d '
+                                 'until %s:%.2d).') % (hour_from, min_from, hour_to, min_to))
+
     def write(self, cr, user, ids, vals, context=None):
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # check if auto synchronisation is modified
+        try:
+            model, auto_sync_id = self.pool.get('ir.model.data').get_object_reference(cr, user,
+                    'sync_client', 'ir_cron_automaticsynchronization0')
+
+            if auto_sync_id in ids \
+                    and set(('nextcall', 'interval_type', 'interval_number')).issubset(vals.keys()):
+                self.check_upgrade_time_range(cr, user, vals['nextcall'],
+                                              vals['interval_type'],
+                                              vals['interval_number'],
+                                              context=context)
+        except ValueError:
+            pass  # the reference don't exists
+
         res = super(ir_cron, self).write(cr, user, ids, vals, context=context)
         self.update_running_cron(cr)
         return res

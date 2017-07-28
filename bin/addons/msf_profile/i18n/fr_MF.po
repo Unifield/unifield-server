@@ -98688,3 +98688,15 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. module: base
+#: code:addons/base/ir/ir_cron.py:240
+#, python-format
+msgid "Automatic Synchronization must be executed within Silent Upgrade time range (from %s:%.2d until %s:%.2d)."
+msgstr "La synchronisation automatique doit être executée dans l'interval de la mise à jour silencieuse (de %s:%.2d à %s:%.2d)."
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:1519
+#, python-format
+msgid "Silent Upgrade time range must include the Automatic Synchronization time (%s)"
+msgstr "L'interval de la mise à jour silencieuse doit inclure l'heure de la synchronisation automatique (%s)"
