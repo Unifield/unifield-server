@@ -65,24 +65,22 @@ class patch_scripts(osv.osv):
                 done[key] = True
         # reset stock mission report line
         cr.execute('truncate mission_move_rel')
+        fields_to_reset = ['in_pipe_coor_val', 'in_pipe_coor_qty', 'in_pipe_val', 'in_pipe_qty',
+            'secondary_val', 'cu_qty', 'wh_qty', 'cu_val', 'stock_val', 'central_qty',
+            'cross_qty', 'cross_val', 'secondary_qty', 'central_val', 'internal_qty'
+        ]
+        cr.execute("""update ir_model_data set touched='[''wh_qty'']', last_modification=NOW()
+            where
+                module='sd' and model='stock.mission.report.line' and
+                res_id in (
+                    select id from stock_mission_report_line where 
+                    """ + ' OR '.join(['%s!=0'%x for x in fields_to_reset]) + """
+                )
+        """)
         cr.execute("""
             update stock_mission_report_line set
-                in_pipe_coor_val=0,
-                in_pipe_coor_qty=0,
-                in_pipe_val=0,
-                in_pipe_qty=0,
-                secondary_val=0,
-                cu_qty=0,
-                wh_qty=0,
-                cu_val=0,
-                stock_val=0,
-                central_qty=0,
-                cross_qty=0,
-                cross_val=0,
-                secondary_qty=0,
-                central_val=0,
-                internal_qty=0
-            where mission_report_id in 
+              """ + ' , '.join(['%s=0'%x for x in fields_to_reset])+ """
+            where mission_report_id in
             (
                 select id from stock_mission_report where full_view='f' and export_ok='t'
             )
