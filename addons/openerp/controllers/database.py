@@ -26,6 +26,7 @@ import os
 import cherrypy
 import formencode
 
+from openobject import paths
 from openobject.controllers import BaseController
 from openobject.tools import url, expose, redirect, validate, error_handler
 import openobject
@@ -49,6 +50,7 @@ def get_db_list():
         return rpc.session.execute_db('list') or []
     except:
         return []
+
 
 class ReplacePasswordField(openobject.widgets.PasswordField):
     params = {
@@ -116,6 +118,17 @@ class FormCreate(DBForm):
     validator = openobject.validators.Schema(chained_validators=[formencode.validators.FieldsMatch("admin_password","confirm_password")])
 
 
+class FormAutoCreate(DBForm):
+    name = "auto_create"
+    string = _('Instance Auto Creation')
+    action = '/openerp/database/do_auto_create'
+    submit_text = _('Start auto creation')
+    #form_attrs = {'onsubmit': 'return window.confirm(_("Do you really want to drop the selected database?"))'}
+    fields = [
+        ReplacePasswordField(name='password', label=_('Super admin password:')),
+    ]
+
+
 class FormDrop(DBForm):
     name = "drop"
     string = _('Drop database')
@@ -127,6 +140,7 @@ class FormDrop(DBForm):
         ReplacePasswordField(name='password', label=_('Drop password:')),
     ]
 
+
 class FormBackup(DBForm):
     name = "backup"
     string = _('Backup database')
@@ -137,9 +151,11 @@ class FormBackup(DBForm):
         ReplacePasswordField(name='password', label=_('Backup password:')),
     ]
 
+
 class FileField(openobject.widgets.FileField):
     def adjust_value(self, value, **params):
         return False
+
 
 class FormRestore(DBForm):
     name = "restore"
@@ -169,6 +185,7 @@ class FormPassword(DBForm):
 
 
 _FORMS = {
+    'auto_create': FormAutoCreate(),
     'create': FormCreate(),
     'drop': FormDrop(),
     'backup': FormBackup(),
@@ -176,8 +193,12 @@ _FORMS = {
     'password': FormPassword()
 }
 
+
 class DatabaseCreationError(Exception): pass
+
+
 class DatabaseCreationCrash(DatabaseCreationError): pass
+
 
 class Database(BaseController):
 
@@ -266,6 +287,172 @@ class Database(BaseController):
         if ok:
             raise redirect('/openerp/menu', {'next': '/openerp/home'})
         raise redirect('/openerp/login', db=dbname)
+
+    @expose(template="/openerp/controllers/templates/auto_create.mako")
+    def auto_create(self, tg_errors=None, **kw):
+        form = _FORMS['auto_create']
+        error = self.msg
+        self.msg = {}
+        return dict(form=form, error=error)
+
+    @expose(template="/openerp/controllers/templates/auto_create_progress.mako")
+    def auto_create_progress(self, tg_errors=None, **kw):
+        finish = ""
+        finished = "False"
+        data_collected = "False"
+        return dict(finish=finish, percent=0.12, total=finished,
+                    data_collected=data_collected, report_name='toto', res_id='123456')
+
+    def check_not_empty_string(self, config, section, option):
+        if not config.get(section, option):
+            self.msg = {'message': ustr(_('The option \'%s\' from section \'[%s]\' cannot be empty, please set a value.') % (option, section)),
+                        'title': ustr(_('Empty option'))}
+
+    def check_mandatory_int(self, config, section, option):
+        try:
+            value = config.getint(section, option)
+        except ValueError:
+            self.msg = {'message': ustr(_('The option \'%s\' from section \'[%s]\' have to be a int.') % (option, section)),
+                        'title': ustr(_('Wrong option value'))}
+            return
+        if not value:
+            self.msg = {'message': ustr(_('The option \'%s\' from section \'[%s]\' cannot be empty, please set a value.') % (option, section)),
+                        'title': ustr(_('Empty option'))}
+
+    def check_possible_value(self, config, section, option, possible_values):
+        value = config.get(section, option)
+        if value not in possible_values:
+            self.msg = {'message': ustr(_('The option \'%s\' from section \'[%s]\' have to be one of those values: %r. (currently it is \'%s\').') % (option, section, possible_values, value)),
+                        'title': ustr(_('Wrong option'))}
+
+    def check_config_file(self, file_path):
+        '''
+        perform some basic checks to avoid crashing later
+        '''
+        if not os.path.exists(file_path):
+            self.msg = {'message': ustr(_("The auto creation config file '%s' does not exists.") % file_path),
+                        'title': ustr(_('Auto creation file not found'))}
+
+        import ConfigParser
+        from ConfigParser import NoOptionError, NoSectionError
+        config = ConfigParser.ConfigParser()
+        config.read(file_path)
+        try:
+            db_name = config.get('instance', 'db_name')
+            if not re.match('^[a-zA-Z][a-zA-Z0-9_-]+$', db_name):
+                self.msg = {'message': ustr(_("You must avoid all accents, space or special characters.")),
+                            'title': ustr(_('Bad database name'))}
+                return
+
+            admin_password = config.get('instance', 'admin_password')
+            res = rpc.session.execute_db('check_super_password_validity', admin_password)
+            if res is not True:
+                self.msg = {'message': res,
+                            'title': ustr(_('Bad admin password'))}
+                return
+
+            # check the mandatory string fields have a value
+            not_empty_string_option_list = (
+                ('instance', 'oc'),
+                ('instance', 'admin_password'),
+                ('instance', 'sync_user'),
+                ('instance', 'sync_pwd'),
+                ('instance', 'instance_level'),
+                ('instance', 'lang'),
+                ('backup', 'auto_bck_path'),
+                ('reconfigure', 'prop_instance'),
+                ('reconfigure', 'address_contact_name'),
+                ('reconfigure', 'address_street'),
+                ('reconfigure', 'address_street2'),
+                ('reconfigure', 'address_zip'),
+                ('reconfigure', 'address_city'),
+                ('reconfigure', 'address_country'),
+                ('reconfigure', 'address_phone'),
+                ('reconfigure', 'address_email'),
+                ('reconfigure', 'delivery_process'),
+            )
+            for section, option in not_empty_string_option_list:
+                self.check_not_empty_string(config, section, option)
+                if self.msg:
+                    return
+
+            # check mandatory integer values
+            not_empty_int_option_list = (
+                ('backup', 'auto_bck_interval_nb'),
+                ('partner', 'external_account_receivable'),
+                ('partner', 'external_account_payable'),
+                ('partner', 'internal_account_receivable'),
+                ('partner', 'internal_account_payable'),
+                ('company', 'default_counterpart'),
+                ('company', 'salaries_default_account'),
+                ('company', 'rebilling_intersection_account'),
+                ('company', 'intermission_counterpart'),
+                ('company', 'counterpart_bs_debit_balance'),
+                ('company', 'counterpart_bs_crebit_balance'),
+                ('company', 'debit_account_pl_positive'),
+                ('company', 'credit_account_pl_negative'),
+                ('company', 'scheduler_range_days'),
+            )
+            for section, option in not_empty_int_option_list:
+                self.check_mandatory_int(config, section, option)
+                if self.msg:
+                    return
+
+            # check value is in possibles values
+            possible_value_list = (
+                ('instance', 'instance_level', ('coordo', 'project')),
+                ('instance', 'lang', ('fr_MF', 'es_MF', 'en_MF')),
+                ('backup', 'auto_bck_interval_unit', ('minutes', 'hours', 'work_days', 'days', 'weeks', 'months')),
+                ('reconfigure', 'delivery_process', ('complex', 'simple')),
+            )
+
+            for section, option, possible_values in possible_value_list:
+                self.check_possible_value(config, section, option, possible_values)
+                if self.msg:
+                    return
+
+        except NoOptionError as e:
+            self.msg = {'message': ustr(_('No option \'%s\' found for the section \'[%s]\' in the config file \'%s\'') % (e.option, e.section, file_path)),
+                        'title': ustr(_('Option missing in configuration file'))}
+            return
+        except NoSectionError as e:
+            self.msg = {'message': ustr(_('No section \'%s\' found in the config file \'%s\'') % (e.section, file_path)),
+                        'title': ustr(_('Option missing in configuration file'))}
+            return
+
+    @expose()
+    @validate(form=_FORMS['auto_create'])
+    @error_handler(auto_create)
+    def do_auto_create(self, password, **kw):
+        self.msg = {}
+        try:
+            config_file_name = 'uf_auto_install.conf'
+            root_path = os.path.split(paths.root())[0]
+            config_file_path = os.path.join(root_path, 'UFautoInstall', config_file_name)
+            self.check_config_file(config_file_path)
+
+            # create database
+            #def do_create(self, password, dbname, admin_password, confirm_password, demo_data=False, language=None, **kw):
+
+            # start db auto creation in background
+
+            # install language
+               
+
+            # add a cron entry to check that the sync server validate the regristration (every 20 minutes for example)
+
+
+
+
+        except openobject.errors.AccessDenied, e:
+            self.msg = {'message': _('Wrong password'),
+                        'title' : e.title}
+        except Exception as e:
+            self.msg = {'message' : _("Could not auto create database")}
+
+        if self.msg:
+            return self.auto_create()
+        return self.auto_create_progress()
 
     @expose(template="/openerp/controllers/templates/database.mako")
     def drop(self, tg_errors=None, **kw):

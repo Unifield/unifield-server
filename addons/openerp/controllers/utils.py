@@ -25,6 +25,7 @@ import cherrypy
 from openerp.utils import rpc
 
 from openobject import tools
+from openobject import paths
 from openobject.tools import expose, redirect
 import openobject
 
@@ -93,6 +94,12 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
 
     url = rpc.session.connection_string
     url = str(url[:-1])
+
+    root_path = os.path.split(paths.root())[0]
+    if os.path.exists(os.path.join(root_path, 'UFautoInstall')):
+        raise redirect('/openerp/database/auto_create')
+        return auto_install(target, db, user, password, action, message,
+                origArgs, url)
 
     result = get_db_list()
     dblist = result['dblist']
