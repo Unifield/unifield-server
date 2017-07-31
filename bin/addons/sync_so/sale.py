@@ -51,9 +51,10 @@ class sale_order_line_sync(osv.osv):
         pol_dict = line_info.to_dict()
 
         # search for the parent sale.order:
-        sale_order_ids = self.pool.get('sale.order').search(cr, uid, [('client_order_ref', '=', '%s.%s' % (source, pol_dict['order_id']['name']))])
+        order_ref = '%s.%s' % (source, pol_dict['order_id']['name'])
+        sale_order_ids = self.pool.get('sale.order').search(cr, uid, [('client_order_ref', '=', order_ref)])
         if not sale_order_ids:
-            raise Exception, "Cannot find the parent sale order of the line"
+            raise Exception, "Cannot find the parent FO with client order ref = %s" % order_ref
         so_name = self.pool.get('sale.order').read(cr, uid, sale_order_ids[0], ['name'], context=context)['name'] or ''
 
         # from purchase.order.line to sale.order.line:
