@@ -418,8 +418,6 @@ class account_move_line(osv.osv):
                         to_change = True
                     elif not ad.funding_pool_lines or len(ad.funding_pool_lines) != 1:
                         to_change = True
-                    elif not ad.cost_center_lines or len(ad.cost_center_lines) != 1:
-                        to_change = True
                     elif ad.funding_pool_lines[0].destination_id.id != vals['destination_id'] or \
                         ad.funding_pool_lines[0].analytic_id.id != vals['analytic_id'] or \
                         ad.funding_pool_lines[0].cost_center_id.id != vals['cost_center_id']:
