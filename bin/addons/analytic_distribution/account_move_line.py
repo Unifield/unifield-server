@@ -407,22 +407,41 @@ class account_move_line(osv.osv):
                         vals.update({'analytic_id': msf_fp_id})
                 # Create analytic distribution
                 if 'cost_center_id' in vals and 'analytic_id' in vals and 'destination_id' in vals:
-                    distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {'name': 'check_employee_analytic_distribution'})
-                    vals.update({'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': l.currency_id.id})
-                    # Create funding pool lines
-                    self.pool.get('funding.pool.distribution.line').create(cr, uid, vals)
-                    # Then cost center lines
-                    vals.update({'analytic_id': vals.get('cost_center_id'),})
-                    self.pool.get('cost.center.distribution.line').create(cr, uid, vals)
-                    # finally free1 and free2
-                    if l.employee_id.free1_id:
-                        self.pool.get('free.1.distribution.line').create(cr, uid, {'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': l.currency_id.id, 'analytic_id': l.employee_id.free1_id.id})
-                    if l.employee_id.free2_id:
-                        self.pool.get('free.2.distribution.line').create(cr, uid, {'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': l.currency_id.id, 'analytic_id': l.employee_id.free2_id.id})
-                    if context.get('from_write', False):
-                        return {'analytic_distribution_id': distrib_id,}
-                    # Write analytic distribution on the move line
-                    self.pool.get('account.move.line').write(cr, uid, [l.id], {'analytic_distribution_id': distrib_id}, check=False, update_check=False)
+                    to_change = False
+
+                    ad = l.analytic_distribution_id
+                    if not ad:
+                        to_change = True
+                    elif l.employee_id.free1_id and (not ad.free_1_lines or len(ad.free_1_lines) or ad.free_1_lines[0].account_id.id != l.employee_id.free1_id.id):
+                        to_change = True
+                    elif l.employee_id.free2_id and (not ad.free_2_lines or len(ad.free_2_lines) or ad.free_2_lines[0].account_id.id != l.employee_id.free2_id.id):
+                        to_change = True
+                    elif not ad.funding_pool_lines or len(ad.funding_pool_lines) != 1:
+                        to_change = True
+                    elif not ad.cost_center_lines or len(ad.cost_center_lines) != 1:
+                        to_change = True
+                    elif ad.funding_pool_lines[0].destination_id.id != vals['destination_id'] or \
+                        ad.funding_pool_lines[0].analytic_id.id != vals['analytic_id'] or \
+                        ad.funding_pool_lines[0].cost_center_id.id != vals['cost_center_id']:
+                        to_change = True
+
+                    if to_change:
+                        distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {'name': 'check_employee_analytic_distribution'})
+                        vals.update({'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': l.currency_id.id})
+                        # Create funding pool lines
+                        self.pool.get('funding.pool.distribution.line').create(cr, uid, vals)
+                        # Then cost center lines
+                        vals.update({'analytic_id': vals.get('cost_center_id'),})
+                        self.pool.get('cost.center.distribution.line').create(cr, uid, vals)
+                        # finally free1 and free2
+                        if l.employee_id.free1_id:
+                            self.pool.get('free.1.distribution.line').create(cr, uid, {'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': l.currency_id.id, 'analytic_id': l.employee_id.free1_id.id})
+                        if l.employee_id.free2_id:
+                            self.pool.get('free.2.distribution.line').create(cr, uid, {'distribution_id': distrib_id, 'percentage': 100.0, 'currency_id': l.currency_id.id, 'analytic_id': l.employee_id.free2_id.id})
+                        if context.get('from_write', False):
+                            return {'analytic_distribution_id': distrib_id}
+                        # Write analytic distribution on the move line
+                        self.pool.get('account.move.line').write(cr, uid, [l.id], {'analytic_distribution_id': distrib_id}, check=False, update_check=False)
                 else:
                     return False
         return True
