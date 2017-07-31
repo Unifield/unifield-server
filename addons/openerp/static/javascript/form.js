@@ -182,6 +182,8 @@ function switchView(view_type, src){
         submit_form(get_form_action('switch', {
             '_terp_source': src,
             '_terp_source_view_type': view_type
+        }));
+    }
 }
 
 function validate_required(form){
