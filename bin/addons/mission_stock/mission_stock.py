@@ -424,6 +424,11 @@ class stock_mission_report(osv.osv):
         sheet.write(1, 1, report_name, row_style)
         sheet.col(1).width=5000
 
+        sheet.set_horz_split_pos(4)
+        sheet.set_vert_split_pos(5)
+        sheet.panes_frozen = True
+        sheet.remove_splits = True
+
         fixed_data = [
             ('Reference', 'default_code'),
             ('Name', 'pt_name'),
@@ -517,7 +522,7 @@ class stock_mission_report(osv.osv):
                             num = None
                         to_write.append(num)
                     for x in instance_loc[inst_id]:
-                        to_write.append(stock_level_data.get(inst_id, {}).get(x))
+                        to_write.append(stock_level_data.get(inst_id, {}).get(x) or None)
 
                 self.xls_write_row(sheet, to_write, row_count, row_style)
                 row_count += 1
