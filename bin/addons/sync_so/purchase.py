@@ -48,9 +48,10 @@ class purchase_order_line_sync(osv.osv):
         sol_dict = sol_info.to_dict()
 
         # search for the parent purchase.order:
-        po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', '%s.%s' % (source, sol_dict['order_id']['name']))])
+        partner_ref = '%s.%s' % (source, sol_dict['order_id']['name'])
+        po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', partner_ref)], context=context)
         if not po_ids:
-            raise Exception, "Cannot find the parent Purchase Order of the line"
+            raise Exception, "Cannot find the parent PO with partner ref %s" % partner_ref
 
         # search for the PO line to update:
         pol_to_update = sol_dict.get('sync_linked_pol', False)
@@ -91,8 +92,6 @@ class purchase_order_line_sync(osv.osv):
             wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'sourced_v', cr)
         elif sol_dict['state'] == 'confirmed':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'confirmed', cr)
-        elif sol_dict['state'] == 'done':
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'done', cr)
         elif sol_dict['state'] == 'cancel':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'cancel', cr)
 
