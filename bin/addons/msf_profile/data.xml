@@ -36,6 +36,7 @@
         <field name="grouping">[3,0]</field>
     </record>
 
+    <function name="set_default_partner_lang" model="res.users" />
 <!--    <function name="install_lang" model="res.lang"/> -->
     
     <record model="res.users" id="base.user_root">
