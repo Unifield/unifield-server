@@ -108,13 +108,15 @@ class db(netsvc.ExportService):
             params = params[1:]
             security.check_super_restoredb(passwd)
         elif method in [ 'create', 'get_progress', 'rename',
-                         'change_admin_password', 'migrate_databases' ]:
+                         'change_admin_password', 'migrate_databases',
+                         'instance_auto_creation']:
             passwd = params[0]
             params = params[1:]
             security.check_super(passwd)
         elif method in [ 'db_exist', 'list', 'list_lang', 'server_version',
                          'check_timezone', 'connected_to_prod_sync_server',
-                         'check_super_password_validity' ]:
+                         'check_super_password_validity',
+                         'creation_get_resume_progress']:
             # params = params
             # No security check for these methods
             pass
@@ -205,6 +207,60 @@ class db(netsvc.ExportService):
         create_thread.start()
         self.actions[id]['thread'] = create_thread
         return id
+
+    def modules_install(self, cr, pool, uid, context=None):
+        if context is None:
+            context = {}
+
+        try:
+            module_obj = pool.get('ir.module.module')
+            creation_obj = pool.get('instance.auto.creation')
+            creation_id = creation_obj.search(cr, uid, [('dbname', '=',
+                                              cr.dbname)], context=context)[0]
+            upgrade_obj = pool.get('base.module.upgrade')
+            for module_name in ['msf_profile', 'sync_so', 'update_client']:
+                module_id = module_obj.search(cr, 1, [('name', '=', module_name)])
+                module_obj.button_install(cr, 1, module_id)
+                creation_obj.write(cr, 1, creation_id,
+                        {'state': '%s_installation' % module_name}, context=context)
+                upgrade_obj.upgrade_module(cr, 1, None, None)
+                creation_obj.write(cr, 1, creation_id,
+                        {'state': '%s_installed' % module_name}, context=context)
+                cr.commit()
+        finally:
+            cr.close()
+
+    def exp_instance_auto_creation(self, db_name, lang, user_password='admin'):
+        db, pool = pooler.get_db_and_pool(db_name)
+        cr = db.cursor()
+
+        creation_obj = pool.get('instance.auto.creation')
+        creation_obj.create(cr, 1, {'dbname': cr.dbname})
+        # install msf_profile
+
+        create_thread = threading.Thread(target=self.modules_install,
+                                         args=(cr, pool, 1))
+        create_thread.start()
+
+        # after 4 seconds, the progress bar is displayed
+        create_thread.join(4)
+
+    def exp_creation_get_resume_progress(self, db_name):
+        db, pool = pooler.get_db_and_pool(db_name)
+        cr = db.cursor()
+        try:
+            creation_obj = pool.get('instance.auto.creation')
+            creation_id = creation_obj.search(cr, 1, [('dbname', '=',
+                                              cr.dbname)])
+            creation_id = creation_id and creation_id[0] or []
+            if not creation_id:
+                nb_state = len(pool.get('instance.auto.creation')._columns['state'].selection) - 1
+                percentage_per_step = 1/float(nb_state)
+                return _('Empty database creation in progress...\n'), percentage_per_step, 'draft'
+            res = creation_obj.read(cr, 1, creation_id, ['resume', 'progress', 'state'])
+        finally:
+            cr.close()
+        return res['resume'], res['progress'], res['state']
 
     def exp_check_super_password_validity(self, password):
         try:
