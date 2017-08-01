@@ -98699,3 +98699,8 @@ msgstr "Numéro de séquence du paiement"
 #: report:addons/account_override/report/open_invoices_xls.mako:316
 msgid "Down Payment Sequence Number"
 msgstr "Numéro de séquence de l'acompte"
+
+#. module: account_override
+#: model:ir.actions.report.xml,name:account_override.paid_invoices
+msgid "Paid Invoices"
+msgstr "Factures Payées"

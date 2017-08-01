@@ -23,7 +23,14 @@ from report import report_sxw
 
 
 class report_open_invoices2(report_sxw.rml_parse):
+    """
+    Used for the reports "Open Invoices" and "Paid Invoices" (same display but the state of the docs displayed changes)
+    """
+
     def __init__(self, cr, uid, name, context=None):
+        if context is None:
+            context = {}
+        context.update({'paid_invoice': name == 'paid.invoices'})  # for the "Paid Invoices" report
         super(report_open_invoices2, self).__init__(cr, uid, name, context=context)
         self.funcCur = ''
         self.localcontext.update({
@@ -35,11 +42,12 @@ class report_open_invoices2(report_sxw.rml_parse):
 
     def get_invoices(self, cr, uid, context):
         """
-        Get only open invoices
+        Get only open invoices by default, or only paid invoices for the Paid Invoices Report
         """
         res = {}
+        state = context.get('paid_invoice', False) and 'paid' or 'open'
         for option_type in ['out_invoice', 'in_invoice', 'out_refund', 'in_refund']:
-            type_ids = self.pool.get('account.invoice').search(cr, uid, [('state', '=', 'open'), ('type', '=', option_type)], context=context)
+            type_ids = self.pool.get('account.invoice').search(cr, uid, [('state', '=', state), ('type', '=', option_type)], context=context)
             if isinstance(type_ids, (int, long)):
                 type_ids = [type_ids]
             res.update({option_type: self.pool.get('account.invoice').browse(cr, uid, type_ids, context)})
@@ -57,4 +65,5 @@ class report_open_invoices2(report_sxw.rml_parse):
 
 
 SpreadsheetReport('report.open.invoices.2','account.invoice','addons/account_override/report/open_invoices_xls.mako', parser=report_open_invoices2)
+SpreadsheetReport('report.paid.invoices', 'account.invoice', 'addons/account_override/report/open_invoices_xls.mako', parser=report_open_invoices2)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

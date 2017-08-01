@@ -13,6 +13,17 @@
             auto="False"
             menu="True"/>
 
+        <report id="paid_invoices"
+            string="Paid Invoices"
+            model="account.invoice"
+            name="paid.invoices"
+            target_filename="Paid Invoices_${company_id.instance_id.code}_%(year)s%(month)s%(day)s"
+            file="account_override/report/open_invoices_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"/>
+
         <report id="synthesis_invoices_report"
             string="Allocation synthesis"
             model="account.invoice"
