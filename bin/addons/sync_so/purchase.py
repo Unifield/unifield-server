@@ -79,6 +79,14 @@ class purchase_order_line_sync(osv.osv):
                 wf_service.trg_validate(uid, 'purchase.order.line', new_pol, 'validated', cr)
                 self.update_fo_lines(cr, uid, orig_pol, context=context) # update original PO line with new qty, price ...
                 pol_updated = new_pol
+        elif not self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['fake_id'])], limit=1, context=context): # new line
+            # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)
+            # so we have to create this new PO line:
+            pol_values['set_as_sourced_n'] = True
+            new_pol = self.create(cr, uid, pol_values, context=context)
+            pol_updated = new_pol
+            if sol_dict['state'] == 'confirmed':
+                wf_service.trg_validate(uid, 'purchase.order.line', new_pol, 'confirmed', cr)
         else: # regular update
             # search for the PO line to update:
             pol_to_update = sol_dict.get('sync_linked_pol', False)

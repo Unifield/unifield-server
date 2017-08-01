@@ -33,7 +33,7 @@ class purchase_order_line(osv.osv):
                     ('procurement_request', '=', is_internal_request),
                 ], context=context)
                 if not so_id:
-                    continue # no sale order linked to our PO
+                    continue # no sale order linked to our PO line
                 else:
                     so_id = so_id[0]
                 sale_order = self.pool.get('sale.order').browse(cr, uid, so_id, context=context)
