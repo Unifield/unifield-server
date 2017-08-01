@@ -5,16 +5,20 @@
     <script type="text/javascript" src="/openerp/static/javascript/openerp/openerp.ui.waitbox.js"></script>
     <script type="text/javascript">
         $(document).ready(function(){
-            setInterval(function()
+            interval = setInterval(function()
             {
                 $.ajax({
                     type: 'get',
                     dataType: "json",
                     url: 'get_auto_create_progress',
                     success: function (data) {
-                        $("div.auto_creation_resume textarea").val(data.resume)
-                        $("div.progressbar").text(data.progress*100+'%')
-                        $("div.progressbar").css({"width":data.progress*100+'%'})
+                        $("div.auto_creation_resume textarea").val(data.resume);
+                        $("div.progressbar").text((data.progress*100).toPrecision(3)+'%');
+                        $("div.progressbar").css({"width":(data.progress*100).toPrecision(3)+'%'});
+                        $("div.my_state").text(data.state);
+                        if (data.state === 'done') {
+                            clearInterval(interval);
+                        }
                     },
                     error: function (xhr, status, error) {
                     }
@@ -37,6 +41,8 @@
 
     <div class="db-form">
         <h1>Automated instance creation in progress...</h1>
+
+        <div class="my_state">state</div>
 
         <div class="instance_creation_progress">
           <div class="progressbar" style="width:${'%d'%(percent*100)}%">${'%d'%(percent*100)}%</div>

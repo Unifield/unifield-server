@@ -314,9 +314,13 @@ class Database(BaseController):
         config = ConfigParser.ConfigParser()
         config.read(config_file_path)
         dbname = config.get('instance', 'db_name')
-        self.resume, self.progress = rpc.session.execute_db('creation_get_resume_progress', dbname)
+        try:
+            self.resume, self.progress, self.state = rpc.session.execute_db('creation_get_resume_progress', dbname)
+        except Exception as e:
+            import pdb; pdb.set_trace()
         my_dict = {'resume': self.resume,
-                   'progress': self.progress}
+                   'progress': self.progress,
+                   'state': self.state}
         import json
         return json.dumps(my_dict)
 
@@ -474,7 +478,7 @@ class Database(BaseController):
 
         # install msf_profile
         rpc.session.execute_db('instance_auto_creation', password, dbname, 'en_US', admin_password)
-        self.resume, self.progress = rpc.session.execute_db('creation_get_resume_progress', dbname)
+        self.resume, self.progress, self.state = rpc.session.execute_db('creation_get_resume_progress', dbname)
 
 
     @expose()
@@ -482,8 +486,9 @@ class Database(BaseController):
     @error_handler(auto_create)
     def do_auto_create(self, password, **kw):
         self.msg = {}
-        self.resume = 'Empty database creation in progress...'
+        self.resume = _('Empty database creation in progress...\n')
         self.progress = 0.1
+        self.state = 'draft'
         try:
             config_file_name = 'uf_auto_install.conf'
             root_path = os.path.split(paths.root())[0]
