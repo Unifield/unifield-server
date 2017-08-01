@@ -36,6 +36,9 @@ from openerp import validators
 from openerp.utils import rpc, get_server_version, is_server_local, serve_file
 from tempfile import NamedTemporaryFile
 import shutil
+import ConfigParser
+from ConfigParser import NoOptionError, NoSectionError
+import threading
 
 def get_lang_list():
     langs = [('en_US', 'English (US)')]
@@ -51,6 +54,7 @@ def get_db_list():
     except:
         return []
 
+class DatabaseExist(Exception): pass
 
 class ReplacePasswordField(openobject.widgets.PasswordField):
     params = {
@@ -127,6 +131,12 @@ class FormAutoCreate(DBForm):
     fields = [
         ReplacePasswordField(name='password', label=_('Super admin password:')),
     ]
+
+
+class AutoCreateProgress(DBForm):
+    name = "get_auto_create_progress"
+    string = _('Auto Creation Progress')
+    action = '/openerp/database/get_auto_create_progress'
 
 
 class FormDrop(DBForm):
@@ -269,7 +279,7 @@ class Database(BaseController):
                         break
                     else:
                         time.sleep(1)
-                except:
+                except Exception as e:
                     raise DatabaseCreationCrash()
         except DatabaseCreationCrash:
             self.msg = {'message': (_("The server crashed during installation.\nWe suggest you to drop this database.")),
@@ -279,7 +289,8 @@ class Database(BaseController):
             self.msg = {'message': _('Bad super admin password'),
                         'title' : e.title}
             return self.create()
-        except Exception:
+        except Exception as e:
+            import pdb; pdb.set_trace()
             self.msg = {'message':_("Could not create database.")}
 
             return self.create()
@@ -295,12 +306,26 @@ class Database(BaseController):
         self.msg = {}
         return dict(form=form, error=error)
 
+    @expose()
+    def get_auto_create_progress(self, **kw):
+        config_file_name = 'uf_auto_install.conf'
+        root_path = os.path.split(paths.root())[0]
+        config_file_path = os.path.join(root_path, 'UFautoInstall', config_file_name)
+        config = ConfigParser.ConfigParser()
+        config.read(config_file_path)
+        dbname = config.get('instance', 'db_name')
+        self.resume, self.progress = rpc.session.execute_db('creation_get_resume_progress', dbname)
+        my_dict = {'resume': self.resume,
+                   'progress': self.progress}
+        import json
+        return json.dumps(my_dict)
+
     @expose(template="/openerp/controllers/templates/auto_create_progress.mako")
     def auto_create_progress(self, tg_errors=None, **kw):
         finish = ""
         finished = "False"
         data_collected = "False"
-        return dict(finish=finish, percent=0.12, total=finished,
+        return dict(finish=finish, percent=self.progress, resume=self.resume, total=finished,
                     data_collected=data_collected, report_name='toto', res_id='123456')
 
     def check_not_empty_string(self, config, section, option):
@@ -333,8 +358,6 @@ class Database(BaseController):
             self.msg = {'message': ustr(_("The auto creation config file '%s' does not exists.") % file_path),
                         'title': ustr(_('Auto creation file not found'))}
 
-        import ConfigParser
-        from ConfigParser import NoOptionError, NoSectionError
         config = ConfigParser.ConfigParser()
         config.read(file_path)
         try:
@@ -420,24 +443,69 @@ class Database(BaseController):
                         'title': ustr(_('Option missing in configuration file'))}
             return
 
+    def database_creation(self, password, dbname, admin_password):
+        try:
+            res = rpc.session.execute_db('create', password, dbname, False, 'en_US', admin_password)
+            while True:
+                try:
+                    progress, users = rpc.session.execute_db('get_progress', password, res)
+                    if progress == 1.0:
+                        for x in users:
+                            if x['login'] == 'admin':
+                                rpc.session.login(dbname, 'admin', x['password'])
+                                ok = True
+                        break
+                    else:
+                        time.sleep(1)
+                except Exception as e:
+                    import pdb; pdb.set_trace()
+                    raise DatabaseCreationCrash()
+        except DatabaseCreationCrash:
+            self.msg = {'message': (_("The server crashed during installation.\nWe suggest you to drop this database.")),
+                        'title': (_('Error during database creation'))}
+        except openobject.errors.AccessDenied, e:
+            self.msg = {'message': _('Bad super admin password'),
+                        'title' : e.title}
+
+    def background_auto_creation(self, password, dbname, admin_password):
+        # create database
+        self.database_creation(password, dbname, admin_password)
+        # start db auto creation in background
+
+        # install msf_profile
+        rpc.session.execute_db('instance_auto_creation', password, dbname, 'en_US', admin_password)
+        self.resume, self.progress = rpc.session.execute_db('creation_get_resume_progress', dbname)
+
+
     @expose()
     @validate(form=_FORMS['auto_create'])
     @error_handler(auto_create)
     def do_auto_create(self, password, **kw):
         self.msg = {}
+        self.resume = 'Empty database creation in progress...'
+        self.progress = 0.1
         try:
             config_file_name = 'uf_auto_install.conf'
             root_path = os.path.split(paths.root())[0]
             config_file_path = os.path.join(root_path, 'UFautoInstall', config_file_name)
             self.check_config_file(config_file_path)
+            config = ConfigParser.ConfigParser()
+            config.read(config_file_path)
+            dbname = config.get('instance', 'db_name')
+            admin_password = confirm_password = config.get('instance', 'admin_password')
 
-            # create database
-            #def do_create(self, password, dbname, admin_password, confirm_password, demo_data=False, language=None, **kw):
+            # check the database not already exists
+            if dbname in get_db_list():
+                raise DatabaseExist
 
-            # start db auto creation in background
+            create_thread = threading.Thread(target=self.background_auto_creation, 
+                                             args=(password, dbname, admin_password))
+            create_thread.start()
+            # after 4 seconds, the progress bar is displayed                                                                                
+            create_thread.join(1) 
+
 
             # install language
-               
 
             # add a cron entry to check that the sync server validate the regristration (every 20 minutes for example)
 
@@ -447,7 +515,11 @@ class Database(BaseController):
         except openobject.errors.AccessDenied, e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
+        except DatabaseExist:
+            self.msg = {'message': ustr(_('The database already exist')),
+                        'title': 'Database exist'}
         except Exception as e:
+            import pdb; pdb.set_trace()
             self.msg = {'message' : _("Could not auto create database")}
 
         if self.msg:
