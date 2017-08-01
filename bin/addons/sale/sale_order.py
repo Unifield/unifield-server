@@ -450,6 +450,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if all([s == 'cancel' for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
             else: # else compute the less advanced state:
+                sol_states.discard('cancel') # cancel state must be ignored
                 res[so.id] = self.pool.get('sale.order.line.state').get_less_advanced_state(cr, uid, ids, sol_states, context=context)
 
                 if res[so.id] == 'draft': # set the draft-p state ?
