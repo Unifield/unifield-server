@@ -1597,7 +1597,7 @@ class res_users(osv.osv):
 
         values_obj = self.pool.get('ir.values')
         default_value = values_obj.get(cr, uid, 'default', False, ['res.partner'])
-        if not default_value or default_value == 'en_US':
+        if not default_value or 'lang' not in [x[1] for x in default_value] or ('lang', 'en_US') in [(x[1], x[2]) for x in default_value]:
             values_obj.set(cr, uid, 'default', False, 'lang', ['res.partner'], 'en_MF')
 
         return True
