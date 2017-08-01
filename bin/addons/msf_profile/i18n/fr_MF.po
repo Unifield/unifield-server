@@ -37907,7 +37907,7 @@ msgstr "Lot de Création Bons de Commande  (à partir des commandes)"
 #: report:addons/account_override/report/open_invoices_xls.mako:308
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:302
 msgid "Total amt func. ccy"
-msgstr "Mnt total dev. fonctionnelle"
+msgstr "Mnt total dev. fctionnelle"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -52988,7 +52988,7 @@ msgstr "Statut validé de la commande de terrain"
 #: report:addons/account_override/report/open_invoices_xls.mako:304
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:298
 msgid "Residual amt booking ccy"
-msgstr "Mnt résiduel dev. d'enregistrement"
+msgstr "Mnt résiduel dev. d'enreg."
 
 #. module: financing_contract
 #: field:financing.contract.format.line,quadruplet_update:0
@@ -59087,7 +59087,7 @@ msgstr "PO/FO/Shipment Logs"
 #: report:addons/account_override/report/open_invoices_xls.mako:307
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:301
 msgid "Residual amt func. ccy"
-msgstr "Mnt résiduel dev. fonctionnelle"
+msgstr "Mnt résiduel dev. fctionnelle"
 
 #. module: sale
 #: view:sale.order.line:0
@@ -91482,7 +91482,7 @@ msgstr "Période '%s' n'est pas ouverte!"
 #: report:addons/account_override/report/open_invoices_xls.mako:305
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:299
 msgid "Total amt booking ccy"
-msgstr "Mnt total dev. d'enregistrement"
+msgstr "Mnt total dev. d'enreg."
 
 #. module: sync_client
 #: model:ir.actions.act_window,name:sync_client.update_received_action
