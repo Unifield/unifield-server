@@ -235,7 +235,7 @@
 
  </Styles>
 
-<Worksheet ss:Name="${_('Open Invoices')}">
+<Worksheet ss:Name="${context.get('paid_invoice') and _('Paid Invoices') or _('Open Invoices')}">
     <Table>
     <Column ss:Width="88.5"/>
     <Column ss:AutoFitWidth="0" ss:Width="75.5" ss:Span="1"/>
@@ -243,10 +243,15 @@
     <Column ss:Width="108"/>
     <Column ss:Width="105.75"/>
     <Column ss:Width="53.25"/>
-    <Column ss:Width="51"/>
-    <Column ss:Width="42.75"/>
-    <Column ss:Width="46.5" ss:Span="1"/>
-    <Column ss:Index="12" ss:Width="49.5"/>
+    % if not context.get('paid_invoice'):
+        <Column ss:Width="61"/>
+    % endif
+    <Column ss:Width="52.75"/>
+    <Column ss:Width="46.5"/>
+    % if not context.get('paid_invoice'):
+        <Column ss:Width="56.5"/>
+    % endif
+    <Column ss:Width="59.5"/>
     <Column ss:Width="39.75"/>
     <Column ss:Width="80"/>
     <Column ss:Width="110"/>
@@ -256,7 +261,7 @@
 
     <Row ss:AutoFitHeight="0" ss:Height="18">
         <Cell ss:StyleID="s25b">
-        <Data ss:Type="String">${_('OPEN INVOICES')}</Data>
+        <Data ss:Type="String">${context.get('paid_invoice') and _('PAID INVOICES') or _('OPEN INVOICES')}</Data>
         </Cell>
     </Row>
 
@@ -312,10 +317,14 @@
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Description')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Source Document')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Due Date')}</Data></Cell>
-        <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Residual amt booking ccy')}</Data></Cell>
+        % if not context.get('paid_invoice'):
+            <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Residual amt booking ccy')}</Data></Cell>
+        % endif
         <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Total amt booking ccy')}</Data></Cell>
         <Cell ss:StyleID="s28"><Data ss:Type="String">${_('Booking Currency')}</Data></Cell>
-        <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Residual amt func. ccy')}</Data></Cell>
+        % if not context.get('paid_invoice'):
+            <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Residual amt func. ccy')}</Data></Cell>
+        % endif
         <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Total amt func. ccy')}</Data></Cell>
         <Cell ss:StyleID="s29"><Data ss:Type="String">${_('Func. Ccy')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('State')}</Data></Cell>
@@ -350,10 +359,14 @@
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
         % endif
-        <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.residual or 0.0)|x}</Data></Cell>
+        % if not context.get('paid_invoice'):
+            <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.residual or 0.0)|x}</Data></Cell>
+        % endif
         <Cell ss:StyleID="s33" ><Data ss:Type="Number">${(o.amount_total or 0.0)|x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.currency_id and o.currency_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.residual, o.currency_id.id) or 0.0 )|x}</Data></Cell>
+        % if not context.get('paid_invoice'):
+            <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.residual, o.currency_id.id) or 0.0 )|x}</Data></Cell>
+        % endif
         <Cell ss:StyleID="s50" ><Data ss:Type="Number">${(getConvert(o.amount_total, o.currency_id.id) or 0.0 )|x}</Data></Cell>
         <Cell ss:StyleID="s50"><Data ss:Type="String">${getFuncCur() |x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.imported_state and getSelValue('account.invoice', 'imported_state', o.imported_state) or '')|x}</Data></Cell>
@@ -372,8 +385,10 @@
         <Cell ss:StyleID="s39"/>
         <Cell ss:StyleID="s39"/>
         <Cell ss:StyleID="s40"/>
-        <Cell ss:StyleID="s40"/>
-        <Cell ss:StyleID="s40"/>
+        % if not context.get('paid_invoice'):
+            <Cell ss:StyleID="s40"/>
+            <Cell ss:StyleID="s40"/>
+        % endif
         <Cell ss:StyleID="s44"><Data ss:Type="String">${_('Subtotal')} =</Data></Cell>
         % if nb_line:
             <Cell ss:StyleID="s49" ss:Formula="=SUM(R[-${nb_line}]C:R[-1]C)"><Data ss:Type="Number"></Data></Cell>

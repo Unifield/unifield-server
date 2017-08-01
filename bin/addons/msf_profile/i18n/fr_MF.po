@@ -37907,7 +37907,7 @@ msgstr "Lot de Création Bons de Commande  (à partir des commandes)"
 #: report:addons/account_override/report/open_invoices_xls.mako:308
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:302
 msgid "Total amt func. ccy"
-msgstr "Total amt func. ccy"
+msgstr "Mnt total dev. fonctionnelle"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -52961,13 +52961,6 @@ msgstr "Outils supplémentaires"
 msgid "West Virginia"
 msgstr "West Virginia"
 
-#. modules: account_override, vertical_integration
-#: view:account.invoice:0
-#: report:addons/account_override/report/open_invoices_xls.mako:230
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:230
-msgid "Open Invoices"
-msgstr "Open Invoices"
-
 #. modules: hr, msf_homere_interface
 #: field:hr.installer,hr_payroll:0
 #: view:hr.payroll.msf:0
@@ -52995,7 +52988,7 @@ msgstr "Statut validé de la commande de terrain"
 #: report:addons/account_override/report/open_invoices_xls.mako:304
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:298
 msgid "Residual amt booking ccy"
-msgstr "Residual amt booking ccy"
+msgstr "Mnt résiduel dev. d'enregistrement"
 
 #. module: financing_contract
 #: field:financing.contract.format.line,quadruplet_update:0
@@ -59094,7 +59087,7 @@ msgstr "PO/FO/Shipment Logs"
 #: report:addons/account_override/report/open_invoices_xls.mako:307
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:301
 msgid "Residual amt func. ccy"
-msgstr "Residual amt func. ccy"
+msgstr "Mnt résiduel dev. fonctionnelle"
 
 #. module: sale
 #: view:sale.order.line:0
@@ -66389,7 +66382,7 @@ msgstr "Commandes Partenaires Externes"
 #: report:addons/account_override/report/open_invoices_xls.mako:249
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:249
 msgid "OPEN INVOICES"
-msgstr "OPEN INVOICES"
+msgstr "FACTURES OUVERTES"
 
 #. modules: base, unifield_setup
 #: model:ir.model,name:base.model_ir_actions_todo
@@ -74531,8 +74524,11 @@ msgstr "Correspondance des Taxes"
 msgid "BAHRAINI DINAR"
 msgstr "BAHRAINI DINAR"
 
-#. module: account_override
+#. modules: account_override, vertical_integration
 #: model:ir.actions.report.xml,name:account_override.open_invoices_2
+#: view:account.invoice:0
+#: report:addons/account_override/report/open_invoices_xls.mako:238
+#: report:addons/vertical_integration/report/open_invoices_xls.mako:230
 msgid "Open Invoices"
 msgstr "Factures Ouvertes"
 
@@ -91486,7 +91482,7 @@ msgstr "Période '%s' n'est pas ouverte!"
 #: report:addons/account_override/report/open_invoices_xls.mako:305
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:299
 msgid "Total amt booking ccy"
-msgstr "Total amt booking ccy"
+msgstr "Mnt total dev. d'enregistrement"
 
 #. module: sync_client
 #: model:ir.actions.act_window,name:sync_client.update_received_action
@@ -98702,5 +98698,11 @@ msgstr "Numéro de séquence de l'acompte"
 
 #. module: account_override
 #: model:ir.actions.report.xml,name:account_override.paid_invoices
+#: report:addons/account_override/report/open_invoices_xls.mako:238
 msgid "Paid Invoices"
 msgstr "Factures Payées"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:264
+msgid "PAID INVOICES"
+msgstr "FACTURES PAYÉES"
