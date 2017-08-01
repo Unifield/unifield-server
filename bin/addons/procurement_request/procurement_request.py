@@ -640,6 +640,33 @@ class procurement_request(osv.osv):
 
         return res
 
+    def stock_take_data(self, cr, uid, ids, context=None):
+        '''
+        data for confirmed for change line wizard
+        '''
+        if context is None:
+            context = {}
+        return {'name': _('Do you want to update the Date Of Stock Take of all order lines ?'), }
+
+    def update_date(self, cr, uid, ids, context=None):
+        '''
+        open the update lines wizard
+        '''
+        # we need the context
+        if context is None:
+            context = {}
+        # field name
+        field_name = context.get('field_name', False)
+        assert field_name, 'The button is not correctly set.'
+        # data
+        data = getattr(self, field_name + '_data')(cr, uid, ids, context=context)
+        name = data['name']
+        model = 'update.lines'
+        obj = self.pool.get(model)
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
+
 procurement_request()
 
 class procurement_request_line(osv.osv):
@@ -740,6 +767,7 @@ class procurement_request_line(osv.osv):
         'supplier': fields.many2one('res.partner', 'Supplier', domain="[('id', '!=', my_company_id)]"),
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
         'fake_state': fields.function(_get_fake_state, type='char', method=True, string='State', help='for internal use only'),
+        'stock_take_date': fields.date('Date Of Stock Take', required=False),
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
         'product_ok': fields.boolean('Product selected'),
         'comment_ok': fields.boolean('Comment written'),
@@ -753,6 +781,25 @@ class procurement_request_line(osv.osv):
 
         return super(procurement_request_line, self)._get_planned_date(cr, uid, c)
 
+    def _get_stock_take_date(self, cr, uid, context=None):
+        '''
+            Returns stock take date
+        '''
+        if context is None:
+            context = {}
+        order_obj = self.pool.get('sale.order')
+        res = False
+
+        if context.get('active_id', False):
+            so = order_obj.browse(cr, uid, context.get('active_id'), context=context)
+            res = so.stock_take_date
+
+        return res
+        # if 'procurement_request' in context:
+        #     return context.get('stock_take_date', False)
+        #
+        # return super(procurement_request_line, self)._get_stock_take_date(cr, uid, context)
+
     _defaults = {
         'procurement_request': lambda self, cr, uid, c: c.get('procurement_request', False),
         'date_planned': _get_planned_date,
@@ -760,6 +807,7 @@ class procurement_request_line(osv.osv):
         'product_ok': False,
         'comment_ok': True,
         'fake_state': 'draft',
+        'stock_take_date': _get_stock_take_date,
     }
 
     def update_supplier_on_line(self, cr, uid, ids, context=None):

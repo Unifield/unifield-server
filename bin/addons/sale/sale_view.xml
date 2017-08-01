@@ -184,6 +184,7 @@
                                     <field name="product_uom" string="UoM"/>
                                     <field name="discount"/>
                                     <field name="price_unit"/>
+                                    <field name="stock_take_date"/>
                                     <field name="price_subtotal"/>
                                 </tree>
                             </field>

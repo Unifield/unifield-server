@@ -26,10 +26,11 @@ import netsvc
 
 class update_lines(osv.osv_memory):
     _name = "update.lines"
-    _description = "Update Lines from purchase order"
+    _description = "Update Lines from order"
     _columns = {
         'delivery_requested_date': fields.date('Delivery Requested Date', readonly=True,),
         'delivery_confirmed_date': fields.date('Delivery Confirmed Date', readonly=True,),
+        'stock_take_date': fields.date('Date Of Stock Take', readonly=True,),
      }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -56,12 +57,16 @@ class update_lines(osv.osv_memory):
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             delivery_requested_date = obj.delivery_requested_date
             delivery_confirmed_date = obj.delivery_confirmed_date
-            
+            stock_take_date = obj.stock_take_date
+
         if 'delivery_requested_date' in fields:
             res.update({'delivery_requested_date': delivery_requested_date})
             
         if 'delivery_confirmed_date' in fields:
             res.update({'delivery_confirmed_date': delivery_confirmed_date})
+
+        if 'stock_take_date' in fields:
+            res.update({'stock_take_date': stock_take_date})
             
         return res
     
@@ -84,21 +89,36 @@ class update_lines(osv.osv_memory):
             return result
         
         obj_name = obj_obj.browse(cr, uid, obj_ids[0], context=context).name
-        
-        _moves_arch_lst = """
-                        <form>
-                        <separator colspan="4" string="%s: Value to be used-"/>
-                        <field name="delivery_%s_date" />
-                        <button name="update_delivery_%s_date" string="Yes" type="object" icon="gtk-apply" />
-                        <button special="cancel" string="No" icon="gtk-cancel"/>
-                        """ % (obj_name, field_name, field_name)
-        
-        _moves_fields = result['fields']
-        # add field related to picking type only
-        _moves_fields.update({'delivery_%s_date'%field_name: {'type' : 'date', 'string' : 'Delivery %s date'%field_name, 'readonly': True,}, 
-                              })
-                    
-        _moves_arch_lst += """</form>"""
+
+        if str(field_name) == 'stock_take':
+            _moves_arch_lst = """
+                            <form>
+                            <separator colspan="4" string="%s: Value to be used-"/>
+                            <field name="stock_take_date" />
+                            <button name="update_stock_take_date" string="Yes" type="object" icon="gtk-apply" />
+                            <button special="cancel" string="No" icon="gtk-cancel"/>
+                            """ % obj_name
+
+            _moves_fields = result['fields']
+            # add field related to picking type only
+            _moves_fields.update({'stock_take_date': {'type': 'date', 'string': 'Date Of Stock Take','readonly': True, },})
+
+            _moves_arch_lst += """</form>"""
+        else:
+            _moves_arch_lst = """
+                            <form>
+                            <separator colspan="4" string="%s: Value to be used-"/>
+                            <field name="delivery_%s_date" />
+                            <button name="update_delivery_%s_date" string="Yes" type="object" icon="gtk-apply" />
+                            <button special="cancel" string="No" icon="gtk-cancel"/>
+                            """ % (obj_name, field_name, field_name)
+
+            _moves_fields = result['fields']
+            # add field related to picking type only
+            _moves_fields.update({'delivery_%s_date'%field_name: {'type' : 'date', 'string' : 'Delivery %s date'%field_name, 'readonly': True,},
+                                  })
+
+            _moves_arch_lst += """</form>"""
         
         result['arch'] = _moves_arch_lst
         result['fields'] = _moves_fields
@@ -134,6 +154,22 @@ class update_lines(osv.osv_memory):
             for line in obj.order_line:
                 line.write({'confirmed_delivery_date': confirmed_date,})
         
+        return {'type': 'ir.actions.act_window_close'}
+
+    def update_stock_take_date(self, cr, uid, ids, context=None):
+        '''
+        update all corresponding lines
+        '''
+        # switch according to type
+        type = context['type']
+        obj_obj = self.pool.get(type)
+        # working objects
+        obj_ids = context.get('active_ids', [])
+        for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
+            stock_take_date = obj.stock_take_date
+            for line in obj.order_line:
+                line.write({'stock_take_date': stock_take_date, })
+
         return {'type': 'ir.actions.act_window_close'}
 
 update_lines()

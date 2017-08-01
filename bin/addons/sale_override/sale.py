@@ -1296,6 +1296,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         for order in order_brw_list:
             line_ids = []
             for line in order.order_line:
+                if not line.stock_take_date:
+                    line.stock_take_date = order.stock_take_date
                 line_ids.append(line.id)
                 if line.soq_updated:
                     reset_soq.append(line.id)

@@ -761,6 +761,14 @@ class purchase_order(osv.osv):
             context = {}
         return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'), }
 
+    def stock_take_data(self, cr, uid, ids, context=None):
+        '''
+        data for confirmed for change line wizard
+        '''
+        if context is None:
+            context = {}
+        return {'name': _('Do you want to update the Date Of Stock Take of all order lines ?'), }
+
     def update_date(self, cr, uid, ids, context=None):
         '''
         open the update lines wizard
@@ -1143,6 +1151,14 @@ class sale_order(osv.osv):
         if context is None:
             context = {}
         return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'), }
+
+    def stock_take_data(self, cr, uid, ids, context=None):
+        '''
+        data for confirmed for change line wizard
+        '''
+        if context is None:
+            context = {}
+        return {'name': _('Do you want to update the Date Of Stock Take of all order lines ?'), }
 
     def update_date(self, cr, uid, ids, context=None):
         '''
