@@ -54,7 +54,7 @@ class lang_setup(osv.osv_memory):
             res['lang_id'] = lang_ids[0]
         else:
             try:
-                res['lang_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'lang_msf_en')[1]
+                res['lang_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_profile', 'lang_msf_en')[1]
             except ValueError:
                 res = False
         
