@@ -29,6 +29,7 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 import logging
 import os
+import netsvc
 
 from mx import DateTime
 
@@ -1540,6 +1541,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         line_obj = self.pool.get('purchase.order.line')
         split_obj = self.pool.get('split.purchase.order.line.wizard')
         simu_obj = self.pool.get('wizard.import.po.simulation.screen')
+        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -1561,7 +1563,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 # Don't do anything
                 continue
             elif line.type_change == 'del' and line.po_line_id:
-                line_obj.fake_unlink(cr, uid, [line.po_line_id.id], context=context)
+                wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
             elif line.type_change == 'split' and line.parent_line_id:
                 # Call the split line wizard
                 po_line_id = False
