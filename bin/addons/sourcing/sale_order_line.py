@@ -1360,6 +1360,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 ('partner_id', '=', sourcing_line.supplier.id),
                 ('state', 'in', ['draft']),
                 ('related_sourcing_id', '=', sourcing_line.related_sourcing_id.id or False), # Column "Group"
+                ('delivery_requested_date', '=', sourcing_line.date_planned),
             ]
             if sourcing_line.po_cft == 'po':
                 domain.append(('order_type', '=', 'regular'))
@@ -1414,7 +1415,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'categ': sourcing_line.categ,
                 'priority': sourcing_line.order_id.priority,
                 'details': sourcing_line.order_id.details,
-                'delivery_requested_date': sourcing_line.order_id.delivery_requested_date,
+                'delivery_requested_date': sourcing_line.date_planned,
                 'related_sourcing_id': sourcing_line.related_sourcing_id.id or False,
                 'unique_fo_id': sourcing_line.order_id.id if sourcing_line.supplier.po_by_project == 'isolated' else False,
             }
