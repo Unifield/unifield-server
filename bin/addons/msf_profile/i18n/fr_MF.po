@@ -35353,11 +35353,12 @@ msgstr "Commitments amount"
 msgid "Easy to Refer action by name e.g. One Sales Order -> Many Invoices"
 msgstr "Facile de se Désigner une action par son nom, ex: Une Commande Client -> Plusieurs Factures."
 
-#. modules: msf_budget, financing_contract
+#. modules: msf_budget, financing_contract, account_override
 #: view:wizard.financing.currency.export:0
 #: view:wizard.actual.export:0
 #: view:wizard.budget.criteria.export:0
 #: view:wizard.local.expenses:0
+#: view:wizard.report.paid.invoice:0
 msgid "Create report"
 msgstr "Créer un rapport"
 
@@ -94839,6 +94840,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:stock.incoming.processor:0
 #: view:stock.picking.processor:0
 #: view:wizard.import.invoice.line:0
+#: view:wizard.report.paid.invoice:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -98697,6 +98699,7 @@ msgid "Down Payment Sequence Number"
 msgstr "Numéro de séquence de l'acompte"
 
 #. module: account_override
+#: model:ir.actions.act_window,name:account_override.action_paid_invoices_menu
 #: model:ir.actions.report.xml,name:account_override.paid_invoices
 #: report:addons/account_override/report/open_invoices_xls.mako:238
 msgid "Paid Invoices"
@@ -98706,3 +98709,18 @@ msgstr "Factures Payées"
 #: report:addons/account_override/report/open_invoices_xls.mako:264
 msgid "PAID INVOICES"
 msgstr "FACTURES PAYÉES"
+
+#. module: account_override
+#: model:ir.model,name:account_override.model_wizard_report_paid_invoice
+msgid "Wizard of the Paid Invoices Report"
+msgstr "Assistant du Rapport des Factures Payées"
+
+#. module: account_override
+#: field:wizard.report.paid.invoice,beginning_date:0
+msgid "Beginning date"
+msgstr "Date de début"
+
+#. module: account_override
+#: field:wizard.report.paid.invoice,ending_date:0
+msgid "Ending date"
+msgstr "Date de fin"
