@@ -47,7 +47,7 @@ from datetime import datetime, timedelta
 
 from sync_common import OC_LIST_TUPLE
 
-MAX_EXECUTED_UPDATES = 500
+MAX_EXECUTED_UPDATES = 1
 MAX_EXECUTED_MESSAGES = 500
 
 
@@ -825,7 +825,7 @@ class Entity(osv.osv):
 
         # Get a list of updates to execute
         # Warning: execution order matter
-        update_ids = updates.search(cr, uid, [('run', '=', False)], order='sequence_number, rule_sequence, id asc', context=context)
+        update_ids = updates.search(cr, uid, [('run', '=', False)], order='sequence_number, is_deleted, rule_sequence, id asc', context=context)
         update_count = len(update_ids)
         if not update_count: return 0
 
