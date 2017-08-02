@@ -1333,15 +1333,17 @@ class Connection(osv.osv):
         if not hour_from:
             hour_from = connection.automatic_patching_hour_from
         if not hour_to:
-            hour_to = connection.automatic_patching_hour_tp
+            hour_to = connection.automatic_patching_hour_to
 
-        hour_from = int(math.floor(abs(hour_from)))
-        min_from = int(round(abs(hour_from)%1+0.01,2) * 60)
-        hour_to = int(math.floor(abs(hour_to)))
-        min_to = int(round(abs(hour_to)%1+0.01,2) * 60)
+        hour_from_decimal = int(math.floor(abs(hour_from)))
+        min_from_decimal = int(round(abs(hour_from)%1+0.01,2) * 60)
+        hour_to_decimal = int(math.floor(abs(hour_to)))
+        min_to_decimal = int(round(abs(hour_to)%1+0.01,2) * 60)
 
-        from_date = datetime(date.year, date.month, date.day, hour_from, min_from)
-        to_date = datetime(date.year, date.month, date.day, hour_to, min_to)
+        from_date = datetime(date.year, date.month, date.day,
+                             hour_from_decimal, min_from_decimal)
+        to_date = datetime(date.year, date.month, date.day, hour_to_decimal,
+                           min_to_decimal)
 
         # from_date and to_date are not the same day:
         if from_date > to_date:
