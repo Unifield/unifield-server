@@ -1491,78 +1491,41 @@ stock moves which are already processed : '''
 
         return True
 
-    def get_so_ids_from_po_ids(self, cr, uid, ids, context=None, sol_ids=[]):
+    def get_so_ids_from_po_ids(self, cr, uid, ids, context=None):
         '''
         receive the list of purchase order ids
-
-        return the list of sale order ids corresponding (through procurement process)
+        return the list of sale order ids corresponding
         '''
-        # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # objects
-        sol_obj = self.pool.get('sale.order.line')
-        # sale order list
-        so_ids = []
-
-        # get the sale order lines
-        if not sol_ids:
-            sol_ids = self.get_sol_ids_from_po_ids(cr, uid, ids, context=context)
-        if sol_ids:
-            # list of dictionaries for each sale order line
-            datas = sol_obj.read(cr, uid, sol_ids, ['order_id'], context=context)
-            # we retrieve the list of sale order ids
-            for data in datas:
-                if data['order_id'][0] not in so_ids:
-                    so_ids.append(data['order_id'][0])
-
+        so_ids = set()
         for po in self.browse(cr, uid, ids, context=context):
-            for line in po.order_line:
-                if line.procurement_id and line.procurement_id.sale_id and line.procurement_id.sale_id.id not in so_ids:
-                    so_ids.append(line.procurement_id.sale_id.id)
+            for pol in po.order_line:
+                if pol.linked_sol_id:
+                    so_ids.add(pol.linked_sol_id.order_id.id)
 
-        return so_ids
+        return list(so_ids)
 
     def get_sol_ids_from_po_ids(self, cr, uid, ids, context=None):
         '''
         receive the list of purchase order ids
-
-        return the list of sale order line ids corresponding (through procurement process)
+        return the list of sale order line ids corresponding
         '''
-        # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # objects
-        sol_obj = self.pool.get('sale.order.line')
-        # procurement ids list
-        # sale order lines list
-        sol_ids = []
+        sol_ids = set()
+        for po in self.browse(cr, uid, ids, context=context):
+            for pol in po.order_line:
+                if pol.linked_sol_id:
+                    sol_ids.add(pol.linked_sol_id.id)
 
-        pol_obj = self.pool.get('purchase.order.line')
-        order_lines = set()
-        for po in self.read(cr, uid, ids, ['order_line'], context=context):
-            for line in po['order_line']:
-                order_lines.add(line)
-
-        proc_ids = set()
-        result = pol_obj.read(cr, uid, list(order_lines), ['procurement_id'],
-                              context=context)
-        result = dict([(x['id'], x['procurement_id'][0]) for x in result if x['procurement_id']])
-        if result:
-            for line_id, procurement_id in result.items():
-                proc_ids.add(procurement_id)
-
-        # get the corresponding sale order line list
-        if proc_ids:
-            sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in',
-                                                list(proc_ids))], context=context)
-        return sol_ids
+        return list(sol_ids)
 
 
     def create_extra_lines_on_fo(self, cr, uid, ids, context=None):
