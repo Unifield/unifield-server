@@ -334,9 +334,10 @@
     </Row>
 
 <% nb_line = 0 %>
+<% inv = invoices(data) %>
 
-% if type in invoices:
-% for o in invoices[type]:
+% if type in inv:
+% for o in inv[type]:
     <Row>
         <% nb_line += 1 %>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.move_id and o.move_id.name or '')|x}</Data></Cell>

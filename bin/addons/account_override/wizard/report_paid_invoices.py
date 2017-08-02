@@ -23,7 +23,6 @@
 from osv import osv
 from osv import fields
 from datetime import datetime
-from dateutil.relativedelta import relativedelta
 
 class wizard_report_paid_invoice(osv.osv_memory):
     _name = 'wizard.report.paid.invoice'
@@ -35,8 +34,8 @@ class wizard_report_paid_invoice(osv.osv_memory):
     }
 
     _defaults = {
-        'beginning_date': lambda *a: (datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
-        'ending_date': lambda *a: (datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
+        'beginning_date': lambda *a: datetime.today(),
+        'ending_date': lambda *a: datetime.today(),
     }
 
     def button_paid_invoices_report(self, cr, uid, ids, context=None):
