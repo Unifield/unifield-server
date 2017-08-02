@@ -205,19 +205,19 @@ class ir_cron(osv.osv, netsvc.Agent):
         '''
         connection = self.pool.get("sync.client.sync_server_connection")
         if not connection:
-            return
+            return False
         con_manager = connection._get_connection_manager(cr, uid)
         if automatic_patching is None:
             automatic_patching = con_manager.automatic_patching
         if not automatic_patching:
-            return
+            return False
         if patching_hour_from is None:
             patching_hour_from = con_manager.automatic_patching_hour_from
         if patching_hour_to is None:
             patching_hour_to = con_manager.automatic_patching_hour_to
 
         if not nextcall:
-            return
+            return False
         nextcall = datetime.strptime(nextcall, '%Y-%m-%d %H:%M:%S')
         now = datetime.now()
         if nextcall < now:
@@ -242,6 +242,7 @@ class ir_cron(osv.osv, netsvc.Agent):
                                  _('Automatic Synchronization must be executed '
                                  'within Silent Upgrade time range (from %s:%.2d '
                                  'until %s:%.2d).') % (hour_from, min_from, hour_to, min_to))
+        return True
 
     def write(self, cr, user, ids, vals, context=None):
         if not ids:
@@ -256,10 +257,19 @@ class ir_cron(osv.osv, netsvc.Agent):
 
             if auto_sync_id in ids \
                     and set(('nextcall', 'interval_type', 'interval_number')).issubset(vals.keys()):
-                self.check_upgrade_time_range(cr, user, vals['nextcall'],
-                                              vals['interval_type'],
-                                              vals['interval_number'],
-                                              context=context)
+                active = vals.get('active', None)
+                if active is None:
+                    active = self.read(cr, uid, auto_sync_id, ['active'],
+                                       context=context)['active']
+                if self.check_upgrade_time_range(cr, user, vals['nextcall'],
+                                                 vals['interval_type'],
+                                                 vals['interval_number'],
+                                                 context=context):
+                    if not active:
+                        raise osv.except_osv(_('Error!'),
+                                             _('Automatic Synchronization must be activated '
+                                             'to perform Silent Upgrade.'))
+
         except ValueError:
             pass  # the reference don't exists
 

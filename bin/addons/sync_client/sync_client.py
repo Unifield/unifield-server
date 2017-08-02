@@ -1511,6 +1511,10 @@ class Connection(osv.osv):
                                            'interval_number',
                                            'active', 'numbercall'],
                                           context=context)
+                if not sync_cron['active']:
+                    raise osv.except_osv(_('Error!'),
+                                         _('Automatic Synchronization must be '
+                                           'activated to perform Silent Upgrade'))
                 try:
                     cron_obj.check_upgrade_time_range(cr, uid,
                             sync_cron['nextcall'], sync_cron['interval_type'],
