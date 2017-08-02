@@ -46,10 +46,7 @@ from email import Encoders
 from itertools import islice, izip
 from lxml import etree
 from which import which
-if sys.version_info[:2] < (2, 4):
-    from threadinglocal import local
-else:
-    from threading import local
+from threading import local
 try:
     from html2text import html2text
 except ImportError:
@@ -1151,8 +1148,6 @@ def ustr(value, hint_encoding='utf-8'):
 
 
 def exception_to_unicode(e):
-    if (sys.version_info[:2] < (2,6)) and hasattr(e, 'message'):
-        return ustr(e.message)
     if hasattr(e, 'args'):
         return "\n".join((ustr(a) for a in e.args))
     try:
