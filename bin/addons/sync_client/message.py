@@ -390,7 +390,8 @@ class message_received(osv.osv):
             sync_message_execution=True,
             sale_purchase_logger={})
         context['lang'] = 'en_US'
-        # get all ids if not specified
+        
+        # message received are executed by rule sequence number:
         if ids is None:
             cr.execute("""
                 SELECT rec.id
@@ -399,7 +400,17 @@ class message_received(osv.osv):
                 AND rec.run = 'false'
                 ORDER BY rule.sequence_number, rec.id;
             """)
-            ids = [id for (id,) in cr.fetchall()]
+        else:
+            cr.execute("""
+                SELECT rec.id
+                FROM sync_client_message_rule rule, sync_client_message_received rec
+                WHERE rule.remote_call = rec.remote_call
+                AND rec.run = 'false'
+                AND rec.id in %s
+                ORDER BY rule.sequence_number, rec.id;
+            """, (tuple(ids),))
+
+        ids = [id for (id,) in cr.fetchall()]
 
         if not ids: return 0
 
