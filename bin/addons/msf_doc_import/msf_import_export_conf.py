@@ -409,15 +409,14 @@ MODEL_DATA_DICT = {
     'currency_rate': {
         'header_list': [
             'name',
-            'rate',
             'currency_id.name',
+            'rate',
         ],
         'required_field_list': [
             'name',
             'rate',
             'currency_id.name',
         ],
-        'csv_button': True,
     },
 
 
