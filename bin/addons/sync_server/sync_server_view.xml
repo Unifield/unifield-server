@@ -136,6 +136,19 @@
             </field>
         </record>
 
+        <record model="ir.ui.view" id="entity_group_form_search">
+            <field name="name">entity.group.search</field>
+            <field name="model">sync.server.entity_group</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Groups">
+                    <field name="name"/>
+                    <field name="type_id"/>
+                    <field name="oc" />
+                </search>
+            </field>
+        </record>
+
 <!-- =========================MENUS and ACTIONS=============================== -->
 
 
