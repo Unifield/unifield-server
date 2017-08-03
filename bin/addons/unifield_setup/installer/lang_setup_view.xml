@@ -44,7 +44,7 @@
         <field name="action_id" ref="action_lang_setup"/>
         <field name="sequence">19</field>
         <field name="restart">never</field>
-        <field name="state">skip</field>
+        <field name="state">done</field>
     </record>
   </data>
 </openerp>

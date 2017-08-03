@@ -42,8 +42,7 @@
     <record id="fixed_asset_setup_todo" model="ir.actions.todo">
         <field name="action_id" ref="action_fixed_asset_setup"/>
         <field name="sequence">14</field>
-        <field name="restart">never</field>
-        <field name="state">skip</field>
+        <field name="restart">always</field>
     </record>
   </data>
 </openerp>
