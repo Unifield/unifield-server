@@ -77,7 +77,7 @@ class operations_event(osv.osv, ratelimit):
 
     _name = 'operations.event'
     _rec_name = 'time'
-    _order = 'time desc'
+    _order = 'time desc, id desc'
     _log_access = False
 
     def __init__(self, pool, cr):
@@ -359,12 +359,6 @@ class memory_usage(osv.osv, ratelimit):
         self._rl_max = ratelimit.MAX
         self._rl = self._rl_max
 
-        self.histogram = {}
-        # Watch OpenERP method calls from 0 to 2 seconds
-        self.histogram['osv'] = Histogram( buckets=20, range=2, name='osv')
-        # Watch SQL queries with auto-range
-        self.histogram['sql'] = Histogram( buckets=20, name='sql')
-
     def _get_inst(self, cr, uid):
         i = self.pool.get('sync.client.entity').get_entity(cr, uid).name;
         if i is None:
@@ -378,17 +372,19 @@ class memory_usage(osv.osv, ratelimit):
     def get_proc_name_list(self, proc_name):
         """return a list of process matching proc_name
         """
-        if os.name == 'nt':
-            proc_list = [proc for proc in psutil.process_iter() if proc.name() == proc_name]
-        else:
-            proc_list = [proc for proc in psutil.process_iter() if proc.name() == proc_name]
+        proc_list = [proc for proc in psutil.process_iter() if proc.name() == proc_name]
+        if os.name != 'nt':
+            import getpass
+            current_user_name = getpass.getuser()
             if not proc_list:
                 proc_list = []
                 for proc in psutil.process_iter():
+                    if proc.username() != current_user_name:
+                        continue
                     command_list = proc.cmdline()
                     if len(command_list) >1 \
                             and command_list[0] == 'python'\
-                            and proc_name in proc.cmdline()[1]:
+                            and proc_name in command_list[1]:
                         proc_list.append(proc)
         return proc_list
 

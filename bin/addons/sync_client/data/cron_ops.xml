@@ -45,11 +45,11 @@
 	  <field name="function">create_memory_entries</field>
 	  <field name="user_id">1</field>
 	  <field name="interval_type">minutes</field>
-      <field name="numbercall">-1</field>
-      <field name="priority">5</field>
-      <field name="doall">0</field>
-      <field name="active">1</field>
-      <field name="interval_number">5</field>
+	  <field eval="-1" name="numbercall"/>
+	  <field eval="5" name="priority"/>
+	  <field eval="0" name="doall"/>
+	  <field eval="1" name="active"/>
+	  <field eval="5" name="interval_number"/>
 	  <field name="model">memory.usage</field>
 	</record>
 
@@ -58,11 +58,11 @@
 	  <field name="function">log_memory_usage</field>
 	  <field name="user_id">1</field>
 	  <field name="interval_type">hours</field>
-      <field name="numbercall">-1</field>
-      <field name="priority">5</field>
-      <field name="doall">0</field>
-      <field name="active">1</field>
-      <field name="interval_number">12</field>
+	  <field eval="-1" name="numbercall"/>
+	  <field eval="5" name="priority"/>
+	  <field eval="0" name="doall"/>
+	  <field eval="1" name="active"/>
+	  <field eval="12" name="interval_number"/>
       <field name="nextcall">2017-08-01 08:00:00</field>
 	  <field name="model">operations.event</field>
 	</record>
