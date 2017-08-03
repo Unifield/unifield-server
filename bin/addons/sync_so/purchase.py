@@ -87,6 +87,15 @@ class purchase_order_line_sync(osv.osv):
             pol_updated = new_pol
             if sol_dict['state'] == 'confirmed':
                 wf_service.trg_validate(uid, 'purchase.order.line', new_pol, 'confirmed', cr)
+            # create IR line if needed:
+            if sol_dict['sync_sourced_origin']:
+                parent_so = self.pool.get('sale.order').search(cr, uid, [
+                    ('name', '=', sol_dict['sync_sourced_origin']),
+                    ('procurement_request', 'in', ['t', 'f']),
+                ], context=context)
+                if not parent_so:
+                    raise Exception, "Sync ref received of Sale Order not found"
+                self.create_sol_from_pol(cr, uid, [new_pol], parent_so[0], context=context)
         else: # regular update
             # search for the PO line to update:
             pol_to_update = sol_dict.get('sync_linked_pol', False)
