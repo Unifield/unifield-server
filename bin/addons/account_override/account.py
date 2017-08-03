@@ -700,18 +700,16 @@ class account_journal(osv.osv):
                     if self_instance.level == 'coordo':
                         # BKLG-19/7: forbid creation of MANUAL journal entries
                         # from COORDO on a PROJECT journal
-                        forbid_levels = ['project']
+                        msf_instance_obj = self.pool.get('msf.instance')
+                        forbid_instance_ids = msf_instance_obj.search(cr, uid, 
+                                                                      [('level', '=', 'project')], context=context)
+                        if forbid_instance_ids:
+                            return [('instance_id', 'not in', forbid_instance_ids)]
                     elif self_instance.level == 'project':
                         # US-896: project should only see project journals
                         # (coordo register journals sync down to project for
                         #  example)
-                        forbid_levels = ['coordo', 'section']
-                if forbid_levels:
-                    msf_instance_obj = self.pool.get('msf.instance')
-                    forbid_instance_ids = msf_instance_obj.search(cr, uid, 
-                                                                  [('level', 'in', forbid_levels)], context=context)
-                    if forbid_instance_ids:
-                        res = [('instance_id', 'not in', forbid_instance_ids)]
+                        return [('is_current_instance', '=', True)]
         return res
 
     _columns = {
