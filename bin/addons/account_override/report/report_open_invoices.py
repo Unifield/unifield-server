@@ -32,13 +32,28 @@ class report_open_invoices2(report_sxw.rml_parse):
             context = {}
         context.update({'paid_invoice': name == 'paid.invoices'})  # for the "Paid Invoices" report
         super(report_open_invoices2, self).__init__(cr, uid, name, context=context)
+        self.percent = 0.0
+        self.nb_lines = 0
+        self.ratio_search = 0.25  # consider that the search in get_invoices takes 25% of the total time of the process
         self.funcCur = ''
         self.localcontext.update({
             'getConvert':self.getConvert,
             'getFuncCur':self.getFuncCur,
             'invoices': self.get_invoices,
+            'update_percent': self.update_percent,
         })
         return
+
+    def update_percent(self, current_line_position, context):
+        """
+        Update the percentage of the Report Generation
+        """
+        if context.get('background_id'):
+            bg_obj = self.pool.get('memory.background.report')
+            if current_line_position % 50 == 0:  # update percentage every 50 lines
+                # self.ratio_search is the ratio already used for the search method
+                self.percent = self.ratio_search + (current_line_position / float(self.nb_lines) * (1 - self.ratio_search))
+                bg_obj.update_percent(self.cr, self.uid, [self.localcontext['background_id']], self.percent)
 
     def get_invoices(self, data):
         """
@@ -46,9 +61,15 @@ class report_open_invoices2(report_sxw.rml_parse):
         """
         res = {}
         inv_obj = self.pool.get('account.invoice')
+        bg_obj = self.pool.get('memory.background.report')
         beginning_date = data.get('form') and data['form'].get('beginning_date')
         ending_date = data.get('form') and data['form'].get('ending_date')
         context = self.localcontext or {}
+        bg_id = False
+        if context.get('background_id'):
+            bg_id = context['background_id']
+            self.percent = 0.05  # 5% of the process
+            bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
         for option_type in ['out_invoice', 'in_invoice', 'out_refund', 'in_refund']:
             if context.get('paid_invoice') and beginning_date and ending_date:
                 # paid invoices within the selected dates
@@ -63,7 +84,11 @@ class report_open_invoices2(report_sxw.rml_parse):
                 type_ids = inv_obj.search(self.cr, self.uid, domain_open_inv, context=context)
             if isinstance(type_ids, (int, long)):
                 type_ids = [type_ids]
+            self.nb_lines += len(type_ids)
             res.update({option_type: inv_obj.browse(self.cr, self.uid, type_ids, context)})
+        if bg_id:
+            self.percent += 0.20  # 25% of the process
+            bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
         return res
 
     def getConvert(self, amount, currency_id):

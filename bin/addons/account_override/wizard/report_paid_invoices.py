@@ -47,6 +47,7 @@ class wizard_report_paid_invoice(osv.osv_memory):
         if context is None:
             context = {}
         user_obj = self.pool.get('res.users')
+        bg_obj = self.pool.get('memory.background.report')
         data = {}
         data['ids'] = context.get('active_ids', [])
         data['model'] = context.get('active_model', 'ir.ui.menu')
@@ -54,8 +55,18 @@ class wizard_report_paid_invoice(osv.osv_memory):
         instance = user_obj.browse(cr, uid, uid).company_id.instance_id
         inst_code = instance and instance.code or ''
         report_date = datetime.today().strftime('%Y%m%d')
+        report_name = 'paid.invoices'
         data['target_filename'] = 'Paid Invoices_%s_%s' % (inst_code, report_date)
-        return {'type': 'ir.actions.report.xml', 'report_name': 'paid.invoices', 'datas': data}
+        # make the report run in background
+        background_id = bg_obj.create(cr, uid,
+                                      {'file_name': data['target_filename'],
+                                       'report_name': report_name,
+                                       },
+                                      context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+        data['context'] = context
+        return {'type': 'ir.actions.report.xml', 'report_name': report_name, 'datas': data, 'context': context}
 
 
 wizard_report_paid_invoice()

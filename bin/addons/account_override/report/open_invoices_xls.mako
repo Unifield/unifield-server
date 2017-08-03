@@ -301,6 +301,7 @@
 
     <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
+<% inv = invoices(data) %>
 % for (type, title) in [('out_invoice', _('Stock Transfer Vouchers')), ('in_invoice', _('Supplier Invoices')), ('out_refund', _('Customer Refunds')), ('in_refund', _('Supplier Refunds'))]:
    <Row >
     <Cell ss:StyleID="s23"><Data ss:Type="String">${title}</Data></Cell>
@@ -352,12 +353,12 @@
     </Row>
 
 <% nb_line = 0 %>
-<% inv = invoices(data) %>
 
 % if type in inv:
 % for o in inv[type]:
     <Row>
         <% nb_line += 1 %>
+        <% update_percent(nb_line, context) %>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.move_id and o.move_id.name or '')|x}</Data></Cell>
         % if isDate(o.document_date):
             <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.document_date or ' ' |n}T00:00:00.000</Data></Cell>
