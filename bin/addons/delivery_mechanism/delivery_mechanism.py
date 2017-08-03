@@ -334,8 +334,8 @@ class stock_move(osv.osv):
                             for move in self.browse(cr, uid, move_ids, context=context):
                                 pick = move.picking_id
                                 cond1 = move.picking_id.subtype == 'standard'
-                                cond2 = move.product_qty != 0.00 and pick.subtype == 'picking' and not pick.backorder_id and pick.state == 'draft'
                                 # move from draft picking or standard picking
+                                cond2 = move.product_qty != 0.00 and pick.subtype == 'picking' and (not pick.backorder_id or pick.backorder_id.subtype == 'standard') and pick.state == 'draft'
                                 if cond2 or cond1:
                                     integrity_check.append(move)
                             # return the first one matching
