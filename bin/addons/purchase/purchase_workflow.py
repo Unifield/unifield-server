@@ -27,10 +27,9 @@ class purchase_order_line(osv.osv):
             # => if yes update it, else create new
             create_line = False
             if not pol.linked_sol_id:
-                is_internal_request = pol.origin and pol.origin.find('/IR') != -1 or False
                 so_id = self.pool.get('sale.order').search(cr, uid, [
                     ('name', '=', pol.origin),
-                    ('procurement_request', '=', is_internal_request),
+                    ('procurement_request', 'in', ['t', 'f']),
                 ], context=context)
                 if not so_id:
                     continue # no sale order linked to our PO line
@@ -86,7 +85,7 @@ class purchase_order_line(osv.osv):
                 'nomen_sub_4': pol.nomen_sub_4 and pol.nomen_sub_4.id or False,
                 'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
                 'confirmed_delivery_date': line_confirmed,
-                'date_planned': pol.order_id.delivery_requested_date,
+                'date_planned': pol.date_planned,
             }
             if create_line:
                 sol_values.update({
