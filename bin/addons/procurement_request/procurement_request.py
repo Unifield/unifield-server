@@ -767,8 +767,14 @@ class procurement_request_line(osv.osv):
             res, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values={'value': vals['value']}, vals={'constraints': 'consumption'}, context=context)
             if test:
                 return res
-            vals['value'] = {'product_uom': product.uom_id.id, 'name': '[%s] %s' % (product.default_code, product.name),
-                             'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price, }
+            vals['value'] = {
+                'product_uom': product.uom_id.id, 
+                'name': '[%s] %s' % (product.default_code, product.name),
+                'type': product.procure_method, 
+                'comment_ok': True, 
+                'cost_price': product.standard_price, 
+                'price_unit': product.list_price,
+            }
             if vals['value']['type'] != 'make_to_stock':
                 vals['value'].update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
             uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])
