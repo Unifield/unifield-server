@@ -47,7 +47,7 @@ from datetime import datetime, timedelta
 
 from sync_common import OC_LIST_TUPLE
 
-MAX_EXECUTED_UPDATES = 1
+MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
 
 
