@@ -60,11 +60,11 @@ class patch_scripts(osv.osv):
                                              ['protocol', 'port'])
         ids_to_change = []
         for connection in read_result:
-            if connection['protocol'] not in ['xmlrpc', 'xmlrpcs']:
+            if connection['protocol'] not in ['xmlrpc', 'gzipxmlrpcs']:
                 ids_to_change.append(connection['id'])
         if ids_to_change:
             vals = {
-                'protocol': 'xmlrpcs',
+                'protocol': 'gzipxmlrpcs',
                 'port': 443,
             }
             server_connection.write(cr, uid, ids_to_change, vals)
