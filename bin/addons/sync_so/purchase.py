@@ -60,25 +60,25 @@ class purchase_order_line_sync(osv.osv):
 
         # update PO line:
         pol_updated = False
-        if sol_dict['is_line_split']: # if line has been split in FO 
-            if not self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['fake_id'])], limit=1, context=context): # ensure split has not already been created
-                # get the original PO line:
-                sync_linked_sol = int(sol_dict['original_line_id'].get('id').split('/')[-1]) if sol_dict['original_line_id'] else False
-                if not sync_linked_sol:
-                    raise Exception, "Original PO line not found"
-                orig_pol = self.search(cr, uid, [('sync_linked_sol', '=', sync_linked_sol)], context=context)
-                # get the linked FO line of the original PO line:
-                linked_sol_id = self.read(cr, uid, orig_pol[0], ['linked_sol_id'], context=context)['linked_sol_id'][0]
-                if linked_sol_id:
-                    # create FO line for split PO line:
-                    new_sol = self.pool.get('sale.order.line').copy(cr, uid, linked_sol_id, {'set_as_sourced_n': True}, context=context)
-                    pol_values['linked_sol_id'] = new_sol
-                # create the split PO line:
-                pol_values['origin'] = self.read(cr, uid, orig_pol[0], ['origin'], context=context)['origin']
-                new_pol = self.copy(cr, uid, orig_pol[0], pol_values, context=context)
-                wf_service.trg_validate(uid, 'purchase.order.line', new_pol, 'validated', cr)
-                self.update_fo_lines(cr, uid, orig_pol, context=context) # update original PO line with new qty, price ...
-                pol_updated = new_pol
+        split_already_created = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['fake_id'])], limit=1, context=context) # ensure split has not already been created
+        if sol_dict['is_line_split'] and not split_already_created:
+            # get the original PO line:
+            sync_linked_sol = int(sol_dict['original_line_id'].get('id').split('/')[-1]) if sol_dict['original_line_id'] else False
+            if not sync_linked_sol:
+                raise Exception, "Original PO line not found"
+            orig_pol = self.search(cr, uid, [('sync_linked_sol', '=', sync_linked_sol)], context=context)
+            # get the linked FO line of the original PO line:
+            linked_sol_id = self.read(cr, uid, orig_pol[0], ['linked_sol_id'], context=context)['linked_sol_id'][0]
+            if linked_sol_id:
+                # create FO line for split PO line:
+                new_sol = self.pool.get('sale.order.line').copy(cr, uid, linked_sol_id, {'set_as_sourced_n': True}, context=context)
+                pol_values['linked_sol_id'] = new_sol
+            # create the split PO line:
+            pol_values['origin'] = self.read(cr, uid, orig_pol[0], ['origin'], context=context)['origin']
+            new_pol = self.copy(cr, uid, orig_pol[0], pol_values, context=context)
+            wf_service.trg_validate(uid, 'purchase.order.line', new_pol, 'validated', cr)
+            self.update_fo_lines(cr, uid, orig_pol, context=context) # update original PO line with new qty, price ...
+            pol_updated = new_pol
         else: # regular update
             # search for the PO line to update:
             pol_to_update = sol_dict.get('sync_linked_pol', False)

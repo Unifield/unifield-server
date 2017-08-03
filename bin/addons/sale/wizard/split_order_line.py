@@ -77,6 +77,7 @@ class split_sale_order_line_wizard(osv.osv_memory):
                     'is_line_split': True, # UTP-972: Indicate that the line is split
                     'product_uom_qty': split.new_line_qty,
                     'original_line_id': split.sale_line_id.id,
+                    'sync_linked_pol': False,
                 }
                 # following new sequencing policy, we check if resequencing occur (behavior 1).
                 # if not (behavior 2), the split line keeps the same line number as original line
