@@ -30,7 +30,7 @@ class update_lines(osv.osv_memory):
     _columns = {
         'delivery_requested_date': fields.date('Delivery Requested Date', readonly=True,),
         'delivery_confirmed_date': fields.date('Delivery Confirmed Date', readonly=True,),
-        'stock_take_date': fields.date('Date Of Stock Take', readonly=True,),
+        'stock_take_date': fields.date('Date of Stock Take', readonly=True,),
      }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -101,7 +101,7 @@ class update_lines(osv.osv_memory):
 
             _moves_fields = result['fields']
             # add field related to picking type only
-            _moves_fields.update({'stock_take_date': {'type': 'date', 'string': 'Date Of Stock Take','readonly': True, },})
+            _moves_fields.update({'stock_take_date': {'type': 'date', 'string': 'Date of Stock Take', 'readonly': True, },})
 
             _moves_arch_lst += """</form>"""
         else:

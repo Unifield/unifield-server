@@ -216,7 +216,7 @@ class purchase_order(osv.osv):
         'product_id': fields.related('order_line','product_id', type='many2one', relation='product.product', string='Product'),
         'create_uid':  fields.many2one('res.users', 'Responsible'),
         'company_id': fields.many2one('res.company','Company',required=True,select=1),
-        'stock_take_date': fields.date(string='Date Of Stock Take', required=False),
+        'stock_take_date': fields.date(string='Date of Stock Take', required=False),
     }
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
@@ -718,7 +718,7 @@ class purchase_order_line(osv.osv):
         'invoiced': fields.boolean('Invoiced', readonly=True),
         'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
         'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
-        'stock_take_date': fields.date(string='Date Of Stock Take', required=False),
+        'stock_take_date': fields.date(string='Date of Stock Take', required=False),
     }
     _defaults = {
         'product_qty': lambda *a: 1.0,

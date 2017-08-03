@@ -1771,6 +1771,10 @@ stock moves which are already processed : '''
                         line_confirmed = self.compute_confirmed_delivery_date(cr, uid, ids, line.confirmed_delivery_date,
                                                                               prep_lt, ship_lt, so.est_transport_lead_time,
                                                                               db_date_format, context=context)
+                    line_stock_take = False
+                    # date of stock take for line
+                    if line.stock_take_date:
+                        line_stock_take = line.stock_take_date
 
                     # we update the corresponding sale order line
                     # {sol: pol}
@@ -1828,6 +1832,7 @@ stock moves which are already processed : '''
                                   'nomen_sub_4': line.nomen_sub_4 and line.nomen_sub_4.id or False,
                                   'nomen_sub_5': line.nomen_sub_5 and line.nomen_sub_5.id or False,
                                   'confirmed_delivery_date': line_confirmed,
+                                  'stock_take_date': line_stock_take,
                                   #'is_line_split': line.is_line_split,
                                   }
                     """
@@ -1998,6 +2003,7 @@ stock moves which are already processed : '''
                                                                         db_date_format, context=context)
                     # write data to so
                     so_obj.write(cr, uid, [so['id']], {'delivery_confirmed_date': so_confirmed,
+                                                       'stock_take_date': po.stock_take_date,
                                                        'ready_to_ship_date': so_rts}, context=context)
                     wf_service.trg_write(uid, 'sale.order', so['id'], cr)
 

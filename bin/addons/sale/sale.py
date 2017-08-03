@@ -265,7 +265,7 @@ class sale_order(osv.osv):
         'payment_term': fields.many2one('account.payment.term', 'Payment Term'),
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position'),
         'company_id': fields.related('shop_id','company_id',type='many2one',relation='res.company',string='Company',store=True,readonly=True),
-        'stock_take_date': fields.date(string='Date Of Stock Take', required=False),
+        'stock_take_date': fields.date(string='Date of Stock Take', required=False),
     }
     _defaults = {
         'picking_policy': 'direct',
@@ -1049,7 +1049,7 @@ class sale_order_line(osv.osv):
                     \n* The \'Exception\' state is set when the related sales order is set as exception. \
                     \n* The \'Done\' state is set when the sales order line has been picked. \
                     \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
-        'stock_take_date': fields.date('Date Of Stock Take', required=False),
+        'stock_take_date': fields.date('Date of Stock Take', required=False),
         'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer'),
         'salesman_id':fields.related('order_id', 'user_id', type='many2one', relation='res.users', store=True, string='Salesman'),
         'company_id': fields.related('order_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
