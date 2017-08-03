@@ -18610,6 +18610,8 @@ msgstr "Commande"
 
 #. module: consumption_calculation
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:90
+#: code:addons/consumption_calculation/wizard/wizard_export_fmc_rac.py:44
+#, python-format
 msgid "Valid Until"
 msgstr "Valide jusqu'au"
 
@@ -20796,12 +20798,6 @@ msgstr "You're only allowed to use a limit between 1 and 10."
 #: view:base.module.update:0
 msgid "Module update result"
 msgstr "Résultat de la mise à jour du module"
-
-#. module: consumption_calculation
-#: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:89
-#: field:monthly.review.consumption.line,security_stock:0
-msgid "Safety Stock (qty)"
-msgstr "Safety Stock (qty)"
 
 #. module: sale
 #: field:sale.installer,sale_margin:0
@@ -27521,12 +27517,12 @@ msgid "Importation completed !\n"
 "                                                Reported errors :\n"
 "                                                %s\n"
 "                                             "
-msgstr "Importation completed !\n"
-"                                                # of imported lines : %s\n"
-"                                                # of lines to correct: %s\n"
-"                                                # of ignored lines : %s\n"
+msgstr "Import terminé !\n"
+"                                                # de lignes importées : %s\n"
+"                                                # de lignes à corriger: %s\n"
+"                                                # des lignes ignorées : %s\n"
 "                                                \n"
-"                                                Reported errors :\n"
+"                                                Rapport d'erreur :\n"
 "                                                %s\n"
 "                                             "
 
@@ -28716,8 +28712,8 @@ msgstr "Type d'enchaînement"
 #, python-format
 msgid "You should have exactly 6 columns in this order:\n"
 "Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Until"
-msgstr "You should have exactly 6 columns in this order:\n"
-"Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Until"
+msgstr "Vous devez avoir exactement les 7 colonnes:\n"
+"Code Produit*, Description du produit*, UdM, AMC, FMC, Stock de Sécurité (qté), Valide jusqu'au"
 
 #. module: base
 #: model:res.currency,currency_name:base.CLP
@@ -29910,12 +29906,6 @@ msgstr "Lot"
 msgid "Total amount this customer owes you."
 msgstr "Montant Total Dû par ce Client."
 
-#. modules: consumption_calculation, stock_override
-#: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:70
-#: field:export.report.stock.move,name:0
-msgid "Generated on"
-msgstr "Generated on"
-
 #. modules: tender_flow, msf_partner, account, product, base, useability_dashboard_and_menu
 #: model:ir.ui.menu,name:account.menu_account_supplier
 #: model:ir.ui.menu,name:account.menu_finance_payables
@@ -30434,7 +30424,9 @@ msgstr "Alloc.Analyt."
 msgid "Action traceability "
 msgstr "Action de traçabilité "
 
-#. module: specific_rules
+#. modules: specific_rules, consumption_calculation, stock_override
+#: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:70
+#: field:export.report.stock.move,name:0
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:129
 #: field:export.report.stock.inventory,name:0
 msgid "Generated on"
@@ -34621,34 +34613,6 @@ msgstr "Invoice allocation"
 #, python-format
 msgid "The current move line is already assigned to a pack, please remove it first if you really want to change it '             #                        'for this product: \"%s\" (id: %d)"
 msgstr "Le mouvement actuel est déjà affecté à un colis : veuillez le retirer si vous souhaitez vraiment le remplacer' # ' pour ce produit :\"%s\" (id: %d)"
-
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/wizard/wizard_import_fmc.py:41
-#, python-format
-msgid "\n"
-"        IMPORTANT : The fourth first lines will be ignored by the system.\n"
-"        \n"
-"        The file should be in Excel xml 2003 format.\n"
-"        The columns should be in this order :\n"
-"          * Product Code\n"
-"          * Product Description\n"
-"          * UoM (not imported)\n"
-"          * FMC\n"
-"          * Safety Stock (qty) - (not imported)\n"
-"          * Valid until (DD-MMM-YYYY)\n"
-"        "
-msgstr "\n"
-"        IMPORTANT : The fourth first lines will be ignored by the system.\n"
-"        \n"
-"        The file should be in Excel xml 2003 format.\n"
-"        The columns should be in this order :\n"
-"          * Product Code\n"
-"          * Product Description\n"
-"          * UoM (not imported)\n"
-"          * FMC\n"
-"          * Safety Stock (qty) - (not imported)\n"
-"          * Valid until (DD-MMM-YYYY)\n"
-"        "
 
 #. module: account_override
 #: help:account.analytic.line,journal_type:0
@@ -60566,7 +60530,7 @@ msgstr "Allocation synthesis"
 #: field:export.report.stock.inventory,company_id:0
 #: field:export.report.stock.move,company_id:0
 msgid "DB/Instance name"
-msgstr "DB/Instance name"
+msgstr "DB/Nom de l'Instance"
 
 #. module: account
 #: selection:account.account.type,sign:0
@@ -98406,7 +98370,7 @@ msgstr "Le template d'import n'est pas reconnu, merci d'utiliser le même que le
 #: code:addons/consumption_calculation/wizard/wizard_import_fmc.py:41
 #, python-format
 msgid "\n"
-"        IMPORTANT : The four first lines will be ignored by the system.\n"
+"        IMPORTANT: The four first lines will be ignored by the system.\n"
 "        \n"
 "        The file should be in Excel xml 2003 format.\n"
 "        The columns should be in this order :\n"
@@ -98419,15 +98383,30 @@ msgid "\n"
 "          * Valid Until (DD-MMM-YYYY)\n"
 "        "
 msgstr "\n"
-"        IMPORTANT : Les 4 premières lignes seront ignorées.\n"
+"        IMPORTANT: Les 4 premières lignes seront ignorées.\n"
 "        \n"
 "        Le fichier doit être au format Excel xml 2003.\n"
 "        Les colonnes doivent être respectivement:\n"
-"          * Product Code\n"
-"          * Product Description\n"
-"          * UoM (not imported)\n"
+"          * Code Produit\n"
+"          * Description du produit\n"
+"          * UdM (non importé)\n"
 "          * AMC\n"
 "          * FMC\n"
-"          * Safety Stock (qty) - (not imported)\n"
-"          * Valid Until (DD-MMM-YYYY)\n"
+"          * Stock de Sécurité (qté) - (non importé)\n"
+"          * Valide jusqu'au (DD-MMM-YYYY)\n"
 "        "
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_export_fmc_rac.py:43
+#: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:89
+#: field:monthly.review.consumption.line,security_stock:0
+#, python-format
+msgid "Safety Stock (qty)"
+msgstr "Stock de Sécurité (qté)"
+
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_fmc.py:111
+#, python-format
+msgid "Column %d mismatches, expected: %s, found: %s"
+msgstr "Colonne %d, attendu: %s, trouvé: %s"
+

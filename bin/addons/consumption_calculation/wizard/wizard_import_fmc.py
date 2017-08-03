@@ -37,9 +37,19 @@ class wizard_import_fmc(osv.osv_memory):
         'rmc_id': fields.many2one('monthly.review.consumption', string='Monthly review consumption', required=True),
     }
     
-    _defaults = {
-        'message': lambda *a : _("""
-        IMPORTANT : The four first lines will be ignored by the system.
+    
+    def default_get(self, cr, uid, fields, context=None):
+        '''
+        Set rmc_id with the active_id value in context
+        '''
+        if not context or not context.get('active_id'):
+            raise osv.except_osv(_('Error !'), _('No Monthly review consumption found !'))
+
+        rmc_id = context.get('active_id')
+        res = super(wizard_import_fmc, self).default_get(cr, uid, fields, context=context)
+        res['rmc_id'] = rmc_id
+        res['message'] =  _("""
+        IMPORTANT: The four first lines will be ignored by the system.
         
         The file should be in Excel xml 2003 format.
         The columns should be in this order :
@@ -51,19 +61,6 @@ class wizard_import_fmc(osv.osv_memory):
           * Safety Stock (qty) - (not imported)
           * Valid Until (DD-MMM-YYYY)
         """)
-    }
-    
-    def default_get(self, cr, uid, fields, context=None):
-        '''
-        Set rmc_id with the active_id value in context
-        '''
-        if not context or not context.get('active_id'):
-            raise osv.except_osv(_('Error !'), _('No Monthly review consumption found !'))
-        else:
-            rmc_id = context.get('active_id')
-            res = super(wizard_import_fmc, self).default_get(cr, uid, fields, context=context)
-            res['rmc_id'] = rmc_id
-            
         return res
     
     def import_file(self, cr, uid, ids, context=None):
@@ -91,13 +88,23 @@ class wizard_import_fmc(osv.osv_memory):
 
         # iterator on rows
         rows = fileobj.getRows()
-        
+
         # check import template:
         for i in range(3):
             row = rows.next()
             if any([cell.data for cell in row.cells[2:]]): # if cells #2 to end are not empty
                 raise osv.except_osv(_('Error'), _('Import template not recognized, please use the same as exports'))
-        rows.next() # skip main table header
+
+        header = rows.next() # skip main table header
+
+        doc_headers = self.pool.get('wizard.export.fmc').get_headers(context=context)
+        if len(header) != len(doc_headers):
+            raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
+Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Until"""))
+
+        for i, h in enumerate(doc_headers):
+            if h.lower().strip() != header[i].data.lower().strip():
+                raise osv.except_osv(_('Error'), _("""Column %d mismatches, expected: %s, found: %s""") % (i+1, h, header[i].data))
 
         line_num = 1
         to_write = {}
@@ -115,7 +122,7 @@ class wizard_import_fmc(osv.osv_memory):
             line_num += 1
             # Check length of the row
             if len(row) != 7:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 6 columns in this order:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
 Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Until"""))
 
             # Cell 0: Product Code

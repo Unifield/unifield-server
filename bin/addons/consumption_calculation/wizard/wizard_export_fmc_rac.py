@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv, fields
+from tools.translate import _
 
 
 class wizard_export_fmc(osv.osv_memory):
@@ -33,6 +34,18 @@ class wizard_export_fmc(osv.osv_memory):
         'message': fields.char(size=256, string='Message', readonly=True),
     }
     
+    _headers_title = [
+        _('Product Code'),
+        _('Product Description'),
+        _('UoM'),
+        _('AMC'),
+        _('FMC'),
+        _('Safety Stock (qty)'),
+        _('Valid Until')
+    ]
+    def get_headers(self, context=None):
+        return [_(x) for x in self._headers_title ]
+
     def close_window(self, cr, uid, ids, context=None):
         '''
         Return to the initial view
