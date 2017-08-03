@@ -42,7 +42,7 @@ from msf_doc_import.msf_import_export_conf import MODEL_DATA_DICT
 MIN_COLUMN_SIZE = 40
 MAX_COLUMN_SIZE = 400
 
-MODEL_HEADER_NOT_CHECKED = ['user.access.configurator', 'hr.employee', 'hq.entries']
+MODEL_HEADER_NOT_CHECKED = ['user.access.configurator', 'hr.employee', 'hq.entries', 'msf.budget']
 
 class msf_import_export(osv.osv_memory):
     _name = 'msf.import.export'
@@ -416,6 +416,13 @@ class msf_import_export(osv.osv_memory):
                 }, context=context)
                 res = hq_import.button_validate(cr, uid, wizard_id,
                         context=context)
+            elif model == 'msf.budget':
+                budget_import = self.pool.get('wizard.budget.import')
+                vals = {'import_file': wiz.import_file}
+                wizard_id = budget_import.create(cr, uid, vals, context=context)
+                res = budget_import.button_import(cr, uid, wizard_id,
+                        context=context)
+
             else:
                 raise osv.except_osv(_('Error'),
                     _('The model \'%s\' is not made to be imported in CSV file.\n'

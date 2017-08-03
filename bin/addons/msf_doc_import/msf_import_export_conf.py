@@ -92,6 +92,11 @@ MODEL_DICT = {
         'domain_type': 'finance',
         'model': 'res.currency.rate'
     },
+    'budget': {
+        'name': 'Budget',
+        'domain_type': 'finance',
+        'model': 'msf.budget'
+    },
 
 
     # NON FUNCTIONNAL
@@ -380,6 +385,7 @@ MODEL_DATA_DICT = {
             'name',
             'identification_id',
         ],
+        'hide_export': True,
     },
     'hq_entries': {
         'header_list': [
@@ -405,6 +411,7 @@ MODEL_DATA_DICT = {
             'analytic_id',
         ],
         'csv_button': True,
+        'hide_export': True,
     },
     'currency_rate': {
         'header_list': [
@@ -417,6 +424,12 @@ MODEL_DATA_DICT = {
             'rate',
             'currency_id.name',
         ],
+    },
+    'budget': {
+        'header_list': [],
+        'required_field_list': [],
+        'csv_button': True,
+        'hide_export': True,
     },
 
 
