@@ -67,13 +67,13 @@ class standard_price_track_changes(osv.osv):
         ),
         'old_standard_price': fields.float(
             string='Old Cost Price',
-            digits_compute=dp.get_precision('Account'),
+            digits_compute=dp.get_precision('Purchase Price Computation'),
             required=False,
             readonly=True,
         ),
         'new_standard_price': fields.float(
             string='New Cost Price',
-            digits_compute=dp.get_precision('Account'),
+            digits_compute=dp.get_precision('Purchase Price Computation'),
             required=True,
             readonly=True,
         ),

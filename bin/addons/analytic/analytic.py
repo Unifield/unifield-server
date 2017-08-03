@@ -206,10 +206,10 @@ class account_analytic_account(osv.osv):
         currency = self.pool.get('res.company').read(cr, uid, [company_id], ['currency_id'])[0]['currency_id']
         return {'value': {'currency_id': currency}}
 
-    def on_change_parent(self, cr, uid, id, parent_id):
+    def on_change_parent(self, cr, uid, id, parent_id, category=False):
         if not parent_id:
             return {}
-        parent = self.read(cr, uid, [parent_id], ['partner_id','code'])[0]
+        parent = self.read(cr, uid, [parent_id], ['partner_id', 'code', 'category', 'type'])[0]
         if parent['partner_id']:
             partner = parent['partner_id'][0]
         else:
@@ -217,6 +217,10 @@ class account_analytic_account(osv.osv):
         res = {'value': {}}
         if partner:
             res['value']['partner_id'] = partner
+        # if a new account has been created via the "Parent Analytic Account" Search View, check its category and type
+        if (category and 'category' in parent and parent['category'] != category) or \
+                ('type' in parent and parent['type'] != 'view'):
+            res['value']['parent_id'] = {}
         return res
 
     def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):

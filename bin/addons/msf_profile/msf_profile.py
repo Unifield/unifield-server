@@ -46,6 +46,160 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_3098_patch(self, cr, uid, *a, **b):
+        cr.execute("""
+            SELECT id, name
+            FROM res_partner
+            WHERE name IN (select name from res_partner where partner_type = 'internal')
+            AND name IN (select name from res_partner where partner_type = 'intermission')
+            AND partner_type = 'intermission';
+        """)
+        wrong_partners = cr.fetchall()
+
+        updated_doc = []
+        for partner in wrong_partners:
+            intermission_partner_id = partner[0]
+            partner_name = partner[1]
+            internal_partner_id = self.pool.get('res.partner').search(cr, uid, [
+                ('name', '=', partner_name),
+                ('partner_type', '=', 'internal'),
+            ])[0]
+            address_id = self.pool.get('res.partner.address').search(cr, uid, [
+                ('partner_id', '=', internal_partner_id),
+                ('type', '=', 'default'),
+            ])
+            if not address_id:
+                address_id = self.pool.get('res.partner.address').search(cr, uid, [
+                    ('partner_id', '=', internal_partner_id),
+                ])
+
+            address_id = address_id[0]
+
+            cr.execute("SELECT name FROM stock_picking WHERE partner_id = %s AND state not in ('done', 'cancel');", (intermission_partner_id,))
+            updated_doc += [x[0] for x in cr.fetchall()]
+            cr.execute("""
+                UPDATE stock_picking
+                SET partner_id = %s, partner_id2 = %s, address_id = %s, partner_type_stock_picking = 'internal', invoice_state = 'none'
+                WHERE partner_id = %s
+                AND state not in ('done', 'cancel');
+            """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id) )
+            cr.execute("""
+                UPDATE stock_move
+                SET partner_id = %s, partner_id2 = %s, address_id = %s
+                WHERE (partner_id = %s OR partner_id2 = %s) AND state not in ('done', 'cancel');
+            """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id, intermission_partner_id) )
+
+            cr.execute("SELECT name FROM purchase_order WHERE partner_id = %s AND state not in ('done', 'cancel');", (intermission_partner_id,))
+            updated_doc += [x[0] for x in cr.fetchall()]
+            cr.execute("""
+                UPDATE purchase_order
+                SET partner_id = %s, partner_address_id = %s, partner_type = 'internal'
+                WHERE partner_id = %s
+                AND state not in ('done', 'cancel');
+            """, (internal_partner_id, address_id, intermission_partner_id) )
+            cr.execute("""
+                UPDATE purchase_order_line pol
+                SET partner_id = %s
+                FROM purchase_order po
+                WHERE pol.order_id = po.id
+                AND pol.partner_id = %s
+                AND po.state not in ('done', 'cancel');
+            """, (internal_partner_id, intermission_partner_id) )
+
+            cr.execute("SELECT name FROM sale_order WHERE partner_id = %s AND state not in ('done', 'cancel');", (intermission_partner_id,))
+            updated_doc += [x[0] for x in cr.fetchall()]
+            cr.execute("""
+                UPDATE sale_order
+                SET partner_id = %s, partner_invoice_id = %s, partner_order_id = %s, partner_shipping_id = %s, partner_type = 'internal'
+                WHERE partner_id = %s
+                AND state not in ('done', 'cancel');
+            """, (internal_partner_id, address_id, address_id, address_id, intermission_partner_id) )
+            cr.execute("""
+                UPDATE sale_order_line sol
+                SET order_partner_id = %s
+                FROM sale_order so
+                WHERE sol.order_id = so.id
+                AND sol.order_partner_id = %s
+                AND so.state not in ('done', 'cancel');
+            """, (internal_partner_id, intermission_partner_id) )
+
+            cr.execute("SELECT name FROM shipment WHERE partner_id = %s AND state not in ('done', 'cancel', 'delivered');", (intermission_partner_id,))
+            updated_doc += [x[0] for x in cr.fetchall()]
+            cr.execute("""
+                UPDATE shipment
+                SET partner_id = %s, partner_id2 = %s, address_id = %s
+                WHERE partner_id = %s
+                AND state not in ('done', 'cancel', 'delivered');
+            """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id) )
+
+        self._logger.warn("Following documents have been updated with internal partner: %s" % ", ".join(updated_doc))
+
+        return True
+
+    def us_2257_patch(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        partner_obj = self.pool.get('res.partner')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'section':
+            intermission_ids = partner_obj.search(cr, uid, [('active', 'in', ['t', 'f']), ('partner_type', '=', 'intermission')])
+            address_ids = []
+            if intermission_ids:
+                address_ids = self.pool.get('res.partner.address').search(cr, uid, [('partner_id', 'in', intermission_ids)])
+                self._logger.warn('touch %d partners, %d addresses' % (len(intermission_ids), len(address_ids)))
+                cr.execute("update ir_model_data set touched='[''name'']', last_modification=now() where model='res.partner' and module='sd' and res_id in %s" , (tuple(intermission_ids), ))
+                if address_ids:
+                    cr.execute("update ir_model_data set touched='[''name'']', last_modification=now() where model='res.partner.address' and module='sd' and res_id in %s" , (tuple(address_ids), ))
+
+        return True
+
+    def us_2730_patch(self, cr, uid, *a, **b):
+        '''
+        remove all translations, and then re-import them
+        so that the {*}_MF.po files are authoratative
+        '''
+        cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
+            select id from ir_translation where lang = 'fr_MF' and type != 'model'
+            )
+        """)
+        cr.execute("delete from ir_translation where lang = 'fr_MF' and type != 'model'")
+        irmm = self.pool.get('ir.module.module')
+        msf_profile_id = irmm.search(cr, uid, [('name', '=', 'msf_profile')])
+        irmm.update_translations(cr, uid, msf_profile_id)
+
+    def us_2632_patch(self, cr, uid, *a, **b):
+        '''fix ir.model.data entries on sync_server instances
+        '''
+        update_module = self.pool.get('sync.server.update')
+        if update_module:
+            cr.execute("""
+            UPDATE ir_model_data SET module='msf_sync_data_server' WHERE
+            model='sync_server.message_rule' AND module='';
+            """)
+
+    def us_2806_add_ir_ui_view_constraint(self, cr, uid, *a, **b):
+        '''
+        The constraint may have not been added during the update because it is
+        needeed to update all the modules before to add this constraint.
+        Having it in this patch script will add it at the end of the update.
+        '''
+        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'ir_ui_view_model_type_priority\'')
+        if not cr.fetchone():
+            cr.execute("""SELECT model, type, priority, count(*)
+            FROM ir_ui_view
+            WHERE inherit_id IS NULL
+            GROUP BY model, type, priority
+            HAVING count(*) > 1""")
+            if not cr.fetchone():
+                cr.execute('CREATE UNIQUE INDEX ir_ui_view_model_type_priority ON ir_ui_view (priority, type, model) WHERE inherit_id IS NULL')
+            else:
+                self._logger.warn('The constraint \'ir_ui_view_model_type_priority\' have not been created because there is some duplicated values.')
+
     def remove_not_synchronized_data(self, cr, uid, *a, **b):
         '''
         The list of models to synchronize was wrong. It is now build
@@ -166,7 +320,7 @@ class patch_scripts(osv.osv):
     def setup_security_on_sync_server(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if not update_module:
-            # this script is exucuted on server side, update the first delete
+            # this script is executed on server side, update the first delete
             return
 
         data_obj = self.pool.get('ir.model.data')

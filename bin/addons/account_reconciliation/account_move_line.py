@@ -121,7 +121,6 @@ class account_move_line(osv.osv):
         WARNING: This method has been taken from account module from OpenERP
         """
         self.check_imported_invoice(cr, uid, ids, context)
-        # @@@override@account.account_move_line.py
         move_rec_obj = self.pool.get('account.move.reconcile')
         merges = []
         unmerge = []
@@ -173,21 +172,21 @@ class account_move_line(osv.osv):
             'type': type,
             'line_partial_ids': map(lambda x: (4,x,False), merges+unmerge),
             'is_multi_instance': different_level,
-        })
-        # US-533: date of JI reconciliation for line_partial_ids linked with
-        # above (4, 0)
-        self.pool.get('account.move.line').write(cr, uid, merges+unmerge, {
-            'reconcile_date': time.strftime('%Y-%m-%d'),
-            'unreconcile_date': False,
-            'unreconcile_txt': '',
+            'nb_partial_legs': len(set(merges+unmerge)),
         })
 
+        # do not delete / recreate AJIs
+        cr.execute("""
+            update account_move_line set
+            reconcile_date=%s, unreconcile_date=NULL, unreconcile_txt=''
+            where id in %s
+            """, (time.strftime('%Y-%m-%d'), tuple(merges+unmerge), )
+        )
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
         if self.pool.get('sync.client.orm_extended'):
             self.pool.get('account.move.line').synchronize(cr, uid, merges+unmerge, context=context)
 
         move_rec_obj.reconcile_partial_check(cr, uid, [r_id] + merges_rec, context=context)
-        # @@@end
         return True
 
     def reconcile(self, cr, uid, ids, type='auto', writeoff_acc_id=False, writeoff_period_id=False, writeoff_journal_id=False, context=None):
@@ -195,7 +194,6 @@ class account_move_line(osv.osv):
         WARNING: This method has been taken from account module from OpenERP
         """
         self.check_imported_invoice(cr, uid, ids, context)
-        # @@@override@account.account_move_line.py
         account_obj = self.pool.get('account.account')
         move_rec_obj = self.pool.get('account.move.reconcile')
         partner_obj = self.pool.get('res.partner')
@@ -300,7 +298,6 @@ class account_move_line(osv.osv):
             partner_id = lines[0].partner_id and lines[0].partner_id.id or False
             if partner_id and context and context.get('stop_reconcile', False):
                 partner_obj.write(cr, uid, [partner_id], {'last_reconciliation_date': time.strftime('%Y-%m-%d %H:%M:%S')})
-        # @@@end
         return r_id
 
     def _hook_check_period_state(self, cr, uid, result=False, context=None, *args, **kargs):
@@ -476,12 +473,14 @@ class account_move_reconcile(osv.osv):
         'is_multi_instance': fields.boolean(string="Reconcile at least 2 lines that comes from different instance levels."),
         'multi_instance_level_creation': fields.selection([('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')],
                                                           string='Where the adjustement line should be created'
-                                                          )
+                                                          ),
+        'nb_partial_legs': fields.integer('Nb legs in partial reconcile'),
     }
 
     _defaults = {
         'is_multi_instance': lambda *a: False,
         'multi_instance_level_creation': False,
+        'nb_partial_legs': 0,
     }
 
     def create(self, cr, uid, vals, context=None):

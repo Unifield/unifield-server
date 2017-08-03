@@ -21,12 +21,11 @@
 
 import os
 import sys
+from setuptools import setup
+import py2exe; assert py2exe
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-
-from distutils.core import setup
 from setup_py2exe_custom import custom_py2exe
-import py2exe
-
 
 setup(service=["OpenERPServerService"],
       cmdclass={'py2exe': custom_py2exe},
@@ -39,8 +38,9 @@ setup(service=["OpenERPServerService"],
                          "skip_archive": 1,
                          "bundle_files": 3, 
                          "optimize": 0,
-                         "compressed": 0}}
-      )
+                         "compressed": 0,
+                         "dll_excludes": [ 'w9xpopen.exe' ],
+                         }})
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

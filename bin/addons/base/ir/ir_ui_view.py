@@ -83,7 +83,7 @@ class view(osv.osv):
         'arch': '<?xml version="1.0"?>\n<tree string="My view">\n\t<field name="name"/>\n</tree>',
         'priority': 16
     }
-    _order = "priority,name"
+    _order = "priority,id"
     _constraints = [
         (_check_xml, 'Invalid XML for View Architecture!', ['arch'])
     ]
@@ -98,6 +98,17 @@ class view(osv.osv):
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'ir_ui_view_model_type_inherit_id\'')
         if not cr.fetchone():
             cr.execute('CREATE INDEX ir_ui_view_model_type_inherit_id ON ir_ui_view (model, type, inherit_id)')
+
+        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'ir_ui_view_model_type_priority\'')
+        if not cr.fetchone():
+            # check it is possible to add a new constraint
+            cr.execute("""SELECT model, type, priority, count(*)
+            FROM ir_ui_view
+            WHERE inherit_id IS NULL
+            GROUP BY model, type, priority
+            HAVING count(*) > 1""")
+            if not cr.fetchone():
+                cr.execute('CREATE UNIQUE INDEX ir_ui_view_model_type_priority ON ir_ui_view (priority, type, model) WHERE inherit_id IS NULL')
 
     def write(self, cr, uid, ids, vals, context={}):
         if not ids:

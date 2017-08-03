@@ -703,7 +703,7 @@ class users(osv.osv):
                     for user_id, is_erp_manager in erp_manager_res.items():
                         if is_erp_manager:
                             super(users, self).write(cr, uid, user_id, vals_sync, context=context)
-                self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
@@ -1069,13 +1069,21 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
                     return
                 audit_rule_ids = user_obj.check_audit(cr, uid, 'write')
                 if users_deleted:
-                    previous_values = [x for x in previous_values if x['id'] in users_deleted]
+                    users_deleted_previous_values = [x for x in previous_values if x['id'] in users_deleted]
                     current_values = dict((x['id'], x) for x in user_obj.read(cr, uid, users_deleted, ['groups_id'], context=context))
-                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj, users_deleted, 'write', previous_values, current_values, context=context)
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj,
+                                        users_deleted, 'write',
+                                        users_deleted_previous_values,
+                                        current_values,
+                                        context=context)
                 if users_added:
-                    previous_values = [x for x in previous_values if x['id'] in users_added]
+                    users_added_previous_values = [x for x in previous_values if x['id'] in users_added]
                     current_values = dict((x['id'], x) for x in user_obj.read(cr, uid, users_added, ['groups_id'], context=context))
-                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj, users_added, 'write', previous_values, current_values, context=context)
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj,
+                                        users_added, 'write',
+                                        users_added_previous_values,
+                                        current_values,
+                                        context=context)
 
     def create(self, cr, uid, vals, context=None):
         '''

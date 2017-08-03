@@ -362,6 +362,7 @@
                 <field name="model">account.analytic.account</field>
                 <field name="type">tree</field>
                 <field name="field_parent">child_complete_ids</field>
+                <field name="priority" eval="17"/>
                 <field name="arch" type="xml">
                     <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts" 
                      toolbar="1" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
@@ -427,6 +428,7 @@
                 <field name="model">financing.contract.donor.reporting.line</field>
                 <field name="type">tree</field>
                 <field name="field_parent">child_ids</field>
+                <field name="priority">17</field>
                 <field name="arch" type="xml">
                     <tree string="Interactive Report" colors="blue:line_type in ('view')">
                         <field name="code"/>
@@ -444,6 +446,7 @@
                 <field name="model">financing.contract.donor.reporting.line</field>
                 <field name="type">tree</field>
                 <field name="field_parent">child_ids</field>
+                <field name="priority">18</field>
                 <field name="arch" type="xml">
                     <tree string="Interactive Report" colors="blue:line_type in ('view')">
                         <field name="code"/>

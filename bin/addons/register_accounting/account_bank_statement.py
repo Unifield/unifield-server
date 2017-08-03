@@ -403,9 +403,8 @@ class account_bank_statement(osv.osv):
         # currency_id is useful to filter cheques in the same currency
         # period_id is useful to filter cheques drawn in the same period
         st = self.browse(cr, uid, ids[0], context=context)
-        cheque_journal_id = st.journal_id.cheque_journal_id and st.journal_id.cheque_journal_id[0] and st.journal_id.cheque_journal_id[0].id or None
         i = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None,
-                                                                   'period_id': st.period_id.id, 'journal_id': cheque_journal_id}, context=context)
+                                                                   'period_id': st.period_id.id}, context=context)
         return {
             'name': "Import Cheque",
             'type': 'ir.actions.act_window',
@@ -448,7 +447,7 @@ class account_bank_statement(osv.osv):
                 # Verify that another bank statement exists.
                 st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', reg.id)], context=context)
                 if len(st_prev_ids) > 1:
-                    raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
+                    raise osv.except_osv(_('Error'), _('A problem occurred: More than one register have this one as previous register!'))
                 if st_prev_ids:
                     self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
         return res
@@ -672,6 +671,32 @@ The starting balance will be proposed automatically and the closing balance is t
             'target': 'current',
         }
 
+    def get_pending_cheque_ids(self, cr, uid, register_ids, account_ids, min_posting_date, context=None):
+        """
+        Returns a list containing the ids of the JIs matching the following criteria:
+        - booked in the register(s) and in the account(s) in parameters
+        - either not reconciled or reconciled partially or totally with at least one reconciliation leg having a
+          posting date later than the min_posting_date in parameter
+        """
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        aml_ids = aml_obj.search(cr, uid, [('statement_id', 'in', register_ids),
+                                           ('account_id', 'in', account_ids), ],
+                                 order='date DESC', context=context)
+        aml_list = []
+        for aml in aml_obj.browse(cr, uid, aml_ids,
+                                  fields_to_fetch=['is_reconciled', 'reconcile_id', 'reconcile_partial_id'], context=context):
+            total_rec_ok = aml.reconcile_id and aml_obj.search_exist(cr, uid,
+                                                                     [('reconcile_id', '=', aml.reconcile_id.id),
+                                                                      ('date', '>', min_posting_date)], context=context)
+            partial_rec_ok = aml.reconcile_partial_id and aml_obj.search_exist(cr, uid,
+                                                                               [('reconcile_partial_id', '=', aml.reconcile_partial_id.id),
+                                                                                ('date', '>', min_posting_date)], context=context)
+            if not aml.is_reconciled or total_rec_ok or partial_rec_ok:
+                aml_list.append(aml.id)
+        return aml_list
+
 account_bank_statement()
 
 class account_bank_statement_line(osv.osv):
@@ -686,7 +711,7 @@ class account_bank_statement_line(osv.osv):
         - draft
         - temp posting
         - hard posting
-        - unknown if an error occured or anything else (for an example the move have a new state)
+        - unknown if an error occurred or anything else (for an example the move have a new state)
         """
         res = {}
         # Optimization: Use SQL request instead of a browse to improve result generation for cases where you have a lot of line (30+)
@@ -1882,6 +1907,27 @@ class account_bank_statement_line(osv.osv):
         self.pool.get('account.move.line').write(cr, uid, line_ids, {'down_payment_id': absl.down_payment_id.id}, update_check=False, check=False)
         return True
 
+    def _check_cheque_number_uniticy(self, cr, uid, statement_id,
+                                     cheque_number, context=None):
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution', False) and\
+                cheque_number and statement_id:
+            statement_obj = self.pool.get('account.bank.statement')
+            statement = statement_obj.read(cr, uid, statement_id, ['journal_id'])
+            journal_id = statement['journal_id'][0]
+            sql = '''SELECT l.id
+                   FROM account_bank_statement_line l
+                   LEFT JOIN account_bank_statement s ON l.statement_id = s.id
+                   WHERE l.cheque_number=%s
+                   AND s.journal_id=%s
+            '''
+            cr.execute(sql, (cheque_number, journal_id))
+
+            for row in cr.dictfetchall():
+                msg = _('This cheque number has already been used')
+                raise osv.except_osv(_('Info'), (msg))
+
     def create(self, cr, uid, values, context=None):
         """
         Create a new account bank statement line with values
@@ -1897,23 +1943,8 @@ class account_bank_statement_line(osv.osv):
         if not distrib_id:
             values = self.update_employee_analytic_distribution(cr, uid,
                                                                 values=values)
-
-        if not context.get('sync_update_execution', False):
-            if 'cheque_number' in values and values.get('cheque_number', False) and values.get('statement_id'):
-                statement_obj = self.pool.get('account.bank.statement')
-                statement = statement_obj.read(cr, uid, values['statement_id'], ['journal_id'])
-                journal_id = statement['journal_id'][0]
-                sql = '''SELECT l.id
-                       FROM account_bank_statement_line l
-                       LEFT JOIN account_bank_statement s ON l.statement_id = s.id
-                       WHERE l.cheque_number=%s
-                       AND s.journal_id=%s
-                '''
-                cr.execute(sql, (values['cheque_number'], journal_id))
-
-                for row in cr.dictfetchall():
-                    msg = _('This cheque number has already been used')
-                    raise osv.except_osv(_('Info'), (msg))
+        self._check_cheque_number_uniticy(cr, uid, values.get('statement_id'),
+                                          values.get('cheque_number'), context=context)
 
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
@@ -1939,6 +1970,12 @@ class account_bank_statement_line(osv.osv):
         one_field = len(values) == 1
         field_match = values.keys()[0] in ['move_ids', 'first_move_line_id', 'from_cash_return', 'name', 'direct_state', 'sequence_for_reference', 'imported_invoice_line_ids']
         skip_check = context.get('skip_write_check', False) and context.get('skip_write_check') == True or False
+        if values.get('cheque_number'):
+            for line in self.read(cr, uid, ids, ['statement_id', 'cheque_number'], context=context):
+                if values.get('cheque_number') !=  line['cheque_number']:
+                    self._check_cheque_number_uniticy(cr, uid,
+                                                      line['statement_id'][0], values.get('cheque_number'),
+                                                      context=context)
         if (one_field and field_match) or skip_check:
             return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
         # Prepare some values
@@ -1970,7 +2007,7 @@ class account_bank_statement_line(osv.osv):
             to_remove= ['from_import_cheque_id', 'down_payment_id', 'imported_invoice_line_ids', 'move_ids']
             keys_to_read = [x for x in values.keys() if x not in to_remove]
             if keys_to_read:
-                for x in self.read(cr, uid, isinstance(ids, (int, long)) and [ids] or ids, keys_to_read, context=context):
+                for x in self.read(cr, uid, ids, keys_to_read, context=context):
                     for k in keys_to_read:
                         if isinstance(x[k], tuple) and x[k]:
                             if x[k][0] != values[k]:
@@ -2048,7 +2085,7 @@ class account_bank_statement_line(osv.osv):
         for line in self.read(cr, uid, ids, ['is_down_payment', 'down_payment_id']):
             if line.get('is_down_payment', False) and line.get('down_payment_id'):
                 if not self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, line.get('id'), line.get('down_payment_id')[0], context=context):
-                    raise osv.except_osv(_('Warning'), _('An error occured on down_payment check. Please contact an administrator to resolve this problem.'))
+                    raise osv.except_osv(_('Warning'), _('An error occurred on down_payment check. Please contact an administrator to resolve this problem.'))
         return res
 
     def copy(self, cr, uid, absl_id, default=None, context=None):

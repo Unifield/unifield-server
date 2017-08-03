@@ -37,6 +37,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssBorderTop">
+<Borders>
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
 <Style ss:ID="ssBorderDate">
 <Alignment ss:Vertical="Center" ss:WrapText="1"/>
 <Borders>
@@ -148,6 +153,34 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
+<Style ss:ID="ssAccountLineRight">
+<Alignment ss:Vertical="Top" ss:Horizontal="Right" ss:WrapText="1"/>
+<Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
+<Style ss:ID="ssSubtotalLine">
+<Alignment ss:Vertical="Top" ss:Horizontal="Right" ss:WrapText="1"/>
+<Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
+<Borders>
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
+<Style ss:ID="ssIBLine">
+<Alignment ss:Vertical="Top" ss:Horizontal="Right" ss:WrapText="1"/>
+<Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+</Style>
 <Style ss:ID="ssAccountLineWrap">
    <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -172,9 +205,53 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Borders>
 <NumberFormat ss:Format="#,##0.00"/>
 </Style>
+<Style ss:ID="ssAccountLineNumberBold">
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Font ss:Size="8" ss:Bold="1"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
+<Style ss:ID="ssSubtotalLineNumber">
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
+<Borders>
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
+<Style ss:ID="ssIBLineNumber">
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
 <Style ss:ID="ssAccountLineAccountCode">
 <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
 <Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Interior/>
+<NumberFormat ss:Format="0" />
+<Protection/>
+</Style>
+<Style ss:ID="ssAccountLineAccountCodeBold">
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Font ss:Size="8" ss:Bold="1"/>
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -202,37 +279,28 @@ entries = get_partners(data)
 % for p_entries in entries:
 <%
 if p_entries[0].account_type == 'payable':
-    worsheet_name = 'Payable Accounts'
+    worsheet_name = _('Payable Accounts')
 else:
-    worsheet_name = 'Receivable Accounts'
+    worsheet_name = _('Receivable Accounts')
 %>
 <Worksheet ss:Name="${worsheet_name}">
 <%
     col_count = 9
     if data['model'] == 'account.account':
-        header_company_or_chart_of_account = 'Company'
+        header_company_or_chart_of_account = _('Company')
     else:
-        header_company_or_chart_of_account = 'Chart of Account'
-    if 'all_journals' in data['form']:
-       journals = 'All Journals'
-    else:
-       journals = ', '.join([lt or '' for lt in get_journal(data)])
+        header_company_or_chart_of_account = _('Chart of Account')
     if data['form'].get('display_partner', '') == 'non-zero_balance':
-        display_account = 'With balance is not equal to 0'
+        display_account = _('With balance is not equal to 0')
     else:
-        display_account = 'All'
-    prop_instances_list = get_prop_instances(data)
-    if prop_instances_list:
-        prop_instances = ', '.join([lt or '' for lt in get_prop_instances(data)])
-    else:
-        prop_instances = 'All Instances'
+        display_account = _('All')
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="140" />
-<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="70" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="80" />
@@ -242,20 +310,21 @@ else:
 header_col_merge_count = col_count - 1
 %>
 <Row>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;Fiscal Year</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Journals</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Display Account</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Entries Sorted By</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Target Moves</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Output Currency</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell> </Row>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${header_company_or_chart_of_account}&#10;${_('Fiscal Year')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader" ss:MergeAcross="1"><Data ss:Type="String">${_('Journals')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Display Partners')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${'%s %s' % (_('Filter By'), (get_filter(data) or ''))|x}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Target Moves')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Functional Currency')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Proprietary Instances')}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">${_('Accounts')}</Data></Cell>
+</Row>
 <Row>
  <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${(get_account(data) or '')|x}&#10;&#10;${(get_fiscalyear(data) or '')|x}</Data>
  </Cell>
- <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${(journals or '')|x}</Data>
+ <Cell ss:StyleID="ssHeaderCell" ss:MergeAcross="1">
+     <Data ss:Type="String">${ get_journals_str(data)|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${(display_account or '')|x}</Data>
@@ -264,21 +333,18 @@ header_col_merge_count = col_count - 1
      <Data ss:Type="String">${(get_filter_info(data) or '')|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${(get_sortby(data) or '')|x}</Data>
- </Cell>
- <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${get_output_currency_code()|x}</Data>
+     <Data ss:Type="String">${company.currency_id.name|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${(prop_instances or '')|x}</Data>
+     <Data ss:Type="String">${ get_prop_instances_str(data)|x}</Data>
  </Cell>
- <Cell ss:StyleID="ssCell">
-    <Data ss:Type="String"></Data>
-</Cell>
- </Row>
+ <Cell ss:StyleID="ssHeaderCell">
+    <Data ss:Type="String">${ get_accounts_str(data)|x}</Data>
+ </Cell>
+</Row>
 ## separation line after header
 <Row>
 % for n in range(col_count):
@@ -290,90 +356,205 @@ header_col_merge_count = col_count - 1
 ## partner header
 <Row>
 <Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Partner</Data>
+    <Data ss:Type="String">${_('Partner')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
+    <Data ss:Type="String">${_('Partner Ref.')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Account</Data>
+    <Data ss:Type="String">${_('Account')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Debit</Data>
+    <Data ss:Type="String">${_('Currency')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Credit</Data>
+    <Data ss:Type="String">${_('Debit')}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Balance</Data>
+    <Data ss:Type="String">${_('Credit')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderRight">
+    <Data ss:Type="String">${_('Booking Balance')}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderRight">
+    <Data ss:Type="String">${'%s %s' % (_('Balance'), company.currency_id.name)|x}</Data>
 </Cell>
 </Row>
+
+<Row>
+## total debit / credit / balance row
+<%
+debit, credit, balance = get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)
+%>
+<Cell ss:StyleID="ssCellRightBold" ss:MergeAcross="3">
+    <Data ss:Type="String">${_('TOTAL PARTNERS')}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartnerRight">
+    <Data ss:Type="String">${company.currency_id.name|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderNumber">
+    <Data ss:Type="Number">${debit or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderNumber">
+    <Data ss:Type="Number">${credit or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderNumber">
+    <Data ss:Type="String">-</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderNumber">
+    <Data ss:Type="Number">${balance or 0.|x}</Data>
+</Cell>
+</Row>
+
 ## partner row
 % for p_obj in p_entries:
 <%
 partner_name = (p_obj.name or '')
+partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 %>
 <Row>
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String">${partner_name|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
+<Cell ss:StyleID="ssPartner" ss:MergeAcross="2">
+    <Data ss:Type="String">${partner_ref|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartnerRight">
+    <Data ss:Type="String">${company.currency_id.name|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${p_obj.debit or 0.}</Data>
+    <Data ss:Type="Number">${p_obj.debit or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${p_obj.credit or 0.}</Data>
+    <Data ss:Type="Number">${p_obj.credit or 0.|x}</Data>
+</Cell>
+    <Cell ss:StyleID="ssPartnerNumber">
+    <Data ss:Type="Number">${p_obj.balance or 0.|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${p_obj.balance or 0.}</Data>
+    <Data ss:Type="Number">${p_obj.balance or 0.|x}</Data>
 </Cell>
 </Row>
+
+<!-- INITIAL BALANCE Section -->
+% if get_display_ib():
+<Row>
+<Cell ss:StyleID="ssIBLine" ss:MergeAcross="2">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssIBLine">
+    <Data ss:Type="String">${_('Initial Balance')}</Data>
+</Cell>
+<Cell ss:StyleID="ssIBLine">
+    <Data ss:Type="String">${company.currency_id.name|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssIBLineNumber">
+    <Data ss:Type="Number">${p_obj.ib_debit or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssIBLineNumber">
+    <Data ss:Type="Number">${p_obj.ib_credit or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssIBLineNumber">
+    <Data ss:Type="Number">${p_obj.ib_balance or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssIBLineNumber">
+    <Data ss:Type="Number">${p_obj.ib_balance or 0.|x}</Data>
+</Cell>
+</Row>
+% endif
+
 ## account move line row
 % for aml in get_partner_account_move_lines(p_entries[0].account_type, p_obj.partner_id.id, data):
 <Row>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineAccountCode">
-    <Data ss:Type="Number">${aml.get('account', '')|x}</Data>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${aml.get('deb') or 0}</Data>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${aml.get('cred') or 0}</Data>
+<Cell ss:StyleID="ssAccountLineAccountCodeBold">
+    <Data ss:Type="String">${aml.get('account', '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${aml.get('total') or 0}</Data>
+<Cell ss:StyleID="ssAccountLineAccountCodeBold">
+    <Data ss:Type="String">${company.currency_id.name|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineNumberBold">
+    <Data ss:Type="Number">${aml.get('deb') or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineNumberBold">
+    <Data ss:Type="Number">${aml.get('cred') or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineNumberBold">
+    <Data ss:Type="Number">${aml.get('total') or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssAccountLineNumberBold">
+    <Data ss:Type="Number">${aml.get('total') or 0.|x}</Data>
+</Cell>
+</Row>
+
+<!-- SUBTOTALS per currency -->
+% for detail_line in get_lines_per_currency(p_entries[0].account_type, p_obj.partner_id.id, data, aml.get('account', '')):
+<Row>
+<Cell ss:StyleID="ssSubtotalLine" ss:MergeAcross="2">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssSubtotalLine">
+    <Data ss:Type="String">${_('Subtotal')}</Data>
+</Cell>
+<Cell ss:StyleID="ssSubtotalLine">
+    <Data ss:Type="String">${detail_line.get('currency_booking', '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssSubtotalLineNumber">
+    <Data ss:Type="Number">${detail_line.get('debit_booking') or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssSubtotalLineNumber">
+    <Data ss:Type="Number">${detail_line.get('credit_booking') or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssSubtotalLineNumber">
+    <Data ss:Type="Number">${detail_line.get('total_booking') or 0.|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssSubtotalLineNumber">
+    <Data ss:Type="Number">${detail_line.get('total_functional') or 0.|x}</Data>
 </Cell>
 </Row>
 % endfor
 % endfor
+% endfor
 <Row>
-## total debit / credit / balance row
-<%
-debit, credit, balance = get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)
-debit = currency_conv(debit, False)
-credit = currency_conv(credit, False)
-balance = currency_conv(balance, False)
-%>
-<Cell ss:StyleID="ssCell">
+<Cell ss:StyleID="ssBorderTop">
     <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssCellRightBold">
-    <Data ss:Type="String">TOTAL</Data>
+<Cell ss:StyleID="ssBorderTop">
+    <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="Number">${debit}</Data>
+<Cell ss:StyleID="ssBorderTop">
+    <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="Number">${credit}</Data>
+<Cell ss:StyleID="ssBorderTop">
+    <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="Number">${balance}</Data>
+<Cell ss:StyleID="ssBorderTop">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssBorderTop">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssBorderTop">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssBorderTop">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssBorderTop">
+    <Data ss:Type="String"></Data>
 </Cell>
 </Row>
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <FitToPage/>
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
     <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14Partner Balance"/>

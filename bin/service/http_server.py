@@ -46,8 +46,8 @@ import logging
 import pooler
 
 import SimpleXMLRPCServer
+import BaseHTTPServer
 from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
-import gzip_xmlrpclib
 
 try:
     import fcntl
@@ -59,7 +59,7 @@ try:
 except ImportError:
     class SSLError(Exception): pass
 
-class ThreadedHTTPServer(websrv_lib.ConnThreadingMixIn, SimpleXMLRPCDispatcher, websrv_lib.HTTPServer):
+class ThreadedHTTPServer(websrv_lib.ConnThreadingMixIn, SimpleXMLRPCDispatcher, BaseHTTPServer.HTTPServer):
     """ A threaded httpd server, with all the necessary functionality for us.
 
         It also inherits the xml-rpc dispatcher, so that some xml-rpc functions
@@ -76,7 +76,7 @@ class ThreadedHTTPServer(websrv_lib.ConnThreadingMixIn, SimpleXMLRPCDispatcher, 
         self.logRequests = logRequests
 
         SimpleXMLRPCDispatcher.__init__(self, allow_none, encoding)
-        websrv_lib.HTTPServer.__init__(self, addr, requestHandler)
+        BaseHTTPServer.HTTPServer.__init__(self, addr, requestHandler)
 
         self.numThreads = 0
         self.proto = proto
@@ -156,7 +156,7 @@ class BaseHttpDaemon(threading.Thread, netsvc.Server):
                 "starting %s service at %s port %d" %
                 (self._RealProto, interface or '0.0.0.0', port,))
         except Exception:
-            logging.getLogger("httpd").exception("Error occured when starting the server daemon.")
+            logging.getLogger("httpd").exception("Error occurred when starting the server daemon.")
             raise
 
     @property
@@ -231,11 +231,11 @@ httpsd = None
 
 def init_servers():
     global httpd, httpsd
-    if tools.config.get('xmlrpc') or tools.config.get('gzipxmlrpc'):
+    if tools.config.get('xmlrpc'):
         httpd = HttpDaemon(tools.config.get('xmlrpc_interface', ''),
                            int(tools.config.get('xmlrpc_port', 8069)))
 
-    if tools.config.get('xmlrpcs') or tools.config.get('gzipxmlrpcs'):
+    if tools.config.get('xmlrpcs'):
         httpsd = HttpSDaemon(tools.config.get('xmlrpcs_interface', ''),
                              int(tools.config.get('xmlrpcs_port', 8071)))
 
@@ -271,6 +271,11 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,websrv_lib.FixSendError,Http
     _logger = logging.getLogger('xmlrpc')
 
     xmlrpc_uid_cache = {}
+
+    def __init__(self, conn, addr, svr):
+        SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.__init__(self, conn, addr, svr)
+        # Always use gzip.
+        self.encode_threshold = 0
 
     def get_uid_list2log(self, db_name):
         '''
@@ -319,29 +324,6 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,websrv_lib.FixSendError,Http
         self.connection = websrv_lib.dummyconn()
         self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
 
-
-class GzipXMLRPCRequestHandler(netsvc.OpenERPDispatcher,websrv_lib.FixSendError,HttpLogHandler, gzip_xmlrpclib.GzipXMLRPCRequestHandler):
-    rpc_paths = []
-    protocol_version = 'HTTP/1.1'
-    _logger = logging.getLogger('xmlrpc')
-
-    def _dispatch(self, method, params):
-        try:
-            service_name = self.path.split("/")[-1]
-            return self.dispatch(service_name, method, params)
-        except netsvc.OpenERPDispatcherException, e:
-            raise xmlrpclib.Fault(tools.exception_to_unicode(e.exception), e.traceback)
-
-    def handle(self):
-        pass
-
-    def finish(self):
-        pass
-
-    def setup(self):
-        self.connection = websrv_lib.dummyconn()
-        self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
-
 def init_xmlrpc():
     if tools.config.get('xmlrpc', False):
         # Example of http file serving:
@@ -349,16 +331,9 @@ def init_xmlrpc():
         reg_http_service(websrv_lib.HTTPDir('/xmlrpc/', XMLRPCRequestHandler))
         logging.getLogger("web-services").info("Registered XML-RPC over HTTP")
 
-    if tools.config.get('gzipxmlrpc', False):
-        # Example of http file serving:
-        # reg_http_service(HTTPDir('/test/',HTTPHandler))
-        reg_http_service(websrv_lib.HTTPDir('/xmlrpc/', GzipXMLRPCRequestHandler))
-        logging.getLogger("web-services").info("Registered gzipped XML-RPC over HTTP")
-
-    if (tools.config.get('xmlrpcs', False) or tools.config.get('gzipxmlrpcs', False) ) \
-            and not tools.config.get('xmlrpc', False):
+    if (tools.config.get('xmlrpcs', False), False) and not tools.config.get('xmlrpc', False):
         # only register at the secure server
-        reg_http_service(websrv_lib.HTTPDir('/xmlrpc/', GzipXMLRPCRequestHandler), True)
+        reg_http_service(websrv_lib.HTTPDir('/xmlrpc/', XMLRPCRequestHandler), True)
         logging.getLogger("web-services").info("Registered XML-RPC over HTTPS only")
 
 class StaticHTTPHandler(HttpLogHandler, websrv_lib.FixSendError, websrv_lib.HttpOptions, websrv_lib.HTTPHandler):

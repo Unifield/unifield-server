@@ -462,14 +462,15 @@ class wizard_register_import(osv.osv_memory):
                             partner_type = 'employee'
                         elif type_for_register in ['transfer', 'transfer_same']:
                             tp_ids = self.pool.get('account.journal').search(cr, uid, [('code', '=', line[cols['third_party']])])
-                            partner_type = 'journal'
-                            tp_journal = self.pool.get('account.journal').browse(cr, uid, tp_ids, context=context)[0]
-                            if type_for_register == 'transfer':
-                                if tp_journal.currency.id == register_currency:
-                                    errors.append(_('Line %s. A Transfer Journal must have a different currency than the register.') % (current_line_num,))
-                            if type_for_register == 'transfer_same':
-                                if tp_journal.currency.id != register_currency:
-                                    errors.append(_('Line %s. A Transfer Same Journal must have the same currency as the register.') % (current_line_num,))
+                            if tp_ids:
+                                partner_type = 'journal'
+                                tp_journal = self.pool.get('account.journal').browse(cr, uid, tp_ids, context=context)[0]
+                                if type_for_register == 'transfer':
+                                    if tp_journal.currency.id == register_currency:
+                                        errors.append(_('Line %s. A Transfer Journal must have a different currency than the register.') % (current_line_num,))
+                                if type_for_register == 'transfer_same':
+                                    if tp_journal.currency.id != register_currency:
+                                        errors.append(_('Line %s. A Transfer Same Journal must have the same currency as the register.') % (current_line_num,))
                         else:
                             tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['third_party']])])
                             partner_type = 'partner'
@@ -494,45 +495,67 @@ class wizard_register_import(osv.osv_memory):
                         errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account['code'], account['name'], ))
                         continue
 
+                    analytic_account_obj = self.pool.get('account.analytic.account')
+
                     # free 1
                     if line[cols['free1']]:
                         free1 = line[cols['free1']]
-                        free_1_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FREE1'), ('code', '=', free1)])
+                        free_1_ids = analytic_account_obj.search(cr, uid, [('category', '=', 'FREE1'), ('code', '=', free1)])
                         if free_1_ids:
                             r_free1 = free_1_ids[0]
+                            view_type = analytic_account_obj.read(cr, uid, r_free1, ['type'], context=context)['type']
+                            if view_type == 'view':
+                                errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['free1']], _('Free 1')))
+                                continue
 
 
                     # free 2
                     if line[cols['free2']]:
                         free2 = line[cols['free2']]
-                        free_2_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FREE2'), ('code', '=', free2)])
+                        free_2_ids = analytic_account_obj.search(cr, uid, [('category', '=', 'FREE2'), ('code', '=', free2)])
                         if free_2_ids:
                             r_free2 = free_2_ids[0]
+                            view_type = analytic_account_obj.read(cr, uid, r_free2, ['type'], context=context)['type']
+                            if view_type == 'view':
+                                errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['free2']], _('Free 2')))
+                                continue
 
                     # Check analytic axis only if G/L account is an analytic-a-holic account
                     if account.get('is_analytic_addicted', False):
                         # Check Destination
                         try:
                             if line[cols['destination']]:
-                                destination_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'DEST'), '|', ('name', '=', line[cols['destination']]), ('code', '=', line[cols['destination']])])
+                                destination_ids = analytic_account_obj.search(cr, uid, [('category', '=', 'DEST'), '|', ('name', '=', line[cols['destination']]), ('code', '=', line[cols['destination']])])
                                 if destination_ids:
                                     r_destination = destination_ids[0]
+                                    view_type = analytic_account_obj.read(cr, uid, r_destination, ['type'], context=context)['type']
+                                    if view_type == 'view':
+                                        errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['destination']], _('Destination')))
+                                        continue
                         except IndexError, e:
                             pass
                         # Check Cost Center
                         try:
                             if line[cols['cost_center']]:
-                                cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[cols['cost_center']]), ('code', '=', line[cols['cost_center']])])
+                                cc_ids = analytic_account_obj.search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[cols['cost_center']]), ('code', '=', line[cols['cost_center']])])
                                 if cc_ids:
                                     r_cc = cc_ids[0]
+                                    view_type = analytic_account_obj.read(cr, uid, r_cc, ['type'], context=context)['type']
+                                    if view_type == 'view':
+                                        errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['cost_center']], _('Cost Center')))
+                                        continue
                         except IndexError, e:
                             pass
                         # Check funding pool
                         try:
                             if line[cols['funding_pool']]:
-                                fp_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', line[cols['funding_pool']]), ('code', '=', line[cols['funding_pool']])])
+                                fp_ids = analytic_account_obj.search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', line[cols['funding_pool']]), ('code', '=', line[cols['funding_pool']])])
                                 if fp_ids:
                                     r_fp = fp_ids[0]
+                                    view_type = analytic_account_obj.read(cr, uid, r_fp, ['type'], context=context)['type']
+                                    if view_type == 'view':
+                                        errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['funding_pool']], _('Funding Pool')))
+                                        continue
 
                         except IndexError, e:
                             pass
@@ -573,7 +596,7 @@ class wizard_register_import(osv.osv_memory):
                             vals.update({'employee_id': r_partner,})
                     line_res = self.pool.get('wizard.register.import.lines').create(cr, uid, vals, context)
                     if not line_res:
-                        errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))
+                        errors.append(_('Line %s. A problem occurred for line registration. Please contact an Administrator.') % (current_line_num,))
                         continue
                     created += 1
 
@@ -610,12 +633,12 @@ class wizard_register_import(osv.osv_memory):
         except osv.except_osv as osv_error:
             logging.getLogger('import register').warn('OSV Exception', exc_info=True)
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occured %s: %s") % (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
+            self.write(cr, uid, ids, {'message': _("An error occurred %s: %s") % (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
             cr.close(True)
         except Exception as e:
             logging.getLogger('import register').warn('Exception', exc_info=True)
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e and e.args and e.args[0] or ''), 'state': 'done', 'progression': 100.0})
+            self.write(cr, uid, ids, {'message': _("An error occurred: %s") % (e and e.args and e.args[0] or ''), 'state': 'done', 'progression': 100.0})
             cr.close(True)
         return True
 

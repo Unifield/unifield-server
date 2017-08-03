@@ -51,16 +51,29 @@ class account_move_line(osv.osv):
         if args[0][1] != '=' or not args[0][2]:
             raise osv.except_osv(_('Error'), _('Filter not implemented.'))
         j_obj = self.pool.get('account.journal')
-        j_ids = j_obj.search(cr, uid, [('type', '=', 'cheque')])
+
+        dom = []
+        j_ids = []
+        if isinstance(args[0][2], int):
+            bnk_st = self.pool.get('account.bank.statement').read(cr, uid, args[0][2], ['journal_id'], context=context)
+            if bnk_st['journal_id']:
+                j_ids = j_obj.search(cr, uid, [('bank_journal_id', '=', bnk_st['journal_id'][0]), ('type', '=', 'cheque')], context=context)
+                dom = [('journal_id', 'in', j_ids)]
+        else:
+            j_ids = j_obj.search(cr, uid, [('type', '=', 'cheque')])
+
+
         if not j_ids:
             return [('id', '=', 0)]
+
         res = []
         for j in j_obj.read(cr, uid, j_ids, ['default_debit_account_id', 'default_credit_account_id']):
             if j['default_debit_account_id']:
                 res.append(j['default_debit_account_id'][0])
             if j['default_credit_account_id']:
                 res.append(j['default_credit_account_id'][0])
-        return [('account_id', 'in', res)]
+
+        return dom + [('account_id', 'in', res)]
 
     def _search_ready_for_import_in_register(self, cr, uid, obj, name, args, context=None):
         """
@@ -107,7 +120,6 @@ class account_move_line(osv.osv):
         res = {}
         if context is None:
             context = {}
-        cur_obj = self.pool.get('res.currency')
         for move_line in self.browse(cr, uid, ids, context=context):
             res[move_line.id] = 0.0
 
@@ -119,8 +131,6 @@ class account_move_line(osv.osv):
 
             move_line_total = move_line.amount_currency
             sign = move_line.amount_currency < 0 and -1 or 1
-
-            context_unreconciled = context.copy()
             if move_line.reconcile_partial_id:
                 for payment_line in move_line.reconcile_partial_id.line_partial_ids:
                     if payment_line.id == move_line.id:
@@ -129,12 +139,6 @@ class account_move_line(osv.osv):
                         move_line_total += payment_line.amount_currency
                     else:
                         raise osv.except_osv(_('No Currency'),_("Payment line without currency %s")%(payment_line.id,))
-                        if move_line.currency_id:
-                            context_unreconciled.update({'date': payment_line.date})
-                            amount_in_foreign_currency = cur_obj.compute(cr, uid, move_line.company_id.currency_id.id, move_line.currency_id.id, (payment_line.debit - payment_line.credit), round=False, context=context_unreconciled)
-                            move_line_total += amount_in_foreign_currency
-                        else:
-                            raise osv.except_osv(_('No Currency'),_("Move line without currency %s")%(move_line.id,))
             for reg_line in move_line.imported_invoice_line_ids:
                 if move_line_total == 0:
                     break
@@ -143,6 +147,11 @@ class account_move_line(osv.osv):
                         raise osv.except_osv(_('Error Currency'),_("Register line %s: currency not equal to invoice %s")%(reg_line.id,move_line.id,))
                     amount_reg = reg_line.amount
                     ignore_id = reg_line.first_move_line_id.id
+                    if context.get('sync_update_execution'):
+                        if self.pool.get('account.move.line').search_exist(cr, uid, [('move_id', '=', reg_line.first_move_line_id.move_id.id), ('id', '!=', ignore_id), ('reconcile_partial_id', '!=', False)], context=context):
+                            # US-2301: reg. line hard posted at lower level, sync upd are not processed in the right order
+                            # the move line has a reconciliation so it's not in temp state
+                            continue
                     for ml in sorted(reg_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
                         if ml.id == ignore_id:
                             continue
@@ -162,6 +171,25 @@ class account_move_line(osv.osv):
 
     def _get_reconciles(self, cr, uid, ids, context=None):
         return self.pool.get('account.move.line').search(cr, uid, ['|', ('reconcile_id','in',ids), ('reconcile_partial_id','in',ids)])
+
+    def _get_move_line_residual_import(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution'):
+            partial_to_compute = {}
+            bypass_standard = False
+            standard_method = []
+            for line in self.browse(cr, uid, ids, fields_to_fetch=['reconcile_partial_id'], context=context):
+                if line.reconcile_partial_id and line.reconcile_partial_id.nb_partial_legs:
+                    bypass_standard = True
+                    if line.reconcile_partial_id.nb_partial_legs == len(line.reconcile_partial_id.line_partial_ids):
+                        partial_to_compute[line.reconcile_partial_id.id] = True
+                else:
+                    standard_method.append(line.id)
+            if bypass_standard:
+                return self.search(cr, uid, [('reconcile_partial_id', 'in', partial_to_compute.keys())], context=context) + standard_method
+
+        return ids
 
     def _get_linked_statement(self, cr, uid, ids, context=None):
         new_move = True
@@ -205,7 +233,7 @@ class account_move_line(osv.osv):
                                                  help="This line has been created by a cheque import. This id is the move line imported."),
         'amount_residual_import_inv': fields.function(_amount_residual_import_inv, method=True, string='Residual Amount',
                                                       store={
-                                                          'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['amount_currency','reconcile_id','reconcile_partial_id','imported_invoice_line_ids'], 10),
+                                                          'account.move.line': (_get_move_line_residual_import, ['amount_currency','reconcile_id','reconcile_partial_id','imported_invoice_line_ids'], 10),
                                                           'account.move.reconcile': (_get_reconciles, None, 10),
                                                           'account.bank.statement.line': (_get_linked_statement, None, 10),
                                                       }),

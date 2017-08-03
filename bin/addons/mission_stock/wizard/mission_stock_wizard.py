@@ -23,37 +23,38 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
-from tools import ustr
 
 
 class mission_stock_wizard(osv.osv_memory):
     _name = 'mission.stock.wizard'
 
-    def _get_processed_value(self, cr, uid, report_id, context=None, state=False):
+    def _get_progression_state(self, cr, uid, report_id, context=None):
         """
-        Returns the progression of the update
+        Returns the progression state of the update and the start_date of it in
+        case of 'in_progress' state. None in case of other state.
         :param cr: Cursor to the database
         :param uid: ID of the res.users that calls this method
         :param report_id: ID of mission.stock.report to compute
         :param context: Context of the call
-        :return: The percentage of processed lines
+        :return: The state of the progression and the start date in case of 'in_progress'
         """
         msr_in_progress = self.pool.get('msr_in_progress')
-        date_tools = self.pool.get('date.tools')
+        msr_obj = self.pool.get('stock.mission.report')
 
         if context is None:
             context = {}
 
         if msr_in_progress._already_processed(cr, 1, report_id, context=context):
-            return state and 'done' or _('Done')
+            return 'done', None
 
         msr_ids = msr_in_progress.search(cr, 1, [('report_id', '=', report_id)], context=context)
         if msr_ids:
-            st_date = date_tools.get_date_formatted(cr, uid, d_type='datetime',
-                                                    datetime=msr_in_progress.browse(cr, uid, msr_ids[0], context=context).start_date)
-            return state and 'progress' or _('In progress since %s') % ustr(st_date)
+            st_date = msr_in_progress.browse(cr, uid, msr_ids[0], context=context).start_date
+            return 'in_progress', st_date
 
-        return state and 'done' or _('Done')
+        export_state = msr_obj.read(cr, uid, report_id, ['export_state'],
+                                    context=context)['export_state']
+        return export_state, None
 
     _columns = {
         'report_id': fields.many2one(
@@ -83,18 +84,24 @@ class mission_stock_wizard(osv.osv_memory):
             string='Filename',
             size=256,
         ),
-        'processed_value': fields.char(
-            string='Processing',
-            size=128,
-            readonly=True,
-        ),
+        'processed_start_date': fields.datetime(string='since', readonly=True),
+        'processed_state': fields.selection([
+                                            ('no_report_selected', 'No report selected'),
+                                            ('draft', 'Draft'),
+                                            ('not_started', 'Not started'),
+                                            ('in_progress', 'In Progress'),
+                                            ('done', 'Done'),
+                                            ('error', 'Error')
+                                            ], string="Processing", readonly=True),
+        'export_error_msg': fields.text('Error message', readonly=True)
     }
 
     _defaults = {
         'with_valuation': lambda *a: 'true',
         'split_stock': lambda *a: 'true',
         'fname': lambda *a: 'Mission stock report',
-        'processed_value': lambda *a: _('Not started'),
+        'processed_state': lambda *a: 'not_started',
+        'export_error_msg': lambda *a: False,
     }
 
     def default_get(self, cr, uid, fields_list, context=None):
@@ -112,8 +119,12 @@ class mission_stock_wizard(osv.osv_memory):
             res['report_id'] = local_id[0]
             report = self.pool.get('stock.mission.report').browse(cr, uid, local_id[0], context=context)
             res['last_update'] = report.last_update
-            res['export_ok'] = report.export_ok and self._get_processed_value(cr, uid, local_id[0], context=context, state=True) == 'done'
-            res['processed_value'] = self._get_processed_value(cr, uid, local_id[0], context=context)
+            progress_state, start_date = self._get_progression_state(cr, uid, local_id[0], context=context)
+            if progress_state == 'in_progress':
+                res['processed_start_date'] = start_date
+            res['export_ok'] = report.export_ok and progress_state == 'done'
+            res['export_error_msg'] = report.export_error_msg
+            res['processed_state'] = progress_state
 
         return res
 
@@ -124,13 +135,18 @@ class mission_stock_wizard(osv.osv_memory):
         v = {}
         if report_id:
             report = self.pool.get('stock.mission.report').browse(cr, uid, report_id, context=context)
+
+            progress_state, start_date = self._get_progression_state(cr, uid, report_id, context=context)
             v.update({
                 'last_update': report.last_update,
-                'export_ok': report.export_ok and self._get_processed_value(cr, uid, report_id, context=context, state=True) == 'done',
-                'processed_value': self._get_processed_value(cr, uid, report_id, context=context)
+                'export_ok': report.export_ok and progress_state == 'done',
+                'export_error_msg': report.export_error_msg,
+                'processed_state': progress_state,
             })
+            if progress_state == 'in_progress':
+                v.update({'processed_start_date': start_date})
         else:
-            v.update({'last_update': False, 'export_ok': False, 'processed_value': _('No report selected')})
+            v.update({'last_update': False, 'export_ok': False, 'processed_state': 'no_report_selected'})
 
         return {'value': v}
 
@@ -154,6 +170,7 @@ class mission_stock_wizard(osv.osv_memory):
         })
 
         return {'type': 'ir.actions.act_window',
+                'name': '%s: %s' % (_('Stock mission report'), wiz_id.report_id.name),
                 'res_model': 'stock.mission.report.line',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
@@ -248,6 +265,6 @@ report when the last update field will be filled. Thank you for your comprehensi
     def update(self, cr, uid, ids, context=None):
         msr_obj = self.pool.get('stock.mission.report')
         ids = msr_obj.search(cr, uid, [], context=context)
-        return msr_obj.background_update(cr, uid, ids)
+        return msr_obj.background_update(cr, uid, ids, context=context)
 
 mission_stock_wizard()

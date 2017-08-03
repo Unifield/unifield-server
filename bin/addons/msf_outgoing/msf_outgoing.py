@@ -834,8 +834,7 @@ class shipment(osv.osv):
                 move_ids = move_obj.search(cr, uid, [
                     ('picking_id', '=', picking.id),
                     ('from_pack', '=', family.from_pack),
-                    ('to_pack', '=', family.to_pack),
-                    ('comment', '=', family.comment),
+                    ('to_pack', '=', family.to_pack)
                 ], context=context)
 
                 # Update the moves, decrease the quantities
@@ -1064,9 +1063,7 @@ class shipment(osv.osv):
                     ('picking_id', '=', family.draft_packing_id.id),
                     ('from_pack', '=', family.from_pack),
                     ('to_pack', '=', family.to_pack),
-                    ('comment', '=', family.comment)
                 ], context=context)
-
                 stay = []
                 if family.to_pack >= family.return_to:
                     if family.return_from == family.from_pack:
@@ -2125,6 +2122,7 @@ class stock_picking(osv.osv):
                     break
         return result
 
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
@@ -2143,7 +2141,7 @@ class stock_picking(osv.osv):
                                                context=context)
 
         family_dict = dict((x['id'], x) for x in family_read_result)
-
+        parent_id_ship = {}
         for current_id, family_ids in picking_to_families.items():
             default_values = {
                 'num_of_packs': 0,
@@ -2160,11 +2158,13 @@ class stock_picking(osv.osv):
                     if family_id in family_dict:
                         family = family_dict[family_id]
                         if family['shipment_id'] and family['not_shipped']:
-                            if self.pool.get('shipment').read(cr, uid, family['shipment_id'][0], ['parent_id'], context=context):
+                            if family['shipment_id'][0] not in parent_id_ship:
+                                parent_id_ship[family['shipment_id'][0]] = self.pool.get('shipment').read(cr, uid, family['shipment_id'][0], ['parent_id'], context=context)['parent_id']
+                            if parent_id_ship.get(family['shipment_id'][0]):
                                 continue
-                    num_of_packs += int(family['num_of_packs'])
-                    total_weight += float(family['total_weight'])
-                    total_volume += float(family['total_volume'])
+                        num_of_packs += int(family['num_of_packs'])
+                        total_weight += float(family['total_weight'])
+                        total_volume += float(family['total_volume'])
 
                 result[current_id]['num_of_packs'] = num_of_packs
                 result[current_id]['total_weight'] = total_weight
@@ -3007,6 +3007,8 @@ class stock_picking(osv.osv):
         moves_states = {}
         pick_to_check = set()
 
+        wf_service = netsvc.LocalService("workflow")
+
         for obj in self.browse(cr, uid, ids, context=context):
             if obj.subtype == 'standard':
                 raise osv.except_osv(
@@ -3090,6 +3092,23 @@ class stock_picking(osv.osv):
                             move_obj.write(cr, uid, [move.backmove_id.id], {'state': 'done'}, context=context)
                             move_obj.update_linked_documents(cr, uid, move.backmove_id.id, move.id, context=context)
                     if move.product_qty == 0.00:
+                        if move.sale_line_id:
+                            other_linked_moves = move_obj.search(cr, uid, [
+                                ('id', '!=', move.id),
+                                ('sale_line_id', '=', move.sale_line_id.id),
+                                ('state', 'not in', ['cancel', 'done'])
+                            ], order='NO_ORDER', limit=1, context=context)
+                            if not other_linked_moves:
+                                other_linked_moves = move_obj.search(cr, uid, [
+                                    ('id', '!=', move.id),
+                                    ('sale_line_id', '=', move.sale_line_id.id),
+                                    ('state', '!=', 'cancel')
+                                ], order='NO_ORDER', limit=1, context=context)
+                            if other_linked_moves:
+                                move_obj.update_linked_documents(cr, uid, move.id, other_linked_moves[0], context=context)
+                                proc_ids = self.pool.get('procurement.order').search(cr, uid, [('move_id', '=', other_linked_moves[0])], context=context)
+                                for proc_id in proc_ids:
+                                    wf_service.trg_write(uid, 'procurement.order', proc_id, cr)
                         move.unlink(force=True)
 #                        move.action_done(context=context)
                 elif move.product_qty != 0.00:
@@ -5009,6 +5028,7 @@ class pack_family_memory(osv.osv):
     _name = 'pack.family.memory'
     _auto = False
     def init(self, cr):
+        tools.sql.drop_view_if_exists(cr, 'pack_family_memory')
         cr.execute('''create or replace view pack_family_memory as (
             select
                 min(m.id) as id,
@@ -5033,14 +5053,14 @@ class pack_family_memory(osv.osv):
                 min(pl.currency_id) as currency_id,
                 sum(sol.price_unit * m.product_qty) as total_amount,
                 bool_and(m.not_shipped) as not_shipped,
-                m.comment as comment
+                ''::varchar(1) as comment
             from stock_picking p
             inner join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
             left join sale_order so on so.id = p.sale_id
             left join sale_order_line sol on sol.id = m.sale_line_id
             left join product_pricelist pl on pl.id = so.pricelist_id
             where p.shipment_id is not null
-            group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id, m.comment
+            group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id
     )
     ''')
 

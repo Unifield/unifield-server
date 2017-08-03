@@ -349,6 +349,7 @@
                         icon="gtk-dialog-error" name="inactive" string="Inactive"/>
                     <separator orientation="vertical"/>
                     <field name="code" select="1"/>
+                    <field name="mission" select="1"/>
                     <field name="level" select="1"/>
                 </search>
             </field>

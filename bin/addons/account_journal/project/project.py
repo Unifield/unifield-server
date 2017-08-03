@@ -24,7 +24,6 @@
 
 from osv import osv
 from osv import fields
-from tools.translate import _
 
 class account_analytic_journal(osv.osv):
     _name = 'account.analytic.journal'
@@ -38,7 +37,7 @@ class account_analytic_journal(osv.osv):
         return [
             ('cash','Cash'),
             ('correction', 'Correction'),
-            ('cur_adj', 'Currency Adjustement'),
+            ('cur_adj', 'Currency Adjustment'),
             ('engagement', 'Engagement'),
             ('general','General'),
             ('hq', 'HQ'),

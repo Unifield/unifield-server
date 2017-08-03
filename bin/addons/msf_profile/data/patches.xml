@@ -1,8 +1,27 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="us_3098_patch" model="patch.scripts">
+            <field name="method">us_3098_patch</field>
+        </record>
+        
+        <record id="us_2257_patch" model="patch.scripts">
+            <field name="method">us_2257_patch</field>
+        </record>
+        <record id="us_2730_patch" model="patch.scripts">
+            <field name="method">us_2730_patch</field>
+        </record>
+
+        <record id="us_2806_add_ir_ui_view_constraint" model="patch.scripts">
+            <field name="method">us_2806_add_ir_ui_view_constraint</field>
+        </record>
+
         <record id="remove_not_synchronized_data" model="patch.scripts">
             <field name="method">remove_not_synchronized_data</field>
+        </record>
+
+        <record id="us_2632_patch" model="patch.scripts">
+            <field name="method">us_2632_patch</field>
         </record>
 
         <record id="us_2110_patch" model="patch.scripts">

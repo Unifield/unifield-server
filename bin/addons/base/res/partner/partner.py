@@ -108,7 +108,7 @@ def _lang_get(self, cr, uid, context={}):
 class res_partner(osv.osv):
     _description='Partner'
     _name = "res.partner"
-    _order = "name"
+    _order = "name, id"
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True),
         'date': fields.date('Date', select=1),
@@ -213,11 +213,11 @@ class res_partner(osv.osv):
             self.pool.get('ir.cron').create(cr, uid, {
                 'name': 'Send Partner Emails',
                 'user_id': uid,
-#               'nextcall': False,
-                'model': 'res.partner',
-                'function': '_email_send',
-                'args': repr([ids[:16], email_from, subject, body, on_error])
-            })
+                                            #               'nextcall': False,
+                                            'model': 'res.partner',
+                                            'function': '_email_send',
+                                            'args': repr([ids[:16], email_from, subject, body, on_error])
+                                            })
             ids = ids[16:]
         return True
 
@@ -269,7 +269,7 @@ class res_partner(osv.osv):
             cr, uid,
             model_data.search(cr, uid, [('module','=','base'),
                                         ('name','=','main_partner')])[0],
-            ).res_id
+        ).res_id
 res_partner()
 
 class res_partner_address(osv.osv):
@@ -296,7 +296,7 @@ class res_partner_address(osv.osv):
         'is_customer_add': fields.related('partner_id', 'customer', type='boolean', string='Customer'),
         'is_supplier_add': fields.related('partner_id', 'supplier', type='boolean', string='Supplier'),
         'active': fields.boolean('Active', help="Uncheck the active field to hide the contact."),
-#        'company_id': fields.related('partner_id','company_id',type='many2one',relation='res.company',string='Company', store=True),
+        #        'company_id': fields.related('partner_id','company_id',type='many2one',relation='res.company',string='Company', store=True),
         'company_id': fields.many2one('res.company', 'Company',select=1),
     }
     _defaults = {
@@ -411,13 +411,13 @@ class res_partner_bank(osv.osv):
         'zip': fields.char('Zip', change_default=True, size=24),
         'city': fields.char('City', size=128),
         'country_id': fields.many2one('res.country', 'Country',
-            change_default=True),
+                                      change_default=True),
         'state_id': fields.many2one("res.country.state", 'State',
-            change_default=True, domain="[('country_id','=',country_id)]"),
+                                    change_default=True, domain="[('country_id','=',country_id)]"),
         'partner_id': fields.many2one('res.partner', 'Partner', required=True,
-            ondelete='cascade', select=True),
+                                      ondelete='cascade', select=True),
         'state': fields.selection(_bank_type_get, 'Bank Type', required=True,
-            change_default=True),
+                                  change_default=True),
         'sequence': fields.integer('Sequence'),
     }
     _defaults = {
@@ -445,7 +445,7 @@ class res_partner_bank(osv.osv):
                 if field.name in res:
                     res[field.name].setdefault('states', {})
                     res[field.name]['states'][type.code] = [
-                            ('readonly', field.readonly),
+                        ('readonly', field.readonly),
                             ('required', field.required)]
         return res
 

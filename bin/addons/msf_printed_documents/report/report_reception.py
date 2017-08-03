@@ -93,7 +93,7 @@ class report_reception(report_sxw.rml_parse):
 
     def getQtyPO(self,line):
         # line amount from the PO, always the same on all INs for a given PO
-        val = line.purchase_line_id.product_qty if line.purchase_line_id else 0
+        val = line.purchase_line_id.product_qty if line.purchase_line_id else line.product_qty
         return "{0:.2f}".format(val)
 
     def getQtyBO(self,line,o):
@@ -147,16 +147,36 @@ class report_reception(report_sxw.rml_parse):
         return time.strftime('%d/%m/%Y', time.strptime(o.min_date,'%Y-%m-%d %H:%M:%S'))
 
     def getPartnerCity(self,o):
-        return o.purchase_id and o.purchase_id.partner_address_id and o.purchase_id.partner_address_id.city or False
+        if o.purchase_id:
+            return o.purchase_id and o.purchase_id.partner_address_id and o.purchase_id.partner_address_id.city or False
+        elif o.partner_id and len(o.partner_id.address):
+            return o.partner_id.address[0].city
+        else:
+            return False
 
     def getPartnerPhone(self,o):
-        return o.purchase_id and o.purchase_id.partner_address_id and o.purchase_id.partner_address_id.phone or False
+        if o.purchase_id:
+            return o.purchase_id and o.purchase_id.partner_address_id and o.purchase_id.partner_address_id.phone or False
+        elif o.partner_id and len(o.partner_id.address):
+            return o.partner_id.address[0].phone
+        else:
+            return False
 
     def getPartnerName(self,o):
-        return o.purchase_id and o.purchase_id.partner_id and o.purchase_id.partner_id.name or False
+        if o.purchase_id:
+            return o.purchase_id and o.purchase_id.partner_id and o.purchase_id.partner_id.name or False
+        if o.partner_id:
+            return o.partner_id.name
+        if o.ext_cu:
+            return o.ext_cu.name
+
+        return False
 
     def getPartnerAddress(self,o):
-        temp = o.purchase_id and o.purchase_id.partner_address_id.name_get()
+        if o.purchase_id:
+            temp = o.purchase_id and o.purchase_id.partner_address_id.name_get()
+        elif o.partner_id and len(o.partner_id.address):
+            temp = o.partner_id.address[0].name_get()
         if temp:
             return temp[0][1]
 
@@ -202,10 +222,18 @@ class report_reception(report_sxw.rml_parse):
 
 
     def getActualReceiptDate(self,o):
-        if o.state == 'assigned':
-          actual_receipt_date = ''
+        if o.state != 'done':
+            actual_receipt_date = ''
+        elif not o.move_lines:
+            ard = time.strptime(o.date, '%Y-%m-%d %H:%M:%S')
+            actual_receipt_date = time.strftime('%d/%m/%Y', ard)
         else:
-            actual_receipt_date = time.strftime('%d/%m/%Y', time.strptime(o.date,'%Y-%m-%d %H:%M:%S'))
+            ard_min = time.strptime(o.move_lines[0].date, '%Y-%m-%d %H:%M:%S')
+            for move in o.move_lines:
+                move_ard = time.strptime(move.date, '%Y-%m-%d %H:%M:%S')
+                if move_ard < ard_min:
+                    ard_min = move_ard
+            actual_receipt_date = time.strftime('%d/%m/%Y', ard_min)
         return actual_receipt_date
 
     def get_lines(self, o):

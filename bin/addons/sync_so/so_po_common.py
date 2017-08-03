@@ -47,9 +47,12 @@ class so_po_common(osv.osv_memory):
             context = {}
         context.update({'active_test': False})
         partner_obj = self.pool.get('res.partner')
-        ids = partner_obj.search(cr, uid, [('name', '=', partner_name)], context=context)
+        domain = [('name', '=', partner_name)]
+        ids = partner_obj.search(cr, uid, domain + [('partner_type', '=', 'internal')], context=context)
         if not ids:
-            raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
+            ids = partner_obj.search(cr, uid, domain, context=context)
+            if not ids:
+                raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
 
         return partner_obj.read(cr, uid, ids, ['partner_type'], context=context)[0]['partner_type']
 
@@ -57,9 +60,12 @@ class so_po_common(osv.osv_memory):
         if not context:
             context = {}
         context.update({'active_test': False})
-        ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', partner_name)], context=context)
+        domain = [('name', '=', partner_name)]
+        ids = self.pool.get('res.partner').search(cr, uid, domain + [('partner_type', '=', 'internal')], context=context)
         if not ids:
-            raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
+            ids = self.pool.get('res.partner').search(cr, uid, domain, context=context)
+            if not ids:
+                raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
         return ids[0]
 
     def get_partner_address_id(self, cr, uid, partner_id, context=None):
@@ -578,7 +584,7 @@ class so_po_common(osv.osv_memory):
                 # look for the correct PO line for updating the value - corresponding to the SO line
                 existing_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', so_id)], context=context)
 
-            if (existing_line_ids and update_lines) or (line_vals_dict.get('state', False) == 'done' and existing_line_ids):
+            if existing_line_ids or (line_vals_dict.get('state', False) == 'done' and existing_line_ids):
                 for existing_line in existing_line_ids:
                     if existing_line not in update_lines:
                         if po_id:

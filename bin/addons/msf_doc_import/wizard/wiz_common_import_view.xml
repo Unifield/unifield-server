@@ -30,6 +30,7 @@
             <field name="name">wizard.common.import.line.form.view.no.qty</field>
             <field name="model">wizard.common.import.line</field>
             <field name="type">form</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <form string="Add multiple products">
                     <field name="parent_id" invisible="1" />
