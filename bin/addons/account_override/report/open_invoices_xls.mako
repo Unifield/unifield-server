@@ -281,6 +281,24 @@
         </Cell>
         <Cell ss:StyleID="short_date2a" ><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data></Cell>
     </Row>
+
+    <% beginning_date = data.get('form', '') and data['form'].get('beginning_date', '')%>
+    <% ending_date = data.get('form', '') and data['form'].get('ending_date', '')%>
+    % if context.get('paid_invoice') and beginning_date and ending_date:
+        <Row>
+            <Cell>
+            <Data ss:Type="String">${_('Beginning date:')}</Data>
+            </Cell>
+            <Cell ss:StyleID="short_date2a"><Data ss:Type="DateTime">${beginning_date|n}T00:00:00.000</Data></Cell>
+        </Row>
+        <Row>
+            <Cell>
+            <Data ss:Type="String">${_('Ending date:')}</Data>
+            </Cell>
+            <Cell ss:StyleID="short_date2a"><Data ss:Type="DateTime">${ending_date|n}T00:00:00.000</Data></Cell>
+        </Row>
+    % endif
+
     <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
 % for (type, title) in [('out_invoice', _('Stock Transfer Vouchers')), ('in_invoice', _('Supplier Invoices')), ('out_refund', _('Customer Refunds')), ('in_refund', _('Supplier Refunds'))]:

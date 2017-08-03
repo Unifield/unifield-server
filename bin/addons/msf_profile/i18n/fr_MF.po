@@ -98724,3 +98724,13 @@ msgstr "Date de début"
 #: field:wizard.report.paid.invoice,ending_date:0
 msgid "Ending date"
 msgstr "Date de fin"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:290
+msgid "Beginning date:"
+msgstr "Date de début :"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:296
+msgid "Ending date:"
+msgstr "Date de fin :"

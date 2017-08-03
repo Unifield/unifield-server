@@ -46,8 +46,8 @@ class report_open_invoices2(report_sxw.rml_parse):
         """
         res = {}
         inv_obj = self.pool.get('account.invoice')
-        beginning_date = data.get('form') and data['form']['beginning_date']
-        ending_date = data.get('form') and data['form']['ending_date']
+        beginning_date = data.get('form') and data['form'].get('beginning_date')
+        ending_date = data.get('form') and data['form'].get('ending_date')
         context = self.localcontext or {}
         for option_type in ['out_invoice', 'in_invoice', 'out_refund', 'in_refund']:
             if context.get('paid_invoice') and beginning_date and ending_date:
