@@ -53,7 +53,7 @@ class report_open_invoices2(report_sxw.rml_parse):
             if current_line_position % 50 == 0:  # update percentage every 50 lines
                 # self.ratio_search is the ratio already used for the search method
                 self.percent = self.ratio_search + (current_line_position / float(self.nb_lines) * (1 - self.ratio_search))
-                bg_obj.update_percent(self.cr, self.uid, [self.localcontext['background_id']], self.percent)
+                bg_obj.update_percent(self.cr, self.uid, [context.get('background_id')], self.percent)
 
     def get_invoices(self, data):
         """
