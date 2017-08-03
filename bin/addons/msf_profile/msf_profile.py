@@ -46,6 +46,14 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2444_touch_liquidity_journals(self, cr, uid, *a, **b):
+        cr.execute('''
+            update ir_model_data set last_modification=NOW(), touched='[''type'']'
+            where module='sd' and model='account.journal' and res_id in (
+                select id from account_journal where type in ('bank', 'cash', 'cheque') and is_current_instance='t'
+            )
+        ''')
+
     def us_3098_patch(self, cr, uid, *a, **b):
         cr.execute("""
             SELECT id, name
