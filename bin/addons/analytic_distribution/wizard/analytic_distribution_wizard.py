@@ -492,7 +492,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         for el in self.browse(cr, uid, ids, context=context):
             res[el.id] = True
             # verify purchase state
-            if el.purchase_id and el.purchase_id.state not in ['draft', 'validated_n', 'validated']:
+            if el.purchase_id and el.purchase_id.state not in ['draft', 'draft_p', 'validated_n', 'validated']:
                 res[el.id] = False
             # verify purchase line state
             if el.purchase_line_id and el.purchase_line_id.order_id and el.purchase_line_id.order_id.state not in ['draft', 'validated_n', 'validated']:
