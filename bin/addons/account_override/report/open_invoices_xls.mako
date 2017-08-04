@@ -302,7 +302,10 @@
     <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
 <% inv = invoices(data) %>
-% for (type, title) in [('out_invoice', _('Stock Transfer Vouchers')), ('in_invoice', _('Supplier Invoices')), ('out_refund', _('Customer Refunds')), ('in_refund', _('Supplier Refunds'))]:
+<% doc_type_list = [('si_di', _('Supplier Invoices')), ('sr', _('Supplier Refunds')), ('donation', _('Donations')),
+                    ('ivi', _('Intermission Vouchers IN')), ('stv', _('Stock Transfer Vouchers')), ('cr', _('Customer Refunds')),
+                    ('dn', _('Debit Notes')), ('ivo', _('Intermission Vouchers OUT'))] %>
+% for (type, title) in doc_type_list:
    <Row >
     <Cell ss:StyleID="s23"><Data ss:Type="String">${title}</Data></Cell>
     <Cell ss:StyleID="s24"/>
@@ -326,9 +329,9 @@
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Number')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Document Date')}</Data></Cell>
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
-% if type in ['out_invoice', 'out_refund']:
+% if type in ['stv', 'ivo', 'dn', 'cr']:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Customer')}</Data></Cell>
-% elif type in ['in_invoice', 'in_refund']:
+% elif type in ['si_di', 'ivi', 'donation', 'sr']:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Supplier')}</Data></Cell>
 % else:
         <Cell ss:StyleID="s27"><Data ss:Type="String">${_('Partner')}</Data></Cell>

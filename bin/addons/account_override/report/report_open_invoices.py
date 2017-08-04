@@ -57,7 +57,8 @@ class report_open_invoices2(report_sxw.rml_parse):
 
     def get_invoices(self, data):
         """
-        Get only open invoices by default, or only paid invoices for the Paid Invoices Report
+        Gets only open account.invoices by default, or only paid ones for the Paid Invoices Report.
+        Returns a dict with key = document type, and value = list of account.invoice browse records.
         """
         res = {}
         inv_obj = self.pool.get('account.invoice')
@@ -70,22 +71,49 @@ class report_open_invoices2(report_sxw.rml_parse):
             bg_id = context['background_id']
             self.percent = 0.05  # 5% of the process
             bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)
-        for option_type in ['out_invoice', 'in_invoice', 'out_refund', 'in_refund']:
+        state = context.get('paid_invoice') and 'paid' or 'open'
+        for type in ['si_di', 'sr', 'donation', 'ivi', 'stv', 'cr', 'dn', 'ivo']:
+            # determine the domain to use according to the report type and the doc type
+            domain = [('state', '=', state)]
             if context.get('paid_invoice') and beginning_date and ending_date:
-                # paid invoices within the selected dates
-                domain_paid_inv = [('state', '=', 'paid'),
-                                   ('date_invoice', '>=', beginning_date),
-                                   ('date_invoice', '<=', ending_date),
-                                   ('type', '=', option_type)]
-                type_ids = inv_obj.search(self.cr, self.uid, domain_paid_inv, context=context, order='move_name')
-            else:
-                # all open invoices
-                domain_open_inv = [('state', '=', 'open'), ('type', '=', option_type)]
-                type_ids = inv_obj.search(self.cr, self.uid, domain_open_inv, context=context)
+                domain += [('date_invoice', '>=', beginning_date), ('date_invoice', '<=', ending_date)]
+            if type == 'si_di':
+                domain += [('type', '=', 'in_invoice'),
+                           ('is_inkind_donation', '=', False),
+                           ('is_debit_note', '=', False),
+                           ('is_intermission', '=', False)]
+            elif type == 'sr':
+                domain += [('type', '=', 'in_refund')]
+            elif type == 'donation':
+                domain += [('type', '=', 'in_invoice'),
+                           ('is_debit_note', '=', False),
+                           ('is_inkind_donation', '=', True)]
+            elif type == 'ivi':
+                domain += [('type', '=', 'in_invoice'),
+                           ('is_debit_note', '=', False),
+                           ('is_inkind_donation', '=', False),
+                           ('is_intermission', '=', True)]
+            elif type == 'stv':
+                domain += [('type', '=', 'out_invoice'),
+                           ('is_debit_note', '=', False),
+                           ('is_inkind_donation', '=', False),
+                           ('is_intermission', '=', False)]
+            elif type == 'cr':
+                domain += [('type', '=', 'out_refund')]
+            elif type == 'dn':
+                domain += [('type', '=', 'out_invoice'),
+                           ('is_debit_note', '!=', False),
+                           ('is_inkind_donation', '=', False)]
+            elif type == 'ivo':
+                domain += [('type','=','out_invoice'),
+                           ('is_debit_note', '=', False),
+                           ('is_inkind_donation', '=', False),
+                           ('is_intermission', '=', True)]
+            type_ids = inv_obj.search(self.cr, self.uid, domain, context=context, order='move_name')
             if isinstance(type_ids, (int, long)):
                 type_ids = [type_ids]
             self.nb_lines += len(type_ids)
-            res.update({option_type: inv_obj.browse(self.cr, self.uid, type_ids, context)})
+            res.update({type: inv_obj.browse(self.cr, self.uid, type_ids, context)})
         if bg_id:
             self.percent += 0.20  # 25% of the process
             bg_obj.update_percent(self.cr, self.uid, [bg_id], self.percent)

@@ -98734,3 +98734,23 @@ msgstr "Date de début :"
 #: report:addons/account_override/report/open_invoices_xls.mako:296
 msgid "Ending date:"
 msgstr "Date de fin :"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:306
+msgid "Intermission Vouchers IN"
+msgstr "Bons Intermission IN"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:307
+msgid "Intermission Vouchers OUT"
+msgstr "Bons Intermission OUT"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:305
+msgid "Donations"
+msgstr "Donations"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:307
+msgid "Debit Notes"
+msgstr "Notes de débit"
