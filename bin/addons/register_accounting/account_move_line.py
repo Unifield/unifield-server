@@ -114,13 +114,15 @@ class account_move_line(osv.osv):
         if default_account:
             dom1.append(('account_id', '!=', default_account.id))
 
-        # to determine whether the line is importable, check that the residual amount is positive, OR if the doc amount is zero
-        # check that there is no link yet between the JI and a register line (with imported_invoice_line_ids)
+        '''
+        To determine whether the line is importable, check that the residual amount is positive, OR if the doc amount is zero
+        check that there is no link yet between the JI and a register line (with imported_invoice_line_ids).
+        (In the domain, the amount_currency is compared with exactly 0.0 as there is a truncation in SQL: 
+        only 2 digits after the comma are kept)
+        '''
         dom_residual = ['|', ('amount_residual_import_inv', '>', 0.001),
                         '&',
-                        '|',
-                        '&', '!', ('amount_currency', '>', 0.001), '!', ('amount_currency', '<', -0.001),
-                        ('amount_currency', '=', False),
+                        '|', ('amount_currency', '=', 0.0), ('amount_currency', '=', False),
                         ('imported_invoice_line_ids', '=', False)]
         return dom1 + dom_residual
 
