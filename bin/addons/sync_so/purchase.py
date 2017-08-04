@@ -65,13 +65,15 @@ class purchase_order_line_sync(osv.osv):
             # get the original PO line:
             sync_linked_sol = int(sol_dict['original_line_id'].get('id').split('/')[-1]) if sol_dict['original_line_id'] else False
             if not sync_linked_sol:
-                raise Exception, "Original PO line not found"
+                raise Exception, "Original PO line not found when trying to split the PO line"
             orig_pol = self.search(cr, uid, [('sync_linked_sol', '=', sync_linked_sol)], context=context)
+            if not orig_pol:
+                raise Exception, "Original PO line not found when trying to split the PO line"
             # get the linked FO line of the original PO line:
-            linked_sol_id = self.read(cr, uid, orig_pol[0], ['linked_sol_id'], context=context)['linked_sol_id'][0]
+            linked_sol_id = self.read(cr, uid, orig_pol[0], ['linked_sol_id'], context=context)['linked_sol_id']
             if linked_sol_id:
                 # create FO line for split PO line:
-                new_sol = self.pool.get('sale.order.line').copy(cr, uid, linked_sol_id, {'set_as_sourced_n': True}, context=context)
+                new_sol = self.pool.get('sale.order.line').copy(cr, uid, linked_sol_id[0], {'set_as_sourced_n': True}, context=context)
                 pol_values['linked_sol_id'] = new_sol
             # create the split PO line:
             pol_values['origin'] = self.read(cr, uid, orig_pol[0], ['origin'], context=context)['origin']
