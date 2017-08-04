@@ -212,7 +212,11 @@ class browse_record(object):
                 fields_to_fetch = [x for x in fields_to_fetch if x[0] in
                                    self._fields_to_fetch]
             field_names = [x[0] for x in fields_to_fetch]
-            field_values = self._table.read(self._cr, self._uid, ids, field_names, context=self._context, load="_classic_write")
+            try:
+                field_values = self._table.read(self._cr, self._uid, ids, field_names, context=self._context, load="_classic_write")
+            except except_orm, e:
+                # read more ids than asked, but this could raise an ir.rule error
+                field_values = self._table.read(self._cr, self._uid, [self._id], field_names, context=self._context, load="_classic_write")
 
             # TODO: improve this, very slow for reports
             if self._fields_process:
