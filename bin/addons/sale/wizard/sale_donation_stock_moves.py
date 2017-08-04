@@ -30,18 +30,6 @@ import time
 class sale_donation_stock_moves(osv.osv_memory):
     _name = 'sale.donation.stock.moves'
 
-    PICKING_STATE = [
-        ('draft', 'Draft'),
-        ('auto', 'Waiting'),
-        ('confirmed', 'Confirmed'),
-        ('assigned', 'Available'),
-        ('shipped', 'Available Shipped'),
-        ('done', 'Closed'),
-        ('cancel', 'Cancelled'),
-        ('import', 'Import in progress'),
-        ('delivered', 'Delivered'),
-    ]
-
     _columns = {
         'start_date': fields.date(
             string='Start date',
@@ -71,10 +59,6 @@ class sale_donation_stock_moves(osv.osv_memory):
             'stock.picking',
             string='Move Ref.',
         ),
-        'state': fields.selection(
-            PICKING_STATE,
-            string='Status',
-        ),
         'sm_ids': fields.text(
             string='Stock Moves',
             readonly=True
@@ -103,6 +87,8 @@ class sale_donation_stock_moves(osv.osv_memory):
             sm_domain = []
 
             sm_domain.append(('reason_type_id', 'in', type_donation_ids))
+            sm_domain.append(('state', '=', 'done'))
+            sm_domain += ['|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'), ('location_dest_id.usage', 'in', ['customer', 'supplier'])]
 
             if wizard.picking_id:
                 sm_domain.append(('picking_id', '=', wizard.picking_id))
@@ -123,9 +109,6 @@ class sale_donation_stock_moves(osv.osv_memory):
 
                 if wizard.product_id:
                     sm_domain.append(('product_id', '=', wizard.product_id.id))
-
-                if wizard.state:
-                    sm_domain.append(('state', '=', wizard.state))
 
                 sm_ids = sm_obj.search(cr, uid, sm_domain, context=context)
 

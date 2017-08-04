@@ -71,6 +71,16 @@
         <Font ss:Size="10"/>
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
+    <Style ss:ID="sShortDate">
+        <NumberFormat ss:Format="Short Date"/>
+        <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+    </Style>
  </Styles>
 
  % for r in objects:
@@ -84,6 +94,8 @@
         <Column ss:AutoFitWidth="1" ss:Width="59.25" />
         ## Movement Date
         <Column ss:AutoFitWidth="1" ss:Width="87.25" />
+        ## Move Ref.
+        <Column ss:AutoFitWidth="1" ss:Width="157.0" />
         ## Order Type
         <Column ss:AutoFitWidth="1" ss:Width="129.0" />
         ## Partner
@@ -109,6 +121,7 @@
                 _('Description'),
                 _('Expense Account'),
                 _('Movement Date'),
+                _('Move Ref.'),
                 _('Order Type'),
                 _('Partner'),
                 _('Partner Type'),
@@ -136,10 +149,15 @@
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String">${o.product_id.categ_id.donation_expense_account.code|x}</Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_right"><Data ss:Type="String">${formatLang(o.date[:10], date=True)|x}</Data></Cell>
+                %if o.date and isDateTime(o.date):
+                <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${o.date[:10]|n}T${o.date[-8:]|n}.000</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                % endif
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.picking_id.name|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.reason_type_id.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id.partner_type|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id.name or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id.partner_type or ''|x}</Data></Cell>
                 % if isQtyOut(o):
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
