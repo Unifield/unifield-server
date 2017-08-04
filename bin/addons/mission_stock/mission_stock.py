@@ -363,7 +363,7 @@ class stock_mission_report(osv.osv):
             where
                 location.id=l.location_id and
                 remote_instance_id is null and
-                (location.usage = 'internal' or location.location_category='consumption_unit')
+                location.usage = 'internal'
             order by location.name
         """)
         for x in cr.fetchall():
@@ -493,7 +493,7 @@ class stock_mission_report(osv.osv):
             inner join product_product p on p.id = l.product_id
             left join stock_location location on location.id = l.location_id
             where
-                (location.usage = 'internal' or location.location_category='consumption_unit' or location.id is null)
+                (location.usage = 'internal' or location.id is null)
             order by p.default_code''')
 
         p_code = False
