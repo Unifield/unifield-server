@@ -1012,14 +1012,7 @@ class Entity(osv.osv):
 
         # Get the whole list of messages to execute
         # Warning: order matters
-        cr.execute("""
-            SELECT rec.id
-            FROM sync_client_message_rule rule, sync_client_message_received rec
-            WHERE rule.remote_call = rec.remote_call
-            AND rec.run = 'false'
-            ORDER BY rule.sequence_number, rec.id;
-        """)
-        message_ids = [id for (id,) in cr.fetchall()]
+        message_ids = messages.search(cr, uid, [('run','=',False)], order='rule_sequence, id', context=context)
         messages_count = len(message_ids)
         if messages_count == 0: return 0
 

@@ -352,9 +352,21 @@ class message_received(osv.osv):
         'execution_date' :fields.datetime('Execution Date', readonly=True),
         'create_date' :fields.datetime('Receive Date', readonly=True),
         'editable' : fields.boolean("Set editable"),
+        'rule_sequence': fields.integer('Sequence of the linked rule', required=True),
     }
 
     _logger = logging.getLogger('sync.client')
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+
+        vals['rule_sequence'] = False
+        parent_rule = self.pool.get('sync.client.message_rule').search(cr, uid, [('remote_call', '=', vals['remote_call'])], context=context)
+        if parent_rule:
+            vals['rule_sequence'] = self.pool.get('sync.client.message_rule').read(cr, uid, parent_rule, ['sequence_number'], context=context)[0]['sequence_number']
+
+        return super(message_received, self).create(cr, uid, vals, context=context)
 
     def unfold_package(self, cr, uid, package, context=None):
         for data in package:
@@ -390,27 +402,9 @@ class message_received(osv.osv):
             sync_message_execution=True,
             sale_purchase_logger={})
         context['lang'] = 'en_US'
-        
-        # message received are executed by rule sequence number:
-        if ids is None:
-            cr.execute("""
-                SELECT rec.id
-                FROM sync_client_message_rule rule, sync_client_message_received rec
-                WHERE rule.remote_call = rec.remote_call
-                AND rec.run = 'false'
-                ORDER BY rule.sequence_number, rec.id;
-            """)
-        else:
-            cr.execute("""
-                SELECT rec.id
-                FROM sync_client_message_rule rule, sync_client_message_received rec
-                WHERE rule.remote_call = rec.remote_call
-                AND rec.run = 'false'
-                AND rec.id in %s
-                ORDER BY rule.sequence_number, rec.id;
-            """, (tuple(ids),))
 
-        ids = [id for (id,) in cr.fetchall()]
+        if ids is None:
+            ids = self.search(cr, uid, [('run','=',False)], order='rule_sequence, id', context=context)
 
         if not ids: return 0
 
