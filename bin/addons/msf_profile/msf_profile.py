@@ -46,6 +46,29 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_3048_patch(self, cr, uid, *a, **b):
+        '''
+        some protocol are now removed from possible protocols
+        If an instance was using a removed protocol, change the connexion to
+        use XMLRPCS
+        '''
+        server_connection = self.pool.get('sync.client.sync_server_connection')
+        if not server_connection:
+            return True
+        connection_ids = server_connection.search(cr, uid, [])
+        read_result = server_connection.read(cr, uid, connection_ids,
+                                             ['protocol', 'port'])
+        ids_to_change = []
+        for connection in read_result:
+            if connection['protocol'] not in ['xmlrpc', 'gzipxmlrpcs']:
+                ids_to_change.append(connection['id'])
+        if ids_to_change:
+            vals = {
+                'protocol': 'gzipxmlrpcs',
+                'port': 443,
+            }
+            server_connection.write(cr, uid, ids_to_change, vals)
+
     def us_3098_patch(self, cr, uid, *a, **b):
         cr.execute("""
             SELECT id, name
@@ -161,7 +184,7 @@ class patch_scripts(osv.osv):
     def us_2730_patch(self, cr, uid, *a, **b):
         '''
         remove all translations, and then re-import them
-        so that the {*}_MF.po files are authoratative
+        so that the {*}_MF.po files are authoritative
         '''
         cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
             select id from ir_translation where lang = 'fr_MF' and type != 'model'
