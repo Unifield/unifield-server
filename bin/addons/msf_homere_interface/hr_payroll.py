@@ -327,6 +327,7 @@ class hr_payroll(osv.osv):
         view_id = ir_model_obj.get_object_reference(cr, uid, 'msf_homere_interface', 'view_payroll_bs_lines_tree')
         view_id = view_id and view_id[1] or False
         domain = [('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', False)]
+        context.update({'payroll_bs_lines': True})
         return {
             'name': _('Payroll B/S lines'),
             'type': 'ir.actions.act_window',
@@ -340,4 +341,35 @@ class hr_payroll(osv.osv):
         }
 
 hr_payroll()
+
+
+class ir_values(osv.osv):
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+        """
+        Make the entries in the "Actions" menu depend on the view (Expense lines view or B/S lines view)
+        """
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        if key == 'action' and key2 == 'client_action_multi' and 'hr.payroll.msf' in [x[0] for x in models]:
+            new_act = []
+            for v in values:
+                if v[1] == 'action_payroll_deletion':
+                    # for all Payroll views
+                    new_act.append(v)
+                elif context.get('payroll_bs_lines'):
+                    if v[1] == 'action_payroll_validation':
+                        # for the B/S lines view
+                        new_act.append(v)
+                else:
+                    if v[1] in ['action_payroll_analytic_reallocation', 'action_move_to_payroll_bs_lines']:
+                        # for the expense lines view
+                        new_act.append(v)
+            values = new_act
+        return values
+
+ir_values()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
