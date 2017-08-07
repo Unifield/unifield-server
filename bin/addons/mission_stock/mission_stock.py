@@ -762,9 +762,6 @@ class stock_mission_report(osv.osv):
         context.update({'update_full_report': True})
         self.check_new_product_and_create_export(cr, uid, full_report_ids, product_values, context=context)
 
-        if instance_id.level == 'coordo':
-            self.generate_full_xls(cr, uid, 'consolidate_mission_stock.xls')
-
         return True
 
     def check_new_product_and_create_export(self, cr, uid, report_ids, product_values, context=None):
@@ -775,6 +772,8 @@ class stock_mission_report(osv.osv):
         line_obj = self.pool.get('stock.mission.report.line')
         self.write(cr, uid, report_ids, {'export_state': 'in_progress',
                                          'export_error_msg': False}, context=context)
+
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
             try:
                 self.write(cr, uid, report['id'], {'report_ok': False},
@@ -826,6 +825,9 @@ class stock_mission_report(osv.osv):
                 logger.info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
                 self._get_export(cr, uid, report['id'], product_values,
                                  context=context)
+
+                if instance_id.level == 'coordo' and not report['full_view']:
+                    self.generate_full_xls(cr, uid, 'consolidate_mission_stock.xls')
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
