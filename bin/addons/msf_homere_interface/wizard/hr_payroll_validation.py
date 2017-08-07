@@ -33,11 +33,6 @@ class hr_payroll_validation(osv.osv_memory):
     _name = 'hr.payroll.validation'
     _description = 'Payroll entries validation wizard'
 
-    _columns = {
-        'check_report': fields.text('Check report'),
-        'check_result': fields.boolean('Check result'),
-    }
-
     def check(self, cr, uid, context=None):
         # US-672/2 expenses lines account/partner compatible check pass
         line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [
@@ -74,116 +69,6 @@ class hr_payroll_validation(osv.osv_memory):
             res = "\n".join(account_partner_not_compat_log)
         return res
 
-    def fields_get(self, cr, uid, fields=None, context=None):
-        """
-        Fields ' description
-        """
-        if not context:
-            context = {}
-        res = super(hr_payroll_validation, self).fields_get(cr, uid, fields, context)
-        hrp = self.pool.get('hr.payroll.msf')
-        search_lines_ids = hrp.search(cr, uid, [('account_id.is_analytic_addicted', '=', False), ('state', '=', 'draft')])
-        for line in hrp.read(cr, uid, search_lines_ids, ['account_id']):
-            # Add line description
-            field_name = 'entry%s' % line.get('id')
-            res.update({field_name: {'selectable': True, 'type': 'char', 'size': 255, 'string': '', 'readonly': 1}})
-            # Add third party field
-            third_name = 'third%s' % line.get('id')
-            res.update({third_name: {'selectable': True, 'type': 'many2one', 'relation': 'res.partner', 'string': 'Partner'}})
-
-            # Add fourth party field
-            fourth_name = 'fourth%s' % line.get('id')
-            res.update({fourth_name: {'selectable': True, 'type': 'many2one', 'relation': 'res.currency','string': 'Currency'}})
-
-            # Add fifth party field
-            fifth_name = 'fifth%s' % line.get('id')
-            res.update({fifth_name: {'selectable': True, 'type': 'float', 'string': 'Amount'}})
-        return res
-
-    def default_get(self, cr, uid, fields, context=None):
-        """
-        Fields ' value
-        """
-        if not context:
-            context = {}
-        res = super(hr_payroll_validation, self).default_get(cr, uid, fields, context)
-        hrp = self.pool.get('hr.payroll.msf')
-        pattern = re.compile('^entry(.*)$')
-        for field in fields:
-            res[field] = ''
-            pattern = re.compile('^(fourth(.*))$')
-            m = re.match(pattern, field)
-            if m:
-                bro = hrp.browse(cr,uid,int(m.groups()[1]))
-                res[field] = bro.currency_id and bro.currency_id.id or False
-            pattern = re.compile('^(fifth(.*))$')
-            m = re.match(pattern, field)
-            if m:
-                bro = hrp.browse(cr,uid,int(m.groups()[1]))
-                res[field] = bro.amount or False
-
-        res['check_result'] = True
-        check_report = self.check(cr, uid, context=context)
-        if check_report:
-            res['check_report'] = check_report
-            res['check_result'] = False
-        return res
-
-    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
-        """
-        Verify that all lines have an analytic distribution.
-        Create all non-analytic-a-holic lines to give a third parties
-        """
-        if not context:
-            context = {}
-        res = super(hr_payroll_validation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        # Verification and sorting lines as explained in UTP-342
-        line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft')], order='account_id, name')
-        for line in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
-            if line.account_id and line.account_id.is_analytic_addicted and line.analytic_state != 'valid':
-                raise osv.except_osv(_('Warning'), _('Some lines have analytic distribution problems!'))
-        if view_type == 'form':
-            form = ET.fromstring(res['arch'])
-            field = form.find('.//label')
-            parent = field.getparent()
-            for el in self.pool.get('hr.payroll.msf').browse(cr, uid, line_ids):
-                if el.account_id and not el.account_id.is_analytic_addicted:
-                    third = 'third' + str(el.id)
-                    fourth = 'fourth' + str(el.id)
-                    fifth = 'fifth' + str(el.id)
-                    is_required = False
-                    if el.account_id.type_for_register and el.account_id.type_for_register == 'payroll':
-                        is_required = True
-                    parent.insert(parent.index(field)+1, ET.XML('<group col="4" colspan="4" invisible="%s"> <label string="%s"/><group col="6" colspan="1"><field name="%s" readonly="1"/><field name="%s" readonly="1"/><field name="%s" required="%s"/></group></group>' % (not is_required, ustr(el.name) + ' - ' + ustr(el.ref), fourth, fifth, third, is_required)))
-            res['arch'] = ET.tostring(form)
-        return res
-
-    def create(self, cr, uid, vals, context=None):
-        """
-        Get non-analytic-a-holic lines
-        """
-        if not context:
-            context = {}
-        # Delete non-working fields (third*)
-        pattern = re.compile('^(third(.*))$')
-        to_delete = []
-        for field in vals:
-            m = re.match(pattern, field)
-            if m:
-                to_delete.append(field)
-                # Write changes to lines
-                if m.groups() and m.groups()[0] and m.groups()[1]:
-                    newvals = {'partner_id': vals.get(m.groups()[0])}
-                    hpm_id = m.groups()[1]
-                    if isinstance(hpm_id, str):
-                        hpm_id = int(hpm_id)
-                    self.pool.get('hr.payroll.msf').write(cr, uid, [hpm_id], newvals)
-        for field in to_delete:
-            del vals[field]
-        # Return default behaviour
-        res = super(hr_payroll_validation, self).create(cr, uid, vals, context)
-        return res
-
     def button_validate(self, cr, uid, ids, context=None):
         """
         Validate ALL draft payroll entries
@@ -215,7 +100,7 @@ class hr_payroll_validation(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for: %s in this period: "%s"!') % (field, period_validated.period_id.name,))
 
         # US-672 check counterpart entries account/thirdparty compat
-        # (expenses lines are checked at wizard init in fields_get)
+        self.check(cr, uid, context=context)  # check expense lines
         account_partner_not_compat_log = []
         for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, [
                 'name', 'ref', 'partner_id', 'account_id', 'amount', ]):

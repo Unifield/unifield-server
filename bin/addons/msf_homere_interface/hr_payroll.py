@@ -196,8 +196,8 @@ class hr_payroll(osv.osv):
         'document_date': fields.date(string='Document Date', required=True, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", required=True, readonly=True),
         'period_id': fields.many2one('account.period', string="Period", required=True, readonly=True),
-        'employee_id': fields.many2one('hr.employee', string="Employee", readonly=True, ondelete="restrict"),
-        'partner_id': fields.many2one('res.partner', string="Partner", readonly=True, ondelete="restrict"),
+        'employee_id': fields.many2one('hr.employee', string="Employee", ondelete="restrict"),
+        'partner_id': fields.many2one('res.partner', string="Partner", ondelete="restrict"),
         'journal_id': fields.many2one('account.journal', string="Journal", readonly=True, ondelete="restrict"),
         'employee_id_number': fields.function(_get_employee_identification_id, method=True, type='char', size=255, string='Employee ID', readonly=True),
         'name': fields.char(string='Description', size=255, readonly=True),
@@ -311,6 +311,33 @@ class hr_payroll(osv.osv):
             if fp_id:
                 vals.update({'funding_pool_id': fp_id,})
         return super(osv.osv, self).create(cr, uid, vals, context)
+
+    def move_to_payroll_bs_lines(self, cr, uid, ids, context=None):
+        """
+        Checks the AD on the Payroll expense lines and returns a view with the Payroll B/S lines
+        """
+        if context is None:
+            context = {}
+        ir_model_obj = self.pool.get('ir.model.data')
+        payroll_obj = self.pool.get('hr.payroll.msf')
+        line_ids = payroll_obj.search(cr, uid, [('state', '=', 'draft')], order='NO_ORDER', context=context)
+        for line in payroll_obj.browse(cr, uid, line_ids, fields_to_fetch=['account_id', 'analytic_state'], context=context):
+            if line.account_id.is_analytic_addicted and line.analytic_state != 'valid':
+                raise osv.except_osv(_('Warning'), _('Some lines have analytic distribution problems!'))
+        view_id = ir_model_obj.get_object_reference(cr, uid, 'msf_homere_interface', 'view_payroll_bs_lines_tree')
+        view_id = view_id and view_id[1] or False
+        domain = [('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', False)]
+        return {
+            'name': _('Payroll B/S lines'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'hr.payroll.msf',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'context': context,
+            'domain': domain,
+            'target': 'current',
+        }
 
 hr_payroll()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
