@@ -150,31 +150,37 @@ class sale_donation_stock_moves(osv.osv_memory):
             'context': context,
         }
 
-    def partner_onchange(self, cr, uid, ids, partner_id=False, picking_id=False):
+    def partner_onchange(self, cr, uid, ids, partner_id=False, move_id=False):
         '''
-        If the partner is changed, check if the picking is to this partner
+        If the partner is changed, check if the move is to this partner
         '''
-        sp_obj = self.pool.get('stock.picking')
+        sm_obj = self.pool.get('stock.move')
 
         res = {}
 
-        if partner_id and picking_id:
-            sp_ids = sp_obj.search(cr, uid, [
-                ('id', '=', picking_id),
+        if partner_id and move_id:
+            sm_ids = sm_obj.search(cr, uid, [
+                ('id', '=', move_id),
                 ('partner_id', '=', partner_id),
             ], count=True)
-            if not sp_ids:
-                res['value'] = {'picking_id': False}
+            if not sm_ids:
+                res['value'] = {'move_id': False}
                 res['warning'] = {
                     'title': _('Warning'),
-                    'message': _('The partner of the selected picking doesn\'t \
-                        match with the selected partner. The selected picking has been reset'),
+                    'message': _('The partner of the selected move doesn\'t \
+                        match with the selected partner. The selected move has been reset'),
                 }
 
         if partner_id:
-            res['domain'] = {'picking_id': [('is_donation', '=', True), ('partner_id', '=', partner_id)]}
+            res['domain'] = {'move_id': [('reason_type_id.name', 'in', ['In-Kind Donation', 'Donation before expiry', 'Donation (standard)']),
+                                         ('state', '=', 'done'), ('partner_id', '=', partner_id),
+                                         '|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
+                                         ('location_dest_id.usage', 'in', ['customer', 'supplier'])]}
         else:
-            res['domain'] = {'picking_id': [('is_donation', '=', True)]}
+            res['domain'] = {'move_id': [('reason_type_id.name', 'in', ['In-Kind Donation', 'Donation before expiry', 'Donation (standard)']),
+                                         ('state', '=', 'done'),
+                                         '|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
+                                         ('location_dest_id.usage', 'in', ['customer', 'supplier'])]}
 
         return res
 

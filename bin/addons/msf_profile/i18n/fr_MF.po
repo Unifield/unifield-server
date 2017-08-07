@@ -98929,5 +98929,5 @@ msgstr "Ref. Mouvement"
 #. module: sale
 #: code:addons/sale/wizard/sale_donation_stock_moves.py:170
 #, python-format
-msgid "The partner of the selected picking doesn't match with the selected partner. The selected picking has been reset"
-msgstr "Le partenaire de la commande sélectionnée ne correspond  pas au partenaire sélectionné. La commande sélectionnée a été remise à 0."
+msgid "The partner of the selected move doesn't match with the selected partner. The selected move has been reset"
+msgstr "Le partenaire du mouvement sélectionné ne correspond pas au partenaire sélectionné. Le mouvement sélectionné a été remis à 0."

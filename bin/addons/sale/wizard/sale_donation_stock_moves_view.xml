@@ -10,7 +10,7 @@
                     <separator colspan="4" string="Request parameters" />
                     <field name="start_date" />
                     <field name="end_date" />
-                    <field name="partner_id" domain="[('customer', '=', True)]" on_change="partner_onchange(partner_id, picking_id)" />
+                    <field name="partner_id" domain="[('customer', '=', True)]" on_change="partner_onchange(partner_id, move_id)" />
                     <field name="partner_type" />
                     <field name="product_id" />
                     <field name="move_id" domain="[('reason_type_id.name', 'in', ['In-Kind Donation', 'Donation before expiry', 'Donation (standard)']),('state', '=', 'done'),
