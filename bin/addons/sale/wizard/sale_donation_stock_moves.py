@@ -55,8 +55,8 @@ class sale_donation_stock_moves(osv.osv_memory):
             'product.product',
             string='Product Ref.',
         ),
-        'picking_id': fields.many2one(
-            'stock.picking',
+        'move_id': fields.many2one(
+            'stock.move',
             string='Move Ref.',
         ),
         'sm_ids': fields.text(
@@ -90,10 +90,10 @@ class sale_donation_stock_moves(osv.osv_memory):
             sm_domain.append(('state', '=', 'done'))
             sm_domain += ['|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'), ('location_dest_id.usage', 'in', ['customer', 'supplier'])]
 
-            if wizard.picking_id:
-                sm_domain.append(('picking_id', '=', wizard.picking_id))
+            if wizard.move_id:
+                sm_domain.append(('move_id', '=', wizard.move_id))
 
-                sm_ids = [wizard.picking_id.id]
+                sm_ids = [wizard.move_id.id]
             else:
                 if wizard.start_date:
                     sm_domain.append(('date', '>=', wizard.start_date))

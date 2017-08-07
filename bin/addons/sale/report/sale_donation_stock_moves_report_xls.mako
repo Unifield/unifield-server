@@ -91,28 +91,28 @@
         ## Product Description
         <Column ss:AutoFitWidth="1" ss:Width="271.5" />
         ## Expense Account
-        <Column ss:AutoFitWidth="1" ss:Width="59.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="82.25" />
         ## Movement Date
-        <Column ss:AutoFitWidth="1" ss:Width="87.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="72.25" />
         ## Move Ref.
-        <Column ss:AutoFitWidth="1" ss:Width="157.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="102.0" />
         ## Order Type
         <Column ss:AutoFitWidth="1" ss:Width="129.0" />
         ## Partner
         <Column ss:AutoFitWidth="1" ss:Width="135.75" />
         ## Partner Type
-        <Column ss:AutoFitWidth="1" ss:Width="96.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="72.0" />
         ## Qty In
-        <Column ss:AutoFitWidth="1" ss:Width="59.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="54.25" />
         ## Qty Out
-        <Column ss:AutoFitWidth="1" ss:Width="59.25"  />
+        <Column ss:AutoFitWidth="1" ss:Width="54.25"  />
         ## Unit Price
         <Column ss:AutoFitWidth="1" ss:Width="57.25"  />
         ## Currency (FX)
-        <Column ss:AutoFitWidth="1" ss:Width="55.75"  />
+        <Column ss:AutoFitWidth="1" ss:Width="65.75"  />
         ## Total Value
         <Column ss:AutoFitWidth="1" ss:Width="67.25"  />
-        ## Instancemove_location
+        ## Instance
         <Column ss:AutoFitWidth="1" ss:Width="97.25"  />
 
         <%
@@ -147,7 +147,7 @@
                 % if o.product_id.donation_expense_account.code:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String">${o.product_id.donation_expense_account.code|x}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="String">${o.product_id.categ_id.donation_expense_account.code|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="String">${o.product_id.categ_id.donation_expense_account.code or ''|x}</Data></Cell>
                 % endif
                 %if o.date and isDateTime(o.date):
                 <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${o.date[:10]|n}T${o.date[-8:]|n}.000</Data></Cell>
@@ -165,9 +165,21 @@
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
                 % endif
+                % if o.price_unit:
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 2)|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.product_id.standard_price, 2)|x}</Data></Cell>
+                % endif
+                % if o.price_currency_id.name:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.price_currency_id.name|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.product_id.currency_id.name or ''|x}</Data></Cell>
+                % endif
+                % if o.price_unit:
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 2) * getQty(o)|x}</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.product_id.standard_price, 2) * getQty(o)|x}</Data></Cell>
+                % endif
                 <Cell ss:StyleID="line_right"><Data ss:Type="String">${getInstance()|x}</Data></Cell>
             </Row>
         % endfor
