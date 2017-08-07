@@ -642,6 +642,7 @@
             <field name="name">sale.order.line.to.correct.form</field>
             <field name="model">sale.order.line</field>
             <field name="type">form</field>
+            <field name="priority" eval="4" />
             <field name="arch" type="xml">
             <form>
                   <notebook>
