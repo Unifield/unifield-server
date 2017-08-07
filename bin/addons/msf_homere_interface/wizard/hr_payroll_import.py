@@ -190,9 +190,9 @@ class hr_payroll_import(osv.osv_memory):
         is_payroll_rounding = False
         if third and third[0] and ustr(third[0]) == 'SAGA_BALANCE' or accounting_code[0] == '67000':
             is_payroll_rounding = True
-        # Check if it's a counterpart line (In HOMERE import, it seems to be lines that have a filled in column "third")
+        # Check if it's a counterpart line (=> amount in credit)
         is_counterpart = False
-        if third and third[0] and third[0] != '':
+        if credit:
             is_counterpart = True
 
         # For non counterpart lines, check expected accounts
