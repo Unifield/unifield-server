@@ -191,6 +191,21 @@ class hr_payroll(osv.osv):
             ])
         return to_update
 
+    def _has_third_party(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns True if the Payroll entry is linked to either an Employee or a Supplier
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for p in self.browse(cr, uid, ids, fields_to_fetch=['employee_id', 'partner_id'], context=context):
+            res[p.id] = False
+            if p.employee_id or p.partner_id:
+                res[p.id] = True
+        return res
+
     _columns = {
         'date': fields.date(string='Date', required=True, readonly=True),
         'document_date': fields.date(string='Document Date', required=True, readonly=True),
@@ -222,9 +237,10 @@ class hr_payroll(osv.osv):
         'partner_type': fields.function(_get_third_parties, type='reference', method=True, string="Third Parties", readonly=True,
                                         selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')]),
         'field': fields.char(string='Field', readonly=True, size=255, help="Field this line come from in Homère."),
+        'has_third_party': fields.function(_has_third_party, method=True, type='boolean', string='Has a Third Party', store=True, readonly=True),
     }
 
-    _order = 'employee_id, date desc'
+    _order = 'has_third_party desc, employee_id, date desc'
 
     _defaults = {
         'date': lambda *a: strftime('%Y-%m-%d'),
