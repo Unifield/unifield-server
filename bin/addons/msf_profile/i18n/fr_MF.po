@@ -21499,11 +21499,6 @@ msgstr "Date de comptabilisation du Paiement"
 msgid "Delivery Lead Time"
 msgstr "Délai de Livraison"
 
-#. module: msf_homere_interface
-#: field:hr.payroll.validation,check_result:0
-msgid "Check result"
-msgstr "Check result"
-
 #. modules: account_override, account
 #: selection:account.journal.column,field:0
 #: field:account.move.line,status_move:0
@@ -56998,6 +56993,7 @@ msgstr "Journal Ajustement"
 #: code:addons/supplier_catalogue/purchase.py:72
 #: code:addons/supplier_catalogue/purchase.py:77
 #: code:addons/unifield_setup/installer/sales_price.py:177
+#: code:addons/msf_homere_interface/hr_payroll.py:361
 #, python-format
 msgid "Warning"
 msgstr "Avertissement"
@@ -87870,11 +87866,6 @@ msgstr "Importer expatriés"
 msgid "Etc/GMT-1"
 msgstr "Etc/GMT-1"
 
-#. module: msf_homere_interface
-#: field:hr.payroll.validation,check_report:0
-msgid "Check report"
-msgstr "Check report"
-
 #. module: res_currency_functional
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:122
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:291
@@ -98694,3 +98685,25 @@ msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source
 #, python-format
 msgid "This account is a Donation account: %s"
 msgstr "Ce compte est un compte de Donation : %s"
+
+#. module: msf_homere_interface
+#: field:hr.payroll.msf,has_third_party:0
+msgid "Has a Third Party"
+msgstr "A un Tiers"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/hr_payroll.py:361
+#, python-format
+msgid "Some lines have analytic distribution problems!"
+msgstr "Certaines lignes ont des problèmes de distribution analytique !"
+
+#. module: msf_homere_interface
+#: model:ir.actions.server,name:msf_homere_interface.action_move_to_payroll_bs_lines
+msgid "Validate Payroll Expenses and move to Payroll B/S lines"
+msgstr "Valider les Lignes de dépenses et aller aux Lignes du bilan"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/hr_payroll.py:367
+#, python-format
+msgid "Payroll B/S lines"
+msgstr "Lignes de paye du bilan"
