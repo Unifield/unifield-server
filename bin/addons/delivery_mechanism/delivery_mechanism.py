@@ -303,57 +303,46 @@ class stock_move(osv.osv):
             ids = [ids]
 
         # objects
-        so_line_obj = self.pool.get('sale.order.line')
-
         res = {}
         for obj in self.browse(cr, uid, ids, context=context,
                                fields_to_fetch=['picking_id', 'purchase_line_id', 'id']):
             res[obj.id] = {'move_id': False, 'picking_id': False, 'picking_version': 0, 'quantity': 0, 'moves': []}
             if obj.picking_id and obj.picking_id.type == 'in':
                 # we are looking for corresponding OUT move from sale order line
-                if obj.purchase_line_id:
-                    # linekd to a po
-                    if obj.purchase_line_id.procurement_id:
-                        # on order
-                        procurement_id = obj.purchase_line_id.procurement_id.id
-                        # find the corresponding sale order line
-                        so_line_ids = so_line_obj.search(cr, uid, [('procurement_id', '=', procurement_id)], context=context)
-                        # if the procurement comes from replenishment rules, there will be a procurement, but no associated sale order line
-                        # we therefore do not raise an exception, but handle the case only if sale order lines are found
-                        if so_line_ids:
-                            # find the corresponding OUT move
-                            move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']),
-                                                             ('state', 'in', ('assigned', 'confirmed')),
-                                                             ('sale_line_id', '=', so_line_ids[0]),
-                                                             ('in_out_updated', '=', False),
-                                                             ('picking_id.type', '=', 'out'),
-                                                             ('processed_stock_move', '=', False),
-                                                             ], order="state desc", context=context)
-                            # list of matching out moves
-                            integrity_check = []
-                            for move in self.browse(cr, uid, move_ids, context=context):
-                                pick = move.picking_id
-                                cond1 = move.picking_id.subtype == 'standard'
-                                cond2 = move.product_qty != 0.00 and pick.subtype == 'picking' and not pick.backorder_id and pick.state == 'draft'
-                                # move from draft picking or standard picking
-                                if cond2 or cond1:
-                                    integrity_check.append(move)
-                            # return the first one matching
-                            if integrity_check:
-                                if all([not move.processed_stock_move for move in integrity_check]):
-                                    # the out stock moves (draft picking or std out) have not yet been processed, we can therefore update them
-                                    res[obj.id].update({
-                                        'move_id': integrity_check[0].id,
-                                        'moves': integrity_check,
-                                        'picking_id': integrity_check[0].picking_id.id,
-                                        'picking_version': integrity_check[0].picking_id.update_version_from_in_stock_picking,
-                                        'quantity': integrity_check[0].product_qty,
-                                    })
-                                else:
-                                    # the corresponding OUT move have been processed completely or partially,, we do not update the OUT
-                                    msg_log = _('The Stock Move %s from %s has already been processed and is '
-                                                'therefore not updated.') % (integrity_check[0].name, integrity_check[0].picking_id.name)
-                                    self.log(cr, uid, integrity_check[0].id, msg_log)
+                if obj.purchase_line_id and obj.purchase_line_id.linked_sol_id:
+                    # find the corresponding OUT move
+                    move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']),
+                                                     ('state', 'in', ('assigned', 'confirmed')),
+                                                     ('sale_line_id', '=', obj.purchase_line_id.linked_sol_id.id),
+                                                     ('in_out_updated', '=', False),
+                                                     ('picking_id.type', '=', 'out'),
+                                                     ('processed_stock_move', '=', False),
+                                                     ], order="state desc", context=context)
+                    # list of matching out moves
+                    integrity_check = []
+                    for move in self.browse(cr, uid, move_ids, context=context):
+                        pick = move.picking_id
+                        cond1 = move.picking_id.subtype == 'standard'
+                        cond2 = move.product_qty != 0.00 and pick.subtype == 'picking' and not pick.backorder_id and pick.state == 'draft'
+                        # move from draft picking or standard picking
+                        if cond2 or cond1:
+                            integrity_check.append(move)
+                    # return the first one matching
+                    if integrity_check:
+                        if all([not move.processed_stock_move for move in integrity_check]):
+                            # the out stock moves (draft picking or std out) have not yet been processed, we can therefore update them
+                            res[obj.id].update({
+                                'move_id': integrity_check[0].id,
+                                'moves': integrity_check,
+                                'picking_id': integrity_check[0].picking_id.id,
+                                'picking_version': integrity_check[0].picking_id.update_version_from_in_stock_picking,
+                                'quantity': integrity_check[0].product_qty,
+                            })
+                        else:
+                            # the corresponding OUT move have been processed completely or partially,, we do not update the OUT
+                            msg_log = _('The Stock Move %s from %s has already been processed and is '
+                                        'therefore not updated.') % (integrity_check[0].name, integrity_check[0].picking_id.name)
+                            self.log(cr, uid, integrity_check[0].id, msg_log)
 
             else:
                 # we are looking for corresponding IN from on_order purchase order
