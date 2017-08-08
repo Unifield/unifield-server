@@ -1136,17 +1136,9 @@ You cannot choose this supplier because some destination locations are not avail
             ids = [ids]
         res = super(stock_picking, self).action_done(cr, uid, ids, context=context)
 
+        move_obj = self.pool.get('stock.move')
         # In case of processed IN, we close the linked PO lines:
         wf_service = netsvc.LocalService("workflow")
-        for incoming_shipment in self.browse(cr, uid, ids, context=context):
-            if incoming_shipment.type == 'in': # ensure we deals with an IN
-                for stock_move in incoming_shipment.move_lines:
-                    if stock_move.purchase_line_id: # if there is a linked PO line we close it
-                        wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
-                        # check for a linked PICK and run "check availability" on it:
-                        if stock_move.purchase_line_id.linked_sol_id:
-                            linked_pick = self.pool.get('stock.picking').search(cr, uid, [('sale_id', '=', stock_move.purchase_line_id.linked_sol_id.order_id.id)], context=context)
-                            self.pool.get('stock.picking').action_assign(cr, uid, linked_pick, context=context)
 
         if res:
             for sp in self.browse(cr, uid, ids):
@@ -1156,6 +1148,12 @@ You cannot choose this supplier because some destination locations are not avail
                 # If the IN is linked to a PO and has a backorder not closed, change the subflow
                 # of the PO to the backorder
                 if sp.type == 'in' and sp.purchase_id:
+                    for stock_move in sp.move_lines:
+                        if stock_move.purchase_line_id:
+                            if not move_obj.search_exist(cr, uid, [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'not in', ['cancel', 'done'])], context=context):
+                                # all in lines processed for this po line
+                                wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
+
                     po_id = sp.purchase_id.id
                     bo_id = False
                     if sp.backorder_id and sp.backorder_id.state not in ('done', 'cancel'):
