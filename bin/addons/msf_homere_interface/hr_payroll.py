@@ -372,7 +372,7 @@ class hr_payroll(osv.osv):
             'view_id': [view_id],
             'context': context,
             'domain': domain,
-            'target': 'current',
+            'target': 'self',  # don't open a new tab
         }
 
 hr_payroll()

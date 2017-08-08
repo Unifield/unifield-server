@@ -103,23 +103,24 @@ class hr_payroll_validation(osv.osv_memory):
         self.check(cr, uid, context=context)  # check expense lines
         account_partner_not_compat_log = []
         for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, [
-                'name', 'ref', 'partner_id', 'account_id', 'amount', ]):
+                'name', 'ref', 'partner_id', 'account_id', 'amount', 'employee_id', ]):
 
             account_id = line.get('account_id', False) and line.get('account_id')[0] or False
             if not account_id:
                 raise osv.except_osv(_('Error'), _('No account found!'))
             account = self.pool.get('account.account').browse(cr, uid, account_id)
 
-            if not account.is_analytic_addicted:
-                if not self.pool.get('account.account').is_allowed_for_thirdparty(
-                        cr, uid, [account_id],
-                        partner_id=line['partner_id'] and line['partner_id'][0] or False,
-                        context=context)[account_id]:
-                    entry_msg = "%s - %s / %0.02f / %s / %s" % (
-                        line['name'] or '',  line['ref'] or '',
-                        round(line['amount'], 2),
-                        line['account_id'][1], line['partner_id'] and line['partner_id'][1] or '', )
-                    account_partner_not_compat_log.append(entry_msg)
+            # if not account.is_analytic_addicted:
+            if not self.pool.get('account.account').is_allowed_for_thirdparty(
+                    cr, uid, [account_id],
+                    partner_id=line['partner_id'] and line['partner_id'][0] or False,
+                    employee_id=line['employee_id'] and line['employee_id'][0] or False,
+                    context=context)[account_id]:
+                entry_msg = "%s - %s / %0.02f / %s / %s" % (
+                    line['name'] or '',  line['ref'] or '',
+                    round(line['amount'], 2),
+                    line['account_id'][1], line['partner_id'] and line['partner_id'][1] or '', )
+                account_partner_not_compat_log.append(entry_msg)
         if account_partner_not_compat_log:
             account_partner_not_compat_log.insert(0,
                                                   _('Following counterpart entries have account/partner not compatible:'))
