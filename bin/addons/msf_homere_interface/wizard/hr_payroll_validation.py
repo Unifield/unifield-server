@@ -35,6 +35,8 @@ class hr_payroll_validation(osv.osv_memory):
 
     def check(self, cr, uid, context=None):
         # US-672/2 expenses lines account/partner compatible check pass
+        if context is None:
+            context = {}
         line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [
             ('state', '=', 'draft'),
             ('account_id.is_analytic_addicted', '=', True)
@@ -42,21 +44,24 @@ class hr_payroll_validation(osv.osv_memory):
         if not line_ids:
             raise osv.except_osv(_('Warning'), _('No draft line found!'))
 
-        res = ''
+        warning_msg = ''
         account_obj = self.pool.get('account.account')
         account_partner_not_compat_log = []
         for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, [
             'name', 'ref', 'account_id',
-                'partner_id', 'employee_id', 'journal_id', ]):
+                'partner_id', 'employee_id', ]):
+            partner_id = line['partner_id'] and line['partner_id'][0] or False
+            employee_id = line['employee_id'] and line['employee_id'][0] or False
+            line['account_id'] and account_obj.check_type_for_specific_treatment(cr, uid, [line['account_id'][0]],
+                                                                                 partner_id=partner_id, employee_id=employee_id,
+                                                                                 context=context)
             if line['account_id'] \
                     and not account_obj.is_allowed_for_thirdparty(cr, uid,
                                                                   line['account_id'][0],
-                                                                  employee_id=line['employee_id'] and line['employee_id'][0] or False,
-                                                                  transfer_journal_id=line['journal_id'] and line['journal_id'][0] or False,
-                                                                  partner_id=line['partner_id'] and line['partner_id'][0] or False,
+                                                                  employee_id=employee_id,
+                                                                  partner_id=partner_id,
                                                                   context=context)[line['account_id'][0]]:
-                partner = line['employee_id'] or line['journal_id'] \
-                    or line['partner_id']
+                partner = line['employee_id'] or line['partner_id']
                 entry_msg = "%s - %s: %s / %s" % (
                     line['name'] or '', line['ref'] or '',
                     line['account_id'][1] or '',
@@ -66,8 +71,9 @@ class hr_payroll_validation(osv.osv_memory):
         if account_partner_not_compat_log:
             account_partner_not_compat_log.insert(0,
                                                   _('Following entries have account/partner not compatible:'))
-            res = "\n".join(account_partner_not_compat_log)
-        return res
+            warning_msg = "\n".join(account_partner_not_compat_log)
+        if warning_msg:
+            raise osv.except_osv(_('Warning'), warning_msg)
 
     def button_validate(self, cr, uid, ids, context=None):
         """
@@ -76,6 +82,7 @@ class hr_payroll_validation(osv.osv_memory):
         # Some verifications
         if not context:
             context = {}
+        acc_obj = self.pool.get('account.account')
         # Retrieve some values
         line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft')])
         if not line_ids:
@@ -108,19 +115,24 @@ class hr_payroll_validation(osv.osv_memory):
             account_id = line.get('account_id', False) and line.get('account_id')[0] or False
             if not account_id:
                 raise osv.except_osv(_('Error'), _('No account found!'))
-            account = self.pool.get('account.account').browse(cr, uid, account_id)
-
-            # if not account.is_analytic_addicted:
-            if not self.pool.get('account.account').is_allowed_for_thirdparty(
-                    cr, uid, [account_id],
-                    partner_id=line['partner_id'] and line['partner_id'][0] or False,
-                    employee_id=line['employee_id'] and line['employee_id'][0] or False,
-                    context=context)[account_id]:
-                entry_msg = "%s - %s / %0.02f / %s / %s" % (
-                    line['name'] or '',  line['ref'] or '',
-                    round(line['amount'], 2),
-                    line['account_id'][1], line['partner_id'] and line['partner_id'][1] or '', )
-                account_partner_not_compat_log.append(entry_msg)
+            account = acc_obj.browse(cr, uid, account_id, context=context)
+            if not account.is_analytic_addicted:
+                partner_id = line['partner_id'] and line['partner_id'][0] or False
+                employee_id = line['employee_id'] and line['employee_id'][0] or False
+                acc_obj.check_type_for_specific_treatment(cr, uid, [account_id], partner_id=partner_id,
+                                                          employee_id=employee_id, context=None)
+                if not acc_obj.is_allowed_for_thirdparty(
+                        cr, uid, [account_id],
+                        partner_id=partner_id,
+                        employee_id=employee_id,
+                        context=context)[account_id]:
+                    partner_txt = (line['partner_id'] and line['partner_id'][1]) or \
+                                  (line['employee_id'] and line['employee_id'][1]) or ''
+                    entry_msg = "%s - %s / %0.02f / %s / %s" % (
+                        line['name'] or '',  line['ref'] or '',
+                        round(line['amount'], 2),
+                        line['account_id'][1], partner_txt, )
+                    account_partner_not_compat_log.append(entry_msg)
         if account_partner_not_compat_log:
             account_partner_not_compat_log.insert(0,
                                                   _('Following counterpart entries have account/partner not compatible:'))
@@ -147,7 +159,7 @@ class hr_payroll_validation(osv.osv_memory):
 
         # Create lines into this move
         for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, ['amount', 'cost_center_id', 'funding_pool_id', 'free1_id', 
-                                                                             'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'journal_id', 'account_id', 'period_id', 
+                                                                             'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'account_id', 'period_id',
                                                                              'destination_id']):
             line_vals = {}
             # fetch amounts
@@ -162,7 +174,7 @@ class hr_payroll_validation(osv.osv_memory):
             account_id = line.get('account_id', False) and line.get('account_id')[0] or False
             if not account_id:
                 raise osv.except_osv(_('Error'), _('No account found!'))
-            account = self.pool.get('account.account').browse(cr, uid, account_id)
+            account = acc_obj.browse(cr, uid, account_id, context=context)
             # End of Note
             # create new distribution (only for analytic-a-holic accounts)
             distrib_id = False
@@ -212,7 +224,6 @@ class hr_payroll_validation(osv.osv_memory):
                 'reference': line.get('ref', ' '), # a backspace is mandatory for salary lines! Do not remove this backspace.
                 'partner_id': line.get('partner_id', False) and line.get('partner_id')[0] or False,
                 'employee_id': line.get('employee_id', False) and line.get('employee_id')[0] or False,
-                'transfer_journal_id': line.get('journal_id', False) and line.get('journal_id')[0] or False,
                 # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
                 'account_id': account_id,
                 # End of Note

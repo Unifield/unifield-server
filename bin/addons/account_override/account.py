@@ -579,6 +579,39 @@ class account_account(osv.osv):
             context.update({'allowed_partner_field': allowed_partner_field})
         return allowed_partner_field
 
+    def _display_account_partner_compatibility_error(self, cr, uid, not_compatible_ids, context):
+        """
+        Raises an error with the list of the accounts which are incompatible with the partner used
+        """
+        if not_compatible_ids:
+            errors = [_('following accounts are not compatible with partner:')]
+            for r in self.pool.get('account.account').browse(cr, uid, not_compatible_ids,
+                                                             fields_to_fetch=['code', 'name'], context=context):
+                errors.append(_('%s - %s') % (r.code, r.name))
+            raise osv.except_osv(_('Error'), "\n- ".join(errors))
+
+    def check_type_for_specific_treatment(self, cr, uid, account_ids, partner_id=False, employee_id=False,
+                                          journal_id=False, context=None):
+        """
+        Checks if the Third parties and accounts in parameter are compatible regarding the "Type for specific treatment"
+        of the accounts (raises an error if not)
+        """
+        if isinstance(account_ids, (int, long)):
+            account_ids = [account_ids]
+        if context is None:
+            context = {}
+        acc_obj = self.pool.get('account.account')
+        not_compatible_ids = []
+        for acc_id in acc_obj.browse(cr, uid, account_ids, fields_to_fetch=['type_for_register'], context=context):
+            acc_type = acc_id.type_for_register
+            transfer_not_ok = acc_type in ['transfer', 'transfer_same'] and (not journal_id or partner_id or employee_id)
+            advance_not_ok = acc_type == 'advance' and (not employee_id or journal_id or partner_id)
+            dp_payroll_not_ok = acc_type in ['down_payment', 'payroll'] and (not partner_id or journal_id or employee_id)
+            if transfer_not_ok or advance_not_ok or dp_payroll_not_ok:
+                not_compatible_ids.append(acc_id.id)
+        if not_compatible_ids:
+            self._display_account_partner_compatibility_error(cr, uid, not_compatible_ids, context)
+
     def is_allowed_for_thirdparty(self, cr, uid, ids, partner_type=False, partner_txt=False, employee_id=False,
                                   transfer_journal_id=False, partner_id=False, from_vals=False, raise_it=False, context=None):
         """
@@ -620,11 +653,7 @@ class account_account(osv.osv):
         if raise_it:
             not_compatible_ids = [ id for id in res if not res[id] ]
             if not_compatible_ids:
-                errors = [_('following accounts are not compatible with partner:')]
-                for r in self.pool.get('account.account').browse(cr, uid, not_compatible_ids,
-                                                                 fields_to_fetch=['code', 'name'], context=context):
-                    errors.append(_('%s - %s') % (r.code, r.name))
-                raise osv.except_osv(_('Error'), "\n- ".join(errors))
+                self._display_account_partner_compatibility_error(cr, uid, not_compatible_ids, context)
         return res
 
     def activate_destination(self, cr, uid, ids, context=None):
