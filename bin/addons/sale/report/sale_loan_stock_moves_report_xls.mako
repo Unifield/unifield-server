@@ -168,18 +168,17 @@
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
-                %if True: #getQtyBalance(o)>0
-                ## <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQtyBalance(o)|x}</Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
+                % if o.balance:
+                <Cell ss:StyleID="line_right"><Data ss:Type="String">${o.balance|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 %endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.origin|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.origin.split(":")[0]|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.purchase_line_id.sync_order_line_db_id or o.sale_line_id.sync_order_line_db_id or ''|x}</Data></Cell>
                 % if o.price_unit:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 2)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 3)|x}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.product_id.standard_price, 2)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.product_id.standard_price, 3)|x}</Data></Cell>
                 % endif
                 % if o.price_currency_id.name:
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.price_currency_id.name|x}</Data></Cell>
@@ -187,9 +186,9 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.product_id.currency_id.name or ''|x}</Data></Cell>
                 % endif
                 % if o.price_unit:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 2) * getQty(o)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 3) * getQty(o)|x}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.product_id.standard_price, 2) * getQty(o)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.product_id.standard_price, 3) * getQty(o)|x}</Data></Cell>
                 % endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.state|x}</Data></Cell>
             </Row>

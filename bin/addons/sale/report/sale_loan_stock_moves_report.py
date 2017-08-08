@@ -42,15 +42,6 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
             'getInstance': self._get_instance,
         })
 
-    def _get_moves(self, report):
-        '''
-        Return the moves for the report
-        '''
-        for move in report.sm_ids:
-            yield self.pool.get('stock.move').browse(self.cr, self.uid, move)
-
-        raise StopIteration
-
     def _is_qty_out(self, move):
         '''
         Check if the move is an in or an out
@@ -73,6 +64,40 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                                    move.product_id.uom_id.id)
 
         return qty
+
+    def _get_moves(self, report):
+        '''
+        Return the moves for the report and set their qty balance
+        '''
+        result = []
+        for move in report.sm_ids:
+            result.append(self.pool.get('stock.move').browse(self.cr, self.uid, move))
+
+        result = sorted(result, key=lambda sm: (sm['product_id'], sm['origin'].split(":")[-1], sm['create_date']))
+        balance = 0
+        for index, move in enumerate(result, start=0):
+            move.balance = balance
+            if self._is_qty_out(move):
+                balance -= self._get_qty(move)
+            else:
+                balance += self._get_qty(move)
+
+            if move is result[-1]:
+                setattr(move, 'balance', balance)
+                balance = 0
+            else:
+                if move.origin.split(":")[-1] not in result[index+1].origin.split(":")[-1] and \
+                        result[index + 1].origin.split(":")[-1] not in move.origin.split(":")[-1]:
+                    setattr(move, 'balance', balance)
+                    balance = 0
+                else:
+                    if move.product_id.id != result[index+1].product_id.id:
+                        setattr(move, 'balance', balance)
+                        balance = 0
+                    else:
+                        setattr(move, 'balance', 0)
+
+        return result
 
     def _get_instance(self):
         '''

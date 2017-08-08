@@ -40,6 +40,21 @@ class sale_loan_stock_moves(osv.osv_memory):
             ('hidden', 'Hidden')
         ]
 
+    def get_stock_moves_origins(self, cr, uid, context=None):
+        sm_obj = self.pool.get('stock.move')
+        sm_ids = sm_obj.search(cr, uid, [('reason_type_id.name', '=', 'Loan'),
+                                          '|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
+                                          ('location_dest_id.usage', 'in', ['customer', 'supplier'])], context=context)
+        sm_list = sm_obj.browse(cr, uid, sm_ids, context=context)
+        origin_list = []
+        for move in sm_list:
+            if move.purchase_line_id:
+                origin_list.append(move.purchase_line_id.sync_order_line_db_id)
+            else:
+                origin_list.append(move.sale_line_id.sync_order_line_db_id)
+
+        return origin_list
+
     _columns = {
         'start_date': fields.date(
             string='Start date',
@@ -65,13 +80,22 @@ class sale_loan_stock_moves(osv.osv_memory):
             'product.product',
             string='Product Ref.',
         ),
-        'move_id': fields.many2one(
-            'stock.move',
-            string='Move Ref.',
-        ),
         'state': fields.selection(
             MOVE_STATE,
             string='Status'
+        ),
+        'po_ref': fields.many2one(
+            'purchase.order',
+            string='PO Ref.',
+        ),
+        'fo_ref': fields.many2one(
+            'sale.order',
+            string='FO Ref.',
+        ),
+        'origin_ref': fields.selection(
+            get_stock_moves_origins,
+            # [],
+            string='Origin Ref.',
         ),
         'sm_ids': fields.text(
             string='Stock Moves',
@@ -95,8 +119,6 @@ class sale_loan_stock_moves(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # type_loan_ids = self.pool.get('stock.move')._get_type_donation_ids(cr, uid)
-
         for wizard in self.browse(cr, uid, ids, context=context):
             sm_domain = []
 
@@ -104,36 +126,46 @@ class sale_loan_stock_moves(osv.osv_memory):
             sm_domain += ['|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
                           ('location_dest_id.usage', 'in', ['customer', 'supplier'])]
 
-            if wizard.move_id:
-                sm_domain.append(('move_id', '=', wizard.move_id))
+            if wizard.start_date:
+                sm_domain.append(('date', '>=', wizard.start_date))
 
-                sm_ids = [wizard.move_id.id]
-            else:
-                if wizard.start_date:
-                    sm_domain.append(('date', '>=', wizard.start_date))
+            if wizard.end_date:
+                sm_domain.append(('date', '<=', wizard.end_date))
 
-                if wizard.end_date:
-                    sm_domain.append(('date', '<=', wizard.end_date))
+            if wizard.partner_id:
+                sm_domain.append(('partner_id', '=', wizard.partner_id.id))
 
-                if wizard.partner_id:
-                    sm_domain.append(('partner_id', '=', wizard.partner_id.id))
+            if wizard.partner_type:
+                sm_domain.append(('partner_id.partner_type', '=', wizard.partner_type))
 
-                if wizard.partner_type:
-                    sm_domain.append(('partner_id.partner_type', '=', wizard.partner_type))
+            if wizard.product_id:
+                sm_domain.append(('product_id', '=', wizard.product_id.id))
 
-                if wizard.product_id:
-                    sm_domain.append(('product_id', '=', wizard.product_id.id))
+            if wizard.state:
+                sm_domain.append(('state', '=', wizard.state))
 
-                if wizard.state:
-                    sm_domain.append(('state', '=', wizard.state))
+            if wizard.po_ref:
+                if wizard.po_ref.origin:
+                    sm_domain.append(('origin', 'like', wizard.po_ref.origin))
+                else:
+                    sm_domain.append(('origin', 'like', wizard.po_ref.name))
 
-                sm_ids = sm_obj.search(cr, uid, sm_domain, context=context)
+            if wizard.fo_ref:
+                if wizard.fo_ref.origin:
+                    sm_domain.append(('origin', 'like', wizard.fo_ref.origin))
+                else:
+                    sm_domain.append(('origin', 'like', wizard.fo_ref.name))
 
-                if not sm_ids:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('No data found with these parameters'),
-                    )
+            if wizard.origin_ref:
+                sm_domain.append(('origin', '=', wizard.origin))
+
+            sm_ids = sm_obj.search(cr, uid, sm_domain, context=context)
+
+            if not sm_ids:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('No data found with these parameters'),
+                )
 
             self.write(cr, uid, [wizard.id], {'sm_ids': sm_ids}, context=context)
 
