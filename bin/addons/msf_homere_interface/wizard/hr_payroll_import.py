@@ -229,6 +229,7 @@ class hr_payroll_import(osv.osv_memory):
         employee_identification_id = ''
         if third and third[0] and not is_payroll_rounding:
             # If Third Party field is filled, check if it matches either a Supplier or an Employee
+            # (inactive partners are ignored by default)
             partner_id = partner_obj.search(cr, uid, [('name', '=ilike', third[0])], order='id', limit=1, context=context)
             partner_id = partner_id and partner_id[0] or False
             if not partner_id:
