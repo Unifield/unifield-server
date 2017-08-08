@@ -27,7 +27,6 @@ import threading
 import time
 import sys
 import platform
-from tools.translate import _
 import addons
 import ir
 import netsvc
@@ -41,6 +40,7 @@ import datetime
 import csv
 import re
 from osv import osv
+from tools.translate import _
 from cStringIO import StringIO
 from tempfile import NamedTemporaryFile
 from updater import get_server_version
@@ -208,38 +208,19 @@ class db(netsvc.ExportService):
         self.actions[id]['thread'] = create_thread
         return id
 
-    def modules_install(self, cr, pool, uid, context=None):
-        if context is None:
-            context = {}
-
-        try:
-            module_obj = pool.get('ir.module.module')
-            creation_obj = pool.get('instance.auto.creation')
-            creation_id = creation_obj.search(cr, uid, [('dbname', '=',
-                                              cr.dbname)], context=context)[0]
-            upgrade_obj = pool.get('base.module.upgrade')
-            for module_name in ['msf_profile', 'sync_so', 'update_client']:
-                module_id = module_obj.search(cr, 1, [('name', '=', module_name)])
-                module_obj.button_install(cr, 1, module_id)
-                creation_obj.write(cr, 1, creation_id,
-                        {'state': '%s_installation' % module_name}, context=context)
-                upgrade_obj.upgrade_module(cr, 1, None, None)
-                creation_obj.write(cr, 1, creation_id,
-                        {'state': '%s_installed' % module_name}, context=context)
-                cr.commit()
-        finally:
-            cr.close()
-
-    def exp_instance_auto_creation(self, db_name, lang, user_password='admin'):
+    def exp_instance_auto_creation(self, db_name, lang, sync_login, sync_pwd, sync_host, sync_port, sync_protocol, sync_server, oc):
         db, pool = pooler.get_db_and_pool(db_name)
         cr = db.cursor()
 
         creation_obj = pool.get('instance.auto.creation')
-        creation_obj.create(cr, 1, {'dbname': cr.dbname})
-        # install msf_profile
+        existing_auto_creation = creation_obj.search(cr, 1, [('dbname', '=', cr.dbname)])
+        if existing_auto_creation:
+            creation_id = existing_auto_creation[0]
+        else:
+            creation_id = creation_obj.create(cr, 1, {'dbname': cr.dbname})
 
-        create_thread = threading.Thread(target=self.modules_install,
-                                         args=(cr, pool, 1))
+        create_thread = threading.Thread(target=creation_obj.background_install,
+                                         args=(cr, pool, 1, creation_id, lang, sync_login, sync_pwd, sync_host, sync_port, sync_protocol, sync_server, oc))
         create_thread.start()
 
         # after 4 seconds, the progress bar is displayed
@@ -257,10 +238,11 @@ class db(netsvc.ExportService):
                 nb_state = len(pool.get('instance.auto.creation')._columns['state'].selection) - 1
                 percentage_per_step = 1/float(nb_state)
                 return _('Empty database creation in progress...\n'), percentage_per_step, 'draft'
-            res = creation_obj.read(cr, 1, creation_id, ['resume', 'progress', 'state'])
+            res = creation_obj.read(cr, 1, creation_id, ['resume', 'progress',
+                                                         'state', 'error'])
         finally:
             cr.close()
-        return res['resume'], res['progress'], res['state']
+        return res['resume'], res['progress'], res['state'], res['error']
 
     def exp_check_super_password_validity(self, password):
         try:
