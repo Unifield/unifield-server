@@ -80,6 +80,29 @@ class hr_payroll_import(osv.osv_memory):
         'state': 'simu',
     }
 
+    def _check_on_employee(self, cr, uid, field, employee_identification_id, debit, credit, account, is_counterpart, context=None):
+        """
+        Checks that the employee corresponding to the employee_identification_id exists.
+        Returns the employee id if it exists, else False.
+        Raises an error if:
+        - the employee doesn't exist and the account is analytic-a-holic
+        - the same Identification ID matches several employees
+        """
+        if context is None:
+            context = {}
+        employee_obj = self.pool.get('hr.employee')
+        employee_ids = employee_obj.search(cr, uid,
+                                           [('identification_id', '=', employee_identification_id)],
+                                           context=context, order='NO_ORDER')
+        if not employee_ids and account.is_analytic_addicted and not is_counterpart:
+            employee_name = ustr(field[0]).replace(employee_identification_id, '')
+            raise osv.except_osv(_('Error'), _('No employee found for this code: %s (%s).\nDEBIT: %s.\nCREDIT: %s.') % (
+                                   employee_identification_id, employee_name, debit, credit,))
+        if employee_ids and len(employee_ids) > 1:
+            raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (
+                                   employee_identification_id,))
+        return employee_ids and employee_ids[0] or False
+
     def update_payroll_entries(self, cr, uid,
                                data='', field='', date_format='%d/%m/%Y',
                                wiz_state='simu',
@@ -103,6 +126,7 @@ class hr_payroll_import(osv.osv_memory):
         # Prepare some values
         vals = {}
         employee_id = False
+        partner_id = False
         line_date = False
         name = ''
         ref = ''
@@ -111,6 +135,7 @@ class hr_payroll_import(osv.osv_memory):
         # US-671: This flag is used to indicate whether the DEST and CC of employee needs to be updated
         to_update_employee = False
         error_message = ""
+        partner_obj = self.pool.get('res.partner')
 
         if len(data) == 13:
             accounting_code, description, second_description, third, expense, receipt, project, financing_line, \
@@ -200,22 +225,25 @@ class hr_payroll_import(osv.osv_memory):
             if not self.pool.get('account.account').search(cr, uid, ACCOUNT_RESTRICTED_AREA['payroll_lines'] + [('id', '=', account.id)]):
                 raise osv.except_osv(_('Warning'), _('This account is not authorized: %s') % (account.code,))
 
-        # If account is analytic-a-holic, fetch employee ID
+        # Check on partner
+        employee_identification_id = ''
+        if third and third[0] and not is_payroll_rounding:
+            # If Third Party field is filled, check if it matches either a Supplier or an Employee
+            partner_id = partner_obj.search(cr, uid, [('name', '=ilike', third[0])], order='id', limit=1, context=context)
+            partner_id = partner_id and partner_id[0] or False
+            if not partner_id:
+                employee_identification_id = ustr(third[0]).split(' ')[-1]
+                employee_id = self._check_on_employee(cr, uid, field, employee_identification_id, debit, credit, account, is_counterpart, context)
+        elif second_description and second_description[0] and not is_payroll_rounding:
+            # if Third Party is empty, check if Secondary Description field matches an employee
+            employee_identification_id = ustr(second_description[0]).split(' ')[-1]
+            employee_id = self._check_on_employee(cr, uid, field, employee_identification_id, debit, credit, account, is_counterpart, context)
+
         if account.is_analytic_addicted:
-            if second_description and second_description[0] and not is_payroll_rounding:
+            if employee_id:
                 # Create description
                 name = 'Salary ' + str(time.strftime('%b %Y', time.strptime(date[0], date_format)))
-
                 if not is_counterpart:
-                    # fetch employee ID
-                    employee_identification_id = ustr(second_description[0]).split(' ')[-1]
-                    employee_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', employee_identification_id)])
-                    if not employee_ids:
-                        employee_name = ustr(second_description[0]).replace(employee_identification_id, '')
-                        raise osv.except_osv(_('Error'), _('No employee found for this code: %s (%s).\nDEBIT: %s.\nCREDIT: %s.') % (employee_identification_id, employee_name, debit, credit,))
-                    if len(employee_ids) > 1:
-                        raise osv.except_osv(_('Error'), _('More than one employee have the same identification ID: %s') % (employee_identification_id,))
-                    employee_id = employee_ids[0]
                     # US_374: Add Employee number to description
                     name += " - " + employee_identification_id
                 # Create reference
@@ -265,6 +293,7 @@ class hr_payroll_import(osv.osv_memory):
             'document_date': line_date,
             'period_id': period_id,
             'employee_id': employee_id,
+            'partner_id': partner_id,
             'name': name,
             'ref': ref,
             'account_id': account.id,
