@@ -290,9 +290,7 @@ class Database(BaseController):
                         'title' : e.title}
             return self.create()
         except Exception as e:
-            import pdb; pdb.set_trace()
             self.msg = {'message':_("Could not create database.")}
-
             return self.create()
 
         if ok:
@@ -314,13 +312,13 @@ class Database(BaseController):
         config = ConfigParser.ConfigParser()
         config.read(config_file_path)
         dbname = config.get('instance', 'db_name')
-        try:
-            self.resume, self.progress, self.state = rpc.session.execute_db('creation_get_resume_progress', dbname)
-        except Exception as e:
-            import pdb; pdb.set_trace()
-        my_dict = {'resume': self.resume,
-                   'progress': self.progress,
-                   'state': self.state}
+        self.resume, self.progress, self.state, self.error = rpc.session.execute_db('creation_get_resume_progress', dbname)
+        my_dict = {
+            'resume': self.resume,
+            'progress': self.progress,
+            'state': self.state,
+            'error': self.error,
+        }
         import json
         return json.dumps(my_dict)
 
@@ -462,7 +460,6 @@ class Database(BaseController):
                     else:
                         time.sleep(1)
                 except Exception as e:
-                    import pdb; pdb.set_trace()
                     raise DatabaseCreationCrash()
         except DatabaseCreationCrash:
             self.msg = {'message': (_("The server crashed during installation.\nWe suggest you to drop this database.")),
@@ -471,44 +468,63 @@ class Database(BaseController):
             self.msg = {'message': _('Bad super admin password'),
                         'title' : e.title}
 
-    def background_auto_creation(self, password, dbname, admin_password):
-        # create database
-        self.database_creation(password, dbname, admin_password)
-        # start db auto creation in background
+    def background_auto_creation(self, password, dbname, admin_password,
+            db_exists, lang, sync_user, sync_pwd, sync_host, sync_port, sync_protocol,
+            sync_server, oc):
+        if not db_exists:
+            # create database
+            self.database_creation(password, dbname, admin_password)
 
-        # install msf_profile
-        rpc.session.execute_db('instance_auto_creation', password, dbname, 'en_US', admin_password)
-        self.resume, self.progress, self.state = rpc.session.execute_db('creation_get_resume_progress', dbname)
-
+        rpc.session.execute_db('instance_auto_creation', password, dbname,
+                lang, sync_user, sync_pwd, sync_host, sync_port, sync_protocol,
+                sync_server, oc)
+        self.resume, self.progress, self.state, self.error = rpc.session.execute_db('creation_get_resume_progress', dbname)
 
     @expose()
     @validate(form=_FORMS['auto_create'])
     @error_handler(auto_create)
     def do_auto_create(self, password, **kw):
         self.msg = {}
-        self.resume = _('Empty database creation in progress...\n')
-        self.progress = 0.1
+        self.progress = 0.05
         self.state = 'draft'
         try:
             config_file_name = 'uf_auto_install.conf'
             root_path = os.path.split(paths.root())[0]
             config_file_path = os.path.join(root_path, 'UFautoInstall', config_file_name)
             self.check_config_file(config_file_path)
+            if self.msg:
+                return self.auto_create()
             config = ConfigParser.ConfigParser()
             config.read(config_file_path)
             dbname = config.get('instance', 'db_name')
             admin_password = confirm_password = config.get('instance', 'admin_password')
+            lang = config.get('instance', 'lang')
+            sync_user = config.get('instance', 'sync_user')
+            sync_pwd = config.get('instance', 'sync_pwd')
+            sync_host = config.get('instance', 'sync_host')
+            sync_port = config.get('instance', 'sync_port')
+            sync_protocol = config.get('instance', 'sync_protocol')
+            sync_server = config.get('instance', 'sync_server')
+            oc = config.get('instance', 'oc').lower()
+            db_exists = False
 
             # check the database not already exists
             if dbname in get_db_list():
-                raise DatabaseExist
+                db_exists = True
+                self.resume = _('Database with this name exists, resume from the last point...\n')
+            else:
+                self.resume = _('Empty database creation in progress...\n')
+                #raise DatabaseExist
 
-            create_thread = threading.Thread(target=self.background_auto_creation, 
-                                             args=(password, dbname, admin_password))
+            create_thread = threading.Thread(target=self.background_auto_creation,
+                                             args=(password, dbname,
+                                                   admin_password, db_exists, lang, sync_user,
+                                                   sync_pwd, sync_host,
+                                                   sync_port, sync_protocol,
+                                                   sync_server, oc))
             create_thread.start()
-            # after 4 seconds, the progress bar is displayed                                                                                
-            create_thread.join(1) 
-
+            # after 4 seconds, the progress bar is displayed
+            create_thread.join(1)
 
             # install language
 
@@ -521,11 +537,11 @@ class Database(BaseController):
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}
         except DatabaseExist:
-            self.msg = {'message': ustr(_('The database already exist')),
-                        'title': 'Database exist'}
+            pass
+            #self.msg = {'message': ustr(_('The database already exist')),
+            #            'title': 'Database exist'}
         except Exception as e:
-            import pdb; pdb.set_trace()
-            self.msg = {'message' : _("Could not auto create database")}
+            self.msg = {'message' : _("Could not auto create database: %s") % e}
 
         if self.msg:
             return self.auto_create()

@@ -12,12 +12,32 @@
                     dataType: "json",
                     url: 'get_auto_create_progress',
                     success: function (data) {
-                        $("div.auto_creation_resume textarea").val(data.resume);
-                        $("div.progressbar").text((data.progress*100).toPrecision(3)+'%');
-                        $("div.progressbar").css({"width":(data.progress*100).toPrecision(3)+'%'});
-                        $("div.my_state").text(data.state);
-                        if (data.state === 'done') {
-                            clearInterval(interval);
+
+                        if (data){
+                            if (data.error){
+                                clearInterval(interval);
+                                var $error_tbl = jQuery('<table class="errorbox">');
+                                $error_tbl.append('<tr><td style="padding: 4px 2px;" width="10%"><img src="/openerp/static/images/warning.png"></td><td class="error_message_content">' + data.error + '</td></tr>');
+                                $error_tbl.append('<tr><td style="padding: 0 8px 5px 0; vertical-align:top;" align="right" colspan="2"><a class="button-a" id="error_btn" onclick="$error_tbl.dialog(\'close\');">OK</a></td></tr>');
+
+                                jQuery(document).ready(function () {
+                                    jQuery(document.body).append($error_tbl);
+                                    var error_dialog_options = {
+                                        modal: true,
+                                        resizable: false,
+                                        title: '<div class="error_message_header">Error</div>'
+                                    };
+                                    $error_tbl.dialog(error_dialog_options);
+                                })
+
+                            };
+                            $("div.auto_creation_resume textarea").val(data.resume);
+                            $("div.progressbar").text((data.progress*100).toPrecision(3)+'%');
+                            $("div.progressbar").css({"width":(data.progress*100).toPrecision(3)+'%'});
+                            $("div.my_state").text(data.state);
+                            if (data.state === 'done') {
+                                clearInterval(interval);
+                            };
                         }
                     },
                     error: function (xhr, status, error) {
@@ -49,7 +69,7 @@
         </div>
 
         <div class="auto_creation_resume">
-            <textarea rows="10" cols="80">${resume}</textarea>
+            <textarea rows="20" cols="80">${resume}</textarea>
         </div>
     </div>
 <%include file="footer.mako"/>
