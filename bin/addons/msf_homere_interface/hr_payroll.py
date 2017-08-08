@@ -240,7 +240,7 @@ class hr_payroll(osv.osv):
         'has_third_party': fields.function(_has_third_party, method=True, type='boolean', string='Has a Third Party', store=True, readonly=True),
     }
 
-    _order = 'has_third_party desc, employee_id, date desc'
+    _order = 'has_third_party, employee_id, date desc'
 
     _defaults = {
         'date': lambda *a: strftime('%Y-%m-%d'),
