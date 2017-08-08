@@ -23199,7 +23199,7 @@ msgid "Menu Items"
 msgstr "Articles du Menu "
 
 #. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:144
+#: code:addons/msf_homere_interface/hr_payroll.py:361
 #, python-format
 msgid "Some lines have analytic distribution problems!"
 msgstr "Certaines lignes ont des problèmes de Distribution analytique!"
@@ -98690,12 +98690,6 @@ msgstr "Ce compte est un compte de Donation : %s"
 #: field:hr.payroll.msf,has_third_party:0
 msgid "Has a Third Party"
 msgstr "A un Tiers"
-
-#. module: msf_homere_interface
-#: code:addons/msf_homere_interface/hr_payroll.py:361
-#, python-format
-msgid "Some lines have analytic distribution problems!"
-msgstr "Certaines lignes ont des problèmes de distribution analytique !"
 
 #. module: msf_homere_interface
 #: model:ir.actions.server,name:msf_homere_interface.action_move_to_payroll_bs_lines
