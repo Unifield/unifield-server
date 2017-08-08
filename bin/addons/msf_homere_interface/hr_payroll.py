@@ -135,8 +135,6 @@ class hr_payroll(osv.osv):
             if line.employee_id:
                 res[line.id] = {'third_parties': 'hr.employee,%s' % line.employee_id.id}
                 res[line.id] = 'hr.employee,%s' % line.employee_id.id
-            elif line.journal_id:
-                res[line.id] = 'account.journal,%s' % line.transfer_journal_id.id
             elif line.partner_id:
                 res[line.id] = 'res.partner,%s' % line.partner_id.id
             else:
@@ -211,8 +209,8 @@ class hr_payroll(osv.osv):
         'document_date': fields.date(string='Document Date', required=True, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", required=True, readonly=True),
         'period_id': fields.many2one('account.period', string="Period", required=True, readonly=True),
-        'employee_id': fields.many2one('hr.employee', string="Employee", ondelete="restrict"),
-        'partner_id': fields.many2one('res.partner', string="Partner", ondelete="restrict"),
+        'employee_id': fields.many2one('hr.employee', string="Employee", readonly=True, ondelete="restrict"),
+        'partner_id': fields.many2one('res.partner', string="Partner", readonly=True, ondelete="restrict"),
         'journal_id': fields.many2one('account.journal', string="Journal", readonly=True, ondelete="restrict"),
         'employee_id_number': fields.function(_get_employee_identification_id, method=True, type='char', size=255, string='Employee ID', readonly=True),
         'name': fields.char(string='Description', size=255, readonly=True),
@@ -235,7 +233,7 @@ class hr_payroll(osv.osv):
                                           }
                                           ),
         'partner_type': fields.function(_get_third_parties, type='reference', method=True, string="Third Parties", readonly=True,
-                                        selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')]),
+                                        selection=[('res.partner', 'Partner'), ('hr.employee', 'Employee')]),
         'field': fields.char(string='Field', readonly=True, size=255, help="Field this line come from in Homère."),
         'has_third_party': fields.function(_has_third_party, method=True, type='boolean', string='Has a Third Party', store=True, readonly=True),
     }
@@ -327,6 +325,27 @@ class hr_payroll(osv.osv):
             if fp_id:
                 vals.update({'funding_pool_id': fp_id,})
         return super(osv.osv, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        In the B/S lines change the values of partner_id and employee_id according to the value of the partner_type field
+        """
+        if not ids:
+            return True
+        if context is None:
+            context = {}
+        if context.get('payroll_bs_lines'):
+            if 'partner_type' in vals:
+                employee_id = False
+                partner_id = False
+                if vals['partner_type']:
+                    p_model, p_id = tuple(vals['partner_type'].split(','))
+                    if p_model == 'hr.employee' and p_id:
+                        employee_id = p_id
+                    elif p_model == 'res.partner' and p_id:
+                        partner_id = p_id
+                vals.update({'employee_id': employee_id, 'partner_id': partner_id})
+        return super(hr_payroll, self).write(cr, uid, ids, vals, context=context)
 
     def move_to_payroll_bs_lines(self, cr, uid, ids, context=None):
         """

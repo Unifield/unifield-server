@@ -30,11 +30,11 @@
                                 </group>
                                 <group colspan="2" col="4">
                                     <separator string="Analytic Accounting"/>
-                                    <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
-                                    <field name="cost_center_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
-                                    <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"/>
-                                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
-                                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                                    <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}" readonly="1"/>
+                                    <field name="cost_center_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}" readonly="1"/>
+                                    <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}" readonly="1"/>
+                                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}" readonly="1"/>
+                                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}" readonly="1"/>
                                 </group>
                             </group>
                         </page>
@@ -44,7 +44,6 @@
                         <field name="state" colspan="2"/>
                         <field name="employee_id" invisible="1"/>
                         <field name="partner_id" invisible="1"/>
-                        <field name="journal_id" invisible="1"/>
                     </group>
                 </form>
             </field>
@@ -83,7 +82,6 @@
                     <field name="period_id"/>
                     <field name="employee_id" invisible="1"/>
                     <field name="partner_id" invisible="1"/>
-                    <field name="journal_id" invisible="1"/>
                     <field name="partner_type"/>
                     <field name="employee_id_number"/>
                     <field name="name"/>
@@ -135,8 +133,7 @@
                     <field name="amount" sum="Total amount"/>
                     <field name="currency_id"/>
                     <field name="state"/>
-                    <field name="employee_id"/>
-                    <field name="partner_id"/>
+                    <field name="partner_type" readonly="0"/>
                 </tree>
             </field>
         </record>
