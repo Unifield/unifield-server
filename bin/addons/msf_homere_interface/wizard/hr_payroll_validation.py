@@ -120,7 +120,7 @@ class hr_payroll_validation(osv.osv_memory):
                 partner_id = line['partner_id'] and line['partner_id'][0] or False
                 employee_id = line['employee_id'] and line['employee_id'][0] or False
                 acc_obj.check_type_for_specific_treatment(cr, uid, [account_id], partner_id=partner_id,
-                                                          employee_id=employee_id, context=None)
+                                                          employee_id=employee_id, context=context)
                 if not acc_obj.is_allowed_for_thirdparty(
                         cr, uid, [account_id],
                         partner_id=partner_id,
