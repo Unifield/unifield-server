@@ -208,9 +208,7 @@ class db(netsvc.ExportService):
         self.actions[id]['thread'] = create_thread
         return id
 
-    def exp_instance_auto_creation(self, db_name, lang, sync_login, sync_pwd,
-            sync_host, sync_port, sync_protocol, sync_server, oc,
-            group_name_list, parent_instance):
+    def exp_instance_auto_creation(self, db_name):
         db, pool = pooler.get_db_and_pool(db_name)
         cr = db.cursor()
 
@@ -222,15 +220,9 @@ class db(netsvc.ExportService):
             creation_id = creation_obj.create(cr, 1, {'dbname': cr.dbname})
 
         create_thread = threading.Thread(target=creation_obj.background_install,
-                                         args=(cr, pool, 1, creation_id, lang,
-                                             sync_login, sync_pwd, sync_host,
-                                             sync_port, sync_protocol,
-                                             sync_server, oc, group_name_list,
-                                             parent_instance))
+                                         args=(cr, pool, 1, creation_id))
         create_thread.start()
-
-        # after 4 seconds, the progress bar is displayed
-        create_thread.join(4)
+        create_thread.join(1)
 
     def exp_creation_get_resume_progress(self, db_name):
         db, pool = pooler.get_db_and_pool(db_name)
@@ -243,7 +235,7 @@ class db(netsvc.ExportService):
             if not creation_id:
                 nb_state = len(pool.get('instance.auto.creation')._columns['state'].selection) - 1
                 percentage_per_step = 1/float(nb_state)
-                return _('Empty database creation in progress...\n'), percentage_per_step, 'draft'
+                return _('Empty database creation in progress...\n'), percentage_per_step, 'draft', ''
             res = creation_obj.read(cr, 1, creation_id, ['resume', 'progress',
                                                          'state', 'error'])
         finally:
