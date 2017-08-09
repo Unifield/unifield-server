@@ -80,10 +80,10 @@ class register_entity(osv.osv_memory):
         'max_size' : fields.integer("Max Packet Size"),
         'parent_id' : fields.many2one('sync_client.instance.temp', 'Parent Instance'),
         'email' : fields.char('Contact Email', size=256, required=True),
-        'identifier': fields.char('Identifier', size=64, readonly=True), 
+        'identifier': fields.char('Identifier', size=64, readonly=True),
         'oc':fields.selection(OC_LIST_TUPLE, 'Operational Center',
                               required=True),
-        'group_ids':fields.many2many('sync.client.entity_group','sync_entity_group_rel','entity_id','group_id',string="Groups"), 
+        'group_ids':fields.many2many('sync.client.entity_group','sync_entity_group_rel','entity_id','group_id',string="Groups"),
         'state':fields.selection([('register','Register'),('parents','Parents'),('groups','Groups'), ('message', 'Message')], 'State', required=True),
     }
 
@@ -227,7 +227,7 @@ class instance_temp(osv.osv):
     _description = "Parent Instance"
 
     _columns = {
-        'name' : fields.char("Instance Name", size=64, required=True)      
+        'name' : fields.char("Instance Name", size=64, required=True)
     }
 
     def fetch(self, cr, uid):

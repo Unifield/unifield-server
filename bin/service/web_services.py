@@ -208,7 +208,9 @@ class db(netsvc.ExportService):
         self.actions[id]['thread'] = create_thread
         return id
 
-    def exp_instance_auto_creation(self, db_name, lang, sync_login, sync_pwd, sync_host, sync_port, sync_protocol, sync_server, oc):
+    def exp_instance_auto_creation(self, db_name, lang, sync_login, sync_pwd,
+            sync_host, sync_port, sync_protocol, sync_server, oc,
+            group_name_list, parent_instance):
         db, pool = pooler.get_db_and_pool(db_name)
         cr = db.cursor()
 
@@ -220,7 +222,11 @@ class db(netsvc.ExportService):
             creation_id = creation_obj.create(cr, 1, {'dbname': cr.dbname})
 
         create_thread = threading.Thread(target=creation_obj.background_install,
-                                         args=(cr, pool, 1, creation_id, lang, sync_login, sync_pwd, sync_host, sync_port, sync_protocol, sync_server, oc))
+                                         args=(cr, pool, 1, creation_id, lang,
+                                             sync_login, sync_pwd, sync_host,
+                                             sync_port, sync_protocol,
+                                             sync_server, oc, group_name_list,
+                                             parent_instance))
         create_thread.start()
 
         # after 4 seconds, the progress bar is displayed
