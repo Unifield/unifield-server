@@ -361,6 +361,8 @@ class hr_payroll(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Some lines have analytic distribution problems!'))
         view_id = ir_model_obj.get_object_reference(cr, uid, 'msf_homere_interface', 'view_payroll_bs_lines_tree')
         view_id = view_id and view_id[1] or False
+        search_view_id = ir_model_obj.get_object_reference(cr, uid, 'msf_homere_interface', 'view_hr_payroll_msf_bs_filter')
+        search_view_id = search_view_id and search_view_id[1] or False
         domain = [('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', False)]
         context.update({'payroll_bs_lines': True})
         return {
@@ -370,6 +372,7 @@ class hr_payroll(osv.osv):
             'view_type': 'form',
             'view_mode': 'tree,form',
             'view_id': [view_id],
+            'search_view_id': [search_view_id],
             'context': context,
             'domain': domain,
             'target': 'self',  # don't open a new tab

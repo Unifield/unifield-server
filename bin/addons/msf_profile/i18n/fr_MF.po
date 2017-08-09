@@ -98698,6 +98698,11 @@ msgid "Has a Third Party"
 msgstr "A un Tiers"
 
 #. module: msf_homere_interface
+#: view:hr.payroll.msf:0
+msgid "Empty Third Party"
+msgstr "Pas de Tiers"
+
+#. module: msf_homere_interface
 #: model:ir.actions.server,name:msf_homere_interface.action_move_to_payroll_bs_lines
 msgid "Validate Payroll Expenses and move to Payroll B/S lines"
 msgstr "Valider les Lignes de dépenses et aller aux Lignes du bilan"

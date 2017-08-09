@@ -52,7 +52,7 @@
     <!--
         Payroll Search
     -->
-
+        <!-- Expense lines -->
         <record id="view_hr_payroll_msf_filter" model="ir.ui.view">
             <field name="name">Payroll Entries</field>
             <field name="model">hr.payroll.msf</field>
@@ -62,6 +62,24 @@
                     <filter name="active" icon="terp-check" domain="[('analytic_state', '=', 'valid')]" string="Valid"/>
                     <filter name="inactive" icon="gtk-dialog-error" domain="[('analytic_state', '!=', 'valid')]" string="Invalid"/>
                     <separator orientation="vertical"/>
+                    <field name="employee_id" select="1"/>
+                    <field name="account_id" select="1"/>
+                </search>
+            </field>
+        </record>
+
+        <!-- B/S lines -->
+        <record id="view_hr_payroll_msf_bs_filter" model="ir.ui.view">
+            <field name="name">Payroll B/S lines</field>
+            <field name="model">hr.payroll.msf</field>
+            <field name="type">search</field>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <search>
+                    <filter name="empty_third_party" icon="terp-emblem-important"
+                            domain="[('has_third_party', '=', False)]" string="Empty Third Party"/>
+                    <separator orientation="vertical"/>
+                    <field name="partner_id" select="1"/>
                     <field name="employee_id" select="1"/>
                     <field name="account_id" select="1"/>
                 </search>
