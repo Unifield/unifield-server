@@ -5,7 +5,7 @@
             id="report_sale_loan_stock_moves_xls"
             name="sale.loan.stock.moves.report_xls"
             model="sale.loan.stock.moves"
-            string="Donation Report"
+            string="Loan Report"
             file="sale/report/sale_loan_stock_moves_report_xls.mako"
             report_type="webkit"
             header="False"

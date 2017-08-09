@@ -55,7 +55,7 @@ class sale_loan_stock_moves(osv.osv_memory):
         'partner_id': fields.many2one(
             'res.partner',
             string='Partner',
-            help="The partner you want have the donations from",
+            help="The partner you want have the loans from",
         ),
         'partner_type': fields.selection(
             PARTNER_TYPE,
@@ -99,10 +99,12 @@ class sale_loan_stock_moves(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        type_loan_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+
         for wizard in self.browse(cr, uid, ids, context=context):
             sm_domain = []
 
-            sm_domain.append(('reason_type_id.name', '=', 'Loan'))
+            sm_domain.append(('reason_type_id', '=', type_loan_id))
             sm_domain += ['|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
                           ('location_dest_id.usage', 'in', ['customer', 'supplier'])]
 
