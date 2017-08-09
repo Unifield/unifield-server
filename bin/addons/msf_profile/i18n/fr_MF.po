@@ -98686,6 +98686,12 @@ msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source
 msgid "This account is a Donation account: %s"
 msgstr "Ce compte est un compte de Donation : %s"
 
+#. module: account_override
+#: code:addons/account_override/account.py:597
+#, python-format
+msgid "Please check the Type for specific treatment of the accounts used."
+msgstr "Veuillez vérifier le Type pour traitement spécifique des comptes utilisés."
+
 #. module: msf_homere_interface
 #: field:hr.payroll.msf,has_third_party:0
 msgid "Has a Third Party"
