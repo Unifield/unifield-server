@@ -40,21 +40,6 @@ class sale_loan_stock_moves(osv.osv_memory):
             ('hidden', 'Hidden')
         ]
 
-    def get_stock_moves_origins(self, cr, uid, context=None):
-        sm_obj = self.pool.get('stock.move')
-        sm_ids = sm_obj.search(cr, uid, [('reason_type_id.name', '=', 'Loan'),
-                                          '|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
-                                          ('location_dest_id.usage', 'in', ['customer', 'supplier'])], context=context)
-        sm_list = sm_obj.browse(cr, uid, sm_ids, context=context)
-        origin_list = []
-        for move in sm_list:
-            if move.purchase_line_id:
-                origin_list.append(move.purchase_line_id.sync_order_line_db_id)
-            else:
-                origin_list.append(move.sale_line_id.sync_order_line_db_id)
-
-        return origin_list
-
     _columns = {
         'start_date': fields.date(
             string='Start date',
@@ -84,18 +69,13 @@ class sale_loan_stock_moves(osv.osv_memory):
             MOVE_STATE,
             string='Status'
         ),
-        'po_ref': fields.many2one(
-            'purchase.order',
-            string='PO Ref.',
+        'origin': fields.char(
+            'Origin',
+            size=256
         ),
-        'fo_ref': fields.many2one(
-            'sale.order',
-            string='FO Ref.',
-        ),
-        'origin_ref': fields.selection(
-            get_stock_moves_origins,
-            # [],
-            string='Origin Ref.',
+        'remove_completed': fields.boolean(
+            'Only unfinished loans',
+            help='Only show the lines with a quantity balance different than 0'
         ),
         'sm_ids': fields.text(
             string='Stock Moves',
@@ -144,20 +124,12 @@ class sale_loan_stock_moves(osv.osv_memory):
             if wizard.state:
                 sm_domain.append(('state', '=', wizard.state))
 
-            if wizard.po_ref:
-                if wizard.po_ref.origin:
-                    sm_domain.append(('origin', 'like', wizard.po_ref.origin))
-                else:
-                    sm_domain.append(('origin', 'like', wizard.po_ref.name))
+            if wizard.origin:
+                sm_domain.append(('origin', 'like', wizard.origin))
 
-            if wizard.fo_ref:
-                if wizard.fo_ref.origin:
-                    sm_domain.append(('origin', 'like', wizard.fo_ref.origin))
-                else:
-                    sm_domain.append(('origin', 'like', wizard.fo_ref.name))
-
-            if wizard.origin_ref:
-                sm_domain.append(('origin', '=', wizard.origin))
+            remove_completed = False
+            if wizard.remove_completed:
+                remove_completed = True
 
             sm_ids = sm_obj.search(cr, uid, sm_domain, context=context)
 
@@ -167,7 +139,7 @@ class sale_loan_stock_moves(osv.osv_memory):
                     _('No data found with these parameters'),
                 )
 
-            self.write(cr, uid, [wizard.id], {'sm_ids': sm_ids}, context=context)
+            self.write(cr, uid, [wizard.id], {'sm_ids': sm_ids, 'remove_completed': remove_completed}, context=context)
 
         return True
 
@@ -198,37 +170,5 @@ class sale_loan_stock_moves(osv.osv_memory):
             'datas': data,
             'context': context,
         }
-
-    def partner_onchange(self, cr, uid, ids, partner_id=False, move_id=False):
-        '''
-        If the partner is changed, check if the move is to this partner
-        '''
-        sm_obj = self.pool.get('stock.move')
-
-        res = {}
-
-        if partner_id and move_id:
-            sm_ids = sm_obj.search(cr, uid, [
-                ('id', '=', move_id),
-                ('partner_id', '=', partner_id),
-            ], count=True)
-            if not sm_ids:
-                res['value'] = {'move_id': False}
-                res['warning'] = {
-                    'title': _('Warning'),
-                    'message': _('The partner of the selected move doesn\'t \
-                        match with the selected partner. The selected move has been reset'),
-                }
-
-        if partner_id:
-            res['domain'] = {'move_id': [('reason_type_id.name', '=', 'Loan'), ('partner_id', '=', partner_id),
-                                         '|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
-                                         ('location_dest_id.usage', 'in', ['customer', 'supplier'])]}
-        else:
-            res['domain'] = {'move_id': [('reason_type_id.name', '=', 'Loan'),
-                                         '|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
-                                         ('location_dest_id.usage', 'in', ['customer', 'supplier'])]}
-
-        return res
 
 sale_loan_stock_moves()

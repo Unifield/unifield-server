@@ -91,9 +91,11 @@
         ## Product Description
         <Column ss:AutoFitWidth="1" ss:Width="271.5" />
         ## Order Type
-        <Column ss:AutoFitWidth="1" ss:Width="129.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="54.0" />
         ## Movement Date
         <Column ss:AutoFitWidth="1" ss:Width="72.25" />
+        ## Move Ref.
+        <Column ss:AutoFitWidth="1" ss:Width="135.75" />
         ## Partner
         <Column ss:AutoFitWidth="1" ss:Width="135.75" />
         ## Partner Type
@@ -107,9 +109,9 @@
         ## Qty Balance
         <Column ss:AutoFitWidth="1" ss:Width="54.25"  />
         ## PO/FO Ref.
-        <Column ss:AutoFitWidth="1" ss:Width="102.0"  />
+        <Column ss:AutoFitWidth="1" ss:Width="302.0"  />
         ## Origin Ref.
-        <Column ss:AutoFitWidth="1" ss:Width="102.0"  />
+        <Column ss:AutoFitWidth="1" ss:Width="202.0"  />
         ## Unit Price
         <Column ss:AutoFitWidth="1" ss:Width="57.25"  />
         ## Currency

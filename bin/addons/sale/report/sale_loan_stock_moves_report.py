@@ -70,34 +70,64 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
         Return the moves for the report and set their qty balance
         '''
         result = []
+        sm_list = []
         for move in report.sm_ids:
-            result.append(self.pool.get('stock.move').browse(self.cr, self.uid, move))
+            sm_list.append(self.pool.get('stock.move').browse(self.cr, self.uid, move))
 
-        result = sorted(result, key=lambda sm: (sm['product_id'], sm['origin'].split(":")[-1], sm['create_date']))
+        sm_list = sorted(sm_list, key=lambda sm: (sm['product_id']['default_code'], sm['origin'].split(":")[-1], sm['create_date']))
+        tmp_list = []
         balance = 0
-        for index, move in enumerate(result, start=0):
+        for index, move in enumerate(sm_list, start=0):
             move.balance = balance
             if self._is_qty_out(move):
                 balance -= self._get_qty(move)
             else:
                 balance += self._get_qty(move)
 
-            if move is result[-1]:
+            if move is sm_list[-1]:
                 setattr(move, 'balance', balance)
+                tmp_list.append(move)
+                if balance == 0:
+                    if not report.remove_completed:
+                        for sm_obj in tmp_list:
+                            result.append(sm_obj)
+                else:
+                    for sm_obj in tmp_list:
+                        result.append(sm_obj)
+                tmp_list = []
                 balance = 0
             else:
-                if move.origin.split(":")[-1] not in result[index+1].origin.split(":")[-1] and \
-                        result[index + 1].origin.split(":")[-1] not in move.origin.split(":")[-1]:
+                if move.origin.split(":")[-1] not in sm_list[index+1].origin.split(":")[-1] and \
+                            sm_list[index + 1].origin.split(":")[-1] not in move.origin.split(":")[-1]:
                     setattr(move, 'balance', balance)
+                    tmp_list.append(move)
+                    if balance == 0:
+                        if not report.remove_completed:
+                            for sm_obj in tmp_list:
+                                result.append(sm_obj)
+                    else:
+                        for sm_obj in tmp_list:
+                            result.append(sm_obj)
+                    tmp_list = []
                     balance = 0
                 else:
-                    if move.product_id.id != result[index+1].product_id.id:
+                    if move.product_id.id != sm_list[index+1].product_id.id:
                         setattr(move, 'balance', balance)
+                        tmp_list.append(move)
+                        if balance == 0:
+                            if not report.remove_completed:
+                                for sm_obj in tmp_list:
+                                    result.append(sm_obj)
+                        else:
+                            for sm_obj in tmp_list:
+                                result.append(sm_obj)
+                        tmp_list = []
                         balance = 0
                     else:
                         setattr(move, 'balance', 0)
+                        tmp_list.append(move)
 
-        return result
+        return sorted(result, key=lambda sm: (sm['product_id']['default_code'], sm['origin'].split(":")[-1], sm['create_date']))
 
     def _get_instance(self):
         '''

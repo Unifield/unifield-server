@@ -10,13 +10,12 @@
                     <separator colspan="4" string="Request parameters" />
                     <field name="start_date" />
                     <field name="end_date" />
-                    <field name="partner_id" domain="[('customer', '=', True)]" on_change="partner_onchange(partner_id, move_id)" />
+                    <field name="partner_id" domain="[('customer', '=', True)]" />
                     <field name="partner_type" />
                     <field name="product_id" />
-                    <field name="po_ref" domain="[('order_type', '=', 'loan')]" />
-                    <field name="fo_ref" domain="[('order_type', '=', 'loan')]" />
-                    <field name="origin_ref" />
+                    <field name="origin" />
                     <field name="state" />
+                    <field name="remove_completed" />
                     <separator colspan="4" string="Actions" />
                     <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="4" />
                 </form>
