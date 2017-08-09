@@ -61,7 +61,7 @@ class purchase_order_line_sync(osv.osv):
         # update PO line:
         pol_updated = False
         split_already_created = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['fake_id'])], limit=1, context=context) # ensure split has not already been created
-        if sol_dict['is_line_split'] and not split_already_created:
+        if sol_dict['is_line_split'] and not split_already_created:                # get the original PO line:
             # get the original PO line:
             sync_linked_sol = int(sol_dict['original_line_id'].get('id').split('/')[-1]) if sol_dict['original_line_id'] else False
             if not sync_linked_sol:
@@ -81,6 +81,23 @@ class purchase_order_line_sync(osv.osv):
             wf_service.trg_validate(uid, 'purchase.order.line', new_pol, 'validated', cr)
             self.update_fo_lines(cr, uid, orig_pol, context=context) # update original PO line with new qty, price ...
             pol_updated = new_pol
+        elif not self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['fake_id'])], limit=1, context=context): # new line
+            # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)
+            # so we have to create this new PO line:
+            pol_values['set_as_sourced_n'] = True
+            new_pol = self.create(cr, uid, pol_values, context=context)
+            pol_updated = new_pol
+            if sol_dict['state'] == 'confirmed':
+                wf_service.trg_validate(uid, 'purchase.order.line', new_pol, 'confirmed', cr)
+            # create IR line if needed:
+            if sol_dict['sync_sourced_origin']:
+                parent_so = self.pool.get('sale.order').search(cr, uid, [
+                    ('name', '=', sol_dict['sync_sourced_origin']),
+                    ('procurement_request', 'in', ['t', 'f']),
+                ], context=context)
+                if not parent_so:
+                    raise Exception, "Sync ref received of Sale Order not found"
+                self.create_sol_from_pol(cr, uid, [new_pol], parent_so[0], context=context)
         else: # regular update
             # search for the PO line to update:
             pol_to_update = sol_dict.get('sync_linked_pol', False)
@@ -401,7 +418,6 @@ class purchase_order_sync(osv.osv):
 
         # check whether this FO has already been sent before! if it's the case, then just update the existing PO, and not creating a new one
         po_id = self.check_existing_po(cr, uid, source, so_dict)
-        header_result['order_line'] = so_po_common.get_lines(cr, uid, source, so_info, po_id, False, False, False, context)
         header_result['push_fo'] = True
         header_result['origin'] = so_dict.get('name', False)
 
@@ -427,43 +443,13 @@ class purchase_order_sync(osv.osv):
             # create a new PO, then send it to Validated state
             po_id = self.create(cr, uid, default , context=context)
 
-        for line in self.browse(cr, uid, po_id, context=context).order_line:
-            if line.sync_order_line_db_id:
-                cancel_ids = self.pool.get('sale.order.line.cancel').search(cr, uid, [('resource_sync_line_db_id', '=', line.sync_order_line_db_id)], context=context)
-                sol_ids = []
-                for cancel in self.pool.get('sale.order.line.cancel').browse(cr, uid, cancel_ids, context=context):
-                    sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('sync_order_line_db_id', '=', cancel.fo_sync_order_line_db_id)], context=context)
-                    for sol in self.pool.get('sale.order.line').browse(cr, uid, sol_ids, context=context):
-                        if sol.procurement_id and sol.procurement_id.purchase_id:
-                            self.pool.get('procurement.order').write(cr, uid, [sol.procurement_id.id], {'purchase_id': po_id}, context=context)
-                            line_obj.write(cr, uid, [line.id], {'procurement_id': sol.procurement_id.id}, context=context)
-                            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', [sol.procurement_id.id], 'purchase.order', [po_id], po_id, cr, force=True)
-                        if sol.order_id and (not sol.order_id.procurement_request or sol.order_id.location_requestor_id.usage == 'customer'):
-                            self.write(cr, uid, [po_id], {'cross_docking_ok': True}, context=context)
-
-        # UTP-952: If the partner is intermission, then use the intermission CC to create a default AD
-        if partner_type == 'intermission':
-            # create the default AD with intermission CC and default FP
-            intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_intermission')
-            ana_obj = self.pool.get('analytic.distribution')
-            for po in self.browse(cr, uid, [po_id], context=context):
-                for line in po.order_line:
-                    account_id = line.account_4_distribution and line.account_4_distribution.id or False
-                    # Search default destination_id
-                    destination_id = self.pool.get('account.account').read(cr, uid, account_id, ['default_destination_id']).get('default_destination_id', False)
-                    ana_obj.create(cr, uid, {'purchase_line_ids': [(4,line.id)],
-                                             'cost_center_lines': [(0, 0, {'destination_id': destination_id[0], 'analytic_id': intermission_cc[1] , 'percentage':'100', 'currency_id': po.currency_id.id})]})
-
-        wf_service = netsvc.LocalService("workflow")
-        wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_confirm', cr)
-
         # update the next line number for the PO if needed
         so_po_common.update_next_line_number_fo_po(cr, uid, po_id, self, 'purchase_order_line', context)
-
 
         name = self.browse(cr, uid, po_id, context=context).name
         message = "The PO " + name + " is created by sync and linked to the FO " + so_info.name + " by Push Flow at " + source
         self._logger.info(message)
+        
         return message
 
     def check_existing_po(self, cr, uid, source, so_dict):

@@ -15,8 +15,7 @@ class purchase_order_line(osv.osv):
 
     def update_fo_lines(self, cr, uid, ids, context=None):
         '''
-        Method called when validating/confirming the PO line in order to 
-        update corresponding FO line(s)
+        update corresponding FO lines in the same instance
         '''
         if context is None:
             context = {}
@@ -28,9 +27,12 @@ class purchase_order_line(osv.osv):
             # => if yes update it, else create new
             create_line = False
             if not pol.linked_sol_id:
-                so_id = self.pool.get('sale.order').search(cr, uid, [('name', '=', pol.origin)], context=context)
+                so_id = self.pool.get('sale.order').search(cr, uid, [
+                    ('name', '=', pol.origin),
+                    ('procurement_request', 'in', ['t', 'f']),
+                ], context=context)
                 if not so_id:
-                    continue # no sale order linked to our PO
+                    continue # no sale order linked to our PO line
                 else:
                     so_id = so_id[0]
                 sale_order = self.pool.get('sale.order').browse(cr, uid, so_id, context=context)
@@ -87,6 +89,7 @@ class purchase_order_line(osv.osv):
             if create_line:
                 sol_values.update({
                     'order_id': so_id,    
+                    'date_planned': pol.date_planned,
                 })
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
@@ -106,8 +109,10 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
-        if not fo_id or not isinstance(fo_id, (int,long)):
-            return False
+        if not fo_id:
+            raise Exception, "No parent Sale Order given for the new Sale Order line"
+        if isinstance(fo_id, list):
+            fo_id = fo_id[0]
 
         sale_order = self.pool.get('sale.order').browse(cr, uid, fo_id, context=context)
         new_sol_id = False
@@ -134,6 +139,7 @@ class purchase_order_line(osv.osv):
                 'order_id': fo_id,
                 'product_id': pol.product_id and pol.product_id.id or False,
                 'name': pol.name,
+                'type': 'make_to_order',
                 'default_name': pol.default_name,
                 'default_code': pol.default_code,
                 'product_uom_qty': pol.product_qty,
@@ -156,13 +162,14 @@ class purchase_order_line(osv.osv):
                 'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
                 'confirmed_delivery_date': line_confirmed,
                 'date_planned': (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d'),
+                'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
+                'set_as_sourced_n': True,
             }
             # create FO line:
             new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
-            wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
-            wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'sourced', cr)
-            wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'confirmed', cr)
+
+            # update current PO line:
+            self.write(cr, uid, pol.id, {'link_so_id': fo_id, 'linked_sol_id': new_sol_id}, context=context)
         
         return new_sol_id
 
@@ -179,12 +186,16 @@ class purchase_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'validated_n'}, context=context)
 
-        # update FO lines:
-        self.update_fo_lines(cr, uid, ids, context=context)
+        # add line to parent SO if needed:
         for pol in self.browse(cr, uid, ids, context=context):
-            if pol.linked_sol_id:
+            parent_so_id = self.pool.get('sale.order').search(cr, uid, [
+                ('name', '=', pol.origin),
+                ('procurement_request', 'in', ['t', 'f']),
+            ], context=context)
+            if parent_so_id:
+                new_sol_id = self.create_sol_from_pol(cr, uid, [pol.id], parent_so_id, context=context)
                 # set the boolean "set_as_sourced_n" to True in order to trigger workflow transition draft => sourced_n:
-                self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], {'set_as_sourced_n': True}, context=context)
+                self.pool.get('sale.order.line').write(cr, uid, new_sol_id, {'set_as_sourced_n': True}, context=context)
 
         return True
 

@@ -29,6 +29,7 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 import logging
 import os
+import netsvc
 
 from mx import DateTime
 
@@ -1540,6 +1541,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         line_obj = self.pool.get('purchase.order.line')
         split_obj = self.pool.get('split.purchase.order.line.wizard')
         simu_obj = self.pool.get('wizard.import.po.simulation.screen')
+        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -1561,7 +1563,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 # Don't do anything
                 continue
             elif line.type_change == 'del' and line.po_line_id:
-                line_obj.fake_unlink(cr, uid, [line.po_line_id.id], context=context)
+                wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
             elif line.type_change == 'split' and line.parent_line_id:
                 # Call the split line wizard
                 po_line_id = False
@@ -1596,6 +1598,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals = {'product_uom': line.imp_uom.id,
                                  'product_id': line.imp_product_id.id,
                                  'price_unit': line.imp_price,
+                                 'set_as_validated_n': True,
                                  }
                     if line.imp_drd:
                         line_vals['date_planned'] = line.imp_drd
@@ -1641,6 +1644,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'price_unit': line.imp_price,
                              'product_qty': line.imp_qty,
                              'date_planned': line.imp_drd or line.simu_id.order_id.delivery_requested_date,
+                             'set_as_validated_n': True,
                              }
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd
