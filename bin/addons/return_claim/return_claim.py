@@ -842,8 +842,8 @@ class claim_event(osv.osv):
         claim = obj.return_claim_id_claim_event
         # claim type
         claim_type = claim.type_return_claim
-        # don't generate financial documents if the claim is linked to an internal partner
-        inv_status = claim.partner_id_return_claim.partner_type == 'internal' and 'none' or '2binvoiced'
+        # don't generate financial documents if the claim is linked to an internal or intermission partner
+        inv_status = claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
         # new name, previous name + -return
         new_name = origin_picking.name + '-return'
         # get the picking values and move values according to claim type
