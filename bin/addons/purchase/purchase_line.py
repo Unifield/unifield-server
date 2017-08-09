@@ -144,7 +144,7 @@ class purchase_order_line(osv.osv):
         'is_line_split': fields.boolean(string='This line is a split line?'),
         'linked_sol_id': fields.many2one('sale.order.line', string='Linked SO line', help='Linked Sale Order line in case of PO from sourcing', readonly=True),
         'sync_linked_sol': fields.char(size=256, string='Linked FO line at synchro'),
-    # UTP-972: Use boolean to indicate if the line is a split line
+        # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=512, string='Origin'),
         'link_so_id': fields.many2one('sale.order', string='Linked FO/IR', readonly=True),
@@ -238,7 +238,7 @@ class purchase_order_line(osv.osv):
                 if is_inkind:
                     raise osv.except_osv(_('Error'), _(
                         'No destination found. An In-kind Donation account is probably missing for this line: %s.') % (
-                                         line.name or ''))
+                        line.name or ''))
                 raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
         return dest_ok
 
@@ -292,7 +292,7 @@ class purchase_order_line(osv.osv):
             else:
                 ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
                 line_ids_to_write = [line.id for line in ad_lines if not
-                line.partner_type]
+                                     line.partner_type]
                 ccdl_obj.write(cr, uid, line_ids_to_write, {
                     'partner_type': pol.order_id.partner_id.partner_type,
                 })
@@ -368,7 +368,7 @@ class purchase_order_line(osv.osv):
                                                              product, qty_in_product_uom or 1.0, partner_id, {
                                                                  'uom': uom,
                                                                  'date': date_order,
-                                                             })[pricelist]
+        })[pricelist]
         if price is False:
             warning = {
                 'title': 'No valid pricelist line found !',
@@ -411,7 +411,7 @@ class purchase_order_line(osv.osv):
         if 'product_uom' in res['value']:
             if uom and (uom != res['value']['product_uom']) and res['value']['product_uom']:
                 seller_uom_name = \
-                self.pool.get('product.uom').read(cr, uid, [res['value']['product_uom']], ['name'])[0]['name']
+                    self.pool.get('product.uom').read(cr, uid, [res['value']['product_uom']], ['name'])[0]['name']
                 res.update({'warning': {'title': _('Warning'), 'message': _(
                     'The selected supplier only sells this product by %s') % seller_uom_name}})
             del res['value']['product_uom']
@@ -529,7 +529,7 @@ class purchase_order_line(osv.osv):
             # If the price unit is changed and the product and the UoM is not modified
             if 'price_unit' in tmp_vals and (
                     line['price_unit'] != tmp_vals['price_unit'] or vals['price_unit'] != tmp_vals[
-                'price_unit']) and not (
+                        'price_unit']) and not (
                     line_product_id != vals.get('product_id', False) or line['product_uom'][0] != vals.get(
                     'product_uom', False)):
                 # Give 0.00 to quantity because the _update should recompute the price unit with the same quantity
@@ -580,7 +580,7 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if line.order_id and line.order_id.partner_id and line.order_id.state != 'done' and line.product_id:
                 if not self.pool.get('product.product')._get_restriction_error(cr, uid, line.product_id.id, vals={
-                    'partner_id': line.order_id.partner_id.id}, context=context):
+                                                                               'partner_id': line.order_id.partner_id.id}, context=context):
                     return False
 
         return True
@@ -847,7 +847,7 @@ class purchase_order_line(osv.osv):
             # check qty
             if vals.get('product_qty', line.product_qty) <= 0.0 and \
                     not line.order_id.rfq_ok and \
-                            'noraise' not in context and line.state != 'cancel':
+                    'noraise' not in context and line.state != 'cancel':
                 raise osv.except_osv(
                     _('Error'),
                     _('You can not have an order line with a negative or zero quantity')
@@ -1085,7 +1085,7 @@ class purchase_order_line(osv.osv):
                 ('order_id.state', '!=', 'split'),
                 ('id', 'not in', ids),
                 ('procurement_id', '=', proc_id)],
-                                     context=context):
+                    context=context):
                 proc_id_to_cancel.add(proc_id)
         if proc_id_to_cancel:
             proc_obj.action_cancel(cr, uid, list(proc_id_to_cancel))
@@ -1300,7 +1300,7 @@ class purchase_order_line(osv.osv):
                 res['warning'].setdefault('message', '')
 
                 res['warning']['message'] = '%s \n %s' % (
-                res.get('warning', {}).get('message', ''), consistency_message)
+                    res.get('warning', {}).get('message', ''), consistency_message)
 
         return res
 
@@ -1465,7 +1465,7 @@ class purchase_order_line(osv.osv):
                     'initial_amount': new_amount,
                     'purchase_order_line_ids': [(4, pol.id)], 
                 }, 
-                context=context)
+                    context=context)
 
             # Create analytic distribution on this commitment line
             self.pool.get('account.commitment.line').create_distribution_from_order_line(cr, uid, [pol.id], context=context)
