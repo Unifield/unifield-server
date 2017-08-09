@@ -22,6 +22,7 @@ import base64
 import re
 import time
 import os
+import sys
 
 import cherrypy
 import formencode
@@ -307,8 +308,10 @@ class Database(BaseController):
     @expose()
     def get_auto_create_progress(self, **kw):
         config_file_name = 'uf_auto_install.conf'
-        root_path = os.path.split(paths.root())[0]
-        config_file_path = os.path.join(root_path, 'UFautoInstall', config_file_name)
+        if sys.platform == 'win32':
+            config_file_path = os.path.join(paths.root(), '..', 'UFautoInstall', config_file_name)
+        else:
+            config_file_path = os.path.join(paths.root(), '..', 'unifield-server', 'UFautoInstall', config_file_name)
         config = ConfigParser.ConfigParser()
         config.read(config_file_path)
         dbname = config.get('instance', 'db_name')
@@ -468,16 +471,12 @@ class Database(BaseController):
             self.msg = {'message': _('Bad super admin password'),
                         'title' : e.title}
 
-    def background_auto_creation(self, password, dbname, admin_password,
-            db_exists, lang, sync_user, sync_pwd, sync_host, sync_port, sync_protocol,
-            sync_server, oc, group_name_list, parent_instance):
+    def background_auto_creation(self, password, dbname, db_exists, config_dict):
         if not db_exists:
             # create database
-            self.database_creation(password, dbname, admin_password)
+            self.database_creation(password, dbname, config_dict['instance'].get('admin_password'))
 
-        rpc.session.execute_db('instance_auto_creation', password, dbname,
-                lang, sync_user, sync_pwd, sync_host, sync_port, sync_protocol,
-                sync_server, oc, group_name_list, parent_instance)
+        rpc.session.execute_db('instance_auto_creation', password, dbname)
         self.resume, self.progress, self.state, self.error = rpc.session.execute_db('creation_get_resume_progress', dbname)
 
     @expose()
@@ -485,29 +484,23 @@ class Database(BaseController):
     @error_handler(auto_create)
     def do_auto_create(self, password, **kw):
         self.msg = {}
-        self.progress = 0.05
+        self.progress = 0.03
         self.state = 'draft'
         try:
             config_file_name = 'uf_auto_install.conf'
-            root_path = os.path.split(paths.root())[0]
-            config_file_path = os.path.join(root_path, 'UFautoInstall', config_file_name)
+            if sys.platform == 'win32':
+                config_file_path = os.path.join(paths.root(), '..', 'UFautoInstall', config_file_name)
+            else:
+                config_file_path = os.path.join(paths.root(), '..', 'unifield-server', 'UFautoInstall', config_file_name)
+
             self.check_config_file(config_file_path)
             if self.msg:
                 return self.auto_create()
             config = ConfigParser.ConfigParser()
             config.read(config_file_path)
-            dbname = config.get('instance', 'db_name')
-            admin_password = confirm_password = config.get('instance', 'admin_password')
-            lang = config.get('instance', 'lang')
-            sync_user = config.get('instance', 'sync_user')
-            sync_pwd = config.get('instance', 'sync_pwd')
-            sync_host = config.get('instance', 'sync_host')
-            sync_port = config.get('instance', 'sync_port')
-            sync_protocol = config.get('instance', 'sync_protocol')
-            sync_server = config.get('instance', 'sync_server')
-            oc = config.get('instance', 'oc').lower()
-            group_name_list = config.get('instance', 'group_names').split(',')
-            parent_instance = config.get('instance', 'parent_instance')
+
+            config_dict =  {x:dict(config.items(x)) for x in config.sections()}
+            dbname = config_dict['instance'].get('db_name')
             db_exists = False
 
             # check the database not already exists
@@ -519,23 +512,10 @@ class Database(BaseController):
                 #raise DatabaseExist
 
             create_thread = threading.Thread(target=self.background_auto_creation,
-                                             args=(password, dbname,
-                                                   admin_password, db_exists, lang, sync_user,
-                                                   sync_pwd, sync_host,
-                                                   sync_port, sync_protocol,
-                                                   sync_server, oc,
-                                                   group_name_list,
-                                                   parent_instance))
+                                             args=(password, dbname, db_exists,
+                                                   config_dict))
             create_thread.start()
-            # after 4 seconds, the progress bar is displayed
-            create_thread.join(1)
-
-            # install language
-
-            # add a cron entry to check that the sync server validate the regristration (every 20 minutes for example)
-
-
-
+            create_thread.join(0.5)
 
         except openobject.errors.AccessDenied, e:
             self.msg = {'message': _('Wrong password'),

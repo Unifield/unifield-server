@@ -20,6 +20,7 @@
 ###############################################################################
 import re
 import os
+import sys
 
 import cherrypy
 from openerp.utils import rpc
@@ -95,8 +96,12 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
     url = rpc.session.connection_string
     url = str(url[:-1])
 
-    root_path = os.path.split(paths.root())[0]
-    if os.path.exists(os.path.join(root_path, 'UFautoInstall')):
+    config_file_name = 'uf_auto_install.conf'
+    if sys.platform == 'win32':
+        config_file_path = os.path.join(paths.root(), '..', 'UFautoInstall', config_file_name)
+    else:
+        config_file_path = os.path.join(paths.root(), '..', 'unifield-server', 'UFautoInstall', config_file_name)
+    if os.path.exists(config_file_path):
         raise redirect('/openerp/database/auto_create')
         return auto_install(target, db, user, password, action, message,
                 origArgs, url)
