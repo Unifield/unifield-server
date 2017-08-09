@@ -333,9 +333,6 @@ class purchase_order_line(osv.osv):
             else:
                 move_obj.in_action_confirm(cr, uid, move_id, context)
 
-            # Confirm FO line
-            if line.linked_sol_id:
-                wf_service.trg_validate(uid, 'sale.order.line', line.linked_sol_id.id, 'confirmed', cr)
 
             # if line created in PO, then create a FO line that match with it:
             if not line.linked_sol_id and line.origin:
@@ -347,6 +344,11 @@ class purchase_order_line(osv.osv):
                         'link_so_id': fo_id,
                         'linked_sol_id': new_sol_id,
                     }, context=context)
+                    wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'confirmed', cr)
+
+            # Confirm FO line
+            if line.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', line.linked_sol_id.id, 'confirmed', cr)
 
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
 

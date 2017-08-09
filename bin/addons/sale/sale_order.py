@@ -3630,6 +3630,7 @@ class sale_order_line(osv.osv):
         if order_id and self.pool.get('sale.order').read(cr, uid, order_id, ['procurement_request'], context)['procurement_request']:
             vals.update({'cost_price': vals.get('cost_price', False)})
 
+
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''

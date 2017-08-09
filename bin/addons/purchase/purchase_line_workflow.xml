@@ -134,6 +134,11 @@
             <field name="act_to" ref="act_pol_confirmed"/>
             <field name="signal">confirmed</field>
         </record>
+        <record id="trans_pol_validated_n_confirmed" model="workflow.transition">
+            <field name="act_from" ref="act_pol_validated_n"/>
+            <field name="act_to" ref="act_pol_confirmed"/>
+            <field name="signal">confirmed</field>
+        </record>
         <record id="trans_pol_confirmed_done" model="workflow.transition">
             <field name="act_from" ref="act_pol_confirmed"/>
             <field name="act_to" ref="act_pol_done"/>

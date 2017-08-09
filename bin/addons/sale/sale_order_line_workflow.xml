@@ -76,6 +76,11 @@
             <field name="act_to" ref="act_sol_validated"/>
             <field name="signal">validated</field>
         </record>
+        <record id="trans_sol_draft_confirmed" model="workflow.transition">
+            <field name="act_from" ref="act_sol_draft"/>
+            <field name="act_to" ref="act_sol_confirmed"/>
+            <field name="signal">confirmed</field>
+        </record>
         <record id="trans_sol_validated_sourced" model="workflow.transition">
             <field name="act_from" ref="act_sol_validated"/>
             <field name="act_to" ref="act_sol_sourced"/>
