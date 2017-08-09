@@ -396,7 +396,7 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         res = {}
         for po in self.browse(cr, uid, ids, context=context):
             pol_states = set([line.state for line in po.order_line])
@@ -411,16 +411,20 @@ class purchase_order(osv.osv):
                     # do we have a line further then draft in our FO ?
                     if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > draft_sequence for s in pol_states]):
                         res[po.id] = 'draft_p'
-                elif res[po.id] == 'validated': # set the validated-p state ?
+                elif res[po.id] in ('validated', 'validated_n'): # set the validated-p state ?
                     validated_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'validated', context=context)
                     # do we have a line further then validated in our FO ?
                     if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > validated_sequence for s in pol_states]):
                         res[po.id] = 'validated_p'
-                elif res[po.id] == 'validated': # set the sourced-p state ?
+                    else:
+                        res[po.id] = 'validated'
+                elif res[po.id].startswith('sourced'): # set the sourced-p state ?
                     sourced_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'sourced', context=context)
                     # do we have a line further then sourced in our FO ?
                     if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > sourced_sequence for s in pol_states]):
                         res[po.id] = 'sourced_p'
+                    else:
+                        res[po.id] = 'sourced'
                 elif res[po.id] == 'confirmed': # set the confirmed-p state ?
                     confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, 'confirmed', context=context)
                     # do we have a line further then confirmed in our FO ?
@@ -505,7 +509,7 @@ class purchase_order(osv.osv):
         'pricelist_id':fields.many2one('product.pricelist', 'Pricelist', required=True, states={'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
         'state': fields.function(_get_less_advanced_pol_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
-                                 'purchase.order.line': (_get_order, ['state'], 10),    
+                                 'purchase.order.line': (_get_order, ['state'], 10), 
                                  },
                                  select=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception."
                                  ),
