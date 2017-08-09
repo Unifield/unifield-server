@@ -483,12 +483,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             readonly=True, states={'draft': [('readonly', False)]}, select=True),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
         'state': fields.function(_get_less_advanced_sol_state, string='Order State', method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True,
-            store = {
-                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-                'sale.order.line': (_get_order, ['state'], 10),    
-            },
-            select=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'."
-        ),
+                                 store = {
+                                 'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                                 'sale.order.line': (_get_order, ['state'], 10),    
+                                 },
+                                 select=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'."
+                                 ),
         'state_hidden_sale_order': fields.function(_get_state_hidden, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State'),
         'date_order': fields.date('Ordered Date', required=True, readonly=True, select=True, states={'draft': [('readonly', False)]}),
         'create_date': fields.date('Creation Date', readonly=True, select=True, help="Date on which sales order is created."),
@@ -2963,8 +2963,8 @@ class sale_order_line(osv.osv):
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
     def product_id_change_orig(self, cr, uid, ids, pricelist, product, qty=0,
-                          uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-                          lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+                               uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+                               lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
         if not  partner_id:
             raise osv.except_osv(_('No Customer Defined !'), _('You have to select a customer in the sales form !\nPlease set one customer before choosing a product.'))
         warning = {}
@@ -3103,8 +3103,8 @@ class sale_order_line(osv.osv):
             context = {}
 
         res = self.product_id_change_orig(cr, uid, ids, pricelist, product, qty,
-                                                             uom, qty_uos, uos, name, partner_id,
-                                                             lang, update_tax, date_order, packaging, fiscal_position, flag)
+                                          uom, qty_uos, uos, name, partner_id,
+                                          lang, update_tax, date_order, packaging, fiscal_position, flag)
 
         if 'domain' in res:
             del res['domain']

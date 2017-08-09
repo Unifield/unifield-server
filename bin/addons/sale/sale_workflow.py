@@ -1,9 +1,8 @@
 # -*- coding:utf-8 -*-
 
-from osv import osv, fields
+from osv import osv
 from tools.translate import _
 import netsvc
-from . import SALE_ORDER_STATE_SELECTION
 
 
 
@@ -29,8 +28,6 @@ class sale_order_line(osv.osv):
         """
         # Objects
         ana_obj = self.pool.get('analytic.distribution')
-        data_obj = self.pool.get('ir.model.data')
-        acc_obj = self.pool.get('account.account')
         sol_obj = self.pool.get('sale.order.line')
         distrib_line_obj = self.pool.get('cost.center.distribution.line')
 
@@ -50,7 +47,6 @@ class sale_order_line(osv.osv):
             if line.created_by_tender or line.created_by_rfq:
                 continue
             # Search intermission
-            intermission_cc = data_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_intermission')
             # Check distribution presence
             l_ana_dist_id = line.analytic_distribution_id and line.analytic_distribution_id.id
             o_ana_dist_id = so.analytic_distribution_id and so.analytic_distribution_id.id
@@ -134,7 +130,7 @@ class sale_order_line(osv.osv):
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
@@ -154,7 +150,7 @@ class sale_order_line(osv.osv):
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
@@ -174,7 +170,7 @@ class sale_order_line(osv.osv):
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
@@ -208,7 +204,7 @@ class sale_order_line(osv.osv):
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
@@ -264,7 +260,7 @@ class sale_order_line(osv.osv):
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
@@ -299,7 +295,7 @@ class sale_order_line(osv.osv):
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
@@ -333,7 +329,7 @@ class sale_order_line(osv.osv):
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 

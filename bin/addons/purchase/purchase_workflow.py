@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from osv import osv, fields
+from osv import osv
 import netsvc
 from tools.translate import _
 import time
@@ -45,7 +45,7 @@ class purchase_order_line(osv.osv):
 
             # convert from currency of pol to currency of sol
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
-                round=False, context={'date': pol.order_id.date_order})
+                                                                         round=False, context={'date': pol.order_id.date_order})
 
             if sale_order.order_type == 'regular' and price_unit_converted < 0.00001:
                 price_unit_converted = 0.00001
@@ -59,7 +59,7 @@ class purchase_order_line(osv.osv):
             line_confirmed = False
             if pol.confirmed_delivery_date:
                 line_confirmed = self.pool.get('purchase.order').compute_confirmed_delivery_date(cr, uid, pol.order_id, pol.confirmed_delivery_date,
-                    prep_lt, ship_lt, sale_order.est_transport_lead_time, db_date_format, context=context)
+                                                                                                 prep_lt, ship_lt, sale_order.est_transport_lead_time, db_date_format, context=context)
 
             sol_values = {
                 'product_id': pol.product_id and pol.product_id.id or False,
@@ -119,7 +119,7 @@ class purchase_order_line(osv.osv):
         for pol in self.browse(cr, uid, ids, context=context):
             # convert from currency of pol to currency of sol
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
-                round=False, context={'date': pol.order_id.date_order})
+                                                                         round=False, context={'date': pol.order_id.date_order})
 
             if sale_order.order_type == 'regular' and price_unit_converted < 0.00001:
                 price_unit_converted = 0.00001
@@ -133,7 +133,7 @@ class purchase_order_line(osv.osv):
             line_confirmed = False
             if pol.confirmed_delivery_date:
                 line_confirmed = self.pool.get('purchase.order').compute_confirmed_delivery_date(cr, uid, pol.order_id, pol.confirmed_delivery_date,
-                    prep_lt, ship_lt, sale_order.est_transport_lead_time, db_date_format, context=context)
+                                                                                                 prep_lt, ship_lt, sale_order.est_transport_lead_time, db_date_format, context=context)
 
             sol_values = {
                 'order_id': fo_id,
@@ -182,8 +182,6 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
-        wf_service = netsvc.LocalService("workflow")
-
         self.write(cr, uid, ids, {'state': 'validated_n'}, context=context)
 
         # add line to parent SO if needed:
