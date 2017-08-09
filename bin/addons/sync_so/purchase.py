@@ -32,11 +32,27 @@ from sync_client import get_sale_purchase_logger
 class purchase_order_line_sync(osv.osv):
     _inherit = 'purchase.order.line'
 
+    def _get_sync_local_id(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for pol in self.read(cr, uid, ids, ['order_id'], context=context):
+            ret[pol['id']] = '%s/%s' % (pol['order_id'][1], pol['id'])
+        return ret
+
     _columns = {
         'original_purchase_line_id': fields.text(string='Original purchase line id'),
         'dest_partner_id': fields.related('order_id', 'dest_partner_id', string='Destination partner', readonly=True, type='many2one', relation='res.partner', store=True),
-        'sync_linked_sol': fields.integer(string='Linked sale order line at synchro'),
+        'sync_linked_sol': fields.char(size=256, string='Linked sale order line at synchro'),
+        'sync_local_id': fields.function(_get_sync_local_id, type='char', method=True, string='ID', help='for internal use only'),
     }
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        if not default:
+            default = {}
+        if 'sync_linked_sol' not in default:
+            default['sync_linked_sol'] = False
+        return super(purchase_order_sync, self).copy(cr, uid, id, default, context=context)
 
     def sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
         '''
@@ -56,11 +72,11 @@ class purchase_order_line_sync(osv.osv):
         # retrieve data:
         pol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, sol_info, context)
         pol_values['order_id'] = po_ids[0]
-        pol_values['sync_linked_sol'] = sol_dict['fake_id']
+        pol_values['sync_linked_sol'] = sol_dict['sync_local_id']
 
         # update PO line:
         pol_updated = False
-        split_already_created = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['fake_id'])], limit=1, context=context) # ensure split has not already been created
+        split_already_created = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context) # ensure split has not already been created
         if sol_dict['is_line_split'] and not split_already_created:                # get the original PO line:
             # get the original PO line:
             sync_linked_sol = int(sol_dict['original_line_id'].get('id').split('/')[-1]) if sol_dict['original_line_id'] else False
@@ -81,7 +97,14 @@ class purchase_order_line_sync(osv.osv):
             wf_service.trg_validate(uid, 'purchase.order.line', new_pol, 'validated', cr)
             self.update_fo_lines(cr, uid, orig_pol, context=context) # update original PO line with new qty, price ...
             pol_updated = new_pol
-        elif not self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['fake_id'])], limit=1, context=context): # new line
+        else:
+            pol_id = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context)
+            if not pol_id and sol_dict.get('sync_linked_pol'):
+                pol_id_msg = sol_dict['sync_linked_pol'].split('/')[-1]
+                pol_id = self.search(cr, uid, [('order_id', '=', pol_values['order_id']), ('id', '=', int(pol_id_msg))], context=context)
+
+        if not pol_id: # new line
+            kind = 'new line'
             # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)
             # so we have to create this new PO line:
             pol_values['set_as_sourced_n'] = True
@@ -100,16 +123,10 @@ class purchase_order_line_sync(osv.osv):
                 self.create_sol_from_pol(cr, uid, [new_pol], parent_so[0], context=context)
         else: # regular update
             # search for the PO line to update:
-            pol_to_update = sol_dict.get('sync_linked_pol', False)
-            if pol_to_update and isinstance(pol_to_update, (int,long)):
-                pol_to_update = [pol_to_update]
-            if not pol_to_update:
-                # when FO line doesn't have a ref to PO line id (e.g. case of split line in FO)
-                pol_to_update = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['fake_id'])], context=context)
-            if not pol_to_update:
-                raise Exception, "Cannot find the linked Purchase Order line to update"
+            pol_updated = pol_id[0]
+            kind = 'update'
+            pol_to_update = [pol_updated]
             self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
-            pol_updated = pol_to_update[0]
 
             # update PO line state:
             if sol_dict['state'] == 'sourced':
@@ -123,7 +140,7 @@ class purchase_order_line_sync(osv.osv):
 
         # log me:
         po_name = self.pool.get('purchase.order').read(cr, uid, po_ids[0], ['name'], context=context)['name'] or ''
-        message = "+++ Purchase Order %s: line number %s (id:%s) has been updated +++" % (po_name, pol_values['line_number'], pol_updated)
+        message = "+++ Purchase Order %s %s: line number %s (id:%s) has been updated +++" % (kind, po_name, pol_values['line_number'], pol_updated)
         logging.getLogger('------sync.purchase.order.line').info(message)
 
         return message
@@ -403,7 +420,6 @@ class purchase_order_sync(osv.osv):
             context = {}
 
         so_po_common = self.pool.get('so.po.common')
-        line_obj = self.pool.get('purchase.order.line')
 
         # UF-1830: TODO: DO NOT CREATE ANYTHING FROM A RESTORE CASE!
         if context.get('restore_flag'):

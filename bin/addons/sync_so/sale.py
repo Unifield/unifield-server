@@ -31,19 +31,26 @@ class sale_order_line_sync(osv.osv):
     _inherit = "sale.order.line"
     _logger = logging.getLogger('------sync.sale.order.line')
 
-    def _get_fake_id(self, cr, uid, ids, field_name, args, context=None):
+    def _get_sync_local_id(self, cr, uid, ids, field_name, args, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         ret = {}
-        for i in ids:
-            ret[i] = i
+        for sol in self.read(cr, uid, ids, ['order_id'], context=context):
+            ret[sol['id']] = '%s/%s' % (sol['order_id'][1], sol['id'])
         return ret
 
     _columns = {
         'source_sync_line_id': fields.text(string='Sync DB id of the PO origin line'),
-        'fake_id': fields.function(_get_fake_id, type='integer', method=True, string='ID', help='for internal use only'),
-        'sync_linked_pol': fields.integer(string='Linked purchase order line at synchro'),
+        'sync_local_id': fields.function(_get_sync_local_id, type='char', method=True, string='ID', help='for internal use only'),
+        'sync_linked_pol': fields.char(size=256, string='Linked purchase order line at synchro', select=1),
     }
+
+    def copy(self, cr, uid, id, default=None, context=None):
+        if not default:
+            default = {}
+        if 'sync_linked_pol' not in default:
+            default['sync_linked_pol'] = False
+        return super(sale_order_line_sync, self).copy(cr, uid, id, default, context=context)
 
     def create_so_line(self, cr, uid, source, line_info, context=None):
         if context is None:
@@ -60,7 +67,7 @@ class sale_order_line_sync(osv.osv):
         # from purchase.order.line to sale.order.line:
         sol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, line_info, context)
         sol_values['order_id'] = sale_order_ids[0]
-        sol_values['sync_linked_pol'] = pol_dict.get('fake_id', False)
+        sol_values['sync_linked_pol'] = pol_dict.get('sync_local_id', False)
         new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
 
         message = ": New line #%s (id:%s) added to Sale Order %s ::" % (pol_dict['line_number'], new_sol_id, so_name)

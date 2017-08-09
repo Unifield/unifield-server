@@ -9,7 +9,6 @@ import netsvc
 from tools.translate import _
 import decimal_precision as dp
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION, PURCHASE_ORDER_LINE_STATE_SELECTION
-from workflow.wkf_expr import _eval_expr
 
 
 class purchase_order_line(osv.osv):
@@ -144,7 +143,7 @@ class purchase_order_line(osv.osv):
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
         'linked_sol_id': fields.many2one('sale.order.line', string='Linked SO line', help='Linked Sale Order line in case of PO from sourcing', readonly=True),
-        'sync_linked_sol': fields.integer(string='Linked FO line at synchro'),
+        'sync_linked_sol': fields.char(size=256, string='Linked FO line at synchro'),
     # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
         'origin': fields.char(size=512, string='Origin'),
@@ -252,7 +251,6 @@ class purchase_order_line(osv.osv):
         ad_obj = self.pool.get('analytic.distribution')
         ccdl_obj = self.pool.get('cost.center.distribution.line')
         pol_obj = self.pool.get('purchase.order.line')
-        imd_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
