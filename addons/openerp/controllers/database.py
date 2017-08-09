@@ -470,14 +470,14 @@ class Database(BaseController):
 
     def background_auto_creation(self, password, dbname, admin_password,
             db_exists, lang, sync_user, sync_pwd, sync_host, sync_port, sync_protocol,
-            sync_server, oc):
+            sync_server, oc, group_name_list, parent_instance):
         if not db_exists:
             # create database
             self.database_creation(password, dbname, admin_password)
 
         rpc.session.execute_db('instance_auto_creation', password, dbname,
                 lang, sync_user, sync_pwd, sync_host, sync_port, sync_protocol,
-                sync_server, oc)
+                sync_server, oc, group_name_list, parent_instance)
         self.resume, self.progress, self.state, self.error = rpc.session.execute_db('creation_get_resume_progress', dbname)
 
     @expose()
@@ -506,6 +506,8 @@ class Database(BaseController):
             sync_protocol = config.get('instance', 'sync_protocol')
             sync_server = config.get('instance', 'sync_server')
             oc = config.get('instance', 'oc').lower()
+            group_name_list = config.get('instance', 'group_names').split(',')
+            parent_instance = config.get('instance', 'parent_instance')
             db_exists = False
 
             # check the database not already exists
@@ -521,7 +523,9 @@ class Database(BaseController):
                                                    admin_password, db_exists, lang, sync_user,
                                                    sync_pwd, sync_host,
                                                    sync_port, sync_protocol,
-                                                   sync_server, oc))
+                                                   sync_server, oc,
+                                                   group_name_list,
+                                                   parent_instance))
             create_thread.start()
             # after 4 seconds, the progress bar is displayed
             create_thread.join(1)
