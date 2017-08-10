@@ -64193,8 +64193,9 @@ msgstr "Mise à jour du module"
 msgid "wizard.import.mapping"
 msgstr "wizard.import.mapping"
 
-#. module: register_accounting
+#. modules: register_accounting, account_override
 #: code:addons/register_accounting/account_move_line.py:52
+#: code:addons/account_override/account_move_line.py:260
 #, python-format
 msgid "Filter not implemented."
 msgstr "Filtre pas mis en oeuvre"
@@ -98688,3 +98689,8 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. module: account_override
+#: field:account.move.line,open_items:0
+msgid "Open Items at"
+msgstr "Écritures ouvertes à"

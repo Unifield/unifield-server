@@ -242,6 +242,26 @@ class account_move_line(osv.osv):
     def _init_status_move(self, cr, ids, *a, **b):
         cr.execute('update account_move_line l set status_move = (select status from account_move m where m.id = l.move_id)')
 
+    def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):
+        """
+        Returns False for all ids
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for i in ids:
+            ret[i] = False
+        return ret
+
+    def _search_open_items(self, cr, uid, obj, name, args, context):
+        if not args:
+            return []
+        if args[0][1] != '=' or not args[0][2] or not isinstance(args[0][2], int):
+            raise osv.except_osv(_('Error'), _('Filter not implemented.'))
+        if context is None:
+            context = {}
+        domain = []  # TODO
+        return domain
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
@@ -277,6 +297,8 @@ class account_move_line(osv.osv):
                                          }
                                          ),
         'is_reconciled': fields.function(_get_is_reconciled, fnct_search=_search_is_reconciled, type='boolean', method=True, string="Is reconciled", help="Is that line partially/totally reconciled?"),
+        'open_items': fields.function(_get_fake, method=True, type='many2one', relation='account.period', string='Open Items at',
+                                      store=False, fnct_search=_search_open_items, domain=[('state', '!=', 'created')]),
         'balance_currency': fields.function(_balance_currency, fnct_search=_balance_currency_search, method=True, string='Balance Booking'),
         'corrected_upstream': fields.boolean('Corrected from CC/HQ', readonly=True, help='This line have been corrected from Coordo or HQ level to a cost center that have the same level or superior.'),
         'line_number': fields.integer(string='Line Number'),
