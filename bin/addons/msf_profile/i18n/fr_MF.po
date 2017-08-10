@@ -98690,8 +98690,9 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
 
-#. modules: account_override, account_mcdb
+#. modules: account_override, account_mcdb, account
 #: field:account.move.line,open_items:0
 #: field:account.mcdb,open_items:0
+#: field:account.report.general.ledger,open_items:0
 msgid "Open Items at"
 msgstr "Écritures ouvertes à"

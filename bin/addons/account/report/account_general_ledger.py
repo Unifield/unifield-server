@@ -190,6 +190,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         else:
             query += " AND am.state in ('draft', 'posted') "
 
+        # "Open Items at" filter
+        if data['form'].get('open_items'):
+            aml_ids = obj_move.search(self.cr, self.uid, [('open_items', '=', data['form']['open_items'])],
+                                      order='NO_ORDER', context=self.context) or [0]
+            query += " AND l.id in(%s) " % (",".join(map(str, aml_ids)))
+
         self._drill = self.pool.get("account.drill").build_tree(self.cr,
                                                                 self.uid, query, self.init_query,
                                                                 include_accounts=self.account_ids,
