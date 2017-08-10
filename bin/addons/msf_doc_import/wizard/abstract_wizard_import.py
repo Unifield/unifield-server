@@ -136,7 +136,9 @@ your support team and give us this message.
                 except Exception as e:
                     return (-1, value, e)
         elif header[1] == 'Boolean':
-            if value.upper() in ('T', 'TRUE', '1'):
+            if isinstance(value, bool):
+                pass
+            elif value.upper() in ('T', 'TRUE', '1'):
                 value = True
             else:
                 value = False
