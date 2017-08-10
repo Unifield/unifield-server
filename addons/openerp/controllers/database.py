@@ -312,6 +312,8 @@ class Database(BaseController):
             config_file_path = os.path.join(paths.root(), '..', 'UFautoInstall', config_file_name)
         else:
             config_file_path = os.path.join(paths.root(), '..', 'unifield-server', 'UFautoInstall', config_file_name)
+        if not os.path.exists(config_file_path):
+            return False
         config = ConfigParser.ConfigParser()
         config.read(config_file_path)
         dbname = config.get('instance', 'db_name')
