@@ -40,6 +40,7 @@
         "wizard/order_change_currency_view.xml",
         "sale_sequence.xml",
         "report/sale_report_view.xml",
+        "wizard/delete_sale_order_line_view.xml",
     ],
     "demo_xml": [
     ],

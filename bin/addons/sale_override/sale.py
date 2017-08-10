@@ -3159,6 +3159,20 @@ class sale_order_line(osv.osv):
                     'res_id': wiz_id,
                     'context': context}
 
+    def open_delete_sale_order_line_wizard(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to delete the line
+        '''
+        # we need the context
+        if context is None:
+            context = {}
+
+        model = 'delete.sale.order.line.wizard'
+        name = {'name': _('Warning!'), }
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
+
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
         reset link to purchase order from update of on order purchase order
