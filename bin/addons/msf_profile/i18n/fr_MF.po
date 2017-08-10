@@ -71246,6 +71246,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/account_override/invoice.py:1273
 #: code:addons/account_override/invoice.py:1548
 #: code:addons/account_override/invoice.py:1551
+#: code:addons/account_override/account_move_line.py:265
 #: code:addons/account_reconciliation/account_move_line.py:238
 #: code:addons/account_reconciliation/account_move_line.py:257
 #: code:addons/account_reconciliation/account_move_line.py:259
