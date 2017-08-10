@@ -444,9 +444,19 @@ class abstract_wizard_import(osv.osv_memory):
                 len(line_content), len(headers)
             ))
 
+        # if the last comlumn(s) is(are) empty, line_content do not contain
+        # this column: len(line_content) is equal to len(headers) - number of
+        # empty columns at the end
+        if len(line_content) < len(headers):
+            # add None instead of the missing column
+            line_content += [None for x in range((len(headers) - len(line_content)))]
+
         data = []
         errors = []
         for col_index, col_value in enumerate(line_content):
+            if col_value is None:
+                data.append(None)
+                continue
             # Check data values according to expected type
             chk_res = ImportHeader.check_value(headers[col_index], col_value.data, col_value.type, context=context)
             data.append(chk_res[1])

@@ -336,13 +336,13 @@ MODEL_DATA_DICT = {
             'default_debit_account_id.code',
             'name',
             'type',
-            'analytic_journal_id.code',
+            'analytic_journal_id.name',
         ],
         'required_field_list': [
             'code',
             'name',
             'type',
-            'analytic_journal_id.code',
+            'analytic_journal_id.name',
         ],
     },
     'analytic_accounts': {
