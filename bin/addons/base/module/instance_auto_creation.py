@@ -57,11 +57,11 @@ class instance_auto_creation(osv.osv):
             ('instance_validated', 'Instance validated on SYNC_SERVER side.'),
             ('backup_configuration', 'Backup configuration...'),
             ('backup_configured', 'Backup configured.'),
-            ('config_file_deleted', 'Instance Auto Creation config files deleted.'),
             ('start_init_sync', 'Start intial synchronisation, this may take a lot of time...'),
             ('end_init_sync', 'Init sync finished !'),
             ('reconfigure', 'Do reconfigure...'),
             ('reconfigure_done', 'Reconfigure done.'),
+            ('config_file_deleted', 'Instance Auto Creation config files deleted.'),
             ('done', 'Done')], 'State', readonly=True),
         'progress': fields.float('Progress', readonly=True),
         'error': fields.text('Error', readonly=True),
@@ -115,7 +115,6 @@ class instance_auto_creation(osv.osv):
                 context=context)
 
     def check_sync_server_registration_validation(self, cr, uid, context=None):
-        #self.pool.get('sync.client.entity').sync(cr, uid)
         entity_obj = self.pool.get('sync.client.entity')
         entity = entity_obj.get_entity(cr, uid, context=context)
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
@@ -125,6 +124,9 @@ class instance_auto_creation(osv.osv):
         validated = False
         message = ''
         creation_id = self.search(cr, uid, [('dbname', '=', cr.dbname)], context=context)
+        if not creation_id:
+            return False
+        creation_id = creation_id and creation_id[0]
         try:
             validated, message = proxy.is_validated(entity.identifier)
         except Exception as e:
@@ -153,8 +155,9 @@ class instance_auto_creation(osv.osv):
                    {'state': 'instance_validated', 'error':''},
                    context=context)
         cr.commit()
+        creation_obj = self.pool.get('instance.auto.creation')
         create_thread = threading.Thread(target=creation_obj.background_install_after_registration,
-                                         args=(cr, uid, creation_id))
+                                         args=(cr.dbname, uid, creation_id))
         create_thread.start()
         create_thread.join(1)
 
@@ -332,14 +335,18 @@ class instance_auto_creation(osv.osv):
             cr.close()
 
 
-    def background_install_after_registration(self, cr, uid, creation_id, context=None):
+    def background_install_after_registration(self, dbname, uid, creation_id, context=None):
+        cr = None
         try:
+            db, pool = pooler.get_db_and_pool(dbname)
+            cr = db.cursor()
             skip_backup = skip_reconfigure = False
             creation_state = self.read(cr, uid, creation_id, ['state'], context=context)['state']
+            skip_backup_config = skip_reconfigure = False
             if creation_state == 'backup_configured':
-                skip_all_modules = skip_language = skip_register = skip_backup_config = True
+                skip_backup_config = True
             elif creation_state == 'reconfigure_done':
-                skip_all_modules = skip_language = skip_register = skip_backup_config = skip_reconfigure = True
+                skip_backup_config = skip_reconfigure = True
 
             config_file_name = 'uf_auto_install.conf'
             config_file_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall', config_file_name)
@@ -347,27 +354,13 @@ class instance_auto_creation(osv.osv):
             config.read(config_file_path)
             config_dict =  {x:dict(config.items(x)) for x in config.sections()}
 
-            # delete the auto configuration folder
-            config_file_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall')
-            import shutil
-            shutil.rmtree(config_file_path)
-            self.write(cr, 1, creation_id,
-                       {'state': 'config_file_deleted'}, context=context)
-
             # start the init sync (very long)
             self.write(cr, 1, creation_id,
                        {'state': 'start_init_sync'}, context=context)
             cr.commit()
-            proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
-            try:
-                proxy.sync()
-            except Exception as e:
-                print e
-                import pdb; pdb.set_trace()
-                pass
+            self.pool.get('sync.client.entity').sync(cr, uid)
             self.write(cr, 1, creation_id,
                        {'state': 'end_init_sync'}, context=context)
-
 
             if not skip_backup_config:
                 self.write(cr, 1, creation_id,
@@ -407,13 +400,22 @@ class instance_auto_creation(osv.osv):
                 self.write(cr, 1, creation_id,
                            {'state': 'reconfigure_done'}, context=context)
 
+            # delete the auto configuration folder
+            config_file_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall')
+            import shutil
+            shutil.rmtree(config_file_path)
+            self.write(cr, 1, creation_id,
+                       {'state': 'config_file_deleted'}, context=context)
+
+
         except Exception as e:
             self.write(cr, 1, creation_id,
                         {'error': '%s' % e}, context=context)
 
         finally:
-            cr.commit()
-            cr.close()
+            if cr:
+                cr.commit()
+                cr.close()
 
 
 instance_auto_creation()
