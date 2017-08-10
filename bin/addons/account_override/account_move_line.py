@@ -254,14 +254,40 @@ class account_move_line(osv.osv):
         return ret
 
     def _search_open_items(self, cr, uid, obj, name, args, context):
+        """
+        Returns a domain with all reconcilable JIs EXCEPT:
+        - those fully reconciled at the period end date or before
+        - those fully reconciled after the period end date, if all legs of the reconciliation are <= to the period end date
+        """
         if not args:
             return []
         if args[0][1] != '=' or not args[0][2] or not isinstance(args[0][2], int):
             raise osv.except_osv(_('Error'), _('Filter not implemented.'))
         if context is None:
             context = {}
-        domain = []  # TODO
-        return domain
+        aml_list = []
+        period_obj = self.pool.get('account.period')
+        period_id = period_obj.browse(cr, uid, args[0][2], fields_to_fetch=['date_stop'], context=context)
+        period_end_date = period_id.date_stop
+        aml_query = '''
+              SELECT aml.id, aml.reconcile_id
+              FROM account_move_line aml
+              INNER JOIN account_account acc ON aml.account_id = acc.id
+              WHERE acc.reconcile = 't'
+              AND (aml.reconcile_id IS NULL OR reconcile_date > %s);
+              '''
+        cr.execute(aml_query, (period_end_date,))
+        lines = cr.dictfetchall()
+        for l in lines:
+            if not l['reconcile_id']:
+                aml_list.append(l['id'])
+            else:
+                # get the JIs with the same reconcile_id
+                same_rec_list = self.search(cr, uid, [('reconcile_id', '=', l['reconcile_id'])], order='NO_ORDER', context=context)
+                # check that at least one of them has a posting date later than the period end date
+                if self.search_exist(cr, uid, [('id', 'in', same_rec_list), ('date', '>', period_end_date)], context=context):
+                    aml_list.append(l['id'])
+        return [('id', 'in', aml_list)]
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
