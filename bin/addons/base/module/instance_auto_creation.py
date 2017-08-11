@@ -61,7 +61,6 @@ class instance_auto_creation(osv.osv):
             ('end_init_sync', 'Init sync finished !'),
             ('reconfigure', 'Do reconfigure...'),
             ('reconfigure_done', 'Reconfigure done.'),
-            ('config_file_deleted', 'Instance Auto Creation config files deleted.'),
             ('done', 'Done')], 'State', readonly=True),
         'progress': fields.float('Progress', readonly=True),
         'error': fields.text('Error', readonly=True),
@@ -89,19 +88,20 @@ class instance_auto_creation(osv.osv):
         state = vals.get('state')
         if state:
             previous_state = self.read(cr, uid, ids[0], ['state'], context=context)['state']
-            get_sel = self.pool.get('ir.model.fields').get_selection
-            current_state_label = get_sel(cr, uid, self._name, 'state', state, context=context)
-            line_to_add = '%s: %s\n' % (current_time, current_state_label)
+            if previous_state != state:
+                get_sel = self.pool.get('ir.model.fields').get_selection
+                current_state_label = get_sel(cr, uid, self._name, 'state', state, context=context)
+                line_to_add = '%s: %s\n' % (current_time, current_state_label)
 
-            resume = self.read(cr, uid, ids[0], ['resume'], context=context)['resume']
-            resume += line_to_add
-            vals['resume'] = resume
+                resume = self.read(cr, uid, ids[0], ['resume'], context=context)['resume']
+                resume += line_to_add
+                vals['resume'] = resume
 
         if 'progress' not in vals and vals.get('state') and state != previous_state:
             # if progress is not passed, increment it at each state change
             progress = self.read(cr, uid, ids[0], ['progress'],
                     context=context)['progress']
-            nb_state = len(self._columns['state'].selection) - 2  # remove draft and done
+            nb_state = len(self._columns['state'].selection) - 3  # remove draft and done
             one_step_percentage = 1/float(nb_state)
             progress += one_step_percentage
             vals['progress'] = progress
@@ -127,11 +127,23 @@ class instance_auto_creation(osv.osv):
         if not creation_id:
             return False
         creation_id = creation_id and creation_id[0]
+        current_state = self.read(cr, uid, creation_id, ['state'])['state']
         try:
             validated, message = proxy.is_validated(entity.identifier)
         except Exception as e:
             if 'AccessDenied' in e.value:
-                message = _('The instance is not connected to the SYNC_SERVER')
+                # try to reconnect automatically:
+                synchro_serv = self.pool.get('sync.client.sync_server_connection')
+                connection_ids = synchro_serv.search(cr, uid, [])
+                connection = False
+                if connection_ids:
+                    connection_state = synchro_serv.read(cr, uid, connection_ids[0], ['state'])['state']
+                    if connection_state == 'Disconnected':
+                        connection = synchro_serv.connect(cr, uid, connection_ids)
+                if connection and current_state in ('start_init_sync', 'end_init_sync', 'reconfigure', 'reconfigure_done', 'done'):
+                    validated = True
+                else:
+                    message = _('The instance is not connected to the SYNC_SERVER')
             else:
                 message = e.value
             self.write(cr, uid, creation_id, {'error': message}, context=context)
@@ -147,14 +159,15 @@ class instance_auto_creation(osv.osv):
         # registration validated ! The crontab can be desactivated
         cron_obj = self.pool.get('ir.cron')
         cron_ids = cron_obj.search(cr, uid,
-                                   [('name', '=', 'Check if SYNC_SERVER validates the registration')],
+                                   [('function', '=', 'check_sync_server_registration_validation')],
                                    context=context)
         if cron_ids:
             cron_obj.write(cr, uid, cron_ids, {'active': False}, context=context)
-        self.write(cr, uid, creation_id,
-                   {'state': 'instance_validated', 'error':''},
-                   context=context)
-        cr.commit()
+        if current_state == 'wating_for_validation':
+            self.write(cr, uid, creation_id,
+                       {'state': 'instance_validated', 'error':''},
+                       context=context)
+            cr.commit()
         creation_obj = self.pool.get('instance.auto.creation')
         create_thread = threading.Thread(target=creation_obj.background_install_after_registration,
                                          args=(cr.dbname, uid, creation_id))
@@ -187,9 +200,13 @@ class instance_auto_creation(osv.osv):
                 skip_update_client = True
             elif creation_state == 'sync_client_web_installed':
                 skip_sync_client_web = True
-            elif creation_state == 'language_installed':
+            elif creation_state in ('language_installed', 'register_instance'):
                 skip_all_modules = skip_language = True
-            elif creation_state == 'instance_registered':
+            elif creation_state in ('instance_registered',
+                    'wating_for_validation', 'instance_validated',
+                    'backup_configuration', 'backup_configured',
+                    'start_init_sync', 'end_init_sync', 'reconfigure',
+                    'reconfigure_done', 'done') :
                 skip_all_modules = skip_language = skip_register = True
             else:
                 # this is not a state we can restart from
@@ -303,26 +320,29 @@ class instance_auto_creation(osv.osv):
                            {'state': 'instance_registered'}, context=context)
                 cr.commit()
 
-                # create a cron job to check that the registration has been validated on the server side
-                cron_obj = pool.get('ir.cron')
-                cron_vals = {
-                    'name': 'Check if SYNC_SERVER validates the registration',
-                    'active': True,
-                    'interval_number': 5,
-                    'interval_type': 'minutes',
-                    'numbercall': -1,
-                    'doall': False,
-                    'nextcall': time.strftime('%Y-%m-%d %H:%M:%S'),
-                    'model': 'instance.auto.creation',
-                    'function': 'check_sync_server_registration_validation',
-                }
-                cron_ids = cron_obj.search(cr, uid,
-                                           [('name', '=', 'Check if SYNC_SERVER validates the registration')],
-                                           context=context)
-                if cron_ids:
-                    cron_obj.write(cr, uid, cron_ids, cron_vals, context=context)
-                else:
-                    cron_obj.create(cr, uid, cron_vals, context=context)
+            # create a cron job to check that the registration has been validated on the server side
+            cron_obj = pool.get('ir.cron')
+            cron_vals = {
+                'name': 'Check if SYNC_SERVER validates the registration',
+                'active': True,
+                'interval_number': 5,
+                'interval_type': 'minutes',
+                'numbercall': -1,
+                'doall': False,
+                'nextcall': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'model': 'instance.auto.creation',
+                'function': 'check_sync_server_registration_validation',
+            }
+            cron_ids = cron_obj.search(cr, uid,
+                                       [('function', '=', 'check_sync_server_registration_validation'),
+                                        ('active', 'in', ('t', 'f'))],
+                                       context=context)
+            if cron_ids:
+                cron_obj.write(cr, uid, cron_ids, cron_vals, context=context)
+            else:
+                cron_obj.create(cr, uid, cron_vals, context=context)
+            current_state = self.read(cr, uid, creation_id, ['state'])['state']
+            if current_state == 'instance_registered':
                 self.write(cr, 1, creation_id,
                            {'state': 'wating_for_validation'}, context=context)
                 cr.commit()
@@ -342,11 +362,24 @@ class instance_auto_creation(osv.osv):
             cr = db.cursor()
             skip_backup = skip_reconfigure = False
             creation_state = self.read(cr, uid, creation_id, ['state'], context=context)['state']
-            skip_backup_config = skip_reconfigure = False
-            if creation_state == 'backup_configured':
-                skip_backup_config = True
+            skip_init_sync = skip_backup_config = skip_reconfigure = False
+            if creation_state == 'end_init_sync':
+                skip_init_sync = True
+            elif creation_state  == 'backup_configured':
+                skip_init_sync = skip_backup_config = True
             elif creation_state == 'reconfigure_done':
-                skip_backup_config = skip_reconfigure = True
+                skip_init_sync = skip_backup_config = skip_reconfigure = True
+            elif creation_state == 'start_init_sync':
+                pass  # it is allowed to restart this state
+            else:
+                # this is not a state we can restart from
+                # this mean there was probably a crash during the creation and
+                # it is safer to create a new one.
+                error_message = self.read(cr, uid, creation_id, ['error'], context=context)['error'] or 'no error stored'
+                if 'It is not possible to restart' not in error_message:
+                    error_message = 'It is not possible to restart the auto-creation from this state. It is safer to delete the database and recreate a new one. Last error message was: %s.' % error_message
+                raise osv.except_osv(_("Error!"), error_message)
+
 
             config_file_name = 'uf_auto_install.conf'
             config_file_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall', config_file_name)
@@ -354,13 +387,25 @@ class instance_auto_creation(osv.osv):
             config.read(config_file_path)
             config_dict =  {x:dict(config.items(x)) for x in config.sections()}
 
-            # start the init sync (very long)
-            self.write(cr, 1, creation_id,
-                       {'state': 'start_init_sync'}, context=context)
-            cr.commit()
-            self.pool.get('sync.client.entity').sync(cr, uid)
-            self.write(cr, 1, creation_id,
-                       {'state': 'end_init_sync'}, context=context)
+            if not skip_init_sync:
+                entity_obj = self.pool.get('sync.client.entity')
+                sync_status = entity_obj.get_status(cr, uid)
+                if sync_status == 'Syncing...':
+                    # keep going
+                    pass
+                elif sync_status == 'Connected' or sync_status.startswith('Last Sync: In Progress...'):
+                    # start/restart the init sync (very long)
+                    self.write(cr, 1, creation_id,
+                               {'state': 'start_init_sync'}, context=context)
+                    cr.commit()
+                    self.pool.get('sync.client.entity').sync(cr, uid)
+                    self.write(cr, 1, creation_id,
+                               {'state': 'end_init_sync'}, context=context)
+                elif sync_status.startswith('Last Sync: Ok'):
+                    self.write(cr, 1, creation_id,
+                               {'state': 'end_init_sync'}, context=context)
+                else:
+                    raise 'Impossible to perform the sync. Sync status is \'%s\'.' % sync_status
 
             if not skip_backup_config:
                 self.write(cr, 1, creation_id,
@@ -397,16 +442,65 @@ class instance_auto_creation(osv.osv):
             if not skip_reconfigure:
                 self.write(cr, 1, creation_id,
                            {'state': 'reconfigure'}, context=context)
+
+
+                base_wizards = {
+                    'base.setup.config' : {
+                        'button' : 'config',
+                    },
+                    'res.config.view' : {
+                        'name' : "auto_init",
+                        'view' : 'extended',
+                    },
+                    'sale.price.setup' : {
+                        'sale_price' : 0.10,
+                    },
+                    'stock.location.configuration.wizard' : {
+                        'location_type' : 'internal',
+                        'location_usage' : 'stock',
+                        'location_name' : 'Test Location',
+                        'button' : 'action_stop',
+                    },
+                    'currency.setup' : {
+                        #'functional_id' : config_dict['instance'].get('functional_currency').lower(),
+                        'functional_id' : 'eur', #config_dict['instance'].get('functional_currency').lower(),
+                    },
+                }
+
+
+
+                model = 'msf_instance.setup'
+                while model != 'ir.ui.menu':
+                    # skip account.installer if no parent_name providen (typically: HQ instance)
+                    if model == 'msf_instance.setup':
+                        instance_id = self.pool.get('msf.instance').search(cr, uid, [('instance', '=', cr.dbname)])
+                        if not instance_id:
+                            error_message = ('No prop. instance \'%s\' found. Please check it has been created on the HQ and sync, then restart the auto creation process from stactch.') % cr.dbname
+                            raise osv.except_osv(_("Error!"), error_message)
+                        else:
+                            instance_id = instance_id[0]
+
+                        self.pool.get('res.company').write(cr, uid, [1], {'instance_id': instance_id})
+                        wiz_obj = self.pool.get(model)
+                        wizard_id = wiz_obj.create(cr, uid, {'instance_id': instance_id})
+                        answer = wiz_obj.action_next(cr, uid, [wizard_id])
+                    else:
+                        data = dict(base_wizards.get(model, {}))
+                        button = data.pop('button', 'action_next')
+                        wiz_obj = self.pool.get(model)
+                        wizard_id = wiz_obj.create(cr, uid, data)
+                        answer = getattr(wiz_obj, button)(cr, uid, [wizard_id])
+                    model = answer.get('res_model', None)
+
                 self.write(cr, 1, creation_id,
                            {'state': 'reconfigure_done'}, context=context)
 
+            time.sleep(15)  # before to delete to let the web get the last
+                            # informations
             # delete the auto configuration folder
             config_file_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall')
             import shutil
             shutil.rmtree(config_file_path)
-            self.write(cr, 1, creation_id,
-                       {'state': 'config_file_deleted'}, context=context)
-
 
         except Exception as e:
             self.write(cr, 1, creation_id,

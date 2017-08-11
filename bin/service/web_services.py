@@ -238,9 +238,18 @@ class db(netsvc.ExportService):
                 return _('Empty database creation in progress...\n'), percentage_per_step, 'draft', ''
             res = creation_obj.read(cr, 1, creation_id, ['resume', 'progress',
                                                          'state', 'error'])
+
+            # get the last sync_monitor informations:
+            monitor_obj = pool.get('sync.monitor')
+            monitor_id = monitor_obj.search(cr, 1, [], order='start desc', limit=1)
+            monitor_id = monitor_id and monitor_id[0] or False
+            monitor_status = ''
+            if monitor_id:
+                result = monitor_obj.read(cr, 1, monitor_id, ['status', 'error'])
+                monitor_status = 'Synchronisation status: %s : %s' % (result['status'], result['error'])
         finally:
             cr.close()
-        return res['resume'], res['progress'], res['state'], res['error']
+        return res['resume'], res['progress'], res['state'], res['error'], monitor_status
 
     def exp_check_super_password_validity(self, password):
         try:
