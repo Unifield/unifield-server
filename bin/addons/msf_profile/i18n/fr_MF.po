@@ -63697,12 +63697,6 @@ msgstr "wizard.invoice.line"
 msgid "America/Juneau"
 msgstr "America/Juneau"
 
-#. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:199
-#, python-format
-msgid "This account is not authorized: %s"
-msgstr "This account is not authorized: %s"
-
 #. module: base
 #: help:workflow.transition,condition:0
 msgid "Expression to be satisfied if we want the transition done."
