@@ -3168,7 +3168,7 @@ class sale_order_line(osv.osv):
             context = {}
 
         model = 'delete.sale.order.line.wizard'
-        name = {'name': _('Warning!'), }
+        name = _('Warning!')
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)

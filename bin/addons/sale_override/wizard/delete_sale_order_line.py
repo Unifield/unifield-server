@@ -20,9 +20,11 @@
 ##############################################################################
 
 from osv import osv, fields
-from product._common import rounding
-
 from tools.translate import _
+from collections import deque
+import threading
+import time
+import netsvc
 
 
 class delete_sale_order_line_wizard(osv.osv_memory):
@@ -45,24 +47,72 @@ class delete_sale_order_line_wizard(osv.osv_memory):
         result = super(delete_sale_order_line_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         # get the line
         so_line = self.pool.get('sale.order.line')
-        line_ids = context.get('active_ids', [])
+        if hasattr(context, 'lines_ids'):
+            line_ids = context.get('lines_ids', [])
+        else:
+            line_ids = context.get('active_ids', [])
 
         if not line_ids:
             # not called through an action (e.g. buildbot), return the default.
             return result
 
-        line_name = so_line.browse(cr, uid, line_ids[0], context=context).name
+        if len(line_ids) > 1:
+            names = ''
+            parent_so_id = 0
+            for index, line_id in enumerate(line_ids, start=1):
+                line = so_line.browse(cr, uid, line_id, context=context)
+                if hasattr(line, 'name'):
+                    if index == 1:
+                        names += line.product_id.default_code
+                        parent_so_id = line.order_id.id
+                    elif index == len(line_ids):
+                        names += ' and ' + line.product_id.default_code
+                    else:
+                        names += ', ' + line.product_id.default_code
 
-        _moves_arch_lst = """
-                        <form>
-                        <separator colspan="6" string="You are about to delete the product %s, are you sure you wish to proceed ?"/>
-                        <button name="perm_unlink" string="OK, delete line" type="object" icon="gtk-apply" />
-                        <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
-                        """ % line_name
+            if parent_so_id != 0:
+                _moves_arch_lst = """
+                                <form>
+                                <separator colspan="6" string="You are about to delete the products %s, are you sure you wish to proceed ?"/>
+                                <button name="unlink" string="OK, delete lines" type="object" icon="gtk-apply"
+                                    context="{'ids': %s, 'order_id': %s}"/>
+                                <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
+                                """ % (names, line_ids, parent_so_id)
+                _moves_arch_lst += """</form>"""
+                result['arch'] = _moves_arch_lst
+        else:
+            line = so_line.browse(cr, uid, line_ids[0], context=context)
 
-        _moves_arch_lst += """</form>"""
+            if hasattr(line, 'name'):
+                _moves_arch_lst = """
+                                <form>
+                                <separator colspan="6" string="You are about to delete the product %s, are you sure you wish to proceed ?"/>
+                                <button name="unlink" string="OK, delete line" type="object" icon="gtk-apply" 
+                                    context="{'line_id': %s, 'order_id': %s}"/>
+                                <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
+                                """ % (line.product_id.default_code, line.id, line.order_id.id)
+                _moves_arch_lst += """</form>"""
+                result['arch'] = _moves_arch_lst
 
-        result['arch'] = _moves_arch_lst
         return result
+
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        deletes the corresponding line, and asks to cancel the FO if it has no line
+        '''
+        if context is None:
+            context = {}
+
+        if context.get('ids', []) and len(context['ids']) > 1:
+            for line_id in context.get('ids'):
+                self.pool.get('sale.order.line').unlink(cr, uid, line_id, context=context)
+        else:
+            self.pool.get('sale.order.line').unlink(cr, uid, context.get('line_id', []), context=context)
+
+            parent_so = self.pool.get('sale.order').browse(cr, uid, context.get('order_id', []), context=context)
+            if len(parent_so['order_line']) == 0:
+                return self.pool.get('sale.order.unlink.wizard').ask_unlink(cr, uid, parent_so['id'], context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
 
 delete_sale_order_line_wizard()

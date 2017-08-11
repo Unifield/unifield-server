@@ -98688,3 +98688,8 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. module: sale_override
+#: model:ir.model,name:sale_override.model_delete_sale_order_line_wizard
+msgid "Delete sale order line"
+msgstr "Supprimer la ligne de Commande de Terrain"
