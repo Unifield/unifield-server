@@ -575,7 +575,7 @@ class wizard_delete_lines(osv.osv_memory):
 
         # only for FO
         if context['active_model'] == 'sale.order' \
-                and (context.get('procurement_request') and not context['procurement_request']):
+                and (not context.get('procurement_request') or not context['procurement_request']):
             lines_ids = []
             for wiz in self.browse(cr, uid, ids, context=context):
                 # the id of lines to remove.
