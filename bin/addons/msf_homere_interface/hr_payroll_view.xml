@@ -68,7 +68,7 @@
             </field>
         </record>
 
-        <!-- B/S lines -->
+        <!-- B/S lines (search) -->
         <record id="view_hr_payroll_msf_bs_filter" model="ir.ui.view">
             <field name="name">Payroll B/S lines</field>
             <field name="model">hr.payroll.msf</field>
@@ -145,6 +145,7 @@
                     <field name="document_date"/>
                     <field name="date"/>
                     <field name="period_id"/>
+                    <field name="partner_type" readonly="0"/>
                     <field name="partner_id"/>
                     <field name="employee_id"/>
                     <field name="name"/>
@@ -153,7 +154,6 @@
                     <field name="amount" sum="Total amount"/>
                     <field name="currency_id"/>
                     <field name="state"/>
-                    <field name="partner_type" readonly="0"/>
                 </tree>
             </field>
         </record>
