@@ -317,12 +317,13 @@ class Database(BaseController):
         config = ConfigParser.ConfigParser()
         config.read(config_file_path)
         dbname = config.get('instance', 'db_name')
-        self.resume, self.progress, self.state, self.error = rpc.session.execute_db('creation_get_resume_progress', dbname)
+        self.resume, self.progress, self.state, self.error, monitor_status = rpc.session.execute_db('creation_get_resume_progress', dbname)
         my_dict = {
             'resume': self.resume,
             'progress': self.progress,
             'state': self.state,
             'error': self.error,
+            'monitor_status': monitor_status,
         }
         import json
         return json.dumps(my_dict)
@@ -388,6 +389,7 @@ class Database(BaseController):
                 ('instance', 'sync_user'),
                 ('instance', 'sync_pwd'),
                 ('instance', 'instance_level'),
+                ('instance', 'parent_instance'),
                 ('instance', 'lang'),
                 ('backup', 'auto_bck_path'),
                 ('reconfigure', 'prop_instance'),
@@ -479,7 +481,7 @@ class Database(BaseController):
             self.database_creation(password, dbname, config_dict['instance'].get('admin_password'))
 
         rpc.session.execute_db('instance_auto_creation', password, dbname)
-        self.resume, self.progress, self.state, self.error = rpc.session.execute_db('creation_get_resume_progress', dbname)
+        self.resume, self.progress, self.state, self.error, monitor_status = rpc.session.execute_db('creation_get_resume_progress', dbname)
 
     @expose()
     @validate(form=_FORMS['auto_create'])

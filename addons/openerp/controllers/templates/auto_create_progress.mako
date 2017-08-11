@@ -38,6 +38,9 @@
                             if (data.state === 'done') {
                                 clearInterval(interval);
                             };
+                            if (data.monitor_status) {
+                                $("div.my_monitor_status").text(data.monitor_status);
+                            };
                         }
                     },
                     error: function (xhr, status, error) {
@@ -62,7 +65,8 @@
     <div class="db-form">
         <h1>Automated instance creation in progress...</h1>
 
-        <div class="my_state">state</div>
+        <div class="my_state"></div>
+        <div class="my_monitor_status"></div>
 
         <div class="instance_creation_progress">
           <div class="progressbar" style="width:${'%d'%(percent*100)}%">${'%d'%(percent*100)}%</div>
