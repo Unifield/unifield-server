@@ -254,6 +254,7 @@ class purchase_order_line(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'sourced_s'}, context=context)
 
+        self.update_fo_lines(cr, uid, ids, context=context)
         # update linked sol (same instance) to sourced-s (if has)
         for po in self.browse(cr, uid, ids, context=context):
             if po.linked_sol_id:
