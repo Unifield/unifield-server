@@ -64193,12 +64193,17 @@ msgstr "Mise à jour du module"
 msgid "wizard.import.mapping"
 msgstr "wizard.import.mapping"
 
-#. modules: register_accounting, account_override
+#. module: register_accounting
 #: code:addons/register_accounting/account_move_line.py:52
-#: code:addons/account_override/account_move_line.py:260
 #, python-format
 msgid "Filter not implemented."
 msgstr "Filtre pas mis en oeuvre"
+
+#. module: account_override
+#: code:addons/account_override/account_move_line.py:265
+#, python-format
+msgid "Filter not implemented. Please check that you have selected one Period in \"Open Items at\"."
+msgstr "Filtre non mis en oeuvre. Veuillez vérifier que vous avez sélectionné une période dans \"Écritures ouvertes à\"."
 
 #. module: product
 #: model:ir.actions.act_window,help:product.product_normal_action_puchased

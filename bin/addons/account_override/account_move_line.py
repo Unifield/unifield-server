@@ -262,7 +262,8 @@ class account_move_line(osv.osv):
         if not args:
             return []
         if args[0][1] != '=' or not args[0][2] or not isinstance(args[0][2], int):
-            raise osv.except_osv(_('Error'), _('Filter not implemented.'))
+            raise osv.except_osv(_('Error'), _('Filter not implemented. '
+                                               'Please check that you have selected one Period in \"Open Items at\".'))
         if context is None:
             context = {}
         aml_list = []
