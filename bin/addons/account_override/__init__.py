@@ -127,13 +127,6 @@ ACCOUNT_RESTRICTED_AREA = {
         ('is_not_hq_correctible', '=', False),
         ('accrual_account', '=', True),
     ],
-    # PAYROLLS
-    'payroll_lines': [
-        ('type', '!=', 'view'),
-        ('user_type_code', 'in', ['income', 'expense']),
-        ('user_type_report_type', '!=', 'none'),
-        ('is_not_hq_correctible', '=', False),
-    ],
     # HQ ENTRIES
     'hq_lines': [
         ('type', '!=', 'view'),

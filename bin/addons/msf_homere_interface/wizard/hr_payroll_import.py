@@ -220,11 +220,6 @@ class hr_payroll_import(osv.osv_memory):
         if credit:
             is_counterpart = True
 
-        # For non counterpart lines, check expected accounts
-        if not is_counterpart:
-            if not self.pool.get('account.account').search(cr, uid, ACCOUNT_RESTRICTED_AREA['payroll_lines'] + [('id', '=', account.id)]):
-                raise osv.except_osv(_('Warning'), _('This account is not authorized: %s') % (account.code,))
-
         # Check on partner
         employee_identification_id = ''
         if third and third[0] and not is_payroll_rounding:
