@@ -303,11 +303,11 @@ MODEL_DATA_DICT = {
     # FINANCE
     'gl_accounts': {
         'header_list': [
-            'user_type.code',
+            'user_type.name',
             'accrual_account',
             'activation_date',
             'code',
-            'default_destination_id.code',
+            'default_destination_id.id',
             'inactivation_date',
             'type',
             'name',
@@ -320,7 +320,7 @@ MODEL_DATA_DICT = {
             'currency_revaluation',
         ],
         'required_field_list': [
-            'user_type.code',
+            'user_type.name',
             'activation_date',
             'code',
             'type',

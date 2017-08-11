@@ -184,6 +184,8 @@ class msf_import_export(osv.osv_memory):
 
             child_field = field.split('.')[0]
             rest = '.'.join(field.split('.')[1:])
+            if child_field == 'id':
+                return field, model
 
             if child_field not in fields_get_res:
                 raise osv.except_osv(_('Error'),
@@ -231,11 +233,13 @@ class msf_import_export(osv.osv_memory):
             child_field, child_model = self.get_child_field(cr, uid, field, model,
                     fields_get_dict, context=context)
             first_part = field.split('.')[0]
-            if first_part not in fields_get_dict[model]:
+            if child_field == 'id':
+                res['name'] = '%s / XMLID' % fields_get_dict[model][first_part]['string']
+            elif first_part not in fields_get_dict[model]:
                 raise osv.except_osv(_('Error'),
                         _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
                         % (first_part, model))
-            if first_part != child_field:
+            elif first_part != child_field:
                 if child_field not in fields_get_dict[child_model]:
                     raise osv.except_osv(_('Error'),
                             _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
@@ -246,7 +250,10 @@ class msf_import_export(osv.osv_memory):
                 res['name'] = fields_get_dict[model][first_part]['string']
 
 
-            field_type = fields_get_dict[child_model][child_field]['type']
+            if child_field == 'id':
+                field_type == 'String'
+            else:
+                field_type = fields_get_dict[child_model][child_field]['type']
             if field_type == 'boolean':
                 res['ftype'] = 'Boolean'
             elif field_type == 'float':
@@ -374,11 +381,13 @@ class msf_import_export(osv.osv_memory):
             child_field, child_model = self.get_child_field(cr, uid, field, model,
                     fields_get_dict, context=context)
             first_part = field.split('.')[0]
-            if first_part not in fields_get_dict[model]:
+            if child_field == 'id':
+                column_name = '%s / XMLID' % fields_get_dict[model][first_part]['string']
+            elif first_part not in fields_get_dict[model]:
                 raise osv.except_osv(_('Error'),
                         _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
                         % (first_part, model))
-            if first_part != child_field:
+            elif first_part != child_field:
                 if child_field not in fields_get_dict[child_model]:
                     raise osv.except_osv(_('Error'),
                             _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
@@ -596,7 +605,20 @@ WHERE n3.level = 3)
             if impobj._name == 'product.product' and value in self._cache.get(dbname, {}).get(relation, {}).get(list_obj[1], {}):
                 return self._cache[dbname][relation][list_obj[1]][value]
             new_obj = self.pool.get(relation)
-            newids = new_obj.search(cr, uid, [(list_obj[1], '=', value)], limit=1)
+            if list_obj[1] == 'id':
+                imd_obj = self.pool.get('ir.model.data')
+
+                if '.' in value:
+                    module, xml_id = value.rsplit('.', 1)
+                else:
+                    module, xml_id = model, value
+                record_id = imd_obj._get_id(cr, uid, module, xml_id)
+                ir_model_data = imd_obj.read(cr, uid, [record_id], ['res_id'])
+                if not ir_model_data:
+                    raise ValueError('No references to %s.%s' % (module, xml_id))
+                newids = [ir_model_data[0]['res_id']]
+            else:
+                newids = new_obj.search(cr, uid, [(list_obj[1], '=', value)], limit=1)
             if not newids:
                 # no obj
                 raise osv.except_osv(_('Warning !'), _('%s \'%s\' does not exist') % (new_obj._description, value,))
@@ -707,12 +729,12 @@ WHERE n3.level = 3)
                             delimiter = points[1]
                             new_fields_def = self.pool.get(fields_def[newo2m]['relation']).fields_get(cr, uid, context=context)
                             o2mdatas[points[1]] = process_data('.'.join(points[1:]), line_data[n], new_fields_def)
-                        elif fields_def[points[0]]['type'] in 'many2one':
+                        elif fields_def[points[0]]['type'] == 'many2one':
                             if not line_data[n]:
                                 data[points[0]] = False
                             elif line_data[n]:
                                 data[points[0]] = _get_obj(h, line_data[n], fields_def) or False
-                        elif fields_def[points[0]]['type'] in 'many2many' and line_data[n]:
+                        elif fields_def[points[0]]['type'] == 'many2many' and line_data[n]:
                             data.setdefault(points[0], []).append((4, _get_obj(h, line_data[n], fields_def)))
                 if not line_ok:
                     continue
