@@ -90,9 +90,11 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 if balance == 0:
                     if not report.remove_completed:
                         for sm_obj in tmp_list:
+                            sm_obj.state = 'Closed'
                             result.append(sm_obj)
                 else:
                     for sm_obj in tmp_list:
+                        sm_obj.state = 'Open'
                         result.append(sm_obj)
                 tmp_list = []
                 balance = 0
@@ -104,9 +106,11 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                     if balance == 0:
                         if not report.remove_completed:
                             for sm_obj in tmp_list:
+                                sm_obj.state = 'Closed'
                                 result.append(sm_obj)
                     else:
                         for sm_obj in tmp_list:
+                            sm_obj.state = 'Open'
                             result.append(sm_obj)
                     tmp_list = []
                     balance = 0
@@ -117,9 +121,11 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                         if balance == 0:
                             if not report.remove_completed:
                                 for sm_obj in tmp_list:
+                                    sm_obj.state = 'Closed'
                                     result.append(sm_obj)
                         else:
                             for sm_obj in tmp_list:
+                                sm_obj.state = 'Open'
                                 result.append(sm_obj)
                         tmp_list = []
                         balance = 0

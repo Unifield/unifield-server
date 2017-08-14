@@ -30,16 +30,6 @@ import time
 class sale_loan_stock_moves(osv.osv_memory):
     _name = 'sale.loan.stock.moves'
 
-    MOVE_STATE = [
-            ('draft', 'Draft'),
-            ('waiting', 'Waiting'),
-            ('confirmed', 'Not Available'),
-            ('assigned', 'Available'),
-            ('done', 'Closed'),
-            ('cancel', 'Cancelled'),
-            ('hidden', 'Hidden')
-        ]
-
     _columns = {
         'start_date': fields.date(
             string='Start date',
@@ -64,10 +54,6 @@ class sale_loan_stock_moves(osv.osv_memory):
         'product_id': fields.many2one(
             'product.product',
             string='Product Ref.',
-        ),
-        'state': fields.selection(
-            MOVE_STATE,
-            string='Status'
         ),
         'origin': fields.char(
             'Origin',
@@ -105,8 +91,9 @@ class sale_loan_stock_moves(osv.osv_memory):
             sm_domain = []
 
             sm_domain.append(('reason_type_id', '=', type_loan_id))
-            sm_domain += ['|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
-                          ('location_dest_id.usage', 'in', ['customer', 'supplier'])]
+            sm_domain += ['|', '&', ('type', '=', 'in'), ('state', 'in', ['assigned', 'done']),
+                          '&', '&', ('location_id.usage', '=', 'internal'),
+                          ('location_dest_id.usage', 'in', ['customer', 'supplier']), ('state', '=', 'done')]
 
             if wizard.start_date:
                 sm_domain.append(('date', '>=', wizard.start_date))
@@ -122,9 +109,6 @@ class sale_loan_stock_moves(osv.osv_memory):
 
             if wizard.product_id:
                 sm_domain.append(('product_id', '=', wizard.product_id.id))
-
-            if wizard.state:
-                sm_domain.append(('state', '=', wizard.state))
 
             if wizard.origin:
                 sm_domain.append(('origin', 'like', wizard.origin))
