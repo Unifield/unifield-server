@@ -8462,6 +8462,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:tender.line,state:0
 #: selection:wizard.import.invoice.line,state:0
 #: selection:mission.stock.wizard,processed_state:0
+#: selection:hr.payroll.validation,state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -17339,7 +17340,8 @@ msgid "Webkit Report template not found !"
 msgstr "Modèle de rapport Webkit non trouvé !"
 
 #. module: msf_homere_interface
-#: view:hr.payroll.validation:0
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:46
+#, python-format
 msgid "This will validate all Payroll entries and create accounting entries. This will take a while."
 msgstr "Cela permettra de valider toutes les écritures de Paie et de créer des écritures comptables. Cela va prendre un certain temps."
 
@@ -31666,7 +31668,7 @@ msgstr "Financing contract - Budget vs. Actuals"
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:73
 #, python-format
 msgid "Following entries have account/partner not compatible:"
-msgstr "Following entries have account/partner not compatible:"
+msgstr "Les écritures suivantes ont une association compte/partenaire non compatible :"
 
 #. module: msf_audittrail
 #: field:audittrail.rule,parent_field_id:0
@@ -42472,7 +42474,7 @@ msgstr "Biens de soutien humanitaire"
 msgid "Total:"
 msgstr "Total:"
 
-#. modules: sales_followup, register_accounting, reason_types_moves, order_types, msf_tools, msf_doc_import, return_claim, mission_stock
+#. modules: sales_followup, register_accounting, reason_types_moves, order_types, msf_tools, msf_doc_import, return_claim, mission_stock, msf_homere_interface
 #: selection:msf.doc.import.accounting,state:0
 #: selection:wizard.import.fo.line,state:0
 #: selection:wizard.import.ir.line,state:0
@@ -42493,6 +42495,7 @@ msgstr "Total:"
 #: selection:export.report.inconsistencies,state:0
 #: selection:stock.mission.report,export_state:0
 #: selection:mission.stock.wizard,processed_state:0
+#: selection:hr.payroll.validation,state:0
 #, python-format
 msgid "In Progress"
 msgstr "En cours"
@@ -73861,7 +73864,7 @@ msgstr "Japon"
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:253
 #, python-format
 msgid "No posting date found for the journal entry. Please contact a developer."
-msgstr "No posting date found for the journal entry. Please contact a developer."
+msgstr "Pas de date de comptabilisation trouvée pour l'écriture comptable. Veuillez contacter un développeur."
 
 #. module: base
 #: selection:ir.actions.server,trigger_name:0
@@ -80952,7 +80955,7 @@ msgstr "Les écritures de Paiement sont la deuxième partie du lettrage."
 msgid "Select a supplier"
 msgstr "Sélectionner un fournisseur"
 
-#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, base, register_accounting, msf_doc_import, return_claim, stock, analytic_distribution
+#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, base, register_accounting, msf_doc_import, return_claim, stock, analytic_distribution, msf_homere_interface
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
 #: selection:account.subscription,state:0
@@ -80998,6 +81001,7 @@ msgstr "Sélectionner un fournisseur"
 #: view:stock.move:0
 #: view:stock.picking:0
 #: selection:wizard.import.invoice.line,state:0
+#: selection:hr.payroll.validation,state:0
 msgid "Done"
 msgstr "Terminé"
 
@@ -81470,6 +81474,7 @@ msgstr "Devise d'enregistrement"
 #: field:tender,state:0
 #: field:tender.line,state:0
 #: field:international.transport.cost.report,order_state:0
+#: field:hr.payroll.validation,state:0
 #: view:sale.order:0
 #, python-format
 msgid "State"
@@ -93650,7 +93655,7 @@ msgstr "Livrer"
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:240
 #, python-format
 msgid "Following counterpart entries have account/partner not compatible:"
-msgstr "Following counterpart entries have account/partner not compatible:"
+msgstr "Les écritures de contrepartie suivantes ont une association compte/partenaire non compatible :"
 
 #. module: hr
 #: field:hr.employee,ssnid:0
@@ -95472,7 +95477,7 @@ msgstr "Cascade"
 msgid "Removal date"
 msgstr "Date de Retrait"
 
-#. modules: msf_budget, financing_contract, res_currency_tables, export_import_lang
+#. modules: msf_budget, financing_contract, res_currency_tables, export_import_lang, msf_homere_interface
 #: view:base.language.export:0
 #: view:base.language.import:0
 #: view:msf.language.import:0
@@ -95480,6 +95485,7 @@ msgstr "Date de Retrait"
 #: view:wizard.budget.import.finish:0
 #: view:confirm.import.currencies:0
 #: view:warning.import.currencies:0
+#: view:hr.payroll.validation:0
 msgid "OK"
 msgstr "OK"
 
@@ -98706,3 +98712,27 @@ msgstr "Valider les Lignes de dépenses et aller aux Lignes du bilan"
 #, python-format
 msgid "Payroll B/S lines"
 msgstr "Lignes de paye du bilan"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:161
+#, python-format
+msgid "Checking account/partner compatibility..."
+msgstr "Vérification de la compatibilité compte/partenaire..."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:303
+#, python-format
+msgid "Posting of the entries. This may take a while..."
+msgstr "Comptabilisation des écritures. Cela peut prendre un certain temps..."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:308
+#, python-format
+msgid "Updating the status of the entries..."
+msgstr "Mise à jour du statut des écritures..."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:213
+#, python-format
+msgid "Creation of the Journal Items..."
+msgstr "Création des Lignes d'Ecritures Comptables..."

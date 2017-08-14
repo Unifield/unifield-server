@@ -25,13 +25,10 @@ from osv import osv
 from osv import fields
 from time import strftime
 from tools.translate import _
-import re
-from lxml import etree as ET
-from tools.misc import ustr
 import threading
 import logging
 import pooler
-import datetime
+
 
 class hr_payroll_validation(osv.osv_memory):
     _name = 'hr.payroll.validation'
@@ -157,6 +154,7 @@ class hr_payroll_validation(osv.osv_memory):
                 raise osv.except_osv(_('Error'),
                                      _('Payroll entries have already been validated for: %s in this period: "%s"!') % (
                                      field, period_validated.period_id.name,))
+            self._update_percent(cr, uid, ids, 1, context, use_new_cursor)  # 1% of the total process time
 
             # US-672 check counterpart entries account/thirdparty compat
             self.check(cr, uid, context=context)  # check expense lines
@@ -303,7 +301,7 @@ class hr_payroll_validation(osv.osv_memory):
                 }
                 # create move line
                 self.pool.get('account.move.line').create(cr, uid, line_vals, check=False)
-            self._update_message(cr, uid, ids, _('Posting of the entries...'), context, use_new_cursor)
+            self._update_message(cr, uid, ids, _('Posting of the entries. This may take a while...'), context, use_new_cursor)
             self.pool.get('account.move').post(cr, uid, [move_id])
             # Update payroll lines status
             self._update_percent(cr, uid, ids, 90, context, use_new_cursor)  # 90% of the total process time
@@ -323,9 +321,9 @@ class hr_payroll_validation(osv.osv_memory):
             self.write(cr, uid, ids, {
                 'state': 'done',
             }, context=context)
-        if use_new_cursor:
-            cr.commit()
-            cr.close(True)
+            if use_new_cursor:
+                cr.commit()
+                cr.close(True)
 
     def button_validate(self, cr, uid, ids, context=None):
         """
