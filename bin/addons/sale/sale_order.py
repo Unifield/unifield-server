@@ -1698,7 +1698,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
-    def _get_picking_data(self, cr, uid, order, context=None):
+    def _get_picking_data(self, cr, uid, order, context=None, get_seq=True):
         """
         Define the values for the picking ticket associated to the
         FO/IR according to order values.
@@ -1744,32 +1744,35 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         'already_replicated': False,
                         'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_external_supply')[1],
                     })
-                    pick_name = seq_obj.get(cr, uid, 'stock.picking.out')
+                    seq_name = 'stock.picking.out'
                 else:
                     picking_data.update({
                         'type': 'internal',
                         'subtype': 'standard',
                         'reason_type_id': data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1],
                     })
-                    pick_name = seq_obj.get(cr, uid, 'stock.picking.internal')
+                    seq_name =  'stock.picking.internal'
         else:
             if setup.delivery_process == 'simple':
                 picking_data['subtype'] = 'standard'
                 # use the name according to picking ticket sequence
-                pick_name = seq_obj.get(cr, uid, 'stock.picking.out')
+                seq_name = 'stock.picking.out'
             else:
                 picking_data['subtype'] = 'picking'
                 # use the name according to picking ticket sequence
-                pick_name = seq_obj.get(cr, uid, 'picking.ticket')
+                seq_name = 'picking.ticket'
 
         picking_data.update({
-            'name': pick_name,
             'flow_type': 'full',
             'backorder_id': False,
             'warehouse_id': order.shop_id.warehouse_id.id,
             'reason_type_id': self._get_reason_type(cr, uid, order, context=context) or picking_data.get('reason_type_id', False),
         })
 
+        if get_seq:
+            picking_data['name'] = seq_obj.get(cr, uid, seq_name)
+        else:
+            picking_data['seq_name'] = seq_name
         return picking_data
 
     def _get_move_data(self, cr, uid, order, line, picking_id, context=None):
