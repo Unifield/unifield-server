@@ -21,9 +21,6 @@
 
 from osv import fields, osv
 from tools.translate import _
-import decimal_precision as dp
-import math
-import re
 import time
 
 
@@ -35,7 +32,7 @@ class product_asset_type(osv.osv):
     _description = "Specify the type of asset at product level"
 
     _columns = {
-                'name': fields.char('Name', size=64, required=True),
+        'name': fields.char('Name', size=64, required=True),
     }
     
 product_asset_type()
@@ -59,11 +56,11 @@ class product_asset(osv.osv):
         product = self.pool.get('product.product').browse(cr, uid, productId)
         
         result.update({
-                       'asset_type_id': product.asset_type_id.id,
+            'asset_type_id': product.asset_type_id.id,
                        'prod_int_code': product.default_code,
                        'prod_int_name': product.name,
                        'nomenclature_description': product.nomenclature_description,
-                     })
+        })
         
         return result
     
@@ -130,8 +127,8 @@ class product_asset(osv.osv):
             vals['xmlid_name'] = vals['name'] 
             
         exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name']),
-            ('partner_name', '=', vals['partner_name']), ('product_id', '=',
-                vals['product_id'])], limit=1, order='NO_ORDER', context=context)
+                                      ('partner_name', '=', vals['partner_name']), ('product_id', '=',
+                                                                                    vals['product_id'])], limit=1, order='NO_ORDER', context=context)
         if exist:
             # but if the value exist for xml_name, then just add a suffix to differentiate them, no constraint unique required here
             vals['xmlid_name'] = vals['xmlid_name'] + "_1"
@@ -173,22 +170,22 @@ class product_asset(osv.osv):
         
         if not intValue:
             warning.update({
-                    'title':'The format of year is invalid.',
+                'title':'The format of year is invalid.',
                     'message':
                         'The format of the year must be 4 digits, e.g. 1983.'
-                })
+            })
         elif len(year) != 4:
             warning.update({
-                    'title':'The length of year is invalid.',
+                'title':'The length of year is invalid.',
                     'message':
                         'The length of year must be 4 digits long, e.g. 1983.'
-                })
+            })
         elif (intValue < 1900) or (intValue > 2100):
             warning.update({
-                    'title':'The year is invalid.',
+                'title':'The year is invalid.',
                     'message':
                         'The year must be between 1900 and 2100.'
-                })
+            })
         
         # if a warning has been generated, clear the field
         if 'title' in warning:
@@ -197,7 +194,7 @@ class product_asset(osv.osv):
         return result
         
     _columns = {
-                # asset
+        # asset
                 'name': fields.char('Asset Code', size=128, required=True),
                 'asset_type_id': fields.many2one('product.asset.type', 'Asset Type', readonly=True), # from product
                 'description': fields.char('Asset Description', size=128),
@@ -240,7 +237,7 @@ class product_asset(osv.osv):
     }
     
     _defaults = {
-                 'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'product.asset'),
+        'name': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'product.asset'),
                  'arrival_date': lambda *a: time.strftime('%Y-%m-%d'),
                  'receipt_place': 'Country/Project/Activity',
     }
@@ -298,12 +295,12 @@ class product_asset_event(osv.osv):
         asset = self.pool.get('product.asset').browse(cr, uid, assetId)
         
         result.update({
-                       'product_id': asset.product_id.id,
+            'product_id': asset.product_id.id,
                        'asset_type_id': asset.asset_type_id.id,
                        'serial_nb': asset.serial_nb, 
                        'brand': asset.brand,
                        'model': asset.model,
-                    })
+        })
         
         return result
     
@@ -350,7 +347,7 @@ class product_asset_event(osv.osv):
         return result
     
     _columns = {
-                # event information
+        # event information
                 'date': fields.date('Date', required=True),
                 'location': fields.char('Location', size=128, required=True),
                 'proj_code': fields.char('Project Code', size=128, required=True),
@@ -414,14 +411,12 @@ class product_product(osv.osv):
 
         #UF-2170: remove the standard price value from the list if the value comes from the sync
         #US-803: If the price comes from rw_sync, then take it
+        # US-3254: update standard_pricde during initial sync (i.e if msf.instance is not set)
         if 'standard_price' in vals and context.get('sync_update_execution', False) and not context.get('rw_sync', False):
-            del vals['standard_price']
+            msf_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            if msf_instance:
+                del vals['standard_price']
 
-#        if 'type' in vals and vals['type'] == 'consu':
-# Remove these two lines to display the warning message of the constraint
-#        if vals.get('type') == 'consu':
-#            vals.update(procure_method='make_to_order')
-        # save the data to db
         return super(product_product, self).write(cr, uid, ids, vals, context=context)
 
     def _constaints_product_consu(self, cr, uid, ids, context=None):
@@ -490,7 +485,7 @@ class stock_move(osv.osv):
         override to clear asset_id
         '''
         result = super(stock_move, self).onchange_product_id(cr, uid, ids, prod_id, loc_id,
-                            loc_dest_id, address_id, parent_type, purchase_line_id,out)
+                                                             loc_dest_id, address_id, parent_type, purchase_line_id,out)
         
         if 'value' not in result:
             result['value'] = {}
