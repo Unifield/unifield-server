@@ -174,7 +174,7 @@ class hr_payroll_validation(osv.osv_memory):
             account_id = line.get('account_id', False) and line.get('account_id')[0] or False
             if not account_id:
                 raise osv.except_osv(_('Error'), _('No account found!'))
-            account = acc_obj.browse(cr, uid, account_id, context=context)
+            account = acc_obj.browse(cr, uid, account_id, fields_to_fetch=['is_analytic_addicted', 'default_destination_id'], context=context)
             # End of Note
             # create new distribution (only for analytic-a-holic accounts)
             distrib_id = False
@@ -242,7 +242,7 @@ class hr_payroll_validation(osv.osv_memory):
         # Update Payroll import period table
         self.pool.get('hr.payroll.import.period').create(cr, uid, {'period_id': period_id, 'field': field,})
         # Display a confirmation wizard
-        period = self.pool.get('account.period').browse(cr, uid, period_id)
+        period = self.pool.get('account.period').browse(cr, uid, period_id, fields_to_fetch=['name'], context=context)
         context.update({'message': _('Payroll entries validation is successful for this period: %s and for that field: %s') % (period.name, field,)})
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
         view_id = view_id and view_id[1] or False
