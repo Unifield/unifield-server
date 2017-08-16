@@ -103,7 +103,6 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
             sm_list.append(self.pool.get('stock.move').browse(self.cr, self.uid, move))
 
         sm_list = sorted(sm_list, key=lambda sm: (sm['product_id']['default_code'], sm['origin'].split(":")[-1], sm['create_date']))
-        tmp_list = []
         balance = 0
         # dict used to check if the loan flow is done
         dict_check_done = {}
@@ -128,9 +127,9 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 elif 'FO' in move.origin and not 'PO' in move.origin:
                     so_found = self._get_move_obj(self.cr, self.uid, so_obj, move)
                     so_state = so_found.state
-                    po_id = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])[0]
-                    if po_id:
-                        po_state = po_obj.browse(self.cr, self.uid, po_id).state
+                    po_ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
+                    if len(po_ids) > 0:
+                        po_state = po_obj.browse(self.cr, self.uid, po_ids[0]).state
                         if so_state == 'done' and po_state == 'done':
                             dict_check_done[move_ref] = 'Closed'
                         else:
@@ -140,9 +139,9 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 elif not 'FO' in move.origin and 'PO' in move.origin:
                     po_found = self._get_move_obj(self.cr, self.uid, po_obj, move)
                     po_state = po_found.state
-                    so_id = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])[0]
-                    if so_id:
-                        so_state = po_obj.browse(self.cr, self.uid, so_id).state
+                    so_ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
+                    if len(so_ids) > 0:
+                        so_state = po_obj.browse(self.cr, self.uid, so_ids[0]).state
                         if so_state == 'done' and po_state == 'done':
                             dict_check_done[move_ref] = 'Closed'
                         else:
@@ -155,50 +154,46 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
             # if the move is the last in the list
             if move is sm_list[-1]:
                 setattr(move, 'balance', balance)
-                tmp_list.append(move)
-                if balance == 0:
-                    if not report.remove_completed:
-                        for sm_obj in tmp_list:
-                            result.append(sm_obj)
+                # remove closed flows
+                if report.remove_completed:
+                    if move.status == 'Open':
+                        result.append(move)
                 else:
-                    for sm_obj in tmp_list:
-                        result.append(sm_obj)
-                tmp_list = []
+                    result.append(move)
                 balance = 0
             else:
                 # if the move's origin is different than the next one
                 if move.origin.split(":")[-1] not in sm_list[index+1].origin.split(":")[-1] and \
                             sm_list[index + 1].origin.split(":")[-1] not in move.origin.split(":")[-1]:
                     setattr(move, 'balance', balance)
-                    tmp_list.append(move)
-                    if balance == 0:
-                        if not report.remove_completed:
-                            for sm_obj in tmp_list:
-                                result.append(sm_obj)
+                    # remove closed flows
+                    if report.remove_completed:
+                        if move.status == 'Open':
+                            result.append(move)
                     else:
-                        for sm_obj in tmp_list:
-                            result.append(sm_obj)
-                    tmp_list = []
+                        result.append(move)
                     balance = 0
                 else:
                     # if the move's product is different than the next one
                     if move.product_id.id != sm_list[index+1].product_id.id:
                         setattr(move, 'balance', balance)
-                        tmp_list.append(move)
-                        if balance == 0:
-                            if not report.remove_completed:
-                                for sm_obj in tmp_list:
-                                    result.append(sm_obj)
+                        # remove closed flows
+                        if report.remove_completed:
+                            if move.status == 'Open':
+                                result.append(move)
                         else:
-                            for sm_obj in tmp_list:
-                                result.append(sm_obj)
-                        tmp_list = []
+                            result.append(move)
                         balance = 0
                     else:
                         setattr(move, 'balance', 0)
-                        tmp_list.append(move)
+                        # remove closed flows
+                        if report.remove_completed:
+                            if move.status == 'Open':
+                                result.append(move)
+                        else:
+                            result.append(move)
 
-        return sorted(result, key=lambda sm: (sm['product_id']['default_code'], sm['origin'].split(":")[-1], sm['create_date']))
+        return result
 
     def _get_instance(self):
         '''
