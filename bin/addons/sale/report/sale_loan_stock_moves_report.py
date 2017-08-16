@@ -65,10 +65,38 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
 
         return qty
 
+    def _get_move_obj(self, cr, uid, obj_obj, move):
+        '''
+        Return the move's order type object
+        '''
+        obj_id = False
+        obj = False
+        acronym_type = False
+
+        for split_origin in move.origin.split(":"):
+            if obj_obj == self.pool.get('sale.order'):
+                acronym_type = 'FO'
+            elif obj_obj == self.pool.get('purchase.order'):
+                acronym_type = 'PO'
+
+            if acronym_type and acronym_type in split_origin:
+                obj_name = str(split_origin.split("/")[-1].split("-")[0])
+                obj_id = obj_obj.search(cr, uid, [('name', 'like', obj_name + '-')])
+                if not obj_id:
+                    obj_id = obj_obj.search(cr, uid, [('name', 'like', obj_name)])
+
+            if obj_id:
+                obj = obj_obj.browse(cr, uid, obj_id[0])
+                break
+
+        return obj
+
     def _get_moves(self, report):
         '''
         Return the moves for the report and set their qty balance
         '''
+        so_obj = self.pool.get('sale.order')
+        po_obj = self.pool.get('purchase.order')
         result = []
         sm_list = []
         for move in report.sm_ids:
@@ -77,6 +105,8 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
         sm_list = sorted(sm_list, key=lambda sm: (sm['product_id']['default_code'], sm['origin'].split(":")[-1], sm['create_date']))
         tmp_list = []
         balance = 0
+        # dict used to check if the loan flow is done
+        dict_check_done = {}
         for index, move in enumerate(sm_list, start=0):
             move.balance = balance
             if self._is_qty_out(move):
@@ -84,21 +114,59 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
             else:
                 balance += self._get_qty(move)
 
+            # check if the flow exists in the dict
+            move.status = 'Open'
+            move_ref = str(move.origin.split(":")[-1].split("/")[-1].split("-")[0])
+            if not dict_check_done.get(move_ref, []):
+                if 'FO' in move.origin and 'PO' in move.origin:
+                    so_state = self._get_move_obj(self.cr, self.uid, so_obj, move).state
+                    po_state = self._get_move_obj(self.cr, self.uid, po_obj, move).state
+                    if so_state == 'done' and po_state == 'done':
+                        dict_check_done[move_ref] = 'Closed'
+                    else:
+                        dict_check_done[move_ref] = 'Open'
+                elif 'FO' in move.origin and not 'PO' in move.origin:
+                    so_found = self._get_move_obj(self.cr, self.uid, so_obj, move)
+                    so_state = so_found.state
+                    po_id = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
+                    if po_id:
+                        po_state = po_obj.browse(self.cr, self.uid, po_id).state
+                        if so_state == 'done' and po_state == 'done':
+                            dict_check_done[move_ref] = 'Closed'
+                        else:
+                            dict_check_done[move_ref] = 'Open'
+                    else:
+                        dict_check_done[move_ref] = 'Open'
+                elif not 'FO' in move.origin and 'PO' in move.origin:
+                    po_found = self._get_move_obj(self.cr, self.uid, po_obj, move)
+                    po_state = po_found.state
+                    so_id = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
+                    if so_id:
+                        so_state = po_obj.browse(self.cr, self.uid, so_id).state
+                        if so_state == 'done' and po_state == 'done':
+                            dict_check_done[move_ref] = 'Closed'
+                        else:
+                            dict_check_done[move_ref] = 'Open'
+                    else:
+                        dict_check_done[move_ref] = 'Open'
+            # set the state according to the flow status
+            setattr(move, 'status', dict_check_done[move_ref])
+
+            # if the move is the last in the list
             if move is sm_list[-1]:
                 setattr(move, 'balance', balance)
                 tmp_list.append(move)
                 if balance == 0:
                     if not report.remove_completed:
                         for sm_obj in tmp_list:
-                            sm_obj.state = 'Closed'
                             result.append(sm_obj)
                 else:
                     for sm_obj in tmp_list:
-                        sm_obj.state = 'Open'
                         result.append(sm_obj)
                 tmp_list = []
                 balance = 0
             else:
+                # if the move's origin is different than the next one
                 if move.origin.split(":")[-1] not in sm_list[index+1].origin.split(":")[-1] and \
                             sm_list[index + 1].origin.split(":")[-1] not in move.origin.split(":")[-1]:
                     setattr(move, 'balance', balance)
@@ -106,26 +174,23 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                     if balance == 0:
                         if not report.remove_completed:
                             for sm_obj in tmp_list:
-                                sm_obj.state = 'Closed'
                                 result.append(sm_obj)
                     else:
                         for sm_obj in tmp_list:
-                            sm_obj.state = 'Open'
                             result.append(sm_obj)
                     tmp_list = []
                     balance = 0
                 else:
+                    # if the move's product is different than the next one
                     if move.product_id.id != sm_list[index+1].product_id.id:
                         setattr(move, 'balance', balance)
                         tmp_list.append(move)
                         if balance == 0:
                             if not report.remove_completed:
                                 for sm_obj in tmp_list:
-                                    sm_obj.state = 'Closed'
                                     result.append(sm_obj)
                         else:
                             for sm_obj in tmp_list:
-                                sm_obj.state = 'Open'
                                 result.append(sm_obj)
                         tmp_list = []
                         balance = 0

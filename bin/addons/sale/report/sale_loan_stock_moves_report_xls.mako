@@ -192,7 +192,7 @@
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.product_id.standard_price, 3) * getQty(o)|x}</Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.state|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.status|x}</Data></Cell>
             </Row>
         % endfor
 
