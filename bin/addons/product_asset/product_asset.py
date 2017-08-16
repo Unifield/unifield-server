@@ -416,8 +416,20 @@ class product_product(osv.osv):
             msf_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
             if msf_instance:
                 del vals['standard_price']
+            elif not vals['standard_price']:
+                vals['standard_price'] = 1
 
         return super(product_product, self).write(cr, uid, ids, vals, context=context)
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+
+        if context.get('sync_update_execution', False) and 'standard_price' in vals and not vals['standard_price']:
+            vals['standard_price'] = 1
+
+        return super(product_product, self).create(cr, uid, vals, context)
+
 
     def _constaints_product_consu(self, cr, uid, ids, context=None):
         if context is None:
