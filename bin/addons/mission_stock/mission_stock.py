@@ -1196,12 +1196,17 @@ class stock_mission_report_line_location(osv.osv):
         # compute instance and location name to generate sync updates
         if not ids:
             return {}
+        res = {}
+        for id in ids:
+            res[id] = {
+                'instance_id': False,
+                'location_name': False,
+            }
 
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id
         cr.execute('''select line.id, loc.name from stock_mission_report_line_location line, stock_location loc
             where line.location_id = loc.id and line.id in %s''', (tuple(ids), ))
 
-        res = {}
         for x in cr.fetchall():
             res[x[0]] = {
                 'instance_id': instance_id,
