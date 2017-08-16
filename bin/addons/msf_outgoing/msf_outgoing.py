@@ -4336,6 +4336,7 @@ class stock_picking(osv.osv):
 
                 move_values = {
                     'product_qty': initial_qty,
+                    'date_expected': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 }
 
                 if not initial_qty:
