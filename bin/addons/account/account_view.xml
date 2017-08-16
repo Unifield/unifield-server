@@ -975,8 +975,12 @@
                                   <field name="type"/>
                                   <field name="amount" attrs="{'readonly':[('type','in',('none', 'code', 'balance'))]}"/>
                                   <separator colspan="4" string="Accounting Information"/>
-                                  <field name="account_collected_id" required="1" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation'),('user_type.code','not in',['income','expense'])]"/>
-                                  <field name="account_paid_id" required="1" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation'),('user_type.code','not in',['income','expense'])]"/>
+                                  <field name="account_collected_id" required="1"
+                                         domain="[('type', 'not in', ['view', 'consolidation']),
+                                                  ('user_type_code', '=', 'tax')]"/>
+                                  <field name="account_paid_id" required="1"
+                                         domain="[('type', 'not in', ['view', 'consolidation']),
+                                                  ('user_type_code', '=', 'tax')]"/>
                                   <separator colspan="4" string="Tax Declaration: Invoices"/>
                                   <field name="base_code_id"/>
                                   <field name="base_sign"/>
