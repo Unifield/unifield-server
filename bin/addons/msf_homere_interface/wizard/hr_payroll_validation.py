@@ -28,7 +28,6 @@ from tools.translate import _
 import threading
 import logging
 import pooler
-import datetime
 
 
 class hr_payroll_validation(osv.osv_memory):
@@ -304,7 +303,7 @@ class hr_payroll_validation(osv.osv_memory):
                 self.pool.get('account.move.line').create(cr, uid, line_vals, check=False)
             self._update_message(cr, uid, ids, _('Posting of the Journal Entry. This may take a while...'), context, use_new_cursor)
             context['do_not_create_analytic_line'] = True
-            self.pool.get('account.move').post(cr, uid, [move_id])
+            self.pool.get('account.move').post(cr, uid, [move_id], context=context)
             # Update payroll lines status
             self._update_percent(cr, uid, ids, 90, context, use_new_cursor)  # 90% of the total process time
             self._update_message(cr, uid, ids, _('Updating the status of the Journal Items...'), context, use_new_cursor)
