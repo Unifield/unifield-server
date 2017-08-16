@@ -98722,14 +98722,14 @@ msgstr "Vérification de la compatibilité compte/partenaire..."
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:303
 #, python-format
-msgid "Posting of the entries. This may take a while..."
-msgstr "Comptabilisation des écritures. Cela peut prendre un certain temps..."
+msgid "Posting of the Journal Entry. This may take a while..."
+msgstr "Comptabilisation de l'Ecriture Comptable. Cela peut prendre un certain temps..."
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:308
 #, python-format
-msgid "Updating the status of the entries..."
-msgstr "Mise à jour du statut des écritures..."
+msgid "Updating the status of the Journal Items..."
+msgstr "Mise à jour du statut des Lignes d'Ecritures Comptables..."
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:213

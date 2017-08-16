@@ -301,11 +301,11 @@ class hr_payroll_validation(osv.osv_memory):
                 }
                 # create move line
                 self.pool.get('account.move.line').create(cr, uid, line_vals, check=False)
-            self._update_message(cr, uid, ids, _('Posting of the entries. This may take a while...'), context, use_new_cursor)
+            self._update_message(cr, uid, ids, _('Posting of the Journal Entry. This may take a while...'), context, use_new_cursor)
             self.pool.get('account.move').post(cr, uid, [move_id])
             # Update payroll lines status
             self._update_percent(cr, uid, ids, 90, context, use_new_cursor)  # 90% of the total process time
-            self._update_message(cr, uid, ids, _('Updating the status of the entries...'), context, use_new_cursor)
+            self._update_message(cr, uid, ids, _('Updating the status of the Journal Items...'), context, use_new_cursor)
             self.pool.get('hr.payroll.msf').write(cr, uid, line_ids, {'state': 'valid'})
             # Update Payroll import period table
             self.pool.get('hr.payroll.import.period').create(cr, uid, {'period_id': period_id, 'field': field, })
