@@ -128,7 +128,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 elif 'FO' in move.origin and not 'PO' in move.origin:
                     so_found = self._get_move_obj(self.cr, self.uid, so_obj, move)
                     so_state = so_found.state
-                    po_id = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
+                    po_id = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])[0]
                     if po_id:
                         po_state = po_obj.browse(self.cr, self.uid, po_id).state
                         if so_state == 'done' and po_state == 'done':
@@ -140,7 +140,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 elif not 'FO' in move.origin and 'PO' in move.origin:
                     po_found = self._get_move_obj(self.cr, self.uid, po_obj, move)
                     po_state = po_found.state
-                    so_id = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
+                    so_id = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])[0]
                     if so_id:
                         so_state = po_obj.browse(self.cr, self.uid, so_id).state
                         if so_state == 'done' and po_state == 'done':
