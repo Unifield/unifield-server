@@ -634,7 +634,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         account_obj = self.pool.get('account.account')
         currency_obj = self.pool.get('res.currency')
         seq_obj = self.pool.get('ir.sequence')
-        instance_obj = self.pool.get('msf.instance')
 
         company = user_obj.browse(cr, uid, uid).company_id
 
