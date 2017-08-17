@@ -1109,9 +1109,12 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	I click on menu "Deliveries|Picking"
 
 	I click "Edit" on line:
-        | ORIGIN           | STATE       |
-        | {{FO_REFERENCE}} | Available   |
+        | ORIGIN           | LINES STATE  |
+        | {{FO_REFERENCE}} | Available    |
 
+    I click on "Create Picking..." and open the window
+    I click on "Copy all"
+    I click on "Create Picking" and close the window
 	I click on "Validate Picking..." and open the window
 	I click on "Copy all"
 	I click on "Validate Picking" and close the window
@@ -1185,16 +1188,17 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Closed |
 	
     I should see "Closed" in "Order State"	
-	
-
 	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
 	I click on menu "Deliveries|Picking"
 
 	I click "Edit" on line:
-        | ORIGIN             | STATE |
-        | {{FO_REFERENCE_2}} | Available   |
+        | ORIGIN             | LINES STATE           |
+        | {{FO_REFERENCE_2}} | Partially available   |
 
+    I click on "Create Picking..." and open the window
+    I click on "Copy all"
+    I click on "Create Picking" and close the window
 	I click on "Validate Picking..." and open the window
 	I click on "Copy all"
 	I click on "Validate Picking" and close the window
@@ -1385,15 +1389,17 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	   
     I should see "Closed" in "Order State"	
 	
-
 	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
 	I click on menu "Deliveries|Picking"
 
 	I click "Edit" on line:
-        | ORIGIN             | STATE |
+        | ORIGIN             | LINES STATE |
         | {{FO_REFERENCE_2}} | Available   |
 
+    I click on "Create Picking..." and open the window
+    I click on "Copy all"
+    I click on "Create Picking" and close the window
 	I click on "Validate Picking..." and open the window
 	I click on "Copy all"
 	I click on "Validate Picking" and close the window
