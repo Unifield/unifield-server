@@ -884,6 +884,13 @@ class shipment(osv.osv):
                     draft_initial_qty += return_qty
                     move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty}, context=context)
 
+                    # Update "save as draft" lines with returned qty:
+                    save_as_draft_move = self.pool.get('create.picking.move.processor').search(cr, uid ,[('move_id', '=', draft_move.id)], context=context)
+                    for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
+                        self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
+                            'quantity': sad_move.quantity + return_qty,
+                        }, context=context)
+                    
             # log the increase action - display the picking ticket view form - log message for each draft packing because each corresponds to a different draft picking
             if not log_flag:
                 draft_shipment_name = self.read(cr, uid, shipment.id, ['name'], context=context)['name']
@@ -3512,8 +3519,13 @@ class stock_picking(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
-        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        # if wizard already exists, then open it (able save as draft/reset functionnality):
+        wiz_ids = proc_obj.search(cr, uid, [('picking_id', 'in', ids), ('draft', '=', True)], context=context)
+        if wiz_ids:
+            processor_id = wiz_ids[0]
+        else:
+            processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
+            proc_obj.create_lines(cr, uid, processor_id, context=context)
 
         return {
             'type': 'ir.actions.act_window',
@@ -3703,8 +3715,13 @@ class stock_picking(osv.osv):
                 _('The picking ticket is not in \'Available\' state. Please check this and re-try')
             )
 
-        processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
-        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        # if wizard already exists, then open it (able save as draft/reset functionnality):
+        wiz_ids = proc_obj.search(cr, uid, [('picking_id', 'in', ids), ('draft', '=', True)], context=context)
+        if wiz_ids:
+            processor_id = wiz_ids[0]
+        else:
+            processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
+            proc_obj.create_lines(cr, uid, processor_id, context=context)
 
         return {
             'type': 'ir.actions.act_window',
