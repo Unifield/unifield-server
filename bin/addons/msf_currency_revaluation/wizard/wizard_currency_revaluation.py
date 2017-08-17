@@ -634,6 +634,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         account_obj = self.pool.get('account.account')
         currency_obj = self.pool.get('res.currency')
         seq_obj = self.pool.get('ir.sequence')
+        instance_obj = self.pool.get('msf.instance')
 
         company = user_obj.browse(cr, uid, uid).company_id
 
@@ -699,11 +700,12 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             raise osv.except_osv(_('Warning!'),
                 _("Revaluation should be run at Coordo level"))
         # get coordo projects...
-        project_ids = [
-            p.id for p in company.instance_id.child_ids \
-                if p.level == 'project' and p.state != 'inactive'
+        projects = [
+            p for p in company.instance_id.child_ids
+            if p.level == 'project' and p.state != 'inactive'
         ]
-        if project_ids:
+        if projects:
+            project_ids = [p.id for p in projects]
             # ...check their period state field-closed
             # we match exactly as any state could not be already synced yet
             domain = [
@@ -711,11 +713,15 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 ('period_id', '=', period_check_id),
                 ('state', '=', 'field-closed'),
             ]
-            res = period_state_obj.search(cr, uid, domain, context=context,
-                count=True)
-            if not res or res != len(project_ids):
-                raise osv.except_osv(_('Warning!'),
-                    _("All coordo projects are not field closed"))
+            period_state_ids = period_state_obj.search(cr, uid, domain, context=context, order='NO_ORDER')
+            closed_project_ids = []
+            for period_state in period_state_obj.browse(cr, uid, period_state_ids, fields_to_fetch=['instance_id'], context=context):
+                period_state.instance_id and closed_project_ids.append(period_state.instance_id.id)
+            ko_projects = [p for p in projects if p.id not in closed_project_ids]
+            if ko_projects:
+                raise osv.except_osv(_('Warning'),
+                                     _("The following projects are not field-closed:\n"
+                                       "%s") % ", ".join([p.code for p in ko_projects]))
 
         # Set the currency table in the context for later computations
         if form.revaluation_method in ['liquidity_year', 'other_bs']:

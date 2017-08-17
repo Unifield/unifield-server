@@ -24705,12 +24705,6 @@ msgstr "You can not hard post with an amount greater than total of imported invo
 msgid "Analytic Allocation (Current)"
 msgstr "Analytic Allocation (Current)"
 
-#. module: msf_currency_revaluation
-#: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:718
-#, python-format
-msgid "All coordo projects are not field closed"
-msgstr "All coordo projects are not field closed"
-
 #. module: account
 #: view:validate.account.move:0
 msgid "Post Journal Entries of a Journal"
@@ -98688,3 +98682,11 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. module: msf_currency_revaluation
+#: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:723
+#, python-format
+msgid "The following projects are not field-closed:\n"
+"%s"
+msgstr "Les projets suivants ne sont pas fermés sur le terrain :\n"
+"%s"
