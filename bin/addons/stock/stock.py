@@ -1179,6 +1179,15 @@ class stock_picking(osv.osv):
                     origin_ivi = picking.name and po and "%s:%s" % (picking.name, po.name) or False
                 if origin_ivi:
                     invoice_vals.update({'origin': origin_ivi})
+
+                # Update Payment terms and due date for the Supplier Invoices
+                if is_si:
+                    si_payment_term = self._get_payment_term(cr, uid, picking)
+                    if si_payment_term:
+                        invoice_vals.update({'payment_term': si_payment_term})
+                        due_date = invoice_obj.get_due_date(cr, uid, ids, si_payment_term, context.get('date_inv', False), context)
+                        due_date and invoice_vals.update({'date_due': due_date})
+
                 invoice_id = invoice_obj.create(cr, uid, invoice_vals, context=context)
                 invoices_group[partner.id] = invoice_id
             res[picking.id] = invoice_id
