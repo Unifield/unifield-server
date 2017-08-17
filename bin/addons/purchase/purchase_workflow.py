@@ -85,6 +85,7 @@ class purchase_order_line(osv.osv):
                 'nomen_sub_4': pol.nomen_sub_4 and pol.nomen_sub_4.id or False,
                 'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
                 'confirmed_delivery_date': line_confirmed,
+                'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
             }
             if create_line:
                 sol_values.update({
@@ -344,7 +345,6 @@ class purchase_order_line(osv.osv):
                     self.write(cr, uid, line.id, {
                         'link_so_id': fo_id,
                         'linked_sol_id': new_sol_id,
-                        'sync_sourced_origin': line.instance_sync_order_ref and line.instance_sync_order_ref.name or False,
                     }, context=context)
                     wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'confirmed', cr)
 
