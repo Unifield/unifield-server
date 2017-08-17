@@ -46,10 +46,11 @@ class sale_donation_stock_moves_report_parser(report_sxw.rml_parse):
         '''
         Return the moves for the report
         '''
+        result = []
         for move in report.sm_ids:
-            yield self.pool.get('stock.move').browse(self.cr, self.uid, move)
+            result.append(self.pool.get('stock.move').browse(self.cr, self.uid, move))
 
-        raise StopIteration
+        return sorted(result, key=lambda r: (r['date']), reverse=True)
 
     def _is_qty_out(self, move):
         '''
