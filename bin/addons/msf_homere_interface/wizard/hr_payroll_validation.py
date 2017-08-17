@@ -219,8 +219,10 @@ class hr_payroll_validation(osv.osv_memory):
                                                               'destination_id']):
                 current_line_position += 1
                 # Update the percentage of import (from 10 to 70 ; assuming that this loop takes 60% of the process time)
-                percent = 10 + (current_line_position / float(len(line_ids)) * (70 - 10))
-                self._update_percent(cr, uid, ids, percent, context, percent)
+                percent_before = 10
+                percent_after = 70
+                percent = percent_before + (current_line_position / float(len(line_ids)) * (percent_after - percent_before))
+                self._update_percent(cr, uid, ids, percent, context, use_new_cursor)
 
                 line_vals = {}
                 # fetch amounts
@@ -318,7 +320,7 @@ class hr_payroll_validation(osv.osv_memory):
             logger = logging.getLogger('hr.payroll.msf.validation_process')
             logger.error(e)
         finally:
-            self._update_percent(cr, uid, ids, 100, context, percent)
+            self._update_percent(cr, uid, ids, 100, context, use_new_cursor)
             self.write(cr, uid, ids, {
                 'state': 'done',
             }, context=context)
