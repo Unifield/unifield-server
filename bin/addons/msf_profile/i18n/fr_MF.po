@@ -98714,6 +98714,12 @@ msgid "Payroll B/S lines"
 msgstr "Lignes de paye du bilan"
 
 #. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:324
+#, python-format
+msgid "An error occurred%s"
+msgstr "Une erreur est survenue%s"
+
+#. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:161
 #, python-format
 msgid "Checking account/partner compatibility..."

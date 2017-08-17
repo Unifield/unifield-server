@@ -319,6 +319,10 @@ class hr_payroll_validation(osv.osv_memory):
         except Exception as e:
             logger = logging.getLogger('hr.payroll.msf.validation_process')
             logger.error(e)
+            if use_new_cursor:
+                cr.rollback()
+            error_msg = _("An error occurred%s") % (e.value and ':\n%s' % e.value or '')
+            self._update_message(cr, uid, ids, error_msg, context, use_new_cursor)
         finally:
             self._update_percent(cr, uid, ids, 100, context, use_new_cursor)
             self.write(cr, uid, ids, {
