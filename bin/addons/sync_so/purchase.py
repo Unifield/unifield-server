@@ -88,7 +88,6 @@ class purchase_order_line_sync(osv.osv):
 
         if not pol_id: # new line
             kind = 'new line'
-            parent_so = False
             if sol_dict['is_line_split']:
                 sync_linked_sol = int(sol_dict['original_line_id'].get('id').split('/')[-1]) if sol_dict['original_line_id'] else False
                 if not sync_linked_sol:
@@ -99,26 +98,13 @@ class purchase_order_line_sync(osv.osv):
                     raise Exception, "Original PO line not found when trying to split the PO line"
                 orig_pol_info = self.browse(cr, uid, orig_pol[0], fields_to_fetch=['linked_sol_id', 'line_number'], context=context)
                 if orig_pol_info.linked_sol_id:
-                    parent_so = orig_pol_info.linked_sol_id.order_id.id
                     pol_values['line_number'] = orig_pol_info.line_number
+                    pol_values['origin'] =  orig_pol_info.origin
             # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)
             # so we have to create this new PO line:
             pol_values['set_as_sourced_n'] = True
             new_pol = self.create(cr, uid, pol_values, context=context)
             pol_updated = new_pol
-            if sol_dict['state'] == 'confirmed':
-                wf_service.trg_validate(uid, 'purchase.order.line', new_pol, 'confirmed', cr)
-            # create IR line if needed:
-            if sol_dict['sync_sourced_origin']:
-                parent_so = self.pool.get('sale.order').search(cr, uid, [
-                    ('name', '=', sol_dict['sync_sourced_origin']),
-                    ('procurement_request', 'in', ['t', 'f']),
-                ], context=context)
-                if not parent_so:
-                    raise Exception, "Sync ref received of Sale Order not found"
-                parent_so = parent_so[0]
-            if parent_so:
-                self.create_sol_from_pol(cr, uid, [new_pol], parent_so, context=context)
         else: # regular update
             # search for the PO line to update:
             pol_updated = pol_id[0]
@@ -126,15 +112,15 @@ class purchase_order_line_sync(osv.osv):
             pol_to_update = [pol_updated]
             self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
 
-            # update PO line state:
-            if sol_dict['state'] in ('sourced', 'sourced_v'):
-                wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'sourced_s', cr)
-            #elif sol_dict['state'] == 'sourced_v':
-            #    wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'sourced_v', cr)
-            elif sol_dict['state'] ==  'confirmed':
-                wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'confirmed', cr)
-            elif sol_dict['state'] == 'cancel':
-                wf_service.trg_validate(uid, 'purchase.order.line', pol_to_update[0], 'cancel', cr)
+        # update PO line state:
+        if sol_dict['state'] in ('sourced', 'sourced_v'):
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'sourced_s', cr)
+        elif sol_dict['state'] == 'validated':
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'validated', cr)
+        elif sol_dict['state'] ==  'confirmed':
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
+        elif sol_dict['state'] == 'cancel':
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel', cr)
 
         # log me:
         pol_data = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['order_id', 'line_number'], context=context)

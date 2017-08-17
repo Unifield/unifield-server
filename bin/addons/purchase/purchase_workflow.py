@@ -13,6 +13,17 @@ class purchase_order_line(osv.osv):
     _name = "purchase.order.line"
     _inherit = "purchase.order.line"
 
+    def get_split_info(self, cr, uid, pol, context=None):
+        sol_values = {}
+
+        if pol.is_line_split:
+            split_po_ids = self.search(cr, uid, [('is_line_split', '=', False), ('line_number', '=', pol.line_number), ('order_id', '=', pol.order_id.id)], context=context)
+            if split_po_ids:
+                split_po = self.browse(cr, uid, split_po_ids[0], context=context)
+                if split_po.linked_sol_id:
+                    sol_values['line_number'] = split_po.linked_sol_id.line_number
+        return sol_values
+
     def update_fo_lines(self, cr, uid, ids, context=None):
         '''
         update corresponding FO lines in the same instance
@@ -86,17 +97,19 @@ class purchase_order_line(osv.osv):
                 'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
                 'confirmed_delivery_date': line_confirmed,
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
+                'type': 'make_to_order',
             }
             if create_line:
                 sol_values.update({
-                    'order_id': so_id,    
+                    'order_id': so_id,
                     'date_planned': pol.date_planned,
                 })
+                sol_values.update(self.get_split_info(cr, uid, pol, context))
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
             else: # update FO line
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
-        
+
         return True
 
 
@@ -167,6 +180,7 @@ class purchase_order_line(osv.osv):
                 'set_as_sourced_n': True,
             }
             # create FO line:
+            sol_values.update(self.get_split_info(cr, uid, pol, context))
             new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
 
             # update current PO line:

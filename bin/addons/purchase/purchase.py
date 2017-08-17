@@ -638,7 +638,7 @@ class purchase_order(osv.osv):
 
         res_partner_obj = self.pool.get('res.partner')
         for order in self.read(cr, uid, ids, ['partner_id', 'warehouse_id'], context=context):
-            partner_type = res_partner_obj.read(cr, uid, vals.get('partner_id', order['partner_id'][0]), ['partner_type'], context=context)['partner_type']
+            partner_type = res_partner_obj.read(cr, uid, int(vals.get('partner_id', order['partner_id'][0])), ['partner_type'], context=context)['partner_type']
             if vals.get('order_type'):
                 if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
                     vals.update({'invoice_method': 'manual'})
