@@ -1185,7 +1185,7 @@ class stock_picking(osv.osv):
                     si_payment_term = self._get_payment_term(cr, uid, picking)
                     if si_payment_term:
                         invoice_vals.update({'payment_term': si_payment_term})
-                        due_date = invoice_obj.get_due_date(cr, uid, ids, si_payment_term, context.get('date_inv', False), context)
+                        due_date = invoice_obj.get_due_date(cr, uid, si_payment_term, context.get('date_inv', False), context)
                         due_date and invoice_vals.update({'date_due': due_date})
 
                 invoice_id = invoice_obj.create(cr, uid, invoice_vals, context=context)

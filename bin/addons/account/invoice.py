@@ -496,7 +496,7 @@ class account_invoice(osv.osv):
             }
         return result
 
-    def get_due_date(self, cr, uid, ids, payment_term_id, date_invoice, context=None):
+    def get_due_date(self, cr, uid, payment_term_id, date_invoice, context=None):
         """
         If a payment_term_id is given, returns the due date based on the payment term and the invoice date,
         else returns False
@@ -519,7 +519,7 @@ class account_invoice(osv.osv):
 
     def onchange_payment_term_date_invoice(self, cr, uid, ids, payment_term_id, date_invoice):
         res = {}
-        due_date = self.get_due_date(cr, uid, ids, payment_term_id, date_invoice)
+        due_date = self.get_due_date(cr, uid, payment_term_id, date_invoice)
         if due_date:
             res = {'value': {'date_due': due_date}}
         return res
