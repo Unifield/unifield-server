@@ -344,6 +344,7 @@ class purchase_order_line(osv.osv):
                     self.write(cr, uid, line.id, {
                         'link_so_id': fo_id,
                         'linked_sol_id': new_sol_id,
+                        'sync_sourced_origin': line.instance_sync_order_ref and line.instance_sync_order_ref.name or False,
                     }, context=context)
                     wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'confirmed', cr)
 
