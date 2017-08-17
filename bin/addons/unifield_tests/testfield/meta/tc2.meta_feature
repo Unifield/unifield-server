@@ -18,7 +18,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 # LINE 2
 
     I log into instance "HQ1C1P1"
-
     I open tab menu "ORDERS"
     I click on menu "Internal Requests"
     I click on "New"
@@ -617,14 +616,15 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	   | ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  	
 	
     I should see "Confirmed-p" in "Order State"	
+
 	
 	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
 	I click on menu "Deliveries|Picking"
 
 	I click "Edit" on line:
-        | ORIGIN           |  STATE      |
-        | {{FO_REFERENCE}} | Available   |
+        | ORIGIN           |  LINES STATE      |
+        | {{FO_REFERENCE}} | Partially available   |
 	
    I should see in the main table the following data:
         | PRODUCT                                                    | STATE         | 
@@ -633,9 +633,9 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 
 #LINE 19
 
-#	I click on "Create Picking..." and open the window
-#	I click on "Copy all"
-#	I click on "Create Picking" and close the window
+	I click on "Create Picking..." and open the window
+	I click on "Copy all"
+	I click on "Create Picking" and close the window
 	I click on "Validate Picking..." and open the window
 	I click on "Copy all"
 	I click on "Validate Picking" and close the window
@@ -775,22 +775,21 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	I click on menu "Deliveries|Picking"
 
 	I click "Edit" on line:
-        | ORIGIN           | STATE       |
-        | {{FO_REFERENCE}} | Available   |
+        | ORIGIN           | LINES STATE  |
+        | {{FO_REFERENCE}} | Available    |
 	
    I should see in the main table the following data:
-        | PRODUCT                                                    | STATE     | 
-#        | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Closed    |
-#        | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Closed    |
-        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | Available |	
-#	    | [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
+        | PRODUCT                                                    | QTY    | STATE     |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | 0.000  | Available |
+        | [ADAPMOUSOUS] MOUSE, optical, USB port                     | 0.000  | Available |
+        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | 25.000 | Available |
 	
 
 #LINE 24
 
-#	I click on "Create Picking..." and open the window
-#	I click on "Copy all"
-#	I click on "Create Picking" and close the window
+	I click on "Create Picking..." and open the window
+	I click on "Copy all"
+	I click on "Create Picking" and close the window
 	I click on "Validate Picking..." and open the window
 	I click on "Copy all"
 	I click on "Validate Picking" and close the window
