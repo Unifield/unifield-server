@@ -91,9 +91,9 @@ class sale_loan_stock_moves(osv.osv_memory):
             sm_domain = []
 
             sm_domain.append(('reason_type_id', '=', type_loan_id))
-            sm_domain += ['|', '&', ('type', '=', 'in'), ('state', 'in', ['assigned', 'done']),
-                          '&', '&', ('location_id.usage', '=', 'internal'),
-                          ('location_dest_id.usage', 'in', ['customer', 'supplier']), ('state', '=', 'done')]
+            sm_domain.append(('state', '=', 'done'))
+            sm_domain += ['|', ('type', '=', 'in'), '&', ('location_id.usage', '=', 'internal'),
+                          ('location_dest_id.usage', 'in', ['customer', 'supplier'])]
 
             if wizard.start_date:
                 sm_domain.append(('date', '>=', wizard.start_date))
