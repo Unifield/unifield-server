@@ -93,6 +93,12 @@
             <blockSpan start="12,0" stop="12,-1" />
         </blockTableStyle>
 
+        <blockTableStyle id="NoteTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
         <paraStyle name="HeaderInfosTitle" fontName="Helvetica" fontSize="8.0" />
         <paraStyle name="HeaderInfosValue" fontName="Helvetica" fontSize="8.0" textColor="blue" />
 
@@ -457,6 +463,14 @@
 
         </pto>
 
+        <blockTable style="NoteTable">
+            <tr>
+                <td>
+                    <para style="HeaderInfosTitle">Notes :</para>
+                    <para style="HeaderInfosValue">[[ pt.note or '-' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
     </story>
 
 </document>
