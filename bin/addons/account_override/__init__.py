@@ -46,11 +46,11 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Supplier Invoice
     #+ Direct Invoice
     #+ Supplier refund
-   'in_invoice': [
+    'in_invoice': [
         ('type', '!=', 'view'),
         # Either Payable/Payables accounts or Regular / Debt accounts
         '|', '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'), '&', ('type', '=', 'other'), ('user_type_code', 'in', ['debt','cash','income']),
-        ('type_for_register', '!=', 'donation'),
+        ('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
     ],
     # HEADER OF:
     #+ Stock Transfer Voucher
@@ -61,6 +61,7 @@ ACCOUNT_RESTRICTED_AREA = {
         # Either Receivable/Receivables or Receivable/Cash or Regular/Cash or Regular/Income accounts
         '|', '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables','cash']),
         '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
+        ('type_for_register', 'not in', ['advance', 'transfer', 'transfer_same']),
     ],
     # HEADER OF donation
     'donation_header': [
@@ -82,6 +83,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('type_for_register', '!=', 'donation'),
         '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
         '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Disallow extra-accounting expenses accounts
+        ('type_for_register', 'not in', ['advance', 'transfer', 'transfer_same']),
     ],
     # LINES OF donation
     'donation_lines': [
@@ -107,6 +109,7 @@ ACCOUNT_RESTRICTED_AREA = {
         ('is_not_hq_correctible', '=', False),
         ('user_type_code', 'in', ['expense', 'income', 'receivables']),
         ('user_type.report_type', '!=', 'none'), # To only use Expense extra-accounting accounts
+        ('type_for_register', 'not in', ['advance', 'transfer', 'transfer_same']),
     ],
     # RECURRING MODELS
     'recurring_lines': [
