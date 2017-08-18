@@ -230,6 +230,7 @@ class entity(osv.osv):
         'mission': fields.char('Mission', size=64),
         'latitude': fields.float('Latitude',digits=(16,6)),
         'longitude': fields.float('Longitude', digits=(16,6)),
+        'pgversion': fields.char('Postgres Version', size=64),
     }
     _defaults = {
         'version': lambda *a: 0,
@@ -478,6 +479,11 @@ class entity(osv.osv):
         self.write(cr, 1, ids_to_validate, {'state': 'invalidated'}, context=context)
         self._send_invalidation_email(cr, uid, entity, ids_to_validate, context=context)
         return (True, "Instance %s are now invalidated" % ", ".join(uuid_list))
+
+    @check_validated
+    def set_pg_version(self, cr, uid, entity, pg_version, context=None):
+        self.write(cr, 1, entity.id, {'pgversion': pg_version}, context=context)
+        return True
 
     def validate_action(self, cr, uid, ids, context=None):
         if not context:

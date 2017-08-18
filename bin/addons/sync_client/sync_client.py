@@ -295,6 +295,11 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                     entity = self.get_entity(cr, uid, context=context)
                     proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
                     proxy.end_synchronization(entity.identifier, self._hardware_id)
+                    cr.execute('SHOW server_version')
+                    result = cr.fetchone()
+                    pg_version = result and result[0] or 'pgversion not found'
+                    proxy.set_pg_version(entity.identifier, self._hardware_id,
+                                         pg_version)
             except SkipStep:
                 # res failed but without exception
                 assert is_step, "Cannot have a SkipTest error outside a sync step process!"
