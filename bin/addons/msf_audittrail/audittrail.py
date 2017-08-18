@@ -331,6 +331,14 @@ class account_move_line(osv.osv):
 account_move_line()
 
 
+class hr_employee(osv.osv):
+    _name = 'hr.employee'
+    _inherit = 'hr.employee'
+    _trace = True
+
+hr_employee()
+
+
 class ir_module(osv.osv):
     _inherit = 'ir.module.module'
 
