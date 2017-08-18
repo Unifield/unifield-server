@@ -12885,8 +12885,8 @@ msgstr "Dépendances :"
 
 #. module: register_accounting
 #: report:bank.reconciliation:0
-msgid "Cheque journal code:"
-msgstr "Code du Journal de Chèques :"
+msgid "Cheque journal code(s):"
+msgstr "Code(s) des Journaux de Chèques :"
 
 #. module: msf_button_access_rights
 #: help:msf_button_access_rights.button_access_rule,group_names:0
