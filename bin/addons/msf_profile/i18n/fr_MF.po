@@ -98722,3 +98722,20 @@ msgstr "Les écritures incluses dans la mise à zéro annuelle ne peuvent pas ê
 #: field:account.report.general.ledger,open_items:0
 msgid "Open Items at"
 msgstr "Écritures ouvertes à"
+
+#. module: account
+#: model:ir.actions.server,name:account.action_aml_related_entries
+msgid "Related Entries"
+msgstr "Ecritures associées"
+
+#. module: account
+#: code:addons/account/account_move_line.py:1369
+#, python-format
+msgid "Related entries: Entry Sequence %s"
+msgstr "Ecritures associées : Entrée Comptable %s"
+
+#. module: account
+#: code:addons/account/account_move_line.py:1330
+#, python-format
+msgid "The related entries feature can only be used with one Journal Item."
+msgstr "La fonctionnalité des écritures associées ne peut être utilisée qu'avec une seule ligne d'écriture comptable."
