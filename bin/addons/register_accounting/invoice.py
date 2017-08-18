@@ -279,8 +279,10 @@ class account_invoice(osv.osv):
                                                                    'partner_id': direct_invoice.partner_id.id , \
                                                                    'account_id': direct_invoice.account_id.id}, # UFTP-166: Saved also the account change to reg line
                                                                    context=context)
-        if (direct_invoice.reference != absl.ref):
-            account_bank_statement_line.write(cr, uid, [absl.id], {'ref': direct_invoice.reference }, context=context)
+        # the regline ref should match the DI reference if any, else the DI number
+        new_ref = direct_invoice.reference or direct_invoice.number
+        if new_ref != absl.ref:
+            account_bank_statement_line.write(cr, uid, [absl.id], {'ref': new_ref}, context=context)
         # Delete moves
         # existing seqnums are saved into context here. utp917
         account_bank_statement_line.unlink_moves(cr, uid, [absl.id], context=context)
