@@ -40,6 +40,12 @@ class allocation_invoice_report(report_sxw.rml_parse):
         self.total_amount = 0.0
 
     def get_data(self, invoice_id):
+        """
+        Get the lines with:
+        - an AD defined at line level (first SELECT)
+        - an AD defined at header level (second SELECT)
+        - no AD (third SELECT)
+        """
         self._cr.execute("""SELECT line_number,NULLIF('[' || default_code || '] ' || name_template, '[] ') as product,i.name as description, ac.code || ' ' || ac.name as account, quantity, ROUND(price_unit, 2) as price_unit, ROUND(percentage, 2) as percentage, ROUND(price_subtotal*percentage/100, 2) as sub_total, y.name as currency, n1.code as destination, n2.code as cost_center, n3.code as funding_pool
             FROM funding_pool_distribution_line a
             INNER JOIN account_invoice_line i ON a.distribution_id = i.analytic_distribution_id
@@ -62,9 +68,11 @@ class allocation_invoice_report(report_sxw.rml_parse):
             INNER JOIN account_analytic_account n3 ON n3.id = a.analytic_id
             INNER JOIN res_currency y ON y.id = s.currency_id
             LEFT JOIN product_product p ON p.id = i.product_id
-            WHERE s.id=%s
+            WHERE s.id=%s AND ac.is_analytic_addicted = True
             UNION ALL
-            SELECT line_number,NULLIF('[' || default_code || '] ' || name_template, '[] ') as product,i.name as description, ac.code || ac.name as account, quantity, ROUND(price_unit, 2) as price_unit, NULL, ROUND(price_subtotal, 2) as sub_total, y.name as currency, NULL, NULL, NULL
+            SELECT line_number, NULLIF('[' || default_code || '] ' || name_template, '[] ') as product, i.name as description, 
+            ac.code || ' ' || ac.name as account, quantity, ROUND(price_unit, 2) as price_unit, NULL, 
+            ROUND(price_subtotal, 2) as sub_total, y.name as currency, NULL, NULL, NULL
             FROM account_invoice_line i
             INNER JOIN account_invoice s ON s.id = i.invoice_id
             INNER JOIN account_account ac ON ac.id = i.account_id
