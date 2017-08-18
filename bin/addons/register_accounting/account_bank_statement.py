@@ -103,6 +103,25 @@ class account_journal(osv.osv):
                 return dom+[('currency', 'not in', [context['curr']])]
         return dom
 
+    def write(self, cr, uid, ids, vals, context=None):
+        # write is not allowed on upper or sibling liquidity journals
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution') and uid != 1:
+            instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            if instance and instance.level != 'section':
+                allowed = [x.id for x in instance.child_ids] + [instance.id]
+                nids = self.search(cr, uid,[
+                    ('id', 'in', ids),
+                    ('type', 'in', ['bank', 'cheque', 'cash']),
+                    ('instance_id', 'not in', allowed)],
+                    context=context)
+                if nids:
+                    raise osv.except_osv(_('Error'), _("Writing on liquidity journals %s is not allowed") % (", ".join([x['code'] for x in self.read(cr, uid, nids, ['code'], context=context)]), ))
+
+        return super(account_journal, self).write(cr, uid, ids, vals, context)
+
+
     _columns = {
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
     }
