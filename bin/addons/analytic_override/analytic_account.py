@@ -239,10 +239,12 @@ class analytic_account(osv.osv):
         if not context:
             context = {}
         for account in self.read(cr, uid, ids, ['category', 'name', 'code'], context=context):
-            bad_ids = self.search(cr, uid, [('category', '=',
-                                             account.get('category', '')), ('|'), ('name', '=ilike',
-                                                                                   account.get('name', '')), ('code', '=ilike',
-                                                                                                              account.get('code', ''))], order='NO_ORDER', limit=2)
+            bad_ids = self.search(cr, uid,
+                                  [('category', '=', account.get('category', '')),
+                                   ('|'),
+                                   ('name', '=ilike', account.get('name', '')),
+                                   ('code', '=ilike', account.get('code', ''))],
+                                  order='NO_ORDER', limit=2)
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
@@ -396,6 +398,7 @@ class analytic_account(osv.osv):
         name = '%s(copy)' % account['name'] or ''
         default['code'] = (account['code'] or '') + '(copy)'
         default['name'] = name
+        default['child_ids'] = [] # do not copy the child_ids
         default['tuple_destination_summary'] = []
         # code is deleted in copy method in addons
         new_id = super(analytic_account, self).copy(cr, uid, a_id, default, context=context)
@@ -444,10 +447,12 @@ class analytic_account(osv.osv):
 
         ######################################################
         # US-399: Now perform the check unicity manually!
-        bad_ids = self.search(cr, uid, [('category', '=',
-                                         new_values.get('category', '')), ('|'), ('name', '=ilike',
-                                                                                  new_values.get('name', '')), ('code', '=ilike',
-                                                                                                                new_values.get('code', ''))], order='NO_ORDER', limit=2)
+        bad_ids = self.search(cr, uid,
+                              [('category', '=', new_values.get('category', '')),
+                               ('|'),
+                               ('name', '=ilike', new_values.get('name', '')),
+                               ('code', '=ilike', new_values.get('code', ''))],
+                              order='NO_ORDER', limit=2)
         if len(bad_ids) and len(bad_ids) > 1:
             raise osv.except_osv(_('Warning !'), _('You cannot have the same code or name between analytic accounts in the same category!'))
         ######################################################
