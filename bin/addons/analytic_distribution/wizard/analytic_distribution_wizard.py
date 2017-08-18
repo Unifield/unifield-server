@@ -1149,10 +1149,14 @@ class analytic_distribution_wizard(osv.osv_memory):
             move_id = False
             if wiz.move_id:
                 move_id = wiz.move_id.id
-                wiz.move_id.write({'id': move_id})
             elif wiz.move_line_id:
                 move_id = wiz.move_line_id.move_id.id
-                wiz.move_line_id.write({'id': wiz.move_line_id.id})
+
+            # check access rights
+            if move_id:
+                self.pool.get('ir.model.access').check(cr, uid, 'account.move', 'write', context=context)
+                self.pool.get('account.move').check_access_rule(cr, uid, [move_id], 'write', context=context)
+
             # Prepare some values
             ana_obj = self.pool.get('account.analytic.line')
             move = self.pool.get('account.move').browse(cr, uid, [move_id])[0]
@@ -1166,7 +1170,9 @@ class analytic_distribution_wizard(osv.osv_memory):
                     correction = True
             # AD changed at header level: all JIs should recreate AJI
             # if an AD is set on a new line, this JI and all JIs in the same move can be valide
-            self.pool.get('account.move').validate(cr, uid, [move_id])
+            # if we change the G/L account, new JE will be created => no need to validate original JE
+            if not context.get('ji_correction_account_changed'):
+                self.pool.get('account.move').validate(cr, uid, [move_id])
 
             # As analytic lines were deleted and recreated, we need to recreate links between reversal, corrections, etc.
             if reversal or correction:
