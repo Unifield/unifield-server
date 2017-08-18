@@ -64199,6 +64199,12 @@ msgstr "wizard.import.mapping"
 msgid "Filter not implemented."
 msgstr "Filtre pas mis en oeuvre"
 
+#. module: account_override
+#: code:addons/account_override/account_move_line.py:265
+#, python-format
+msgid "Filter not implemented. Please check that you have selected one Period in \"Open Items at\"."
+msgstr "Filtre non mis en oeuvre. Veuillez vérifier que vous avez sélectionné une période dans \"Écritures ouvertes à\"."
+
 #. module: product
 #: model:ir.actions.act_window,help:product.product_normal_action_puchased
 msgid "Products can be purchased and/or sold. They can be raw materials, stockable products, consumables or services. The Product form contains detailed information about your products related to procurement logistics, sales price, product category, suppliers and so on."
@@ -71245,6 +71251,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/account_override/invoice.py:1273
 #: code:addons/account_override/invoice.py:1548
 #: code:addons/account_override/invoice.py:1551
+#: code:addons/account_override/account_move_line.py:265
 #: code:addons/account_reconciliation/account_move_line.py:238
 #: code:addons/account_reconciliation/account_move_line.py:257
 #: code:addons/account_reconciliation/account_move_line.py:259
@@ -98708,3 +98715,10 @@ msgstr "La fermeture de l'année fiscale ne peut pas être effectuée car une ou
 #, python-format
 msgid "The entries included in the yearly move to zero can't be reconciled together because they are unbalanced."
 msgstr "Les écritures incluses dans la mise à zéro annuelle ne peuvent pas être lettrées ensemble car elles ne sont pas équilibrées."
+
+#. modules: account_override, account_mcdb, account
+#: field:account.move.line,open_items:0
+#: field:account.mcdb,open_items:0
+#: field:account.report.general.ledger,open_items:0
+msgid "Open Items at"
+msgstr "Écritures ouvertes à"
