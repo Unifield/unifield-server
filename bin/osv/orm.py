@@ -4194,7 +4194,7 @@ class orm(orm_template):
 
             if record_id is None or not record_id:
                 record_id = self.pool.get(table).create(cr, user, tocreate[table], context=context)
-            else:
+            elif tocreate[table]:
                 self.pool.get(table).write(cr, user, [record_id], tocreate[table], context=context)
 
             upd0 += ',' + self._inherits[table]
