@@ -44,6 +44,9 @@ class purchase_order(osv.osv):
             amount_total = 0.00
             amount_received = 0.00
             for line in order.order_line:
+                if line.state == 'cancel':
+                    continue
+
                 amount_total += line.product_qty
                 for move in line.move_ids:
                     if move.state == 'done':
@@ -62,7 +65,7 @@ class purchase_order(osv.osv):
         return res
     
     _columns = {
-            'shipped_rate': fields.function(_shipped_rate, method=True, string='Received', type='float'),
+        'shipped_rate': fields.function(_shipped_rate, method=True, string='Received', type='float'),
     }
 
     def name_search(self, cr, uid, name='', args=None, operator='ilike', context=None, limit=80):
@@ -83,12 +86,12 @@ class purchase_order(osv.osv):
             if name and len(name) > 1:
                 # search for customer
                 customer_ids = self.pool.get('res.partner').search(cr, uid,
-                    [('name', operator, name)], context=context)
+                                                                   [('name', operator, name)], context=context)
                 if customer_ids:
                     # search for m2o 'dest_partner_id' dest_customer in PO (direct PO) 
                     po1_ids = ids.extend(self.search(cr, uid,
-                        [('dest_partner_id', 'in', customer_ids)],
-                        context=context))
+                                                     [('dest_partner_id', 'in', customer_ids)],
+                                                     context=context))
                     # search for m2m 'dest_partner_ids' dest_customer in PO (sourcing PO)
                     query = "SELECT purchase_order_id FROM res_partner_purchase_order_rel"
                     query += " WHERE partner_id in (" + ",".join(map(str, customer_ids)) + ")"
@@ -166,6 +169,9 @@ class sale_order(osv.osv):
             amount_total = 0.00
             amount_received = 0.00
             for line in order.order_line:
+                if line.state == 'cancel':
+                    continue
+
                 amount_total += line.product_uom_qty*line.price_unit
                 for move in line.move_ids:
                     if move.state == 'done' and move.location_dest_id.usage == 'customer':

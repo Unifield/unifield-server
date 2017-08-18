@@ -148,41 +148,6 @@ class sale_order(osv.osv):
             res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
         return res
 
-    # This is False
-    def _picked_rate(self, cr, uid, ids, name, arg, context=None):
-        if not ids:
-            return {}
-        res = {}
-        for id in ids:
-            res[id] = [0.0, 0.0]
-        cr.execute('''SELECT
-                p.sale_id, sum(m.product_qty), mp.state as mp_state
-            FROM
-                stock_move m
-            LEFT JOIN
-                stock_picking p on (p.id=m.picking_id)
-            LEFT JOIN
-                procurement_order mp on (mp.move_id=m.id)
-            WHERE
-                p.sale_id IN %s GROUP BY mp.state, p.sale_id''', (tuple(ids),))
-        for oid, nbr, mp_state in cr.fetchall():
-            if mp_state == 'cancel':
-                continue
-            if mp_state == 'done':
-                res[oid][0] += nbr or 0.0
-                res[oid][1] += nbr or 0.0
-            else:
-                res[oid][1] += nbr or 0.0
-        for r in res:
-            if not res[r][1]:
-                res[r] = 0.0
-            else:
-                res[r] = 100.0 * res[r][0] / res[r][1]
-        for order in self.browse(cr, uid, ids, context=context):
-            if order.shipped:
-                res[order.id] = 100.0
-        return res
-
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
         '''
         Return True is the sale order is an uninvoiced order
@@ -503,7 +468,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'invoice_ids': fields.many2many('account.invoice', 'sale_order_invoice_rel', 'order_id', 'invoice_id', 'Invoices', readonly=True, help="This is the list of invoices that have been generated for this sales order. The same sales order may have been invoiced in several times (by line for example)."),
         'picking_ids': fields.one2many('stock.picking', 'sale_id', 'Related Picking', readonly=True, help="This is a list of picking that has been generated for this sales order."),
         'shipped': fields.boolean('Delivered', readonly=True, help="It indicates that the sales order has been delivered. This field is updated only after the scheduler(s) have been launched."),
-        'picked_rate': fields.function(_picked_rate, method=True, string='Picked', type='float'),
         'note': fields.text('Notes'),
 
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
