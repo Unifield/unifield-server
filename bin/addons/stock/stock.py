@@ -1180,8 +1180,8 @@ class stock_picking(osv.osv):
                 if origin_ivi:
                     invoice_vals.update({'origin': origin_ivi})
 
-                # Update Payment terms and due date for the Supplier Invoices
-                if is_si:
+                # Update Payment terms and due date for the Supplier Invoices and Refunds
+                if is_si or inv_type == 'in_refund':
                     si_payment_term = self._get_payment_term(cr, uid, picking)
                     if si_payment_term:
                         invoice_vals.update({'payment_term': si_payment_term})
