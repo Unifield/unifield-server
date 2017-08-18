@@ -1589,9 +1589,23 @@ class res_users(osv.osv):
             return 'en_MF'
         return 'en_US'
 
+    def set_default_partner_lang(self, cr, uid, context=None):
+        """
+            when base module is installed en_US is the default lang for partner
+            overwrite this default value
+        """
+
+        values_obj = self.pool.get('ir.values')
+        default_value = values_obj.get(cr, uid, 'default', False, ['res.partner'])
+        if not default_value or 'lang' not in [x[1] for x in default_value] or ('lang', 'en_US') in [(x[1], x[2]) for x in default_value]:
+            values_obj.set(cr, uid, 'default', False, 'lang', ['res.partner'], 'en_MF')
+
+        return True
+
     _defaults = {
         'context_lang': _get_default_ctx_lang,
     }
+
 res_users()
 
 class email_configuration(osv.osv):
