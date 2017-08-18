@@ -239,7 +239,7 @@
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                         <page string="Payments" groups="base.group_extended">
-                            <field name="payment_ids" colspan="4" nolabel="1" >
+                            <field name="payment_to_display_ids" colspan="4" nolabel="1" >
                                 <tree string="Payments">
                                     <field name="move_id"/>
                                     <field name="name"/>
@@ -339,7 +339,7 @@
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                         <page string="Payments">
-                            <field name="payment_ids" colspan="4" nolabel="1">
+                            <field name="payment_to_display_ids" colspan="4" nolabel="1">
                                 <tree string="Payments">
                                     <field name="date"/>
                                     <field name="ref"/>

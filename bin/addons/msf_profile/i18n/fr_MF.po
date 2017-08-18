@@ -60159,8 +60159,9 @@ msgstr "Erreur utilisateur!"
 msgid "Reconcile"
 msgstr "Lettrer"
 
-#. modules: account
+#. modules: account, account_override
 #: field:account.move.line,reconcile_txt:0
+#: report:addons/account_override/report/open_invoices_xls.mako:314
 msgid "Reconcile"
 msgstr "Lettrage"
 
@@ -72233,8 +72234,7 @@ msgstr "Constraint error on Uom"
 msgid "Book. Currency"
 msgstr "Enreg.Devise"
 
-#. modules: account_override, vertical_integration, register_accounting
-#: report:addons/account_override/report/open_invoices_xls.mako:301
+#. modules: vertical_integration, register_accounting
 #: field:account.bank.statement,responsible_ids:0
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:295
 msgid "Responsible"
@@ -94578,6 +94578,7 @@ msgstr "Ecritures Ouvertes"
 #. modules: account_override, account, register_accounting
 #: view:account.invoice:0
 #: field:account.invoice,payment_ids:0
+#: field:account.invoice,payment_to_display_ids:0
 #: selection:account.vat.declaration,based_on:0
 #: view:account.invoice:0
 #: view:account.invoice:0
@@ -98809,3 +98810,13 @@ msgstr "La devise que vous désirez %s est utilisée dans au moins une Ligne de 
 #, python-format
 msgid "The currency you want to %s is used in at least one Payroll Entry which isn't validated."
 msgstr "La devise que vous désirez %s est utilisée dans au moins une Ecriture de Paie non validée."
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:315
+msgid "Payment Sequence Number"
+msgstr "Numéro de séquence du paiement"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:316
+msgid "Down Payment Sequence Number"
+msgstr "Numéro de séquence de l'acompte"
