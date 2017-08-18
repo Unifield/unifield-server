@@ -24,6 +24,7 @@ from tools.translate import _
 import logging
 from tools.safe_eval import safe_eval
 from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
+from register_accounting import register_tools
 
 
 class account_period(osv.osv):
@@ -102,7 +103,7 @@ class account_period(osv.osv):
             if level == 'coordo':
                 #US-1433: If the FY is already mission-closed, do not allow this to be done!
                 self.check_reopen_period_with_fy(cr, uid, ids, context['state'], context)
-                
+
                 if previous_state == 'created' and context['state'] == 'draft':
                     self.write(cr, uid, ids, {'state_sync_flag': 'none'})
                 if previous_state == 'draft' and context['state'] == 'field-closed':
@@ -192,9 +193,31 @@ class account_period(osv.osv):
 
                 # first verify that all existent registers for this period are closed
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
+                linked_prev_reg_ids = []
                 for register in reg_obj.browse(cr, uid, reg_ids, context=context):
+                    register.prev_reg_id and linked_prev_reg_ids.append(register.prev_reg_id.id)
                     if register.state not in ['confirm']:
                         raise osv.except_osv(_('Warning'), _("The register '%s' is not closed. Please close it before closing period") % (register.name,))
+
+                # prevent period closing if one of the registers of the previous period
+                # has no corresponding register in the period to close AND has a non 0 balance.
+                prev_period_id = register_tools.previous_period_id(self, cr, uid, period.id, context=context, raise_error=False)
+                if prev_period_id:
+                    all_prev_reg_ids = reg_obj.search(cr, uid, [('period_id', '=', prev_period_id)], order='NO_ORDER', context=context)
+                    # get the registers of the previous period which are NOT linked to a register of the period to close
+                    orphan_prev_reg_ids = [reg_id for reg_id in all_prev_reg_ids if reg_id not in linked_prev_reg_ids]
+                    reg_ko = []
+                    for reg in reg_obj.browse(cr, uid, orphan_prev_reg_ids,
+                                              fields_to_fetch=['balance_end', 'balance_end_real', 'balance_end_cash', 'name'],
+                                              context=context):
+                        if abs(reg.balance_end) > 10**-3 or abs(reg.balance_end_real) > 10**-3 or abs(reg.balance_end_cash) > 10**-3:
+                            reg_ko.append(reg)
+                    if len(reg_ko) > 0:
+                        raise osv.except_osv(_('Warning'),
+                                             _("One or several registers have not been generated for the period "
+                                               "to close and have a balance which isn't equal to 0:\n"
+                                               "%s") % ", ".join([r.name for r in reg_ko]))
+
                 # check if subscriptions lines were not created for this period
                 sub_ids = sub_obj.search(cr, uid, [('date', '<', period.date_stop), ('move_id', '=', False)], context=context)
                 if len(sub_ids) > 0:
@@ -336,7 +359,7 @@ class account_period(osv.osv):
     def check_reopen_period_with_fy(self, cr, uid, ids, new_state, context):
         ap_dict = self.read(cr, uid, ids)[0]
         previous_state = ap_dict['state']
-    
+
         # If the state is currently in mission-closed and the fiscal year is also in mission closed, then do not allow to reopen the period
         if previous_state == 'mission-closed' and new_state in ['field-closed', 'draft']:
             for period in self.browse(cr, uid, ids, context=context):
