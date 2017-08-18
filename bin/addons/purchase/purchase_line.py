@@ -778,7 +778,7 @@ class purchase_order_line(osv.osv):
         '''
         Remove link to merged line
         '''
-        defaults.update({'merged_id': False, 'sync_order_line_db_id': False, 'linked_sol_id': False})
+        defaults.update({'merged_id': False, 'sync_order_line_db_id': False, 'linked_sol_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False})
 
         return super(purchase_order_line, self).copy(cr, uid, line_id, defaults, context=context)
 
@@ -801,7 +801,7 @@ class purchase_order_line(osv.osv):
         if 'procurement_id' not in default:
             default.update({'procurement_id': False})
 
-        default.update({'sync_order_line_db_id': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False})
         return super(purchase_order_line, self).copy_data(cr, uid, p_id, default=default, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
