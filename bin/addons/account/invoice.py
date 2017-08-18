@@ -557,22 +557,32 @@ class account_invoice(osv.osv):
             }
         return result
 
+    def get_due_date(self, cr, uid, payment_term_id, date_invoice, context=None):
+        """
+        If a payment_term_id is given, returns the due date based on the payment term and the invoice date,
+        else returns False
+        """
+        if context is None:
+            context = {}
+        due_date = False
+        if payment_term_id:
+            pt_obj = self.pool.get('account.payment.term')
+            if not date_invoice:
+                date_invoice = time.strftime('%Y-%m-%d')
+            pterm_list = pt_obj.compute(cr, uid, payment_term_id, value=1, date_ref=date_invoice, context=context)
+            if pterm_list:
+                pterm_list = [line[0] for line in pterm_list]
+                pterm_list.sort()
+                due_date = pterm_list[-1]
+            else:
+                raise osv.except_osv(_('Data Insufficient !'), _('The Payment Term of Supplier does not have Payment Term Lines(Computation) defined !'))
+        return due_date
+
     def onchange_payment_term_date_invoice(self, cr, uid, ids, payment_term_id, date_invoice):
-        if not payment_term_id:
-            return {}
         res = {}
-        pt_obj = self.pool.get('account.payment.term')
-        if not date_invoice:
-            date_invoice = time.strftime('%Y-%m-%d')
-
-        pterm_list = pt_obj.compute(cr, uid, payment_term_id, value=1, date_ref=date_invoice)
-
-        if pterm_list:
-            pterm_list = [line[0] for line in pterm_list]
-            pterm_list.sort()
-            res = {'value':{'date_due': pterm_list[-1]}}
-        else:
-            raise osv.except_osv(_('Data Insufficient !'), _('The Payment Term of Supplier does not have Payment Term Lines(Computation) defined !'))
+        due_date = self.get_due_date(cr, uid, payment_term_id, date_invoice)
+        if due_date:
+            res = {'value': {'date_due': due_date}}
         return res
 
     def onchange_invoice_line(self, cr, uid, ids, lines):
