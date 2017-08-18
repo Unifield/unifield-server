@@ -185,7 +185,7 @@ class account_year_end_closing(osv.osv):
                 mi_obj = self.pool.get('msf.instance')
                 ci_ids = mi_obj.search(cr, uid, [
                     ('parent_id', '=', instance_id.id),
-                        ('level', '=', 'coordo'),
+                    ('level', '=', 'coordo'),
                 ], context=context)
                 if ci_ids:
                     afs_obj = self.pool.get("account.fiscalyear.state")
@@ -194,8 +194,8 @@ class account_year_end_closing(osv.osv):
                     # => so all have sync up their fy state report
                     closed_afs_ids = afs_obj.search(cr, uid, [
                         ('fy_id', '=', fy_rec.id),
-                            ('instance_id', 'in', ci_ids),
-                            ('state', 'in', ('mission-closed', 'done', )),
+                        ('instance_id', 'in', ci_ids),
+                        ('state', 'in', ('mission-closed', 'done', )),
                     ], context=context)
                     closed_ci_ids = []
                     if closed_afs_ids:
@@ -233,7 +233,7 @@ class account_year_end_closing(osv.osv):
 
         for pn in period_numbers:
             period_year_month = (fy_year, self._period_month_map[pn], )
-            code = "Period %d" % (pn, )
+            code = "Period %d %s" % (pn, fy_year)
             if not period_obj.search(cr, uid, [('fiscalyear_id', '=', fy_id), ('number', '=', pn), ('active', 'in', ['t', 'f'])],
                                      order='NO_ORDER', context=context):
                 vals = {
@@ -347,9 +347,9 @@ class account_year_end_closing(osv.osv):
                 'source_date': posting_date,
 
                 'debit_currency': \
-                    balance_currency if balance_currency > 0. else 0.,
+                balance_currency if balance_currency > 0. else 0.,
                 'credit_currency': \
-                    abs(balance_currency) if balance_currency < 0. else 0.,
+                abs(balance_currency) if balance_currency < 0. else 0.,
 
                 'move_id': je_id,
             }
@@ -560,7 +560,7 @@ class account_year_end_closing(osv.osv):
         row = cr.fetchone()
         if row[0] is None:
             return
-        
+
         balance = float(row[0])
         if balance > 0:  # debit balance
             account = cpy_rec.ye_pl_pos_credit_account  # Credit Account for P&L>0 (Income account)
@@ -623,9 +623,9 @@ class account_year_end_closing(osv.osv):
                 'source_date': posting_date,
 
                 'debit_currency': \
-                    balance_currency if balance_currency > 0. else 0.,
+                balance_currency if balance_currency > 0. else 0.,
                 'credit_currency': \
-                    abs(balance_currency) if balance_currency < 0. else 0.,
+                abs(balance_currency) if balance_currency < 0. else 0.,
 
                 'move_id': je_id,
             }
@@ -776,7 +776,7 @@ class account_year_end_closing(osv.osv):
             am_obj = self.pool.get('account.move')
             am_ids = am_obj.search(cr, uid, [
                 ('period_id', 'in', period_ids),
-                    ('state', '!=', 'posted')
+                ('state', '!=', 'posted')
             ], context=context)
             if am_ids:
                 am_obj.write(cr, uid, am_ids, {'state': 'posted', },
