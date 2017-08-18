@@ -10552,12 +10552,6 @@ msgstr "Lorsqu'une version est dupliquée elle est réglée comme non active, de
 msgid " Code: %s"
 msgstr " Code: %s"
 
-#. module: res_currency_tables
-#: code:addons/res_currency_tables/res_currency.py:215
-#, python-format
-msgid "The currency you want to %s is currently used on at least one sale order or purchase order."
-msgstr "La devise que vous désirez %s est utilisée par au moins une commande client ou un bon de commande"
-
 #. modules: stock_override, product_list, stock
 #: view:product.list:0
 #: field:product.list,location_id:0
@@ -25401,7 +25395,7 @@ msgstr "Impossible d'annuler cette commande client !"
 #: code:addons/res_currency_tables/res_currency.py:215
 #: code:addons/res_currency_tables/res_currency.py:232
 #, python-format
-msgid "Currency currently used !"
+msgid "Currency currently used!"
 msgstr "Devise actuellement utilisée !"
 
 #. module: consumption_calculation
@@ -88275,7 +88269,7 @@ msgstr "Batch number"
 #: code:addons/res_currency_tables/res_currency.py:232
 #, python-format
 msgid "The currency cannot be deleted as one or more journal items are currently using it!"
-msgstr "The currency cannot be deleted as one or more journal items are currently using it!"
+msgstr "La devise ne peut pas être supprimée car au moins une ligne d'écriture comptable l'utilise."
 
 #. module: sync_client
 #: field:ir.model.data,last_modification:0
@@ -94946,12 +94940,6 @@ msgstr "Appel d'offres"
 msgid "# lines"
 msgstr "# de lignes"
 
-#. module: res_currency_tables
-#: code:addons/res_currency_tables/res_currency.py:211
-#, python-format
-msgid "The currency you want to %s is currently used on at least one partner form."
-msgstr "La devise que vous désirez %s est utilisée par au moins un  formulaire partenaire."
-
 #. module: account
 #: help:account.chart.template,property_reserve_and_surplus_account:0
 msgid "This Account is used for transferring Profit/Loss(If It is Profit: Amount will be added, Loss: Amount will be deducted.), Which is calculated from Profilt & Loss Report"
@@ -98743,3 +98731,81 @@ msgid "One or several registers have not been generated for the period to close 
 "%s"
 msgstr "Un ou plusieurs registres n'ont pas été générés pour la période à fermer et ont un solde qui n'est pas égal à 0 :\n"
 "%s"
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:0
+#, python-format
+msgid "delete"
+msgstr "supprimer"
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:0
+#, python-format
+msgid "de-activate"
+msgstr "désactiver"
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:225
+#, python-format
+msgid "The currency you want to %s is used in at least one active partner form."
+msgstr "La devise que vous désirez %s est utilisée dans au moins un formulaire d'un partenaire actif."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:216
+#, python-format
+msgid "The currency you want to %s is used in at least one Field Order which isn't Closed."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Commande de Terrain qui n'est pas Clôturée."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:216
+#, python-format
+msgid "The currency you want to %s is used in at least one Purchase Order which isn't Closed."
+msgstr "La devise que vous désirez %s est utilisée dans au moins un Bon de Commande qui n'est pas Clôturé."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:230
+#, python-format
+msgid "The currency you want to %s is used in at least one document in Draft or Open state."
+msgstr "La devise que vous désirez %s est utilisée dans au moins un document à l'état Brouillon ou Ouvert."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:256
+#, python-format
+msgid "The currency you want to %s is used in at least one Register in Draft or Open state."
+msgstr "La devise que vous désirez %s est utilisée dans au moins un Registre à l'état Brouillon ou Ouvert."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:236
+#, python-format
+msgid "The currency you want to %s is used in at least one Journal Item in Unposted state."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Ligne d'écriture comptable non comptabilisée."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:263
+#, python-format
+msgid "The currency you want to %s is used in at least one Recurring Entry having a state not Done."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Ecriture Périodique avec un statut non Terminé."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:240
+#, python-format
+msgid "The currency you want to %s is used in at least one Commitment Voucher which isn't Done."
+msgstr "La devise que vous désirez %s est utilisée dans un moins un Bon d'Engagement non Terminé."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:244
+#, python-format
+msgid "The currency you want to %s is used in at least one HQ Entry which isn't validated."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Ecriture HQ non validée."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:272
+#, python-format
+msgid "The currency you want to %s is used in at least one Draft or Partially Posted Accrual Line."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Ligne de Régularisation à l'état Brouillon ou Partiellement Comptabilisée."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:249
+#, python-format
+msgid "The currency you want to %s is used in at least one Payroll Entry which isn't validated."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Ecriture de Paie non validée."
