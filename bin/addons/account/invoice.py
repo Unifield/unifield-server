@@ -532,6 +532,8 @@ class account_invoice(osv.osv):
 
         if type in ('in_invoice', 'in_refund'):
             result['value']['partner_bank_id'] = bank_id
+            if partner_id and p.ref:
+                result['value']['supplier_reference'] = p.ref
 
         if payment_term != partner_payment_term:
             if partner_payment_term:
