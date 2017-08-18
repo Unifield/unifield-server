@@ -1069,6 +1069,7 @@ class account_invoice(osv.osv):
             else:
                 # US-1669 For the JI/AJI ref: use the source doc if it exists, else use the Entry Sequence
                 ref = obj_inv.origin or self._convert_ref(cr, uid, number)
+            ref = ref[:64]
 
             # UTP-594: for invoice, the ref on move, move lines and analytic lines must be checked and updated
             if invtype in ('in_invoice'):
