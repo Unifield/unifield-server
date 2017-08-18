@@ -1232,7 +1232,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     {'analytic_distribution_id': distr_id},
                     context=context)
             return_wiz = {
-                'name': "Cash Return- Wizard",
+                'name': _('Advance Return - Wizard'),
                 'type': 'ir.actions.act_window',
                 'res_model': wizard_name,
                 'target': 'new',
