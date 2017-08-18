@@ -537,56 +537,5 @@ class account_move_reconcile(osv.osv):
                     cr.execute(sql, (name, tuple(p+t)))
         return res
 
-    def reset_addendum_line(self, cr, uid, fxa_line_ids, context):
-        '''
-        For each addendum line in parameter, put the amount back to 0.0 for:
-        - the addendum line and its counterpart (JIs)
-        - the related AJI
-        '''
-        aml_obj = self.pool.get('account.move.line')
-        for fxa_line in aml_obj.browse(cr, uid, fxa_line_ids, context=context, fields_to_fetch=['move_id']):
-            account_move_id = fxa_line.move_id.id
-            counterpart_id = aml_obj.search(cr, uid, [('move_id', '=', account_move_id), ('id', '!=', fxa_line.id)],
-                                            order='NO_ORDER', limit=1, context=context)
-            counterpart_id = counterpart_id and counterpart_id[0]
-            aji = counterpart_id and aml_obj.browse(cr, uid, counterpart_id, context=context,
-                                                    fields_to_fetch=['analytic_lines']).analytic_lines
-            aji_id = aji and aji[0].id
-            # reset the JIs
-            # We use an UPDATE in SQL instead of a "write" otherwise we'll end up with a value in functional
-            sql_ji = """
-                UPDATE account_move_line
-                SET debit_currency=0.0, credit_currency=0.0, amount_currency=0.0, debit=0.0, credit=0.0,
-                unreconcile_txt=reconcile_txt, unreconcile_date=reconcile_date,
-                reconcile_id=NULL, reconcile_txt='', reconcile_date=NULL
-                WHERE id IN %s;
-            """
-            cr.execute(sql_ji, (tuple([fxa_line.id, counterpart_id]),))
-            # reset the AJI
-            if aji_id:
-                sql_aji = """
-                UPDATE account_analytic_line
-                SET amount=0.0, amount_currency=0.0
-                WHERE id = %s;
-                """
-                cr.execute(sql_aji, (aji_id,))
-
-    def unlink(self, cr, uid, ids, context=None):
-        aml_obj = self.pool.get('account.move.line')
-        if context is None:
-            context = {}
-        if context.get('sync_update_execution'):
-            # US-1997 While synchronizing if there is an FXA line linked to the reconciliation about to be deleted,
-            # update the FXA line with the amount "0.0" (don't delete it to avoid gaps in FX entry sequences).
-            # (Cover the use case where balanced entries from an instance are reconciled in an upper instance,
-            # sync is done in the upper instance, entries are unreconciled in the upper instance, sync is done in the
-            # upper instance and only then sync is done in the lower instance
-            # ==> it wrongly creates an FXA line in the lower instance with the amount of one of the legs)
-            fxa_line_ids = aml_obj.search(cr, uid, [('reconcile_id', '=', ids), ('is_addendum_line', '=', True)],
-                                          context=context, order='NO_ORDER')
-            if fxa_line_ids:
-                self.reset_addendum_line(cr, uid, fxa_line_ids, context)
-        return super(account_move_reconcile, self).unlink(cr, uid, ids, context=context)
-
 account_move_reconcile()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
