@@ -14500,6 +14500,11 @@ msgstr "Approuvé par :"
 msgid "Latest Connections"
 msgstr "Dernières connexions"
 
+#. module: board
+#: view:res.users:0
+msgid "Group members"
+msgstr "Membres du groupe"
+
 #. module: account_override
 #: help:account.move.line,move_state:0
 msgid "This indicates the state of the Journal Entry."
