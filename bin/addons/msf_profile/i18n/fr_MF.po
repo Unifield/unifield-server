@@ -98932,3 +98932,8 @@ msgstr "Les projets suivants ne sont pas fermés sur le terrain :\n"
 #, python-format
 msgid "Writing on liquidity journals %s is not allowed"
 msgstr "Vous ne pouvez pas modifier le journal de liquidité %s"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,instance_state:0
+msgid "Instance State"
+msgstr "État de l'instance"
