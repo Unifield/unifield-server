@@ -209,8 +209,8 @@ class account_invoice(osv.osv):
                                                 other_doc_ids.append(part_aml.id)
                                 temp_lines.update(other_leg_ids)
                                 temp_lines.update(other_doc_ids)
-                lines += [x for x in temp_lines if x not in lines]
-                src.append(m.id)
+                    lines += [x for x in temp_lines if x not in lines]
+                    src.append(m.id)
 
             lines = filter(lambda x: x not in src, lines)
             result[invoice.id] = lines
