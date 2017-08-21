@@ -1414,25 +1414,16 @@ class purchase_order_line(osv.osv):
         input: purchase order line ids
         return: sale order line ids
         '''
-        # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # objects
-        sol_obj = self.pool.get('sale.order.line')
-        # procurement ids list
-        proc_ids = []
-        # sale order lines list
-        sol_ids = []
+        sol_ids = set()
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.linked_sol_id:
+                sol_ids.add(pol.linked_sol_id.id)
 
-        for line in self.read(cr, uid, ids, ['procurement_id'], context=context):
-            if line['procurement_id']:
-                proc_ids.append(line['procurement_id'][0])
-        # get the corresponding sale order line list
-        if proc_ids:
-            sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
         return sol_ids
 
     def open_split_wizard(self, cr, uid, ids, context=None):
