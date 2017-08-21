@@ -33,6 +33,7 @@ SALE_ORDER_LINE_STATE_SELECTION = [
      ('confirmed', 'Confirmed'),
      ('done', 'Closed'),
      ('cancel', 'Cancelled'),
+     ('cancel_r', 'Cancelled-r'),
 ]
 
 SALE_ORDER_STATE_SELECTION = SALE_ORDER_LINE_STATE_SELECTION + [('draft_p', 'Draft-p'), ('validated_p', 'Validated-p'), ('sourced_p', 'Sourced-p'), ('confirmed_p', 'Confirmed-p')]

@@ -57,6 +57,13 @@
             <field name="action">action_cancel()</field>
             <field name="flow_stop">True</field>
         </record>
+        <record id="act_pol_cancel_r" model="workflow.activity">
+            <field name="name">cancel_r</field>
+            <field name="wkf_id" ref="wkf_purchase_order_line"/>
+            <field name="kind">function</field>
+            <field name="action">action_cancel_r()</field>
+            <field name="flow_stop">True</field>
+        </record>
         <record id="act_pol_done" model="workflow.activity">
             <field name="name">done</field>
             <field name="wkf_id" ref="wkf_purchase_order_line"/>
@@ -185,6 +192,41 @@
                 <field name="act_from" ref="act_pol_confirmed"/>
                 <field name="act_to" ref="act_pol_cancel"/>
                 <field name="signal">cancel</field>
+            </record>
+            <record id="trans_pol_draft_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_pol_draft"/>
+                <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+            <record id="trans_pol_validated_n_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_pol_validated_n"/>
+                <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+            <record id="trans_pol_validated_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_pol_validated"/>
+                <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+            <record id="trans_pol_sourced_s_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_pol_sourced_s"/>
+                <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+            <record id="trans_pol_sourced_v_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_pol_sourced_v"/>
+                <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+            <record id="trans_pol_sourced_n_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_pol_sourced_n"/>
+                <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="signal">cancel_r</field>
+            </record>
+            <record id="trans_pol_confirmed_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_pol_confirmed"/>
+                <field name="act_to" ref="act_pol_cancel_r"/>
+                <field name="signal">cancel_r</field>
             </record>
         <!-- end cancel -->
 
