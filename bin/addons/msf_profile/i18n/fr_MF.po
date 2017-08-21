@@ -98946,6 +98946,19 @@ msgstr "Les projets suivants ne sont pas fermés sur le terrain :\n"
 msgid "Writing on liquidity journals %s is not allowed"
 msgstr "Vous ne pouvez pas modifier le journal de liquidité %s"
 
+#. module: base
+#: code:addons/base/ir/ir_cron.py:240
+#, python-format
+msgid "Automatic Synchronization must be executed within Silent Upgrade time range (from %s:%.2d until %s:%.2d)."
+msgstr "La synchronisation automatique doit être executée dans l'interval de la mise à jour silencieuse (de %s:%.2d à %s:%.2d)."
+
+#. modules: base, sync_client
+#: code:addons/base/ir/ir_cron.py:240
+#: code:addons/sync_client/sync_client.py:1569
+#, python-format
+msgid "Automatic Synchronization must be activated to perform Silent Upgrade."
+msgstr "La synchronisation automatique doit être activée pour faire une mise à jour silencieuse."
+
 #. module: sync_client
 #: field:sync.version.instance.monitor,instance_state:0
 msgid "Instance State"
@@ -98955,3 +98968,9 @@ msgstr "État de l'instance"
 #: model:ir.model,name:sale_override.model_delete_sale_order_line_wizard
 msgid "Delete sale order line"
 msgstr "Supprimer la ligne de Commande de Terrain"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:1519
+#, python-format
+msgid "Silent Upgrade time range must include the Automatic Synchronization time (%s)"
+msgstr "L'intervalle de la mise à jour silencieuse doit inclure l'heure de la synchronisation automatique (%s)"

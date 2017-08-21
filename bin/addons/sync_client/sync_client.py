@@ -1319,38 +1319,50 @@ class Connection(osv.osv):
                 result.setdefault('value', {}).update({name: 23.98}) # 23.98 == 23h59
         return result
 
-    def is_automatic_patching_allowed(self, cr, uid, context=None):
+    def is_automatic_patching_allowed(self, cr, uid, date=None, automatic_patching=None,
+                                      hour_from=None, hour_to=None, context=None):
         """
-        return True if the current time is in the range of hour_from, hour_to
+        return True if the passed date is in the range of hour_from, hour_to
         False othewise
+        If no date is passed as parameter, datetime.today() is used
         """
         connection = self._get_connection_manager(cr, uid)
-        if not connection.automatic_patching:
+        if automatic_patching is None:
+            automatic_patching = connection.automatic_patching
+        if not automatic_patching:
             return False
 
-        now = datetime.today()
+        if date is None:
+            date = datetime.today()
 
-        hour_from = int(math.floor(abs(connection.automatic_patching_hour_from)))
-        min_from = int(round(abs(connection.automatic_patching_hour_from)%1+0.01,2) * 60)
-        hour_to = int(math.floor(abs(connection.automatic_patching_hour_to)))
-        min_to = int(round(abs(connection.automatic_patching_hour_to)%1+0.01,2) * 60)
+        if not hour_from:
+            hour_from = connection.automatic_patching_hour_from
+        if not hour_to:
+            hour_to = connection.automatic_patching_hour_to
 
-        from_date = datetime(now.year, now.month, now.day, hour_from, min_from)
-        to_date = datetime(now.year, now.month, now.day, hour_to, min_to)
+        hour_from_decimal = int(math.floor(abs(hour_from)))
+        min_from_decimal = int(round(abs(hour_from)%1+0.01,2) * 60)
+        hour_to_decimal = int(math.floor(abs(hour_to)))
+        min_to_decimal = int(round(abs(hour_to)%1+0.01,2) * 60)
+
+        from_date = datetime(date.year, date.month, date.day,
+                             hour_from_decimal, min_from_decimal)
+        to_date = datetime(date.year, date.month, date.day, hour_to_decimal,
+                           min_to_decimal)
 
         # from_date and to_date are not the same day:
         if from_date > to_date:
             # case 1: the from date is in the past
             # ex. it is 3h, from_date=19h, to_date=7h
-            if from_date > now:
+            if from_date > date:
                 from_date = from_date - timedelta(days=1)
 
             # case 2: the to_date is in the future
             # ex. it is 20h, from_date=19h, to_date=7h
-            elif now > to_date:
+            elif date > to_date:
                 to_date = to_date + timedelta(days=1)
 
-        return now > from_date and now < to_date
+        return date > from_date and date < to_date
 
     def _get_connection_manager(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
@@ -1469,7 +1481,7 @@ class Connection(osv.osv):
         self.disconnect(cr, uid, context=context)
         return {}
 
-    def write(self, *args, **kwargs):
+    def write(self, cr, uid, ids, vals, context=None):
         # reset connection flag when connection data changed
         connection_property_list = [
             'database',
@@ -1484,14 +1496,50 @@ class Connection(osv.osv):
             'xmlrpc_retry'
         ]
 
-        new_values = args[3]
-        current_values = self.read(*args)[0]
+        new_values = vals
+        current_values = self.read(cr, uid, ids, vals.keys())[0]
         for key, value in new_values.items():
             if current_values[key] != value and \
                     key in connection_property_list:
                 self._uid = False
                 break
-        return super(Connection, self).write(*args, **kwargs)
+
+        # check the new properties match the automatic sync task
+        if set(('automatic_patching', 'automatic_patching_hour_from',
+                'automatic_patching_hour_to')).issubset(vals.keys()) and\
+                vals['automatic_patching']:
+
+            try:
+                model, auto_sync_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
+                                                                                          'sync_client', 'ir_cron_automaticsynchronization0')
+                cron_obj = self.pool.get(model)
+                sync_cron = cron_obj.read(cr, uid, auto_sync_id,
+                                          ['nextcall','interval_type',
+                                           'interval_number',
+                                           'active', 'numbercall'],
+                                          context=context)
+                if not sync_cron['active']:
+                    raise osv.except_osv(_('Error!'),
+                                         _('Automatic Synchronization must be '
+                                           'activated to perform Silent Upgrade'))
+                try:
+                    cron_obj.check_upgrade_time_range(cr, uid,
+                                                      sync_cron['nextcall'], sync_cron['interval_type'],
+                                                      sync_cron['interval_number'],
+                                                      vals['automatic_patching_hour_from'],
+                                                      vals['automatic_patching_hour_to'],
+                                                      vals['automatic_patching'], context=context)
+                except osv.except_osv:
+                    nextcall_time = datetime.strptime(sync_cron['nextcall'],
+                                                      '%Y-%m-%d %H:%M:%S').strftime('%H:%M')
+                    raise osv.except_osv(_('Error!'),
+                                         _('Silent Upgrade time range must include '
+                                           'the Automatic Synchronization time (%s)') % nextcall_time)
+            except ValueError:
+                pass  # the reference don't exists
+
+        return super(Connection, self).write(cr, uid, ids, vals,
+                                             context=context)
 
     def change_host(self, cr, uid, ids, host, proto, context=None):
         if host in ('127.0.0.1', 'localhost'):
