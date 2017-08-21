@@ -207,13 +207,14 @@
                                     <field name="red_color" invisible="1" />
                                     <field name="rfq_ok" invisible="1" />
                                     <field name="tender_line_id" invisible="1" />
-                                    <field name="state"/>
+                                    <field name="display_state"/>
+                                    <field name="state" invisible="1"/>
                                     <field name="fake_state" invisible="1"/>
                                     <field name="order_state_purchase_order_line" invisible="True" />
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
                                         attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('order_state_purchase_order_line', 'not in', ('draft', 'wait', 'confirmed'))]}" />
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" states="draft,validated_n"/>
-                                    <button string="Confirm" icon="terp-check" name="confirmed" type="workflow" states="validated"/>
+                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('state', 'not in', ['draft', 'validated_n'])]}" />
+                                    <button string="Confirm" icon="terp-check" name="confirmed" type="workflow" attrs="{'invisible': [('state', 'not in', ['validated'])]}" />
                                     <button string="Delete" icon="gtk-del" type="object" name="ask_unlink" confirm="You requested to cancel a line in the PO. Do you want to proceed?" 
                                         attrs="{'invisible': [('fake_state', 'in', ['cancel', 'done'])]}" />
                                 </tree>

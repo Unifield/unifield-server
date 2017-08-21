@@ -138,6 +138,36 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def _get_display_state(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        return the purchase.order.line state to display
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for pol in self.browse(cr, uid, ids, context=context):
+            # if PO line has been created from ressourced process, then we display the state as 'Resourced-XXX':
+            if pol.resourced_original_line:
+                if pol.state.startswith('draft'):
+                    res[pol.id] = 'Resourced-d'
+                elif pol.state.startswith('validated'):
+                    res[pol.id] = 'Resourced-v'
+                elif pol.state.startswith('sourced'):
+                    if pol.state == 'sourced_v':
+                        res[pol.id] = 'Resourced-pv'
+                    else:
+                        res[pol.id] = 'Resourced-s'
+                elif pol.state.startswith('confirmed'):
+                    res[pol.id] = 'Resourced-c'
+            else: # case of regular PO line, we just copy the current line state:
+                res[pol.id] = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, pol, 'state', context=context)
+
+        return res
+
+
     _columns = {
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
@@ -208,6 +238,13 @@ class purchase_order_line(osv.osv):
                                        \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                                        \n* The \'Done\' state is set automatically when purchase order is set as done. \
                                        \n* The \'Cancelled\' state is set automatically when user cancel purchase order.'),
+        'display_state': fields.function(_get_display_state, string='State', type='text', method=True, readonly=True,
+            help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
+               \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
+               \n* The \'Done\' state is set automatically when purchase order is set as done. \
+               \n* The \'Cancelled\' state is set automatically when user cancel purchase order.'
+        ),
+        'resourced_original_line': fields.many2one('purchase.order.line', 'Original line', readonly=True, help='Original line from which the current one has been cancel and ressourced'),
         'invoice_lines': fields.many2many('account.invoice.line', 'purchase_order_line_invoice_rel', 'order_line_id',
                                           'invoice_id', 'Invoice Lines', readonly=True),
         'invoiced': fields.boolean('Invoiced', readonly=True),
