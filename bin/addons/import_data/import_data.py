@@ -46,7 +46,10 @@ class import_data(osv.osv_memory):
 
         if data.get('parent_id', False):
             n_obj = self.pool.get('product.nomenclature')
-            parent_ids = n_obj.search(cr, uid, [('msfid', '=', data['parent_id'])], limit=1)
+            if isinstance(data['parent_id'], (int, long)):
+                parent_ids = [data['parent_id']]
+            else:
+                parent_ids = n_obj.search(cr, uid, [('msfid', '=', data['parent_id'])], limit=1)
             if parent_ids:
                 parent_id = parent_ids[0]
 
@@ -178,7 +181,7 @@ class import_data(osv.osv_memory):
             ('crossovered.budget','Budget'),
             ('account.budget.post','Budget Line'),
             ('product.supplierinfo', 'Supplier Info'),
-            ], 'Object' ,required=True),
+        ], 'Object' ,required=True),
         'config_logo': fields.binary('Image', readonly='1'),
         'import_mode': fields.selection([('update', 'Update'), ('create', 'Create')], string='Update or create ?'),
     }
@@ -461,13 +464,13 @@ WHERE n3.level = 3)
                     if impobj._name == 'product.product':
                         # UF-2254: Allow to update the product, use xmlid_code now for searching
                         ids_to_update = impobj.search(cr, uid, [('xmlid_code',
-                            '=', data['xmlid_code'])], order='NO_ORDER')
+                                                                 '=', data['xmlid_code'])], order='NO_ORDER')
                     elif impobj._name == 'product.nomenclature':
                         ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                            data['msfid'])], order='NO_ORDER')
+                                                                 data['msfid'])], order='NO_ORDER')
                     elif impobj._name == 'product.category':
                         ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                            data['msfid'])], order='NO_ORDER')
+                                                                 data['msfid'])], order='NO_ORDER')
 
                     if ids_to_update:
                         #UF-2170: remove the standard price value from the list for update product case
@@ -523,11 +526,11 @@ WHERE n3.level = 3)
 
             request_obj = self.pool.get('res.request')
             req_id = request_obj.create(cr, uid,
-                {'name': "%s %s"%(import_type, objname,),
-                'act_from': uid,
-                'act_to': uid,
-                'body': summary,
-                })
+                                        {'name': "%s %s"%(import_type, objname,),
+                                         'act_from': uid,
+                                         'act_to': uid,
+                                         'body': summary,
+                                         })
             if req_id:
                 request_obj.request_send(cr, uid, [req_id])
 
@@ -574,7 +577,7 @@ class import_product(osv.osv_memory):
     def import_csv(self, cr, uid, ids, context=None):
         # UFTP-327
         fg = self.pool.get('product.product').fields_get(cr, uid,
-            fields=['default_code', 'xmlid_code'], context=context)
+                                                         fields=['default_code', 'xmlid_code'], context=context)
         if fg and 'default_code' in fg and 'size' in fg['default_code']:
             context['import_data_field_max_size'] = {
                 'default_code': fg['default_code']['size'],

@@ -39,7 +39,7 @@ class ImportHeader(object):
     """
     Class used to export Header template.
     """
-    type_ok = ['String', 'Number', 'DateTime']
+    type_ok = ['String', 'Number', 'DateTime', 'Boolean', 'Float']
 
     def __new__(cls, name, ftype='String', size=70, tech_name=None, required=False):
         """
@@ -70,13 +70,12 @@ your support team and give us this message.
         :param date_value: String value to compute
         :return: A datetime instance or False
         """
-        # US:2527: accept only one format, reject other
-        date_format = [
+        accepted_date_format = [
             '%d/%m/%Y',
         ]
 
         d = False
-        for dformat in date_format:
+        for dformat in accepted_date_format:
             try:
                 d = DateTime.strptime(date_value, dformat)
                 d = d.strftime('%Y-%m-%d %H:%M:%S')
@@ -130,7 +129,20 @@ your support team and give us this message.
                 return (0, value, None)
             else:
                 try:
+                    if isinstance(value, basestring):
+                        value = value.rstrip().replace(',', '.')
                     return (0, float(value), None)
+                except Exception as e:
+                    return (-1, value, e)
+        elif header[1] == 'Boolean':
+            if value.upper() in ('T', 'TRUE', '1'):
+                value = True
+            else:
+                value = False
+        elif header[1] == 'Number':
+            if vtype =='int':
+                try:
+                    return (0, int(value), None)
                 except Exception as e:
                     return (-1, value, e)
 

@@ -95,25 +95,37 @@
 
         <Table x:FullColumns="1" x:FullRows="1">
 
-        % for col in data.get('header_columns', []):
+            <% rows = getRows(data['model'], data['fields'], data.get('nb_lines'), data.get('domain'), data.get('template_only', False), data['context']) %>
+            <% headers = getHeaders(data['model'], data['fields'], rows, data['context']) %>
+            % for col in headers:
             <Column ss:AutoFitWidth="1" ss:Width="${col[2] or 70|x}" ss:StyleID="${col[1]|x}" />
-        % endfor
+            % endfor
 
             <Row>
-            % for col in data.get('header_columns', []):
+            % for col in headers:
                 <Cell ss:StyleID="header">
-                    <Data ss:Type="String">${col[0]}</Data>
+                    <Data ss:Type="String">${col[0]|x}</Data>
                 </Cell>
             % endfor
             </Row>
 
+            % if not data.get('template_only', False):
+            % for row in rows:
             <Row>
-            % for col in data.get('header_columns', []):
-                <Cell ss:StyleID="${col[1]|x}" />
-            % endfor
+                % for index, cell in enumerate(row):
+                <Cell ss:StyleID="${headers[index][1]|x}">
+                    % if headers[index][1] == 'String' and not cell:
+                        <Data ss:Type="String"></Data>
+                    % else:
+                        <Data ss:Type="String">${cell|x}</Data>
+                    % endif
+                </Cell>
+                % endfor
             </Row>
+            % endfor
+            % endif
         </Table>
-        
+
         <x:WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
             <ProtectScenarios>False</ProtectScenarios>
             <EnableSelection>UnlockedCells</EnableSelection>
