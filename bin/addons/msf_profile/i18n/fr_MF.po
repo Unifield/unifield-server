@@ -98974,3 +98974,38 @@ msgstr "Supprimer la ligne de Commande de Terrain"
 #, python-format
 msgid "Silent Upgrade time range must include the Automatic Synchronization time (%s)"
 msgstr "L'intervalle de la mise à jour silencieuse doit inclure l'heure de la synchronisation automatique (%s)"
+
+#. module: msf_profile
+#: field:communication.config,message:0
+msgid "Message to display"
+msgstr "Message à afficher"
+
+#. module: msf_profile
+#: help:communication.config,message:0
+msgid "Enter the message you want to display as a banner. Nothing more than the information entered here will be displayed."
+msgstr "Entrer le message que vous souhaitez afficher comme banière. Seules les informations entrées ici seront affichées."
+
+#. module: msf_profile
+#: field:communication.config,from_date:0
+msgid "Broadcast start date"
+msgstr "Date de début de diffusion"
+
+#. module: msf_profile
+#: field:communication.config,to_date:0
+msgid "Broadcast stop date"
+msgstr "Date de fin de diffusion"
+
+#. module: msf_profile
+#: help:communication.config,from_date:0
+msgid "If defined, the display of the message will start at this date"
+msgstr "Si défini, l'affichage du message démarrera à cette date"
+
+#. module: msf_profile
+#: help:communication.config,to_date:0
+msgid "If defined, the display of the message will stop at this date"
+msgstr "Si défini, l'affichage du message s'arrêtera à cette date"
+
+#. module: msf_profile
+#: constraint:communication.config:0
+msgid "You cannot have more than one Communication configuration"
+msgstr "Vous ne pouvez pas avoir plus d'une configuration Communication"
