@@ -17,6 +17,7 @@ if os.path.exists('credentials.py'):
     execfile('credentials.py')
 
 oerp = OERP(server=SRV_ADDRESS, protocol='xmlrpc', port=XMLRPC_PORT, timeout=3600, version='6.0')
+print UNIFIELD_ADMIN, UNIFIELD_PASSWORD, DB_PREFIX
 l = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_SYNC_SERVER' % DB_PREFIX)
 ids = oerp.get('sync.server.entity').search([])
 oerp.get('sync.server.entity').write(ids, {'user_id': 1})
