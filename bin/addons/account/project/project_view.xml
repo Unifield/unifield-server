@@ -364,7 +364,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Analytic Journal">
-                    <field name="name" select="1"/>
+                    <field name="name" select="1" default_focus="1"/>
                     <field name="code" select="1"/>
                     <field name="type" select="2"/>
                     <field name="active" select="2"/>
