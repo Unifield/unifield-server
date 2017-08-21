@@ -1,4 +1,4 @@
-<button class="button-b"
+<button class="button-b oe_form_button_${btype}"
         id="${name}"
         name="${name}"
         type="button"
