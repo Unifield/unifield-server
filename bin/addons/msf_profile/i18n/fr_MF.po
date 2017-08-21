@@ -98950,3 +98950,8 @@ msgstr "Vous ne pouvez pas modifier le journal de liquidité %s"
 #: field:sync.version.instance.monitor,instance_state:0
 msgid "Instance State"
 msgstr "État de l'instance"
+
+#. module: sale_override
+#: model:ir.model,name:sale_override.model_delete_sale_order_line_wizard
+msgid "Delete sale order line"
+msgstr "Supprimer la ligne de Commande de Terrain"
