@@ -2735,19 +2735,12 @@ class sale_order_line(osv.osv):
             else: # case of regular FO line, we just copy the current line state:
                 res[sol.id] = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, sol, 'state', context=context)
 
+        return res
+
 
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
     _columns = {
-        'display_state': fields.function(_get_display_state, method=True, type='text', string='State', required=True, readonly=True,
-            store={'sale.order.line': (lambda obj, cr, uid, ids, c={}: ids, ['state', 'resourced_original_line'], 10)},
-            help='* The \'Draft\' state is set when the related sales order in draft state. \
-            \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
-            \n* The \'Exception\' state is set when the related sales order is set as exception. \
-            \n* The \'Done\' state is set when the sales order line has been picked. \
-            \n* The \'Cancelled\' state is set when a user cancel the sales order related.'
-        ),
-        'resourced_original_line': fields.many2one('sale.order.line', 'Original line', readonly=True),
         'order_id': fields.many2one('sale.order', 'Order Reference', required=True, ondelete='cascade', select=True, readonly=True, states={'draft':[('readonly',False)]}),
         'name': fields.char('Description', size=256, required=True, select=True, readonly=True, states={'draft': [('readonly', False)]}),
         'sequence': fields.integer('Sequence', help="Gives the sequence order when displaying a list of sales order lines."),
@@ -2778,6 +2771,14 @@ class sale_order_line(osv.osv):
             \n* The \'Exception\' state is set when the related sales order is set as exception. \
             \n* The \'Done\' state is set when the sales order line has been picked. \
             \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
+        'display_state': fields.function(_get_display_state, method=True, type='text', string='State', readonly=True,
+            help='* The \'Draft\' state is set when the related sales order in draft state. \
+            \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
+            \n* The \'Exception\' state is set when the related sales order is set as exception. \
+            \n* The \'Done\' state is set when the sales order line has been picked. \
+            \n* The \'Cancelled\' state is set when a user cancel the sales order related.'
+        ),
+        'resourced_original_line': fields.many2one('sale.order.line', 'Original line', readonly=True, help='Original line from which the current one has been cancel and ressourced'),
         'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer'),
         'salesman_id':fields.related('order_id', 'user_id', type='many2one', relation='res.users', store=True, string='Salesman'),
         'company_id': fields.related('order_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),

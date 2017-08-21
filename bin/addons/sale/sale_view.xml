@@ -191,12 +191,14 @@
                                     <field name="discount"/>
                                     <field name="price_unit"/>
                                     <field name="price_subtotal"/>
-                                    <field name="state"/>
+                                    <field name="display_state"/>
+                                    <field name="state" invisible="1"/>
                                     <field name="fake_state" invisible="1" />
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" 
                                             name="open_split_wizard" type="object" 
                                             attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}" />
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" states="draft"/>
+                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" 
+                                        attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                     <button string="Delete" icon="gtk-del" type="object" name="ask_unlink"
                                             confirm="Do you really want to delete selected record ?"
                                             attrs="{'invisible': [('fake_state', 'in', ('cancel', 'done'))]}" />
