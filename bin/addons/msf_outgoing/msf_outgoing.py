@@ -864,6 +864,7 @@ class shipment(osv.osv):
                     """
                     cp_vals = {
                         'product_qty': return_qty,
+                        'date_expected': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                         'line_number': move.line_number,
                         'location_dest_id': move.initial_location.id,
                         'from_pack': family.to_pack - family.selected_number + 1,
@@ -4335,6 +4336,7 @@ class stock_picking(osv.osv):
 
                 move_values = {
                     'product_qty': initial_qty,
+                    'date_expected': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 }
 
                 if not initial_qty:
