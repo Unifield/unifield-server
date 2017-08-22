@@ -118,6 +118,15 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     return True
         return False
 
+    def _get_move_from_line(self, product_id, origin):
+        '''
+        Returns the move of the given line
+        '''
+        sm_obj = self.pool.get('stock.move')
+        sm_ids = sm_obj.search(self.cr, self.uid, {('product_id', '=', product_id), ('origin', 'like', origin)}, order='id desc')
+
+        return sm_obj.browse(self.cr, self.uid, sm_ids[0])
+
     def _get_lines(self, order_id, grouped=False, only_bo=False):
         '''
         Get all lines with OUT/PICK for an order
@@ -140,19 +149,100 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             bo_qty = line.product_uom_qty
             po_name = ''
             cdd = False
+            from_stock = line.type == 'make_to_stock'
             if line.procurement_id and line.procurement_id.purchase_id:
                 po_name = line.procurement_id.purchase_id.name
                 cdd = line.procurement_id.purchase_id.delivery_confirmed_date
             if not cdd and line.order_id.delivery_confirmed_date:
                 cdd = line.order_id.delivery_confirmed_date
 
-            for move in line.move_ids:
-                m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
-                ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
-                ppl_not_shipped = move.picking_id.subtype == 'ppl' and move.picking_id.state not in ('cancel', 'done')
-                s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
+            if len(line.move_ids) > 0 and not from_stock:
+                for move in line.move_ids:
+                    m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
+                    ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
+                    ppl_not_shipped = move.picking_id.subtype == 'ppl' and move.picking_id.state not in ('cancel', 'done')
+                    s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
 
-                if m_type and (ppl or s_out or ppl_not_shipped):
+                    if m_type and (ppl or s_out or ppl_not_shipped):
+                        # bo_qty < 0 if we receipt (IN) more quantities then expected (FO):
+                        bo_qty -= self.pool.get('product.uom')._compute_qty(
+                            self.cr,
+                            self.uid,
+                            move.product_uom.id,
+                            move.product_qty,
+                            line.product_uom.id,
+                        )
+                        data = {
+                            'po_name': po_name,
+                            'cdd': cdd,
+                            'line_number': line.line_number,
+                            'line_comment': line.comment,
+                            'product_name': line.product_id.name,
+                            'product_code': line.product_id.code,
+                            'is_delivered': False,
+                            'delivery_order': move.picking_id.name,
+                        }
+                        if first_line:
+                            data.update({
+                                'uom_id': line.product_uom.name,
+                                'ordered_qty': line.product_uom_qty,
+                                'backordered_qty': 0.00,
+                                'first_line': True,
+                            })
+                            first_line = False
+
+                        if ppl or ppl_not_shipped:
+                            is_delivered = False
+                            is_shipment_done = False
+                            if ppl:
+                                is_delivered = move.picking_id.shipment_id.state == 'delivered' or False
+                                is_shipment_done = move.picking_id.shipment_id.state == 'done' or False
+
+                            if not grouped:
+                                key = (move.product_uom.name)
+                            else:
+                                key = (move.product_uom.name, line.line_number)
+                            data.update({
+                                'is_delivered': is_delivered,
+                                'delivered_qty': not only_bo and (is_shipment_done or is_delivered) and move.product_qty or 0.00,
+                                'delivered_uom': not only_bo and (is_shipment_done or is_delivered) and move.product_uom.name or '',
+                                'backordered_qty': not is_shipment_done and not is_delivered and line.order_id.state != 'cancel' and move.product_qty or 0.00,
+                                'rts': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.shipment_expected_date[0:10] or '',
+                            })
+                        else:
+                            if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
+                                is_shipment_done = move.picking_id.shipment_id.state == 'done'
+                            else:
+                                is_shipment_done = move.picking_id.state == 'done'
+                            if not grouped:
+                                key = (move.product_uom.name)
+                            else:
+                                key = (move.product_uom.name, line.line_number)
+                            if not only_bo:
+                                data.update({
+                                    'delivered_qty': is_shipment_done and move.product_qty or 0.00,
+                                    'delivered_uom': is_shipment_done and move.product_uom.name or '',
+                                    'rts': line.order_id.ready_to_ship_date,
+                                })
+
+                        if key in keys:
+                            for rline in lines:
+                                if rline['delivered_uom'] == key[1]:
+                                    if not grouped or (grouped and line.line_number == key[2]):
+                                        rline.update({
+                                            'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
+                                        })
+                        else:
+                            keys.append(key)
+                            lines.append(data)
+                            if data.get('first_line'):
+                                fl_index = m_index
+                            m_index += 1
+            elif (len(line.move_ids) == 0 and line.procurement_id.move_id) or from_stock:
+                move = self._get_move_from_line(line.product_id.id, line.order_id.name)
+                m_type = move.product_qty != 0.00
+
+                if m_type:
                     # bo_qty < 0 if we receipt (IN) more quantities then expected (FO):
                     bo_qty -= self.pool.get('product.uom')._compute_qty(
                         self.cr,
@@ -180,39 +270,19 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         })
                         first_line = False
 
-                    if ppl or ppl_not_shipped:
-                        is_delivered = False
-                        is_shipment_done = False
-                        if ppl:
-                            is_delivered = move.picking_id.shipment_id.state == 'delivered' or False
-                            is_shipment_done = move.picking_id.shipment_id.state == 'done' or False
-
-                        if not grouped:
-                            key = (move.product_uom.name)
-                        else:
-                            key = (move.product_uom.name, line.line_number)
-                        data.update({
-                            'is_delivered': is_delivered,
-                            'delivered_qty': not only_bo and (is_shipment_done or is_delivered) and move.product_qty or 0.00,
-                            'delivered_uom': not only_bo and (is_shipment_done or is_delivered) and move.product_uom.name or '',
-                            'backordered_qty': not is_shipment_done and not is_delivered and line.order_id.state != 'cancel' and move.product_qty or 0.00,
-                            'rts': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.shipment_expected_date[0:10] or '',
-                        })
+                    is_done = move.picking_id.state == 'done'
+                    if not grouped:
+                        key = move.product_uom.name
                     else:
-                        if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
-                            is_shipment_done = move.picking_id.shipment_id.state == 'done'
-                        else:
-                            is_shipment_done = move.picking_id.state == 'done'
-                        if not grouped:
-                            key = (move.product_uom.name)
-                        else:
-                            key = (move.product_uom.name, line.line_number)
-                        if not only_bo:
-                            data.update({
-                                'delivered_qty': is_shipment_done and move.product_qty or 0.00,
-                                'delivered_uom': is_shipment_done and move.product_uom.name or '',
-                                'rts': line.order_id.ready_to_ship_date,
-                            })
+                        key = (move.product_uom.name, line.line_number)
+                    if not only_bo:
+                        data.update({
+                            'delivered_qty': is_done and move.product_qty or 0.00,
+                            'delivered_uom': is_done and move.product_uom.name or '',
+                            'is_delivered': is_done,
+                            'backordered_qty': not is_done and line.order_id.state != 'cancel' and move.product_qty or 0.00,
+                            'rts': line.order_id.ready_to_ship_date,
+                        })
 
                     if key in keys:
                         for rline in lines:
@@ -225,27 +295,26 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         keys.append(key)
                         lines.append(data)
                         if data.get('first_line'):
-                            fl_index= m_index
+                            fl_index = m_index
                         m_index += 1
-
-            # No move found
-            if first_line:
-                data = {
-                    'line_number': line.line_number,
-                    'line_comment': line.comment,
-                    'po_name': po_name,
-                    'product_code': line.product_id.default_code,
-                    'product_name': line.product_id.name,
-                    'uom_id': line.product_uom.name,
-                    'ordered_qty': line.product_uom_qty,
-                    'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date or '',
-                    'delivered_qty': 0.00,
-                    'delivered_uom': '',
-                    'delivery_order': '',
-                    'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' else 0.00,
-                    'cdd': cdd,
-                }
-                lines.append(data)
+            else:  # No move found
+                if first_line:
+                    data = {
+                        'line_number': line.line_number,
+                        'line_comment': line.comment,
+                        'po_name': po_name,
+                        'product_code': line.product_id.default_code,
+                        'product_name': line.product_id.name,
+                        'uom_id': line.product_uom.name,
+                        'ordered_qty': line.product_uom_qty,
+                        'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date or '',
+                        'delivered_qty': 0.00,
+                        'delivered_uom': '',
+                        'delivery_order': '',
+                        'backordered_qty': line.product_uom_qty if line.order_id.state != 'cancel' else 0.00,
+                        'cdd': cdd,
+                    }
+                    lines.append(data)
 
             # Put the backorderd qty on the first line
             if not lines:

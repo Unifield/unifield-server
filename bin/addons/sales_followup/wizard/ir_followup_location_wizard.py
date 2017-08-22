@@ -41,11 +41,6 @@ class ir_followup_location_wizard(osv.osv_memory):
             string='Company',
             readonly=True,
         ),
-        'warehouse_id': fields.many2one(
-            'stock.warehouse',
-            string='Warehouse',
-            help="The Warehouse you want have the IR",
-        ),
         'start_date': fields.date(
             string='Start date',
         ),
@@ -158,7 +153,6 @@ class ir_followup_location_wizard(osv.osv_memory):
         for wizard in self.browse(cr, uid, ids, context=context):
             ir_domain = []
             ir_domain.append(('procurement_request', '=', 't'))
-            ir_domain.append(('location_requestor_id.chained_picking_type', '=', 'out'))
 
             if wizard.order_id:
                 ir_ids = [wizard.order_id.id]
@@ -167,9 +161,6 @@ class ir_followup_location_wizard(osv.osv_memory):
 
                 if wizard.location_id:
                     ir_domain.append(('location_requestor_id', '=', wizard.location_id.id))
-
-                if wizard.warehouse_id:
-                    ir_domain.append(('warehouse_id', '=', wizard.warehouse_id.id))
 
                 if wizard.start_date:
                     ir_domain.append(('date_order', '>=', wizard.start_date))
@@ -248,14 +239,13 @@ class ir_followup_location_wizard(osv.osv_memory):
             'context': context,
         }
 
-    def onchange(self, cr, uid, ids, location_id=False, warehouse_id=False, order_id=False):
+    def onchange(self, cr, uid, ids, location_id=False, order_id=False):
         '''
-        If the location or the warehouse is changed, check if the order is to this location/warehouse
+        If the location is changed, check if the order is to this location
         '''
         so_obj = self.pool.get('sale.order')
 
         res = {}
-        message = ''
 
         if location_id and order_id:
             so_ids = so_obj.search(cr, uid, [
@@ -265,31 +255,13 @@ class ir_followup_location_wizard(osv.osv_memory):
             ], count=True)
             if not so_ids:
                 res['value'] = {'order_id': False}
-                message += 'The location of the selected order doesn\'t \
-                            match with the selected location,. The selected order has been reset\n'
-        if warehouse_id and order_id:
-            so_ids = so_obj.search(cr, uid, [
-                ('id', '=', order_id),
-                ('warehouse_id', '=', warehouse_id),
-                ('procurement_request', '=', 't'),
-            ], count=True)
-            if not so_ids:
-                res['value'] = {'order_id': False}
-                message += 'The warehouse of the selected order doesn\'t \
-                            match with the selected warehouse. The selected order has been reset\n'
+                res['warning'] = {
+                    'title': _('Warning'),
+                    'message': _('The location of the selected order doesn\'t \
+                            match with the selected location. The selected order has been reset\n'),
+                }
 
-        if len(message) > 0:
-            res['warning'] = {
-                'title': _('Warning'),
-                'message': _(message),
-            }
-
-        if location_id and warehouse_id:
-            res['domain'] = {'order_id': [('warehouse_id', '=', warehouse_id), ('location_requestor_id', '=', location_id),
-                                          ('procurement_request', '=', 't')]}
-        elif not location_id and warehouse_id:
-            res['domain'] = {'order_id': [('warehouse_id', '=', warehouse_id), ('procurement_request', '=', 't')]}
-        elif location_id and not warehouse_id:
+        elif location_id:
             res['domain'] = {'order_id': [('location_requestor_id', '=', location_id), ('procurement_request', '=', 't')]}
         else:
             res['domain'] = {'order_id': [('procurement_request', '=', 't')]}
