@@ -237,26 +237,6 @@ class purchase_order_line(osv.osv):
         return True
 
 
-    def action_cancel(self, cr, uid, ids, context=None):
-        '''
-        Wkf method called when getting the cancel state
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        wf_service = netsvc.LocalService("workflow")
-
-        # cancel the linked SO line too:
-        for pol in self.browse(cr, uid, ids, context=context):
-            if pol.linked_sol_id:
-                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
-
-        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
-
-        return True
-
-
     def action_sourced_s(self, cr, uid, ids, context=None):
         '''
         wkf method when PO line get the sourced_s state
@@ -387,6 +367,46 @@ class purchase_order_line(osv.osv):
 
         return True
 
+
+    def action_cancel(self, cr, uid, ids, context=None):
+        '''
+        Wkf method called when getting the cancel state
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
+
+        # cancel the linked SO line too:
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
+
+        self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+
+        return True
+
+
+    def action_cancel_r(self, cr, uid, ids, context=None):
+        '''
+        Wkf method called when getting the cancel state
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
+
+        # cancel the linked SO line too:
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.linked_sol_id:
+                # wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
+                pass
+
+        self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
+
+        return True
 
 purchase_order_line()
 

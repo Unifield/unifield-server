@@ -519,65 +519,40 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         '''
         return {'type': 'ir.actions.act_window_close'}
 
-    def cancel_po(self, cr, uid, ids, context=None):
+
+    def cancel_po(self, cr, uid, ids, resource=False, context=None):
         '''
         Cancel the PO and display his form
+        @param resource: do we have to resource the cancelled line ?
         '''
-        po_obj = self.pool.get('purchase.order')
-        so_obj = self.pool.get('sale.order')
-        line_obj = self.pool.get('purchase.order.line')
-        wf_service = netsvc.LocalService("workflow")
-
-
         if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        line_ids = []
-        order_ids = []
-        order_to_check = []
+        wf_service = netsvc.LocalService("workflow")
+
+        # get PO
+        po = False
         for wiz in self.browse(cr, uid, ids, context=context):
-            order_ids.append(wiz.order_id.id)
-            if wiz.last_lines and wiz.order_id.id not in order_to_check:
-                order_to_check.append(wiz.order_id.id)
-            if context.get('has_to_be_resourced'):
-                line_ids.extend([l.id for l in wiz.order_id.order_line])
+            po = wiz.order_id
 
-        po_so_ids, po_ids, so_ids, sol_nc_ids = po_obj.sourcing_document_state(cr, uid, order_to_check, context=context)
-
-        # Mark lines as 'To be resourced'
-        line_obj.write(cr, uid, line_ids, {'has_to_be_resourced': True}, context=context)
-
-        po_obj.write(cr, uid, order_ids, {'canceled_end': True}, context=context)
-        for order_id in order_ids:
-            wf_service.trg_validate(uid, 'purchase.order', order_id, 'purchase_cancel', cr)
-
-        if po_so_ids:
-            order_to_cancel = []
-            for so_id in po_so_ids:
-                if so_obj._get_ready_to_cancel(cr, uid, so_id, context=context)[so_id]:
-                    order_to_cancel.append(so_id)
-
-            if order_to_cancel:
-                context.update({
-                    'from_po': True,
-                    'po_ids': list(order_to_check),
-                })
-                return so_obj.open_cancel_wizard(cr, uid, po_so_ids, context=context)
+        # cancel all lines:
+        for pol in po.order_line:
+            signal = 'cancel_r' if resource else 'cancel'
+            wf_service.trg_validate(uid, 'purchase.order.line', pol.id, signal, cr)
 
         return {'type': 'ir.actions.act_window_close'}
+
 
     def cancel_and_resource(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
 
-        context['has_to_be_resourced'] = True
-
-        return self.cancel_po(cr, uid, ids, context=context)
+        return self.cancel_po(cr, uid, ids, resource=True, context=context)
 
 purchase_order_cancel_wizard()
+
 
 
 class res_partner(osv.osv):
