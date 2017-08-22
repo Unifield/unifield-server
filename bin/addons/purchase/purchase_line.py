@@ -172,7 +172,7 @@ class purchase_order_line(osv.osv):
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
-        'linked_sol_id': fields.many2one('sale.order.line', string='Linked SO line', help='Linked Sale Order line in case of PO from sourcing', readonly=True),
+        'linked_sol_id': fields.many2one('sale.order.line', string='Linked FO line', help='Linked Sale Order line in case of PO line from sourcing', readonly=True),
         'sync_linked_sol': fields.char(size=256, string='Linked FO line at synchro'),
         # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
@@ -1432,7 +1432,7 @@ class purchase_order_line(osv.osv):
             if pol.linked_sol_id:
                 sol_ids.add(pol.linked_sol_id.id)
 
-        return sol_ids
+        return list(sol_ids)
 
     def open_split_wizard(self, cr, uid, ids, context=None):
         '''
