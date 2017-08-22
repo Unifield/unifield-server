@@ -789,7 +789,7 @@ class Entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
 
         # ask only max_seq_pack sequences to the sync server
-        max_seq_pack = 200
+        max_seq_pack = 500
 
         max_seq = min(last_seq+max_seq_pack, total_max_seq)
         while max_seq <= total_max_seq:
