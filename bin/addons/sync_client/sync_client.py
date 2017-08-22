@@ -646,6 +646,7 @@ class Entity(osv.osv):
         while True:
             try:
                 context = context or {}
+                logger = context.get('logger')
                 updates = self.pool.get(context.get('update_to_send_model', 'sync.client.update_to_send'))
 
                 def prepare_update(session):
@@ -668,7 +669,11 @@ class Entity(osv.osv):
                 if nb_tries == MAX_TRIES:
                     self._logger.info(_("Unable to generate updates after %d tries") % MAX_TRIES)
                     raise
-                self._logger.info(_("Unable to generate updates, retrying %d/%d") % (nb_tries, MAX_TRIES))
+                msg = _("Unable to generate updates, retrying %d/%d") % (nb_tries, MAX_TRIES)
+                if logger:
+                    logger.append(msg)
+                    logger.write()
+                self._logger.info(msg)
                 nb_tries += 1
 
     @sync_subprocess('data_push_send')
