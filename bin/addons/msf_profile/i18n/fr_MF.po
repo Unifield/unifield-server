@@ -98839,6 +98839,21 @@ msgstr "Date de début"
 msgid "Ending date"
 msgstr "Date de fin"
 
+#. module: sale
+#: field:sale.donation.stock.moves,sm_ids:0
+msgid "Stock Moves"
+msgstr "Mouvements de Stock"
+
+#. module: sale
+#: field:sale.donation.stock.moves,company_id:0
+msgid "Company"
+msgstr "Société"
+
+#. module: sale
+#: field:sale.donation.stock.moves,end_date:0
+msgid "End date"
+msgstr "Date de fin"
+
 #. module: account_override
 #: report:addons/account_override/report/open_invoices_xls.mako:290
 msgid "Beginning date:"
@@ -99009,3 +99024,231 @@ msgstr "Si défini, l'affichage du message s'arrêtera à cette date"
 #: constraint:communication.config:0
 msgid "You cannot have more than one Communication configuration"
 msgstr "Vous ne pouvez pas avoir plus d'une configuration Communication"
+
+#. module: sale
+#: view:sale.donation.stock.moves:0
+msgid "Request parameters"
+msgstr "Paramètres de la requête"
+
+#. module: sale
+#: code:addons/sale/wizard/sale_donation_stock_moves.py:184
+#, python-format
+msgid "The partner of the selected picking doesn't match with the selected partner. The selected picking has been reset"
+msgstr "Le partenaire de la commande sélectionnée ne correspond pas au partenaire sélectionné. La commande sélectionnée a été remise à 0."
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:119
+msgid "Total Value"
+msgstr "Valeur Totale"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:115
+msgid "Qty In"
+msgstr "Qté Entrante"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:118
+msgid "Currency (FX)"
+msgstr "Devise (FX)"
+
+#. module: sale
+#: field:sale.donation.stock.moves,product_id:0
+msgid "Product Ref."
+msgstr "Ref. Produit"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,state:0
+msgid "Waiting"
+msgstr "En Attente"
+
+#. module: sale
+#: view:sale.donation.stock.moves:0
+msgid "Excel report"
+msgstr "Rapport Excel"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,state:0
+msgid "Import in progress"
+msgstr "Import en cours"
+
+#. module: sale
+#: model:ir.actions.report.xml,name:sale.report_sale_donation_stock_moves_xls
+msgid "Donation Report"
+msgstr "Rapport des Dons"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,state:0
+msgid "Delivered"
+msgstr "Livré"
+
+#. module: sale
+#: code:addons/sale/wizard/sale_donation_stock_moves.py:132
+#, python-format
+msgid "No data found with these parameters"
+msgstr "Aucune donnée n'a été trouvée avec ces paramètres"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:114
+#: field:sale.donation.stock.moves,partner_type:0
+msgid "Partner Type"
+msgstr "Type de Partenaire"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,state:0
+msgid "Available Shipped"
+msgstr "Disponible en Expédition"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,partner_type:0
+msgid "Inter-section"
+msgstr "Inter-section"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,partner_type:0
+msgid "Intermission"
+msgstr "Intermission"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:111
+msgid "Movement Date"
+msgstr "Date du Mouvement"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,partner_type:0
+msgid "Internal"
+msgstr "Interne"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,state:0
+msgid "Draft"
+msgstr "Brouillon"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:113
+#: field:sale.donation.stock.moves,partner_id:0
+msgid "Partner"
+msgstr "Partneraire"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,state:0
+msgid "Confirmed"
+msgstr "Confirmé"
+
+#. module: sale
+#: view:sale.donation.stock.moves:0
+msgid "Actions"
+msgstr "Actions"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:120
+msgid "Instance"
+msgstr "Instance"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,partner_type:0
+msgid "External"
+msgstr "Externe"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:110
+msgid "Expense Account"
+msgstr "Compte de Dépenses"
+
+#. module: sale
+#: field:sale.donation.stock.moves,start_date:0
+msgid "Start date"
+msgstr "Date de départ"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,state:0
+msgid "Cancelled"
+msgstr "Annulé"
+
+#. module: sale
+#: model:ir.actions.act_window,name:sale.action_sale_donation_stock_moves
+#: model:ir.ui.menu,name:sale.menu_sale_donation_stock_moves
+#: view:sale.donation.stock.moves:0
+msgid "Donation Report"
+msgstr "Rapport des Dons"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:108
+#: report:msf.report_reception_in:0
+msgid "Code"
+msgstr "Code"
+
+#. module: sale
+#: code:addons/sale/wizard/sale_donation_stock_moves.py:183
+#, python-format
+msgid "Warning"
+msgstr "Attention"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:116
+msgid "Qty Out"
+msgstr "Qté Sortante"
+
+#. module: sale
+#: code:addons/sale/wizard/sale_donation_stock_moves.py:131
+#, python-format
+msgid "Error"
+msgstr "Erreur"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:117
+msgid "Unit Price"
+msgstr "Prix Unitaire"
+
+#. module: sale
+#: help:sale.donation.stock.moves,partner_id:0
+msgid "The partner you want have the donations from"
+msgstr "Le partenaire duquel vous voulez voir les dons"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,state:0
+msgid "Closed"
+msgstr "Fermé"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,state:0
+msgid "Available"
+msgstr "Disponible"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:112
+msgid "Order Type"
+msgstr "Type de Commande"
+
+#. module: sale
+#: selection:sale.donation.stock.moves,partner_type:0
+msgid "ESC"
+msgstr "ESC"
+
+#. module: sale
+#: model:ir.model,name:sale.model_sale_donation_stock_moves
+msgid "sale.donation.stock.moves"
+msgstr "sale.donation.stock.moves"
+
+#. module: sale
+#: field:sale.donation.stock.moves,state:0
+msgid "Status"
+msgstr "Status"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:109
+#: report:msf.freight_manifest:0
+#: report:msf.report_reception_in:0
+msgid "Description"
+msgstr "Description"
+
+#. module: sale
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:124
+#: field:sale.donation.stock.moves,move_id:0
+msgid "Move Ref."
+msgstr "Ref. Mouvement"
+
+#. module: sale
+#: code:addons/sale/wizard/sale_donation_stock_moves.py:170
+#, python-format
+msgid "The partner of the selected move doesn't match with the selected partner. The selected move has been reset"
+msgstr "Le partenaire du mouvement sélectionné ne correspond pas au partenaire sélectionné. Le mouvement sélectionné a été remis à 0."

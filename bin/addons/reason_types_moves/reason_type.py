@@ -180,7 +180,7 @@ class stock_inventory(osv.osv):
         if inventory_line:
             move_vals.update({
                 'comment': inventory_line.comment,
-                    'reason_type_id': inventory_line.reason_type_id.id,
+                'reason_type_id': inventory_line.reason_type_id.id,
             })
         move_vals.update({'not_chained': True})
 
@@ -307,8 +307,38 @@ class stock_picking(osv.osv):
                     return False
         return res
 
+    def _get_type_donation_ids(self, cr, uid, context=None):
+        data_obj = self.pool.get('ir.model.data')
+        type_ids = []
+        type_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1])
+        type_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1])
+        type_ids.append(data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_in_kind_donation')[1])
+        return type_ids
+
+    def _get_is_donation(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for rid in ids:
+            res[rid] = False
+
+        don_ids = self._get_type_donation_ids(cr, uid)
+        for x in self.search(cr, uid, [('id', 'in', ids), ('reason_type_id', 'in', don_ids)], context=context):
+            res[x] = True
+
+        return res
+
+    def _search_is_donation(self, cr, uid, obj, name, args, context=None):
+        don_ids = self._get_type_donation_ids(cr, uid)
+        if not args:
+            return []
+        if args[0][1] != '=' or not args[0][2]:
+            raise osv.except_osv(_('Error'), _('Filter not implemented on field %') % (name, ))
+
+        return [('reason_type_id', 'in', don_ids)]
+
+
     _columns = {
         'reason_type_id': fields.many2one('stock.reason.type', string='Reason type', required=True),
+        'is_donation': fields.function(_get_is_donation, string='Is Donation ?', type='boolean', fnct_search=_search_is_donation),
     }
 
     _constraints = [
