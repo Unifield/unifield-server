@@ -215,8 +215,7 @@
                                         attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('order_state_purchase_order_line', 'not in', ('draft', 'wait', 'confirmed'))]}" />
                                     <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('state', 'not in', ['draft', 'validated_n'])]}" />
                                     <button string="Confirm" icon="terp-check" name="confirmed" type="workflow" attrs="{'invisible': [('state', 'not in', ['validated'])]}" />
-                                    <button string="Delete" icon="gtk-del" type="object" name="ask_unlink" confirm="You requested to cancel a line in the PO. Do you want to proceed?" 
-                                        attrs="{'invisible': [('fake_state', 'in', ['cancel', 'done'])]}" />
+                                    <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': [('fake_state', 'in', ['cancel', 'cancel_r', 'done'])]}" />
                                 </tree>
                                 <!-- default form view -->
                             </field>

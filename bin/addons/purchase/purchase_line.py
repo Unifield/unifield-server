@@ -950,11 +950,19 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        wf_service = netsvc.LocalService("workflow")
-        for sol_id in ids:
-            wf_service.trg_validate(uid, 'purchase.order.line', sol_id, 'cancel', cr)
+        wiz_id = self.pool.get('purchase.order.line.cancel.wizard').create(cr, uid, {'pol_id': ids[0]}, context=context)
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'purchase_line_cancel_form_view')[1]
 
-        return True
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'purchase.order.line.cancel.wizard',
+            'res_id': wiz_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [view_id],
+            'target': 'new',
+            'context': context
+        }
 
     def cancel_sol(self, cr, uid, ids, context=None):
         '''

@@ -22,5 +22,6 @@
 import purchase_order_group
 import purchase_installer
 import purchase_line_invoice
+import purchase_line_cancel
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
