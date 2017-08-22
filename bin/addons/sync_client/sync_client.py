@@ -822,6 +822,7 @@ class Entity(osv.osv):
             cr.commit()
             if max_seq == total_max_seq:
                 break
+            last = False
             last_seq = max_seq
             offset = (0, 0)
             offset_recovery = 0
