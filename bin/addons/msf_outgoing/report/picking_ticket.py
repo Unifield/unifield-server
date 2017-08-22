@@ -24,6 +24,7 @@ import pooler
 from osv import osv
 from tools.translate import _
 from report import report_sxw
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 
 class BatchMoveLines(object):
@@ -274,3 +275,10 @@ report_sxw.report_sxw(
     header=False,
 )
 
+SpreadsheetReport(
+    'report.pre.packing.excel.export',
+    'stock.picking',
+    'addons/msf_outgoing/report/pre_packing_excel_report_xls.mako',
+    parser=picking_ticket,
+    header=False,
+)
