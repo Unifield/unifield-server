@@ -32,6 +32,7 @@ import os
 import math
 import hashlib
 from psycopg2 import OperationalError
+from psycopg2.extensions import ISOLATION_LEVEL_REPEATABLE_READ, TransactionRollbackError
 
 import logging
 from sync_common import get_md5, check_md5
@@ -637,24 +638,38 @@ class Entity(osv.osv):
         return True
 
     @sync_subprocess('data_push_create')
-    def create_update(self, cr, uid, context=None):
-        context = context or {}
-        updates = self.pool.get(context.get('update_to_send_model', 'sync.client.update_to_send'))
+    def create_update(self, oldcr, uid, context=None):
+        cr = pooler.get_db(oldcr.dbname).cursor()
+        cr._cnx.set_isolation_level(ISOLATION_LEVEL_REPEATABLE_READ)
+        nb_tries = 1
+        MAX_TRIES = 10
+        while True:
+            try:
+                context = context or {}
+                updates = self.pool.get(context.get('update_to_send_model', 'sync.client.update_to_send'))
 
-        def prepare_update(session):
-            updates_count = 0
-            for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [('type', '!=', 'USB')], context=context):
-                updates_count += sum(updates.create_update(
-                    cr, uid, rule_id, session, context=context))
-            return updates_count
+                def prepare_update(session):
+                    updates_count = 0
+                    for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [('type', '!=', 'USB')], context=context):
+                        updates_count += sum(updates.create_update(
+                            cr, uid, rule_id, session, context=context))
+                    return updates_count
 
-        entity = self.get_entity(cr, uid, context)
-        session = str(uuid.uuid1())
-        updates_count = prepare_update(session)
-        if updates_count > 0:
-            self.write(cr, uid, [entity.id], {'session_id' : session})
-        return updates_count
-        #state init => update_send
+                entity = self.get_entity(cr, uid, context)
+                session = str(uuid.uuid1())
+                updates_count = prepare_update(session)
+                if updates_count > 0:
+                    self.write(cr, uid, [entity.id], {'session_id' : session})
+                cr.commit()
+                cr.close(True)
+                return updates_count
+            except TransactionRollbackError:
+                cr.rollback()
+                if nb_tries == MAX_TRIES:
+                    self._logger.info(_("Unable to generate updates after %d tries") % MAX_TRIES)
+                    raise
+                self._logger.info(_("Unable to generate updates, retrying %d/%d") % (nb_tries, MAX_TRIES))
+                nb_tries += 1
 
     @sync_subprocess('data_push_send')
     def send_update(self, cr, uid, context=None):
