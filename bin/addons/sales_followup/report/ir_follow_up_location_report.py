@@ -122,10 +122,14 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
         '''
         Returns the move of the given line
         '''
+        res = False
         sm_obj = self.pool.get('stock.move')
         sm_ids = sm_obj.search(self.cr, self.uid, {('product_id', '=', product_id), ('origin', 'like', origin)}, order='id desc')
 
-        return sm_obj.browse(self.cr, self.uid, sm_ids[0])
+        if len(sm_ids) > 0:
+            res = sm_obj.browse(self.cr, self.uid, sm_ids[0])
+
+        return res
 
     def _get_lines(self, order_id, grouped=False, only_bo=False):
         '''
@@ -155,6 +159,10 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                 cdd = line.procurement_id.purchase_id.delivery_confirmed_date
             if not cdd and line.order_id.delivery_confirmed_date:
                 cdd = line.order_id.delivery_confirmed_date
+
+            # fetch the move in case the line doesn't have move_ids
+            # if no move found for this line, it's set to False
+            line_move = self._get_move_from_line(line.product_id.id, line.order_id.name)
 
             if len(line.move_ids) > 0 and not from_stock:
                 for move in line.move_ids:
@@ -238,17 +246,16 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             if data.get('first_line'):
                                 fl_index = m_index
                             m_index += 1
-            elif (len(line.move_ids) == 0 and line.procurement_id.move_id) or from_stock:
-                move = self._get_move_from_line(line.product_id.id, line.order_id.name)
-                m_type = move.product_qty != 0.00
+            elif line_move and ((len(line.move_ids) == 0 and line.procurement_id.move_id) or from_stock):
+                m_type = line_move.product_qty != 0.00
 
                 if m_type:
                     # bo_qty < 0 if we receipt (IN) more quantities then expected (FO):
                     bo_qty -= self.pool.get('product.uom')._compute_qty(
                         self.cr,
                         self.uid,
-                        move.product_uom.id,
-                        move.product_qty,
+                        line_move.product_uom.id,
+                        line_move.product_qty,
                         line.product_uom.id,
                     )
                     data = {
@@ -259,7 +266,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'product_name': line.product_id.name,
                         'product_code': line.product_id.code,
                         'is_delivered': False,
-                        'delivery_order': move.picking_id.name,
+                        'delivery_order': line_move.picking_id.name,
                     }
                     if first_line:
                         data.update({
@@ -270,17 +277,17 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         })
                         first_line = False
 
-                    is_done = move.picking_id.state == 'done'
+                    is_done = line_move.picking_id.state == 'done'
                     if not grouped:
-                        key = move.product_uom.name
+                        key = line_move.product_uom.name
                     else:
-                        key = (move.product_uom.name, line.line_number)
+                        key = (line_move.product_uom.name, line.line_number)
                     if not only_bo:
                         data.update({
-                            'delivered_qty': is_done and move.product_qty or 0.00,
-                            'delivered_uom': is_done and move.product_uom.name or '',
+                            'delivered_qty': is_done and line_move.product_qty or 0.00,
+                            'delivered_uom': is_done and line_move.product_uom.name or '',
                             'is_delivered': is_done,
-                            'backordered_qty': not is_done and line.order_id.state != 'cancel' and move.product_qty or 0.00,
+                            'backordered_qty': not is_done and line.order_id.state != 'cancel' and line_move.product_qty or 0.00,
                             'rts': line.order_id.ready_to_ship_date,
                         })
 
