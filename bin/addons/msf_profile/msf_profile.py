@@ -28,6 +28,7 @@ import tools
 import os
 import logging
 from threading import Lock
+import time
 
 from msf_field_access_rights.osv_override import _get_instance_level
 
@@ -1117,7 +1118,7 @@ class patch_scripts(osv.osv):
         cr.execute(sql)
         return True
 
-    def us_1452_patch(self, cr, uid, *a, **b):
+    def us_1452_patch_bis(self, cr, uid, *a, **b):
         """
         Put 1.00 as cost price for all product with cost price = 0.00
         """
@@ -1128,8 +1129,18 @@ class patch_scripts(osv.osv):
             sale_percent = 1 + (setup_br.sale_price/100.00)
 
 
-        sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00"""
+        sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00 RETURNING id"""
         cr.execute(sql, (sale_percent, ))
+
+
+        prod_templ_ids = [x[0] for x in cr.fetchall()]
+        if prod_templ_ids:
+            now = time.strftime('%Y-%m-%d %H:%M:%S')
+            p_ids = self.pool.get('product.product').search(cr, uid, [('product_tmpl_id', 'in', prod_templ_ids)])
+            for p_id in p_ids:
+                cr.execute("""insert into standard_price_track_changes (create_uid, create_date, new_standard_price, user_id, product_id, change_date, transaction_name, old_standard_price) VALUES
+                        (1, NOW(), 1, 1, %s, %s, 'Product price reset 1', 0)
+                """, (p_id, now))
         return True
 
     def us_1430_patch(self, cr, uid, *a, **b):
