@@ -1141,6 +1141,7 @@ class patch_scripts(osv.osv):
                 cr.execute("""insert into standard_price_track_changes (create_uid, create_date, new_standard_price, user_id, product_id, change_date, transaction_name, old_standard_price) VALUES
                         (1, NOW(), 1, 1, %s, %s, 'Product price reset 1', 0)
                 """, (p_id, now))
+            cr.execute('update product_product set uf_write_date=%s where id in %s', (now, tuple(p_ids)))
         return True
 
     def us_1430_patch(self, cr, uid, *a, **b):
