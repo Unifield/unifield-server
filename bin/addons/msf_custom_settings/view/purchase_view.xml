@@ -42,7 +42,7 @@
                             <field name="internal_type" string="Zone"  />
                             <field name="customer_ref" widget="char" />
                             <group colspan="2" col="3">
-                                <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft'])], 'required': [('partner_type', '=', 'esc')]}" />
+                                <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
                                 <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent"
                                     attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
                             </group>

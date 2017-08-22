@@ -98706,3 +98706,15 @@ msgstr "Date de Prise de Stock"
 #, python-format
 msgid "Do you want to update the Date of Stock Take of all order lines ?"
 msgstr "Voulez-vous mettre à jour la Date de Prise de Stock sur toutes les lignes de la commande ?"
+
+#. module: purchase_override
+#: code:addons/purchase_override/purchase.py:1180
+#, python-format
+msgid "The Date of Stock Take is required for all Purchase Order lines if the Partner is an ESC."
+msgstr "La Date de Prise de Stock est obligatoire pour les lignes des Bons de Commande qui ont un Partenaire ESC."
+
+#. module: purchase_override
+#: code:addons/purchase_override/purchase.py:1176
+#, python-format
+msgid "The Date of Stock Take is required for a Purchase Order if the Partner is an ESC."
+msgstr "La Date de Prise de Stock est obligatoire pour les Bons de Commande qui ont un Partenaire ESC."

@@ -1162,6 +1162,24 @@ class purchase_order(osv.osv):
 
         return True
 
+    def check_if_stock_take_date_with_esc_partner(self, cr, uid, ids, context=None):
+        """
+        Check if the PO and all lines have a date of stock take with an ESC Partner
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.partner_type == 'esc':
+                if not po.stock_take_date:
+                    raise osv.except_osv(_('Warning !'), _(
+                        'The Date of Stock Take is required for a Purchase Order if the Partner is an ESC.'))
+                if po.order_line:
+                    for line in po.order_line:
+                        if not line.stock_take_date:
+                            raise osv.except_osv(_('Warning !'), _('The Date of Stock Take is required for all Purchase Order lines if the Partner is an ESC.'))
+        return True
+
     def wkf_picking_done(self, cr, uid, ids, context=None):
         '''
         Change the shipped boolean and the state of the PO
@@ -1369,6 +1387,7 @@ stock moves which are already processed : '''
         '''
         Update the confirmation date of the PO at confirmation.
         Check analytic distribution.
+        Check Date of Stock Take for ESC Partner
         '''
         # Objects
         po_line_obj = self.pool.get('purchase.order.line')
@@ -1448,6 +1467,7 @@ stock moves which are already processed : '''
 
         self.ssl_products_in_line(cr, uid, ids, context=context)
         self.check_analytic_distribution(cr, uid, ids, context=context)
+        self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
 
         return True
 
@@ -1457,6 +1477,7 @@ stock moves which are already processed : '''
         update corresponding date at line level if needed.
         Check analytic distribution
         Check that no line have a 0 price unit.
+        Check Date of Stock Take for ESC Partner
         '''
         # Objects
         po_line_obj = self.pool.get('purchase.order.line')
@@ -1469,6 +1490,7 @@ stock moves which are already processed : '''
 
         # Check analytic distribution
         self.check_analytic_distribution(cr, uid, ids, context=context)
+        self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
         for po in self.read(cr, uid, ids, ['order_type', 'state', 'delivery_confirmed_date'], context=context):
             # prepare some values
             is_regular = po['order_type'] == 'regular' # True if order_type is regular, else False
