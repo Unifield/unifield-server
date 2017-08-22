@@ -401,8 +401,7 @@ class purchase_order_line(osv.osv):
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.linked_sol_id:
-                # wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
-                pass
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
 
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
 

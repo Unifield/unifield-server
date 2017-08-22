@@ -121,6 +121,8 @@ class purchase_order_line_sync(osv.osv):
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
         elif sol_dict['state'] == 'cancel':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel', cr)
+        elif sol_dict['state'] == 'cancel_r':
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel_r', cr)
 
         # log me:
         pol_data = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['order_id', 'line_number'], context=context)
@@ -551,31 +553,6 @@ class purchase_order_sync(osv.osv):
     def msg_close(self, cr, uid, source, po, context=None):
         po_id = self.search(cr, uid, [('name','=',po.name)])
         self.action_done(cr, uid, po_id, context=context)
-
-    def canceled_fo_cancel_po(self, cr, uid, source, so_info, context=None):
-        if not context:
-            context = {}
-        self._logger.info("+++ Cancel the original PO at %s due to the cancel of the FO at %s"%(cr.dbname,source))
-        wf_service = netsvc.LocalService("workflow")
-        so_po_common = self.pool.get('so.po.common')
-        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
-
-        # UF-1830: TODO: if the PO does not exist in the system, just warn that the message is failed to be executed, and create a message to the partner
-        if not po_id:
-            if context.get('restore_flag'):
-                # UF-1830: Create a message to remove the invalid reference to the inexistent document
-                so_po_common.create_invalid_recovery_message(cr, uid, source, so_info.name, context)
-                return "Recovery: The PO " + so_info.name + " does not exist any more. The reference to it will be set to void."
-            raise Exception, "Cannot find the original PO with the given info."
-
-        self.write(cr, uid, po_id, {'from_sync': True}, context)
-        # Cancel the PO
-        wf_service.trg_validate(uid, 'purchase.order', po_id, 'purchase_cancel', cr)
-
-        name = self.browse(cr, uid, po_id, context).name
-        message = "The PO " + name + " is canceled by sync as its partner FO " + so_info.name + " got canceled at " + source
-        self._logger.info(message)
-        return message
 
     def on_create(self, cr, uid, id, values, context=None):
         if context is None \

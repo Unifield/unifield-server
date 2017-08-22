@@ -333,7 +333,27 @@ class sale_order_line(osv.osv):
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+
+        return True
+
+
+    def action_cancel_r(self, cr, uid, ids, context=None):
+        '''
+        Workflow method called when SO line is getting the cancel_r state
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
+
+        # generate sync message:
+        return_info = {}
+        for sol_id in ids:
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
