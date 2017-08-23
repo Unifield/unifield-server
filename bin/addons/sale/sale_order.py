@@ -2733,7 +2733,7 @@ class sale_order_line(osv.osv):
                 elif sol.state.startswith('confirmed'):
                     res[sol.id] = 'Resourced-c'
                 else: # draft + unexpected PO line state:
-                    res[pol.id] = 'Resourced-d'
+                    res[sol.id] = 'Resourced-d'
             else: # case of regular FO line, we just copy the current line state:
                 res[sol.id] = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, sol, 'state', context=context)
 
