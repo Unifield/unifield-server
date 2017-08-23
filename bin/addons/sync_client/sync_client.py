@@ -667,7 +667,12 @@ class Entity(osv.osv):
             except TransactionRollbackError:
                 cr.rollback()
                 if nb_tries == MAX_TRIES:
-                    self._logger.info(_("Unable to generate updates after %d tries") % MAX_TRIES)
+                    msg = _("Unable to generate updates after %d tries") % MAX_TRIES
+                    if logger:
+                        logger.append(msg)
+                        logger.write()
+                    self._logger.info(msg)
+                    cr.close(True)
                     raise
                 msg = _("Unable to generate updates, retrying %d/%d") % (nb_tries, MAX_TRIES)
                 if logger:
@@ -675,6 +680,11 @@ class Entity(osv.osv):
                     logger.write()
                 self._logger.info(msg)
                 nb_tries += 1
+            except:
+                cr.rollback()
+                cr.close(True)
+                raise
+
 
     @sync_subprocess('data_push_send')
     def send_update(self, cr, uid, context=None):
