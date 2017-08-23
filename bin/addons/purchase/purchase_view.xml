@@ -207,9 +207,9 @@
                                     <field name="red_color" invisible="1" />
                                     <field name="rfq_ok" invisible="1" />
                                     <field name="tender_line_id" invisible="1" />
-                                    <field name="display_state"/>
                                     <field name="state" invisible="1"/>
                                     <field name="fake_state" invisible="1"/>
+                                    <field name="state_to_display"/>
                                     <field name="order_state_purchase_order_line" invisible="True" />
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
                                         attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('order_state_purchase_order_line', 'not in', ('draft', 'wait', 'confirmed'))]}" />
@@ -469,6 +469,7 @@
                             <field name="external_ref" readonly="1" />
                             <field name="project_ref" readonly="1" />
                             <field name="fnct_project_ref" readonly="1" />
+                            <field name="resourced_original_line" readonly="1" />
                             <separator colspan="4" string="Notes" />
                             <field colspan="4" name="notes" nolabel="1"/>
                         </page>

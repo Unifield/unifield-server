@@ -115,6 +115,23 @@ class sale_order_line(osv.osv):
         return True
 
 
+    def create_resource_line(self, cr, uid, ids, context=None):
+        '''
+        create a new FO line (resourced) with given FO line (cancelled-r)
+        @param ids: line to copy
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        new_sol_id = False
+        for sol in self.browse(cr, uid, ids, context=context):
+            new_sol_id = self.copy(cr, uid, sol.id, {'resourced_original_line': sol.id, 'resourced_original_remote_line': sol.sync_linked_pol}, context=context)
+
+        return new_sol_id
+
+
     def action_done(self, cr, uid, ids, context=None):
         '''
         Workflow method called when SO line is done
@@ -347,14 +364,20 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        resourced_sol = self.create_resource_line(cr, uid, ids, context=context)
+
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
 
-        # generate sync message:
+        # generate sync message for original FO line:
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
                 'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
+        # generate sync message for resourced line:
+        self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', resourced_sol, return_info, 
+            'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+        
         return True
 
 

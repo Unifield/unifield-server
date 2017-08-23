@@ -76,6 +76,9 @@ class purchase_order_line_sync(osv.osv):
         pol_values['sync_linked_sol'] = sol_dict['sync_local_id']
         if 'line_number' in pol_values:
             del(pol_values['line_number'])
+        if sol_dict.get('resourced_original_line'):
+            if sol_dict.get('resourced_original_remote_line'):
+                pol_values['resourced_original_line'] = int(sol_dict['resourced_original_remote_line'].split('/')[-1])
 
         kind = ""
         # update PO line:
@@ -102,7 +105,7 @@ class purchase_order_line_sync(osv.osv):
                     pol_values['origin'] =  orig_pol_info.origin
             # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)
             # so we have to create this new PO line:
-            pol_values['set_as_sourced_n'] = True
+            pol_values['set_as_sourced_n'] = True if not sol_dict.get('resourced_original_line') else False
             new_pol = self.create(cr, uid, pol_values, context=context)
             pol_updated = new_pol
         else: # regular update

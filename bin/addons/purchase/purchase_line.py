@@ -138,7 +138,7 @@ class purchase_order_line(osv.osv):
 
         return res
 
-    def _get_display_state(self, cr, uid, ids, field_name, args, context=None):
+    def _get_state_to_display(self, cr, uid, ids, field_name, args, context=None):
         '''
         return the purchase.order.line state to display
         '''
@@ -238,7 +238,7 @@ class purchase_order_line(osv.osv):
                                        \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                                        \n* The \'Done\' state is set automatically when purchase order is set as done. \
                                        \n* The \'Cancelled\' state is set automatically when user cancel purchase order.'),
-        'display_state': fields.function(_get_display_state, string='State', type='text', method=True, readonly=True,
+        'state_to_display': fields.function(_get_state_to_display, string='State', type='text', method=True, readonly=True,
             help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
                \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                \n* The \'Done\' state is set automatically when purchase order is set as done. \

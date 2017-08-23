@@ -43,6 +43,7 @@ class sale_order_line_sync(osv.osv):
         'source_sync_line_id': fields.text(string='Sync DB id of the PO origin line'),
         'sync_local_id': fields.function(_get_sync_local_id, type='char', method=True, string='ID', help='for internal use only'),
         'sync_linked_pol': fields.char(size=256, string='Linked purchase order line at synchro', select=1),
+        'resourced_original_remote_line': fields.char(size=256, string='Orig customer PO line', select=1, help='INTERNAL USE: id of the remote cancelled and resourced line, the parent of the current line. Usefull to fill the field resourced_original_line in the other instance'),
     }
 
     def copy(self, cr, uid, id, default=None, context=None):

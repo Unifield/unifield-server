@@ -2710,7 +2710,7 @@ class sale_order_line(osv.osv):
 
         return res
 
-    def _get_display_state(self, cr, uid, ids, field_name, args, context=None):
+    def _get_state_to_display(self, cr, uid, ids, field_name, args, context=None):
         '''
         return the sale.order.line state to display
         '''
@@ -2773,7 +2773,7 @@ class sale_order_line(osv.osv):
             \n* The \'Exception\' state is set when the related sales order is set as exception. \
             \n* The \'Done\' state is set when the sales order line has been picked. \
             \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
-        'display_state': fields.function(_get_display_state, method=True, type='text', string='State', readonly=True,
+        'state_to_display': fields.function(_get_state_to_display, method=True, type='text', string='State', readonly=True,
             help='* The \'Draft\' state is set when the related sales order in draft state. \
             \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
             \n* The \'Exception\' state is set when the related sales order is set as exception. \
