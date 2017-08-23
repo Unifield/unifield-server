@@ -989,12 +989,13 @@ class supplier_catalogue_line(osv.osv):
             elif cat_state != 'draft' and line.partner_info_id:
                 pinfo_data = {'min_quantity': new_vals.get('min_qty', line.min_qty),
                               'price': new_vals.get('unit_price', line.unit_price),
-                              'product_code': new_vals.get('product_code', line.product_code),
                               'uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
                               'rounding': new_vals.get('rounding', line.rounding),
                               'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty)
                               }
                 # Update the pricelist line on product supplier information tab
+                if 'product_code' in new_vals and line.partner_info_id.suppinfo_id.product_code != new_vals['product_code']:
+                    self.pool.get('product.supplierinfo').write(cr, uid, [line.partner_info_id.suppinfo_id.id], {'product_code': new_vals['product_code']})
                 self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id],
                                                              pinfo_data, context=context)
             elif cat_state != 'draft':
