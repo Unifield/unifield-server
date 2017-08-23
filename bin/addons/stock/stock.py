@@ -3065,8 +3065,10 @@ class stock_inventory(osv.osv):
                     if self._name == 'initial.stock.inventory':
                         value.update({'price_unit': line['average_cost']})
                     move_ids.append(self._inventory_line_hook(cr, uid, None, value))
+                elif not change:
+                    inv_line_obj.write(cr, uid, [line['id']], {'dont_move': True}, context=context)
             # Changed the text of the following line to "is confirmed" instead of "is done" due to the state value
-            message = _('Inventory') + " '" + inv['name'] + "' "+ _("is confirmed.")
+            message = _('Inventory') + " '" + inv['name'] + "' "+ _("is validated.")
             self.log(cr, uid, inv['id'], message)
             self.write(cr, uid, [inv['id']], {'state': 'confirm', 'move_ids': [(6, 0, move_ids)]})
         return True
@@ -3101,6 +3103,9 @@ class stock_inventory(osv.osv):
                             raise osv.except_osv(_('UserError'),
                                                  _('You can not cancel inventory which has any account move with posted state.'))
                         account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
+            line_ids = [x.id for x in inv.inventory_line_id]
+            if line_ids:
+                self.pool.get('stock.inventory.line').write(cr, uid, line_ids, {'dont_move': False}, context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
             if self._name == 'initial.stock.inventory':
                 self.infolog(cr, uid, "The Initial Stock inventory id:%s (%s) has been canceled" % (inv.id, inv.name))

@@ -1696,7 +1696,7 @@ Expiry date. Only one line with same data is expected."""))
         # super function after production lot creation - production lot are therefore taken into account at stock move creation
         result = super(stock_inventory, self).action_confirm(cr, uid, ids, context=context)
 
-        self.infolog(cr, uid, 'The %s inventor%s %s (%s) ha%s been confirmed' % (
+        self.infolog(cr, uid, 'The %s inventor%s %s (%s) ha%s been validated' % (
             self._name == 'initial.stock.inventory' and 'Initial stock' or 'Physical',
             len(ids) > 1 and 'ies' or 'y',
             ids, ', '.join(x['name'] for x in self.read(cr, uid, ids, ['name'], context=context)),
@@ -1719,7 +1719,7 @@ Expiry date. Only one line with same data is expected."""))
     def action_done(self, cr, uid, ids, context=None):
         res = super(stock_inventory, self).action_done(cr, uid, ids, context=context)
 
-        self.infolog(cr, uid, 'The Physical inventor%s %s (%s) ha%s been validated' % (
+        self.infolog(cr, uid, 'The Physical inventor%s %s (%s) ha%s been confirmed' % (
             len(ids) > 1 and 'ies' or 'y',
             ids, ', '.join(x['name'] for x in self.read(cr, uid, ids, ['name'], context=context)),
             len(ids) > 1 and 've' or 's',

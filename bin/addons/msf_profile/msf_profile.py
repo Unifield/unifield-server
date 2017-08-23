@@ -46,6 +46,16 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2647(self, cr, uid, *a, **b):
+        cr.execute('''update stock_inventory_line set dont_move='t' where id in (
+            select l.id from stock_inventory_line l
+                left join stock_inventory_move_rel r on l.inventory_id = r.inventory_id
+                left join stock_move m on m.id = r.move_id and m.product_id = l.product_id and m.prodlot_id = l.prod_lot_id
+            where m.id is null
+            )''')
+
+        return True
+
     def us_2444_touch_liquidity_journals(self, cr, uid, *a, **b):
         if _get_instance_level(self, cr, uid) == 'project':
             cr.execute('''

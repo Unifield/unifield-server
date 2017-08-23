@@ -57031,8 +57031,9 @@ msgstr "Vous ne devriez choisir une Liste produits à exporter !"
 msgid "Turkish / Türkçe"
 msgstr "Turkish / Türkçe"
 
-#. module: account
+#. modules: account, stock
 #: code:addons/account/invoice.py:1124
+#: code:addons/stock/stock.py:2988
 #, python-format
 msgid "is validated."
 msgstr "est validé."
