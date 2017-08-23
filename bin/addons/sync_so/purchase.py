@@ -76,20 +76,35 @@ class purchase_order_line_sync(osv.osv):
         pol_values['sync_linked_sol'] = sol_dict['sync_local_id']
         if 'line_number' in pol_values:
             del(pol_values['line_number'])
+
         if sol_dict.get('resourced_original_line'):
             if sol_dict.get('resourced_original_remote_line'):
                 pol_values['resourced_original_line'] = int(sol_dict['resourced_original_remote_line'].split('/')[-1])
+                # link our resourced PO line with corresponding resourced FO line:
+                if pol_values['resourced_original_line']:
+                    orig_po_line = self.browse(cr, uid, pol_values['resourced_original_line'], fields_to_fetch=['linked_sol_id'], context=context)
+                    if orig_po_line.linked_sol_id:
+                        resourced_sol_id = self.pool.get('sale.order.line').search(cr, uid, [('resourced_original_line', '=', orig_po_line.linked_sol_id.id)], context=context)
+                        linked = False
+                        if resourced_sol_id:
+                            pol_values['linked_sol_id']=  resourced_sol_id[0]
+                            linked = True
+                            wf_service.trg_validate(uid, 'sale.order.line', resourced_sol_id[0], 'validated', cr)
+                        if not linked:
+                            raise Exception, "Unable to link resourced PO line with corresponding IR line"
 
-        kind = ""
-        # update PO line:
-        pol_updated = False
 
+
+        # search the PO line to update:
         pol_id = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context)
         if not pol_id and sol_dict.get('sync_linked_pol'):
             pol_id_msg = sol_dict['sync_linked_pol'].split('/')[-1]
             pol_id = self.search(cr, uid, [('order_id', '=', pol_values['order_id']), ('id', '=', int(pol_id_msg))], context=context)
 
-        if not pol_id: # new line
+        # update PO line:
+        kind = ""
+        pol_updated = False
+        if not pol_id: # then create new PO line
             kind = 'new line'
             if sol_dict['is_line_split']:
                 sync_linked_sol = int(sol_dict['original_line_id'].get('id').split('/')[-1]) if sol_dict['original_line_id'] else False
@@ -109,7 +124,6 @@ class purchase_order_line_sync(osv.osv):
             new_pol = self.create(cr, uid, pol_values, context=context)
             pol_updated = new_pol
         else: # regular update
-            # search for the PO line to update:
             pol_updated = pol_id[0]
             kind = 'update'
             pol_to_update = [pol_updated]
