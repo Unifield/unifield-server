@@ -2301,7 +2301,7 @@ class stock_move(osv.osv):
                     cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
 
                     done, notdone = self._hook_copy_stock_move(cr, uid, res, move, done, notdone)
-        if not move_to_assign:
+        if move_to_assign:
             self.write(cr, uid, list(move_to_assign), {'state':'assigned'})
         count = self._hook_write_state_stock_move(cr, uid, done, notdone, count)
 
