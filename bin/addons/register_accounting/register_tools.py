@@ -221,7 +221,7 @@ def previous_period_id(self, cr, uid, period_id, context=None, raise_error=True)
     p_obj = self.pool.get('account.period')
     # Search period and previous one
     period = p_obj.browse(cr, uid, [period_id], context=context)[0]
-    first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id)], order='date_start', limit=1, context=context)[0]
+    first_period_id = p_obj.search(cr, uid, [('fiscalyear_id', '=', period.fiscalyear_id.id), ('number', '!=', 0)], order='date_start', limit=1, context=context)[0]
     previous_period_ids = p_obj.search(cr, uid, [('date_start', '<=', period.date_start), ('fiscalyear_id', '=', period.fiscalyear_id.id),
                                                  ('id', '!=', period_id), ('number', '<=', 12.0)], order='number desc', context=context)
     if period_id == first_period_id:
