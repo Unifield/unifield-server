@@ -2723,9 +2723,7 @@ class sale_order_line(osv.osv):
         for sol in self.browse(cr, uid, ids, context=context):
             # if FO line has been created from ressourced process, then we display the state as 'Resourced-XXX':
             if sol.resourced_original_line:
-                if sol.state.startswith('draft'):
-                    res[sol.id] = 'Resourced-d'
-                elif sol.state.startswith('validated'):
+                if sol.state.startswith('validated'):
                     res[sol.id] = 'Resourced-v'
                 elif sol.state.startswith('sourced'):
                     if sol.state == 'sourced_v':
@@ -2734,6 +2732,8 @@ class sale_order_line(osv.osv):
                         res[sol.id] = 'Resourced-s'
                 elif sol.state.startswith('confirmed'):
                     res[sol.id] = 'Resourced-c'
+                else: # draft + unexpected PO line state:
+                    res[pol.id] = 'Resourced-d'
             else: # case of regular FO line, we just copy the current line state:
                 res[sol.id] = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, sol, 'state', context=context)
 
