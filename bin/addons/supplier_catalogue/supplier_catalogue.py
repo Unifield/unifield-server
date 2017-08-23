@@ -899,7 +899,7 @@ class supplier_catalogue_line(osv.osv):
                                                   },
                                         context=context)
         else:
-            supinfo_obj.write(cr, uid, {'product_code': vals.get('product_code', False)}, context=context)
+            supinfo_obj.write(cr, uid, [sup_id], {'product_code': vals.get('product_code', False)}, context=context)
 
         # Pass 'no_store_function' to False to compute the sequence on the pricelist.partnerinfo object
         create_context = context.copy()

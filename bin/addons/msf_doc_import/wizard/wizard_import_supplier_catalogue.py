@@ -207,7 +207,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                             to_correct_ok = True
                             error_list_line.append(_("The product '%s' was not found.") % product_code)
 
-                    product_code = len(row.cells)>=3 and row.cells[2].data
+                    supplier_code = len(row.cells)>=3 and row.cells[2].data
                     #Product UoM
                     p_uom = len(row.cells)>=4 and row.cells[3].data
                     if not p_uom:
@@ -321,8 +321,8 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                                 to_write['min_order_qty'] = p_min_order_qty
                             if cl_obj.comment != p_comment:
                                 to_write['comment'] = p_comment
-                            if cl_obj.product_code != product_code:
-                                to_write['product_code'] = product_code
+                            if cl_obj.supplier_code != supplier_code:
+                                to_write['product_code'] = supplier_code
                             # Check Min. Qty rounding quantity
                             qty_check = obj_catalog_line.change_uom_qty(cr, uid, cl_obj.id,
                                                                         to_write.get('line_uom_id', cl_obj.line_uom_id.id),
@@ -343,7 +343,7 @@ class wizard_import_supplier_catalogue(osv.osv_memory):
                             'rounding': p_rounding,
                             'min_order_qty': p_min_order_qty,
                             'comment': p_comment,
-                            'product_code': product_code,
+                            'product_code': supplier_code,
                         }
                         # Check Min. Qty rounding quantity
                         qty_check = obj_catalog_line.change_uom_qty(cr, uid, False,
