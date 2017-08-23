@@ -200,23 +200,24 @@ class account_period(osv.osv):
                         raise osv.except_osv(_('Warning'), _("The register '%s' is not closed. Please close it before closing period") % (register.name,))
 
                 # prevent period closing if one of the registers of the previous period
-                # has no corresponding register in the period to close AND has a non 0 balance.
-                prev_period_id = register_tools.previous_period_id(self, cr, uid, period.id, context=context, raise_error=False)
-                if prev_period_id:
-                    all_prev_reg_ids = reg_obj.search(cr, uid, [('period_id', '=', prev_period_id)], order='NO_ORDER', context=context)
-                    # get the registers of the previous period which are NOT linked to a register of the period to close
-                    orphan_prev_reg_ids = [reg_id for reg_id in all_prev_reg_ids if reg_id not in linked_prev_reg_ids]
-                    reg_ko = []
-                    for reg in reg_obj.browse(cr, uid, orphan_prev_reg_ids,
-                                              fields_to_fetch=['balance_end', 'balance_end_real', 'balance_end_cash', 'name'],
-                                              context=context):
-                        if abs(reg.balance_end) > 10**-3 or abs(reg.balance_end_real) > 10**-3 or abs(reg.balance_end_cash) > 10**-3:
-                            reg_ko.append(reg)
-                    if len(reg_ko) > 0:
-                        raise osv.except_osv(_('Warning'),
-                                             _("One or several registers have not been generated for the period "
-                                               "to close and have a balance which isn't equal to 0:\n"
-                                               "%s") % ", ".join([r.name for r in reg_ko]))
+                # has no corresponding register in the period to close AND has a non 0 balance. (except for period 13..16)
+                if not period.special:
+                    prev_period_id = register_tools.previous_period_id(self, cr, uid, period.id, context=context, raise_error=False)
+                    if prev_period_id:
+                        all_prev_reg_ids = reg_obj.search(cr, uid, [('period_id', '=', prev_period_id)], order='NO_ORDER', context=context)
+                        # get the registers of the previous period which are NOT linked to a register of the period to close
+                        orphan_prev_reg_ids = [reg_id for reg_id in all_prev_reg_ids if reg_id not in linked_prev_reg_ids]
+                        reg_ko = []
+                        for reg in reg_obj.browse(cr, uid, orphan_prev_reg_ids,
+                                                  fields_to_fetch=['balance_end', 'balance_end_real', 'balance_end_cash', 'name'],
+                                                  context=context):
+                            if abs(reg.balance_end) > 10**-3 or abs(reg.balance_end_real) > 10**-3 or abs(reg.balance_end_cash) > 10**-3:
+                                reg_ko.append(reg)
+                        if len(reg_ko) > 0:
+                            raise osv.except_osv(_('Warning'),
+                                                 _("One or several registers have not been generated for the period "
+                                                   "to close and have a balance which isn't equal to 0:\n"
+                                                   "%s") % ", ".join([r.name for r in reg_ko]))
 
                 # check if subscriptions lines were not created for this period
                 sub_ids = sub_obj.search(cr, uid, [('date', '<', period.date_stop), ('move_id', '=', False)], context=context)
