@@ -47,12 +47,12 @@ class patch_scripts(osv.osv):
     }
 
     def us_2647(self, cr, uid, *a, **b):
-        cr.execute('''update stock_inventory_line set dont_move='t' where id in (
-            select l.id from stock_inventory_line l
-                left join stock_inventory_move_rel r on l.inventory_id = r.inventory_id
-                left join stock_move m on m.id = r.move_id and m.product_id = l.product_id and m.prodlot_id = l.prod_lot_id
-            where m.id is null
-            )''')
+        cr.execute('''update stock_inventory_line set dont_move='t' where id not in (
+                select l.id from stock_inventory_line l
+                    inner join stock_inventory_move_rel r on l.inventory_id = r.inventory_id
+                    inner join stock_move m on m.id = r.move_id and m.product_id = l.product_id and coalesce(m.prodlot_id,0) = coalesce(l.prod_lot_id,0)
+            ) and inventory_id in (select id from stock_inventory where state='done')
+            ''')
 
         return True
 
