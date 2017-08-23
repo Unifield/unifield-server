@@ -100,7 +100,6 @@
                                         domain="[('supplier', '=', True), ('id', '!=', my_company_id), ('check_partner_ir', '=', True)]"
                                         />
                                     <field name="fake_state" invisible="1"/>
-                                    <field name="state" invisible="1"/>
                                     <field name="state_to_display"/>
                                     <field name="price_subtotal" sum="Total"/>
                                     <button name="open_split_wizard"
@@ -109,7 +108,7 @@
                                         icon="terp-stock_effects-object-colorize"
                                         attrs="{'invisible': [('fake_state', 'in', ('confirmed', 'cancel', 'done', 'exception'))]}"
                                         />
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                 </tree>
                                 <form>
                                    <field name="product_id" colspan="4" />
