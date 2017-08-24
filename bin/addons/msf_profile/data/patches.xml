@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="us_2676_patch" model="patch.scripts">
+            <field name="method">us_2676</field>
+        </record>
         <record id="us_244_patch" model="patch.scripts">
             <field name="method">us_2444_touch_liquidity_journals</field>
         </record>

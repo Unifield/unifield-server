@@ -46,6 +46,21 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2676(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'section':
+            cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''code'']' where model='account.analytic.journal' and res_id in
+                (select id from account_analytic_journal where code='ENGI')
+            ''')
+        return True
+
     def us_2444_touch_liquidity_journals(self, cr, uid, *a, **b):
         if _get_instance_level(self, cr, uid) == 'project':
             cr.execute('''
