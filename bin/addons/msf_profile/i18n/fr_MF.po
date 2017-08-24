@@ -35860,41 +35860,6 @@ msgstr "Total Fonctionnel Crédit"
 msgid "Only technically to filter currencies according to partner type"
 msgstr "Seulement techniquement pour filtrer les devises d'après le type de partenaire"
 
-#. modules: purchase, product, msf_outgoing, purchase_override, supplier_catalogue, sale, account, kit, purchase_allocation_report, order_types, tender_flow, register_accounting, stock, msf_doc_import
-#: field:account.invoice.line,price_unit:0
-#: report:account.invoice2:0
-#: field:kit.selection.line,price_unit_kit_selection_line:0
-#: field:kit.selection.sale.line,price_unit_kit_selection_sale_line:0
-#: report:invoice:0
-#: field:stock.certificate.valuation,unit_price:0
-#: field:pricelist.partnerinfo,price:0
-#: report:purchase.order:0
-#: field:purchase.order.line,price_unit:0
-#: report:po.line.allocation.report:0
-#: report:purchase.order.allocation.report:0
-#: field:purchase.order.line.allocation.report,unit_price:0
-#: report:msf.purchase.order:0
-#: report:purchase.order.merged:0
-#: field:purchase.order.merged.line,price_unit:0
-#: field:wizard.account.invoice.line,price_unit:0
-#: report:msf.sale.order:0
-#: report:sale.order.allocation.report:0
-#: field:sale.order.line,price_unit:0
-#: report:lot.stock.overview:0
-#: report:lot.stock.overview_all:0
-#: field:stock.move,price_unit:0
-#: field:supplier.catalogue.line,unit_price:0
-#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:577
-#: code:addons/msf_doc_import/wizard/__init__.py:112
-#: code:addons/msf_doc_import/wizard/__init__.py:133
-#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:195
-#: field:wizard.simu.import.po.line,import_unit_price:0
-#: field:wizard.simu.import.po.line,initial_unit_price:0
-#: field:account.direct.invoice.wizard.line,price_unit:0
-#, python-format
-msgid "Unit Price"
-msgstr "Prix unitaire"
-
 #. module: base
 #: field:res.config.users,is_erp_manager:0
 #: field:res.users,is_erp_manager:0
@@ -74815,10 +74780,41 @@ msgstr "Modifié"
 msgid "# of lines imported"
 msgstr "# de lignes importées"
 
-#. modules: account_override, msf_supply_doc_export, supplier_catalogue
+#. modules: account_override, msf_supply_doc_export, supplier_catalogue, purchase, product, msf_outgoing, purchase_override, supplier_catalogue, sale, account, kit, purchase_allocation_report, order_types, tender_flow, register_accounting, stock, msf_doc_import
 #: report:allocation.invoices.report:0
 #: report:po.follow.up_rml:0
 #: report:addons/supplier_catalogue/report/report_supplier_catalogue_lines_xls.mako:74
+#: field:account.invoice.line,price_unit:0
+#: report:account.invoice2:0
+#: field:kit.selection.line,price_unit_kit_selection_line:0
+#: field:kit.selection.sale.line,price_unit_kit_selection_sale_line:0
+#: report:invoice:0
+#: field:stock.certificate.valuation,unit_price:0
+#: field:pricelist.partnerinfo,price:0
+#: report:purchase.order:0
+#: field:purchase.order.line,price_unit:0
+#: report:po.line.allocation.report:0
+#: report:purchase.order.allocation.report:0
+#: field:purchase.order.line.allocation.report,unit_price:0
+#: report:msf.purchase.order:0
+#: report:purchase.order.merged:0
+#: field:purchase.order.merged.line,price_unit:0
+#: field:wizard.account.invoice.line,price_unit:0
+#: report:msf.sale.order:0
+#: report:sale.order.allocation.report:0
+#: field:sale.order.line,price_unit:0
+#: report:lot.stock.overview:0
+#: report:lot.stock.overview_all:0
+#: field:stock.move,price_unit:0
+#: field:supplier.catalogue.line,unit_price:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:577
+#: code:addons/msf_doc_import/wizard/__init__.py:112
+#: code:addons/msf_doc_import/wizard/__init__.py:133
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:195
+#: field:wizard.simu.import.po.line,import_unit_price:0
+#: field:wizard.simu.import.po.line,initial_unit_price:0
+#: field:account.direct.invoice.wizard.line,price_unit:0
+#, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
 
