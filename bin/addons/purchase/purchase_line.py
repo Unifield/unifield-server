@@ -149,8 +149,8 @@ class purchase_order_line(osv.osv):
 
         res = {}
         for pol in self.browse(cr, uid, ids, context=context):
-            # if PO line has been created from ressourced process, then we display the state as 'Resourced-XXX':
-            if pol.resourced_original_line:
+            # if PO line has been created from ressourced process, then we display the state as 'Resourced-XXX' (excepted for 'done' status)
+            if pol.resourced_original_line and pol.state != 'done':
                 if pol.state.startswith('validated'):
                     res[pol.id] = 'Resourced-v'
                 elif pol.state.startswith('sourced'):
@@ -160,9 +160,9 @@ class purchase_order_line(osv.osv):
                         res[pol.id] = 'Resourced-s'
                 elif pol.state.startswith('confirmed'):
                     res[pol.id] = 'Resourced-c'
-                else: # draft + unexpected PO line state:
+                else: # draft + unexpected PO line state
                     res[pol.id] = 'Resourced-d'
-            else: # case of regular PO line, we just copy the current line state:
+            else: # state_to_display == state
                 res[pol.id] = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, pol, 'state', context=context)
 
         return res
