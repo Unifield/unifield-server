@@ -89,11 +89,9 @@ class purchase_order_line_sync(osv.osv):
                         if resourced_sol_id:
                             pol_values['linked_sol_id']=  resourced_sol_id[0]
                             linked = True
-                            wf_service.trg_validate(uid, 'sale.order.line', resourced_sol_id[0], 'validated', cr)
+                            self.pool.get('sale.order.line').write(cr, uid, resourced_sol_id, {'set_as_sourced_n': True}, context=context)
                         if not linked:
                             raise Exception, "Unable to link resourced PO line with corresponding IR line"
-
-
 
         # search the PO line to update:
         pol_id = self.search(cr, uid, [('sync_linked_sol', '=', sol_dict['sync_local_id'])], limit=1, context=context)
