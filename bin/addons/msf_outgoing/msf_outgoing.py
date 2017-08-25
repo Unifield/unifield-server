@@ -811,7 +811,6 @@ class shipment(osv.osv):
                 picking = family.draft_packing_id
                 draft_picking = family.ppl_id and family.ppl_id.previous_step_id and family.ppl_id.previous_step_id.backorder_id or False
 
-
                 # UF-2531: Store some important info for the return pack messages
                 return_info.setdefault(str(counter), {
                     'name': draft_picking.name,
@@ -889,6 +888,7 @@ class shipment(osv.osv):
                     save_as_draft_move = self.pool.get('create.picking.move.processor').search(cr, uid ,[('move_id', '=', draft_move.id)], context=context)
                     for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
                         self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
+                            'ordered_quantity': sad_move.ordered_quantity + return_qty,
                             'quantity': sad_move.quantity + return_qty,
                         }, context=context)
                     
