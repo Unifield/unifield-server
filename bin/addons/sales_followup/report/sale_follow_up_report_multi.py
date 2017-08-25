@@ -224,7 +224,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         keys.append(key)
                         lines.append(data)
                         if data.get('first_line'):
-                            fl_index= m_index
+                            fl_index = m_index
                         m_index += 1
 
             # No move found
