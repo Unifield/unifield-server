@@ -584,13 +584,12 @@ def _find_pg_patch():
 def _is_major(oldVer, newVer):
     oldVer = oldVer.split('.')
     newVer = newVer.split('.')
-    if oldVer[0] != newVer[0]:
-        return True
-    if oldVer[0] >= 10:
+    if int(oldVer[0]) >= 10:
         # for 10.x and onward, second position indicates minor
         # version: https://www.postgresql.org/support/versioning/
-        return False
-    if oldVer[1] != newVer[1]:
+        return oldVer[0] != newVer[0]
+    if (oldVer[0] != newVer[0] or
+            oldVer[0] == newVer[0] and oldVer[1] != newVer[1]):
         return True
     return False
 
@@ -704,6 +703,7 @@ def do_pg_update():
     pg_new_db = None
     run_analyze = False
     re_alter = False
+    failed = False
     try:
         env = os.environ
         if tools.config.get('db_user'):
@@ -773,7 +773,6 @@ def do_pg_update():
                 '-E', 'UTF8', pg_new_db
                 ]
         warn('initdb: %r' % cmd)
-        warn('initdb env: %r' % env)
         rc = subprocess.call(cmd, stdout=log, stderr=log, env=env)
         os.remove(pwf.name)
         if rc != 0:
@@ -828,7 +827,7 @@ def do_pg_update():
 
         # The pg_upgrade went ok, so we are committed now. Nuke the
         # old db directory and move the upgraded one into place.
-        warn("pg_upgrade returned %d, commiting to new version" % rc)
+        warn("pg_upgrade returned %d, committing to new version" % rc)
         run_analyze = True
 
         warn("Rename %s to %s." % (pg_new_db, pg_old_db))
@@ -885,6 +884,7 @@ def do_pg_update():
     except Exception as e:
         s = str(e) or type(e)
         warn('Failed to update Postgres:', s)
+        failed = True
     finally:
         try:
             if pg_new_db is not None and os.path.exists(pg_new_db):
@@ -919,6 +919,9 @@ def do_pg_update():
             cmd = [ os.path.join(r'..\pgsql', 'bin', 'vacuumdb'),
                     '--all', '--analyze-only' ]
             subprocess.call(cmd, stdout=log, stderr=log, env=env)
+
+        if not failed:
+            warn("Major update done.")
     return
 
 # https://stackoverflow.com/questions/51658/cross-platform-space-remaining-on-volume-using-python
@@ -965,6 +968,7 @@ if __name__ == '__main__':
 
     assert _is_major('8.4.17', '9.6.3')
     assert not _is_major('8.4.16', '8.4.17')
+    assert _is_major('9.5.6', '9.6.3')
     assert _is_major('9.6.9', '10.1')
     assert not _is_major('10.1', '10.2')
     assert _is_major('21.9', '22.1')
