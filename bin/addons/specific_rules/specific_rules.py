@@ -76,7 +76,7 @@ class sale_order_line(osv.osv):
             if prod_obj.browse(cr, uid, product).is_ssl:
                 warning = {
                     'title': 'Short Shelf Life product',
-                            'message': _(SHORT_SHELF_LIFE_MESS)
+                    'message': _(SHORT_SHELF_LIFE_MESS)
                 }
                 result.update(warning=warning)
 
@@ -169,7 +169,7 @@ class purchase_order_line(osv.osv):
             if prod_obj.browse(cr, uid, product).is_ssl:
                 warning = {
                     'title': 'Short Shelf Life product',
-                            'message': _(SHORT_SHELF_LIFE_MESS)
+                    'message': _(SHORT_SHELF_LIFE_MESS)
                 }
                 result.update(warning=warning)
 
@@ -704,12 +704,12 @@ class stock_move(osv.osv):
                     raise osv.except_osv(_('Error!'),  _('The selected product is Expiry Date Mandatory while the selected Batch number corresponds to Batch Number Mandatory.'))
             if not move.prodlot_id and move.product_qty and \
                (move.state == 'done' and \
-                ( \
-                (move.product_id.track_production and move.location_id.usage == 'production') or \
-                (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
-                (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
-                (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') \
-                )):
+                    ( \
+                        (move.product_id.track_production and move.location_id.usage == 'production') or \
+                        (move.product_id.track_production and move.location_dest_id.usage == 'production') or \
+                        (move.product_id.track_incoming and move.location_id.usage == 'supplier') or \
+                        (move.product_id.track_outgoing and move.location_dest_id.usage == 'customer') \
+                    )):
                 raise osv.except_osv(_('Error!'),  _('You must assign a batch number for this product.'))
 
         return True
@@ -783,16 +783,16 @@ class stock_move(osv.osv):
             product_ids.add(read_dict['product_id'][0])
 
         product_list_dict = self.pool.get('product.product').read(cr, uid,
-                                                             list(product_ids),
-                                                             ['kc_txt',
-                                                              'ssl_txt',
-                                                              'dg_txt',
-                                                              'cs_txt',
-                                                              'batch_management',
-                                                              'perishable',
-                                                              'type',
-                                                              'subtype',],
-            context=context)
+                                                                  list(product_ids),
+                                                                  ['kc_txt',
+                                                                   'ssl_txt',
+                                                                   'dg_txt',
+                                                                   'cs_txt',
+                                                                   'batch_management',
+                                                                   'perishable',
+                                                                   'type',
+                                                                   'subtype',],
+                                                                  context=context)
         product_dict = dict([(x['id'], x) for x in product_list_dict])
 
         for stock_move_dict in read_result:
@@ -1114,7 +1114,7 @@ class stock_production_lot(osv.osv):
                 if context.get('location_dive', False):
                     new_location_ids = []
                     self._location_dive(cr, uid, location_id,
-                        result_ids=new_location_ids, context=context)
+                                        result_ids=new_location_ids, context=context)
                     location_id = new_location_ids
 
                 context['location_id'] = location_id
@@ -1126,7 +1126,7 @@ class stock_production_lot(osv.osv):
                                                       parent_location_ids, ['child_ids'], context=context):
             if r['child_ids']:
                 self._location_dive(cr, uid, r['child_ids'],
-                    result_ids=result_ids, context=context)
+                                    result_ids=result_ids, context=context)
 
     def _get_stock_virtual(self, cr, uid, ids, field_name, arg, context=None):
         """ Gets stock of products for locations
@@ -1359,11 +1359,11 @@ class stock_production_lot(osv.osv):
 
     # UF-2148: Removed the name unique constraint here, and use only the constraint with 3 attrs: name, prod and instance
     _constraints = [(_check_batch_type_integrity,
-                    'You can\'t create a standard batch number for a product which is not batch mandatory. If the product is perishable, the system will create automatically an internal batch number on reception/inventory.',
-                    ['Type', 'Product']),
+                     'You can\'t create a standard batch number for a product which is not batch mandatory. If the product is perishable, the system will create automatically an internal batch number on reception/inventory.',
+                     ['Type', 'Product']),
                     (_check_perishable_type_integrity,
-                    'You can\'t create an internal Batch Number for a product which is batch managed or which is not perishable. If the product is batch managed, please create a standard batch number.',
-                    ['Type', 'Product']),
+                     'You can\'t create an internal Batch Number for a product which is batch managed or which is not perishable. If the product is batch managed, please create a standard batch number.',
+                     ['Type', 'Product']),
                     ]
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -1371,8 +1371,8 @@ class stock_production_lot(osv.osv):
         search function of production lot
         '''
         result = super(stock_production_lot, self).search(cr, uid, args=args,
-                offset=offset, limit=limit, order=order,
-                context=context, count=count)
+                                                          offset=offset, limit=limit, order=order,
+                                                          context=context, count=count)
 
         return result
 
@@ -1602,7 +1602,7 @@ class stock_inventory(osv.osv):
             HAVING count(l.id) > 1
             ORDER BY count(l.id) DESC""" % (
             self._name.replace('.', '_'),
-                self._name == 'stock.inventory' and 'prod_lot_id' or 'prodlot_name',
+            self._name == 'stock.inventory' and 'prod_lot_id' or 'prodlot_name',
         )
         cr.execute(sql_req, (tuple(ids),))
         check_res = cr.dictfetchall()
@@ -1696,7 +1696,7 @@ Expiry date. Only one line with same data is expected."""))
         # super function after production lot creation - production lot are therefore taken into account at stock move creation
         result = super(stock_inventory, self).action_confirm(cr, uid, ids, context=context)
 
-        self.infolog(cr, uid, 'The %s inventor%s %s (%s) ha%s been confirmed' % (
+        self.infolog(cr, uid, 'The %s inventor%s %s (%s) ha%s been validated' % (
             self._name == 'initial.stock.inventory' and 'Initial stock' or 'Physical',
             len(ids) > 1 and 'ies' or 'y',
             ids, ', '.join(x['name'] for x in self.read(cr, uid, ids, ['name'], context=context)),
@@ -1719,7 +1719,7 @@ Expiry date. Only one line with same data is expected."""))
     def action_done(self, cr, uid, ids, context=None):
         res = super(stock_inventory, self).action_done(cr, uid, ids, context=context)
 
-        self.infolog(cr, uid, 'The Physical inventor%s %s (%s) ha%s been validated' % (
+        self.infolog(cr, uid, 'The Physical inventor%s %s (%s) ha%s been confirmed' % (
             len(ids) > 1 and 'ies' or 'y',
             ids, ', '.join(x['name'] for x in self.read(cr, uid, ids, ['name'], context=context)),
             len(ids) > 1 and 've' or 's',
@@ -1814,7 +1814,7 @@ class stock_inventory_line(osv.osv):
                 if type_check == 'in':
                     # the corresponding production lot will be created afterwards
                     result['warning'] = {'title': _('Info'),
-                                     'message': _('The selected Expiry Date does not exist in the system. It will be created during validation process.')}
+                                         'message': _('The selected Expiry Date does not exist in the system. It will be created during validation process.')}
                     # clear prod lot
                     result['value'].update(prod_lot_id=False)
                 else:
@@ -1921,6 +1921,15 @@ class stock_inventory_line(osv.osv):
         # call super
         result = super(stock_inventory_line, self).create(cr, uid, vals, context=context)
         return result
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+
+        if 'dont_move' not in default:
+            default['dont_move'] = False
+        return super(stock_inventory_line, self).copy_data(cr, uid, id, default, context)
+
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
