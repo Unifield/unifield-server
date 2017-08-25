@@ -63,14 +63,12 @@ class picking_ticket(report_sxw.rml_parse):
         super(picking_ticket, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
-            'self': self,
-            'cr': cr,
-            'uid': uid,
             'getWarningMessage': self.get_warning,
             'getStock': self.get_qty_available,
             'getNbItems': self.get_nb_items,
             'getLines': self.get_lines,
             'getShipper': self.get_shipper,
+            'getPickingShipper': self.get_picking_shipper,
             'getConsignee': self.get_consignee,
         })
 
@@ -92,20 +90,26 @@ class picking_ticket(report_sxw.rml_parse):
             consignee_addr = None
 
             addr = ''
+            addr_street = ''
+            addr_zip_city = ''
             if consignee_addr_id:
                 consignee_addr = addr_obj.browse(cr, uid, consignee_addr_id)
                 if consignee_addr.street:
                     addr += consignee_addr.street
                     addr += ' '
+                    addr_street += consignee_addr.street + ' '
                 if consignee_addr.street2:
                     addr += consignee_addr.street2
                     addr += ' '
+                    addr_street += consignee_addr.street2
                 if consignee_addr.zip:
                     addr += consignee_addr.zip
                     addr += ' '
+                    addr_zip_city += consignee_addr.zip + ' '
                 if consignee_addr.city:
                     addr += consignee_addr.city
                     addr += ' '
+                    addr_zip_city += consignee_addr.city
                 if consignee_addr.country_id:
                     addr += consignee_addr.country_id.name
 
@@ -115,6 +119,8 @@ class picking_ticket(report_sxw.rml_parse):
                 'consignee_address': addr,
                 'consignee_phone': consignee_addr and consignee_addr.phone or '',
                 'consignee_email': consignee_addr and consignee_addr.email or '',
+                'consignee_addr_street': addr_street,
+                'consignee_addr_zip_city': addr_zip_city,
             })
 
         return [res]
@@ -127,7 +133,60 @@ class picking_ticket(report_sxw.rml_parse):
         """
         return [self.pool.get('shipment').default_get(self.cr, self.uid, [])]
 
-    def get_lines(self, picking):
+    def get_picking_shipper(self, picking):
+        """
+        Return values for shipper
+        @param picking: browse_record of the picking.ticket
+        @return: A dictionnary with consignee values
+        """
+        partner_obj = self.pool.get('res.partner')
+        addr_obj = self.pool.get('res.partner.address')
+        cr = self.cr
+        uid = self.uid
+        res = {}
+
+        if picking.partner_id:
+            shipper_partner = picking.partner_id
+            shipper_addr_id = partner_obj.address_get(cr, uid, shipper_partner.id)['default']
+            shipper_addr = None
+
+            addr = ''
+            addr_street = ''
+            addr_zip_city = ''
+            if shipper_addr_id:
+                shipper_addr = addr_obj.browse(cr, uid, shipper_addr_id)
+                if shipper_addr.street:
+                    addr += shipper_addr.street
+                    addr += ' '
+                    addr_street += shipper_addr.street + ' '
+                if shipper_addr.street2:
+                    addr += shipper_addr.street2
+                    addr += ' '
+                    addr_street += shipper_addr.street2
+                if shipper_addr.zip:
+                    addr += shipper_addr.zip
+                    addr += ' '
+                    addr_zip_city += shipper_addr.zip + ' '
+                if shipper_addr.city:
+                    addr += shipper_addr.city
+                    addr += ' '
+                    addr_zip_city += shipper_addr.city
+                if shipper_addr.country_id:
+                    addr += shipper_addr.country_id.name
+
+            res.update({
+                'shipper_name': shipper_partner.name,
+                'shipper_contact': shipper_partner.partner_type == 'internal' and 'Supply responsible' or shipper_addr and shipper_addr.name or '',
+                'shipper_address': addr,
+                'shipper_phone': shipper_addr and shipper_addr.phone or '',
+                'shipper_email': shipper_addr and shipper_addr.email or '',
+                'shipper_addr_street': addr_street,
+                'shipper_addr_zip_city': addr_zip_city,
+            })
+
+        return [res]
+
+    def get_lines(self, picking, is_pdf=True):
         """
         Returns the move lines. For move lines with a batch number/expiry date
         create a first line with the whole quantity of product in stock, then
@@ -139,7 +198,7 @@ class picking_ticket(report_sxw.rml_parse):
 
         for m in picking.move_lines:
             dict_res.setdefault(m.line_number, [])
-            if m.prodlot_id and not dict_res[m.line_number]:
+            if m.prodlot_id and not dict_res[m.line_number] and is_pdf:
                 # First create a line without batch
                 dict_res[m.line_number].append(BatchMoveLines(m))
             bm = BatchMoveLines(m)
@@ -149,6 +208,11 @@ class picking_ticket(report_sxw.rml_parse):
             bm.kc_check = m.product_id and m.product_id.is_kc or False
             bm.dg_check = m.product_id and m.product_id.is_dg or False
             bm.np_check = m.product_id and m.product_id.is_cs or False
+            bm.from_pack = m.from_pack
+            bm.to_pack = m.to_pack
+            bm.total_weight = m.product_qty * m.product_id.weight
+            bm.total_vol = m.product_qty * m.product_id.volume * 1000
+            bm.pack_type = m.pack_type
             if m.prodlot_id and dict_res[m.line_number]:
                 bm.no_product = True
                 dict_res[m.line_number][0].product_qty += pool.get('product.uom')._compute_qty(

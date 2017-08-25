@@ -21,22 +21,9 @@
   <ProtectWindows>False</ProtectWindows>
  </ExcelWorkbook>
  <Styles>
+    <!-- ssCells -->
     <Style ss:ID="ssCell">
         <Alignment ss:Vertical="Top" ss:WrapText="1"/>
-        <Font ss:Bold="1" />
-    </Style>
-    <Style ss:ID="ssCellBlue">
-        <Alignment ss:Vertical="Top" ss:WrapText="1"/>
-        <Font ss:Color="#0000FF" />
-    </Style>
-
-    <!-- File header -->
-    <Style ss:ID="big_header">
-        <Font x:Family="Swiss" ss:Size="14" ss:Bold="1"/>
-    </Style>
-    <Style ss:ID="file_header">
-        <Font ss:Size="9" />
-        <Interior ss:Color="#F79646" ss:Pattern="Solid"/>
     </Style>
 
     <!-- Line header -->
@@ -47,9 +34,19 @@
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <Font x:Family="Swiss" ss:Size="7" ss:Bold="1"/>
+        <Font x:Family="Swiss" ss:Bold="1"/>
         <Interior ss:Color="#F79646" ss:Pattern="Solid"/>
-        <Interior/>
+    </Style>
+    <Style ss:ID="line_header_center">
+        <Alignment ss:Horizontal="Center"/>
+        <Borders>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font x:Family="Swiss" ss:Bold="1"/>
+        <Interior ss:Color="#F79646" ss:Pattern="Solid"/>
     </Style>
 
     <!-- Lines -->
@@ -61,17 +58,6 @@
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <Font ss:Size="8" ss:Color="#0000FF"/>
-    </Style>
-    <Style ss:ID="line_left_green">
-        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
-        <Borders>
-            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-        </Borders>
-        <Font ss:Size="8" ss:Color="#1A721A"/>
     </Style>
     <Style ss:ID="line_right">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
@@ -81,127 +67,152 @@
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <Font ss:Size="8" ss:Color="#0000FF"/>
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
      <Style ss:ID="line_center">
         <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
-         <Borders>
-            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-        </Borders>
-        <Font ss:Size="8" ss:Color="#0000FF"/>
-        <NumberFormat ss:Format="#,##0.00"/>
-    </Style>
-    <Style ss:ID="line_left_date">
-        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
-        <NumberFormat ss:Format="Short Date" />
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
-        <Font ss:Size="8" ss:Color="#0000FF"/>
+        <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+    <Style ss:ID="line_left_date">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <NumberFormat ss:Format="Short Date"/>
+    </Style>
+    <Style ss:ID="line_borders_top">
+        <Alignment ss:Vertical="Top" ss:WrapText="1"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+    </Style>
+    <Style ss:ID="line_borders_middle">
+        <Alignment ss:Vertical="Top" ss:WrapText="1"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+    </Style>
+    <Style ss:ID="line_borders_bottom">
+        <Alignment ss:Vertical="Top" ss:WrapText="1"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
     </Style>
 
     <Style ss:ID="short_date">
-        <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1" />
+        <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
         <NumberFormat ss:Format="Short Date" />
-        <Font ss:Color="#0000FF" />
     </Style>
     <Style ss:ID="short_date_center">
-        <Alignment ss:Horizontal="Center" ss:Vertical="Bottom" ss:WrapText="1" />
-        <NumberFormat ss:Format="Short Date" />
-        <Font ss:Color="#0000FF" />
+        <Alignment ss:Horizontal="Center" ss:Vertical="Bottom" ss:WrapText="1"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <NumberFormat ss:Format="Short Date"/>
     </Style>
-</Styles>
-
+ </Styles>
 
 % for pt in objects:
 <ss:Worksheet ss:Name="Pre-Packing Excel Report">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Item
-        <Column ss:AutoFitWidth="1" ss:Width="19.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="30.0" />
         ## Code
-        <Column ss:AutoFitWidth="1" ss:Width="107.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="85.0" />
         ## Description
-        <Column ss:AutoFitWidth="1" ss:Width="239.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="250.0" />
         ## Comment
-        <Column ss:AutoFitWidth="1" ss:Width="150.75" />
+        <Column ss:AutoFitWidth="1" ss:Width="250.0" />
         ## Total Qty to pack
-        <Column ss:AutoFitWidth="1" ss:Width="54.75" />
+        <Column ss:AutoFitWidth="1" ss:Width="90.0" />
         ## Batch #
-        <Column ss:AutoFitWidth="1" ss:Width="107.25" />
+        <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## Expiry Date #
-        <Column ss:AutoFitWidth="1" ss:Width="55.75" />
+        <Column ss:AutoFitWidth="1" ss:Width="65.0" />
         ## KC
-        <Column ss:AutoFitWidth="1" ss:Width="19.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="20.0" />
         ## DG
-        <Column ss:AutoFitWidth="1" ss:Width="19.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="20.0" />
         ## CS
-        <Column ss:AutoFitWidth="1" ss:Width="19.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="20.0" />
         ## Qty Packed
-        <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
+        <Column ss:AutoFitWidth="1" ss:Width="60.0"  />
         ## From pack
-        <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
+        <Column ss:AutoFitWidth="1" ss:Width="55.0"  />
+        ## To pack
+        <Column ss:AutoFitWidth="1" ss:Width="55.0"  />
         ## Weight per pack (kg)
-        <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
+        <Column ss:AutoFitWidth="1" ss:Width="105.0"  />
         ## Size (w x l x h) (cm)
-        <Column ss:AutoFitWidth="1" ss:Width="54.75"  />
+        <Column ss:AutoFitWidth="1" ss:Width="105.0"  />
         ## Pack Type
-        <Column ss:AutoFitWidth="1" ss:Width="68.25"  />
+        <Column ss:AutoFitWidth="1" ss:Width="80.0"  />
 
         ## WORKSHEET HEADER
         <Row>
-            <Cell ss:StyleID="file_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Reference*')|x}</Data></Cell>
-            <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data>${pt.name|x}</Cell>
-            <Cell ss:StyleID="file_header" ss:MergeAcross="2"><Data ss:Type="String">${_('Shipper')|x}</Data></Cell>
-            <Cell ss:StyleID="file_header" ss:MergeAcross="4"><Data ss:Type="String">${_('Consignee')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Reference*')|x}</Data></Cell>
+            <Cell ss:StyleID="line_center"><Data ss:Type="String">${pt.name|x}</Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="2"><Data ss:Type="String">${_('Shipper')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="4"><Data ss:Type="String">${_('Consignee')|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="file_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Date')|x}</Data></Cell>
-            <Cell ss:StyleID="short_date_center"><Data ss:Type="String"></Data>${formatLang(time.strftime('%Y-%m-%d'), date=True)|x}</Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String">${getShipper.get('shipper_name', '')|x}</Data></Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt).get('consignee_name', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Date')|x}</Data></Cell>
+            <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${formatLang(time.strftime('%Y-%m-%d'), date=True)|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_top" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper(pt)[0].get('shipper_name', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_top" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_name', '')|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="file_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Requester Ref')|x}</Data></Cell>
-            <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data>${pt.sale_id and pt.sale_id.client_order_ref or ''|x}</Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String">${getShipper.get('shipper_contact', '')|x}</Data></Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt).get('consignee_contact', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Requester Ref')|x}</Data></Cell>
+            <Cell ss:StyleID="line_center"><Data ss:Type="String">${pt.sale_id and pt.sale_id.client_order_ref or ''|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper(pt)[0].get('shipper_contact', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_contact', '')|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="file_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Our Ref*')|x}</Data></Cell>
-            <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data>${pt.sale_id and pt.sale_id.name or ''|x}</Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String">${getShipper.get('shipper_address', '')|x}</Data></Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt).get('consignee_address', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Our Ref*')|x}</Data></Cell>
+            <Cell ss:StyleID="line_center"><Data ss:Type="String">${pt.sale_id and pt.sale_id.name or ''|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper(pt)[0].get('shipper_addr_street', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_addr_street', '')|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="file_header" ss:MergeAcross="1"><Data ss:Type="String">${_('FO Date')|x}</Data></Cell>
-            <Cell ss:StyleID="short_date_center"><Data ss:Type="String"></Data>${pt.sale_id and formatLang(pt.sale_id.date_order, date=True) or ''|x}</Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String">${getShipper.get('shipper_phone', '')|x}</Data></Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt).get('consignee_phone', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('FO Date')|x}</Data></Cell>
+            <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${pt.sale_id and formatLang(pt.sale_id.date_order, date=True) or ''|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper(pt)[0].get('shipper_addr_zip_city', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_addr_zip_city', '')|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="file_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Packing Date')|x}</Data></Cell>
-            <Cell ss:StyleID="short_date_center"><Data ss:Type="String"></Data>${pt.sale_id and formatLang(pt.sale_id.delivery_requested_date, date=True) or ''|x}</Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="4"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Packing Date')|x}</Data></Cell>
+            <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${pt.sale_id and formatLang(pt.sale_id.delivery_requested_date, date=True) or ''|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getShipper()[0].get('shipper_phone', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_phone', '')|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="file_header" ss:MergeAcross="1"><Data ss:Type="String">${_('RTS Date')|x}</Data></Cell>
-            <Cell ss:StyleID="short_date_center"><Data ss:Type="String"></Data>${pt.sale_id and formatLang(pt.sale_id.ready_to_ship_date, date=True)|x}</Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="4"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('RTS Date')|x}</Data></Cell>
+            <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${pt.sale_id and formatLang(pt.sale_id.ready_to_ship_date, date=True)|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String"></Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="file_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Transport mode')|x}</Data></Cell>
-            <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data>${pt.sale_id and pt.sale_id.transport_type and getSel(pt.sale_id, 'transport_type') or ''|x}</Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
-            <Cell ss:StyleID="ssCell" ss:MergeAcross="4"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Transport mode')|x}</Data></Cell>
+            <Cell ss:StyleID="line_center"><Data ss:Type="String">${pt.sale_id and pt.sale_id.transport_type and getSel(pt.sale_id, 'transport_type') or ''|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_bottom" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line_borders_bottom" ss:MergeAcross="4"><Data ss:Type="String"></Data></Cell>
         </Row>
 
         <Row></Row>
@@ -214,7 +225,7 @@
                 _('Comment'),
                 _('Total Qty to pack*'),
                 _('Batch #'),
-                _('Expiry Date#'),
+                _('Expiry Date #'),
                 _('KC'),
                 _('DG'),
                 _('CS'),
@@ -227,58 +238,31 @@
             ]
         %>
 
-        <Row>
+        <Row ss:Height="18.25">
         % for h in headers_list:
-            <Cell ss:StyleID="line_header"><Data ss:Type="String">${h|x}</Data></Cell>
+            <Cell ss:StyleID="line_header_center"><Data ss:Type="String">${h|x}</Data></Cell>
         % endfor
         </Row>
 
-        % for o in getOrders(r):
-            % for line in getLines(o, grouped=True):
-            <Row ss:Height="11.25">
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.client_order_ref or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('po_name', '')|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'state')|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${saleUstr(formatLang(o.date_order, date=True))|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.delivery_requested_date and saleUstr(formatLang(o.delivery_requested_date, date=True)) or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${line.get('line_number', '-')|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_code', '-') or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('product_name', '-') or ''|x}</Data></Cell>
-                % if line.get('ordered_qty'):
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('ordered_qty')}</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
-                % endif
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('uom_id', '-')|x}</Data></Cell>
-                % if line.get('delivered_qty'):
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('delivered_qty')}</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">N/A</Data></Cell>
-                % endif
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('packing', '')|x}</Data></Cell>
-                % if line.get('extra_qty', False):
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('backordered_qty', 0.00)} (+${line.get('extra_qty', 0.00)|x})</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
-                % endif
-                % if o.transport_type and o.transport_type not in (False, 'False', ''):
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${getSel(o, 'transport_type')|x}</Data></Cell>
-                % else:
+        % for m in getLines(pt, False):
+            <Row ss:Height="14.25">
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.line_number or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${(m.sale_line_id and m.sale_line_id.product_id.default_code) or (m.product_id and m.product_id.default_code) or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${m.sale_line_id and m.sale_line_id.product_id.name or m.product_id.name or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${m.sale_line_id and m.comment or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${(formatLang(m.product_qty, digits=2) + ' ' + m.product_uom.name) or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.prodlot_id and m.prodlot_id.name or ''|x}</Data></Cell>
+                <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${m.prodlot_id and formatLang(m.prodlot_id.life_date, date=True) or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.kc_txt or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.dg_txt or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.cs_txt or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                % endif
-                % if line.get('is_delivered'):
-                <Cell ss:StyleID="line_left_green"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('shipment', '')|x}</Data></Cell>
-                % endif
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('cdd', False) not in (False, 'False') and saleUstr(formatLang(line.get('cdd'), date=True)) or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('eta', False) not in (False, 'False') and saleUstr(formatLang(line.get('eta'), date=True)) or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${line.get('rts', False) not in (False, 'False') and saleUstr(formatLang(line.get('rts'), date=True)) or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
             </Row>
-            % endfor
-
         % endfor
 
     </Table>

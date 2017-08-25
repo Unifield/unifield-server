@@ -496,7 +496,7 @@
 
             <!-- Lines -->
             <blockTable colWidths="30.0,60.0,220.0,55.0,75.0,65.0,20.0,20.0,20.0,55.0,45.0,45.0,50.0,50.0" rowHeights="15.0" style="LinesValues">
-                [[ repeatIn(getLines(pt), 'm', 'blockTable') ]]
+                [[ repeatIn(getLines(pt, True), 'm', 'blockTable') ]]
                 [[ m.state == 'cancel' and removeParentNode('blockTable') ]]
                 <tr>
                     <td>
