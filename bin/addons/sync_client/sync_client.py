@@ -780,40 +780,54 @@ class Entity(osv.osv):
 
         entity = self.get_entity(cr, uid, context)
         last_seq = entity.update_last
-        max_seq = entity.max_update
+        total_max_seq = entity.max_update
         offset = (0, entity.update_offset)
         offset_recovery = entity.update_offset
-        last = (last_seq >= max_seq)
+        last = (last_seq >= total_max_seq)
         updates_count = 0
         logger_index = None
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        while not last:
-            res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
-            if res and res[0]:
-                if res[1]: check_md5(res[3], res[1], _('method get_update'))
-                increment_to_offset = 0
-                for package in (res[1] or []):
-                    updates_count += updates.unfold_package(cr, uid, package, context=context)
 
-                    if logger and updates_count:
-                        if logger_index is None: logger_index = logger.append()
-                        logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
-                        logger.write()
-                    if package:
-                        increment_to_offset = package['offset'][1]
-                        offset = (package['update_id'], 0)
+        # ask only max_seq_pack sequences to the sync server
+        max_seq_pack = 500
 
-                offset_recovery += increment_to_offset
-                self.write(cr, uid, entity.id, {'update_offset' : offset_recovery}, context=context)
-                last = res[2]
-            elif res and not res[0]:
-                raise Exception, res[1]
+        max_seq = min(last_seq+max_seq_pack, total_max_seq)
+        while max_seq <= total_max_seq:
+            while not last:
+                res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
+                if res and res[0]:
+                    if res[1]: check_md5(res[3], res[1], _('method get_update'))
+                    increment_to_offset = 0
+                    for package in (res[1] or []):
+                        updates_count += updates.unfold_package(cr, uid, package, context=context)
+
+                        if logger and updates_count:
+                            if logger_index is None: logger_index = logger.append()
+                            logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
+                            logger.write()
+                        if package:
+                            increment_to_offset = package['offset'][1]
+                            offset = (package['update_id'], 0)
+
+                    offset_recovery += increment_to_offset
+                    self.write(cr, uid, entity.id, {'update_offset' : offset_recovery}, context=context)
+                    last = res[2]
+                elif res and not res[0]:
+                    raise Exception, res[1]
+                cr.commit()
+
+            self.write(cr, uid, entity.id, {'update_offset' : 0,
+                                            'max_update' : 0,
+                                            'update_last' : max_seq}, context=context)
             cr.commit()
+            if max_seq == total_max_seq:
+                break
+            last = False
+            last_seq = max_seq
+            offset = (0, 0)
+            offset_recovery = 0
+            max_seq = min(max_seq+max_seq_pack, total_max_seq)
 
-        self.write(cr, uid, entity.id, {'update_offset' : 0,
-                                        'max_update' : 0,
-                                        'update_last' : max_seq}, context=context)
-        cr.commit()
         return updates_count
 
     @sync_subprocess('data_pull_execute')
