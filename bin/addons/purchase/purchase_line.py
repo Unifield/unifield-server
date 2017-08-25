@@ -161,7 +161,7 @@ class purchase_order_line(osv.osv):
                 elif pol.state.startswith('confirmed'):
                     res[pol.id] = 'Resourced-c'
                 else: # draft + unexpected PO line state
-                    res[pol.id] = 'Resourced-d'
+                    res[pol.id] = 'Resourced-n'
             else: # state_to_display == state
                 res[pol.id] = self.pool.get('ir.model.fields').get_browse_selection(cr, uid, pol, 'state', context=context)
 
