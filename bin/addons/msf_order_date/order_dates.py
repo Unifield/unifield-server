@@ -436,19 +436,11 @@ def common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_da
     '''
     if context is None:
         context = {}
-    min_confirmed = min_requested = False
 
     order_id = context.get('active_id', [])
     if isinstance(order_id, (int, long)):
         order_id = [order_id]
 
-    if order_id:
-        min_confirmed = self.pool.get(parent_class).browse(cr, uid, order_id[0]).delivery_confirmed_date
-        min_requested = self.pool.get(parent_class).browse(cr, uid, order_id[0]).delivery_requested_date
-
-    for line in self.browse(cr, uid, ids, context=context):
-        min_confirmed = line.order_id.delivery_confirmed_date
-        min_requested = line.order_id.delivery_requested_date
 
     return {'value': {'date_planned': requested_date, }}
 #                      'confirmed_delivery_date': confirmed_date}}
@@ -564,7 +556,6 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         res = {}
-        pick_obj = self.pool.get('stock.picking')
 
         if isinstance(field_name, str):
             field_name = [field_name]
@@ -583,29 +574,29 @@ class purchase_order(osv.osv):
         return res
 
     _columns = {
-                'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
-                'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
-                'ready_to_ship_date': fields.date(string='Ready To Ship Date'),
-                'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
-                'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
-                'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True,
-                                                string='Receipt Date', help='for a PO, date of the first godd receipt.'),
-                # BETA - to know if the delivery_confirmed_date can be erased - to be confirmed
-                'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
-                # FIELDS PART OF CREATE/WRITE methods
-                # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
-                'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Mode',
-                        help='Number of days this field has to be associated with a transport mode selection'),
-                # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
-                'est_transport_lead_time': fields.float(digits=(16, 2), string='Est. Transport Lead Time',
-                        help="Estimated Transport Lead-Time in weeks"),
-                # not a function because a function value is only filled when saved, not with on change of partner id
-                # from partner_id object
-                'partner_type': fields.selection(string='Partner Type', selection=PARTNER_TYPE, readonly=True,),
-                # not a function because a function value is only filled when saved, not with on change of partner id
-                # from partner_id object
-                'internal_type': fields.selection(string='Type', selection=ZONE_SELECTION, readonly=True,),
-                }
+        'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
+        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
+        'ready_to_ship_date': fields.date(string='Ready To Ship Date'),
+        'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
+        'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
+        'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True,
+                                        string='Receipt Date', help='for a PO, date of the first godd receipt.'),
+        # BETA - to know if the delivery_confirmed_date can be erased - to be confirmed
+        'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
+        # FIELDS PART OF CREATE/WRITE methods
+        # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
+        'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Mode',
+                                           help='Number of days this field has to be associated with a transport mode selection'),
+        # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
+        'est_transport_lead_time': fields.float(digits=(16, 2), string='Est. Transport Lead Time',
+                                                help="Estimated Transport Lead-Time in weeks"),
+        # not a function because a function value is only filled when saved, not with on change of partner id
+        # from partner_id object
+        'partner_type': fields.selection(string='Partner Type', selection=PARTNER_TYPE, readonly=True,),
+        # not a function because a function value is only filled when saved, not with on change of partner id
+        # from partner_id object
+        'internal_type': fields.selection(string='Type', selection=ZONE_SELECTION, readonly=True,),
+    }
 
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
@@ -761,6 +752,14 @@ class purchase_order(osv.osv):
             context = {}
         return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'), }
 
+    def stock_take_data(self, cr, uid, ids, context=None):
+        '''
+        data for confirmed for change line wizard
+        '''
+        if context is None:
+            context = {}
+        return {'name': _('Do you want to update the Date of Stock Take of all order lines ?'), }
+
     def update_date(self, cr, uid, ids, context=None):
         '''
         open the update lines wizard
@@ -775,7 +774,6 @@ class purchase_order(osv.osv):
         data = getattr(self, field_name + '_data')(cr, uid, ids, context=context)
         name = data['name']
         model = 'update.lines'
-        obj = self.pool.get(model)
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
@@ -948,7 +946,6 @@ class sale_order(osv.osv):
         '''
         if context is None:
             context = {}
-        company_obj = self.pool.get('res.company')
         # common function for so and po
         data = common_create(self, cr, uid, data, type=get_type(self), context=context)
         # ready_to_ship_date only mandatory for so
@@ -1006,13 +1003,13 @@ class sale_order(osv.osv):
         'shipment_date': fields.date(string='Shipment Date', readonly=True, help='Date on which picking is created at supplier'),
         'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
         'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True,
-                                    string='Receipt Date', help='for a PO, date of the first godd receipt.'),
+                                        string='Receipt Date', help='for a PO, date of the first godd receipt.'),
         # BETA - to know if the delivery_confirmed_date can be erased - to be confirmed
         'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
         # FIELDS PART OF CREATE/WRITE methods
         # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
         'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Mode',
-                        help='Number of days this field has to be associated with a transport mode selection'),
+                                           help='Number of days this field has to be associated with a transport mode selection'),
         # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
         'est_transport_lead_time': fields.float(digits=(16, 2), string='Est. Transport Lead Time', help="Estimated Transport Lead-Time in weeks"),
         # not a function because a function value is only filled when saved, not with on change of partner id
@@ -1109,7 +1106,6 @@ class sale_order(osv.osv):
                 order = self.pool.get('sale.order').browse(cr, uid, ids[0])
                 partner = self.pool.get('res.partner').browse(cr, uid, part)
                 pricelist_ids = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'sale'), ('in_search', '=', partner.partner_type)])
-                pricelist_id = res['value'].pop('pricelist_id')
                 if order.pricelist_id.id not in pricelist_ids:
                     res.update({'warning': {'title': 'Warning',
                                             'message': 'The currency used currently on the order is not compatible with the new partner. Please change the currency to choose a compatible currency.'}})
@@ -1144,6 +1140,14 @@ class sale_order(osv.osv):
             context = {}
         return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'), }
 
+    def stock_take_data(self, cr, uid, ids, context=None):
+        '''
+        data for confirmed for change line wizard
+        '''
+        if context is None:
+            context = {}
+        return {'name': _('Do you want to update the Date of Stock Take of all order lines ?'), }
+
     def update_date(self, cr, uid, ids, context=None):
         '''
         open the update lines wizard
@@ -1158,7 +1162,6 @@ class sale_order(osv.osv):
         data = getattr(self, field_name + '_data')(cr, uid, ids, context=context)
         name = data['name']
         model = 'update.lines'
-        obj = self.pool.get(model)
         wiz_obj = self.pool.get('wizard')
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)

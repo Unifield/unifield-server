@@ -99252,3 +99252,33 @@ msgstr "Ref. Mouvement"
 #, python-format
 msgid "The partner of the selected move doesn't match with the selected partner. The selected move has been reset"
 msgstr "Le partenaire du mouvement sélectionné ne correspond pas au partenaire sélectionné. Le mouvement sélectionné a été remis à 0."
+
+#. modules: msf_order_date, purchase, purchase_override, sale
+#: field:purchase.order,stock_take_date:0
+#: field:sale.order,stock_take_date:0
+#: field:purchase.order.line,stock_take_date:0
+#: field:purchase.order.merged.line,stock_take_date:0
+#: field:sale.order.line,stock_take_date:0
+#: field:update.lines,stock_take_date:0
+msgid "Date of Stock Take"
+msgstr "Date de Prise de Stock"
+
+#. modules: msf_order_date, procurement_request
+#: code:addons/msf_order_date/order_dates.py:770
+#: code:addons/msf_order_date/order_dates.py:1161
+#: code:addons/procurement_request/procurement_request.py:652
+#, python-format
+msgid "Do you want to update the Date of Stock Take of all order lines ?"
+msgstr "Voulez-vous mettre à jour la Date de Prise de Stock sur toutes les lignes de la commande ?"
+
+#. module: purchase_override
+#: code:addons/purchase_override/purchase.py:1180
+#, python-format
+msgid "The Date of Stock Take is required for all Purchase Order lines if the Partner is an ESC."
+msgstr "La Date de Prise de Stock est obligatoire pour les lignes des Bons de Commande qui ont un Partenaire ESC."
+
+#. module: purchase_override
+#: code:addons/purchase_override/purchase.py:1176
+#, python-format
+msgid "The Date of Stock Take is required for a Purchase Order if the Partner is an ESC."
+msgstr "La Date de Prise de Stock est obligatoire pour les Bons de Commande qui ont un Partenaire ESC."
