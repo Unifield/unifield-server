@@ -127,7 +127,7 @@ class wizard_import_cheque(osv.osv_memory):
         self.write(cr, uid, ids, {'state': 'open', 'line_ids': [(6, 0, [])], 'imported_lines_ids': new_lines, 'date': '', 'document_date': '',}, context=context)
         # Refresh wizard to display changes
         return {
-         'type': 'ir.actions.act_window',
+            'type': 'ir.actions.act_window',
          'res_model': 'wizard.import.cheque',
          'view_type': 'form',
          'view_mode': 'form',
@@ -162,6 +162,9 @@ class wizard_import_cheque(osv.osv_memory):
         for imported_line in wizard.imported_lines_ids:
             line = imported_line.line_id
             total = line.amount_currency
+            if not imported_line.document_date:
+                raise osv.except_osv(_('Warning'), _('Please add a Document Date on imported lines.'))
+
             vals = {
                 'name': 'Imported Cheque: ' + (line.cheque_number or line.name or line.ref or ''),
                 'ref': line.ref,
@@ -172,7 +175,6 @@ class wizard_import_cheque(osv.osv_memory):
                 'partner_id': line.partner_id.id,
                 'employee_id': line.employee_id and line.employee_id.id or None,
                 'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or None,
-                #'partner_type_mandatory': True, # if we come from another register, Third Parties is mandatory !
                 'amount': total,
                 'from_import_cheque_id': line.id,
             }

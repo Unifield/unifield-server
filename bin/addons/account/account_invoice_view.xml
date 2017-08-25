@@ -241,14 +241,16 @@
                         <page string="Payments" groups="base.group_extended">
                             <field name="payment_ids" colspan="4" nolabel="1" >
                                 <tree string="Payments">
-                                    <field name="date" string="Payment Date"/>
+                                    <field name="move_id"/>
+                                    <field name="name"/>
                                     <field name="ref"/>
-                                    <field name="name" groups="base.group_extended"/>
-                                    <field name="journal_id"/>
-                                    <field name="debit"/>
-                                    <field name="credit"/>
-                                    <field name="amount_currency" groups="base.group_extended"/>
-                                    <field name="currency_id" groups="base.group_extended"/>
+                                    <field name="date" string="Payment Date"/>
+                                    <field name="partner_type"/>
+                                    <field name="reconcile_txt"/>
+                                    <field name="debit_currency"/>
+                                    <field name="credit_currency"/>
+                                    <field name="amount_currency" sum="Total Amount"/>
+                                    <field name="currency_id"/>
                                 </tree>
                             </field>
                         </page>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="liquidity_balance_wizard_view" model="ir.ui.view">
+            <field name="name">Liquidity Balances</field>
+            <field name="model">liquidity.balance.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <field name="instance_id"
+                           domain="['&amp;', ('level', 'in', ['coordo', 'section']), ('instance_to_display_ids','=',True)]"/>
+                    <field name="fiscalyear_id"/>
+                    <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('number', '&lt;', 16)]"/>
+                    <newline/>
+                    <group colspan="6" col="4">
+                        <label string="" colspan="2"/>
+                        <button icon="gtk-cancel" string="Cancel" special="cancel" colspan="1"/>
+                        <button icon="gtk-print" string="Print" name="print_liquidity_balance_report" type="object"
+                                default_focus="1" colspan="1"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_liquidity_balance_report" model="ir.actions.act_window">
+             <field name="name">Liquidity Balances</field>
+             <field name="res_model">liquidity.balance.wizard</field>
+             <field name="type">ir.actions.act_window</field>
+             <field name="view_type">form</field>
+             <field name="view_mode">form</field>
+             <field name="view_id" ref="liquidity_balance_wizard_view"/>
+             <field name="target">new</field>
+        </record>
+
+        <menuitem
+            name="Liquidity Balances"
+            action="action_liquidity_balance_report"
+            id="menu_liquidity_balance_report"
+            parent="final_accounting_reports"
+            sequence="95"/>
+
+    </data>
+</openerp>

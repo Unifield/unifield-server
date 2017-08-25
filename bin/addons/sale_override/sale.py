@@ -1318,8 +1318,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if len(order.order_line) < 1:
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
 
-            # 3/ Check of line procurement method in case of loan PO
-            if order.order_type == 'loan':
+            # 3/ Check of line procurement method in case of loan/donation PO
+            if order.order_type in ['loan', 'donation_st', 'donation_exp']:
                 non_mts_line = line_obj.search(cr, uid, [
                     ('order_id', '=', order.id),
                     ('type', '!=', 'make_to_stock'),
@@ -1931,7 +1931,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'price_currency_id': order.procurement_request and order.functional_currency_id.id or order.pricelist_id.currency_id.id,
             'price_unit': order.procurement_request and line.cost_price or line.price_unit,
             'line_number': line.line_number,
-            'comment': line.comment or '',
+            'comment': line.comment,
         }
 
         if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer' and not line.product_id and line.comment:

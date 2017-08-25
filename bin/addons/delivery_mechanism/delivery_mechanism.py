@@ -783,7 +783,7 @@ class stock_picking(osv.osv):
             'prodlot_id': line.prodlot_id and line.prodlot_id.id or False,
             'asset_id': line.asset_id and line.asset_id.id or False,
             'change_reason': line.change_reason,
-            'comment': line.comment or move.comment or '',
+            'comment': line.comment or move.comment,
             # Values from incoming wizard
             'direct_incoming': line.wizard_id.direct_incoming,
             # Values for Direct Purchase Order
@@ -982,6 +982,7 @@ class stock_picking(osv.osv):
             done_moves = []  # Moves that are completed
             out_picks = set()
             processed_out_moves = []
+            track_changes_to_create = [] # list of dict that contains data on track changes to create at the method's end
 
             picking_move_lines = move_obj.browse(cr, uid, picking_dict['move_lines'],
                                                  context=context)
@@ -1184,9 +1185,12 @@ class stock_picking(osv.osv):
                     backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values))
                 else:
                     for sptc_values in move_sptc_values:
-                        sptc_obj.track_change(cr, uid, move.product_id.id,
-                                              _('Reception %s') % move.picking_id.name,
-                                              sptc_values, context=context)
+                        # track change that will be created:
+                        track_changes_to_create.append({
+                            'product_id': move.product_id.id,
+                            'transaction_name': _('Reception %s') % move.picking_id.name,
+                            'sptc_values': sptc_values.copy(),
+                        })
 
                 # UTP-967
                 if move.state != 'cancel' and move.purchase_line_id and move.purchase_line_id.procurement_id:
@@ -1295,6 +1299,9 @@ class stock_picking(osv.osv):
                     'create_bo': _('Done'),
                     'close_in': _('In progress'),
                 }, context=context)
+                # update track changes data linked to this moved moves:
+                for tc_data in track_changes_to_create:
+                    tc_data['transaction_name'] = _('Reception %s') % backorder_name
 
                 if sync_in:
                     # UF-1617: When it is from the sync., then just send the IN to shipped, then return the backorder_id
@@ -1348,6 +1355,10 @@ class stock_picking(osv.osv):
 
             if not sync_in:
                 move_obj.action_assign(cr, uid, processed_out_moves)
+
+            # create track changes:
+            for tc_data in track_changes_to_create:
+                sptc_obj.track_change(cr, uid, tc_data['product_id'], tc_data['transaction_name'], tc_data['sptc_values'], context=context)
 
         if not out_picks:
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
@@ -1576,7 +1587,7 @@ class procurement_order(osv.osv):
             if (sol.order_id.procurement_request or procurement.supplier.partner_type == 'esc') and not sol.product_id and sol.comment:
                 line.update({'product_id': False,
                              'name': 'Description: %s' % sol.comment,
-                             'comment': procurement.tender_line_id and procurement.tender_line_id.comment or sol.comment or '',
+                             'comment': procurement.tender_line_id and procurement.tender_line_id.comment or sol.comment,
                              'product_qty': sol.product_uom_qty,
                              'price_unit': sol.price_unit,
                              'date_planned': sol.date_planned,

@@ -30,7 +30,7 @@ class common_report_header(object):
         - we do not set/touch in context any filter if already set from parent
           caller report parser"""
         if not hasattr(self, 'context') or not self.context or not data or \
-            not 'form' in data:
+                not 'form' in data:
             return
         form = data['form']
 
@@ -116,9 +116,38 @@ class common_report_header(object):
         return ''
 
     def _get_account(self, data):
+        account_obj = pooler.get_pool(self.cr.dbname).get('account.account')
         if data.get('form', False) and data['form'].get('chart_account_id', False):
-            return pooler.get_pool(self.cr.dbname).get('account.account').browse(self.cr, self.uid, data['form']['chart_account_id']).name
+            return account_obj.browse(self.cr, self.uid, data['form']['chart_account_id'],
+                                      fields_to_fetch=['name'], context=data.get('context', {})).name
         return ''
+
+    def _get_accounts(self, data):
+        """
+        Returns:
+        - "All Accounts" if no specific account is selected
+        - or the codes of all accounts selected
+        """
+        account_ids = data.get('form', False) and data['form'].get('account_ids', False)
+        if account_ids:
+            account_obj = pooler.get_pool(self.cr.dbname).get('account.account')
+            return [i.code for i in account_obj.browse(self.cr, self.uid, self.account_ids,
+                                                       fields_to_fetch=['code'], context=data.get('context', {}))]
+        return [_('All Accounts')]
+
+    def _get_instances_from_data(self, data):
+        """
+        Returns:
+        - "All Instances" if no specific instance has been selected in the form
+        - or the codes of all instances selected
+        :param data: dictionary of values coming from the form
+        """
+        instance_ids = data.get('form', False) and data['form'].get('instance_ids', False)
+        if instance_ids:
+            instance_obj = pooler.get_pool(self.cr.dbname).get('msf.instance')
+            return [i.code for i in instance_obj.browse(self.cr, self.uid, self.instance_ids,
+                                                        fields_to_fetch=['code'], context=data.get('context', {}))]
+        return [_('All Instances')]
 
     def _get_sortby(self, data):
         raise (_('Error'), _('Not implemented'))
@@ -210,7 +239,7 @@ class common_report_header(object):
         """
         instance_obj = pooler.get_pool(self.cr.dbname).get('msf.instance')
         ids = instance_obj.search(self.cr, self.uid,
-            mission_filter and [('instance_to_display_ids','=',True)] or [])
+                                  mission_filter and [('instance_to_display_ids','=',True)] or [])
         if not get_code or not ids:
             return ids
         return [ i.code for i in instance_obj.browse(self.cr, self.uid, ids) ]

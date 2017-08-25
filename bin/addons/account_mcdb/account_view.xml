@@ -7,6 +7,7 @@
             <field name="name">account.move.line.mcdb.search.result</field>
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
+            <field name="priority" eval="13"/>
             <field name="arch" type="xml">
                 <tree string="Account Entries" min_rows="100" hide_new_button="1" hide_delete_button="1"  noteditable="1" >
                     <field name="instance_id"/>
@@ -339,7 +340,7 @@
                                 <separator orientation="vertical"/>
                                 <field name="document_date" select="1"/>
                                 <field name="date" select="1" string="Posting Date"/>
-                                <field name="period_id"/>
+                                <field name="period_id" domain="[]"/>
                             </group>
                             <newline/>
                             <group col='8' colspan='4'>

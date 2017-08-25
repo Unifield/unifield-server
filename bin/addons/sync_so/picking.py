@@ -447,7 +447,9 @@ class stock_picking(osv.osv):
                     already_set_moves.append(move_id)
                     if not line_proc_ids:
                         data['ordered_quantity'] = data['quantity']
-                        move_proc.create(cr, uid, data, context=context)
+                        new_id = move_proc.create(cr, uid, data, context=context)
+                        if data.get('comment'):
+                            move_proc.write(cr, uid, new_id, {'comment': data['comment']}, context=context)
                     else:
                         for line in move_proc.browse(cr, uid, line_proc_ids, context=context):
                             if line.product_id.id == data.get('product_id') and \

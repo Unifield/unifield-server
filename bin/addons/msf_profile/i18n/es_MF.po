@@ -7809,7 +7809,7 @@ msgstr "El origen seleccionado debe estar en estado 'Realizado'."
 #: code:addons/account_journal/account_journal.py:248
 #: code:addons/account_journal/account_journal.py:258
 #, python-format
-msgid "Default Debit Account should be an expense account for Adjustement Journals!"
+msgid "Default Debit Account should be an expense account for Adjustment Journals!"
 msgstr "La cuenta de débito por defecto debería ser una cuenta de gastos para los diarios de ajustes!"
 
 #. module: stock_schedule
@@ -12309,7 +12309,7 @@ msgstr "Contabilización"
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:75
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:222
 #, python-format
-msgid "No Currency Adjustement journal found!"
+msgid "No Currency Adjustment journal found!"
 msgstr "¡No se encontró diario de ajuste de divisas!"
 
 #. module: msf_homere_interface
@@ -56824,7 +56824,7 @@ msgstr "SWEDISH KRONA"
 #: selection:account.move.line,journal_type:0
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
-msgid "Currency Adjustement"
+msgid "Currency Adjustment"
 msgstr "Ajuste de divisa"
 
 #. module: sale
@@ -56880,11 +56880,6 @@ msgstr "Invalid prefix or suffix for sequence '%s'"
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:79
 msgid "Book. Amount"
 msgstr "Book. Amount"
-
-#. module: account_mcdb
-#: field:account.mcdb,rev_instance_ids:0
-msgid "Exclude instance selection"
-msgstr "Excluir selección de instancias"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/analytic_account.py:390

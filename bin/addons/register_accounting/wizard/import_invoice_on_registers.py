@@ -43,7 +43,7 @@ class wizard_import_invoice_lines(osv.osv_memory):
         return res
 
     _columns = {
-        'partner_id': fields.many2one('res.partner', string='3rd Party', readonly=True),
+        'partner_id': fields.many2one('res.partner', string='Partner', readonly=True),
         'employee_id': fields.many2one('hr.employee', string='Employee', readonly=True),
         'ref': fields.char('Ref.', size=64, readonly=True),
         'account_id': fields.many2one('account.account', string="Account", readonly=True),
