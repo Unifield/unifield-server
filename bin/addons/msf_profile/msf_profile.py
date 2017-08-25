@@ -46,6 +46,15 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2444_touch_liquidity_journals(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) == 'project':
+            cr.execute('''
+                update ir_model_data set last_modification=NOW(), touched='[''type'']'
+                where module='sd' and model='account.journal' and res_id in (
+                    select id from account_journal where type in ('bank', 'cash', 'cheque') and is_current_instance='t'
+                )
+            ''')
+
     def us_3098_patch(self, cr, uid, *a, **b):
         cr.execute("""
             SELECT id, name
@@ -1363,6 +1372,25 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_1562_rename_special_periods(self, cr, uid, *a, **b):
+        """
+        Update the name and code of the special Periods from "Period xx" to "Period xx YYYY" (ex: Period 13 2017)
+        """
+        update_name_and_code = """
+            UPDATE account_period AS p
+            SET name = name || ' ' || (SELECT SUBSTR(code, 3, 4) FROM account_fiscalyear AS fy WHERE p.fiscalyear_id = fy.id),
+            code = code || ' ' || (SELECT SUBSTR(code, 3, 4) FROM account_fiscalyear AS fy WHERE p.fiscalyear_id = fy.id)
+            WHERE name like 'Period %';
+            """
+        update_translation = """
+            UPDATE ir_translation AS t 
+            SET src = (SELECT t.src || ' ' || to_char(date_start,'YYYY') FROM account_period WHERE id=t.res_id), 
+            value = (SELECT t.value || ' ' || to_char(date_start,'YYYY') FROM account_period WHERE id=t.res_id) 
+            WHERE name='account.period,name' AND src LIKE 'Period%' AND type='model';
+        """
+        cr.execute(update_name_and_code)
+        cr.execute(update_translation)
+
 
 patch_scripts()
 
@@ -1589,9 +1617,23 @@ class res_users(osv.osv):
             return 'en_MF'
         return 'en_US'
 
+    def set_default_partner_lang(self, cr, uid, context=None):
+        """
+            when base module is installed en_US is the default lang for partner
+            overwrite this default value
+        """
+
+        values_obj = self.pool.get('ir.values')
+        default_value = values_obj.get(cr, uid, 'default', False, ['res.partner'])
+        if not default_value or 'lang' not in [x[1] for x in default_value] or ('lang', 'en_US') in [(x[1], x[2]) for x in default_value]:
+            values_obj.set(cr, uid, 'default', False, 'lang', ['res.partner'], 'en_MF')
+
+        return True
+
     _defaults = {
         'context_lang': _get_default_ctx_lang,
     }
+
 res_users()
 
 class email_configuration(osv.osv):

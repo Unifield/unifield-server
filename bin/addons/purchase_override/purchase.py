@@ -2011,7 +2011,8 @@ stock moves which are already processed : '''
 
             if out_pick_id and not full_out:
                 pick_id_to_delete.add(out_pick_id)
-            move_to_delete.update(out_move_ids)
+            else:
+                move_to_delete.update(out_move_ids)
         if pick_id_to_delete:
             pick_obj.write(cr, uid, list(pick_id_to_delete), {'state': 'draft'}, context=context)
             pick_obj.unlink(cr, uid, list(pick_id_to_delete))

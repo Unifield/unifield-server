@@ -295,6 +295,11 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                     entity = self.get_entity(cr, uid, context=context)
                     proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
                     proxy.end_synchronization(entity.identifier, self._hardware_id)
+                    cr.execute('SHOW server_version')
+                    result = cr.fetchone()
+                    pg_version = result and result[0] or 'pgversion not found'
+                    proxy.set_pg_version(entity.identifier, self._hardware_id,
+                                         pg_version)
             except SkipStep:
                 # res failed but without exception
                 assert is_step, "Cannot have a SkipTest error outside a sync step process!"
@@ -557,7 +562,7 @@ class Entity(osv.osv):
             if obj[model_field_name] not in model_field_dict:
                 model_field_dict[obj[model_field_name]] = set()
             model_field_dict[obj[model_field_name]].update(eval(obj['arguments']))
-       
+
         model_set = set(model_field_dict.keys())
 
         def get_field_obj(model, field_name):
@@ -825,7 +830,7 @@ class Entity(osv.osv):
 
         # Get a list of updates to execute
         # Warning: execution order matter
-        update_ids = updates.search(cr, uid, [('run', '=', False)], order='sequence_number, rule_sequence, id asc', context=context)
+        update_ids = updates.search(cr, uid, [('run', '=', False)], order='sequence_number, is_deleted, rule_sequence, id asc', context=context)
         update_count = len(update_ids)
         if not update_count: return 0
 
@@ -1354,13 +1359,10 @@ class Connection(osv.osv):
         return self.browse(cr, uid, ids, context=context)[0]
 
     def connector_factory(self, con):
-        if con.protocol == 'xmlrpc':
+        # xmlrpc now does gzip by default
+        if con.protocol == 'xmlrpc' or con.protocol == 'gzipxmlrpc':
             connector = rpc.XmlRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
-        elif con.protocol == 'gzipxmlrpc':
-            connector = rpc.GzipXmlRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
-        elif con.protocol == 'gzipxmlrpcs':
-            connector = rpc.GzipXmlRPCSConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
-        elif con.protocol == 'xmlrpcs':
+        elif con.protocol == 'xmlrpcs' or con.protocol == 'gzipxmlrpcs':
             connector = rpc.SecuredXmlRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
         elif con.protocol == 'netrpc':
             connector = rpc.NetRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.netrpc_retry)

@@ -3711,10 +3711,18 @@ msgstr "Amériques/Dawson"
 msgid "Picking - available"
 msgstr "Picking - disponible"
 
-#. module: account
+#. modules: account, msf_audittrail
 #: selection:account.tax.template,applicable_type:0
+#: code:addons/msf_audittrail/audittrail.py:1064
+#, python-format
 msgid "True"
 msgstr "Vrai"
+
+#. module: msf_audittrail
+#: code:addons/msf_audittrail/audittrail.py:1066
+#, python-format
+msgid "False"
+msgstr "Faux"
 
 #. module: base
 #: view:ir.values:0
@@ -8462,6 +8470,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:tender.line,state:0
 #: selection:wizard.import.invoice.line,state:0
 #: selection:mission.stock.wizard,processed_state:0
+#: selection:hr.payroll.validation,state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -9769,8 +9778,8 @@ msgstr "Rapport/Modèle"
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2502
 #, python-format
-msgid "You cannot do a cash return in Register which is in another state that \"open\"!"
-msgstr "Vous ne pouvez pas faire de retour de liquidités dans un Registre qui se trouverait sous un statut autre que 'ouvert'."
+msgid "You cannot do an advance return in a Register which is in another state than \"open\"!"
+msgstr "Vous ne pouvez pas faire de retour d'avance dans un Registre qui se trouverait sous un statut autre que 'ouvert'."
 
 #. module: purchase_override
 #: code:addons/purchase_override/purchase.py:925
@@ -10551,12 +10560,6 @@ msgstr "Lorsqu'une version est dupliquée elle est réglée comme non active, de
 #, python-format
 msgid " Code: %s"
 msgstr " Code: %s"
-
-#. module: res_currency_tables
-#: code:addons/res_currency_tables/res_currency.py:215
-#, python-format
-msgid "The currency you want to %s is currently used on at least one sale order or purchase order."
-msgstr "La devise que vous désirez %s est utilisée par au moins une commande client ou un bon de commande"
 
 #. modules: stock_override, product_list, stock
 #: view:product.list:0
@@ -12890,8 +12893,8 @@ msgstr "Dépendances :"
 
 #. module: register_accounting
 #: report:bank.reconciliation:0
-msgid "Cheque journal code:"
-msgstr "Code du Journal de Chèques :"
+msgid "Cheque journal code(s):"
+msgstr "Code(s) des Journaux de Chèques :"
 
 #. module: msf_button_access_rights
 #: help:msf_button_access_rights.button_access_rule,group_names:0
@@ -14496,6 +14499,11 @@ msgstr "Approuvé par :"
 #: view:res.users:0
 msgid "Latest Connections"
 msgstr "Dernières connexions"
+
+#. module: board
+#: view:res.users:0
+msgid "Group members"
+msgstr "Membres du groupe"
 
 #. module: account_override
 #: help:account.move.line,move_state:0
@@ -17339,7 +17347,8 @@ msgid "Webkit Report template not found !"
 msgstr "Modèle de rapport Webkit non trouvé !"
 
 #. module: msf_homere_interface
-#: view:hr.payroll.validation:0
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:46
+#, python-format
 msgid "This will validate all Payroll entries and create accounting entries. This will take a while."
 msgstr "Cela permettra de valider toutes les écritures de Paie et de créer des écritures comptables. Cela va prendre un certain temps."
 
@@ -17790,8 +17799,8 @@ msgstr "Justification - Description"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:1121
 #, python-format
-msgid "No invoice selected in the cash return wizard. The corresponding cash return has been linked with PO %s - Please confirm you wish to proceed."
-msgstr "No invoice selected in the cash return wizard. The corresponding cash return has been linked with PO %s - Please confirm you wish to proceed."
+msgid "No invoice selected in the advance return wizard. The corresponding advance return has been linked with PO %s - Please confirm you wish to proceed."
+msgstr "Pas de facture sélectionnée dans l'assistant Retour d'Avance. Le retour d'avance correspondant a été relié avec le BC %s - Veuillez confirmer que vous souhaitez continuer."
 
 #. module: sale_override
 #: field:sale.order.sourcing.progress,sourcing_start:0
@@ -21499,11 +21508,6 @@ msgstr "Date de comptabilisation du Paiement"
 msgid "Delivery Lead Time"
 msgstr "Délai de Livraison"
 
-#. module: msf_homere_interface
-#: field:hr.payroll.validation,check_result:0
-msgid "Check result"
-msgstr "Check result"
-
 #. modules: account_override, account
 #: selection:account.journal.column,field:0
 #: field:account.move.line,status_move:0
@@ -22185,8 +22189,8 @@ msgstr "Le niveau de nomenclature sélectionné est '%s'. Doit être '%s' (Nivea
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:548
-msgid "Cash Return"
-msgstr "Cash Return"
+msgid "Advance Return"
+msgstr "Retour d'Avance"
 
 #. module: account_corrections
 #: code:addons/account_corrections/account_move_line.py:733
@@ -23204,7 +23208,7 @@ msgid "Menu Items"
 msgstr "Articles du Menu "
 
 #. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:144
+#: code:addons/msf_homere_interface/hr_payroll.py:361
 #, python-format
 msgid "Some lines have analytic distribution problems!"
 msgstr "Certaines lignes ont des problèmes de Distribution analytique!"
@@ -24705,12 +24709,6 @@ msgstr "You can not hard post with an amount greater than total of imported invo
 msgid "Analytic Allocation (Current)"
 msgstr "Analytic Allocation (Current)"
 
-#. module: msf_currency_revaluation
-#: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:718
-#, python-format
-msgid "All coordo projects are not field closed"
-msgstr "All coordo projects are not field closed"
-
 #. module: account
 #: view:validate.account.move:0
 msgid "Post Journal Entries of a Journal"
@@ -25401,7 +25399,7 @@ msgstr "Impossible d'annuler cette commande client !"
 #: code:addons/res_currency_tables/res_currency.py:215
 #: code:addons/res_currency_tables/res_currency.py:232
 #, python-format
-msgid "Currency currently used !"
+msgid "Currency currently used!"
 msgstr "Devise actuellement utilisée !"
 
 #. module: consumption_calculation
@@ -28241,8 +28239,8 @@ msgstr "Calculer le Prix du Produit par unité selon cette version de liste de p
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2491
 #, python-format
-msgid "The attached journal is not a Cash Journal"
-msgstr "Le journal en pièce jointe est un journal de Trésorerie"
+msgid "The register journal is not compatible with an advance return."
+msgstr "Le journal du registre n'est pas compatible avec un retour d'avance."
 
 #. module: account
 #: field:account.tax,type:0
@@ -31671,7 +31669,7 @@ msgstr "Financing contract - Budget vs. Actuals"
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:73
 #, python-format
 msgid "Following entries have account/partner not compatible:"
-msgstr "Following entries have account/partner not compatible:"
+msgstr "Les écritures suivantes ont une association compte/partenaire non compatible :"
 
 #. module: msf_audittrail
 #: field:audittrail.rule,parent_field_id:0
@@ -35353,11 +35351,12 @@ msgstr "Commitments amount"
 msgid "Easy to Refer action by name e.g. One Sales Order -> Many Invoices"
 msgstr "Facile de se Désigner une action par son nom, ex: Une Commande Client -> Plusieurs Factures."
 
-#. modules: msf_budget, financing_contract
+#. modules: msf_budget, financing_contract, account_override
 #: view:wizard.financing.currency.export:0
 #: view:wizard.actual.export:0
 #: view:wizard.budget.criteria.export:0
 #: view:wizard.local.expenses:0
+#: view:wizard.report.paid.invoice:0
 msgid "Create report"
 msgstr "Créer un rapport"
 
@@ -37907,7 +37906,7 @@ msgstr "Lot de Création Bons de Commande  (à partir des commandes)"
 #: report:addons/account_override/report/open_invoices_xls.mako:308
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:302
 msgid "Total amt func. ccy"
-msgstr "Total amt func. ccy"
+msgstr "Mnt total dev. fctionnelle"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -39333,10 +39332,11 @@ msgstr "Chart of Accounts"
 msgid "res.widget"
 msgstr "res.widget"
 
-#. module: register_accounting
+#. modules: register_accounting,analytic_distribution
 #: view:wizard.cash.return:0
-msgid "Cash Return- Wizard"
-msgstr "Retour d'Espèce - Assistant"
+#: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:1235
+msgid "Advance Return - Wizard"
+msgstr "Retour d'Avance - Assistant"
 
 #. module: base
 #: model:ir.actions.act_window,name:base.res_request_link-act
@@ -42477,7 +42477,7 @@ msgstr "Biens de soutien humanitaire"
 msgid "Total:"
 msgstr "Total:"
 
-#. modules: sales_followup, register_accounting, reason_types_moves, order_types, msf_tools, msf_doc_import, return_claim, mission_stock
+#. modules: sales_followup, register_accounting, reason_types_moves, order_types, msf_tools, msf_doc_import, return_claim, mission_stock, msf_homere_interface
 #: selection:msf.doc.import.accounting,state:0
 #: selection:wizard.import.fo.line,state:0
 #: selection:wizard.import.ir.line,state:0
@@ -42498,6 +42498,7 @@ msgstr "Total:"
 #: selection:export.report.inconsistencies,state:0
 #: selection:stock.mission.report,export_state:0
 #: selection:mission.stock.wizard,processed_state:0
+#: selection:hr.payroll.validation,state:0
 #, python-format
 msgid "In Progress"
 msgstr "En cours"
@@ -52961,13 +52962,6 @@ msgstr "Outils supplémentaires"
 msgid "West Virginia"
 msgstr "West Virginia"
 
-#. modules: account_override, vertical_integration
-#: view:account.invoice:0
-#: report:addons/account_override/report/open_invoices_xls.mako:230
-#: report:addons/vertical_integration/report/open_invoices_xls.mako:230
-msgid "Open Invoices"
-msgstr "Open Invoices"
-
 #. modules: hr, msf_homere_interface
 #: field:hr.installer,hr_payroll:0
 #: view:hr.payroll.msf:0
@@ -52995,7 +52989,7 @@ msgstr "Statut validé de la commande de terrain"
 #: report:addons/account_override/report/open_invoices_xls.mako:304
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:298
 msgid "Residual amt booking ccy"
-msgstr "Residual amt booking ccy"
+msgstr "Mnt résiduel dev. d'enreg."
 
 #. module: financing_contract
 #: field:financing.contract.format.line,quadruplet_update:0
@@ -55745,7 +55739,7 @@ msgstr "Vous devez sélectionné un UdM produit de la même catégorie que l'UdM
 msgid "New Subscription"
 msgstr "Nouvel Abonnement"
 
-#. module: analytic_distribution_supply, finance, msf_profile
+#. modules: analytic_distribution_supply, finance, msf_profile
 #: field:purchase.order,commitment_ids:0
 #: model:ir.actions.act_window,name:finance.account_board_commitment_voucher
 #: view:board.board:0
@@ -56998,6 +56992,7 @@ msgstr "Journal Ajustement"
 #: code:addons/supplier_catalogue/purchase.py:72
 #: code:addons/supplier_catalogue/purchase.py:77
 #: code:addons/unifield_setup/installer/sales_price.py:177
+#: code:addons/msf_homere_interface/hr_payroll.py:361
 #, python-format
 msgid "Warning"
 msgstr "Avertissement"
@@ -59094,7 +59089,7 @@ msgstr "PO/FO/Shipment Logs"
 #: report:addons/account_override/report/open_invoices_xls.mako:307
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:301
 msgid "Residual amt func. ccy"
-msgstr "Residual amt func. ccy"
+msgstr "Mnt résiduel dev. fctionnelle"
 
 #. module: sale
 #: view:sale.order.line:0
@@ -59804,11 +59799,6 @@ msgstr "wizard.currency.revaluation"
 msgid "Please, enter some stock moves before changing the source location to CROSS DOCKING"
 msgstr "Veuillez entrer quelques mouvements de stock avant de changer la localisation de la source pour le TRANSBORDEMENT"
 
-#. module: register_accounting
-#: view:wizard.cash.return:0
-msgid "Cash Return Wizard will help you book advances return."
-msgstr "Assistant Retour d'Espèce vous aidera à comptabiliser les retours d'avances."
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/check_line.py:394
 #, python-format
@@ -60169,8 +60159,9 @@ msgstr "Erreur utilisateur!"
 msgid "Reconcile"
 msgstr "Lettrer"
 
-#. modules: account
+#. modules: account, account_override
 #: field:account.move.line,reconcile_txt:0
+#: report:addons/account_override/report/open_invoices_xls.mako:314
 msgid "Reconcile"
 msgstr "Lettrage"
 
@@ -61885,8 +61876,8 @@ msgstr "Annuler"
 #. module: register_accounting
 #: code:addons/register_accounting/register_tools.py:232
 #, python-format
-msgid "No previous fiscalyear found. Is your period the first one of a fiscalyear that have no previous fiscalyear ?"
-msgstr "Pas d'exercice comptable trouvé. Est-ce que votre période est la première d'un exercice comptable qui n'ait pas d'exercice comptable antérieur?"
+msgid "No previous fiscal year found. Is your period the first one of a fiscal year that has no previous fiscal year?"
+msgstr "Pas d'exercice comptable trouvé. Est-ce que votre période est la première d'un exercice comptable qui n'ait pas d'exercice comptable antérieur ?"
 
 #. module: base
 #: view:workflow.activity:0
@@ -63701,12 +63692,6 @@ msgstr "wizard.invoice.line"
 msgid "America/Juneau"
 msgstr "America/Juneau"
 
-#. module: msf_homere_interface
-#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:199
-#, python-format
-msgid "This account is not authorized: %s"
-msgstr "This account is not authorized: %s"
-
 #. module: base
 #: help:workflow.transition,condition:0
 msgid "Expression to be satisfied if we want the transition done."
@@ -63983,8 +63968,8 @@ msgstr "No Donation Payable account for this partner: %s"
 
 #. module: register_accounting
 #: field:wizard.cash.return,date:0
-msgid "Date for cash return"
-msgstr "Date de retour d'espèce"
+msgid "Date for advance return"
+msgstr "Date du retour d'avance"
 
 #. modules: register_accounting, analytic_distribution, account_subscription
 #: field:account.model.line,is_allocatable:0
@@ -64181,6 +64166,12 @@ msgstr "wizard.import.mapping"
 #, python-format
 msgid "Filter not implemented."
 msgstr "Filtre pas mis en oeuvre"
+
+#. module: account_override
+#: code:addons/account_override/account_move_line.py:265
+#, python-format
+msgid "Filter not implemented. Please check that you have selected one Period in \"Open Items at\"."
+msgstr "Filtre non mis en oeuvre. Veuillez vérifier que vous avez sélectionné une période dans \"Écritures ouvertes à\"."
 
 #. module: product
 #: model:ir.actions.act_window,help:product.product_normal_action_puchased
@@ -66371,7 +66362,7 @@ msgstr "Commandes Partenaires Externes"
 #: report:addons/account_override/report/open_invoices_xls.mako:249
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:249
 msgid "OPEN INVOICES"
-msgstr "OPEN INVOICES"
+msgstr "FACTURES OUVERTES"
 
 #. modules: base, unifield_setup
 #: model:ir.model,name:base.model_ir_actions_todo
@@ -71228,6 +71219,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/account_override/invoice.py:1273
 #: code:addons/account_override/invoice.py:1548
 #: code:addons/account_override/invoice.py:1551
+#: code:addons/account_override/account_move_line.py:265
 #: code:addons/account_reconciliation/account_move_line.py:238
 #: code:addons/account_reconciliation/account_move_line.py:257
 #: code:addons/account_reconciliation/account_move_line.py:259
@@ -71896,6 +71888,7 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/unifield_setup/installer/project_leadtime.py:61
 #: code:addons/unifield_setup/installer/restrictive_country.py:138
 #: code:addons/unifield_setup/setup_configuration.py:110
+#: code:addons/account_mcdb/account_period_state.py:178
 #: view:allocation.stock.setup:0
 #: field:allocation.stock.setup,error_central_ok:0
 #: field:allocation.stock.setup,error_cross_ok:0
@@ -72218,8 +72211,7 @@ msgstr "Constraint error on Uom"
 msgid "Book. Currency"
 msgstr "Enreg.Devise"
 
-#. modules: account_override, vertical_integration, register_accounting
-#: report:addons/account_override/report/open_invoices_xls.mako:301
+#. modules: vertical_integration, register_accounting
 #: field:account.bank.statement,responsible_ids:0
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:295
 msgid "Responsible"
@@ -73854,7 +73846,7 @@ msgstr "Japon"
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:253
 #, python-format
 msgid "No posting date found for the journal entry. Please contact a developer."
-msgstr "No posting date found for the journal entry. Please contact a developer."
+msgstr "Pas de date de comptabilisation trouvée pour l'écriture comptable. Veuillez contacter un développeur."
 
 #. module: base
 #: selection:ir.actions.server,trigger_name:0
@@ -74514,8 +74506,11 @@ msgstr "Correspondance des Taxes"
 msgid "BAHRAINI DINAR"
 msgstr "BAHRAINI DINAR"
 
-#. module: account_override
+#. modules: account_override, vertical_integration
 #: model:ir.actions.report.xml,name:account_override.open_invoices_2
+#: view:account.invoice:0
+#: report:addons/account_override/report/open_invoices_xls.mako:238
+#: report:addons/vertical_integration/report/open_invoices_xls.mako:230
 msgid "Open Invoices"
 msgstr "Factures Ouvertes"
 
@@ -80945,7 +80940,7 @@ msgstr "Les écritures de Paiement sont la deuxième partie du lettrage."
 msgid "Select a supplier"
 msgstr "Sélectionner un fournisseur"
 
-#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, base, register_accounting, msf_doc_import, return_claim, stock, analytic_distribution
+#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, base, register_accounting, msf_doc_import, return_claim, stock, analytic_distribution, msf_homere_interface
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
 #: selection:account.subscription,state:0
@@ -80991,6 +80986,7 @@ msgstr "Sélectionner un fournisseur"
 #: view:stock.move:0
 #: view:stock.picking:0
 #: selection:wizard.import.invoice.line,state:0
+#: selection:hr.payroll.validation,state:0
 msgid "Done"
 msgstr "Terminé"
 
@@ -81463,6 +81459,7 @@ msgstr "Devise d'enregistrement"
 #: field:tender,state:0
 #: field:tender.line,state:0
 #: field:international.transport.cost.report,order_state:0
+#: field:hr.payroll.validation,state:0
 #: view:sale.order:0
 #, python-format
 msgid "State"
@@ -82638,11 +82635,6 @@ msgstr "Suivi d'un mouvement"
 #: view:base.language.install:0
 msgid "Load"
 msgstr "Charger"
-
-#. module: sync_client
-#: view:sync.client.register_entity:0
-msgid "Generate a new UUID"
-msgstr "Générer un nouvel Identificateur d'utilisateur unique"
 
 #. module: transport_mgmt
 #: selection:international.transport.cost.report,transport_mode:0
@@ -87853,11 +87845,6 @@ msgstr "Importer expatriés"
 msgid "Etc/GMT-1"
 msgstr "Etc/GMT-1"
 
-#. module: msf_homere_interface
-#: field:hr.payroll.validation,check_report:0
-msgid "Check report"
-msgstr "Check report"
-
 #. module: res_currency_functional
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:122
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:291
@@ -88254,7 +88241,7 @@ msgstr "Batch number"
 #: code:addons/res_currency_tables/res_currency.py:232
 #, python-format
 msgid "The currency cannot be deleted as one or more journal items are currently using it!"
-msgstr "The currency cannot be deleted as one or more journal items are currently using it!"
+msgstr "La devise ne peut pas être supprimée car au moins une ligne d'écriture comptable l'utilise."
 
 #. module: sync_client
 #: field:ir.model.data,last_modification:0
@@ -91469,7 +91456,7 @@ msgstr "Période '%s' n'est pas ouverte!"
 #: report:addons/account_override/report/open_invoices_xls.mako:305
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:299
 msgid "Total amt booking ccy"
-msgstr "Total amt booking ccy"
+msgstr "Mnt total dev. d'enreg."
 
 #. module: sync_client
 #: model:ir.actions.act_window,name:sync_client.update_received_action
@@ -92549,12 +92536,13 @@ msgstr "Safety stock"
 msgid "Date start:"
 msgstr "Date start:"
 
-#. module: account_period_closing_level
+#. modules: account_period_closing_level, account_mcdb
 #: code:addons/account_period_closing_level/account_year_end_closing.py:393
 #: code:addons/account_period_closing_level/account_year_end_closing.py:533
+#: code:addons/account_mcdb/account_period_state.py:178
 #, python-format
 msgid "FY 'Period %d' not found"
-msgstr "FY 'Period %d' not found"
+msgstr "'Période %d' de l'année fiscale non trouvée"
 
 #. module: account
 #: model:ir.actions.report.xml,name:account.account_analytic_account_inverted_balance
@@ -93648,7 +93636,7 @@ msgstr "Livrer"
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:240
 #, python-format
 msgid "Following counterpart entries have account/partner not compatible:"
-msgstr "Following counterpart entries have account/partner not compatible:"
+msgstr "Les écritures de contrepartie suivantes ont une association compte/partenaire non compatible :"
 
 #. module: hr
 #: field:hr.employee,ssnid:0
@@ -94562,6 +94550,7 @@ msgstr "Ecritures Ouvertes"
 #. modules: account_override, account, register_accounting
 #: view:account.invoice:0
 #: field:account.invoice,payment_ids:0
+#: field:account.invoice,payment_to_display_ids:0
 #: selection:account.vat.declaration,based_on:0
 #: view:account.invoice:0
 #: view:account.invoice:0
@@ -94825,6 +94814,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:stock.incoming.processor:0
 #: view:stock.picking.processor:0
 #: view:wizard.import.invoice.line:0
+#: view:wizard.report.paid.invoice:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -94924,12 +94914,6 @@ msgstr "Appel d'offres"
 msgid "# lines"
 msgstr "# de lignes"
 
-#. module: res_currency_tables
-#: code:addons/res_currency_tables/res_currency.py:211
-#, python-format
-msgid "The currency you want to %s is currently used on at least one partner form."
-msgstr "La devise que vous désirez %s est utilisée par au moins un  formulaire partenaire."
-
 #. module: account
 #: help:account.chart.template,property_reserve_and_surplus_account:0
 msgid "This Account is used for transferring Profit/Loss(If It is Profit: Amount will be added, Loss: Amount will be deducted.), Which is calculated from Profilt & Loss Report"
@@ -94950,8 +94934,8 @@ msgstr "Taux"
 
 #. module: register_accounting
 #: field:account.bank.statement.line,cash_return_move_line_id:0
-msgid "Cash Return JI"
-msgstr "Cash Return JI"
+msgid "Advance Return JI"
+msgstr "Entrée compt. Retour d'Avance"
 
 #. module: msf_doc_import
 #: field:stock.picking,filetype:0
@@ -95470,7 +95454,7 @@ msgstr "Cascade"
 msgid "Removal date"
 msgstr "Date de Retrait"
 
-#. modules: msf_budget, financing_contract, res_currency_tables, export_import_lang
+#. modules: msf_budget, financing_contract, res_currency_tables, export_import_lang, msf_homere_interface
 #: view:base.language.export:0
 #: view:base.language.import:0
 #: view:msf.language.import:0
@@ -95478,6 +95462,7 @@ msgstr "Date de Retrait"
 #: view:wizard.budget.import.finish:0
 #: view:confirm.import.currencies:0
 #: view:warning.import.currencies:0
+#: view:hr.payroll.validation:0
 msgid "OK"
 msgstr "OK"
 
@@ -98671,3 +98656,280 @@ msgstr "La zone source des lignes a été changé avec la valeur présente en en
 #, python-format
 msgid "Warning, you have removed header value source location! The lines will be re-set to have 'Other Supplier' as the source location. Please check this is correct!"
 msgstr "Attention, vous avez supprimé la zone source d'en-tête! La zone source des lignes va être réinitialisée avec la valeur 'Autre Fournisseur'. Merci de vérifier leur cohérence!"
+
+#. module: account_override
+#: code:addons/account_override/account.py:524
+#, python-format
+msgid "An account can't be both reconcilable and included in the yearly move to 0."
+msgstr "Un compte ne peut pas être à la fois lettrable et inclus dans la mise à zéro annuelle."
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_year_end_closing.py:423
+#, python-format
+msgid "The yearly closure can't be processed due to one or several reconciled entries that are included in the move to 0."
+msgstr "La fermeture de l'année fiscale ne peut pas être effectuée car une ou plusieurs écritures incluses dans la mise à zéro sont déjà lettrées."
+
+#. module: account_reconciliation
+#: code:addons/account_reconciliation/account_move_line.py:269
+#, python-format
+msgid "The entries included in the yearly move to zero can't be reconciled together because they are unbalanced."
+msgstr "Les écritures incluses dans la mise à zéro annuelle ne peuvent pas être lettrées ensemble car elles ne sont pas équilibrées."
+
+#. modules: account_override, account_mcdb, account
+#: field:account.move.line,open_items:0
+#: field:account.mcdb,open_items:0
+#: field:account.report.general.ledger,open_items:0
+msgid "Open Items at"
+msgstr "Écritures ouvertes à"
+
+#. module: account
+#: model:ir.actions.server,name:account.action_aml_related_entries
+msgid "Related Entries"
+msgstr "Ecritures associées"
+
+#. module: account
+#: code:addons/account/account_move_line.py:1369
+#, python-format
+msgid "Related entries: Entry Sequence %s"
+msgstr "Ecritures associées : Entrée Comptable %s"
+
+#. module: account
+#: code:addons/account/account_move_line.py:1330
+#, python-format
+msgid "The related entries feature can only be used with one Journal Item."
+msgstr "La fonctionnalité des écritures associées ne peut être utilisée qu'avec une seule ligne d'écriture comptable."
+
+#. module: account_period_closing_level
+#: code:addons/account_period_closing_level/account_period.py:217
+#, python-format
+msgid "One or several registers have not been generated for the period to close and have a balance which isn't equal to 0:\n"
+"%s"
+msgstr "Un ou plusieurs registres n'ont pas été générés pour la période à fermer et ont un solde qui n'est pas égal à 0 :\n"
+"%s"
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:0
+#, python-format
+msgid "delete"
+msgstr "supprimer"
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:0
+#, python-format
+msgid "de-activate"
+msgstr "désactiver"
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:225
+#, python-format
+msgid "The currency you want to %s is used in at least one active partner form."
+msgstr "La devise que vous désirez %s est utilisée dans au moins un formulaire d'un partenaire actif."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:216
+#, python-format
+msgid "The currency you want to %s is used in at least one Field Order which isn't Closed."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Commande de Terrain qui n'est pas Clôturée."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:216
+#, python-format
+msgid "The currency you want to %s is used in at least one Purchase Order which isn't Closed."
+msgstr "La devise que vous désirez %s est utilisée dans au moins un Bon de Commande qui n'est pas Clôturé."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:230
+#, python-format
+msgid "The currency you want to %s is used in at least one document in Draft or Open state."
+msgstr "La devise que vous désirez %s est utilisée dans au moins un document à l'état Brouillon ou Ouvert."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:256
+#, python-format
+msgid "The currency you want to %s is used in at least one Register in Draft or Open state."
+msgstr "La devise que vous désirez %s est utilisée dans au moins un Registre à l'état Brouillon ou Ouvert."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:236
+#, python-format
+msgid "The currency you want to %s is used in at least one Journal Item in Unposted state."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Ligne d'écriture comptable non comptabilisée."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:263
+#, python-format
+msgid "The currency you want to %s is used in at least one Recurring Entry having a state not Done."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Ecriture Périodique avec un statut non Terminé."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:240
+#, python-format
+msgid "The currency you want to %s is used in at least one Commitment Voucher which isn't Done."
+msgstr "La devise que vous désirez %s est utilisée dans un moins un Bon d'Engagement non Terminé."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:244
+#, python-format
+msgid "The currency you want to %s is used in at least one HQ Entry which isn't validated."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Ecriture HQ non validée."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:272
+#, python-format
+msgid "The currency you want to %s is used in at least one Draft or Partially Posted Accrual Line."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Ligne de Régularisation à l'état Brouillon ou Partiellement Comptabilisée."
+
+#. module: res_currency_tables
+#: code:addons/res_currency_tables/res_currency.py:249
+#, python-format
+msgid "The currency you want to %s is used in at least one Payroll Entry which isn't validated."
+msgstr "La devise que vous désirez %s est utilisée dans au moins une Ecriture de Paie non validée."
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:315
+msgid "Payment Sequence Number"
+msgstr "Numéro de séquence du paiement"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:316
+msgid "Down Payment Sequence Number"
+msgstr "Numéro de séquence de l'acompte"
+
+#. module: account_override
+#: model:ir.actions.act_window,name:account_override.action_paid_invoices_menu
+#: model:ir.actions.report.xml,name:account_override.paid_invoices
+#: report:addons/account_override/report/open_invoices_xls.mako:238
+msgid "Paid Invoices"
+msgstr "Factures Payées"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:264
+msgid "PAID INVOICES"
+msgstr "FACTURES PAYÉES"
+
+#. module: account_override
+#: model:ir.model,name:account_override.model_wizard_report_paid_invoice
+msgid "Wizard of the Paid Invoices Report"
+msgstr "Assistant du Rapport des Factures Payées"
+
+#. module: account_override
+#: field:wizard.report.paid.invoice,beginning_date:0
+msgid "Beginning date"
+msgstr "Date de début"
+
+#. module: account_override
+#: field:wizard.report.paid.invoice,ending_date:0
+msgid "Ending date"
+msgstr "Date de fin"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:290
+msgid "Beginning date:"
+msgstr "Date de début :"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:296
+msgid "Ending date:"
+msgstr "Date de fin :"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:306
+msgid "Intermission Vouchers IN"
+msgstr "Bons Intermission IN"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:307
+msgid "Intermission Vouchers OUT"
+msgstr "Bons Intermission OUT"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:305
+msgid "Donations"
+msgstr "Donations"
+
+#. module: account_override
+#: report:addons/account_override/report/open_invoices_xls.mako:307
+msgid "Debit Notes"
+msgstr "Notes de débit"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:188
+#, python-format
+msgid "This account is a Donation account: %s"
+msgstr "Ce compte est un compte de Donation : %s"
+
+#. module: account_override
+#: code:addons/account_override/account.py:597
+#, python-format
+msgid "Please check the Type for specific treatment of the accounts used."
+msgstr "Veuillez vérifier le Type pour traitement spécifique des comptes utilisés."
+
+#. module: msf_homere_interface
+#: field:hr.payroll.msf,has_third_party:0
+msgid "Has a Third Party"
+msgstr "A un Tiers"
+
+#. module: msf_homere_interface
+#: view:hr.payroll.msf:0
+msgid "Empty Third Party"
+msgstr "Pas de Tiers"
+
+#. module: msf_homere_interface
+#: model:ir.actions.server,name:msf_homere_interface.action_move_to_payroll_bs_lines
+msgid "Validate Payroll Expenses and move to Payroll B/S lines"
+msgstr "Valider les Lignes de dépenses et aller aux Lignes du bilan"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/hr_payroll.py:367
+#, python-format
+msgid "Payroll B/S lines"
+msgstr "Lignes de paye du bilan"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:324
+#, python-format
+msgid "An error occurred%s"
+msgstr "Une erreur est survenue%s"
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:161
+#, python-format
+msgid "Checking account/partner compatibility..."
+msgstr "Vérification de la compatibilité compte/partenaire..."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:303
+#, python-format
+msgid "Posting of the Journal Entry. This may take a while..."
+msgstr "Comptabilisation de l'Ecriture Comptable. Cela peut prendre un certain temps..."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:308
+#, python-format
+msgid "Updating the status of the Journal Items..."
+msgstr "Mise à jour du statut des Lignes d'Ecritures Comptables..."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:213
+#, python-format
+msgid "Creation of the Journal Items..."
+msgstr "Création des Lignes d'Ecritures Comptables..."
+
+#. module: msf_currency_revaluation
+#: code:addons/msf_currency_revaluation/wizard/wizard_currency_revaluation.py:723
+#, python-format
+msgid "The following projects are not field-closed:\n"
+"%s"
+msgstr "Les projets suivants ne sont pas fermés sur le terrain :\n"
+"%s"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:120
+#, python-format
+msgid "Writing on liquidity journals %s is not allowed"
+msgstr "Vous ne pouvez pas modifier le journal de liquidité %s"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,instance_state:0
+msgid "Instance State"
+msgstr "État de l'instance"

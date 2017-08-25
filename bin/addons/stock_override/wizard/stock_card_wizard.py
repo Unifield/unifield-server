@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import fields, osv
-from tools.translate import _
 import time
 
 
@@ -113,15 +112,15 @@ class stock_card_wizard(osv.osv_memory):
         if location_id:
             context.update({'location': location_id})
             location_ids = loc_obj.search(cr, uid,
-                                    [('location_id', 'child_of', location_id)],
-                                    context=context)
+                                          [('location_id', 'child_of', location_id)],
+                                          context=context)
 
         # Set the context to compute stock qty at the start date
         context.update({'to_date': card.from_date})
 
         prodlot_id = card.prodlot_id and card.prodlot_id.id or False
         product = product_obj.browse(cr, uid, card.product_id.id,
-                                                        context=context)
+                                     context=context)
         if not card.from_date:
             initial_stock = 0.00
         else:
@@ -148,7 +147,7 @@ class stock_card_wizard(osv.osv_memory):
 
         # Create one line per stock move
         move_ids = move_obj.search(cr, uid, domain,order='date asc',
-                                                        context=context)
+                                   context=context)
 
         for move in move_obj.browse(cr, uid, move_ids, context=context):
             # If the move is from the same location as destination
@@ -166,9 +165,12 @@ class stock_card_wizard(osv.osv_memory):
 
             in_qty, out_qty = 0.00, 0.00
             move_location = False
+            to_unit = False
+            if move.product_uom.id != move.product_id.uom_id.id:
+                to_unit = move.product_id.uom_id.id
             qty = uom_obj._compute_qty(cr, uid, move.product_uom.id,
-                                                move.product_qty,
-                                                move.product_id.uom_id.id)
+                                       move.product_qty,
+                                       to_unit)
 
             if location_ids:
                 if move.location_dest_id.id in location_ids:
@@ -205,10 +207,10 @@ class stock_card_wizard(osv.osv_memory):
                 'notes': move.picking_id and move.picking_id.note  or '',
             }
 
-            line_id = line_obj.create(cr, uid, line_values, context=context)
+            line_obj.create(cr, uid, line_values, context=context)
 
         self.write(cr, uid, [ids[0]], {'available_stock': initial_stock},
-                                                            context=context)
+                   context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.card.wizard',

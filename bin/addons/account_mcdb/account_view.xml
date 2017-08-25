@@ -168,6 +168,7 @@
                             <field name="reconcile_total_partial_id" select='1'/>
                             <field name="is_reconciled" select='1'/>
                             <field name="reconcile_date" select='1' string="At"/>
+                            <field name="open_items" select='1'/>
                         </group>
                         <newline/>
                         <group>

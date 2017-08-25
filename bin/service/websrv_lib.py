@@ -32,7 +32,7 @@ import socket
 import base64
 import errno
 import SocketServer
-from BaseHTTPServer import *
+import BaseHTTPServer
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 
 class AuthRequiredExc(Exception):
@@ -184,7 +184,7 @@ class FixSendError:
         self.end_headers()
         if hasattr(self, '_flush'):
             self._flush()
-        
+
         if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
             self.wfile.write(content)
 
@@ -217,16 +217,16 @@ class HttpOptions:
 
     def _prep_OPTIONS(self, opts):
         """Prepare the OPTIONS response, if needed
-        
+
         Sometimes, like in special DAV folders, the OPTIONS may contain
         extra keywords, perhaps also dependant on the request url. 
         @param the options already. MUST be copied before being altered
         @return the updated options.
-        
+
         """
         return opts
 
-class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPRequestHandler):
+class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPServer.BaseHTTPRequestHandler):
     """ this is a multiple handler, that will dispatch each request
         to a nested handler, iff it matches
 
@@ -311,7 +311,7 @@ class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPRequestHandler):
             if hasattr(fore, '_flush'):
                 fore._flush()
             return
-        
+
         if fore.close_connection:
             # print "Closing connection because of handler"
             self.close_connection = fore.close_connection
@@ -364,7 +364,7 @@ class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPRequestHandler):
                 self.close_connection = 0
             if version_number >= (2, 0):
                 self.send_error(505,
-                          "Invalid HTTP Version (%s)" % base_version_number)
+                                "Invalid HTTP Version (%s)" % base_version_number)
                 return False
         elif len(words) == 2:
             [command, path] = words
@@ -397,14 +397,14 @@ class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPRequestHandler):
             self.log_message("Could not parse rawline.")
             return
         # self.parse_request(): # Do NOT parse here. the first line should be the only
-        
+
         if self.path == '*' and self.command == 'OPTIONS':
             # special handling of path='*', must not use any vdir at all.
             if not self.parse_request():
                 return
             self.do_OPTIONS()
             return
-            
+
         for vdir in self.server.vdirs:
             p = vdir.matches(self.path)
             if p == False:
@@ -426,7 +426,7 @@ class MultiHTTPHandler(FixSendError, HttpOptions, BaseHTTPRequestHandler):
             except IOError, e:
                 if e.errno == errno.EPIPE:
                     self.log_message("Could not complete request %s," \
-                            "client closed connection", self.rlpath.rstrip())
+                                     "client closed connection", self.rlpath.rstrip())
                 else:
                     raise
             return
@@ -459,10 +459,10 @@ class SecureMultiHTTPHandler(MultiHTTPHandler):
         certfile, keyfile = self.getcert_fnames()
         try:
             self.connection = ssl.wrap_socket(self.request,
-                                server_side=True,
-                                certfile=certfile,
-                                keyfile=keyfile,
-                                ssl_version=ssl.PROTOCOL_SSLv23)
+                                              server_side=True,
+                                              certfile=certfile,
+                                              keyfile=keyfile,
+                                              ssl_version=ssl.PROTOCOL_TLSv1_2)
             self.rfile = self.connection.makefile('rb', self.rbufsize)
             self.wfile = self.connection.makefile('wb', self.wbufsize)
             self.log_message("Secure %s connection from %s",self.connection.cipher(),self.client_address)

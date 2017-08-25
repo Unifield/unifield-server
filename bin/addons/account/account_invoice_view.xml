@@ -193,9 +193,10 @@
                                         <field name="account_tax_id" on_change="tax_code_change(account_tax_id,parent.amount_untaxed,context)"/>
                                         <field name="name"/>
 
-                                        <field name="account_id" groups="account.group_account_invoice" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation'),('user_type.code','not in',['income','expense'])]"/>
-
-
+                                        <field name="account_id" groups="account.group_account_invoice"
+                                               domain="[('type', 'not in', ['view', 'consolidation']),
+                                                        ('user_type_code', '=', 'tax')]"/>
+                                        
                                         <field name="base" on_change="base_change(base,parent.currency_id,parent.company_id,parent.date_invoice)" readonly="1"/>
                                         <field name="amount" on_change="amount_change(amount,parent.currency_id,parent.company_id,parent.date_invoice)"/>
 
@@ -239,7 +240,7 @@
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                         <page string="Payments" groups="base.group_extended">
-                            <field name="payment_ids" colspan="4" nolabel="1" >
+                            <field name="payment_to_display_ids" colspan="4" nolabel="1" >
                                 <tree string="Payments">
                                     <field name="move_id"/>
                                     <field name="name"/>
@@ -339,7 +340,7 @@
                             <field colspan="4" name="comment" nolabel="1"/>
                         </page>
                         <page string="Payments">
-                            <field name="payment_ids" colspan="4" nolabel="1">
+                            <field name="payment_to_display_ids" colspan="4" nolabel="1">
                                 <tree string="Payments">
                                     <field name="date"/>
                                     <field name="ref"/>

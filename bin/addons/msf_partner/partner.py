@@ -628,6 +628,9 @@ class res_partner(osv.osv):
                                          _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
                                            ) % (objects_linked_to_partner))
 
+        if vals.get('name'):
+            vals['name'] = vals['name'].strip()
+
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):

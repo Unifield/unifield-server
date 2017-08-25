@@ -472,10 +472,13 @@ class account_analytic_line(osv.osv):
                 # Instance has a parent
                 browse_instance = current_instance.parent_id
                 res[line_data.id] = current_instance.parent_id.instance
+
             # UFTP-382/BKLG-24: sync the line associated to a register line to the register owner and to the target CC
             # UF-450: send also the AJI to the journal owner
             if line_data and line_data.move_id and line_data.move_id.journal_id and line_data.move_id.journal_id.instance_id and line_data.move_id.journal_id.instance_id.id != current_instance.id:
                 if res[line_data.id]:
+                    if not browse_instance:
+                        raise osv.except_osv('Error', "Cost center %s must have 'Is Target' set" % (line_data.cost_center_id.code, ))
                     res[line_data.id] = self.get_lower_instance_name(cr, uid, browse_instance, line_data.move_id.journal_id.instance_id, context=context)
                 else:
                     res[line_data.id] = line_data.move_id.journal_id.instance_id.instance
@@ -632,6 +635,8 @@ class funding_pool_distribution_line(osv.osv):
                 for move_line in line_data.distribution_id.move_line_ids:
                     if move_line.journal_id:
                         inst = move_line.journal_id and move_line.journal_id.instance_id
+                        if not browse_instance:
+                            raise osv.except_osv('Error', "Cost center %s must have 'Is Target' set" % (line_data.cost_center_id.code, ))
                         if inst and inst.id != current_instance.id and inst.instance != res[line_id]:
                             res[line_id] = ana_obj.get_lower_instance_name(cr, uid, browse_instance, inst, context=context)
                         break
