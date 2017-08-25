@@ -258,6 +258,9 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         line_move.product_qty,
                         line.product_uom.id,
                     )
+                    delivery_order = line_move.picking_id.name
+                    if 'INT' in line_move.picking_id.name and line_move.picking_id.state != 'done':
+                        delivery_order = ''
                     data = {
                         'po_name': po_name,
                         'cdd': cdd,
@@ -266,7 +269,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         'product_name': line.product_id.name,
                         'product_code': line.product_id.code,
                         'is_delivered': False,
-                        'delivery_order': line_move.picking_id.name,
+                        'delivery_order': delivery_order,
                     }
                     if first_line:
                         data.update({

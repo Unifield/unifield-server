@@ -202,7 +202,7 @@
                     <para style="Lines"># Items: [[ getProducts(o) ]]</para>
                 </td>
                 <td>
-                    <para style="Lines">Estimated amount: [[ formatLang(o.amount_total or 0.00) ]] [[ o.pricelist_id.currency_id.name ]]</para>
+                    <para style="Lines">Estimated amount: [[ formatLang(o.amount_total or 0.00) ]] [[ o.functional_currency_id.name ]]</para>
                 </td>
                 <td>
                     <para style="Lines"></para>
