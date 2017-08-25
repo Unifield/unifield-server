@@ -99051,8 +99051,65 @@ msgstr "Valeur Totale"
 
 #. module: sale
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:115
+#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:134
 msgid "Qty In"
 msgstr "Qté Entrante"
+
+#. module: sale
+#: help:sale.loan.stock.moves,remove_completed:0
+msgid "Only show the lines with a quantity balance different than 0"
+msgstr "Montre uniquement les lignes avec un bilan des quantité différent de 0"
+
+#. module: sale
+#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:137
+msgid "PO/FO Ref."
+msgstr "Ref. PO/FO"
+
+#. module: sale
+#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:136
+msgid "Qty Balance"
+msgstr "Bilan des Qtés"
+
+#. module: sale
+#: field:sale.loan.stock.moves,remove_completed:0
+msgid "Only unfinished loans"
+msgstr "Uniquement les prêts non terminés"
+
+#. modules: sales_followup, sale
+#: code:addons/sale/wizard/sale_loan_stock_moves.py:139
+#: code:addons/sales_followup/wizard/sale_followup_multi_wizard.py:184
+#, python-format
+msgid "No data found with these parameters"
+msgstr "Aucune données n'ont été trouvées avec ces paramètres"
+
+#. module: sale
+#: model:ir.actions.act_window,name:sale.action_sale_loan_stock_moves
+#: model:ir.actions.report.xml,name:sale.report_sale_loan_stock_moves_xls
+#: model:ir.ui.menu,name:sale.menu_sale_loan_stock_moves
+#: view:sale.loan.stock.moves:0
+msgid "Loan Report"
+msgstr "Rapport des Prêts"
+
+#. module: sale
+#: help:sale.loan.stock.moves,partner_id:0
+msgid "The partner you want have the loans from"
+msgstr "Le partenaire duquel vous voulez voir les prêts"
+
+#. module: sale
+#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:135
+msgid "Qty Out"
+msgstr "Qté Sortante"
+
+#. modules: msf_doc_import, sale
+#: field:wizard.import.po.simulation.screen.line,imp_origin:0
+#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:138
+msgid "Origin Ref."
+msgstr "Ref. de l'Origine"
+
+#. module: sale
+#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:130
+msgid "Move Ref."
+msgstr "Ref. du Mouvement"
 
 #. module: sale
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:118
@@ -99118,6 +99175,7 @@ msgstr "Intermission"
 
 #. module: sale
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:111
+#: report:addons/sale/report/sale_loan_stock_moves_report_xls.mako:129
 msgid "Movement Date"
 msgstr "Date du Mouvement"
 
