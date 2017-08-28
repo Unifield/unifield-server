@@ -1174,10 +1174,8 @@ class purchase_order(osv.osv):
                 if not po.stock_take_date:
                     raise osv.except_osv(_('Warning !'), _(
                         'The Date of Stock Take is required for a Purchase Order if the Partner is an ESC.'))
-                if po.order_line:
-                    for line in po.order_line:
-                        if not line.stock_take_date:
-                            raise osv.except_osv(_('Warning !'), _('The Date of Stock Take is required for all Purchase Order lines if the Partner is an ESC.'))
+                if self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', '=', po.id), ('stock_take_date', '=', False)], context=context):
+                    raise osv.except_osv(_('Warning !'), _('The Date of Stock Take is required for all Purchase Order lines if the Partner is an ESC.'))
         return True
 
     def wkf_picking_done(self, cr, uid, ids, context=None):
