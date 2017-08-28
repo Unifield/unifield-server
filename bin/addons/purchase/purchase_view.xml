@@ -469,7 +469,7 @@
                             <field name="external_ref" readonly="1" />
                             <field name="project_ref" readonly="1" />
                             <field name="fnct_project_ref" readonly="1" />
-                            <field name="resourced_original_line" readonly="1" />
+                            <field name="display_resourced_orig_line" readonly="1" />
                             <separator colspan="4" string="Notes" />
                             <field colspan="4" name="notes" nolabel="1"/>
                         </page>

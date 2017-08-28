@@ -168,6 +168,28 @@ class purchase_order_line(osv.osv):
         return res
 
 
+    def _get_display_resourced_orig_line(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        return the original PO line (from which the current on has been resourced) formatted as wanted
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for pol in self.browse(cr, uid, ids, context=context):
+            res[pol.id] = False
+            if pol.resourced_original_line:
+                res[pol.id] = '[%s] %s (ln:%s)' % (
+                    pol.resourced_original_line.product_id.default_code, 
+                    pol.resourced_original_line.name,
+                    pol.resourced_original_line.line_number
+                )
+
+        return res
+
+
     _columns = {
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
@@ -245,6 +267,7 @@ class purchase_order_line(osv.osv):
                \n* The \'Cancelled\' state is set automatically when user cancel purchase order.'
         ),
         'resourced_original_line': fields.many2one('purchase.order.line', 'Original line', readonly=True, help='Original line from which the current one has been cancel and ressourced'),
+        'display_resourced_orig_line': fields.function(_get_display_resourced_orig_line, method=True, type='char', readonly=True, string='Original PO line', help='Original line from which the current one has been cancel and ressourced'),
         'invoice_lines': fields.many2many('account.invoice.line', 'purchase_order_line_invoice_rel', 'order_line_id',
                                           'invoice_id', 'Invoice Lines', readonly=True),
         'invoiced': fields.boolean('Invoiced', readonly=True),

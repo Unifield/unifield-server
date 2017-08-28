@@ -2739,6 +2739,27 @@ class sale_order_line(osv.osv):
 
         return res
 
+    def _get_display_resourced_orig_line(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        return the original SO line (from which the current on has been resourced) formatted as wanted
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for sol in self.browse(cr, uid, ids, context=context):
+            res[sol.id] = False
+            if sol.resourced_original_line:
+                res[sol.id] = '[%s] %s (ln:%s)' % (
+                    sol.resourced_original_line.product_code, 
+                    sol.resourced_original_line.name, 
+                    sol.resourced_original_line.line_number
+                )
+
+        return res
+
 
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
@@ -2781,6 +2802,7 @@ class sale_order_line(osv.osv):
             \n* The \'Cancelled\' state is set when a user cancel the sales order related.'
         ),
         'resourced_original_line': fields.many2one('sale.order.line', 'Original line', readonly=True, help='Original line from which the current one has been cancel and ressourced'),
+        'display_resourced_orig_line': fields.function(_get_display_resourced_orig_line, method=True, type='char', readonly=True, string='Original FO/IR line', help='Original line from which the current one has been cancel and ressourced'),
         'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer'),
         'salesman_id':fields.related('order_id', 'user_id', type='many2one', relation='res.users', store=True, string='Salesman'),
         'company_id': fields.related('order_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),

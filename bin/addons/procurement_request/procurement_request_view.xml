@@ -87,7 +87,7 @@
                                     <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
                                     <field name="price_unit"/>
                                     <field name="notes" />
-                                    <field name="resourced_original_line" />
+                                    <field name="display_resourced_orig_line" />
                                     <field name="display_confirm_button" invisible="1" />
                                     <field name="type" on_change="requested_type_change(product_id, type)"
                                            attrs="{'readonly': [('fake_state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('display_confirm_button', '=', False)]}"

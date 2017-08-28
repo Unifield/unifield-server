@@ -168,7 +168,7 @@
                                             <field name="discount"/>
                                             <field name="type" groups="base.group_extended"/>
                                             <field name="delay" groups="base.group_extended"/>
-                                            <field name="resourced_original_line"/>
+                                            <field name="display_resourced_orig_line"/>
                                             <newline/>
                                             <separator colspan="5" string="Taxes"/>
                                             <field colspan="4" name="tax_id" nolabel="1" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
