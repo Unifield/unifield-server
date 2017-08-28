@@ -4382,7 +4382,13 @@ class stock_picking(osv.osv):
                 draft_initial_qty += return_qty
                 move_obj.write(cr, uid, [draft_move_id], {'product_qty': draft_initial_qty}, context=context)
 
-
+                # Update "save as draft" lines with returned qty:
+                save_as_draft_move = self.pool.get('create.picking.move.processor').search(cr, uid ,[('move_id', '=', draft_move_id)], context=context)
+                for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
+                    self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
+                        'ordered_quantity': sad_move.ordered_quantity + return_qty,
+                        'quantity': sad_move.quantity + return_qty,
+                    }, context=context)
 
             # Log message for PPL
             ppl_view = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
@@ -4501,6 +4507,15 @@ class stock_picking(osv.osv):
                         initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
                         initial_qty += move.product_qty
                         move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty}, context=context)
+
+                        # Update "save as draft" lines with returned qty:
+                        save_as_draft_move = self.pool.get('create.picking.move.processor').search(cr, uid ,[('move_id', '=', draft_move.id)], context=context)
+                        for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
+                            self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
+                                'ordered_quantity': sad_move.ordered_quantity + move.product_qty,
+                                'quantity': sad_move.quantity + move.product_qty,
+                            }, context=context)
+
                         # log the increase action
                         # TODO refactoring needed
                         obj_data = self.pool.get('ir.model.data')
