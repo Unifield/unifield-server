@@ -106,7 +106,7 @@
                                         type="object"
                                         string="Split Line"
                                         icon="terp-stock_effects-object-colorize"
-                                        attrs="{'invisible': [('fake_state', 'in', ('confirmed', 'cancel', 'done', 'exception'))]}"
+                                        attrs="{'invisible': [('fake_state', 'in', ('confirmed', 'cancel', 'cancel_r', 'done', 'exception'))]}"
                                         />
                                     <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                 </tree>
