@@ -1491,7 +1491,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             if sourcing_line.type == 'make_to_stock':
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
-                wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'confirmed', cr) # confirmation create pick/out
+                wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'confirmed', cr) # confirmation create pick/out or INT
+                if sourcing_line.procurement_request and sourcing_line.order_id.location_requestor_id.usage == 'internal':
+                    wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'done', cr)
                     
             elif sourcing_line.type == 'make_to_order':
                 po_to_use = self.get_existing_po(cr, uid, sourcing_line.id, context=context)
