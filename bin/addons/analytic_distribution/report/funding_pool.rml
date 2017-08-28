@@ -169,9 +169,7 @@
       <font color="white"> </font>
     </para>
     <para style="P6">Report edition date: [[ formatLang(today(), date=True) ]]</para>
-    <para>
-      <br />
-    </para>
+    <para><br /></para>
     <blockTable colWidths="266.0,269.0" style="Table2">
       <tr>
         <td>
