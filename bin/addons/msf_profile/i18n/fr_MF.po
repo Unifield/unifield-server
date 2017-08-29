@@ -98950,3 +98950,17 @@ msgstr "Vous ne pouvez pas modifier le journal de liquidité %s"
 #: field:sync.version.instance.monitor,instance_state:0
 msgid "Instance State"
 msgstr "État de l'instance"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:670
+#, python-format
+msgid "Unable to generate updates after %d tries"
+msgstr "Impossible de générer les data après %d tentatives"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:677
+#, python-format
+msgid "Unable to generate updates, retrying %d/%d"
+msgstr "Impossible de générer les data, nouvel essai %d/%d"
+
+
