@@ -739,11 +739,14 @@ class purchase_order_line(osv.osv):
                                   limit=1, order='NO_ORDER', context=context)
         stages = self._get_stages_price(cr, uid, product_id, product_uom, order, context=context)
 
-        if vals.get('origin'):
-            proc = False
-            if vals.get('procurement_id'):
-                proc = self.pool.get('procurement.order').read(cr, uid, vals.get('procurement_id'), ['sale_id'])
-            if not proc or not proc['sale_id']:
+        # try to fill "link_so_id" if not in vals:
+        if not vals.get('link_so_id'):
+            linked_so = False
+            if vals.get('linked_sol_id'):
+                sol_data = self.pool.get('sale.order.line').read(cr, uid, vals.get('linked_sol_id'), ['order_id'])
+                linked_so = sol_data['order_id']
+                vals.update({'link_so_id': linked_so})
+            elif vals.get('origin'):
                 vals.update(self.update_origin_link(cr, uid, vals.get('origin'), context=context))
 
         if (other_lines and stages and order.state != 'confirmed'):
@@ -782,13 +785,10 @@ class purchase_order_line(osv.osv):
                 self._check_product_uom(
                     cr, uid, vals['product_id'], vals['product_uom'], context=context)
 
-        # utp-518:we write the comment from the sale.order.line on the PO line through the procurement (only for the create!!)
-        po_procurement_id = vals.get('procurement_id', False)
-        if po_procurement_id and not vals.get('comment'):
-            sale_id = sol_obj.search(cr, uid, [('procurement_id', '=', po_procurement_id)], context=context)
-            if sale_id:
-                comment_so = sol_obj.read(cr, uid, sale_id, ['comment'], context=context)[0]['comment']
-                vals.update(comment=comment_so)
+        # utp-518:we write the comment from the sale.order.line on the PO line:
+        if vals.get('linked_sol_id'):
+            sol_comment = self.pool.get('sale.order.line').read(cr, uid, vals.get('linked_sol_id'), ['comment'], context=context)['comment']
+            vals.update({'comment': sol_comment})
 
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
@@ -953,15 +953,16 @@ class purchase_order_line(osv.osv):
         '''
         Return the FO/IR that matches with the origin value
         '''
-        so_obj = self.pool.get('sale.order')
-
         tmp_proc_context = context.get('procurement_request')
         context['procurement_request'] = True
-        so_ids = so_obj.search(cr, uid, [('name', '=', origin), ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_v'])], context=context)
+        so_ids = self.pool.get('sale.order').search(cr, uid, [
+            ('name', '=', origin), 
+            ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_v']),
+        ], context=context)
         context['procurement_request'] = tmp_proc_context
+
         if so_ids:
             return {'link_so_id': so_ids[0]}
-
         return {}
 
     def ask_unlink(self, cr, uid, ids, context=None):
