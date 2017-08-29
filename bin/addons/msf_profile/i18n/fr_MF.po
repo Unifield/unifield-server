@@ -99348,3 +99348,16 @@ msgstr "La Date de Prise de Stock est obligatoire pour les lignes des Bons de Co
 #, python-format
 msgid "The Date of Stock Take is required for a Purchase Order if the Partner is an ESC."
 msgstr "La Date de Prise de Stock est obligatoire pour les Bons de Commande qui ont un Partenaire ESC."
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:670
+#, python-format
+msgid "Unable to generate updates after %d tries"
+msgstr "Impossible de générer les data après %d tentatives"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:677
+#, python-format
+msgid "Unable to generate updates, retrying %d/%d"
+msgstr "Impossible de générer les data, nouvel essai %d/%d"
+
