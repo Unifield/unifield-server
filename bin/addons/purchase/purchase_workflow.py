@@ -38,14 +38,16 @@ class purchase_order_line(osv.osv):
             # => if yes update it, else create new
             create_line = False
             if not pol.linked_sol_id:
-                so_id = self.pool.get('sale.order').search(cr, uid, [
-                    ('name', '=', pol.origin),
-                    ('procurement_request', 'in', ['t', 'f']),
-                ], context=context)
+                # try to get the linked sale.order:
+                so_id = pol.link_so_id.id
+                if not so_id:
+                    so_id = self.pool.get('sale.order').search(cr, uid, [
+                        ('name', '=', pol.origin),
+                        ('procurement_request', 'in', ['t', 'f']),
+                    ], context=context)
+                    so_id = so_id and so_id[0] or False
                 if not so_id:
                     continue # no sale order linked to our PO line
-                else:
-                    so_id = so_id[0]
                 sale_order = self.pool.get('sale.order').browse(cr, uid, so_id, context=context)
                 create_line = True
             elif pol.linked_sol_id:
@@ -103,6 +105,7 @@ class purchase_order_line(osv.osv):
                 sol_values.update({
                     'order_id': so_id,
                     'date_planned': pol.date_planned,
+                    'set_as_sourced_n': True,
                 })
                 sol_values.update(self.get_split_info(cr, uid, pol, context))
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
