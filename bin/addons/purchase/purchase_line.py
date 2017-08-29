@@ -134,7 +134,7 @@ class purchase_order_line(osv.osv):
         res = {}
         for pol in self.browse(cr, uid, ids, context=context):
             res[
-                pol.id] = pol.procurement_id and pol.procurement_id.sale_id and pol.procurement_id.sale_id.client_order_ref or False
+                pol.id] = pol.linked_sol_id and pol.linked_sol_id.order_id.client_order_ref or False
 
         return res
 
