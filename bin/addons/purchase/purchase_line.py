@@ -716,7 +716,7 @@ class purchase_order_line(osv.osv):
 
         # if the PO line has been created when PO has status "validated" then new PO line gets specific state "validated-n" to mark the 
         # line as non-really validated. It avoids the PO to go back in draft state.
-        if order.state == 'validated':
+        if order.state.startswith('validated'):
             vals.update({'set_as_validated_n': True})
 
         # Update the name attribute if a product is selected
