@@ -798,7 +798,7 @@ class purchase_order_line(osv.osv):
                                                    {'sync_order_line_db_id': name + "_" + str(po_line_id), },
                                                    context=context)
 
-        if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('procurement_id'):
+        if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('linked_sol_id'):
             so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], context=context)
             for so_id in so_ids:
                 self.pool.get('expected.sale.order.line').create(cr, uid, {
@@ -858,9 +858,6 @@ class purchase_order_line(osv.osv):
         if 'move_dest_id' not in default:
             default.update({'move_dest_id': False})
 
-        if 'procurement_id' not in default:
-            default.update({'procurement_id': False})
-
         default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False})
         return super(purchase_order_line, self).copy_data(cr, uid, p_id, default=default, context=context)
 
@@ -892,8 +889,7 @@ class purchase_order_line(osv.osv):
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
 
-        if ('state' in vals and vals.get('state') != 'draft') or (
-                'procurement_id' in vals and vals.get('procurement_id')):
+        if ('state' in vals and vals.get('state') != 'draft') or ('linked_sol_id' in vals and vals.get('linked_sol_id')):
             exp_sol_ids = exp_sol_obj.search(cr, uid, [('po_line_id', 'in', ids)],
                                              order='NO_ORDER', context=context)
             exp_sol_obj.unlink(cr, uid, exp_sol_ids, context=context)
@@ -913,14 +909,15 @@ class purchase_order_line(osv.osv):
                     _('You can not have an order line with a negative or zero quantity')
                 )
 
-            if vals.get('origin', line.origin):
-                proc = False
-                if vals.get('procurement_id', line.procurement_id.id):
-                    proc = self.pool.get('procurement.order').browse(cr, uid,
-                                                                     vals.get('procurement_id', line.procurement_id.id))
-                if not proc or not proc.sale_id:
-                    link_so_dict = self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context)
-                    new_vals.update(link_so_dict)
+            # try to fill "link_so_id":
+            if not line.link_so_id and not vals.get('link_so_id'):
+                linked_so = False
+                if vals.get('linked_sol_id', line.linked_sol_id):
+                    sol_data = self.pool.get('sale.order.line').read(cr, uid, vals.get('linked_sol_id', line.linked_sol_id.id), ['order_id'])
+                    linked_so = sol_data['order_id']
+                    new_vals.update({'link_so_id': linked_so})
+                elif vals.get('origin'):
+                    new_vals.update(self.update_origin_link(cr, uid, vals.get('origin'), context=context))
 
             if line.order_id and not line.order_id.rfq_ok and (line.order_id.po_from_fo or line.order_id.po_from_ir):
                 new_vals['from_fo'] = True
@@ -930,8 +927,7 @@ class purchase_order_line(osv.osv):
 
             res = super(purchase_order_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
-            if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('procurement_id',
-                                                                                                  line.procurement_id):
+            if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('linked_sol_id', line.linked_sol_id):
                 so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], order='NO_ORDER', context=context)
                 for so_id in so_ids:
                     exp_sol_obj.create(cr, uid, {
