@@ -362,6 +362,12 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            # if the PO line is linked to an internal IR line, then no PICK/OUT needed and we close the IR line:
+            if pol.linked_sol_id and pol.linked_sol_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal':
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'done', cr)
 
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
 
