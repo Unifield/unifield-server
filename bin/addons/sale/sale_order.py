@@ -1512,26 +1512,22 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     def get_po_ids_from_so_ids(self, cr, uid, ids, context=None):
         '''
         receive the list of sale order ids
-
-        return the list of purchase order ids corresponding (through procurement process)
+        return the list of purchase order ids corresponding
         '''
-        # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # procurement ids list
-        po_ids = []
-
+        po_ids = set()
+        sol_ids = []
         for so in self.browse(cr, uid, ids, context=context):
-            for line in so.order_line:
-                if line.procurement_id:
-                    if line.procurement_id.purchase_id:
-                        if line.procurement_id.purchase_id.id not in po_ids:
-                            po_ids.append(line.procurement_id.purchase_id.id)
+            sol_ids = [sol.id for sol in so.order_line]
 
-        # return the purchase order ids
+        pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', 'in', sol_ids)], context=context)
+        for pol in self.pool.get('purchase.order.line').browse(cr, uid, pol_ids, context=context):
+            po_ids.add(pol.order_id.id)
+
         return po_ids
 
     def _hook_message_action_wait(self, cr, uid, *args, **kwargs):
