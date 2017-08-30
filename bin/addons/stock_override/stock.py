@@ -487,7 +487,7 @@ class stock_picking(osv.osv):
         if vals.get('from_wkf') and vals.get('purchase_id'):
             po = self.pool.get('purchase.order').browse(cr, uid, vals.get('purchase_id'), context=context)
             for line in po.order_line:
-                if line.procurement_id and line.procurement_id.sale_id:
+                if line.linked_sol_id:
                     vals['from_wkf_sourcing'] = True
                     break
 
