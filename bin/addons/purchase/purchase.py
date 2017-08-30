@@ -215,34 +215,32 @@ class purchase_order(osv.osv):
 
         return res
 
-    def _po_from_x(self, cr, uid, ids, field_names, args, context=None):
-        """fields.function multi for 'po_from_ir' and 'po_from_fo' fields."""
+
+    def _po_from_x(self, cr, uid, ids, field_name, args, context=None):
+        """
+        fields.function multi for 'po_from_ir' and 'po_from_fo' fields.
+        As one PO can contains lines from IR and from FO, both fields can be True
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]    
+
         res = {}
-        pol_obj = self.pool.get('purchase.order.line')
-        sol_obj = self.pool.get('sale.order.line')
-        for po_data in self.read(cr, uid, ids, ['order_line'], context=context):
-            res[po_data['id']] = {'po_from_ir': False, 'po_from_fo': False}
-            pol_ids = po_data.get('order_line')
-            if pol_ids:
-                pol_datas = pol_obj.read(
-                    cr, uid, pol_ids, ['procurement_id'], context=context)
-                proc_ids = [pol['procurement_id'][0]
-                            for pol in pol_datas if pol.get('procurement_id')]
-                if proc_ids:
-                    # po_from_ir
-                    sol_exist = sol_obj.search_exist(
-                        cr, uid,
-                        [('procurement_id', 'in', proc_ids)],
-                        context=context)
-                    res[po_data['id']]['po_from_ir'] = sol_exist
-                    if sol_exist:
-                        # po_from_fo
-                        sol_exist = sol_obj.search_exist(
-                            cr, uid,
-                            [('procurement_id', 'in', proc_ids),
-                             ('order_id.procurement_request', '=', False)],
-                            context=context)
-                    res[po_data['id']]['po_from_fo'] = sol_exist
+        for po in self.browse(cr, uid, ids, context=context):
+            from_fo = False
+            from_ir = False
+            for pol in po.order_line:
+                if pol.linked_sol_id:
+                    if pol.linked_sol_id.procurement_request:
+                        from_ir = True
+                    else:
+                        from_fo = True
+            res[po.id] = {
+                'po_from_ir': from_ir,
+                'po_from_fo': from_fo,
+            }
+
         return res
 
     def _get_dest_partner_names(self, cr, uid, ids, field_name, args, context=None):
