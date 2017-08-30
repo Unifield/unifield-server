@@ -180,7 +180,7 @@ class purchase_order_line_allocation_report(osv.osv):
                   LEFT JOIN
                     sale_order_line sol
                     ON
-                    sol.procurement_id = pol.procurement_id
+                    sol.id = pol.linked_sol_id
                   LEFT JOIN
                     sale_order so
                     ON
@@ -239,7 +239,7 @@ class purchase_order_line_allocation_report(osv.osv):
                   LEFT JOIN
                     sale_order_line sol
                     ON
-                    sol.procurement_id = pol.procurement_id
+                    sol.id = pol.linked_sol_id
                   LEFT JOIN
                     sale_order so
                     ON
