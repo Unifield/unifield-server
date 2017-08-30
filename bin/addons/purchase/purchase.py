@@ -821,7 +821,7 @@ class purchase_order(osv.osv):
                   'nomenclature_code', 'name', 'default_name', 'comment', 'date_planned',
                   'to_correct_ok', 'text_error', 'select_fo', 'project_ref', 'external_ref',
                   'nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4',
-                  'nomen_sub_5', 'procurement_id', 'change_price_manually', 'old_price_unit',
+                  'nomen_sub_5', 'linked_sol_id', 'change_price_manually', 'old_price_unit',
                   'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes', 'taxes_id',
                   'link_so_id', 'from_fo', 'sale_order_line_id', 'tender_line_id', 'dest_partner_id']
 
@@ -966,11 +966,11 @@ class purchase_order(osv.osv):
                         o_line[field] = field_val
                     o_line['uom_factor'] = order_line.product_uom and order_line.product_uom.factor or 1.0
                     o_line = self._hook_o_line_value(cr, uid, o_line=o_line, order_line=order_line)
-                if order_line.procurement_id:
+                if order_line.linked_sol_id:
                     no_proc_ids.append(order_line.id)
 
             if no_proc_ids:
-                line_obj.write(cr, uid, no_proc_ids, {'procurement_id': False}, context=context)
+                line_obj.write(cr, uid, no_proc_ids, {'linked_sol_id': False}, context=context)
 
         allorders = []
         orders_info = {}
