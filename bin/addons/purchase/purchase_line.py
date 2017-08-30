@@ -1028,8 +1028,8 @@ class purchase_order_line(osv.osv):
                 diff_qty = uom_obj._compute_qty(cr, uid, line['product_uom'][0], line_qty, sol.product_uom.id)
                 # In case of the product qty of the PO line is decrease before the cancelation, check if there
                 # is some other PO lines related to this FO line, then cancel the whole line.
-                if 'pol_qty' not in context and sol.procurement_id:
-                    pol_ids = self.search(cr, uid, [('procurement_id', '=', sol.procurement_id.id)], context=context)
+                pol_ids = self.search(cr, uid, [('linked_sol_id', '=', sol.id)], context=context)
+                if 'pol_qty' not in context and pol_ids:
                     if len(pol_ids) == 1 and pol_ids[0] == line['id']:
                         diff_qty = sol.product_uom_qty
 
