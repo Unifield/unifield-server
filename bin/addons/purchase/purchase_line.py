@@ -1160,8 +1160,6 @@ class purchase_order_line(osv.osv):
                 pol['id'], pol['name'],
             ))
 
-        po_obj.wkf_confirm_trigger(cr, uid, order_ids, context=context)
-
         return res
 
     def _get_stages_price(self, cr, uid, product_id, uom_id, order, context=None):
