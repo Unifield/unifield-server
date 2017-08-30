@@ -322,20 +322,14 @@ class purchase_order(osv.osv):
         if not args:
             return []
 
-        pol_obj = self.pool.get('purchase.order.line')
-        so_obj = self.pool.get('sale.order')
-        proc_obj = self.pool.get('procurement.order')
-
-        po_ids = []
+        po_ids = set()
         for tu in args:
-            if tu[1] == 'ilike' or tu[1] == 'not ilike' or tu[1] == '=' or tu[1] == '!=':
-                so_ids = so_obj.search(cr, uid, [('client_order_ref', tu[1], tu[2])], context=context)
-                proc_ids = proc_obj.search(cr, uid, [('sale_id', 'in', so_ids)], context=context)
-                pol_ids = pol_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
-                po_ids = set()
-                for pol in pol_obj.read(cr, uid, pol_ids, ['order_id'], context=context):
-                    if pol.get('order_id'):
-                        po_ids.add(pol['order_id'][0])
+            if tu[1] in ('ilike', 'not ilike', '=', '!='):
+                so_ids = self.pool.get('sale.order').search(cr, uid, [('client_order_ref', tu[1], tu[2])], context=context)
+                sol_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', 'in', so_ids)], context=context)
+                pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', 'in', sol_ids)], context=context)
+                for pol in self.pool.get('purchase.order.line').browse(cr, uid, pol_ids, context=context):
+                    po_ids.add(pol.order_id.id)
             else:
                 raise osv.except_osv(_('Error'), _('Bad operator : You can only use \'=\', \'!=\', \'ilike\' or \'not ilike\' as operator'))
 
