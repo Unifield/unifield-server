@@ -1104,35 +1104,15 @@ class purchase_order_line(osv.osv):
         Add an entry to cancel (and resource if needed) the line when the
         PO will be confirmed
         '''
-        proc_obj = self.pool.get('procurement.order')
-
         if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         so_to_cancel = []
-
-        proc_ids = []
-        purchase_ids = []
         line_to_cancel = []
-
-        for line in self.read(cr, uid, ids,
-                              ['procurement_id',
-                               'order_id',
-                               'sync_order_line_db_id'],
-                              context=context):
-            # Set the procurement orders to delete
-            # Set the list of linked purchase orders
-            if line['procurement_id']:
-                proc_ids.append(line['procurement_id'][0])
-            if line['order_id'][0] not in purchase_ids:
-                purchase_ids.append(line['order_id'][0])
-
-            if not self.pool.get('sale.order.line.cancel').search(cr, uid, [
-                ('sync_order_line_db_id', '=', line['sync_order_line_db_id']),
-            ], limit=1, order='NO_ORDER', context=context):
+        for line in self.read(cr, uid, ids, ['order_id', 'sync_order_line_db_id'], context=context):
+            if not self.pool.get('sale.order.line.cancel').search(cr, uid, [('sync_order_line_db_id', '=', line['sync_order_line_db_id']), ], limit=1, order='NO_ORDER', context=context):
                 so_to_cancel = self.cancel_sol(cr, uid, [line['id']], context=context)
 
             # we want to skip resequencing because unlink is performed on merged purchase order lines
@@ -1142,18 +1122,6 @@ class purchase_order_line(osv.osv):
             context['skipResequencing'] = tmp_Resequencing
 
             line_to_cancel.append(line['id'])
-
-        # Cancel the listed procurement orders
-        proc_id_to_cancel = set()
-        for proc_id in proc_ids:
-            if not self.search_exist(cr, uid, [
-                ('order_id.state', '!=', 'split'),
-                ('id', 'not in', ids),
-                ('procurement_id', '=', proc_id)],
-                    context=context):
-                proc_id_to_cancel.add(proc_id)
-        if proc_id_to_cancel:
-            proc_obj.action_cancel(cr, uid, list(proc_id_to_cancel))
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         self.unlink(cr, uid, line_to_cancel, context=context)
