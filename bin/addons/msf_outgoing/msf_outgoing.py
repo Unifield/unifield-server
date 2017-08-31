@@ -4972,18 +4972,6 @@ class stock_move(osv.osv):
                         sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
                     if move.id not in context.get('not_resource_move', []):
                         sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, context=context)
-                if move.sale_line_id.procurement_id:
-                    # Search OUT moves that have the same source and there are done
-                    other_out_move_ids = self.search(cr, uid, [
-                        ('sale_line_id', '=', move.sale_line_id.id),
-                        ('state', 'in', ['assigned', 'confirmed', 'done']),
-                        ('id', '!=', move.id),
-                    ], context=context)
-                    if other_out_move_ids:
-                        proc_obj.write(cr, uid,
-                                       [move.sale_line_id.procurement_id.id],
-                                       {'move_id': other_out_move_ids[0]},
-                                       context=context)
 
         self.action_done(cr, uid, move_to_done, context=context)
 
@@ -4992,14 +4980,6 @@ class stock_move(osv.osv):
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
 
         wf_service = netsvc.LocalService("workflow")
-
-        proc_obj = self.pool.get('procurement.order')
-        proc_ids = proc_obj.search(cr, uid, [('move_id', 'in', ids)], context=context)
-        for proc in proc_obj.read(cr, uid, proc_ids, ['state'], context=context):
-            if proc['state'] == 'draft':
-                wf_service.trg_validate(uid, 'procurement.order', proc['id'], 'button_confirm', cr)
-            else:
-                wf_service.trg_validate(uid, 'procurement.order', proc['id'], 'button_check', cr)
 
         for ptc in pick_obj.browse(cr, uid, list(pick_to_check), context=context):
             if ptc.subtype == 'picking' and ptc.state == 'draft' and not pick_obj.has_picking_ticket_in_progress(cr, uid, [ptc.id], context=context)[ptc.id] and all(m.state == 'cancel' or m.product_qty == 0.00 for m in ptc.move_lines):
