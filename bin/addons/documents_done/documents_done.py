@@ -130,29 +130,15 @@ class documents_done_wizard(osv.osv):
         tender_ids = []
         invoice_ids = []
         for line in order.order_line:
-            # Check procurement orders
-            if line.procurement_id:
-                if line.procurement_id.state not in ('cancel', 'done'):
-                    proc_ids.append(line.procurement_id.id)
-                # Check PO
-                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state not in ('cancel', 'done'):
-                    po_ids.append(line.procurement_id.purchase_id.id)
-                # Check tenders
-                if line.procurement_id.tender_id and line.procurement_id.tender_id.state not in ('cancel', 'done'):
-                    tender_ids.append(line.procurement_id.tender_id.id)
-                    # Check Rfheck RfQ
-                    for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if rfq.state not in ('cancel', 'done'):
-                            po_ids.append(rfq.id)
+            pol_id = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', line.id)], context=context)
+            po_line = self.pool.get('purchase.order.line').browse(cr, uid, pol_id[0], context=context) if pol_id else False
+            # Check PO
+            if po_line and not po_line.state.startswith(('cancel', 'done')):
+                po_ids.append(po_line.order_id.id)
 
         # Check loan counterpart
         if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
             po_ids.append(order.loan_id.id)
-
-        # Invoices
-        #for invoice in order.invoice_ids:
-        #    if invoice.state not in ('cancel', 'paid'):
-        #        invoice_ids.append(invoice.id)
 
         if context.get('count', False):
             return move_ids or proc_ids or po_ids or tender_ids or invoice_ids or False
@@ -171,11 +157,6 @@ class documents_done_wizard(osv.osv):
         invoice_ids = []
         if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
             so_ids.append(order.loan_id.id)
-
-        # Invoices
-        #for invoice in order.invoice_ids:
-        #    if invoice.state not in ('cancel', 'paid'):
-        #        invoice_ids.append(invoice.id)
 
         if context.get('count', False):
             return move_ids or so_ids or invoice_ids or False
