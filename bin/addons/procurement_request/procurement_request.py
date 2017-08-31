@@ -564,59 +564,6 @@ class procurement_request(osv.osv):
 
         return True
 
-    def confirm_procurement(self, cr, uid, ids, context=None):
-        '''
-        Confirmed the request
-        '''
-        if context is None:
-            context = {}
-
-        self.write(cr, uid, ids, {'state': 'progress'}, context=context)
-
-        for request in self.browse(cr, uid, ids, context=context):
-            if len(request.order_line) <= 0:
-                raise osv.except_osv(_('Error'), _('You cannot confirm an Internal request with no lines !'))
-            for line in request.order_line:
-                # for FO
-                if line.type == 'make_to_order' and not line.po_cft == 'cft':
-                    if not line.supplier:
-                        line_number = line.line_number
-                        request_name = request.name
-                        raise osv.except_osv(_('Error'), _('Please correct the line %s of the %s: the supplier is required for the procurement method "On Order" !') % (line_number, request_name))
-                    # an Internal Request without product can only have Internal, Intersection or Intermission partners.
-                    elif line.supplier and not line.product_id and line.order_id.procurement_request and line.supplier.partner_type not in ['internal', 'section', 'intermission', 'esc']:
-                        raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
-                        the supplier must be either in 'Internal', 'Inter-Section', 'Intermission' or 'ESC' type.
-                        """))
-            message = _("The internal request '%s' has been confirmed (nb lines: %s).") % (request.name, len(request.order_line))
-            proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
-            context.update({'view_id': proc_view and proc_view[1] or False})
-            self.log(cr, uid, request.id, message, context=context)
-
-        self.action_ship_create(cr, uid, ids, context=context)
-
-        return True
-
-    def test_state_done(self, cr, uid, ids, mode, *args):
-        if not self.test_state(cr, uid, ids, mode, *args):
-            return False
-
-        for ir in self.browse(cr, uid, ids):
-            is_out = ir.location_requestor_id.usage == 'customer'
-            if not is_out:
-                return True
-
-            ir_lines = [x.id for x in ir.order_line]
-            out_move_ids = self.pool.get('stock.move').search(cr, uid, [
-                ('picking_id.type', '=', 'out'),
-                ('sale_line_id', 'in', ir_lines),
-                ('state', 'not in', ['done', 'cancel']),
-            ])
-            if out_move_ids:
-                return False
-
-        return True
-
     def procurement_done(self, cr, uid, ids, context=None):
         '''
         Creates all procurement orders according to lines

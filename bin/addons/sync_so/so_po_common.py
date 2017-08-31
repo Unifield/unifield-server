@@ -437,11 +437,6 @@ class so_po_common(osv.osv_memory):
         else:
             res['name'] = order_line.comment
 
-        if src_values.get('procurement_id'): # replicating procurement for RW instance
-            rec_id = self.pool.get('procurement.order').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.procurement_id.id), context=context)
-            if rec_id:
-                res['procurement_id'] = rec_id
-
         if src_values.get('nomen_manda_0'):
             rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_0.id), context=context)
             if rec_id:
@@ -574,11 +569,6 @@ class so_po_common(osv.osv_memory):
                     values['name'] = line.comment
             else:
                 values['name'] = line.comment
-
-            if line_dict.get('procurement_id'): # replicating procurement for RW instance
-                rec_id = self.pool.get('procurement.order').find_sd_ref(cr, uid, xmlid_to_sdref(line.procurement_id.id), context=context)
-                if rec_id:
-                    values['procurement_id'] = rec_id
 
             if line_dict.get('nomen_manda_0'):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_0.id), context=context)
