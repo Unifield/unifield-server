@@ -80,7 +80,9 @@ class enter_reason(osv.osv_memory):
                 context['pol_qty'] = pol_qty
                 context['from_in_cancel'] = True
                 pol_obj.write(cr, uid, pol_ids, {'has_to_be_resourced': True}, context=context)
-                pol_obj.cancel_sol(cr, uid, pol_ids, context=context)
+                for pol in self.pool.get('purchase.order.line').browse(cr, uid, pol_ids, context=context):
+                    if pol.linked_sol_id:
+                        wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
             
             # cancel the IN
             wf_service.trg_validate(uid, 'stock.picking', obj.id, 'button_cancel', cr)

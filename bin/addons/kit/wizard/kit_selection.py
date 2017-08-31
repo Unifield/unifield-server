@@ -225,18 +225,7 @@ class kit_selection(osv.osv_memory):
                                        })
                         # copy existing sol
                         last_line_id = sol_obj.copy(cr, uid, last_line_id, values, context=ctx_keep_info)
-                        # call the new procurement creation method
-                        so_obj.action_ship_proc_create(cr, uid, [obj.corresponding_so_id_kit_selection.id], context=context)
-                        # run the procurement, the make_po function detects the link to original po
-                        # and force merge the line to this po (even if it is not draft anymore)
-                        new_data_so = sol_obj.read(cr, uid, [last_line_id], ['procurement_id'], context=context)
-                        new_proc_id = new_data_so[0]['procurement_id'][0]
-                        wf_service.trg_validate(uid, 'procurement.order', new_proc_id, 'button_check', cr)
-                        # if original po line is confirmed, we action_confirm new line
-                        if obj.order_line_id_kit_selection.state == 'confirmed':
-                            # the correct line number according to new line number policy is set in po_line_values_hook of order_line_number/order_line_number.py/procurement_order
-                            new_po_ids = pol_obj.search(cr, uid, [('procurement_id', '=', new_proc_id)], context=context)
-                            pol_obj.action_confirm(cr, uid, new_po_ids, context=context)
+                        # /* code deletion for partial confirmation US-3185 */
                     else:
                         # first item to be treated, we update the existing purchase order line
                         # sale order line will be updated when the Po is confirmed

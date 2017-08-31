@@ -1774,8 +1774,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if context is None:
             context = {}
         order_lines = []
-        procurement_ids = []
-        proc_move_ids = []
         for order in self.browse(cr, uid, ids, context=context):
             #  Done picking
             for pick in order.picking_ids:
@@ -1784,10 +1782,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             for sol in order.order_line:
                 order_lines.append(sol.id)
-                if sol.procurement_id:
-                    procurement_ids.append(sol.procurement_id.id)
-                    if sol.procurement_id.move_id:
-                        proc_move_ids.append(sol.procurement_id.move_id.id)
 
             # Closed loan counterpart
             if order.loan_id and order.loan_id.state not in ('cancel', 'done') and not context.get('loan_id', False) == order.id:
@@ -1798,13 +1792,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Closed stock moves
         move_ids = self.pool.get('stock.move').search(cr, uid, [('sale_line_id', 'in', order_lines), ('state', 'not in', ('cancel', 'done'))], context=context)
         self.pool.get('stock.move').set_manually_done(cr, uid, move_ids, all_doc=all_doc, context=context)
-        self.pool.get('stock.move').set_manually_done(cr, uid, proc_move_ids, all_doc=all_doc, context=context)
-
-        for procurement in procurement_ids:
-            # Closed procurement
-            wf_service.trg_validate(uid, 'procurement.order', procurement, 'subflow.cancel', cr)
-            wf_service.trg_validate(uid, 'procurement.order', procurement, 'button_check', cr)
-
 
         if all_doc:
             # Detach the PO from his workflow and set the state to done
@@ -1900,238 +1887,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return proc_data
 
-    def action_ship_proc_create(self, cr, uid, ids, context=None):
-        """
-        1/ Check of the analytic distribution
-        2/ Check if there is lines in order
-        3/ Update the delivery confirmed date of sale order in case of STOCK sale order
-           (check split_type_sale_order == 'stock_split_sale_order')
-        4/ Update the delivery confirmed date on sale order line
-        5/ Update the order policy of the sale order according to partner and order type
-        6/ Create and confirm the procurement orders according to line values
-
-        :param cr: Cursor to the database
-        :param uid: ID of the user that runs the method
-        :param ids: List of IDs of the order to validate
-        :param context: Context of the call
-
-        :return True if all order have been written
-        :rtype boolean
-        """
-        # Objects
-        wf_service = netsvc.LocalService("workflow")
-        sol_obj = self.pool.get('sale.order.line')
-        fields_tools = self.pool.get('fields.tools')
-        date_tools = self.pool.get('date.tools')
-        proc_obj = self.pool.get('procurement.order')
-        pol_obj = self.pool.get('purchase.order.line')
-        tl_obj = self.pool.get('tender.line')
-        data_obj = self.pool.get('ir.model.data')
-
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
-        order_brw_list = self.browse(cr, uid, ids)
-
-        lines = []
-
-        # 1/ Check of the analytic distribution
-        self.analytic_distribution_checks(cr, uid, order_brw_list)
-
-        for order in order_brw_list:
-            self.update_sourcing_progress(cr, uid, order, False, {
-                'check_data': _('In Progress'),
-            }, context=context)
-
-            o_write_vals = {}
-            # 2/ Check if there is lines in order
-            if len(order.order_line) < 1:
-                raise osv.except_osv(_('Error'), _('You cannot confirm a Field order without line !'))
-
-            # 3/ Update the delivery confirmed date of sale order in case of STOCK sale order
-            #    (check split_type_sale_order == 'stock_split_sale_order')
-            delivery_confirmed_date = order.delivery_confirmed_date
-
-            prep_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='preparation_lead_time', context=context)
-
-            # If the order is stock So, we update the confirmed delivery date
-            if order.split_type_sale_order == 'stock_split_sale_order':
-                # date values
-                ship_lt = fields_tools.get_field_from_company(cr, uid, object=self._name, field='shipment_lead_time', context=context)
-                # confirmed
-                days_to_add = (ship_lt or 0) + (order.est_transport_lead_time or 0)
-                delivery_confirmed_date = (datetime.today() + relativedelta(days=days_to_add)).strftime(db_date_format)
-                # rts
-                o_rts = (datetime.today() + relativedelta(days=ship_lt or 0)).strftime(db_date_format)
-
-                o_write_vals.update({
-                    'delivery_confirmed_date': delivery_confirmed_date,
-                    'ready_to_ship_date': o_rts,
-                })
-
-            # Put a default delivery confirmed date
-            if not delivery_confirmed_date:
-                o_write_vals['delivery_confirmed_date'] = time.strftime('%Y-%m-%d')
-
-            # For all lines, if the confirmed date is not filled, we copy the header value
-            line_to_write = sol_obj.search(cr, uid, [
-                ('order_id', '=', order.id),
-                ('confirmed_delivery_date', '=', False),
-            ], order='NO_ORDER', context=context)
-
-            if line_to_write:
-                sol_obj.write(cr, uid, line_to_write, {
-                    'confirmed_delivery_date': o_write_vals.get('delivery_confirmed_date', order.delivery_confirmed_date),
-                }, context=context)
-
-            if (order.partner_id.partner_type == 'internal' and order.order_type == 'regular') or \
-               order.order_type in ['donation_exp', 'donation_st', 'loan']:
-                o_write_vals['order_policy'] = 'manual'
-                lines = sol_obj.search(cr, uid, [('order_id', '=', order.id)],
-                                       order='NO_ORDER', context=context)
-
-
-            # flag to prevent the display of the sale order log message
-            # if the method is called after po update, we do not display log message
-            display_log = True
-            line_done = 0
-            self.update_sourcing_progress(cr, uid, order, False, {
-                'check_data': _('Done'),
-            }, context=context)
-            for line in order.order_line:
-                # these lines are valid for all types (stock and order)
-                # when the line is sourced, we already get a procurement for the line
-                # when the line is confirmed, the corresponding procurement order has already been processed
-                # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
-                if line.state not in ['sourced', 'confirmed', 'done'] and not (line.created_by_po_line and line.procurement_id):
-                    if not line.product_id and order.procurement_request:
-                        continue
-
-                    product_id = line.product_id.id
-                    if not order.procurement_request and not line.product_id and line.comment:
-                        product_id = \
-                            data_obj.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
-
-                    rts = self._get_date_planned(order, line, prep_lt, db_date_format)
-                    proc_data = self._get_procurement_order_data(line, order, rts, product_id=product_id, context=context)
-                    proc_id = proc_obj.create(cr, uid, proc_data, context=context)
-                    # set the flag for log message
-                    if line.so_back_update_dest_po_id_sale_order_line or line.created_by_po:
-                        display_log = False
-
-                    if line.created_by_po_line and not line.created_by_po_line.order_id.rfq_ok:
-                        pol_obj.write(cr, uid, [line.created_by_po_line.id], {'procurement_id': proc_id}, context=context)
-
-                    line_values = {
-                        'procurement_id': proc_id,
-                    }
-                    # if the line is draft (it should be the case), we set its state to 'sourced'
-                    if line.state == 'draft':
-                        line_values['state'] = 'sourced'
-
-                    # Avoid a second write on the line if the line must be set as invoiced
-                    if line.id in lines:
-                        line_values['invoiced'] = 1
-                        lines.remove(line.id)
-
-                    sol_obj.write(cr, uid, [line.id], line_values, context=context)
-
-                    if line.created_by_tender_line:
-                        tl_obj.write(cr, uid, [line.created_by_tender_line.id], {
-                            'sale_order_line_id': line.id,
-                        }, context=context)
-
-                    wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
-
-                    if line.created_by_po or line.created_by_rfq or line.created_by_tender:
-                        wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
-
-                    if line.created_by_po:
-                        proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
-
-                    line_done += 1
-                    if line.type == 'make_to_stock':
-                        self.update_sourcing_progress(cr, uid, order, False, {
-                            'line_from_stock_completed': 1,
-                        }, context=context)
-                    else:
-                        self.update_sourcing_progress(cr, uid, order, False, {
-                            'line_on_order_completed': 1,
-                        }, context=context)
-
-            # the Fo is sourced we set the state (keep the IR in confirmed state)
-            if not order.procurement_request:
-                o_write_vals['state'] = 'sourced'
-                self.write(cr, uid, [order.id], o_write_vals, context=context)
-                # display message for sourced
-                if display_log:
-                    self.log(cr, uid, order.id, _('The split \'%s\' is sourced.') % (order.name))
-
-            self.update_sourcing_progress(cr, uid, order, False, {
-                'prepare_picking': _('Done'),
-            }, context=context)
-            prog_obj = self.pool.get('sale.order.sourcing.progress')
-            prog_ids = prog_obj.search(cr, uid, [('order_id', '=', order.id)],
-                                       order='NO_ORDER', context=context)
-            prog_obj.write(cr, uid, prog_ids, {
-                'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-            }, context=context)
-
-        if lines:
-            sol_obj.write(cr, uid, lines, {'invoiced': 1}, context=context)
-
-        return True
-
-    def test_lines(self, cr, uid, ids, context=None):
-        '''
-        return True if all lines of type 'make_to_order' are 'confirmed'
-
-        only if a product is selected
-        internal requests are not taken into account (should not be the case anyway because of separate workflow)
-        '''
-        line_obj = self.pool.get('sale.order.line')
-
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        # Update the context to get IR lines
-        context['procurement_request'] = True
-
-        for order in self.read(cr, uid, ids, ['from_yml_test', 'order_line', 'procurement_request'], context=context):
-            if not self._get_ready_to_cancel(cr, uid, [order['id']], order['order_line'], context=context)[order['id']]:
-                return False
-
-            # backward compatibility for yml tests, if test we do not wait
-            if order['from_yml_test']:
-                continue
-
-            domain = [
-                ('order_id', '=', order['id']),
-                ('type', '=', 'make_to_order'),
-                ('state', '!=', 'confirmed'),
-            ]
-            if order['procurement_request']:
-                domain.append(('product_id', '!=', False))
-
-            domain.extend([
-                '|',
-                ('procurement_id', '=', 'False'),
-                ('procurement_id.state', '!=', 'cancel'),
-            ])
-
-            line_error = line_obj.search(cr, uid, domain, limit=1, order='NO_ORDER', context=context)
-
-            if line_error:
-                return False
-
-        return True
 
     def _get_ready_to_cancel(self, cr, uid, ids, line_ids=[], context=None):
         """
@@ -2504,24 +2259,6 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
 
-        def _get_line_qty(line):
-            if (line.order_id.invoice_quantity=='order') or not line.procurement_id:
-                if line.product_uos:
-                    return line.product_uos_qty or 0.0
-                return line.product_uom_qty
-            else:
-                return self.pool.get('procurement.order').quantity_get(cr, uid,
-                                                                       line.procurement_id.id, context=context)
-
-        def _get_line_uom(line):
-            if (line.order_id.invoice_quantity=='order') or not line.procurement_id:
-                if line.product_uos:
-                    return line.product_uos.id
-                return line.product_uom.id
-            else:
-                return self.pool.get('procurement.order').uom_get(cr, uid,
-                                                                  line.procurement_id.id, context=context)
-
         create_ids = []
         sales = {}
         for line in self.browse(cr, uid, ids, context=context):
@@ -2540,8 +2277,8 @@ class sale_order_line(osv.osv):
                                                             'property_account_income_categ', 'product.category',
                                                             context=context)
                     a = prop and prop.id or False
-                uosqty = _get_line_qty(line)
-                uos_id = _get_line_uom(line)
+                uosqty = line.product_uos_qty
+                uos_id = line.product_uos or line.product_uom or False
                 pu = 0.0
                 if uosqty:
                     pu = round(line.price_unit * line.product_uom_qty / uosqty,
@@ -2639,7 +2376,6 @@ class sale_order_line(osv.osv):
             'move_ids': [],
             'invoiced': False,
             'invoice_lines': [],
-            'procurement_id': False
         })
 
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
@@ -3027,7 +2763,6 @@ class sale_order_line(osv.osv):
             'order_id': order_id,
             'product_uom_qty': qty_diff,
             'product_uos_qty': qty_diff,
-            'procurement_id': False
         }
         context['keepDateAndDistrib'] = True
         if not line.analytic_distribution_id and line.order_id and line.order_id.analytic_distribution_id:
