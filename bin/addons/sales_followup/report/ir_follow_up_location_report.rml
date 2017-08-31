@@ -295,9 +295,8 @@
 	    		</td>
 	    		<td>
                     <para style="LinesBlue">[[ line.get('line_state') != 'cancel' and (line.get('extra_qty', 0) == 0 and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para')) or removeParentNode('para') ]]</para>
-                    <para style="LinesGrey">[[ line.get('line_state') == 'cancel' and (line.get('extra_qty', 0) == 0 and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para')) or removeParentNode('para') ]]</para>
                     <para style="LinesBlue">[[ line.get('line_state') != 'cancel' and (line.get('extra_qty', 0) and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para')) or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('extra_qty', 0.00))) ]])</para>
-                    <para style="LinesGrey">[[ line.get('line_state') == 'cancel' and (line.get('extra_qty', 0) and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para')) or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('extra_qty', 0.00))) ]])</para>
+                    <para style="LinesGrey">[[ line.get('line_state') == 'cancel' and '-' or removeParentNode('para') ]]</para>
 	    		</td>
 	    		<td>
 	    			<para style="LinesBlue">[[ line.get('line_state') != 'cancel' and line.get('delivery_order', '-') or removeParentNode('para') ]]</para>

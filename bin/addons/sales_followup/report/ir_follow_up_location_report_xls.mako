@@ -329,11 +329,7 @@
                     % endif
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivered_uom', '')|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('delivery_order', '')|x}</Data></Cell>
-                    % if line.get('extra_qty', False):
-                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('backordered_qty', 0.00)} (+${line.get('extra_qty', 0.00)|x})</Data></Cell>
-                    % else:
-                    <Cell ss:StyleID="line_right_grey"><Data ss:Type="Number">${line.get('backordered_qty')}</Data></Cell>
-                    % endif
+                    <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">-</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('cdd', False) not in (False, 'False') and saleUstr(formatLang(line.get('cdd'), date=True)) or ''|x}</Data></Cell>
                     <Cell ss:StyleID="line_left_grey"><Data ss:Type="String">${line.get('rts', False) not in (False, 'False') and saleUstr(formatLang(line.get('rts'), date=True)) or ''|x}</Data></Cell>
                 % else:
