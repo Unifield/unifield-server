@@ -1521,18 +1521,6 @@ class purchase_order(osv.osv):
                             return True
         return False
 
-    def _hook_action_picking_create_modify_out_source_loc_check(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_picking_create method from purchase>purchase.py>purchase_order class
-
-        - allow to choose whether or not the source location of the corresponding outgoing stock move should
-        match the destination location of incoming stock move
-        '''
-        order_line = kwargs['order_line']
-        # by default, we change the destination stock move if the destination stock move exists
-        return order_line.move_dest_id
-
     def ensure_object(self, cr, uid, model, value):
         if isinstance(value, (int, long)):
             value = self.pool.get(model).browse(cr, uid, value)
@@ -1647,52 +1635,6 @@ class purchase_order(osv.osv):
 
         return move_obj.create(cr, uid, values, context=ctx)
 
-    def action_picking_create(self, cr, uid, ids, context=None, *args):
-        picking_id = False
-        for order in self.browse(cr, uid, ids):
-            # US-917: Check if any IN exists for the given PO
-            pick_obj = self.pool.get('stock.picking')
-            if pick_obj.search_exist(cr, uid, [('purchase_id', 'in', [order.id])], context=context):
-                return
-            picking_id = self.create_picking(cr, uid, order, context)
-
-            move_obj = self.pool.get('stock.move')
-            line_obj = self.pool.get('purchase.order.line')
-            todo_moves = []
-            moves_to_update = []
-
-            for order_line in order.order_line:
-
-                # Reload the data of the line because if the line comes from an ISR and it's a duplicate line,
-                # the move_dest_id field has been changed by the _hook_action_picking_create_modify_out_source_loc_check method
-                order_line = line_obj.browse(cr, uid, order_line.id, context=context)
-                if not order_line.product_id:
-                    continue
-
-                move = self.create_picking_line(cr, uid, picking_id, order_line, context=context)
-
-                if self._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context=context,
-                                                                                order_line=order_line, move_id=move):
-                    moves_to_update.append(order_line.move_dest_id.id)
-                todo_moves.append(move)
-                # compute function fields
-                if todo_moves:
-                    compute_store = move_obj._store_get_values(cr, uid, todo_moves, None, context)
-                    compute_store.sort()
-                    done = []
-                    for null, store_object, store_ids, store_fields2 in compute_store:
-                        if store_fields2 in ('dpo_incoming', 'dpo_out', 'overall_qty', 'line_state') and not (
-                                store_object, store_ids, store_fields2) in done:
-                            self.pool.get(store_object)._store_set_values(cr, uid, store_ids, store_fields2, context)
-                            done.append((store_object, store_ids, store_fields2))
-                if moves_to_update:
-                    move_obj.write(cr, uid, moves_to_update, {'location_id': order.location_id.id})
-                move_obj.confirm_and_force_assign(cr, uid, todo_moves)
-                wf_service = netsvc.LocalService("workflow")
-                wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
-                return picking_id
-
-        return picking_id
 
     def _get_location_id(self, cr, uid, vals, warehouse_id=False, context=None):
         """

@@ -781,42 +781,5 @@ class procurement_request_line(osv.osv):
 
 procurement_request_line()
 
-class purchase_order(osv.osv):
-    _name = 'purchase.order'
-    _inherit = 'purchase.order'
-
-    def _hook_action_picking_create_modify_out_source_loc_check(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_picking_create method from purchase>purchase.py>purchase_order class
-
-        - allow to choose whether or not the source location of the corresponding outgoing stock move should
-        match the destination location of incoming stock move
-        '''
-        order_line = kwargs['order_line']
-        move_id = kwargs['move_id']
-        proc_obj = self.pool.get('procurement.order')
-        move_obj = self.pool.get('stock.move')
-        sale_line_obj = self.pool.get('sale.order.line')
-        po_line_obj = self.pool.get('purchase.order.line')
-        # If the line comes from an ISR and it's not splitted line,
-        # change the move_dest_id of this line (and their children)
-        # to match with the procurement ordre move destination
-        if order_line.move_dest_id and not order_line.is_line_split:  # UTP-972: Use the boolean for split line
-            proc_ids = proc_obj.search(cr, uid, [('move_id', '=', order_line.move_dest_id.id)], context=context)
-            so_line_ids = sale_line_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
-            po_line_ids = po_line_obj.search(cr, uid, [('move_dest_id', '=', order_line.move_dest_id.id)], context=context)
-            if so_line_ids and all(not line.order_id or (line.order_id.procurement_request and line.order_id.location_requestor_id.usage != 'customer') for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
-                for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
-                    if proc.move_id:
-                        move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
-                        move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
-                    proc_obj.write(cr, uid, [proc.id], {'move_id': move_id}, context=context)
-                    # Update the move_dest_id of all children to avoid the system to deal with a deleted stock move
-                    po_line_obj.write(cr, uid, po_line_ids, {'move_dest_id': move_id}, context=context)
-
-        return super(purchase_order, self)._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context, *args, **kwargs)
-
-purchase_order()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
