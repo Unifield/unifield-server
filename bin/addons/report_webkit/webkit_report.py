@@ -525,8 +525,9 @@ class WebKitParser(report_sxw):
 
             # check the number is really a number, if not, set it to zero
             try:
-                float(cell.text)
-            except ValueError:
+                if cell.text:
+                    float(cell.text)
+            except (ValueError, TypeError):
                 error_message = 'Line %s of document %s is corrupted, a '\
                     'Number cell contain other things than number: %r. '\
                     'It has been replaced by 0.0.' % \
