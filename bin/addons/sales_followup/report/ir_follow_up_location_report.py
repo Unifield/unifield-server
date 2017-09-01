@@ -172,14 +172,14 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                 if line_state != 'cancel' and line.procurement_id.purchase_id.state == 'cancel':
                     line_state = 'cancel'
 
-            if len(line.move_ids) > 0 and not from_stock:
+            if len(line.move_ids) > 0:
                 for move in line.move_ids:
                     m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
                     ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
                     ppl_not_shipped = move.picking_id.subtype == 'ppl' and move.picking_id.state not in ('cancel', 'done')
                     s_out = move.picking_id.subtype == 'standard' and move.location_dest_id.usage == 'customer'
 
-                    if m_type and (ppl or ppl_not_shipped or s_out):
+                    if (m_type and (ppl or ppl_not_shipped or s_out)) or from_stock:
                         # bo_qty < 0 if we receipt (IN) more quantities then expected (FO):
                         bo_qty -= self.pool.get('product.uom')._compute_qty(
                             self.cr,
@@ -241,7 +241,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 'eta': not only_bo and eta and eta.strftime('%Y-%m-%d'),
                                 'transport': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.transport_type or '-',
                             })
-                        elif not ppl and not ppl_not_shipped and s_out:
+                        elif not ppl and not ppl_not_shipped and s_out and not from_stock:
                             is_done = move.picking_id.state == 'done'
                             if not grouped:
                                 key = (False, False, move.product_uom.name)
@@ -255,6 +255,29 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                     'delivered_uom': is_done and move.product_uom.name or '-',
                                     'is_delivered': is_done,
                                     'backordered_qty': not is_done and line.order_id.state != 'cancel' and move.product_qty or 0.00,
+                                    'rts': line.order_id.ready_to_ship_date,
+                                })
+                        elif from_stock:
+                            if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
+                                packing = move.picking_id.previous_step_id.name
+                                shipment = move.picking_id.shipment_id.name or '-'
+                                is_shipment_done = move.picking_id.shipment_id.state == 'done'
+                            else:
+                                shipment = move.picking_id.name or '-'
+                                is_shipment_done = move.picking_id.state == 'done'
+                                packing = '-'
+                            if not grouped:
+                                key = (packing, shipment, move.product_uom.name)
+                            else:
+                                key = (packing, shipment, move.product_uom.name, line.line_number)
+                            if not only_bo:
+                                data.update({
+                                    'packing': packing,
+                                    'shipment': shipment,
+                                    'delivered_qty': is_shipment_done and move.product_qty or 0.00,
+                                    'delivered_uom': is_shipment_done and move.product_uom.name or '-',
+                                    'is_delivered': is_shipment_done,
+                                    'backordered_qty': not is_shipment_done and line.order_id.state != 'cancel' and move.product_qty or 0.00,
                                     'rts': line.order_id.ready_to_ship_date,
                                 })
                         else:
@@ -292,7 +315,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             if data.get('first_line'):
                                 fl_index = m_index
                             m_index += 1
-            elif line_move and ((len(line.move_ids) == 0 and line.procurement_id.move_id) or from_stock):
+            elif line_move and (len(line.move_ids) == 0 and line.procurement_id.move_id):
                 m_type = line_move.product_qty != 0.00
 
                 if m_type:
