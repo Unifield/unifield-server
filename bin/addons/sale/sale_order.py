@@ -600,16 +600,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 raise osv.except_osv(_('Invalid action !'), _('Cannot delete Sales Order(s) which are already confirmed !'))
         return osv.osv.unlink(self, cr, uid, unlink_ids, context=context)
 
-    def onchange_shop_id(self, cr, uid, ids, shop_id):
-        v = {}
-        if shop_id:
-            shop = self.pool.get('sale.shop').browse(cr, uid, shop_id)
-            v['project_id'] = shop.project_id.id
-            # Que faire si le client a une pricelist a lui ?
-            if shop.pricelist_id.id:
-                v['pricelist_id'] = shop.pricelist_id.id
-        return {'value': v}
-
     def action_cancel_draft(self, cr, uid, ids, *args):
         if not len(ids):
             return False
@@ -911,61 +901,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     cr.execute('insert into sale_order_invoice_rel (order_id,invoice_id) values (%s,%s)', (order.id, res))
         return res
 
-    def action_invoice_cancel(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        for sale in self.browse(cr, uid, ids, context=context):
-            for line in sale.order_line:
-                #
-                # Check if the line is invoiced (has asociated invoice
-                # lines from non-cancelled invoices).
-                #
-                invoiced = False
-                for iline in line.invoice_lines:
-                    if iline.invoice_id and iline.invoice_id.state != 'cancel':
-                        invoiced = True
-                        break
-                # Update the line (only when needed)
-                if line.invoiced != invoiced:
-                    self.pool.get('sale.order.line').write(cr, uid, [line.id], {'invoiced': invoiced}, context=context)
-        self.write(cr, uid, ids, {'state': 'invoice_except', 'invoice_ids': False}, context=context)
-        return True
-
-    def action_invoice_end(self, cr, uid, ids, context=None):
-        '''
-        Modified to set lines invoiced when order_type is not regular
-        '''
-        for order in self.browse(cr, uid, ids, context=context):
-            #
-            # Update the sale order lines state (and invoiced flag).
-            #
-            for line in order.order_line:
-                vals = {}
-                #
-                # Check if the line is invoiced (has asociated invoice
-                # lines from non-cancelled invoices).
-                #
-                invoiced = order.noinvoice
-                if not invoiced:
-                    for iline in line.invoice_lines:
-                        if iline.invoice_id and iline.invoice_id.state != 'cancel':
-                            invoiced = True
-                            break
-                if line.invoiced != invoiced:
-                    vals['invoiced'] = invoiced
-                # If the line was in exception state, now it gets confirmed.
-                if line.state == 'exception':
-                    vals['state'] = 'confirmed'
-                # Update the line (only when needed).
-                if vals:
-                    self.pool.get('sale.order.line').write(cr, uid, [line.id], vals, context=context)
-            #
-            # Update the sales order state.
-            #
-            if order.state == 'invoice_except':
-                self.write(cr, uid, [order.id], {'state': 'progress'}, context=context)
-        return True
-
     def action_cancel_orig(self, cr, uid, ids, context=None):
         wf_service = netsvc.LocalService("workflow")
         if context is None:
@@ -1034,26 +969,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ))
         return True
 
-    def _hook_ship_create_stock_move(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-
-        - allow to modify the data for stock move creation
-        '''
-        move_data = kwargs['move_data']
-        return move_data
-
-    def _hook_ship_create_procurement_order(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-
-        - allow to modify the data for procurement order creation
-        '''
-        proc_data = kwargs['proc_data']
-        return proc_data
-
     def _hook_ship_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
@@ -1065,100 +980,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         result['reason_type_id'] = self._get_reason_type(cr, uid, kwargs['order'], context)
 
         return result
-
-    def _hook_ship_create_execute_picking_workflow(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-
-        - allow to avoid the stock picking workflow execution
-        '''
-        picking_id = kwargs['picking_id']
-        return picking_id
-
-    def _hook_ship_create_execute_specific_code_01(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-
-        - allow to execute specific code at position 01
-        '''
-        pass
-
-    def _hook_ship_create_execute_specific_code_02(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-
-        - allow to execute specific code at position 02
-        '''
-        pass
-
-    def _hook_procurement_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-
-        - allow to customize the execution condition
-        '''
-        return True
-
-    def _hook_ship_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-
-        - allow to customize the execution condition
-        '''
-        line = kwargs['line']
-        result = line.product_id and line.product_id.product_tmpl_id.type in ('product', 'consu', 'service_recep')
-        return result
-
-    def _hook_ship_create_product_id(self, cr, uid, ids, context=None,  *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-
-        - allow to modifiy product especially for internal request which type is "make_to_order"
-        '''
-        pass
-
-    def _hook_ship_create_uom_id(self, cr, uid, ids, context=None,  *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-
-        - allow to  modifiy uom especially for internal request which type is "make_to_order"
-        '''
-        pass
-
-    def _hook_execute_action_assign(self, cr, uid, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_ship_create method from sale>sale.py
-
-        - allow to add more actions when the picking is confirmed
-        '''
-        return True
-
-    def action_ship_end(self, cr, uid, ids, context=None):
-        for order in self.browse(cr, uid, ids, context=context):
-            val = {'shipped': True}
-            if order.state == 'shipping_except':
-                val['state'] = 'progress'
-                if (order.order_policy == 'manual'):
-                    for line in order.order_line:
-                        if (not line.invoiced) and (line.state not in ('cancel', 'draft')):
-                            val['state'] = 'manual'
-                            break
-            for line in order.order_line:
-                towrite = []
-                if line.state == 'exception':
-                    towrite.append(line.id)
-                if towrite:
-                    self.pool.get('sale.order.line').write(cr, uid, towrite, {'state': 'done'}, context=context)
-            self.write(cr, uid, [order.id], val)
-        return True
 
     def _log_event(self, cr, uid, ids, factor=0.7, name='Open Order'):
         invs = self.read(cr, uid, ids, ['date_order', 'partner_id', 'amount_untaxed'])
@@ -1183,19 +1004,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'type': eventtype
             }
             self.pool.get('res.partner.event').create(cr, uid, event)
-
-    def has_stockable_products(self, cr, uid, ids, *args):
-        '''
-        Override the has_stockable_product to return False
-        when the internal_type of the order is 'direct'
-        '''
-        for order in self.browse(cr, uid, ids):
-            if order.order_type != 'direct':
-                for order_line in order.order_line:
-                    if order_line.product_id and order_line.product_id.product_tmpl_id.type in ('product', 'consu'):
-                        return True
-
-        return False
     
     def _check_own_company(self, cr, uid, company_id, context=None):
         '''
@@ -1286,51 +1094,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             })
 
         return {'warning': message}
-
-    def update_sourcing_progress(self, cr, uid, order, prog_id=False, values=None, context=None):
-        '''
-        Update the osv_memory sourcing process object linked to order ID.
-
-        :param cr: Cursor to the database
-        :param uid: ID of the user that calls the method
-        :param order: browse_record of a sale.order or the ID of a sale.order
-        :param prog_id: ID of a sale.order.sourcing.progress.mem to update
-        :param values: Dictionary that contains the value to put on sourcing
-                       process object
-        :param context: Context of the call
-
-        :return: The ID of the sale.order.sourcing.progress.mem that have been
-                 updated
-        '''
-        prog_obj = self.pool.get('sale.order.sourcing.progress.mem')
-
-        if not prog_id:
-            if not isinstance(order, browse_record) and isinstance(order, (int, long)):
-                order = self.browse(cr, uid, order, context=context)
-
-            order_id = order.original_so_id_sale_order and order.original_so_id_sale_order.id or order.id
-
-            prog_ids = prog_obj.search(cr, uid, [('order_id', '=', order_id)], context=context)
-            if prog_ids:
-                prog_id = prog_ids[0]
-            else:
-                prog_id = prog_obj.create(cr, uid, {
-                    'order_id': order_id,
-                }, context=context)
-
-        if not values:
-            return prog_id
-
-        for fld in ['line_on_order_completed', 'line_from_stock_completed']:
-            if fld in values:
-                line_completed = prog_obj.read(cr, uid, [prog_id], [fld], context=context)[0][fld]
-                line_completed += values[fld]
-                values[fld] = line_completed
-
-        prog_obj.write(cr, uid, [prog_id], values, context=context)
-
-        return prog_id
-
 
     def ask_resource_lines(self, cr, uid, ids, context=None):
         '''
@@ -1464,59 +1227,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         Hook the message displayed on sale order confirmation
         '''
         return _('The Field order \'%s\' has been confirmed.') % (kwargs['order'].name,)
-
-    def action_purchase_order_create(self, cr, uid, ids, context=None):
-        '''
-        Create a purchase order as counterpart for the loan.
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-
-        purchase_obj = self.pool.get('purchase.order')
-        purchase_line_obj = self.pool.get('purchase.order.line')
-        partner_obj = self.pool.get('res.partner')
-
-        for order in self.browse(cr, uid, ids):
-            # UTP-392: don't create a PO if it is created by sync ofr the loan
-            if order.is_a_counterpart or order.order_type != 'loan':
-                return
-
-            # from yml test is updated according to order value
-            values = {'partner_id': order.partner_id.id,
-                      'partner_address_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['contact'])['contact'],
-                      'pricelist_id': order.partner_id.property_product_pricelist_purchase.id,
-                      'loan_id': order.id,
-                      'loan_duration': order.loan_duration,
-                      'origin': order.name,
-                      'order_type': 'loan',
-                      'delivery_requested_date': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
-                      'categ': order.categ,
-                      'location_id': order.shop_id.warehouse_id.lot_input_id.id,
-                      'priority': order.priority,
-                      'from_yml_test': order.from_yml_test,
-                      'is_a_counterpart': True,
-                      }
-            context['is_a_counterpart'] = True
-            order_id = purchase_obj.create(cr, uid, values, context=context)
-            for line in order.order_line:
-                purchase_line_obj.create(cr, uid, {'product_id': line.product_id and line.product_id.id or False,
-                                                   'product_uom': line.product_uom.id,
-                                                   'order_id': order_id,
-                                                   'price_unit': line.price_unit,
-                                                   'product_qty': line.product_uom_qty,
-                                                   'date_planned': (today() + RelativeDateTime(months=+order.loan_duration)).strftime('%Y-%m-%d'),
-                                                   'name': line.name, }, context)
-            self.write(cr, uid, [order.id], {'loan_id': order_id})
-
-            purchase = purchase_obj.browse(cr, uid, order_id)
-
-            message = _("Loan counterpart '%s' has been created.") % (purchase.name,)
-
-            purchase_obj.log(cr, uid, order_id, message)
-
-        return order_id
 
     def _get_reason_type(self, cr, uid, order, context=None):
         r_types = {
@@ -1814,79 +1524,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             return line.related_sourcing_id.id
 
         return False
-
-    def _get_procurement_order_data(self, line, order, rts_date, product_id=False, context=None):
-        """
-        Get data for the  procurement order creation according to
-        sale.order.line and sale.order values.
-
-        :param line: browse_record of a sale.order.line
-        :param order: browse_record of a sale.order
-        :param rts_date: Ready to ship date of the procurement order to create
-        :param context: Context of the call
-        """
-        if context is None:
-            context = {}
-
-        # Check type of parameters
-        for param in [line, order]:
-            self._check_browse_param(param, '_create_procurement_order')
-
-        if line.type == 'make_to_order':
-            location_id = order.shop_id.warehouse_id.lot_input_id.id
-        else:
-            location_id = order.shop_id.warehouse_id.lot_stock_id.id
-
-        proc_data = {
-            'name': line.name,
-            'origin': order.name,
-            'product_qty': line.product_uom_qty,
-            'product_uom': line.product_uom.id,
-            'product_uos_qty': (line.product_uos and line.product_uos_qty)\
-            or line.product_uom_qty,
-            'product_uos': (line.product_uos and line.product_uos.id)\
-            or line.product_uom.id,
-            'location_id': location_id,
-            'procure_method': line.type,
-            'move_id': False,  # will be completed at ship state in action_ship_create method
-            'property_ids': [(6, 0, [x.id for x in line.property_ids])],
-            'company_id': order.company_id.id,
-            'supplier': line.supplier and line.supplier.id or False,
-            'po_cft': line.po_cft or False,
-            'related_sourcing_id': self._get_related_sourcing_id(line),
-            'date_planned': rts_date,
-            'from_yml_test': order.from_yml_test,
-            'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
-            'so_back_update_dest_pol_id_procurement_order': line.so_back_update_dest_pol_id_sale_order_line.id,
-            'sale_id': line.order_id.id,
-            'purchase_id': line.created_by_po.id or False,
-        }
-
-        if line.created_by_rfq:
-            proc_data.update({
-                'purchase_id': False,
-                'is_rfq': True,
-                'is_rfq_done': True,
-                'po_cft': 'rfq',
-                'rfq_id': line.created_by_rfq and line.created_by_rfq.id,
-            })
-
-        if line.created_by_tender:
-            proc_data.update({
-                'is_tender_done': True,
-                'po_cft': 'cft',
-                'tender_line_id': line.created_by_tender_line and line.created_by_tender_line.id or False,
-                'tender_id': line.created_by_tender and line.created_by_tender.id or False,
-            })
-
-        if not product_id and line.product_id:
-            product_id = line.product_id.id
-
-        if product_id:
-            proc_data['product_id'] = product_id
-
-        return proc_data
-
 
     def _get_ready_to_cancel(self, cr, uid, ids, line_ids=[], context=None):
         """
@@ -2331,26 +1968,6 @@ class sale_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             wf_service.trg_write(uid, 'sale.order', line.order_id.id, cr)
         return res
-
-    def uos_change(self, cr, uid, ids, product_uos, product_uos_qty=0, product_id=None):
-        product_obj = self.pool.get('product.product')
-        if not product_id:
-            return {'value': {'product_uom': product_uos,
-                              'product_uom_qty': product_uos_qty}, 'domain': {}}
-
-        product = product_obj.browse(cr, uid, product_id)
-        value = {
-            'product_uom': product.uom_id.id,
-        }
-        # FIXME must depend on uos/uom of the product and not only of the coeff.
-        try:
-            value.update({
-                'product_uom_qty': product_uos_qty / product.uos_coeff,
-                'th_weight': product_uos_qty / product.uos_coeff * product.weight
-            })
-        except ZeroDivisionError:
-            pass
-        return {'value': value}
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
