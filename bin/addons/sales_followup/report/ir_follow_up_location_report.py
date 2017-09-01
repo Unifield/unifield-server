@@ -173,6 +173,13 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     line_state = 'cancel'
 
             if len(line.move_ids) > 0:
+                # creating a table in the case there is an IN with from on order lines but
+                # with only partially processed products to the OUT
+                moves_on_order = []
+                for move in line.move_ids:
+                    if move.sale_line_id.type != 'make_to_stock':
+                        moves_on_order.append(move)
+
                 for move in line.move_ids:
                     m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
                     ppl = move.picking_id.subtype == 'packing' and move.picking_id.shipment_id and not self._is_returned(move)
@@ -257,7 +264,13 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 shipment = move.picking_id.name or '-'
                                 is_shipment_done = move.picking_id.state == 'done'
                                 packing = '-'
-                                if len(line.move_ids) >= 2 and line.move_ids[0].picking_id.state == line.move_ids[1].picking_id.state == 'assigned':
+                                # to get only one line with the right qty to deliver if the OUT product from the line
+                                # haven't been processed
+                                if len(moves_on_order) > 1:
+                                    qty_to_deliver = 0.00
+                                    for on_order_move in moves_on_order:
+                                        if on_order_move.picking_id.state == 'assigned':
+                                            qty_to_deliver += not is_shipment_done and line.order_id.state != 'cancel' and on_order_move.product_qty or 0.00
                                     not_processed = True
                             if not grouped:
                                 key = (packing, shipment, move.product_uom.name, state)
@@ -273,11 +286,9 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                     'backordered_qty': not is_shipment_done and line.order_id.state != 'cancel' and move.product_qty or 0.00,
                                     'rts': line.order_id.ready_to_ship_date,
                                 })
-                                if not_processed:
-                                    qty_to_deliver_mv1 = not is_shipment_done and line.order_id.state != 'cancel' and line.move_ids[0].product_qty or 0.00
-                                    qty_to_deliver_mv2 = not is_shipment_done and line.order_id.state != 'cancel' and line.move_ids[1].product_qty or 0.00
+                                if not_processed and qty_to_deliver:
                                     data.update({
-                                        'backordered_qty': (qty_to_deliver_mv1 + qty_to_deliver_mv2) or 0.00,
+                                        'backordered_qty': qty_to_deliver or 0.00,
                                     })
                         else:
                             if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
