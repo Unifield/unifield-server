@@ -71,7 +71,7 @@ class delete_sale_order_line_wizard(osv.osv_memory):
                 _moves_arch_lst = """
                                 <form>
                                 <separator colspan="6" string="You are about to delete the products %s, are you sure you wish to proceed ?"/>
-                                <button name="unlink" string="OK, delete lines" type="object" icon="gtk-apply"
+                                <button name="fake_unlink" string="OK, delete lines" type="object" icon="gtk-apply"
                                     context="{'ids': %s, 'order_id': %s}"/>
                                 <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
                                 """ % (escaped_default_code, line_ids, parent_so_id)
@@ -85,7 +85,7 @@ class delete_sale_order_line_wizard(osv.osv_memory):
                 _moves_arch_lst = """
                                 <form>
                                 <separator colspan="6" string="You are about to delete the product %s, are you sure you wish to proceed ?"/>
-                                <button name="unlink" string="OK, delete line" type="object" icon="gtk-apply" 
+                                <button name="fake_unlink" string="OK, delete line" type="object" icon="gtk-apply" 
                                     context="{'line_id': %s, 'order_id': %s}"/>
                                 <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
                                 """ % (escaped_default_code, line.id, line.order_id.id)
@@ -94,7 +94,7 @@ class delete_sale_order_line_wizard(osv.osv_memory):
 
         return result
 
-    def unlink(self, cr, uid, ids, context=None):
+    def fake_unlink(self, cr, uid, ids, context=None):
         '''
         deletes the corresponding line, and asks to cancel the FO if it has no line
         '''

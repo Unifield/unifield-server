@@ -606,7 +606,7 @@ class wizard_delete_lines(osv.osv_memory):
                     'noraise': True,
                     'from_del_wizard': True,
                 })
-                if wiz.to_remove_type in ('purchase.order.line', 'tender.line'):
+                if wiz.to_remove_type in ('purchase.order.line', 'tender.line', 'delete.sale.order.line.wizard'):
                     line_obj.fake_unlink(cr, uid, line_ids, context=context)
                 else:
                     line_obj.unlink(cr, uid, line_ids, context=context)
