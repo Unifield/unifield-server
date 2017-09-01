@@ -242,7 +242,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 'transport': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.transport_type or '-',
                             })
                         elif (not ppl and not ppl_not_shipped and s_out) or from_stock:
-                            if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
+                            if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing' and not from_stock:
                                 packing = move.picking_id.previous_step_id.name
                                 shipment = move.picking_id.shipment_id.name or '-'
                                 is_shipment_done = move.picking_id.shipment_id.state == 'done'
