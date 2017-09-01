@@ -241,23 +241,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 'eta': not only_bo and eta and eta.strftime('%Y-%m-%d'),
                                 'transport': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.transport_type or '-',
                             })
-                        elif not ppl and not ppl_not_shipped and s_out and not from_stock:
-                            is_done = move.picking_id.state == 'done'
-                            if not grouped:
-                                key = (False, False, move.product_uom.name)
-                            else:
-                                key = (False, False, move.product_uom.name, line.line_number)
-                            if not only_bo:
-                                data.update({
-                                    'packing': '-',
-                                    'shipment': '-',
-                                    'delivered_qty': is_done and move.product_qty or 0.00,
-                                    'delivered_uom': is_done and move.product_uom.name or '-',
-                                    'is_delivered': is_done,
-                                    'backordered_qty': not is_done and line.order_id.state != 'cancel' and move.product_qty or 0.00,
-                                    'rts': line.order_id.ready_to_ship_date,
-                                })
-                        elif from_stock:
+                        elif (not ppl and not ppl_not_shipped and s_out) or from_stock:
                             if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
                                 packing = move.picking_id.previous_step_id.name
                                 shipment = move.picking_id.shipment_id.name or '-'
