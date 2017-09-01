@@ -1230,36 +1230,6 @@ class purchase_order_line(osv.osv):
 
         return res
 
-    def get_exp_sol_ids_from_pol_ids(self, cr, uid, ids, context=None, po_line=False):
-        """
-        input: purchase order line ids
-        return: expected sale order line ids
-        """
-        exp_sol_obj = self.pool.get('expected.sale.order.line')
-        so_obj = self.pool.get('sale.order')
-
-        if context is None:
-            context = {}
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        if po_line and isinstance(po_line, (int, long)):
-            po_line = [po_line]
-
-        so_name = []
-        for line in self.read(cr, uid, ids, ['origin'], context=context):
-            if line['origin'] and line['origin'] not in so_name:
-                so_name.append(line['origin'])
-
-        so_ids = so_obj.search(cr, uid, [('name', 'in', so_name)],
-                               order='NO_ORDER', context=context)
-        exp_sol_domain = [('order_id', 'in', so_ids)]
-        if po_line:
-            exp_sol_domain.append(('po_line_id', 'not in', po_line))
-
-        return exp_sol_obj.search(cr, uid, exp_sol_domain, context=context)
-
     def get_sol_ids_from_pol_ids(self, cr, uid, ids, context=None):
         '''
         input: purchase order line ids
