@@ -1436,46 +1436,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 })
 
         return self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
-
-
-    def get_existing_pick(self, cr, uid, ids, context=None):
-        """
-        Do we have to create new picking ticket or use an existing one ?
-        If an existing one can be used, then returns his ID, otherwise returns False
-        @return ID (int) of document to use or False
-        """
-        if context is None:
-            context = {}
-        if isinstance(ids, (int,long)):
-            ids = [ids]
-
-        res_id = False
-        for sourcing_line in self.browse(cr, uid, ids, context=context):
-            domain = [
-                ('partner_id2', '=', sourcing_line.order_id.partner_id.id),
-                ('state', 'in', ['draft', 'assigned']),
-            ]
-            res_id = self.pool.get('stock.picking').search(cr, uid, domain, context=context)
-            if res_id and isinstance(res_id, list):
-                res_id = res_id[0]
-
-        return res_id
-
-
-    def create_pick_from_sourcing_line(self, cr, uid, ids, context=None):
-        '''
-        from sale.order.line to stock.picking (PICK) line
-        '''
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for sourcing_line in self.browse(cr, uid, ids, context=context):
-            pick_values = self.pool.get('sale.order')._get_picking_data(cr, uid, sourcing_line.order_id, context=context)
-
-        return self.pool.get('stock.picking').create(cr, uid, pick_values, context=context)
-        
+     
 
     def source_line(self, cr, uid, ids, context=None):
         """
