@@ -214,23 +214,20 @@ class sale_order_followup(osv.osv_memory):
         '''
         Returns a list of purchase orders related to the sale order line
         '''
-        line_obj = self.pool.get('sale.order.line')
-        
+        if context is None:
+            context = {}
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
             
-        purchase_ids = []
-        
-        for line in line_obj.browse(cr, uid, line_id, context=context):
-            if line.type == 'make_to_order' and line.procurement_id:
-                if line.procurement_id.purchase_id and not line.procurement_id.purchase_id.rfq_ok:
-                    purchase_ids.append(line.procurement_id.purchase_id.id)
-                elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
-                    for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if not rfq.rfq_ok:
-                            purchase_ids.append(rfq.id)
+        po_ids = set()
+        for sol in self.pool.get('sale.order.line').browse(cr, uid, line_id, context=context):
+            linked_pol = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)])
+            if sol.type == 'make_to_order' and linked_pol:
+                linked_pol = self.pool.get('purchase.order.line').browse(cr, uid, linked_pol, context=context)[0]
+                if not linked_pol.order_id.rfq_ok:
+                    po_ids.add(linked_pol.order_id.id)
 
-        return purchase_ids
+        return list(po_ids)
 
     def get_purchase_line_ids(self, cr, uid, line_id, purchase_ids, context=None):
         '''
@@ -255,24 +252,20 @@ class sale_order_followup(osv.osv_memory):
         '''
         Returns a list of request for quotation related to the sale order line
         '''
-        line_obj = self.pool.get('sale.order.line')
-        
+        if context is None:
+            context = {}
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
-            
-        quotation_ids = []
-        
-        for line in line_obj.browse(cr, uid, line_id, context=context):
-            if line.type == 'make_to_order' and line.procurement_id:
-                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.rfq_ok:
-                    quotation_ids.append(line.procurement_id.purchase_id.id)
-                elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
-                    for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if rfq.rfq_ok:
-                            quotation_ids.append(rfq.id)
+
+        rfq_ids = set()
+        for sol in self.pool.get('sale.order.line').browse(cr, uid, line_id, context=context):
+            linked_pol = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)])
+            if sol.type == 'make_to_order' and linked_pol:
+                linked_pol = self.pool.get('purchase.order.line').browse(cr, uid, linked_pol, context=context)[0]
+                if linked_pol.order_id.rfq_ok:
+                    rfq_ids.add(linked_pol.order_id.id)
                 
-        
-        return quotation_ids
+        return rfq_ids
         
     def get_incoming_ids(self, cr, uid, line_id, purchase_ids, context=None):
         '''
