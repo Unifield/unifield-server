@@ -3532,6 +3532,8 @@ class stock_picking(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
 
         # if wizard already exists, then open it (able save as draft/reset functionnality):
         wiz_ids = proc_obj.search(cr, uid, [('picking_id', 'in', ids), ('draft', '=', True)], context=context)
@@ -3548,6 +3550,7 @@ class stock_picking(osv.osv):
             'view_type': 'form',
             'view_mode': 'form',
             'target': 'new',
+            'context': context,
         }
 
     def do_create_picking(self, cr, uid, wizard_ids, context=None):
