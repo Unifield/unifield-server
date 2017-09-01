@@ -44,15 +44,6 @@ class purchase_order(osv.osv):
     _description = "Purchase Order"
     _order = "name desc"
 
-
-    def _calc_amount(self, cr, uid, ids, prop, unknow_none, unknow_dict):
-        res = {}
-        for order in self.browse(cr, uid, ids):
-            res[order.id] = 0
-            for oline in order.order_line:
-                res[order.id] += oline.price_unit * oline.product_qty
-        return res
-
     def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         cur_obj=self.pool.get('res.currency')
@@ -791,17 +782,6 @@ class purchase_order(osv.osv):
     def button_dummy(self, cr, uid, ids, context=None):
         return True
 
-    def onchange_dest_address_id(self, cr, uid, ids, adr_id):
-        if not adr_id:
-            return {}
-        values = {'warehouse_id': False}
-        part_id = self.pool.get('res.partner.address').browse(cr, uid, adr_id).partner_id
-        if part_id:
-            loc_id = part_id.property_stock_customer.id
-            values.update({'location_id': loc_id})
-        return {'value':values}
-
-
     def _hook_o_line_value(self, cr, uid, *args, **kwargs):
         o_line = super(purchase_order, self)._hook_o_line_value(cr, uid, *args, **kwargs)
         order_line = kwargs['order_line']
@@ -1420,90 +1400,6 @@ class purchase_order(osv.osv):
         confirmed = confirmed.strftime(db_date_format)
 
         return confirmed
-
-    def check_if_product(self, cr, uid, ids, context=None):
-        """
-        Check if all line have a product before confirming the Purchase Order
-        """
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.order_line:
-                for line in po.order_line:
-                    if not line.product_id:
-                        raise osv.except_osv(_('Error !'), _('You should have a product on all Purchase Order lines to be able to confirm the Purchase Order.') )
-        return True
-
-    def need_counterpart(self, cr, uid, ids, context=None):
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.order_type == 'loan' and not po.loan_id and not po.is_a_counterpart and po.partner_id.partner_type not in ('internal', 'intermission', 'section'):
-                return True
-        return False
-
-    def go_to_loan_done(self, cr, uid, ids, context=None):
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.order_type not in ('loan', 'direct') or po.loan_id or (po.order_type == 'loan' and po.partner_id.partner_type in ('internal', 'intermission', 'section')):
-                return True
-        return False
-
-    def action_sale_order_create(self, cr, uid, ids, context=None):
-        '''
-        Create a sale order as counterpart for the loan.
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-
-        sale_obj = self.pool.get('sale.order')
-        sale_line_obj = self.pool.get('sale.order.line')
-        sale_shop = self.pool.get('sale.shop')
-        partner_obj = self.pool.get('res.partner')
-
-        for order in self.browse(cr, uid, ids):
-            if order.is_a_counterpart or (order.order_type == 'loan' and order.partner_id.partner_type in ('internal', 'intermission', 'section')):
-                # UTP-392: This PO is created by the synchro from a Loan FO of internal/intermission partner, so do not generate the counterpart FO
-                return
-
-            loan_duration = Parser.DateFromString(order.minimum_planned_date) + RelativeDateTime(months=+order.loan_duration)
-            # from yml test is updated according to order value
-            values = {'shop_id': sale_shop.search(cr, uid, [])[0],
-                      'partner_id': order.partner_id.id,
-                      'partner_order_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['contact'])['contact'],
-                      'partner_invoice_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['invoice'])['invoice'],
-                      'partner_shipping_id': partner_obj.address_get(cr, uid, [order.partner_id.id], ['delivery'])['delivery'],
-                      'pricelist_id': order.partner_id.property_product_pricelist.id,
-                      'loan_id': order.id,
-                      'loan_duration': order.loan_duration,
-                      'origin': order.name,
-                      'order_type': 'loan',
-                      'delivery_requested_date': loan_duration.strftime('%Y-%m-%d'),
-                      'categ': order.categ,
-                      'priority': order.priority,
-                      'from_yml_test': order.from_yml_test,
-                      'is_a_counterpart': True,
-                      }
-            order_id = sale_obj.create(cr, uid, values, context=context)
-            for line in order.order_line:
-                sale_line_obj.create(cr, uid, {'product_id': line.product_id and line.product_id.id or False,
-                                               'product_uom': line.product_uom.id,
-                                               'order_id': order_id,
-                                               'price_unit': line.price_unit,
-                                               'product_uom_qty': line.product_qty,
-                                               'date_planned': loan_duration.strftime('%Y-%m-%d'),
-                                               'confirmed_delivery_date': loan_duration.strftime('%Y-%m-%d'),
-                                               'delay': 60.0,
-                                               'name': line.name,
-                                               'type': line.product_id.procure_method})
-            self.write(cr, uid, [order.id], {'loan_id': order_id})
-
-            sale = sale_obj.read(cr, uid, order_id, ['name'])
-            message = _("Loan counterpart '%s' has been created and validated. Please confirm it.") % (sale['name'],)
-
-            sale_obj.log(cr, uid, order_id, message)
-
-        return order_id
 
     def has_stockable_product(self,cr, uid, ids, *args):
         '''
