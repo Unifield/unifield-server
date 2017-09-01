@@ -901,14 +901,14 @@ class shipment(osv.osv):
                         ], context=context)
                         if not save_as_draft_move: # then create the SaD line:
                             move_data = self.pool.get('create.picking.move.processor')._get_line_data(cr, uid, wizard=picking_processor_wiz, move=draft_move, context=context)
-                            move_data.update({'quantity': move.product_qty})
+                            move_data.update({'quantity': return_qty})
                             save_as_draft_move = self.pool.get('create.picking.move.processor').create(cr, uid, move_data, context=context)
                             save_as_draft_move = [save_as_draft_move]
                         else: # update Sad line
                             for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
                                 self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
-                                    'ordered_quantity': sad_move.ordered_quantity + move.product_qty,
-                                    'quantity': sad_move.quantity + move.product_qty,
+                                    'ordered_quantity': sad_move.ordered_quantity + return_qty,
+                                    'quantity': sad_move.quantity + return_qty,
                                 }, context=context)
                     
             # log the increase action - display the picking ticket view form - log message for each draft packing because each corresponds to a different draft picking
@@ -4420,14 +4420,14 @@ class stock_picking(osv.osv):
                     ], context=context)
                     if not save_as_draft_move: # then create the SaD line:
                         move_data = self.pool.get('create.picking.move.processor')._get_line_data(cr, uid, wizard=picking_processor_wiz, move=line.move_id.backmove_id, context=context)
-                        move_data.update({'quantity': line.move_id.product_qty})
+                        move_data.update({'quantity': return_qty})
                         save_as_draft_move = self.pool.get('create.picking.move.processor').create(cr, uid, move_data, context=context)
                         save_as_draft_move = [save_as_draft_move]
                     else: # update Sad line
                         for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
                             self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
-                                'ordered_quantity': sad_move.ordered_quantity + line.move_id.product_qty,
-                                'quantity': sad_move.quantity + line.move_id.product_qty,
+                                'ordered_quantity': sad_move.ordered_quantity + return_qty,
+                                'quantity': sad_move.quantity + return_qty,
                             }, context=context)
 
             # Log message for PPL
