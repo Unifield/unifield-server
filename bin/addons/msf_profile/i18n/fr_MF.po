@@ -10842,7 +10842,7 @@ msgstr "Groupes (pas de groupe = global)"
 msgid "International status"
 msgstr "International status"
 
-#. modules: return_claim, msf_outgoing
+#. modules: return_claim, delivery_mechanism, msf_outgoing, stock_override, stock
 #: code:addons/msf_outgoing/msf_outgoing.py:536
 #: code:addons/msf_outgoing/msf_outgoing.py:739
 #: code:addons/msf_outgoing/msf_outgoing.py:778
@@ -10897,7 +10897,7 @@ msgstr "International status"
 #: code:addons/return_claim/return_claim.py:1639
 #, python-format
 msgid "Processing Error"
-msgstr "Erreur en cours "
+msgstr "Erreur de traitement"
 
 #. module: account_payment
 #: field:payment.order,mode:0
@@ -37260,7 +37260,7 @@ msgstr "Assistant Confirmation Bancaire"
 #: code:addons/return_claim/return_claim.py:1640
 #, python-format
 msgid "No data to process !"
-msgstr "No data to process !"
+msgstr "Aucune donnée à traiter !"
 
 #. module: stock_override
 #: field:export.report.stock.move,exported_file:0
@@ -63785,23 +63785,6 @@ msgstr "You can not modify entries in a HQ closed journal. Field: %s, db value: 
 msgid "Child Accounts"
 msgstr "Comptes Enfant "
 
-#. modules: delivery_mechanism, msf_outgoing, stock_override, stock
-#: code:addons/delivery_mechanism/wizard/stock_partial_picking.py:149
-#: code:addons/msf_outgoing/wizard/shipment.py:444
-#: code:addons/stock/wizard/stock_move.py:265
-#: code:addons/stock/wizard/stock_partial_picking.py:157
-#: code:addons/stock/wizard/stock_partial_picking.py:165
-#: code:addons/stock/wizard/stock_partial_picking.py:172
-#: code:addons/stock_override/wizard/stock_partial_picking.py:113
-#: code:addons/stock_override/wizard/stock_partial_picking.py:131
-#: code:addons/stock_override/wizard/stock_partial_picking.py:138
-#: code:addons/stock_override/wizard/stock_partial_picking.py:149
-#: code:addons/stock_override/wizard/stock_partial_picking.py:187
-#: code:addons/stock_override/wizard/stock_partial_picking.py:193
-#, python-format
-msgid "Processing Error"
-msgstr "Erreur de traitement"
-
 #. module: specific_rules
 #: help:product.uom,uom_by_product:0
 msgid "Field used to filter the UoM for a specific product"
@@ -74779,6 +74762,7 @@ msgstr "# de lignes importées"
 #: field:wizard.simu.import.po.line,import_unit_price:0
 #: field:wizard.simu.import.po.line,initial_unit_price:0
 #: field:account.direct.invoice.wizard.line,price_unit:0
+#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:117
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -98525,7 +98509,6 @@ msgstr "Stock de Sécurité (qté)"
 msgid "Column %d mismatches, expected: %s, found: %s"
 msgstr "Colonne %d, attendu: %s, trouvé: %s"
 
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:275
 #: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:280
@@ -99261,11 +99244,6 @@ msgid "Error"
 msgstr "Erreur"
 
 #. module: sale
-#: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:117
-msgid "Unit Price"
-msgstr "Prix Unitaire"
-
-#. module: sale
 #: help:sale.donation.stock.moves,partner_id:0
 msgid "The partner you want have the donations from"
 msgstr "Le partenaire duquel vous voulez voir les dons"
@@ -99360,4 +99338,3 @@ msgstr "Impossible de générer les data après %d tentatives"
 #, python-format
 msgid "Unable to generate updates, retrying %d/%d"
 msgstr "Impossible de générer les data, nouvel essai %d/%d"
-
