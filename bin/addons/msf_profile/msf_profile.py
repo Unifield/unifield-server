@@ -29,6 +29,7 @@ import os
 import logging
 from threading import Lock
 import time
+import xmlrpclib
 
 from msf_field_access_rights.osv_override import _get_instance_level
 
@@ -58,17 +59,26 @@ class patch_scripts(osv.osv):
             return True
         connection_ids = server_connection.search(cr, uid, [])
         read_result = server_connection.read(cr, uid, connection_ids,
-                                             ['protocol', 'port'])
-        ids_to_change = []
-        for connection in read_result:
-            if connection['protocol'] not in ['xmlrpc', 'gzipxmlrpcs']:
-                ids_to_change.append(connection['id'])
-        if ids_to_change:
-            vals = {
-                'protocol': 'gzipxmlrpcs',
-                'port': 443,
-            }
-            server_connection.write(cr, uid, ids_to_change, vals)
+                                             ['protocol', 'port', 'host'])
+        connection = read_result[0]
+        if connection['protocol'] not in ['xmlrpc', 'gzipxmlrpcs']:
+            # check port 443 permit to connect to sync_server
+            from sync_client.timeout_transport import TimeoutTransport
+            transport = TimeoutTransport(timeout=10.0)
+            try:
+                sock = xmlrpclib.ServerProxy('http://%s:%s/xmlrpc/db'%(connection['host'], 443), transport=transport)
+                sock.server_version()
+            except Exception as e:
+                vals = {
+                    'protocol': 'xmlrpc',
+                    'port': 8069,
+                }
+            else:
+                vals = {
+                    'protocol': 'gzipxmlrpcs',
+                    'port': 443,
+                }
+            server_connection.write(cr, uid, [connection['id']], vals)
 
     def us_2647(self, cr, uid, *a, **b):
         cr.execute('''update stock_inventory_line set dont_move='t' where id not in (
