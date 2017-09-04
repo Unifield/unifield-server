@@ -113,7 +113,18 @@ class account_move_line(osv.osv):
         default_account = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.import_invoice_default_account
         if default_account:
             dom1.append(('account_id', '!=', default_account.id))
-        return dom1+[('amount_residual_import_inv', '>', 0.001)]
+
+        '''
+        To determine whether the line is importable, check that the residual amount is positive, OR if the doc amount is zero
+        check that there is no link yet between the JI and a register line (with imported_invoice_line_ids).
+        (In the domain, the amount_currency is compared with exactly 0.0 as there is a truncation in SQL: 
+        only 2 digits after the comma are kept)
+        '''
+        dom_residual = ['|', ('amount_residual_import_inv', '>', 0.001),
+                        '&',
+                        '|', ('amount_currency', '=', 0.0), ('amount_currency', '=', False),
+                        ('imported_invoice_line_ids', '=', False)]
+        return dom1 + dom_residual
 
     # @@override account.account_move_line _amount_residual()
     def _amount_residual_import_inv(self, cr, uid, ids, field_names, args, context=None):

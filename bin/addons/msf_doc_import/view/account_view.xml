@@ -26,7 +26,7 @@
                     <newline/>
                     <field name="file" filename="filename" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     <field name="filename" invisible="1"/>
-                    <field name="date" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <field name="date" attrs="{'invisible': [('state', '!=', 'draft')]}" default_focus="1"/>
                     <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
                     <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}"/>
                     <newline/>

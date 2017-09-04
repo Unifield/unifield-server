@@ -131,7 +131,7 @@ if cols < 0:
     <Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(i.available_qty) or 0.00} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
     % endif
     % if not i.expired_qty:
-    <Cell ss:StyleID="line"><Data ss:Type="Number">${formatLang(i.available_qty) or 0.00}</Data></Cell>
+    <Cell ss:StyleID="line"><Data ss:Type="Number">${i.available_qty or 0.00}</Data></Cell>
     % endif
 % endfor
 <Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.in_stock or 0.}</Data></Cell>

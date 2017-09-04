@@ -19419,11 +19419,6 @@ msgstr "button_cancel - (procurement.order)"
 msgid "Chart of Accounts for MSF"
 msgstr "Plan de cuentas MSF"
 
-#. module: sync_client
-#: view:sync.client.register_entity:0
-msgid "Generate a new UUID"
-msgstr "Generar un nuevo identificador de usuario único"
-
 #. modules: account, account_activable
 #: view:account.account:0
 #: field:account.account,type:0
