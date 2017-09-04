@@ -1544,7 +1544,7 @@ class purchase_order(osv.osv):
         if not warehouse_id:
             warehouse_id = stock_warehouse_obj.search(cr, uid, [], context=context)[0]
 
-        if isinstance(warehouse_id, str):
+        if isinstance(warehouse_id, (str,unicode)):
             try:
                 warehouse_id = int(warehouse_id)
             except ValueError:
