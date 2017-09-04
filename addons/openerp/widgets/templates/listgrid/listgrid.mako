@@ -35,7 +35,7 @@
             % endfor
             <td class="grid-cell selector" style="text-align: center; padding: 0;">
                 <img alt="save record" src="/openerp/static/images/listgrid/save_inline.gif"
-                    class="listImage editors" border="0" title="${_('Update')}"
+                    class="listImage editors oe_form_button_save_line" border="0" title="${_('Update')}"
                     onclick="${object}.save(${(data and data['id']) or 'null'})"/>
             </td>
         </tr>
@@ -51,15 +51,15 @@
     %>
     % if editors:
         <tr class="grid-row inline_editors ${row_class} ${data['id'] and data['id'] in noteditable and 'noteditable' or ''}" record="${data['id']}"
-        % if data['id'] in notselectable: 
-            notselectable=1 
-        % endif 
+        % if data['id'] in notselectable:
+            notselectable=1
+        % endif
         >
     % else:
-        <tr class="grid-row ${row_class}" record="${data['id']}" 
-        % if data['id'] in notselectable: 
-            notselectable=1 
-        % endif 
+        <tr class="grid-row ${row_class}" record="${data['id']}"
+        % if data['id'] in notselectable:
+            notselectable=1
+        % endif
         >
     % endif
     % if selector:
@@ -168,13 +168,13 @@
                                         % elif o2m:
                                            % if not hide_new_button:
                                             <button title="${_('Create new record.')}" id="${name}_btn_"
-                                                onclick="listgridValidation('${name}', '${o2m or 0}', -1); return false;" type="button">
+                                                onclick="listgridValidation('${name}', '${o2m or 0}', -1); return false;" type="button" class="oe_form_button_create">
                                                     ${_('New')}
                                             </button>
                                            % endif
                                         % else:
                                             % if not dashboard and not hide_new_button:
-                                                <button id="${name}_new" title="${_('Create new record.')}" type="button">${_('New')}</button>
+                                                <button id="${name}_new" title="${_('Create new record.')}" class="oe_form_button_create" type="button">${_('New')}</button>
                                                 % if editors:
                                                     <script type="text/javascript">
                                                         jQuery('[id=${name}_new]').click(function() {

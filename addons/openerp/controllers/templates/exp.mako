@@ -88,9 +88,7 @@
         function do_import_cmp(){
             do_pre_submit()
             jQuery('#view_form').attr({
-                'action': openobject.http.getURL('/openerp/impex/exp', {
-                    'import_compat': jQuery('#import_compat').val()
-                })
+                'action': openobject.http.getURL('/openerp/impex/exp')
             }).submit();
         }
 

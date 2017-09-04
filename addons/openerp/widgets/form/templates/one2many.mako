@@ -18,7 +18,7 @@
 	               	<td class="pagerbar-cell" align="left" width="${pager_width}">
 	               		<div class="pagerbar-header">
 	               			<strong>${screen.string}</strong>
-	               			<a class="button-a" href="javascript: void(0)" title="${_('Create new record...')}" onclick="new One2Many('${name}', ${(screen.view_type == 'tree' or 0) and len(screen.widget.editors)}).create(); return false;">${_('New')}</a>
+	               			<a class="button-a oe_form_button_create" href="javascript: void(0)" title="${_('Create new record...')}" onclick="new One2Many('${name}', ${(screen.view_type == 'tree' or 0) and len(screen.widget.editors)}).create(); return false;">${_('New')}</a>
 	               			%if id:
 	               				<a class="button-a" href="javascript: void(0);" title="${_('Delete record...')}" onclick="new One2Many('${name}', ${(screen.view_type == 'tree' or 0) and len(screen.widget.editors)}).remove(${id}); return false;">${_("Delete")}</a>
 	               			%endif

@@ -178,10 +178,12 @@ function switchView(view_type, src){
             openobject.dom.get('_terp_id').value = ids[0];
         }
     }
-    submit_form(get_form_action('switch', {
-        '_terp_source': src,
-        '_terp_source_view_type': view_type
-    }));
+    if (!openobject.dom.get('_terp_view_type') || openobject.dom.get('_terp_view_type').value != view_type) {
+        submit_form(get_form_action('switch', {
+            '_terp_source': src,
+            '_terp_source_view_type': view_type
+        }));
+    }
 }
 
 function validate_required(form){

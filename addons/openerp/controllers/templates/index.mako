@@ -91,6 +91,9 @@
                     </div>
                 </td>
             </tr>
+            <tr>
+                <%include file="banner.mako"/>
+            </tr>
             % if tools is not None:
                 <tr>
                     <td id="secondary" class="sidenav-open">

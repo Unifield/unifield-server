@@ -80,10 +80,10 @@
                     <table border="0" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
                             <td style="padding: 0 2px 0 10px;">
-                                <a class="button-a" href="javascript: void(0)" onclick="submit_form('save')">${_("Save")}</a>
+                                <a class="button-a oe_form_button_save_close" href="javascript: void(0)" onclick="submit_form('save')">${_("Save")}</a>
                             </td>
                             <td style="padding: 0 2px 0 0px;">
-                                <a class="button-a" href="javascript: void(0)" onclick="window.frameElement.close()">${_("Close")}</a>
+                                <a class="button-a oe_form_button_close" href="javascript: void(0)" onclick="window.frameElement.close()">${_("Close")}</a>
                             </td>
                             <td width="100%">
                             </td>

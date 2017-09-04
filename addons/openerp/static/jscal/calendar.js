@@ -971,7 +971,7 @@ Calendar._keyEvent = function(ev) {
 	if (!cal || cal.multiple)
 		return false;
 	(Calendar.is_ie) && (ev = window.event);
-	var act = (Calendar.is_ie || ev.type == "keypress"),
+	var act = (Calendar.is_ie || ev.type == "keypress" || ev.type == "keydown"),
 		K = ev.keyCode;
 	if (ev.ctrlKey) {
 		switch (K) {
