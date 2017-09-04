@@ -2288,20 +2288,19 @@ class sale_order_line(osv.osv):
             # Delete the line and the procurement
             self.write(cr, uid, [line.id], {'state': 'cancel'}, context=context)
 
-            # UF-2401: Remove OUT line when IR line has been canceled
+            # UF-2401: Remove OUT line when IR line has been canceled:
             picking_ids = set()
-            move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ['done', 'cancel']), ('in_out_updated', '=', False)], context=context)
-            for move in move_obj.read(cr, uid, move_ids, ['picking_id'], context=context):
+            out_moves = move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ['done', 'cancel']), ('in_out_updated', '=', False)], context=context)
+            for move in move_obj.read(cr, uid, out_moves, ['picking_id'], context=context):
                 if move['picking_id']:
                     picking_ids.add(move['picking_id'][0])
-
             if not context.get('no_cancel_out'):
                 if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer':
-                    move_obj.write(cr, uid, move_ids, {'state': 'draft'}, context=context)
-                    move_obj.unlink(cr, uid, move_ids, context=context)
+                    move_obj.write(cr, uid, out_moves, {'state': 'draft'}, context=context)
+                    move_obj.unlink(cr, uid, out_moves, context=context)
                 else:
-                    move_obj.write(cr, uid, move_ids, {'state': 'cancel'}, context=context)
-                    move_obj.action_cancel(cr, uid, move_ids, context=context)
+                    move_obj.write(cr, uid, out_moves, {'state': 'cancel'}, context=context)
+                    move_obj.action_cancel(cr, uid, out_moves, context=context)
 
             for pick in pick_obj.browse(cr, uid, list(picking_ids), context=context):
                 if not len(pick.move_lines) or (pick.subtype == 'standard' and all(m.state == 'cancel' for m in pick.move_lines)):
@@ -2312,27 +2311,6 @@ class sale_order_line(osv.osv):
             if line.original_line_id:
                 cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
-
-            # UFTP-82:
-            # do not delete cancelled IR line from PO cancelled
-            # see purchase_override/purchase.py
-            # - purchase_order_cancel_wizard.cancel_po()
-            # - purchase_order_line.cancel_sol()
-            if not 'update_or_cancel_line_not_delete' in context \
-                    or not context['update_or_cancel_line_not_delete']:
-                tmp_ctx = context.get('call_unlink', None)
-                context['call_unlink'] = True
-                self.unlink(cr, uid, [line.id], context=context)
-                if tmp_ctx is None:
-                    del context['call_unlink']
-                else:
-                    context['call_unlink'] = tmp_ctx
-            elif line.order_id.procurement_request:
-                # UFTP-82: flagging SO is an IR and its PO is cancelled
-                self.pool.get('sale.order').write(cr, uid, [line.order_id.id], {'is_ir_from_po_cancel': True}, context=context)
-            if proc and context.get('cancel_type') and not context.get('no_cancel_out'):
-                proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
-                proc_obj.action_cancel(cr, uid, [proc])
         else:
             minus_qty = line.product_uom_qty - qty_diff
             proc = line.procurement_id and line.procurement_id.id
