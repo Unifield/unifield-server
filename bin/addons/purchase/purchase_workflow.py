@@ -304,52 +304,50 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # Create IN lines
-        po_obj = self.pool.get('purchase.order')
-        picking_obj = self.pool.get('stock.picking')
-        move_obj = self.pool.get('stock.move')
-        po_line_obj = self.pool.get('purchase.order.line')
         wf_service = netsvc.LocalService("workflow")
 
         # update FO line with change on PO line
         self.update_fo_lines(cr, uid, ids, context=context)
 
-        for line in po_line_obj.browse(cr, uid, ids):
-            # Search existing IN for PO line
-            in_id = picking_obj.search(cr, uid, [
-                ('purchase_id', '=', line.order_id.id),
-                ('state', 'not in', ['done'])
-            ])
-            created = False
-            if len(in_id) < 1:
-                in_id = po_obj.create_picking(cr, uid, line.order_id, context)
-                created = True
-            else:
-                in_id = in_id[0]
-            move_id = po_obj.create_picking_line(cr, uid, in_id, line, context)
-            if created:
-                wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_confirm', cr)
-            else:
-                move_obj.in_action_confirm(cr, uid, move_id, context)
-
+        for pol in self.browse(cr, uid, ids):
+            if pol.order_type != 'direct': # create IN:
+                # Search existing IN for PO line
+                in_id = self.pool.get('stock.picking').search(cr, uid, [
+                    ('purchase_id', '=', pol.order_id.id),
+                    ('state', 'not in', ['done']),
+                ])
+                created = False
+                if len(in_id) < 1:
+                    in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context)
+                    created = True
+                else:
+                    in_id = in_id[0]
+                move_id = self.pool.get('purchase.order').create_picking_line(cr, uid, in_id, pol, context)
+                if created:
+                    wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_confirm', cr)
+                else:
+                    self.pool.get('stock.move').in_action_confirm(cr, uid, move_id, context)
 
             # if line created in PO, then create a FO line that match with it:
-            if not line.linked_sol_id and line.origin:
-                fo_id = self.update_origin_link(cr, uid, line.origin, context=context)
+            if not pol.linked_sol_id and pol.origin:
+                fo_id = self.update_origin_link(cr, uid, pol.origin, context=context)
                 fo_id = fo_id['link_so_id'] if fo_id else False
                 if fo_id:
-                    new_sol_id = self.create_sol_from_pol(cr, uid, line.id, fo_id, context=context)
-                    self.write(cr, uid, line.id, {
+                    new_sol_id = self.create_sol_from_pol(cr, uid, pol.id, fo_id, context=context)
+                    self.write(cr, uid, pol.id, {
                         'link_so_id': fo_id,
                         'linked_sol_id': new_sol_id,
                     }, context=context)
                     wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'confirmed', cr)
 
-            # Confirm FO line
-            if line.linked_sol_id:
-                wf_service.trg_validate(uid, 'sale.order.line', line.linked_sol_id.id, 'confirmed', cr)
+            # Confirm linked FO line:
+            if pol.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'confirmed', cr)
 
-        self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
+            self.write(cr, uid, [pol.id], {'state': 'confirmed'}, context=context)
+
+            if pol.order_id.order_type == 'direct':
+                wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
 
         # create or update the linked commitment voucher:
         self.create_or_update_commitment_voucher(cr, uid, ids, context=context)
@@ -368,8 +366,11 @@ class purchase_order_line(osv.osv):
         wf_service = netsvc.LocalService("workflow")
 
         for pol in self.browse(cr, uid, ids, context=context):
-            # if the PO line is linked to an internal IR line, then no PICK/OUT needed and we close the IR line:
-            if pol.linked_sol_id and pol.linked_sol_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal':
+            # no PICK/OUT needed in this cases; close SO line:
+            internal_ir = pol.linked_sol_id and pol.linked_sol_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal' or False # PO line from Internal IR
+            dpo = pol.order_id.order_type == 'direct' or False # direct PO
+
+            if internal_ir or dpo:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'done', cr)
 
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
@@ -474,5 +475,20 @@ class purchase_order(osv.osv):
                 vals.update({'shipped': 1})
             self.write(cr, uid, order['id'], vals, context=context)
         return True
+
+
+    def dpo_received(self, cr, uid, ids, context=None):
+        '''
+        triggered when validating the reception in a DPO
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
+
+        for po in self.browse(cr, uid, ids, context=context):
+            for pol in po.order_line:
+                wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
 
 purchase_order()
