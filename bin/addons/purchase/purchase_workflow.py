@@ -460,26 +460,9 @@ class purchase_order(osv.osv):
         return True
 
 
-    def action_done(self, cr, uid, ids, context=None):
-        """
-        Done activity in workflow.
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for order in self.read(cr, uid, ids, ['order_type'], context=context):
-            vals = {'state': 'done'}
-            if order['order_type'] == 'direct':
-                vals.update({'shipped': 1})
-            self.write(cr, uid, order['id'], vals, context=context)
-        return True
-
-
-    def dpo_received(self, cr, uid, ids, context=None):
+    def close_lines(self, cr, uid, ids, context=None):
         '''
-        triggered when validating the reception in a DPO
+        close all lines of the PO
         '''
         if context is None:
             context = {}
@@ -490,5 +473,8 @@ class purchase_order(osv.osv):
         for po in self.browse(cr, uid, ids, context=context):
             for pol in po.order_line:
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
+
+        return True
+        
 
 purchase_order()

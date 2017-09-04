@@ -83,9 +83,9 @@
                         <group colspan="4" col="16">
                             <field name="state" readonly="1"/>
                             <field name="from_procurement" invisible="1" />
-                            <button name="dpo_received" string="Validate the reception" icon="terp-camera_test"
+                            <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test"
                                 attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}" />
-                            <button name="purchase_cancel"  type="object"
+                            <button name="purchase_cancel" type="object"
                             attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'validated', 'rfq_sent']), '&amp;',('partner_type', 'not in', ('external', 'esc')), ('state', '=', 'validated')]}" 
                             string="Cancel" icon="gtk-cancel"/>
                             <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
