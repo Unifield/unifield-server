@@ -56,7 +56,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sync.server.entity')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['name', 'email', 'state', 'children_ids', 'parent_id', 'hardware_id', 'identifier', 'email', 'version_id']
+        fields = ['name', 'email', 'state', 'children_ids', 'parent_id', 'hardware_id', 'identifier', 'email', 'version_id', 'pgversion']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'sync.server.entity'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],

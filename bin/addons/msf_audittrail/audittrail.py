@@ -70,6 +70,22 @@ class product_template(osv.osv):
 product_template()
 
 
+class res_partner(osv.osv):
+    _name = 'res.partner'
+    _inherit = 'res.partner'
+    _trace = True
+
+res_partner()
+
+
+class res_partner_address(osv.osv):
+    _name = 'res.partner.address'
+    _inherit = 'res.partner.address'
+    _trace = True
+
+res_partner_address()
+
+
 class product_supplier(osv.osv):
     _name = 'product.supplierinfo'
     _inherit = 'product.supplierinfo'
@@ -329,6 +345,14 @@ class account_move_line(osv.osv):
     _trace = True
 
 account_move_line()
+
+
+class hr_employee(osv.osv):
+    _name = 'hr.employee'
+    _inherit = 'hr.employee'
+    _trace = True
+
+hr_employee()
 
 
 class ir_module(osv.osv):
@@ -1051,7 +1075,14 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         relation_model = field['relation']
         relation_model_pool = relation_model and pool.get(relation_model) or False
 
-        if field['ttype'] == 'many2one':
+        if field['ttype'] == 'boolean':
+            if values in ('True', 't', '1', 1, True):
+                res = _('True')
+            else:
+                res = _('False')
+            return res
+
+        elif field['ttype'] == 'many2one':
             res = False
             if values and values != '()':
                 values = values[1:-1].split(',')

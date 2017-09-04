@@ -216,6 +216,7 @@ class purchase_order(osv.osv):
         'product_id': fields.related('order_line','product_id', type='many2one', relation='product.product', string='Product'),
         'create_uid':  fields.many2one('res.users', 'Responsible'),
         'company_id': fields.many2one('res.company','Company',required=True,select=1),
+        'stock_take_date': fields.date(string='Date of Stock Take', required=False),
     }
     _defaults = {
         'date_order': lambda *a: time.strftime('%Y-%m-%d'),
@@ -678,6 +679,21 @@ class purchase_order_line(osv.osv):
                 res[line.id] = 0.01
         return res
 
+    def _get_stock_take_date(self, cr, uid, context=None):
+        '''
+            Returns stock take date
+        '''
+        if context is None:
+            context = {}
+        order_obj = self.pool.get('purchase.order')
+        res = False
+
+        if context.get('purchase_id', False):
+            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
+            res = po.stock_take_date
+
+        return res
+
     _columns = {
         'name': fields.char('Description', size=256, required=True),
         'product_qty': fields.float('Quantity', required=True, digits=(16,2)),
@@ -701,13 +717,14 @@ class purchase_order_line(osv.osv):
         'invoice_lines': fields.many2many('account.invoice.line', 'purchase_order_line_invoice_rel', 'order_line_id', 'invoice_id', 'Invoice Lines', readonly=True),
         'invoiced': fields.boolean('Invoiced', readonly=True),
         'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
-        'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date")
-
+        'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
+        'stock_take_date': fields.date(string='Date of Stock Take', required=False),
     }
     _defaults = {
         'product_qty': lambda *a: 1.0,
         'state': lambda *args: 'draft',
         'invoiced': lambda *a: 0,
+        'stock_take_date': _get_stock_take_date,
     }
     _table = 'purchase_order_line'
     _name = 'purchase.order.line'

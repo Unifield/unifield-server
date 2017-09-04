@@ -1296,6 +1296,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         for order in order_brw_list:
             line_ids = []
             for line in order.order_line:
+                if not line.stock_take_date:
+                    line_obj.write(cr, uid, [line.id], {'stock_take_date': order.stock_take_date}, context=context)
                 line_ids.append(line.id)
                 if line.soq_updated:
                     reset_soq.append(line.id)
@@ -3158,6 +3160,20 @@ class sale_order_line(osv.osv):
                     'target': 'new',
                     'res_id': wiz_id,
                     'context': context}
+
+    def open_delete_sale_order_line_wizard(self, cr, uid, ids, context=None):
+        '''
+        Open the wizard to delete the line
+        '''
+        # we need the context
+        if context is None:
+            context = {}
+
+        model = 'delete.sale.order.line.wizard'
+        name = _('Warning!')
+        wiz_obj = self.pool.get('wizard')
+        # open the selected wizard
+        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''

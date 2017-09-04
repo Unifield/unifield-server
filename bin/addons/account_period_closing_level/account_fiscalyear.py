@@ -102,6 +102,7 @@ class account_fiscalyear(osv.osv):
     }
 
     def create_period(self,cr, uid, ids, context=None, interval=1):
+        period_obj = self.pool.get('account.period')
         for fy in self.browse(cr, uid, ids, context=context):
             ds = datetime.datetime.strptime(fy.date_start, '%Y-%m-%d')
             i = 0
@@ -112,7 +113,7 @@ class account_fiscalyear(osv.osv):
                 if de.strftime('%Y-%m-%d')>fy.date_stop:
                     de = datetime.datetime.strptime(fy.date_stop, '%Y-%m-%d')
 
-                self.pool.get('account.period').create(cr, uid, {
+                period_obj.create(cr, uid, {
                     'name': ds.strftime('%b %Y'),
                     'code': ds.strftime('%b %Y'),
                     'date_start': ds.strftime('%Y-%m-%d'),
@@ -125,9 +126,9 @@ class account_fiscalyear(osv.osv):
 
             ds = datetime.datetime.strptime(fy.date_stop, '%Y-%m-%d')
             for period_nb in (13, 14, 15):
-                self.pool.get('account.period').create(cr, uid, {
-                    'name': 'Period %d' % (period_nb),
-                    'code': 'Period %d' % (period_nb),
+                period_obj.create(cr, uid, {
+                    'name': 'Period %d %d' % (period_nb, ds.year),
+                    'code': 'Period %d %d' % (period_nb, ds.year),
                     'date_start': '%d-12-01' % (ds.year),
                     'date_stop': '%d-12-31' % (ds.year),
                     'fiscalyear_id': fy.id,
