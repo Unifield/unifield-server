@@ -53,7 +53,7 @@ class instance_auto_creation(osv.osv):
             ('language_installed', 'Language installed.'),
             ('register_instance', 'Register the instance into the SYNC_SERVER...'),
             ('instance_registered', 'Instance registered.'),
-            ('wating_for_validation', 'Waiting for validation on SYNC_SERVER side...'),
+            ('waiting_for_validation', 'Waiting for validation on SYNC_SERVER side...'),
             ('instance_validated', 'Instance validated on SYNC_SERVER side.'),
             ('backup_configuration', 'Backup configuration...'),
             ('backup_configured', 'Backup configured.'),
@@ -61,6 +61,8 @@ class instance_auto_creation(osv.osv):
             ('end_init_sync', 'Init sync finished !'),
             ('reconfigure', 'Do reconfigure...'),
             ('reconfigure_done', 'Reconfigure done.'),
+            #('import_files', 'Start file imoprt...'),
+            #('files_imported', 'Files import done.'),
             ('done', 'Done')], 'State', readonly=True),
         'progress': fields.float('Progress', readonly=True),
         'error': fields.text('Error', readonly=True),
@@ -111,8 +113,10 @@ class instance_auto_creation(osv.osv):
             vals['progress'] = 1
             vals['state'] = 'done'
 
-        return super(instance_auto_creation, self).write(cr, uid, ids, vals,
+        res = super(instance_auto_creation, self).write(cr, uid, ids, vals,
                 context=context)
+        cr.commit()
+        return res
 
     def check_sync_server_registration_validation(self, cr, uid, context=None):
         entity_obj = self.pool.get('sync.client.entity')
@@ -147,7 +151,6 @@ class instance_auto_creation(osv.osv):
             else:
                 message = e.value
             self.write(cr, uid, creation_id, {'error': message}, context=context)
-            cr.commit()
         else:
             self.write(cr, uid, creation_id,
                        {'error':''},
@@ -163,11 +166,10 @@ class instance_auto_creation(osv.osv):
                                    context=context)
         if cron_ids:
             cron_obj.write(cr, uid, cron_ids, {'active': False}, context=context)
-        if current_state == 'wating_for_validation':
+        if current_state == 'waiting_for_validation':
             self.write(cr, uid, creation_id,
                        {'state': 'instance_validated', 'error':''},
                        context=context)
-            cr.commit()
         creation_obj = self.pool.get('instance.auto.creation')
         create_thread = threading.Thread(target=creation_obj.background_install_after_registration,
                                          args=(cr.dbname, uid, creation_id))
@@ -203,10 +205,10 @@ class instance_auto_creation(osv.osv):
             elif creation_state in ('language_installed', 'register_instance'):
                 skip_all_modules = skip_language = True
             elif creation_state in ('instance_registered',
-                    'wating_for_validation', 'instance_validated',
+                    'waiting_for_validation', 'instance_validated',
                     'backup_configuration', 'backup_configured',
                     'start_init_sync', 'end_init_sync', 'reconfigure',
-                    'reconfigure_done', 'done') :
+                    'reconfigure_done', 'import_files', 'file_imported', 'done') :
                 skip_all_modules = skip_language = skip_register = True
             else:
                 # this is not a state we can restart from
@@ -229,14 +231,13 @@ class instance_auto_creation(osv.osv):
                 for module_name in ['msf_profile', 'sync_so', 'update_client', 'sync_client_web']:
                     if locals().get(('skip_%s' % module_name), False):
                         continue
-                    module_id = module_obj.search(cr, 1, [('name', '=', module_name)])
-                    module_obj.button_install(cr, 1, module_id)
                     self.write(cr, 1, creation_id,
                                {'state': '%s_installation' % module_name}, context=context)
+                    module_id = module_obj.search(cr, 1, [('name', '=', module_name)])
+                    module_obj.button_install(cr, 1, module_id)
                     upgrade_obj.upgrade_module(cr, 1, None, None)
                     self.write(cr, 1, creation_id,
                                {'state': '%s_installed' % module_name}, context=context)
-                    cr.commit()
 
             # XXX
             skip_language = True
@@ -245,7 +246,6 @@ class instance_auto_creation(osv.osv):
             if not skip_language:
                 self.write(cr, 1, creation_id,
                            {'state': 'language_installation'}, context=context)
-                cr.commit()
                 lang = config_dict['instance'].get('lang')
                 if lang:
                     lang_obj = pool.get('res.lang')
@@ -256,13 +256,11 @@ class instance_auto_creation(osv.osv):
                         module_obj.button_update_translations(cr, uid, mod_ids, lang)
                 self.write(cr, 1, creation_id,
                            {'state': 'language_installed'}, context=context)
-                cr.commit()
 
             if not skip_register:
                 # register instance
                 self.write(cr, 1, creation_id,
                            {'state': 'register_instance'}, context=context)
-                cr.commit()
                 sync_vals = {
                     'protocol': config_dict['instance'].get('sync_protocol'),
                     'host': config_dict['instance'].get('sync_host'),
@@ -318,7 +316,6 @@ class instance_auto_creation(osv.osv):
                 wizard.validate(cr, uid, wizard_id)
                 self.write(cr, 1, creation_id,
                            {'state': 'instance_registered'}, context=context)
-                cr.commit()
 
             # create a cron job to check that the registration has been validated on the server side
             cron_obj = pool.get('ir.cron')
@@ -344,8 +341,7 @@ class instance_auto_creation(osv.osv):
             current_state = self.read(cr, uid, creation_id, ['state'])['state']
             if current_state == 'instance_registered':
                 self.write(cr, 1, creation_id,
-                           {'state': 'wating_for_validation'}, context=context)
-                cr.commit()
+                           {'state': 'waiting_for_validation'}, context=context)
         except Exception as e:
             self.write(cr, 1, creation_id,
                         {'error': '%s' % e}, context=context)
@@ -362,10 +358,10 @@ class instance_auto_creation(osv.osv):
             cr = db.cursor()
             skip_backup = skip_reconfigure = False
             creation_state = self.read(cr, uid, creation_id, ['state'], context=context)['state']
-            skip_init_sync = skip_backup_config = skip_reconfigure = False
+            skip_init_sync = skip_backup_config = skip_reconfigure = skip_import_files = False
             if creation_state == 'end_init_sync':
                 skip_init_sync = True
-            elif creation_state  == 'backup_configured':
+            elif creation_state in ('backup_configured', 'reconfigure'):
                 skip_init_sync = skip_backup_config = True
             elif creation_state == 'reconfigure_done':
                 skip_init_sync = skip_backup_config = skip_reconfigure = True
@@ -397,7 +393,6 @@ class instance_auto_creation(osv.osv):
                     # start/restart the init sync (very long)
                     self.write(cr, 1, creation_id,
                                {'state': 'start_init_sync'}, context=context)
-                    cr.commit()
                     self.pool.get('sync.client.entity').sync(cr, uid)
                     self.write(cr, 1, creation_id,
                                {'state': 'end_init_sync'}, context=context)
@@ -410,7 +405,6 @@ class instance_auto_creation(osv.osv):
             if not skip_backup_config:
                 self.write(cr, 1, creation_id,
                            {'state': 'backup_configuration'}, context=context)
-                cr.commit()
                 backup_obj = self.pool.get('backup.config')
                 backup_id = backup_obj.search(cr, uid, [], context=context)
                 backup_vals = {
@@ -437,7 +431,6 @@ class instance_auto_creation(osv.osv):
                     cron_obj.write(cr, uid, backup_id, vals, context=context)
                 self.write(cr, 1, creation_id,
                            {'state': 'backup_configured'}, context=context)
-                cr.commit()
 
             if not skip_reconfigure:
                 self.write(cr, 1, creation_id,
@@ -475,7 +468,7 @@ class instance_auto_creation(osv.osv):
                     if model == 'msf_instance.setup':
                         instance_id = self.pool.get('msf.instance').search(cr, uid, [('instance', '=', cr.dbname)])
                         if not instance_id:
-                            error_message = ('No prop. instance \'%s\' found. Please check it has been created on the HQ and sync, then restart the auto creation process from stactch.') % cr.dbname
+                            error_message = ('No prop. instance \'%s\' found. Please check it has been created on the HQ and sync, then restart the auto creation process from scratch.') % cr.dbname
                             raise osv.except_osv(_("Error!"), error_message)
                         else:
                             instance_id = instance_id[0]
@@ -494,6 +487,13 @@ class instance_auto_creation(osv.osv):
 
                 self.write(cr, 1, creation_id,
                            {'state': 'reconfigure_done'}, context=context)
+
+            if not skip_import_files:
+                pass
+                #for file_name in file_list_to_import:
+                    #model = ...
+                    #module = ...
+                    #import
 
             time.sleep(15)  # before to delete to let the web get the last
                             # informations
