@@ -11366,12 +11366,18 @@ msgstr "El plan de cuentas por defecto está adaptado al país seleccionado. Si 
 msgid "Shipping Type of the Picking List that will contain the chained move (leave empty to automatically detect the type based on the source and destination locations)."
 msgstr "Tipo de envío de la lista de picking que contendrá el movimiento encadenado (déjelo vacío para detectar automáticamente el tipo en función de las ubicaciones de origen y de destino)."
 
-#. modules: register_accounting, account_voucher
+#. modules: register_accounting, account_voucher, msf_doc_import
 #: view:account.statement.from.invoice.lines:0
 #: code:addons/account_voucher/wizard/account_statement_from_invoice.py:187
 #: model:ir.actions.act_window,name:account_voucher.action_view_account_statement_from_invoice_lines
 #: view:wizard.import.cheque:0
 #: view:wizard.import.invoice:0
+#: model:ir.actions.act_window,name:msf_doc_import.action_migration_accounting_import_wizard
+#: model:ir.ui.menu,name:msf_doc_import.menu_finance_migration_accounting
+#: view:msf.doc.import.accounting:0
+msgid "Import Entries"
+msgstr "Importar asientos"
+
 #, python-format
 msgid "Import Entries"
 msgstr "Importar asientos"
@@ -44767,13 +44773,6 @@ msgstr "Los productos de servicio deben tener una ubicación de servicio o de cr
 msgid "America/Argentina/Salta"
 msgstr "America/Argentina/Salta"
 
-#. module: msf_doc_import
-#: model:ir.actions.act_window,name:msf_doc_import.action_migration_accounting_import_wizard
-#: model:ir.ui.menu,name:msf_doc_import.menu_finance_migration_accounting
-#: view:msf.doc.import.accounting:0
-msgid "Import Entries"
-msgstr "Importar asientos de migración"
-
 #. module: base
 #: view:ir.model.access:0
 #: view:ir.rule:0
@@ -52188,7 +52187,7 @@ msgstr "Fusión de orden de compra"
 #. module: account
 #: field:account.journal,default_debit_account_id:0
 msgid "Default Debit Account"
-msgstr "Cuenta de crédito por defecto"
+msgstr "Cuenta de débito por defecto"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
