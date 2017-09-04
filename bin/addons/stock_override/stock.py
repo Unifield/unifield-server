@@ -1311,7 +1311,6 @@ class stock_move(osv.osv):
 
         if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -1329,7 +1328,7 @@ class stock_move(osv.osv):
                 )
             if backmove_ids or move.product_qty == 0.00:
                 raise osv.except_osv(_('Error'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
-            if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id and (move.purchase_line_id.order_id.po_from_ir or move.purchase_line_id.order_id.po_from_fo)):
+            if (move.sale_line_id and move.sale_line_id.order_id) or (move.purchase_line_id and move.purchase_line_id.order_id and move.purchase_line_id.linked_sol_id):
                 vals = {'move_id': ids[0]}
                 if 'from_int' in context:
                     """UFTP-29: we are in a INT stock move - line by line cancel

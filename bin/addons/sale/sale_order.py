@@ -2368,10 +2368,8 @@ class sale_order_line(osv.osv):
         if isinstance(line, (int, long)):
             line = self.browse(cr, uid, line, context=context)
 
-#        if not order_id and not line.order_id.procurement_request and line.order_id.original_so_id_sale_order:
-#            order_id = order_obj.create_resource_order(cr, uid, line.order_id.original_so_id_sale_order, context=context)
-#        elif not order_id and (line.order_id.procurement_request or not line.order_id.original_so_id_sale_order):
-        order_id = order_obj.create_resource_order(cr, uid, line.order_id, context=context)
+        if not order_id:
+            order_id = order_obj.create_resource_order(cr, uid, line.order_id, context=context)
 
         if not qty_diff:
             qty_diff = line.product_uom_qty

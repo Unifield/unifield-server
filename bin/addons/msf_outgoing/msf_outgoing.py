@@ -4895,7 +4895,6 @@ class stock_move(osv.osv):
             Confirm or check the procurement order associated to the stock move
         '''
         pol_obj = self.pool.get('purchase.order.line')
-        proc_obj = self.pool.get('procurement.order')
         pick_obj = self.pool.get('stock.picking')
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
@@ -4949,7 +4948,7 @@ class stock_move(osv.osv):
 
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
-                        sol_obj.add_resource_line(cr, uid, sol.id, False, diff_qty, context=context)
+                        sol_obj.add_resource_line(cr, uid, sol.id, sol.order_id.id, diff_qty, context=context)
                     sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, context=context)
 
                     # Cancel the remaining OUT line
@@ -4969,7 +4968,7 @@ class stock_move(osv.osv):
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
-                        sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
+                        sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, move.sale_line_id.order_id.id, diff_qty, context=context)
                     if move.id not in context.get('not_resource_move', []):
                         sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, context=context)
 
