@@ -2259,13 +2259,14 @@ class sale_order_line(osv.osv):
 
         return True
 
-    def update_or_cancel_line(self, cr, uid, line, qty_diff, context=None):
+    def update_or_cancel_line(self, cr, uid, line, qty_diff, resource=False, context=None):
         '''
         Update the quantity of the IR/FO line with the qty_diff - Update also
         the quantity in procurement attached to the IR/Fo line.
 
         If the qty_diff is equal or larger than the line quantity, delete the
         line and its procurement.
+        @param resource: is the line cancel and resourced ? usefull to set the 'cancel_r' state
         '''
         # Documents
         proc_obj = self.pool.get('procurement.order')
@@ -2286,7 +2287,7 @@ class sale_order_line(osv.osv):
         if qty_diff >= line.product_uom_qty:
             proc = line.procurement_id and line.procurement_id.id
             # Delete the line and the procurement
-            self.write(cr, uid, [line.id], {'state': 'cancel'}, context=context)
+            self.write(cr, uid, [line.id], {'state': 'cancel_r' if resource else 'cancel'}, context=context)
 
             # UF-2401: Remove OUT line when IR line has been canceled:
             picking_ids = set()
