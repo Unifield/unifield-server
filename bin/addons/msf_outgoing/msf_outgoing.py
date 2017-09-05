@@ -1645,7 +1645,7 @@ class shipment(osv.osv):
                 # closing FO lines:
                 for stock_move in packing.move_lines:
                     if stock_move.sale_line_id:
-                        wf_service.trg_validate(uid, 'sale.order.line', stock_move.sale_line_id.id, 'done', cr)
+                        self.pool.get('sale.order.line').action_done(cr, uid, [stock_move.sale_line_id.id], context=context)
 
             # Create automatically the invoice
             self.shipment_create_invoice(cr, uid, shipment.id, context=context)
@@ -3396,7 +3396,7 @@ class stock_picking(osv.osv):
                     move_obj.write(cr, uid, [move.id], values, context=context)
                     processed_moves.append(move.id)
                     if move.sale_line_id:
-                        wf_service.trg_validate(uid, 'sale.order.line', move.sale_line_id.id, 'done', cr)
+                        self.pool.get('sale.order.line').action_done(cr, uid, [move.sale_line_id.id], context=context)
 
             if not len(move_data):
                 pick_type = 'Internal picking'
@@ -4951,8 +4951,10 @@ class stock_move(osv.osv):
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
                         sol_obj.add_resource_line(cr, uid, sol.id, sol.order_id.id, diff_qty, context=context)
                     sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, resource=move.has_to_be_resourced,context=context)
-                    signal = 'cancel_r' if move.has_to_be_resourced else 'cancel'
-                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
+                    if move.has_to_be_resourced:
+                        self.pool.get('purchase.order.line').action_cancel_r(cr, uid, [move.purchase_line_id.id], context=context)
+                    else:
+                        self.pool.get('purchase.order.line').action_cancel(cr, uid, [move.purchase_line_id.id], context=context)
 
                     # Cancel the remaining OUT line
                     if diff_qty < sol.product_uom_qty:

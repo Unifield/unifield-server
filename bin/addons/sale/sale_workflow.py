@@ -129,7 +129,7 @@ class sale_order_line(osv.osv):
         new_sol_id = False
         for sol in self.browse(cr, uid, ids, context=context):
             new_sol_id = self.copy(cr, uid, sol.id, {'resourced_original_line': sol.id, 'resourced_original_remote_line': sol.sync_linked_pol}, context=context)
-            wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
+            self.action_validate(cr, uid, [new_sol_id], context=context)
 
         return new_sol_id
 
@@ -408,8 +408,7 @@ class sale_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
             
         for so in self.browse(cr, uid, ids, context=context):
-            for sol_id in [sol.id for sol in so.order_line]:
-                wf_service.trg_validate(uid, 'sale.order.line', sol_id, 'validated', cr)
+            self.pool.get('sale.order.line').action_validate(cr, uid, [sol.id for sol in so.order_line], context=context)
 
         return True
 

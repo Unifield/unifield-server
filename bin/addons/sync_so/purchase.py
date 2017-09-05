@@ -129,15 +129,15 @@ class purchase_order_line_sync(osv.osv):
 
         # update PO line state:
         if sol_dict['state'] in ('sourced', 'sourced_v'):
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'sourced_s', cr)
+            self.action_sourced_s(cr ,uid, [pol_updated], context=context)
         elif sol_dict['state'] == 'validated':
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'validated', cr)
+            self.action_validate(cr ,uid, [pol_updated], context=context)
         elif sol_dict['state'] ==  'confirmed':
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
+            self.action_confirmed(cr ,uid, [pol_updated], context=context)
         elif sol_dict['state'] == 'cancel':
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel', cr)
+            self.action_cancel(cr ,uid, [pol_updated], context=context)
         elif sol_dict['state'] == 'cancel_r':
-            wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel_r', cr)
+            self.action_cancel_r(cr ,uid, [pol_updated], context=context)
 
         # log me:
         pol_data = self.pool.get('purchase.order.line').read(cr, uid, pol_updated, ['order_id', 'line_number'], context=context)

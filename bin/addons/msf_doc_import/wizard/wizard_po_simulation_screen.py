@@ -1563,7 +1563,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 # Don't do anything
                 continue
             elif line.type_change == 'del' and line.po_line_id:
-                wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
+                self.pool.get('purchase.order.line').action_cancel(cr, uid, [line.po_line_id.id], context=context)
             elif line.type_change == 'split' and line.parent_line_id:
                 # Call the split line wizard
                 po_line_id = False

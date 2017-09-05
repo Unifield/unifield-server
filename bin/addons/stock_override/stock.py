@@ -960,7 +960,7 @@ You cannot choose this supplier because some destination locations are not avail
                         if stock_move.purchase_line_id:
                             if not move_obj.search_exist(cr, uid, [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'not in', ['cancel', 'done'])], context=context):
                                 # all in lines processed for this po line
-                                wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
+                                self.pool.get('purchase.order.line').action_done(cr, uid, [stock_move.purchase_line_id.id], context=context)
 
                     po_id = sp.purchase_id.id
                     bo_id = False
