@@ -61,8 +61,8 @@ class instance_auto_creation(osv.osv):
             ('end_init_sync', 'Init sync finished !'),
             ('reconfigure', 'Do reconfigure...'),
             ('reconfigure_done', 'Reconfigure done.'),
-            #('import_files', 'Start file imoprt...'),
-            #('files_imported', 'Files import done.'),
+            ('import_files', 'Start file imoprt...'),
+            ('files_imported', 'Files import done.'),
             ('done', 'Done')], 'State', readonly=True),
         'progress': fields.float('Progress', readonly=True),
         'error': fields.text('Error', readonly=True),
@@ -109,7 +109,7 @@ class instance_auto_creation(osv.osv):
             vals['progress'] = progress
 
         # prevent to go more the 100%
-        if vals.get('progress', 0) >= 1:
+        if vals.get('progress', 0) >= 1 or state == 'done':
             vals['progress'] = 1
             vals['state'] = 'done'
 
@@ -239,9 +239,6 @@ class instance_auto_creation(osv.osv):
                     self.write(cr, 1, creation_id,
                                {'state': '%s_installed' % module_name}, context=context)
 
-            # XXX
-            skip_language = True
-
             # install language
             if not skip_language:
                 self.write(cr, 1, creation_id,
@@ -370,7 +367,7 @@ class instance_auto_creation(osv.osv):
                 skip_init_sync = True
             elif creation_state in ('backup_configured', 'reconfigure'):
                 skip_init_sync = skip_backup_config = True
-            elif creation_state == 'reconfigure_done':
+            elif creation_state in ('reconfigure_done', 'import_files'):
                 skip_init_sync = skip_backup_config = skip_reconfigure = True
             elif creation_state in ('start_init_sync', 'instance_validated'):
                 pass  # it is allowed to restart this state
@@ -382,7 +379,6 @@ class instance_auto_creation(osv.osv):
                 if 'It is not possible to restart' not in error_message:
                     error_message = 'It is not possible to restart the auto-creation from this state. It is safer to delete the database and recreate a new one. Last error message was: %s.' % error_message
                 raise osv.except_osv(_("Error!"), error_message)
-
 
             config_file_name = 'uf_auto_install.conf'
             config_file_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall', config_file_name)
@@ -472,7 +468,7 @@ class instance_auto_creation(osv.osv):
                 else:
                     payroll_ok = True
 
-                if cionfig.has_option('reconfigure', 'delivery_process'):
+                if config.has_option('reconfigure', 'delivery_process'):
                     delivery_process = config_dict['reconfigure'].get('delivery_process')
                 else:
                     delivery_process = 'complex'
@@ -482,7 +478,7 @@ class instance_auto_creation(osv.osv):
                         'button' : 'config',
                     },
                     'unifield.setup.configuration': {
-                        'import_commitments': import_commitments, 
+                        'import_commitments': import_commitments,
                     },
                     'payroll.setup': {
                         'payroll_ok': payroll_ok,
@@ -553,11 +549,17 @@ class instance_auto_creation(osv.osv):
                            {'state': 'reconfigure_done'}, context=context)
 
             if not skip_import_files:
-                pass
-                #for file_name in file_list_to_import:
-                    #model = ...
-                    #module = ...
-                    #import
+                self.write(cr, 1, creation_id,
+                           {'state': 'import_files'}, context=context)
+                import_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall', 'import')
+                for file_name in os.listdir(import_path):
+                    if not '.csv' in file_name:
+                        raise osv.except_osv(_("Error!"), 'Only CSV file can be imported. \'%s\' is not a CSV extension.' % file_name)
+                    model_to_import = file_name.split('.csv')[0]
+                    model_obj = self.pool.get(model_to_import)
+                    model_obj.import_data_from_csv(cr, uid, os.path.join(import_path, file_name))
+                self.write(cr, 1, creation_id,
+                           {'state': 'files_imported'}, context=context)
 
             self.write(cr, 1, creation_id,
                        {'state': 'done'}, context=context)
