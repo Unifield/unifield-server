@@ -2237,7 +2237,8 @@ class sale_order_line(osv.osv):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
-        self.action_cancel(cr, uid, ids, context=context)
+        for sol_id in ids:
+            wf_service.trg_validate(uid, 'sale.order.line', sol_id, 'cancel', cr)
 
         return True
 
@@ -2360,7 +2361,7 @@ class sale_order_line(osv.osv):
             values['analytic_distribution_id'] = new_distrib
 
         line_id = self.copy(cr, uid, line.id, values, context=context)
-        self.action_validate(cr, uid, [line_id], context=context)
+        wf_service.trg_validate(uid, 'sale.order.line', line_id, 'validated', cr)
 
         order_name = self.pool.get('sale.order').read(cr, uid, [order_id], ['name'], context=context)[0]['name']
 

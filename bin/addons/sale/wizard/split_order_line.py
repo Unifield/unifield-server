@@ -92,7 +92,8 @@ class split_sale_order_line_wizard(osv.osv_memory):
                 ))
                 # .. and validate it if needed:
                 if split.sale_line_id.state == 'validated':
-                    self.pool.get('sale.order.line').action_validate(cr, uid, [new_line_id], context=context)
+                    wf_service = netsvc.LocalService("workflow")
+                    wf_service.trg_validate(uid, 'sale.order.line', new_line_id, 'validated', cr)
 
         return {'type': 'ir.actions.act_window_close'}
 

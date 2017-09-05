@@ -233,7 +233,7 @@ class purchase_order_line(osv.osv):
         self.update_fo_lines(cr, uid, ids, context=context)
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.linked_sol_id:
-                self.pool.get('sale.order.line').action_sourced_v(cr, uid, [pol.linked_sol_id.id], context=context)
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_v', cr)
 
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
@@ -254,9 +254,9 @@ class purchase_order_line(osv.osv):
 
         self.update_fo_lines(cr, uid, ids, context=context)
         # update linked sol (same instance) to sourced-s (if has)
-        for pol in self.browse(cr, uid, ids, context=context):
-            if pol.linked_sol_id:
-                self.pool.get('sale.order.line').action_sourced_s(cr, uid, [pol.linked_sol_id.id], context=context)
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_s', cr)
 
         return True
         
@@ -274,9 +274,9 @@ class purchase_order_line(osv.osv):
         self.write(cr, uid, ids, {'state': 'sourced_v'}, context=context)
 
         #update linked sol (same instance) to sourced-v (if has)
-        for pol in self.browse(cr, uid, ids, context=context):
-            if pol.linked_sol_id:
-                self.pool.get('sale.order.line').action_sourced_v(cr, uid, [pol.linked_sol_id.id], context=context)
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_v', cr)
 
         return True
 
@@ -338,16 +338,16 @@ class purchase_order_line(osv.osv):
                         'link_so_id': fo_id,
                         'linked_sol_id': new_sol_id,
                     }, context=context)
-                    self.pool.get('sale.order.line').action_confirmed(cr, uid, [new_sol_id], context=context)
+                    wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'confirmed', cr)
 
             # Confirm linked FO line:
             if pol.linked_sol_id:
-                self.pool.get('sale.order.line').action_confirmed(cr, uid, [pol.linked_sol_id.id], context=context)
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'confirmed', cr)
 
             self.write(cr, uid, [pol.id], {'state': 'confirmed'}, context=context)
 
             if pol.order_id.order_type == 'direct':
-                self.action_done(cr, uid, [pol.id], context=context)
+                wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
 
         # create or update the linked commitment voucher:
         self.create_or_update_commitment_voucher(cr, uid, ids, context=context)
@@ -371,7 +371,7 @@ class purchase_order_line(osv.osv):
             dpo = pol.order_id.order_type == 'direct' or False # direct PO
 
             if internal_ir or dpo:
-                self.pool.get('sale.order.line').action_done(cr, uid, [pol.linked_sol_id.id], context=context)
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'done', cr)
 
         self.write(cr, uid, ids, {'state': 'done'}, context=context)
 
@@ -391,7 +391,7 @@ class purchase_order_line(osv.osv):
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.linked_sol_id:
-                self.pool.get('sale.order.line').action_cancel(cr, uid, [pol.linked_sol_id.id], context=context)
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
@@ -411,7 +411,7 @@ class purchase_order_line(osv.osv):
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
-                self.pool.get('sale.order.line').action_cancel_r(cr, uid, [pol.linked_sol_id.id], context=context)
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
 
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
 
@@ -436,7 +436,8 @@ class purchase_order(osv.osv):
 
         wf_service = netsvc.LocalService("workflow")
         for po in self.browse(cr, uid, ids, context=context):
-            self.pool.get('purchase.order.line').action_validate(cr, uid, [pol.id for pol in po.order_line], context=context)
+            for pol_id in [pol.id for pol in po.order_line]:
+                wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'validated', cr)
 
         return True
 
@@ -453,7 +454,8 @@ class purchase_order(osv.osv):
 
         wf_service = netsvc.LocalService("workflow")
         for po in self.browse(cr, uid, ids, context=context):
-            self.pool.get('purchase.order.line').action_confirmed(cr, uid, [pol.id for pol in po.order_line], context=context)
+            for pol_id in [pol.id for pol in po.order_line]:
+                wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'confirmed', cr)
 
         return True
 
@@ -469,7 +471,8 @@ class purchase_order(osv.osv):
         wf_service = netsvc.LocalService("workflow")
 
         for po in self.browse(cr, uid, ids, context=context):
-            self.pool.get('purchase.order.line').action_done(cr, uid, [pol.id for pol in po.order_line], context=context)
+            for pol in po.order_line:
+                wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
 
         return True
         

@@ -43,11 +43,9 @@ class purchase_order_line_cancel_wizard(osv.osv_memory):
         wf_service = netsvc.LocalService("workflow")
 
         # cancel line:
+        signal = 'cancel_r' if resource else 'cancel'
         for wiz in self.browse(cr, uid, ids, context=context):
-            if resource:
-                self.pool.get('purchase.order.line').action_cancel_r(cr, uid, [wiz.pol_id.id], context=context)
-            else:
-                self.pool.get('purchase.order.line').action_cancel(cr, uid, [wiz.pol_id.id], context=context)
+            wf_service.trg_validate(uid, 'purchase.order.line', wiz.pol_id.id, signal, cr)
 
         return {'type': 'ir.actions.act_window_close'}
 
