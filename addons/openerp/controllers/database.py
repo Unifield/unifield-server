@@ -402,6 +402,7 @@ class Database(BaseController):
                 ('reconfigure', 'address_phone'),
                 ('reconfigure', 'address_email'),
                 ('reconfigure', 'delivery_process'),
+                ('reconfigure', 'functional_currency'),
             )
             for section, option in not_empty_string_option_list:
                 self.check_not_empty_string(config, section, option)
