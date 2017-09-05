@@ -337,7 +337,7 @@ class Database(BaseController):
                     data_collected=data_collected, report_name='toto', res_id='123456')
 
     def check_not_empty_string(self, config, section, option):
-        if not config.get(section, option):
+        if not config.has_option(section, option) or not config.get(section, option):
             self.msg = {'message': ustr(_('The option \'%s\' from section \'[%s]\' cannot be empty, please set a value.') % (option, section)),
                         'title': ustr(_('Empty option'))}
 
