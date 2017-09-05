@@ -392,6 +392,7 @@ class Database(BaseController):
                 ('instance', 'parent_instance'),
                 ('instance', 'lang'),
                 ('backup', 'auto_bck_path'),
+                ('reconfigure', 'prop_instance_code'),
                 ('reconfigure', 'address_contact_name'),
                 ('reconfigure', 'address_street'),
                 ('reconfigure', 'address_street2'),
