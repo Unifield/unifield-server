@@ -53,7 +53,7 @@ class instance_auto_creation(osv.osv):
             ('language_installed', 'Language installed.'),
             ('register_instance', 'Register the instance into the SYNC_SERVER...'),
             ('instance_registered', 'Instance registered.'),
-            ('waiting_for_validation', 'Waiting for validation on SYNC_SERVER side...'),
+            ('waiting_for_validation', 'Waiting for validation on SYNC_SERVER side (re-check every 5 minutes) ...'),
             ('instance_validated', 'Instance validated on SYNC_SERVER side.'),
             ('backup_configuration', 'Backup configuration...'),
             ('backup_configured', 'Backup configured.'),
@@ -257,6 +257,13 @@ class instance_auto_creation(osv.osv):
                 self.write(cr, 1, creation_id,
                            {'state': 'language_installed'}, context=context)
 
+            if skip_register:
+                # try to connect
+                synchro_serv = pool.get('sync.client.sync_server_connection')
+                ids = synchro_serv.search(cr, uid, [])
+                if ids:
+                    synchro_serv.connect(cr, uid, ids)
+
             if not skip_register:
                 # register instance
                 self.write(cr, 1, creation_id,
@@ -365,7 +372,7 @@ class instance_auto_creation(osv.osv):
                 skip_init_sync = skip_backup_config = True
             elif creation_state == 'reconfigure_done':
                 skip_init_sync = skip_backup_config = skip_reconfigure = True
-            elif creation_state == 'start_init_sync':
+            elif creation_state in ('start_init_sync', 'instance_validated'):
                 pass  # it is allowed to restart this state
             else:
                 # this is not a state we can restart from
@@ -393,7 +400,7 @@ class instance_auto_creation(osv.osv):
                     # start/restart the init sync (very long)
                     self.write(cr, 1, creation_id,
                                {'state': 'start_init_sync'}, context=context)
-                    self.pool.get('sync.client.entity').sync(cr, uid)
+                    entity_obj.sync(cr, uid)
                     self.write(cr, 1, creation_id,
                                {'state': 'end_init_sync'}, context=context)
                 elif sync_status.startswith('Last Sync: Ok'):
@@ -433,9 +440,11 @@ class instance_auto_creation(osv.osv):
                            {'state': 'backup_configured'}, context=context)
 
             if not skip_reconfigure:
-                self.write(cr, 1, creation_id,
-                           {'state': 'reconfigure'}, context=context)
-
+                # sync to get the parent prop instance if it has been recently added
+                self.pool.get('sync.client.entity').sync(cr, uid)
+                if creation_state != 'reconfigure':
+                    self.write(cr, 1, creation_id,
+                               {'state': 'reconfigure'}, context=context)
 
                 base_wizards = {
                     'base.setup.config' : {
@@ -466,7 +475,7 @@ class instance_auto_creation(osv.osv):
                 while model != 'ir.ui.menu':
                     # skip account.installer if no parent_name providen (typically: HQ instance)
                     if model == 'msf_instance.setup':
-                        instance_id = self.pool.get('msf.instance').search(cr, uid, [('instance', '=', cr.dbname)])
+                        instance_id = self.pool.get('msf.instance').search(cr, uid, [('name', '=', cr.dbname)])
                         if not instance_id:
                             error_message = ('No prop. instance \'%s\' found. Please check it has been created on the HQ and sync, then restart the auto creation process from scratch.') % cr.dbname
                             raise osv.except_osv(_("Error!"), error_message)
@@ -485,6 +494,8 @@ class instance_auto_creation(osv.osv):
                         answer = getattr(wiz_obj, button)(cr, uid, [wizard_id])
                     model = answer.get('res_model', None)
 
+                # sync to send the prop instance modifications
+                self.pool.get('sync.client.entity').sync(cr, uid)
                 self.write(cr, 1, creation_id,
                            {'state': 'reconfigure_done'}, context=context)
 
@@ -495,6 +506,8 @@ class instance_auto_creation(osv.osv):
                     #module = ...
                     #import
 
+            self.write(cr, 1, creation_id,
+                       {'state': 'done'}, context=context)
             time.sleep(15)  # before to delete to let the web get the last
                             # informations
             # delete the auto configuration folder
