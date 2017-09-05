@@ -80,6 +80,8 @@ class project_addresses(osv.osv_memory):
             for field in ['country_id','state_id']:
                 if address[field]:
                     res[field] = address[field].id
+            if address.name:
+                res['contact_name'] = address['name']
 
         if delivery_id:
             address = self.pool.get('res.partner.address').browse(cr, uid, delivery_id, context=context)
@@ -111,7 +113,7 @@ class project_addresses(osv.osv_memory):
         assert len(ids) == 1, "We should only get one object from the form"
         payload = self.browse(cr, uid, ids[0], context=context)
         if not getattr(payload, 'company_id', None):
-            raise ValueError('Case where no default main company is setup ' 
+            raise ValueError('Case where no default main company is setup '
                              'not handled yet')
 
         # TODO: quick fix

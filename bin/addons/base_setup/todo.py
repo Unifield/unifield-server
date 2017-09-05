@@ -113,7 +113,7 @@ IBAN: BE74 1262 0121 6907 - SWIFT: CPDF BE71 - VAT: BE0477.472.701'''),
         'logo':fields.binary('Logo'),
         'account_no':fields.char('Bank Account No', size=64),
         'website': fields.char('Company Website', size=64, help="Example: http://www.msf.org/"),
-        'contact_name': fields.char('Contact Name', size=64, select=1, required=True)
+        'contact_name': fields.char('Contact Name', size=64, required=True)
     }
 
     def execute(self, cr, uid, ids, context=None):
