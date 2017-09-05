@@ -4899,6 +4899,7 @@ class stock_move(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
         solc_obj = self.pool.get('sale.order.line.cancel')
+        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -4950,6 +4951,8 @@ class stock_move(osv.osv):
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
                         sol_obj.add_resource_line(cr, uid, sol.id, sol.order_id.id, diff_qty, context=context)
                     sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, resource=move.has_to_be_resourced,context=context)
+                    signal = 'cancel_r' if move.has_to_be_resourced else 'cancel'
+                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
 
                     # Cancel the remaining OUT line
                     if diff_qty < sol.product_uom_qty:
