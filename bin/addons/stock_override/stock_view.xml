@@ -617,11 +617,11 @@
                                     <field name="expired_date"/>
                                     <field name="location_dest_id"/>
                                     <field name="date" string="Actual Receipt Date"/>
-                                    <field name="state"/>
+                                    <field name="state_to_display"/>
                                     <field name="fake_state" invisible="1"/>
                                     <field name="kit_check" invisible="True"/>
                                     <button name="create_composition_list" type="object" string="Create Composition List" icon="gtk-justify-fill" attrs="{'invisible': ['|', ('fake_state', '!=', 'done'), ('kit_check', '=', False)]}"/>
-                                    <button name="in_action_confirm" states="draft,confirmed" string="Confirm" type="object" icon="gtk-apply"/>
+                                    <button name="in_action_confirm" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'confirmed'])]}" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
                                     <field name="kc_check" widget="null_boolean" />
