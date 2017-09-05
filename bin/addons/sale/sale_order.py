@@ -2289,17 +2289,13 @@ class sale_order_line(osv.osv):
             # Delete the line and the procurement
             self.write(cr, uid, [line.id], {'state': 'cancel_r' if resource else 'cancel'}, context=context)
 
-            # UF-2401: Remove OUT line when IR line has been canceled:
+            # Cancel OUT line when IR line has been canceled:
             picking_ids = set()
             out_moves = move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ['done', 'cancel']), ('in_out_updated', '=', False)], context=context)
             for move in move_obj.read(cr, uid, out_moves, ['picking_id'], context=context):
                 if move['picking_id']:
                     picking_ids.add(move['picking_id'][0])
             if not context.get('no_cancel_out'):
-                if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer':
-                    move_obj.write(cr, uid, out_moves, {'state': 'draft'}, context=context)
-                    move_obj.unlink(cr, uid, out_moves, context=context)
-                else:
                     move_obj.write(cr, uid, out_moves, {'state': 'cancel'}, context=context)
                     move_obj.action_cancel(cr, uid, out_moves, context=context)
 
