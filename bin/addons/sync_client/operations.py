@@ -346,7 +346,7 @@ class memory_usage(osv.osv, ratelimit):
         'instance': fields.char('Instance', readonly=True, size=64, required=True, help="The originating instance."),
         'remote_id': fields.integer('Remote id', help="Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during count centralization."),
         'process': fields.char('Process', readonly=True, size=64, required=True, help="Which process is concerned?"),
-        'memory_usage': fields.integer('Memory Usage', readonly=True, required=True, help="Size of RAM (in bytes) used by the process.")
+        'memory_usage': fields.integer_big('Memory Usage', readonly=True, required=True, help="Size of RAM (in bytes) used by the process.")
     }
 
     _logger = logging.getLogger('memory.usage')
