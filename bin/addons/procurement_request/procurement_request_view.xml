@@ -108,7 +108,7 @@
                                         icon="terp-stock_effects-object-colorize"
                                         attrs="{'invisible': [('fake_state', 'in', ('confirmed', 'cancel', 'cancel_r', 'done', 'exception'))]}"
                                         />
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
+                                    <button string="Validate" icon="terp-check" name="action_validate" type="object" attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                 </tree>
                                 <form>
                                    <field name="product_id" colspan="4" />
