@@ -446,36 +446,89 @@ class instance_auto_creation(osv.osv):
                     self.write(cr, 1, creation_id,
                                {'state': 'reconfigure'}, context=context)
 
+                country_code = config_dict['reconfigure'].get('address_country')
+                country_id = None
+                if country_code:
+                    country_obj = self.pool.get('res.country')
+                    country_ids = country_obj.search(cr, uid, [('code', '=', country_code)])
+                    if country_ids:
+                        country_id = country_ids[0]
+
+                state_code = config_dict['reconfigure'].get('address_state')
+                state_id = None
+                if state_code:
+                    state_obj = self.pool.get('res.country.state')
+                    state_ids = state_obj.search(cr, uid, [('code', '=', state_code)])
+                    if state_ids:
+                        state_id = state_ids[0]
+
+                if config.has_option('reconfigure', 'import_commitments'):
+                    import_commitments = config.getboolean('reconfigure', 'import_commitments')
+                else:
+                    import_commitments = True
+
+                if config.has_option('reconfigure', 'payroll_ok'):
+                    payroll_ok = config.getboolean('reconfigure', 'payroll_ok')
+                else:
+                    payroll_ok = True
+
+                if cionfig.has_option('reconfigure', 'delivery_process'):
+                    delivery_process = config_dict['reconfigure'].get('delivery_process')
+                else:
+                    delivery_process = 'complex'
+
                 base_wizards = {
-                    'base.setup.config' : {
+                    'base.setup.config': {
                         'button' : 'config',
                     },
-                    'res.config.view' : {
-                        'name' : "auto_init",
-                        'view' : 'extended',
+                    'unifield.setup.configuration': {
+                        'import_commitments': import_commitments, 
                     },
-                    'sale.price.setup' : {
-                        'sale_price' : 0.10,
+                    'payroll.setup': {
+                        'payroll_ok': payroll_ok,
                     },
-                    'stock.location.configuration.wizard' : {
-                        'location_type' : 'internal',
-                        'location_usage' : 'stock',
-                        'location_name' : 'Test Location',
-                        'button' : 'action_stop',
+                    'delivery.process.setup': {
+                        'delivery_process': delivery_process,
                     },
-                    'currency.setup' : {
-                        #'functional_id' : config_dict['instance'].get('functional_currency').lower(),
-                        'functional_id' : 'eur', #config_dict['instance'].get('functional_currency').lower(),
+                    'base.setup.company': {
+                        'street': config_dict['reconfigure'].get('address_street'),
+                        'street2': config_dict['reconfigure'].get('address_street2'),
+                        'zip': config_dict['reconfigure'].get('address_zip'),
+                        'city': config_dict['reconfigure'].get('address_city'),
+                        'phone': config_dict['reconfigure'].get('address_phone'),
+                        'email': config_dict['reconfigure'].get('address_email'),
+                        'website': config_dict['reconfigure'].get('address_company_website'),
+                        'contact_name': config_dict['reconfigure'].get('address_contact_name'),
+                        'account_no': config_dict['reconfigure'].get('address_account'),
+                    },
+                    'res.config.view': {
+                        'name': "auto_init",
+                        'view': 'extended',
+                    },
+                    'sale.price.setup': {
+                        'sale_price': 0.10,
+                    },
+                    'stock.location.configuration.wizard': {
+                        'location_type': 'internal',
+                        'location_usage': 'stock',
+                        'location_name': 'Test Location',
+                        'button': 'action_stop',
+                    },
+                    'currency.setup': {
+                        'functional_id': config_dict['reconfigure'].get('functional_currency').lower(),
                     },
                 }
-
-
+                if country_id:
+                    base_wizards['base.setup.company']['country_id'] = country_id
+                if state_code:
+                    base_wizards['base.setup.company']['state_id'] = state_id
 
                 model = 'msf_instance.setup'
                 while model != 'ir.ui.menu':
                     # skip account.installer if no parent_name providen (typically: HQ instance)
                     if model == 'msf_instance.setup':
-                        instance_id = self.pool.get('msf.instance').search(cr, uid, [('name', '=', cr.dbname)])
+                        instance_id = self.pool.get('msf.instance').search(cr,
+                                uid, [('code', '=', config_dict['reconfigure']['prop_instance_code'])])
                         if not instance_id:
                             error_message = ('No prop. instance \'%s\' found. Please check it has been created on the HQ and sync, then restart the auto creation process from scratch.') % cr.dbname
                             raise osv.except_osv(_("Error!"), error_message)
@@ -508,7 +561,7 @@ class instance_auto_creation(osv.osv):
 
             self.write(cr, 1, creation_id,
                        {'state': 'done'}, context=context)
-            time.sleep(15)  # before to delete to let the web get the last
+            time.sleep(6)  # before to delete to let the web get the last
                             # informations
             # delete the auto configuration folder
             config_file_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall')
