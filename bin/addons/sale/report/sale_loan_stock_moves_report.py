@@ -37,6 +37,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
             'isQtyOut': self._is_qty_out,
             'getQty': self._get_qty,
             'getInstance': self._get_instance,
+            'getFirstSplitOnUnderscore': self._get_first_split_on_underscore,
         })
 
     def _is_qty_out(self, move):
@@ -115,30 +116,34 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
             move_ref = str(move.origin.split(":")[-1].split("/")[-1].split("-")[0])
             if not dict_check_done.get(move_ref, []):
                 if 'FO' in move.origin and 'PO' in move.origin:
-                    so_state = self._get_move_obj(self.cr, self.uid, so_obj, move).state
-                    po_state = self._get_move_obj(self.cr, self.uid, po_obj, move).state
+                    so_found = self._get_move_obj(self.cr, self.uid, so_obj, move)
+                    so_state = so_found.state if so_found else 'none'
+                    po_found = self._get_move_obj(self.cr, self.uid, po_obj, move)
+                    po_state = po_found.state if po_found else 'none'
                     if so_state == 'done' and po_state == 'done':
                         dict_check_done[move_ref] = 'Closed'
                     else:
                         dict_check_done[move_ref] = 'Open'
-                elif 'FO' in move.origin and not 'PO' in move.origin:
+                elif 'FO' in move.origin and 'PO' not in move.origin:
                     so_found = self._get_move_obj(self.cr, self.uid, so_obj, move)
-                    so_state = so_found.state
+                    so_state = so_found.state if so_found else 'none'
                     po_ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
                     if len(po_ids) > 0:
-                        po_state = po_obj.browse(self.cr, self.uid, po_ids[0]).state
+                        po_found = po_obj.browse(self.cr, self.uid, po_ids[0])
+                        po_state = po_found.state if po_found else 'none'
                         if so_state == 'done' and po_state == 'done':
                             dict_check_done[move_ref] = 'Closed'
                         else:
                             dict_check_done[move_ref] = 'Open'
                     else:
                         dict_check_done[move_ref] = 'Open'
-                elif not 'FO' in move.origin and 'PO' in move.origin:
+                elif 'FO' not in move.origin and 'PO' in move.origin:
                     po_found = self._get_move_obj(self.cr, self.uid, po_obj, move)
-                    po_state = po_found.state
+                    po_state = po_found.state if po_found else 'none'
                     so_ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
                     if len(so_ids) > 0:
-                        so_state = po_obj.browse(self.cr, self.uid, so_ids[0]).state
+                        so_found = po_obj.browse(self.cr, self.uid, so_ids[0])
+                        so_state = so_found.state if so_found else 'none'
                         if so_state == 'done' and po_state == 'done':
                             dict_check_done[move_ref] = 'Closed'
                         else:
@@ -197,6 +202,16 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
         Return user's current instance
         '''
         return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.name
+
+    def _get_first_split_on_underscore(self, name):
+        '''
+        Return the first data from a table with the string split to '_'
+        '''
+        res = name
+        if res:
+            res = name.split('_')[0]
+
+        return res
 
 class sale_loan_stock_moves_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,

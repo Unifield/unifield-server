@@ -176,7 +176,7 @@
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 %endif
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.origin|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.purchase_line_id.sync_order_line_db_id or o.sale_line_id.sync_order_line_db_id or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${getFirstSplitOnUnderscore(o.purchase_line_id.sync_order_line_db_id) or getFirstSplitOnUnderscore(o.sale_line_id.sync_order_line_db_id) or ''|x}</Data></Cell>
                 % if o.price_unit:
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 3)|x}</Data></Cell>
                 % else:
