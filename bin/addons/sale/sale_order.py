@@ -2269,7 +2269,6 @@ class sale_order_line(osv.osv):
         @param resource: is the line cancel and resourced ? usefull to set the 'cancel_r' state
         '''
         # Documents
-        proc_obj = self.pool.get('procurement.order')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
         so_obj = self.pool.get('sale.order')
@@ -2285,7 +2284,6 @@ class sale_order_line(osv.osv):
         order = line.order_id and line.order_id.id
 
         if qty_diff >= line.product_uom_qty:
-            proc = line.procurement_id and line.procurement_id.id
             # Delete the line and the procurement
             self.write(cr, uid, [line.id], {'state': 'cancel_r' if resource else 'cancel'}, context=context)
 
@@ -2310,12 +2308,8 @@ class sale_order_line(osv.osv):
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
         else:
             minus_qty = line.product_uom_qty - qty_diff
-            proc = line.procurement_id and line.procurement_id.id
             # Update the line and the procurement
-            self.write(cr, uid, [line.id], {'product_uom_qty': minus_qty,
-                                            'product_uos_qty': minus_qty}, context=context)
-            if proc:
-                proc_obj.write(cr, uid, [proc], {'product_qty': minus_qty}, context=context)
+            self.write(cr, uid, [line.id], {'product_uom_qty': minus_qty, 'product_uos_qty': minus_qty}, context=context)
 
         so_to_cancel_id = False
         if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
