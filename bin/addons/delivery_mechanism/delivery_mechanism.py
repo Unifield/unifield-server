@@ -1180,20 +1180,6 @@ class stock_picking(osv.osv):
                             'sptc_values': sptc_values.copy(),
                         })
 
-                # UTP-967
-                if move.state != 'cancel' and move.purchase_line_id and move.purchase_line_id.procurement_id:
-                    proc = move.purchase_line_id.procurement_id
-                    if proc.move_id and proc.move_id.location_id.id == proc_loc_id:
-                        if diff_qty > 0:
-                            # REF-59: move of partial in,
-                            # adapt proc order's move qty (for correct virtual stock)
-                            move_obj.write(cr, uid, [proc.move_id.id],
-                                           {'product_qty': diff_qty}, context=context)
-                        else:
-                            proc_obj.write(cr, uid, [proc.id], {'move_id': move.id}, context=context)
-                            # note: do not close move until a diff qty is applied above
-                            move_obj.write(cr, uid, [proc.move_id.id], {'product_qty': 0.00, 'state': 'done'}, context=context)
-
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'progress_line': _('Done (%s/%s)') % (move_done, total_moves),
             }, context=context)
@@ -1479,13 +1465,6 @@ class stock_picking(osv.osv):
                         elif mirror_pick.subtype == 'picking' and ptc.state == 'draft':
                             # If there are still some lines available with qty 0, then check if any in progress PICK, if all complete, then close the PICK
                             self.validate(cr, uid, [mirror_pick.id], context=context)
-
-                if move.purchase_line_id and move.purchase_line_id.procurement_id:
-                    procurement = move.purchase_line_id.procurement_id
-                    if not procurement.sale_id and procurement.move_id:
-                        self.pool.get('stock.move').action_cancel(cr, uid, [move.purchase_line_id.procurement_id.move_id.id])
-                        wf_service.trg_validate(uid, 'procurement.order', move.purchase_line_id.procurement_id.id, 'button_cancel', cr)
-
 
             # correct the corresponding po manually if exists - should be in shipping exception
             if obj.purchase_id:
