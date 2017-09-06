@@ -78,7 +78,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 acronym_type = 'PO'
 
             if acronym_type and acronym_type in split_origin:
-                obj_name = str(split_origin.split("/")[-1].split("-")[0])
+                obj_name = str(split_origin.split("-")[0])
                 obj_id = obj_obj.search(cr, uid, [('name', 'like', obj_name + '-')])
                 if not obj_id:
                     obj_id = obj_obj.search(cr, uid, [('name', 'like', obj_name)])
