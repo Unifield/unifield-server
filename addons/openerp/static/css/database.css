@@ -88,3 +88,8 @@ select.selectfield {
 .auto_creation_resume {
     text-align: center;
 }
+
+.auto_instance_text {
+    font-size: 1.5em;
+    margin: 3em;
+}

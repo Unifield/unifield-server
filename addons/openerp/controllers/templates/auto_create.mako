@@ -46,16 +46,23 @@
         <h1>Automated instance creation detected</h1>
 
         <div class='auto_instance_text'>
-            <p>If you have checked the following points and you are ready to start
-               instance creation, login to start. Points to check:
+            <p>If you have checked the following points, you can start the
+process of instance auto creation by login with the Super admin password. Points to check:
                 <ul>
-                    <li>truc 1</li>
-                    <li>truc 2</li>
+                    <li>A Folder 'UFautoInstall' is present in Unifield/Server folder.</li>
+                    <li>This folder contain a file 'uf_auto_install.conf'</li>
+                    <li>This file is correct (required fields, correct values)</li>
+                    <li>The folder also contain an 'import' directory
+(Unifield/Server/UFautoInstall/import)</li>
+                    <li>This 'import' directory contain files where the name of
+the file is the model to import and the extension is csv (typically,
+'account.analytic.journal.csv' and 'account.journal.csv')</li>
+                    <li>The connexion to the SYNC_SERVER is ok (credentials,
+address, port, ...)</li>
+                    <li>The parents instance (HQ, and Coordo if it is a
+project) exists and are present as instance in the SYNC_SERVER</li>
                 </ul>
             </p>
-        </div>
-        <div class="auto_create_text">
-            <p>flklfjjffdsqf  fdsq fsqf dsqf </p>
         </div>
         <div>${form.display()}</div>
     </div>
