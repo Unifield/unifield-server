@@ -63,7 +63,9 @@ class instance_auto_creation(osv.osv):
             ('reconfigure_done', 'Reconfigure done.'),
             ('import_files', 'Start file imoprt...'),
             ('files_imported', 'Files import done.'),
-            ('done', 'Done')], 'State', readonly=True),
+            ('partner_configuration', 'Start configuration of internal partner...'),
+            ('partner_configuration_done', 'Internal partner configuration done.'),
+            ('done', 'Instance creation done.')], 'State', readonly=True),
         'progress': fields.float('Progress', readonly=True),
         'error': fields.text('Error', readonly=True),
         'message': fields.text('Message', readonly=True),
@@ -288,22 +290,25 @@ class instance_auto_creation(osv.osv):
                 cr.commit()
                 synchro_serv.connect(cr, uid, ids)
 
-                # search the current entity
-                entity_id = pool.get('sync.client.entity').search(cr, uid, [])
-
+                # use the instance name if defined else, the database name
+                instance_name = config_dict['instance'].get('instance_name') or cr.dbname
                 # find the parent_id:
                 oc = config_dict['instance'].get('oc').lower()
                 data = {
-                    'name': cr.dbname,
+                    'name': instance_name,
                     'identifier': str(uuid.uuid1()),
                     'oc': oc,
                     'parent': config_dict['instance'].get('parent_instance'),
                 }
+
+                # search the current entity
+                entity_obj = pool.get('sync.client.entity')
+                entity_id = entity_obj.search(cr, uid, [])
                 if entity_id:
-                    entity_data = pool.get('sync.client.entity').read(cr, uid, entity_id[0])
-                    pool.get('sync.client.entity').write(cr, uid, entity_id[0], data)
+                    entity_data = entity_obj.read(cr, uid, entity_id[0])
+                    entity_obj.write(cr, uid, entity_id[0], data)
                 else:
-                    pool.get('sync.client.entity').create(cr, uid, data)
+                    entity_obj.create(cr, uid, data)
                 wiz_data = {'email': 'www', 'oc': oc}
                 wizard = pool.get('sync.client.register_entity')
                 wizard_id = wizard.create(cr, uid, wiz_data)
@@ -526,7 +531,7 @@ class instance_auto_creation(osv.osv):
                         instance_id = self.pool.get('msf.instance').search(cr,
                                 uid, [('code', '=', config_dict['reconfigure']['prop_instance_code'])])
                         if not instance_id:
-                            error_message = ('No prop. instance \'%s\' found. Please check it has been created on the HQ and sync, then restart the auto creation process from scratch.') % cr.dbname
+                            error_message = ('No prop. instance \'%s\' found. Please check it has been created on the HQ and sync, then restart the auto creation process from scratch.') % config_dict['reconfigure']['prop_instance_code']
                             raise osv.except_osv(_("Error!"), error_message)
                         else:
                             instance_id = instance_id[0]
@@ -560,6 +565,40 @@ class instance_auto_creation(osv.osv):
                     model_obj.import_data_from_csv(cr, uid, os.path.join(import_path, file_name))
                 self.write(cr, 1, creation_id,
                            {'state': 'files_imported'}, context=context)
+
+            # internal partner configuration
+            self.write(cr, 1, creation_id,
+                       {'state': 'partner_configuration'}, context=context)
+            partner_obj = self.pool.get('res.partner')
+            local_market_id = partner_obj.search(cr, uid, [('ref', '=', 'LOCAL')])
+            if len(local_market_id) != 1:
+                raise osv.except_osv(_("Error!"), 'There should be one and only one partner with reference \'LOCAL\' (Local Market), found %d.' % len(local_market_id))
+            account_obj = self.pool.get('account.account')
+            account_receivable = config_dict['partner'].get('external_account_receivable')
+            account_receivable_id = account_obj.search(cr, uid, [('code', '=', account_receivable)])[0]
+            account_payable = config_dict['partner'].get('external_account_payable')
+            account_payable_id = account_obj.search(cr, uid, [('code', '=', account_payable)])[0]
+            vals = {
+                'property_account_receivable': account_receivable_id,
+                'property_account_payable': account_payable_id,
+            }
+            partner_obj.write(cr, uid, local_market_id, vals)
+            instance_partner_id = partner_obj.search(cr, uid, [('name', '=', config_dict['instance'].get('instance_name'))])
+            if len(instance_partner_id) != 1:
+                raise osv.except_osv(_("Error!"), 'There should be one and only one partner with name \'%s\', found %d.' % (config_dict['instance'].get('instance_name'), len(instance_partner_id)))
+            account_receivable = config_dict['partner'].get('internal_account_receivable')
+            account_receivable_id = account_obj.search(cr, uid, [('code', '=', account_receivable)])[0]
+            account_payable = config_dict['partner'].get('internal_account_payable')
+            account_payable_id = account_obj.search(cr, uid, [('code', '=', account_payable)])[0]
+            vals = {
+                'property_account_receivable': account_receivable_id,
+                'property_account_payable': account_payable_id,
+            }
+            partner_obj.write(cr, uid, instance_partner_id, vals)
+            cr.commit()
+            self.write(cr, 1, creation_id,
+                       {'state': 'partner_configuration_done'}, context=context)
+
 
             self.write(cr, 1, creation_id,
                        {'state': 'done'}, context=context)
