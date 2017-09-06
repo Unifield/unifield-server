@@ -11378,10 +11378,6 @@ msgstr "Tipo de envío de la lista de picking que contendrá el movimiento encad
 msgid "Import Entries"
 msgstr "Importar asientos"
 
-#, python-format
-msgid "Import Entries"
-msgstr "Importar asientos"
-
 #. module: msf_outgoing
 #: report:labels:0
 msgid "DG / "
