@@ -56,7 +56,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
     def _sale_ustr(self, string):
         return tools.ustr(string)
 
-    def _get_orders(self, report, grouped=False, only_bo=False):
+    def _get_orders(self, report, only_bo=False):
         orders = []
         for order_id in report.order_ids:
             if self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)]):
@@ -66,7 +66,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
         for order in orders:
             if only_bo:
-                for line in self._get_lines(order, grouped=grouped, only_bo=only_bo):
+                for line in self._get_lines(order, only_bo=only_bo):
                     # A line exist, just break the second loop
                     break
                 else:
@@ -157,22 +157,17 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
 
 
-    def _get_lines(self, order_id, grouped=False, only_bo=False):
+    def _get_lines(self, order_id, only_bo=False):
         '''
         Get all lines for an order
         '''
         keys = []
-
-        if only_bo:
-            grouped = True
 
         if not isinstance(order_id, int):
             order_id = order_id.id
 
         sort_state = {'cancel': 1}
         for line in self._get_order_line(order_id):
-            if not grouped:
-                keys = []
             lines = []
             first_line = True
             fl_index = 0
@@ -280,20 +275,17 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 packing = move.picking_id.name or '-'
                                 shipment = '-'
 
-                            if not grouped:
-                                key = (packing, shipment, move.product_uom.name)
-                            else:
-                                key = (packing, shipment, move.product_uom.name, line.line_number)
+                            key = (packing, shipment, move.product_uom.name, line.line_number)
                             data.update({
                                 'packing': packing,
                                 'shipment': shipment,
                                 'is_delivered': is_delivered,
-                                'delivered_qty': not only_bo and (is_shipment_done or is_delivered) and move.product_qty or 0.00,
-                                'delivered_uom': not only_bo and (is_shipment_done or is_delivered) and move.product_uom.name or '-',
+                                'delivered_qty': (is_shipment_done or is_delivered) and move.product_qty or 0.00,
+                                'delivered_uom': (is_shipment_done or is_delivered) and move.product_uom.name or '-',
                                 'backordered_qty': not is_shipment_done and not is_delivered and line.order_id.state != 'cancel' and move.product_qty or 0.00,
-                                'rts': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.shipment_expected_date[0:10],
-                                'eta': not only_bo and eta and eta.strftime('%Y-%m-%d'),
-                                'transport': not only_bo and move.picking_id.shipment_id and move.picking_id.shipment_id.transport_type or '-',
+                                'rts': move.picking_id.shipment_id and move.picking_id.shipment_id.shipment_expected_date[0:10],
+                                'eta': eta and eta.strftime('%Y-%m-%d'),
+                                'transport': move.picking_id.shipment_id and move.picking_id.shipment_id.transport_type or '-',
                             })
                         elif (not ppl and not ppl_not_shipped and s_out) or from_stock:
                             state = move.state == 'cancel'
@@ -310,18 +302,15 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 shipment = move.picking_id.name or '-'
                                 is_shipment_done = move.picking_id.state == 'done'
                                 packing = '-'
-                            if not grouped:
-                                key = (packing, shipment, move.product_uom.name, state)
-                            else:
-                                key = (packing, shipment, move.product_uom.name, line.line_number, state)
+                            key = (packing, shipment, move.product_uom.name, line.line_number, state)
                             data.update({
                                 'packing': packing,
                                 'shipment': shipment,
-                                'delivered_qty': not only_bo and is_shipment_done and move.product_qty or 0.00,
-                                'delivered_uom': not only_bo and move.product_uom.name or '-',
+                                'delivered_qty': is_shipment_done and move.product_qty or 0.00,
+                                'delivered_uom': move.product_uom.name or '-',
                                 'is_delivered': is_shipment_done,
                                 'backordered_qty': not is_shipment_done and line.order_id.state != 'cancel' and move.product_qty or 0.00,
-                                'rts': not only_bo and line.order_id.ready_to_ship_date,
+                                'rts': line.order_id.ready_to_ship_date,
                             })
                         else:
                             if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
@@ -332,23 +321,19 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 shipment = move.picking_id.name or '-'
                                 is_shipment_done = move.picking_id.state == 'done'
                                 packing = '-'
-                            if not grouped:
-                                key = (packing, False, move.product_uom.name)
-                            else:
-                                key = (packing, False, move.product_uom.name, line.line_number)
-                            if not only_bo:
-                                data.update({
-                                    'packing': packing,
-                                    'delivered_qty': not only_bo and is_shipment_done and move.product_qty or 0.00,
-                                    'delivered_uom': not only_bo and is_shipment_done and move.product_uom.name or '-',
-                                    'rts': not only_bo and line.order_id.ready_to_ship_date,
-                                    'shipment': shipment,
-                                })
+                            key = (packing, False, move.product_uom.name, line.line_number)
+                            data.update({
+                                'packing': packing,
+                                'delivered_qty': is_shipment_done and move.product_qty or 0.00,
+                                'delivered_uom': is_shipment_done and move.product_uom.name or '-',
+                                'rts': line.order_id.ready_to_ship_date,
+                                'shipment': shipment,
+                            })
 
                         if key in keys:
                             for rline in lines:
                                 if rline['packing'] == key[0] and rline['shipment'] == key[1] and rline['delivered_uom'] == key[2]:
-                                    if not grouped or (grouped and line.line_number == key[3]):
+                                    if line.line_number == key[3]:
                                         rline.update({
                                             'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
                                             'backordered_qty': rline['backordered_qty'] + data['backordered_qty'],
@@ -400,22 +385,19 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
                         is_done = line_move.picking_id.state == 'done'
 
-                        if not grouped:
-                            key = (line_move.product_uom.name, line_move.picking_id.id)
-                        else:
-                            key = (line_move.product_uom.name, line.line_number, line_move.picking_id.id)
+                        key = (line_move.product_uom.name, line.line_number, line_move.picking_id.id)
                         data.update({
-                            'delivered_qty': not only_bo and is_done and line_move.product_qty or 0.00,
-                            'delivered_uom': not only_bo and is_done and line_move.product_uom.name or '-',
+                            'delivered_qty': is_done and line_move.product_qty or 0.00,
+                            'delivered_uom': is_done and line_move.product_uom.name or '-',
                             'is_delivered': is_done,
-                            'backordered_qty': not is_done and line.order_id.state != 'cancel' and line_move.product_qty or 0.00,
-                            'rts': not only_bo and line.order_id.ready_to_ship_date,
+                            'backordered_qty': line.order_id.state != 'cancel' and line_move.product_qty or 0.00,
+                            'rts': line.order_id.ready_to_ship_date,
                         })
 
                         if key in keys:
                             for rline in lines:
                                 if rline['delivered_uom'] == key[0]:
-                                    if not grouped or (grouped and line.line_number == key[1]):
+                                    if line.line_number == key[1]:
                                         rline.update({
                                             'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
                                         })
@@ -448,7 +430,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             # Put the backorderd qty on the first line
             if not lines:
                 continue
-            if not only_bo and bo_qty and bo_qty > 0 and not first_line and line.order_id.state not in ('cancel', 'done'):
+            if bo_qty and bo_qty > 0 and not first_line and line.order_id.state not in ('cancel', 'done'):
                 lines.append({
                     'po_name': po_name,
                     'cdd': cdd,
@@ -459,21 +441,12 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     'is_delivered': False,
                     'backordered_qty': bo_qty if line.order_id.state != 'cancel' else 0.00,
                 })
-            elif only_bo:
-                lines[fl_index].update({
-                    'backordered_qty': bo_qty if line.order_id.state not in  ('done', 'cancel') else 0.00,
-                })
-
             elif bo_qty < 0:
                 lines[fl_index]['extra_qty'] = abs(bo_qty) if line.order_id.state != 'cancel' else 0.00
 
             for ln in lines:
-                if only_bo and ln.get('backordered_qty', 0.00) <= 0.00:
+                if only_bo and (ln.get('backordered_qty', 0.00) <= 0.00 or ln.get('current_line_state') == 'cancel'):
                     continue
-                elif only_bo:
-                    ln['ordered_qty'] = line.product_uom_qty
-                    ln['uom_id'] = line.product_uom.name if ln['ordered_qty'] > 0 and line.order_id.state != 'cancel' else '-'
-                    ln['delivered_qty'] = line.product_uom_qty - ln.get('backordered_qty', 0.00)
                 yield ln
 
         self._order_iterator += 1

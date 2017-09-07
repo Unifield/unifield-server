@@ -181,7 +181,7 @@
 	    </para>
 
     <section>
-            [[ repeatIn(getOrders(r, grouped=True, only_bo=r.only_bo), 'o', 'section') ]]
+            [[ repeatIn(getOrders(r, only_bo=r.only_bo), 'o', 'section') ]]
         <blockTable colWidths="32.0,80.0,130.0,110.0,45.0,45.0,45.0,45.0,45.0,75.0,60.0,60.0" style="LinesTable" repeatRows="2">
 	    	<tr>
 	    		<td colspan="2">
@@ -260,7 +260,7 @@
 	    		</td>
 	    	</tr>
             <tr>
-                [[ repeatIn(getLines(o, grouped=True, only_bo=r.only_bo), 'line') ]]
+                [[ repeatIn(getLines(o, only_bo=r.only_bo), 'line') ]]
 	    		<td>
                     <para style="LinesBlue">[[ line.get('current_line_state') != 'cancel' and line.get('line_number', '-') or removeParentNode('para') ]]</para>
                     <para style="LinesGrey">[[ line.get('current_line_state') == 'cancel' and line.get('line_number', '-') or removeParentNode('para') ]]</para>
@@ -323,7 +323,7 @@
         </blockTable>
 
         <para style="LinesBlue">
-            <font color="white"> </font>
+            <font color="white"> [[ empty_fo() ]]</font>
         </para>
 
     </section>
