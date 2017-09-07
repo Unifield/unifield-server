@@ -58,6 +58,7 @@
                     <field name="order_id" string="Order reference" />
                     <field name="line_number" />
                     <field name="product_id" />
+                    <field name="comment" />
                     <field name="product_uom_qty" />
                     <field name="product_uom" />
                     <field name="real_stock" />

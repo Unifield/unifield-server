@@ -112,6 +112,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             if order_line_ids:
                 origin_line = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0])
                 line.update({'origin': origin_line.order_id.name})
+                if origin_line.stock_take_date:
+                    line.update({'stock_take_date': origin_line.stock_take_date})
             else:
                 # Update the link to the original FO to create new line on it at PO confirmation
                 procurement = kwargs['procurement']
@@ -119,7 +121,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                     link_so = self.pool.get('purchase.order.line').update_origin_link(cr, uid, procurement.origin, context=context)
                     if link_so.get('link_so_id'):
                         line.update({'origin': procurement.origin, 'link_so_id': link_so.get('link_so_id')})
-
+                if procurement.unique_rule_type:
+                    line.update({'stock_take_date': procurement.date_planned[0:10]})
             # UTP-934: If the procurement is a rfq, the price unit must be taken from this rfq, and not from the pricelist or standard price
             procurement = kwargs['procurement']
             if procurement.po_cft in ('cft', 'rfq') and procurement.price_unit:
@@ -211,7 +214,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         purchase_domain = [('partner_id', '=', partner.id),
                            ('state', '=', 'draft'),
                            ('rfq_ok', '=', False),
-                           ('delivery_requested_date', '=', values.get('delivery_requested_date'))]
+                           ('delivery_requested_date', '=', values.get('delivery_requested_date')),
+                           ('stock_take_date', '=', values.get('stock_take_date'))]
 
         if procurement.po_cft == 'dpo':
             purchase_domain.append(('order_type', '=', 'direct'))
@@ -263,6 +267,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
 
         if procurement.unique_rule_type:
             values['po_from_rr'] = True
+            values['stock_take_date'] = values['date_planned'][0:10]
 
         # Category requirements => Search a PO with the same category than the IR/FO category
         if partner.po_by_project in ('category_project', 'category'):
@@ -676,6 +681,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                 'date_planned': newdate.strftime('%Y-%m-%d %H:%M:%S'),
                 'move_dest_id': res_id,
                 'notes': product.description_purchase,
+                'stock_take_date': procurement.sale_id.stock_take_date,
             }
 
             # line values modification from hook
@@ -695,6 +701,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                 'order_line': [(0, 0, line)],
                 'company_id': procurement.company_id.id,
                 'fiscal_position': partner.property_account_position and partner.property_account_position.id or False,
+                'stock_take_date': procurement.sale_id.stock_take_date,
             }
             # values modification from hook
             values = self.po_values_hook(cr, uid, ids, context=context, values=values, procurement=procurement, line=line,)

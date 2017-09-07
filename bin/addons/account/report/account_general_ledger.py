@@ -182,6 +182,12 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             self.account_ids += self.pool.get('account.account')._get_parent_of(
                 self.cr, self.uid, self.account_ids)
 
+        # "Open Items at" filter
+        if data['form'].get('open_items'):
+            aml_ids = obj_move.search(self.cr, self.uid, [('open_items', '=', data['form']['open_items'])],
+                                      order='NO_ORDER', context=self.context) or [0]
+            self.query += " AND l.id in(%s) " % (",".join(map(str, aml_ids)))
+
         query = self.query
         if self.reconciled_filter:
             query += self.reconciled_filter
