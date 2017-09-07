@@ -192,14 +192,14 @@ def secured(fn):
             if action == 'login' and login_ret == -2:
                 return login(cherrypy.request.path_info, message=_('Database newer than UniField version'),
                              db=db, user=user, action=action, origArgs=get_orig_args(kw))
-            if action == 'login' and login_ret == -3:
+            elif action == 'login' and login_ret == -3:
                 nb_mod = rpc.session.number_update_modules(db) or ''
                 return login(cherrypy.request.path_info, message=_('The server is updating %s modules, please wait ...') % (nb_mod,),
                              db=db, user=user, action=action, origArgs=get_orig_args(kw))
-            if action == 'login' and login_ret == -4:
+            elif action == 'login' and login_ret == -4:
                 return login(cherrypy.request.path_info, message=_('A script during patch failed! Login is forbidden for the moment. Please contact your administrator'),
                              db=db, user=user, action=action, origArgs=get_orig_args(kw))
-            if action == 'login' and login_ret == -5: # must change password
+            elif action == 'login' and login_ret == -5: # must change password
                 if 'confirm_password' in kw:
                     message = rpc.session.change_password(db, user, password, kw['new_password'], kw['confirm_password'])
                     if message is not True:
@@ -220,6 +220,9 @@ def secured(fn):
                                          db=db, user=user, password=password, action=action, origArgs=get_orig_args(kw))
                 clear_change_password_fields(kw)
                 return result
+            elif action == 'login' and login_ret == -6:
+                return login(cherrypy.request.path_info, message=_('Your IP have been blocked because of too many bad login attempts. It will be unblocked after %s minutes.') % rpc.BLOCKED_MIN_COUNT,
+                             db=db, user=user, action=action, origArgs=get_orig_args(kw))
             elif login_ret <= 0:
                 # Bad login attempt
                 if action == 'login':
