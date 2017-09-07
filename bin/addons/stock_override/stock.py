@@ -2143,15 +2143,19 @@ class stock_move(osv.osv):
                           'prodlot_id', 'asset_id', 'composition_list_id', 'line_number']
         stock_picking_obj = self.pool.get('stock.picking')
 
-        for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
+        for move_id in ids:
+            # don't move this read in the upper "for"
+            # as this loop can write on stock.move, data should be refreshed on each iteration
+            move_data = self.read(cr, uid, move_id, fields_to_read, context=context)
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
             picking_id = move_data['picking_id'] and move_data['picking_id'][0] or False
 
-            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
+            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s (%s), qty: %s' % (
                 move_data['line_number'],
                 move_data['id'],
                 picking_id,
                 stock_picking_obj.read(cr, uid, picking_id, ['name'], context=context)['name'],
+                move_data['product_qty'],
             ))
 
             for f in fields_to_read:
