@@ -547,6 +547,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             string='FO/IR sourced',
         ),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        'stock_take_date': fields.date(string='Date of Stock Take', required=False),
     }
     _defaults = {
         'picking_policy': 'direct',
@@ -1803,6 +1804,20 @@ class sale_order_line(osv.osv):
 
         return res
 
+    def _get_stock_take_date(self, cr, uid, context=None):
+        '''
+            Returns stock take date
+        '''
+        if context is None:
+            context = {}
+        order_obj = self.pool.get('sale.order')
+        res = False
+
+        if context.get('sale_id', False):
+            so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
+            res = so.stock_take_date
+
+        return res
 
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
@@ -1846,6 +1861,7 @@ class sale_order_line(osv.osv):
         ),
         'resourced_original_line': fields.many2one('sale.order.line', 'Original line', readonly=True, help='Original line from which the current one has been cancel and ressourced'),
         'display_resourced_orig_line': fields.function(_get_display_resourced_orig_line, method=True, type='char', readonly=True, string='Original FO/IR line', help='Original line from which the current one has been cancel and ressourced'),
+        'stock_take_date': fields.date('Date of Stock Take', required=False),
         'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer'),
         'salesman_id':fields.related('order_id', 'user_id', type='many2one', relation='res.users', store=True, string='Salesman'),
         'company_id': fields.related('order_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
@@ -1890,6 +1906,7 @@ class sale_order_line(osv.osv):
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'soq_updated': False,
         'set_as_sourced_n': False,
+        'stock_take_date': _get_stock_take_date,
     }
 
     def invoice_line_create(self, cr, uid, ids, context=None):

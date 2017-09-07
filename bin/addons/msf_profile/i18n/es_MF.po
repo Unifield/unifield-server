@@ -7809,7 +7809,7 @@ msgstr "El origen seleccionado debe estar en estado 'Realizado'."
 #: code:addons/account_journal/account_journal.py:248
 #: code:addons/account_journal/account_journal.py:258
 #, python-format
-msgid "Default Debit Account should be an expense account for Adjustement Journals!"
+msgid "Default Debit Account should be an expense account for Adjustment Journals!"
 msgstr "La cuenta de débito por defecto debería ser una cuenta de gastos para los diarios de ajustes!"
 
 #. module: stock_schedule
@@ -12309,7 +12309,7 @@ msgstr "Contabilización"
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:75
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:222
 #, python-format
-msgid "No Currency Adjustement journal found!"
+msgid "No Currency Adjustment journal found!"
 msgstr "¡No se encontró diario de ajuste de divisas!"
 
 #. module: msf_homere_interface
@@ -19418,11 +19418,6 @@ msgstr "button_cancel - (procurement.order)"
 #: model:ir.module.module,shortdesc:account_activable.module_meta_information
 msgid "Chart of Accounts for MSF"
 msgstr "Plan de cuentas MSF"
-
-#. module: sync_client
-#: view:sync.client.register_entity:0
-msgid "Generate a new UUID"
-msgstr "Generar un nuevo identificador de usuario único"
 
 #. modules: account, account_activable
 #: view:account.account:0
@@ -56824,7 +56819,7 @@ msgstr "SWEDISH KRONA"
 #: selection:account.move.line,journal_type:0
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
-msgid "Currency Adjustement"
+msgid "Currency Adjustment"
 msgstr "Ajuste de divisa"
 
 #. module: sale

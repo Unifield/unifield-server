@@ -322,7 +322,7 @@ class stock_move(osv.osv):
                     for move in self.browse(cr, uid, move_ids, context=context):
                         pick = move.picking_id
                         cond1 = move.picking_id.subtype == 'standard'
-                        cond2 = move.product_qty != 0.00 and pick.subtype == 'picking' and not pick.backorder_id and pick.state == 'draft'
+                        cond2 = move.product_qty != 0.00 and pick.subtype == 'picking' and (not pick.backorder_id or pick.backorder_id.subtype == 'standard') and pick.state == 'draft'
                         # move from draft picking or standard picking
                         if cond2 or cond1:
                             integrity_check.append(move)
@@ -342,7 +342,6 @@ class stock_move(osv.osv):
                             msg_log = _('The Stock Move %s from %s has already been processed and is '
                                         'therefore not updated.') % (integrity_check[0].name, integrity_check[0].picking_id.name)
                             self.log(cr, uid, integrity_check[0].id, msg_log)
-
             else:
                 # we are looking for corresponding IN from on_order purchase order
                 assert False, 'This method is not implemented for OUT or Internal moves'

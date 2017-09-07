@@ -449,6 +449,7 @@
                             <field colspan="4" name="name"/>
                             <field name="date_planned" widget="date"/>
                             <field name="price_unit"/>
+                            <field name="stock_take_date"/>
                             <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                             <field name="account_analytic_id" colspan="4" groups="analytic.group_analytic_accounting" domain="[('parent_id','!=',False)]" />
                             <field name="vat_ok" invisible="1" />

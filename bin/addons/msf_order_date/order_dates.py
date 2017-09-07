@@ -436,6 +436,11 @@ def common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_da
     '''
     if context is None:
         context = {}
+
+    order_id = context.get('active_id', [])
+    if isinstance(order_id, (int, long)):
+        order_id = [order_id]
+
     return {'value': {'date_planned': requested_date, }}
 
 def common_create(self, cr, uid, data, type, context=None):
@@ -568,27 +573,27 @@ class purchase_order(osv.osv):
 
     _columns = {
         'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
-                'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
-                'ready_to_ship_date': fields.date(string='Ready To Ship Date'),
-                'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
-                'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
-                'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True,
-                                                string='Receipt Date', help='for a PO, date of the first godd receipt.'),
-                # BETA - to know if the delivery_confirmed_date can be erased - to be confirmed
-                'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
-                # FIELDS PART OF CREATE/WRITE methods
-                # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
-                'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Mode',
-                                                   help='Number of days this field has to be associated with a transport mode selection'),
-                # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
-                'est_transport_lead_time': fields.float(digits=(16, 2), string='Est. Transport Lead Time',
-                                                        help="Estimated Transport Lead-Time in weeks"),
-                # not a function because a function value is only filled when saved, not with on change of partner id
-                # from partner_id object
-                'partner_type': fields.selection(string='Partner Type', selection=PARTNER_TYPE, readonly=True,),
-                # not a function because a function value is only filled when saved, not with on change of partner id
-                # from partner_id object
-                'internal_type': fields.selection(string='Type', selection=ZONE_SELECTION, readonly=True,),
+        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
+        'ready_to_ship_date': fields.date(string='Ready To Ship Date'),
+        'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
+        'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
+        'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True,
+                                        string='Receipt Date', help='for a PO, date of the first godd receipt.'),
+        # BETA - to know if the delivery_confirmed_date can be erased - to be confirmed
+        'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
+        # FIELDS PART OF CREATE/WRITE methods
+        # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
+        'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Mode',
+                                           help='Number of days this field has to be associated with a transport mode selection'),
+        # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
+        'est_transport_lead_time': fields.float(digits=(16, 2), string='Est. Transport Lead Time',
+                                                help="Estimated Transport Lead-Time in weeks"),
+        # not a function because a function value is only filled when saved, not with on change of partner id
+        # from partner_id object
+        'partner_type': fields.selection(string='Partner Type', selection=PARTNER_TYPE, readonly=True,),
+        # not a function because a function value is only filled when saved, not with on change of partner id
+        # from partner_id object
+        'internal_type': fields.selection(string='Type', selection=ZONE_SELECTION, readonly=True,),
     }
 
     _defaults = {
@@ -744,6 +749,14 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'), }
+
+    def stock_take_data(self, cr, uid, ids, context=None):
+        '''
+        data for confirmed for change line wizard
+        '''
+        if context is None:
+            context = {}
+        return {'name': _('Do you want to update the Date of Stock Take of all order lines ?'), }
 
     def update_date(self, cr, uid, ids, context=None):
         '''
@@ -1126,6 +1139,14 @@ class sale_order(osv.osv):
         if context is None:
             context = {}
         return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'), }
+
+    def stock_take_data(self, cr, uid, ids, context=None):
+        '''
+        data for confirmed for change line wizard
+        '''
+        if context is None:
+            context = {}
+        return {'name': _('Do you want to update the Date of Stock Take of all order lines ?'), }
 
     def update_date(self, cr, uid, ids, context=None):
         '''

@@ -254,7 +254,7 @@
                 <form string="Partners" col='1'>
                     <group col="6" colspan="4">
                         <group colspan="5" col="6">
-                            <field name="name" select="1"/>
+                            <field name="name" select="1" default_focus="1"/>
                             <field name="ref" groups="base.group_extended"/>
                             <field domain="[('domain', '=', 'partner')]" name="title" size="0" groups="base.group_extended" widget="selection"/>
                             <field name="lang"/>
@@ -513,7 +513,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Partner Category">
-                    <field name="name" select="1"/>
+                    <field name="name" select="1" default_focus="1"/>
                     <field name="active" groups="base.group_extended"/>
                     <field name="parent_id"/>
                     <separator colspan="4" string="Partners"/>

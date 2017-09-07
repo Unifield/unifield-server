@@ -55,6 +55,11 @@
                         <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
                         <field name="functional_currency_id" />
                         <field name="categ" on_change="onchange_categ(categ)" />
+                        <group colspan="2" col="3">
+                            <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft'])]}" />
+                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent"
+                                attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
+                        </group>
                         <field name="fo_to_resource" invisible="1" />
                         <field name="parent_order_name" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
                     </group>
@@ -101,6 +106,7 @@
                                         />
                                     <field name="fake_state" invisible="1"/>
                                     <field name="state_to_display"/>
+                                    <field name="stock_take_date"/>
                                     <field name="price_subtotal" sum="Total"/>
                                     <button name="open_split_wizard"
                                         type="object"

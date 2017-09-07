@@ -518,6 +518,7 @@ class purchase_order(osv.osv):
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position'),
         'create_uid':  fields.many2one('res.users', 'Responsible'),
         'company_id': fields.many2one('res.company','Company',required=True,select=1),
+        'stock_take_date': fields.date(string='Date of Stock Take', required=False),
     }
     _defaults = {
         'po_confirmed': lambda *a: False,

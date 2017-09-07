@@ -1179,6 +1179,15 @@ class stock_picking(osv.osv):
                     origin_ivi = picking.name and po and "%s:%s" % (picking.name, po.name) or False
                 if origin_ivi:
                     invoice_vals.update({'origin': origin_ivi})
+
+                # Update Payment terms and due date for the Supplier Invoices and Refunds
+                if is_si or inv_type == 'in_refund':
+                    si_payment_term = self._get_payment_term(cr, uid, picking)
+                    if si_payment_term:
+                        invoice_vals.update({'payment_term': si_payment_term})
+                        due_date = invoice_obj.get_due_date(cr, uid, si_payment_term, context.get('date_inv', False), context)
+                        due_date and invoice_vals.update({'date_due': due_date})
+
                 invoice_id = invoice_obj.create(cr, uid, invoice_vals, context=context)
                 invoices_group[partner.id] = invoice_id
             res[picking.id] = invoice_id
@@ -3053,8 +3062,10 @@ class stock_inventory(osv.osv):
                     if self._name == 'initial.stock.inventory':
                         value.update({'price_unit': line['average_cost']})
                     move_ids.append(self._inventory_line_hook(cr, uid, None, value))
+                elif not change:
+                    inv_line_obj.write(cr, uid, [line['id']], {'dont_move': True}, context=context)
             # Changed the text of the following line to "is confirmed" instead of "is done" due to the state value
-            message = _('Inventory') + " '" + inv['name'] + "' "+ _("is confirmed.")
+            message = _('Inventory') + " '" + inv['name'] + "' "+ _("is validated.")
             self.log(cr, uid, inv['id'], message)
             self.write(cr, uid, [inv['id']], {'state': 'confirm', 'move_ids': [(6, 0, move_ids)]})
         return True
@@ -3089,6 +3100,9 @@ class stock_inventory(osv.osv):
                             raise osv.except_osv(_('UserError'),
                                                  _('You can not cancel inventory which has any account move with posted state.'))
                         account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
+            line_ids = [x.id for x in inv.inventory_line_id]
+            if line_ids:
+                self.pool.get('stock.inventory.line').write(cr, uid, line_ids, {'dont_move': False}, context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
             if self._name == 'initial.stock.inventory':
                 self.infolog(cr, uid, "The Initial Stock inventory id:%s (%s) has been canceled" % (inv.id, inv.name))

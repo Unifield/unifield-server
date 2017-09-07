@@ -162,17 +162,21 @@ def pg_dump(db_name, outfile=False):
         if outfile:
             res = exec_pg_command(*tuple(cmd))
         else:
+            # TODO: current pg_dump method do not return the same type of
+            # variable depending of outfile, if outfile, it return an int, else
+            # a tuple, this make this method unreliable
             stdin, stdout = exec_pg_command_pipe(*tuple(cmd))
             stdin.close()
             data = stdout.read()
             error = stdout.close()
             res = (data, error)
-
-        _set_env_pg(remove=True)
-        return res
     except Exception:
         _logger.error('Dump', exc_info=1)
-        raise
+        if outfile:
+            res = -1
+    finally:
+        _set_env_pg(remove=True)
+        return res
 
 def find_pg_tool(name):
     path = None

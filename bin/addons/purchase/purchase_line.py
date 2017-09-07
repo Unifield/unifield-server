@@ -190,6 +190,22 @@ class purchase_order_line(osv.osv):
         return res
 
 
+    def _get_stock_take_date(self, cr, uid, context=None):
+        '''
+            Returns stock take date
+        '''
+        if context is None:
+            context = {}
+        order_obj = self.pool.get('purchase.order')
+        res = False
+
+        if context.get('purchase_id', False):
+            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
+            res = po.stock_take_date
+
+        return res
+
+
     _columns = {
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
@@ -273,6 +289,7 @@ class purchase_order_line(osv.osv):
         'invoiced': fields.boolean('Invoiced', readonly=True),
         'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
         'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
+        'stock_take_date': fields.date(string='Date of Stock Take', required=False),
     }
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
@@ -287,6 +304,7 @@ class purchase_order_line(osv.osv):
         'state': lambda *args: 'draft',
         'invoiced': lambda *a: 0,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+        'stock_take_date': _get_stock_take_date,
     }
 
     def _get_destination_ok(self, cr, uid, lines, context):

@@ -123,11 +123,13 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             bo_qty = line.product_uom_qty
             po_name = ''
             cdd = False
+            
             linked_pol = self.pool.get('purchase.order.line').search(self.cr, self.uid, [('linked_sol_id', '=', line.id)])
             if linked_pol:
                 linked_pol = self.pool.get('purchase.order.line').browse(self.cr, self.uid, linked_pol)[0]
                 po_name = linked_pol.order_id.name
                 cdd = linked_pol.order_id.delivery_confirmed_date
+
             if not cdd and line.order_id.delivery_confirmed_date:
                 cdd = line.order_id.delivery_confirmed_date
 
@@ -153,6 +155,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         'product_name': line.product_id.name,
                         'product_code': line.product_id.code,
                         'is_delivered': False,
+                        'backordered_qty': 0.00,
                     }
                     if first_line:
                         data.update({

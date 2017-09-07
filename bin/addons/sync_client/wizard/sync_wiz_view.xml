@@ -49,14 +49,13 @@
                         <button type="object" string="Next" name="next" colspan="2" icon="gtk-go-forward"/>
                     </group>
                     <group colspan="4" col="5" states="parents" width="450" height="200">
-                        <field name="identifier" colspan="4"/><button type="object" string="Generate a new UUID" name="generate_uuid" colspan="1" icon="gtk-refresh"/>
+                        <field name="identifier" colspan="4"/>
                         <field name="parent_id" colspan="1"/>
                         <field name="oc" colspan="1"/>
                         <separator string="" colspan="5" />
                         <button type="special" special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
-                        <label colspan="2" />
-                        <button type="object" string="Previous" name="previous" colspan="1" icon="gtk-go-back"/>
-                        <button type="object" string="Next" name="group_state" colspan="1" icon="gtk-go-forward"/>
+                        <button type="object" string="Previous" name="previous" colspan="2" icon="gtk-go-back"/>
+                        <button type="object" string="Next" name="group_state" colspan="2" icon="gtk-go-forward"/>
                     </group>
                     <group colspan="4" col="5" states="groups" width="450" height="200">
                         <field name="group_ids" mode="tree" nolabel="1" colspan="5" >

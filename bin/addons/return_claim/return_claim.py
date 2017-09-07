@@ -24,8 +24,6 @@ from osv import osv, fields
 import time
 
 from tools.translate import _
-from dateutil.relativedelta import relativedelta
-from datetime import datetime
 import decimal_precision as dp
 
 # category
@@ -69,16 +67,6 @@ EVENT_TYPE_DESTINATION = {'accept': 'stock.stock_location_stock',  # move to sto
                           'quarantine': 'stock_override.stock_location_quarantine_analyze',
                           'scrap': 'stock_override.stock_location_quarantine_scrap',
                           }
-# import partner_type from msf_partner
-from msf_partner import PARTNER_TYPE
-from msf_order_date import TRANSPORT_TYPE
-from msf_order_date import ZONE_SELECTION
-from purchase_override import PURCHASE_ORDER_STATE_SELECTION
-from sale import SALE_ORDER_STATE_SELECTION
-
-import tools
-from os import path
-import logging
 
 
 class return_claim(osv.osv):
@@ -282,8 +270,6 @@ class return_claim(osv.osv):
                 data = prod_obj.read(cr, uid, [item.product_id_claim_product_line.id], ['batch_management', 'perishable', 'type', 'subtype'], context=context)[0]
                 management = data['batch_management']
                 perishable = data['perishable']
-                asset = data['type'] == 'product' and data['subtype'] == 'asset'
-                kit = data['type'] == 'product' and data['subtype'] == 'kit'
                 # check qty
                 if item.qty_claim_product_line <= 0.0:
                     errors.update(must_be_greater_than_0=True)
@@ -381,13 +367,13 @@ class return_claim(osv.osv):
         """
         # Objects
         pl_obj = self.pool.get('claim.product.line')
-        
+
         # Some verifications
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         for claim in self.browse(cr, uid, ids, context=context):
             # Clear existing products
             line_ids = pl_obj.search(cr, uid, [
@@ -842,6 +828,8 @@ class claim_event(osv.osv):
         claim = obj.return_claim_id_claim_event
         # claim type
         claim_type = claim.type_return_claim
+        # don't generate financial documents if the claim is linked to an internal or intermission partner
+        inv_status = claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
         # new name, previous name + -return
         new_name = origin_picking.name + '-return'
         # get the picking values and move values according to claim type
@@ -851,7 +839,7 @@ class claim_event(osv.osv):
                           'purchase_id': origin_picking.purchase_id.id,
                           'sale_id': origin_picking.sale_id.id,
                           'reason_type_id': context['common']['rt_goods_return'],
-                          'invoice_state': '2binvoiced',
+                          'invoice_state': inv_status,
                           'claim': True,
                           }
         move_values = {'reason_type_id': context['common']['rt_goods_return']}
@@ -887,7 +875,7 @@ class claim_event(osv.osv):
                                   'reason_type_id': context['common']['rt_goods_replacement'],
                                   'purchase_id': origin_picking.purchase_id.id,
                                   'sale_id': origin_picking.sale_id.id,
-                                  'invoice_state': '2binvoiced',
+                                  'invoice_state': inv_status,
                                   }
             replacement_move_values = {'reason_type_id': context['common']['rt_goods_replacement']}
 
@@ -1313,9 +1301,6 @@ class claim_product_line(osv.osv):
         product_obj = prod_obj.browse(cr, uid, product_id, context=context)
         # uom from product is taken by default if needed
         uom_id = uom_id or product_obj.uom_id.id
-        # we do not want the children location
-        stock_context = dict(context, compute_child=False)
-        # we check for the available qty (in:done, out: assigned, done)
         res = loc_obj.compute_availability(cr, uid, [location_id], False, product_id, uom_id, context=context)
         if prodlot_id:
             # if a lot is specified, we take this specific qty info - the lot may not be available in this specific location
@@ -1661,7 +1646,7 @@ class stock_picking(osv.osv):
                     raise osv.except_osv(
                         _('Warning !'),
                         _('Processed an internal picking without moves, cannot find original Incoming shipment '\
-'for claim registration.'),
+                          'for claim registration.'),
                     )
 
                 for move in picking.move_lines:
@@ -1678,7 +1663,7 @@ class stock_picking(osv.osv):
                             raise osv.except_osv(
                                 _('Warning !'),
                                 _('Corresponding Incoming Shipment cannot be found. Registration of claim cannot '\
-'be processed. (no back order)'),
+                                  'be processed. (no back order)'),
                             )
                         else:
                             # We try with the backorder
@@ -1690,7 +1675,7 @@ class stock_picking(osv.osv):
                                     raise osv.except_osv(
                                         _('Warning !'),
                                         _('Corresponding Incoming Shipment cannot be found. Registration of '\
-'claim cannot be processed. (no IN for back order moves)'),
+                                          'claim cannot be processed. (no IN for back order moves)'),
                                     )
                                 else:
                                     in_move_id = b_src_move_ids[0]
@@ -1723,18 +1708,18 @@ class stock_picking(osv.osv):
                     'partner_id_return_claim': partner_id.id,
                     'picking_id_return_claim': picking_id,
                     'product_line_ids_return_claim': [(0, 0, {
-                                  'qty_claim_product_line': x.product_qty,
-                                  'price_unit_claim_product_line': x.price_unit,
-                                  'price_currency_claim_product_line': x.price_currency_id.id,
-                                  'product_id_claim_product_line': x.product_id.id,
-                                  'uom_id_claim_product_line': x.product_uom.id,
-                                  'lot_id_claim_product_line': x.prodlot_id.id,
-                                  'expiry_date_claim_product_line': x.expired_date,
-                                  'asset_id_claim_product_line': x.asset_id.id,
-                                  'composition_list_id_claim_product_line': x.composition_list_id.id,
-                                  'src_location_id_claim_product_line': x.location_id.id,
-                                  'stock_move_id_claim_product_line': x.id}) for x in picking.move_lines]
-                    }
+                        'qty_claim_product_line': x.product_qty,
+                        'price_unit_claim_product_line': x.price_unit,
+                        'price_currency_claim_product_line': x.price_currency_id.id,
+                        'product_id_claim_product_line': x.product_id.id,
+                        'uom_id_claim_product_line': x.product_uom.id,
+                        'lot_id_claim_product_line': x.prodlot_id.id,
+                        'expiry_date_claim_product_line': x.expired_date,
+                        'asset_id_claim_product_line': x.asset_id.id,
+                        'composition_list_id_claim_product_line': x.composition_list_id.id,
+                        'src_location_id_claim_product_line': x.location_id.id,
+                        'stock_move_id_claim_product_line': x.id}) for x in picking.move_lines]
+                }
 
                 new_claim_id = claim_obj.create(cr, uid, claim_values, context=context)
                 # log creation message
@@ -1814,7 +1799,7 @@ class product_product(osv.osv):
 
     _columns = {
         'picking_ids': fields.function(_vals_get_claim, fnct_search=_search_picking_claim,
-                                    type='boolean', method=True, string='Picking', multi='get_vals_claim'),
+                                       type='boolean', method=True, string='Picking', multi='get_vals_claim'),
     }
 
 product_product()

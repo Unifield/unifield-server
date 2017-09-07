@@ -103,6 +103,25 @@ class account_journal(osv.osv):
                 return dom+[('currency', 'not in', [context['curr']])]
         return dom
 
+    def write(self, cr, uid, ids, vals, context=None):
+        # write is not allowed on upper or sibling liquidity journals
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution') and uid != 1:
+            instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+            if instance and instance.level != 'section':
+                allowed = [x.id for x in instance.child_ids] + [instance.id]
+                nids = self.search(cr, uid,[
+                    ('id', 'in', ids),
+                    ('type', 'in', ['bank', 'cheque', 'cash']),
+                    ('instance_id', 'not in', allowed)],
+                    context=context)
+                if nids:
+                    raise osv.except_osv(_('Error'), _("Writing on liquidity journals %s is not allowed") % (", ".join([x['code'] for x in self.read(cr, uid, nids, ['code'], context=context)]), ))
+
+        return super(account_journal, self).write(cr, uid, ids, vals, context)
+
+
     _columns = {
         'filter_for_third_party': fields.function(_get_fake, type='char', string="Internal Field", fnct_search=_search_filter_third, method=True),
     }
@@ -670,6 +689,32 @@ The starting balance will be proposed automatically and the closing balance is t
             'domain': domain,
             'target': 'current',
         }
+
+    def get_pending_cheque_ids(self, cr, uid, register_ids, account_ids, min_posting_date, context=None):
+        """
+        Returns a list containing the ids of the JIs matching the following criteria:
+        - booked in the register(s) and in the account(s) in parameters
+        - either not reconciled or reconciled partially or totally with at least one reconciliation leg having a
+          posting date later than the min_posting_date in parameter
+        """
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        aml_ids = aml_obj.search(cr, uid, [('statement_id', 'in', register_ids),
+                                           ('account_id', 'in', account_ids), ],
+                                 order='date DESC', context=context)
+        aml_list = []
+        for aml in aml_obj.browse(cr, uid, aml_ids,
+                                  fields_to_fetch=['is_reconciled', 'reconcile_id', 'reconcile_partial_id'], context=context):
+            total_rec_ok = aml.reconcile_id and aml_obj.search_exist(cr, uid,
+                                                                     [('reconcile_id', '=', aml.reconcile_id.id),
+                                                                      ('date', '>', min_posting_date)], context=context)
+            partial_rec_ok = aml.reconcile_partial_id and aml_obj.search_exist(cr, uid,
+                                                                               [('reconcile_partial_id', '=', aml.reconcile_partial_id.id),
+                                                                                ('date', '>', min_posting_date)], context=context)
+            if not aml.is_reconciled or total_rec_ok or partial_rec_ok:
+                aml_list.append(aml.id)
+        return aml_list
 
 account_bank_statement()
 
@@ -1699,7 +1744,8 @@ class account_bank_statement_line(osv.osv):
                 'name': st_line.name,
                 'date': st_line.date or curr_date,
                 'document_date': st_line.document_date or curr_date,
-                'ref': st_line.ref,
+                'ref': st_line.ref or st_line.sequence_for_reference,
+                'reference': st_line.ref or st_line.sequence_for_reference,
                 'move_id': move_id,
                 'partner_id': st_line.partner_id.id or False,
                 'partner_type_mandatory': True,
@@ -2487,7 +2533,7 @@ class account_bank_statement_line(osv.osv):
 
     def button_advance(self, cr, uid, ids, context=None):
         """
-        Launch a wizard when you press "Advance return" button on a bank statement line in a Cash Register
+        Launch a wizard when you press "Advance return" button on a bank statement line in a Cash or Bank Register
         """
         if context is None:
             context = {}
@@ -2496,10 +2542,10 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Error'), _('This wizard only accept ONE advance line.'))
         # others verifications
         for st_line in self.browse(cr, uid, ids, context=context):
-            # verify that the journal id is a cash journal
+            # verify that the journal id is a cash or bank journal
             if not st_line.statement_id or not st_line.statement_id.journal_id or not st_line.statement_id.journal_id.type \
-                    or st_line.statement_id.journal_id.type != 'cash':
-                raise osv.except_osv(_('Error'), _("The attached journal is not a Cash Journal"))
+                    or st_line.statement_id.journal_id.type not in ['cash', 'bank']:
+                raise osv.except_osv(_('Error'), _("The register journal is not compatible with an advance return."))
             # verify that there is a third party, particularly an employee_id in order to do something
             if not st_line.employee_id:
                 raise osv.except_osv(_('Error'), _("The staff field is not filled in. Please complete the third parties field with an employee/staff."))
@@ -2510,7 +2556,7 @@ class account_bank_statement_line(osv.osv):
         if 'open_advance' in context:
             st = self.pool.get('account.bank.statement').browse(cr, uid, context.get('open_advance'), context=context)
         if st and st.state != 'open':
-            raise osv.except_osv(_('Error'), _('You cannot do a cash return in Register which is in another state that "open"!'))
+            raise osv.except_osv(_('Error'), _('You cannot do an advance return in a Register which is in another state than "open"!'))
         statement_id = st.id
         amount = self.read(cr, uid, ids[0], ['amount']).get('amount', 0.0)
         if amount >= 0:
@@ -2949,7 +2995,7 @@ class ir_values(osv.osv):
             for v in values:
                 if v[1] == 'Bank Reconciliation' and context['journal_type'] == 'bank' \
                     or v[1] == 'Cash Reconciliation' and context['journal_type'] == 'cash' \
-                    or v[1] == 'Open Advances' and context['journal_type'] == 'cash' \
+                    or v[1] == 'Open Advances' and context['journal_type'] in ['bank', 'cash'] \
                     or v[1] == 'Cheque Inventory' and context['journal_type'] == 'cheque' \
                     or v[1] == 'Pending Cheque' and context['journal_type'] == 'cheque' \
                     or v[1] == 'Liquidity Position' and context['journal_type'] != 'cheque' \
