@@ -29,6 +29,7 @@ import os
 import logging
 from threading import Lock
 import time
+import xmlrpclib
 
 from msf_field_access_rights.osv_override import _get_instance_level
 
@@ -46,6 +47,38 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    def us_3048_patch(self, cr, uid, *a, **b):
+        '''
+        some protocol are now removed from possible protocols
+        If an instance was using a removed protocol, change the connexion to
+        use XMLRPCS
+        '''
+        server_connection = self.pool.get('sync.client.sync_server_connection')
+        if not server_connection:
+            return True
+        connection_ids = server_connection.search(cr, uid, [])
+        read_result = server_connection.read(cr, uid, connection_ids,
+                                             ['protocol', 'port', 'host'])
+        connection = read_result[0]
+        if connection['protocol'] not in ['xmlrpc', 'gzipxmlrpcs']:
+            # check port 443 permit to connect to sync_server
+            from sync_client.timeout_transport import TimeoutTransport
+            transport = TimeoutTransport(timeout=10.0)
+            try:
+                sock = xmlrpclib.ServerProxy('http://%s:%s/xmlrpc/db'%(connection['host'], 443), transport=transport)
+                sock.server_version()
+            except Exception as e:
+                vals = {
+                    'protocol': 'xmlrpc',
+                    'port': 8069,
+                }
+            else:
+                vals = {
+                    'protocol': 'gzipxmlrpcs',
+                    'port': 443,
+                }
+            server_connection.write(cr, uid, [connection['id']], vals)
 
     def us_2647(self, cr, uid, *a, **b):
         cr.execute('''update stock_inventory_line set dont_move='t' where id not in (
@@ -181,7 +214,7 @@ class patch_scripts(osv.osv):
     def us_2730_patch(self, cr, uid, *a, **b):
         '''
         remove all translations, and then re-import them
-        so that the {*}_MF.po files are authoratative
+        so that the {*}_MF.po files are authoritative
         '''
         cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
             select id from ir_translation where lang = 'fr_MF' and type != 'model'
