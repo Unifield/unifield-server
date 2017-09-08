@@ -1993,6 +1993,7 @@ class sale_order_line(osv.osv):
             'move_ids': [],
             'invoiced': False,
             'invoice_lines': [],
+            'set_as_sourced_n': False,
         })
 
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
