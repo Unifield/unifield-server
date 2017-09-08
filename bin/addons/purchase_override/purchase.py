@@ -1171,7 +1171,7 @@ class purchase_order(osv.osv):
 
         for po in self.browse(cr, uid, ids, context=context):
             if po.partner_type == 'esc':
-                if not po.stock_take_date:
+                if not po.stock_take_date and self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', '=', po.id), ('stock_take_date', '=', False)], context=context):
                     raise osv.except_osv(_('Warning !'), _(
                         'The Date of Stock Take is required for a Purchase Order if the Partner is an ESC.'))
                 if self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', '=', po.id), ('stock_take_date', '=', False)], context=context):
