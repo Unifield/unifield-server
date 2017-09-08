@@ -40308,10 +40308,10 @@ msgid "You cannot select a start period starting after the end period!"
 msgstr "You cannot select a start period starting after the end period!"
 
 #. module: account_override
-#: code:addons/account_override/invoice.py:568
+#: code:addons/account_override/invoice.py:617
 #, python-format
 msgid "Tax included in price can not be tied to the whole invoice."
-msgstr "Tax included in price can not be tied to the whole invoice."
+msgstr "Une Taxe incluse dans le prix ne peut pas être liée à toute la facture."
 
 #. module: specific_rules
 #: code:addons/specific_rules/wizard/stock_partial_picking.py:172

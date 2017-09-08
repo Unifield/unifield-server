@@ -603,6 +603,7 @@ class account_invoice(osv.osv):
         # in bottom left corner
         if 'tax_line' in vals:
             tax_obj = self.pool.get('account.tax')
+            inv_tax_obj = self.pool.get('account.invoice.tax')
             for tax_line in vals['tax_line']:
                 if tax_line[2]:
                     if 'account_tax_id' in tax_line[2]:
@@ -610,7 +611,8 @@ class account_invoice(osv.osv):
                                 ('id', '=', tax_line[2]['account_tax_id'])]
                         tax_ids = tax_obj.search(cr, uid, args, limit=1,
                                                  order='NO_ORDER', context=context)
-                        if tax_ids:
+                        if tax_ids and tax_line[1] and \
+                                inv_tax_obj.browse(cr, uid, tax_line[1], fields_to_fetch=['manual'], context=context).manual:
                             raise osv.except_osv(_('Error'),
                                                  _('Tax included in price can not be tied to the whole invoice.'))
 
