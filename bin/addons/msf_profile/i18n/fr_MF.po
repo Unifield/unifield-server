@@ -79005,9 +79005,13 @@ msgstr "Délai de Paiement"
 msgid "Please keep in mind that documents currently displayed may not be relevant after switching to another company. If you have unsaved changes, please make sure to save and close all forms before switching to a different company. (You can click on Cancel in the User Preferences now)"
 msgstr "Gardez à l'esprit que les documents actuellement affichés peuvent ne plus être pertinents après le changement vers une autre société. Si vous avez des changements non enregistrés, veuillez vérifier que vous avez sauvegardé et enregistré tous les formulaires avant de changer de société. (Vous pouvez maintenant cliquer sur Annuler dans les Préférences Utilisateur)"
 
-#. modules: register_accounting, account_voucher
+#. modules: register_accounting, account_voucher, msf_doc_import
 #: view:account.statement.from.invoice.lines:0
 #: code:addons/account_voucher/wizard/account_statement_from_invoice.py:187
+#: model:ir.actions.act_window,name:account_voucher.action_view_account_statement_from_invoice_lines
+#: model:ir.actions.act_window,name:msf_doc_import.action_migration_accounting_import_wizard
+#: model:ir.ui.menu,name:msf_doc_import.menu_finance_migration_accounting
+#: view:msf.doc.import.accounting:0
 #: view:wizard.import.cheque:0
 #: view:wizard.import.invoice:0
 #, python-format
@@ -86333,14 +86337,6 @@ msgstr "Ce nom sera affiché sur les rapports"
 #, python-format
 msgid "Copy of standard.price.track.changes is not allowed"
 msgstr "Copy of standard.price.track.changes is not allowed"
-
-#. modules: msf_doc_import, account_voucher
-#: model:ir.actions.act_window,name:account_voucher.action_view_account_statement_from_invoice_lines
-#: model:ir.actions.act_window,name:msf_doc_import.action_migration_accounting_import_wizard
-#: model:ir.ui.menu,name:msf_doc_import.menu_finance_migration_accounting
-#: view:msf.doc.import.accounting:0
-msgid "Import Entries"
-msgstr "Import d'entrées de migration"
 
 #. module: msf_budget
 #: field:wizard.budget.criteria.export,period_id:0
