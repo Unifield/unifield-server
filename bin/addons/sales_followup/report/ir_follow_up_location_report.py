@@ -227,7 +227,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                     if (m_type and (ppl or ppl_not_shipped or s_out)) or move.type == 'internal':
                         # bo_qty < 0 if we receipt (IN) more quantities then expected (FO):
                         #if move.state == 'done' or move.picking_id.state == 'cancel':
-                        if move.state != 'cancel' or move.picking_id.state == 'cancel':
+                        if move.state != 'cancel': 
                             bo_qty -= self.pool.get('product.uom')._compute_qty(
                                 self.cr,
                                 self.uid,
@@ -296,7 +296,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             elif from_stock:
                                 packing = '-'
                                 shipment = '-'
-                                is_shipment_done = move.picking_id.state == 'done'
+                                is_shipment_done = move.picking_id.state == 'done' and move.state != 'cancel'
                                 state = move.picking_id.state
                             else:
                                 shipment = move.picking_id.name or '-'
@@ -309,7 +309,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                                 'delivered_qty': is_shipment_done and move.product_qty or 0.00,
                                 'delivered_uom': move.product_uom.name or '-',
                                 'is_delivered': is_shipment_done,
-                                'backordered_qty': not is_shipment_done and line.order_id.state != 'cancel' and move.product_qty or 0.00,
+                                'backordered_qty': not is_shipment_done and line.order_id.state != 'cancel' and move.state != 'cancel' and move.product_qty or 0.00,
                                 'rts': line.order_id.ready_to_ship_date,
                             })
                         else:
@@ -390,7 +390,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             'delivered_qty': is_done and line_move.product_qty or 0.00,
                             'delivered_uom': is_done and line_move.product_uom.name or '-',
                             'is_delivered': is_done,
-                            'backordered_qty': line.order_id.state != 'cancel' and line_move.product_qty or 0.00,
+                            'backordered_qty': not is_done and line.order_id.state != 'cancel' and line_move.product_qty or 0.00,
                             'rts': line.order_id.ready_to_ship_date,
                         })
 
