@@ -1344,7 +1344,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
     def get_existing_po(self, cr, uid, ids, context=None):
         """
-        Do we have to create new PO/DPO/Tender/RfQ or use an existing one ?
+        Do we have to create new PO/DPO or use an existing one ?
         If an existing one can be used, then returns his ID, otherwise returns False
         @return ID (int) of document to use or False
         """
@@ -1364,15 +1364,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             ]
             if sourcing_line.po_cft == 'po':
                 domain.append(('order_type', '=', 'regular'))
-
             elif sourcing_line.po_cft == 'dpo':
                 domain.append(('order_type', '=', 'direct'))
-
-            elif sourcing_line.po_cft == 'cft': # Tender
-                pass
-
-            elif sourcing_line.po_cft == 'rfq': # Request for Quotation
-                pass
 
             # supplier's order creation mode:
             if sourcing_line.supplier.po_by_project in ('project', 'category_project') or (sourcing_line.po_cft == 'dpo' and sourcing_line.supplier.po_by_project == 'all'):
@@ -1392,8 +1385,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
     def create_po_from_sourcing_line(self, cr, uid, ids, context=None):
         '''
-        Create an new PO/DPO/Tender/RfQ from sourcing line
-        @return id of the newly created PO/DPO/Tender or RfQ
+        Create an new PO/DPO from sourcing line
+        @return id of the newly created PO/DPO
         '''
         if context is None:
             context = {}
@@ -1428,15 +1421,118 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'order_type': 'direct',    
                     'dest_partner_id': sourcing_line.order_id.partner_id.id,
                 })
-            elif sourcing_line.po_cft == 'cft': # Tender
-                pass
-            elif sourcing_line.po_cft == 'rfq': # Request for Quotation
-                po_values.update({
-                    'rfq_ok': True,
-                })
 
         return self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
      
+
+    def get_existing_tender(self, cr, uid, ids, context=None):
+        '''
+        Search for an existing tender to use for the given sale.order.line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            return False
+
+        sol = self.browse(cr, uid, ids[0], context=context)
+
+        tender_to_use = self.pool.get('tender').search(cr, uid, [('sale_order_id', '=', sol.order_id.id)], context=context)
+
+        return tender_to_use[0] if tender_to_use else False
+
+
+    def create_tender_from_sourcing_line(self, cr, uid, ids, context=None):
+        '''
+        create a tender with given sourcing line (=sale.order.line)
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        if not ids:
+            return False
+
+        proc_location_id = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'procurement')], context=context)
+        proc_location_id = proc_location_id[0] if proc_location_id else False
+
+        new_tender_id = False
+        sol = self.browse(cr, uid, ids[0], context=context)
+
+        new_tender_id = self.pool.get('tender').create(cr, uid, {
+            'sale_order_id': sol.order_id.id,
+            'location_id': proc_location_id,
+            'categ': sol.order_id.categ,
+            'priority': sol.order_id.priority,
+            'warehouse_id': sol.order_id.shop_id.warehouse_id.id,
+            'requested_date': sol.date_planned,
+        }, context=context)
+
+        return new_tender_id
+
+
+    def get_existing_rfq(self, cr, uid, ids, context=None):
+        """
+        Do we have to create new RfQ or use an existing one ?
+        If an existing one can be used, then returns his ID, otherwise returns False
+        @return ID (int) of document to use or False
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res_id = False
+        for sourcing_line in self.browse(cr, uid, ids, context=context):
+            domain = [
+                ('rfq_ok', '=', True),
+                ('partner_id', '=', sourcing_line.supplier.id),
+                ('state', 'in', ['draft']),
+                ('related_sourcing_id', '=', sourcing_line.related_sourcing_id.id or False), # Column "Group"
+                ('delivery_requested_date', '=', sourcing_line.date_planned),
+            ]
+            res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
+        
+        if res_id and isinstance(res_id, list):
+            res_id = res_id[0]
+
+        return res_id or False
+
+
+    def create_rfq_from_sourcing_line(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            return False
+
+        new_rfq_id = False
+        sol = self.browse(cr, uid, ids[0], context=context)
+
+        rfq_values = {
+            'origin': sol.order_id.name,
+            'rfq_ok': True,
+            'partner_id': sol.supplier.id,
+            'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [sol.supplier.id], ['default'])['default'],
+            'location_id': self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0],
+            'pricelist_id': sol.supplier.property_product_pricelist_purchase.id,
+            # 'company_id': tender.company_id.id,
+            'fiscal_position': sol.supplier.property_account_position and sol.supplier.property_account_position.id or False,
+            'warehouse_id': sol.order_id.warehouse_id.id,
+            'categ': sol.categ,
+            'priority': sol.order_id.priority,
+            'details': sol.order_id.details,
+            'delivery_requested_date': sol.date_planned,
+            # 'rfq_delivery_address': tender.delivery_address and tender.delivery_address.id or False,
+        }
+        context.update({'rfq_ok': True})
+        new_rfq_id = self.pool.get('purchase.order').create(cr, uid, rfq_values, context=context)
+
+        return new_rfq_id
+
+
 
     def source_line(self, cr, uid, ids, context=None):
         """
@@ -1457,36 +1553,83 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'done', cr)
                     
             elif sourcing_line.type == 'make_to_order':
-                po_to_use = self.get_existing_po(cr, uid, sourcing_line.id, context=context)
-                if not po_to_use: # then create new PO:
-                    po_to_use = self.create_po_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
+                if sourcing_line.po_cft in ('po', 'dpo'):
+                    po_to_use = self.get_existing_po(cr, uid, sourcing_line.id, context=context)
+                    if not po_to_use: # then create new PO:
+                        po_to_use = self.create_po_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
+                        # log new PO:
+                        po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
+                        self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                        self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                    # No AD on sourcing line if it comes from IR:
+                    anal_dist = False
+                    if not sourcing_line.procurement_request:
+                        anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context)
+                    # attach PO line:
+                    pol_values = {
+                        'order_id': po_to_use,
+                        'product_id': sourcing_line.product_id.id,
+                        'product_uom': sourcing_line.product_id.uom_id.id,
+                        'product_qty': sourcing_line.product_uom_qty,
+                        'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price,
+                        'partner_id': sourcing_line.supplier.id,
+                        'origin': sourcing_line.order_id.name,
+                        'sale_order_line_id': sourcing_line.id,
+                        'linked_sol_id': sourcing_line.id,
+                        'analytic_distribution_id': anal_dist,
+                        'link_so_id': sourcing_line.order_id.id,
+                    }
+                    self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
+                    self.pool.get('purchase.order').write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
 
-                    # log new PO:
-                    po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
-                    self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
-                    self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                elif sourcing_line.po_cft == 'rfq':
+                    rfq_to_use = self.get_existing_rfq(cr, uid, sourcing_line.id, context=context)
+                    if not rfq_to_use:
+                        rfq_to_use = self.create_rfq_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
+                        # log new RfQ:
+                        rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, context=context)
+                        self.pool.get('purchase.order').log(cr, uid, rfq_to_use, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
+                        self.pool.get('purchase.order').infolog(cr, uid, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
+                    anal_dist = False
+                    if not sourcing_line.procurement_request:
+                        anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context)
+                    # attach new RfQ line:
+                    rfq_line_values = {
+                        'order_id': rfq_to_use,
+                        'product_id': sourcing_line.product_id.id,
+                        'product_uom': sourcing_line.product_id.uom_id.id,
+                        'product_qty': sourcing_line.product_uom_qty,
+                        'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price,
+                        'partner_id': sourcing_line.supplier.id,
+                        'origin': sourcing_line.order_id.name,
+                        'sale_order_line_id': sourcing_line.id,
+                        'linked_sol_id': sourcing_line.id,
+                        'analytic_distribution_id': anal_dist,
+                        'link_so_id': sourcing_line.order_id.id,
+                    }
+                    self.pool.get('purchase.order.line').create(cr, uid, rfq_line_values, context=context)
 
-                # No AD on sourcing line if it comes from IR:
-                anal_dist = False
-                if not sourcing_line.procurement_request:
-                    anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context)
+                elif sourcing_line.po_cft == 'cft':
+                    tender_to_use = self.get_existing_tender(cr, uid, sourcing_line.id, context=context)
+                    if not tender_to_use:
+                        tender_to_use = self.create_tender_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
+                        # log new tender:
+                        tender = self.pool.get('tender').browse(cr, uid, tender_to_use, context=context)
+                        self.pool.get('tender').log(cr, uid, tender_to_use, 'The Tender %s has been created.' % (tender.name,))
+                        self.pool.get('tender').infolog(cr, uid, 'The Tender %s has been created.' % (tender.name,))
+                    # attach tender line:
+                    proc_location_id = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'procurement')], context=context)
+                    proc_location_id = proc_location_id[0] if proc_location_id else False
+                    tender_line_id = self.pool.get('tender.line').create(cr, uid, {
+                        'product_id': sourcing_line.product_id.id,
+                        'comment': sourcing_line.comment,
+                        'qty': sourcing_line.product_uom_qty,
+                        'product_uom': sourcing_line.product_id.uom_id.id,
+                        'tender_id': tender_to_use,
+                        'sale_order_line_id': sourcing_line.id,
+                        'location_id': proc_location_id,
+                    }, context=context)
 
-                # attach PO line:
-                pol_values = {
-                    'order_id': po_to_use,
-                    'product_id': sourcing_line.product_id.id,
-                    'product_uom': sourcing_line.product_id.uom_id.id,
-                    'product_qty': sourcing_line.product_uom_qty,
-                    'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price,
-                    'partner_id': sourcing_line.supplier.id,
-                    'origin': sourcing_line.order_id.name,
-                    'sale_order_line_id': sourcing_line.id,
-                    'linked_sol_id': sourcing_line.id,
-                    'analytic_distribution_id': anal_dist,
-                    'link_so_id': sourcing_line.order_id.id,
-                }
-                self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
-                self.pool.get('purchase.order').write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
 
         return True
