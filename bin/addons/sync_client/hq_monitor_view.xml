@@ -62,6 +62,8 @@
                     <field name="version" />
                     <field name="backup_date" />
                     <field name="backup_path" />
+                    <field name="postgresql_disk_space" />
+                    <field name="unifield_disk_space" />
                     <field name="instance_state" />
                 </tree>
             </field>
