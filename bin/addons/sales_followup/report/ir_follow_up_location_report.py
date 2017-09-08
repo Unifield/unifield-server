@@ -388,7 +388,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         key = (line_move.product_uom.name, line.line_number, line_move.picking_id.id)
                         data.update({
                             'delivered_qty': is_done and line_move.product_qty or 0.00,
-                            'delivered_uom': is_done and line_move.product_uom.name or '-',
+                            'delivered_uom': line_move.product_uom.name or '-',
                             'is_delivered': is_done,
                             'backordered_qty': not is_done and line.order_id.state != 'cancel' and line_move.product_qty or 0.00,
                             'rts': line.order_id.ready_to_ship_date,
@@ -396,11 +396,10 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
 
                         if key in keys:
                             for rline in lines:
-                                if rline['delivered_uom'] == key[0]:
-                                    if line.line_number == key[1]:
-                                        rline.update({
-                                            'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
-                                        })
+                                if rline['delivered_uom'] == key[0] and rline['line_number'] == key[1] and rline['delivery_order'] == delivery_order:
+                                    rline.update({
+                                        'delivered_qty': rline['delivered_qty'] + data['delivered_qty'],
+                                    })
                         else:
                             keys.append(key)
                             lines.append(data)
