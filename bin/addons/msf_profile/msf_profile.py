@@ -68,7 +68,7 @@ class patch_scripts(osv.osv):
             try:
                 sock = xmlrpclib.ServerProxy('http://%s:%s/xmlrpc/db'%(connection['host'], 443), transport=transport)
                 sock.server_version()
-            except Exception as e:
+            except Exception:
                 vals = {
                     'protocol': 'xmlrpc',
                     'port': 8069,
