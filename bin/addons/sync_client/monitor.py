@@ -339,7 +339,7 @@ class sync_version_instance_monitor(osv.osv):
             usage = "Path %s doesn't exists" % path
         return usage
 
-    def _get_default_posgresql_disk_space(self, cr, uid, context=None):
+    def _get_default_postgresql_disk_space(self, cr, uid, context=None):
         if os.name == 'nt':
             # get the pass from the database
             cr.execute('SHOW data_directory')
