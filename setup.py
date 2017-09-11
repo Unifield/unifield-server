@@ -125,6 +125,7 @@ def data_files():
         files.append(('.', [join('bin', 'unifield-version.txt')]))
         files.append(('tools', [join('bin', 'tools', 'import_po.dtd')]))
         os.chdir('bin')
+        files.append(('fonts', glob.glob('fonts/*')))
         for (dp, dn, names) in os.walk('addons'):
             files.append((dp, map(lambda x: join('bin', dp, x), names)))
         os.chdir('..')
