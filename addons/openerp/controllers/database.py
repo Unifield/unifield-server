@@ -334,7 +334,7 @@ class Database(BaseController):
         finished = "False"
         data_collected = "False"
         return dict(finish=finish, percent=self.progress, resume=self.resume, total=finished,
-                    data_collected=data_collected, report_name='toto', res_id='123456')
+                    data_collected=data_collected)
 
     def check_not_empty_string(self, config, section, option):
         if not config.has_option(section, option) or not config.get(section, option):
