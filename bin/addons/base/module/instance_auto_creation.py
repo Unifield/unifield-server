@@ -599,6 +599,54 @@ class instance_auto_creation(osv.osv):
             self.write(cr, 1, creation_id,
                        {'state': 'partner_configuration_done'}, context=context)
 
+            # company configuration
+            instance_name = config_dict['instance'].get('instance_name') or cr.dbname
+            instance_id = self.pool.get('msf.instance').search(cr,
+                    uid, [('code', '=', config_dict['reconfigure']['prop_instance_code'])])
+            company_obj = self.pool.get('res.company')
+            company_id = company_obj.search(cr, uid, [('instance_id', '=', instance_id)])
+            if len(company_id) != 1:
+                raise osv.except_osv(_("Error!"), 'There should be one and only one company with proprietary instance \'%s\', found %d.' % (config_dict['reconfigure']['prop_instance_code'], len(instance_partner_id)))
+
+            vals = {
+                'schedule_range': float(config_dict['company']['scheduler_range_days']),
+            }
+
+            account_property_dict = {  # config_file_property_name : unifield property name
+                'salaries_default_account': 'salaries_default_account',
+                'default_counterpart': 'counterpart_hq_entries_default_account',
+                'reserve_profitloss_account': 'property_reserve_and_surplus_account',
+                'rebilling_intersection_account': 'import_invoice_default_account',
+                'intermission_counterpart': 'intermission_default_counterpart',
+                'revaluation_account': 'revaluation_default_account',
+                'counterpart_bs_debit_balance': 'ye_pl_cp_for_bs_debit_bal_account',
+                'counterpart_bs_crebit_balance': 'ye_pl_cp_for_bs_credit_bal_account',
+                'credit_account_pl_positive': 'ye_pl_pos_credit_account',
+                'debit_account_pl_positive': 'ye_pl_pos_debit_account',
+                'credit_account_pl_negative': 'ye_pl_ne_credit_account',
+                'debit_account_pl_negative': 'ye_pl_ne_debit_account',
+            }
+
+            for config_file_prop, unifield_prop in account_property_dict.items():
+              account = config_dict['company'].get(config_file_prop)
+              account_id = account_obj.search(cr, uid, [('code', '=', account)])
+              account_id = account_id and account_id[0] or False
+              if account_id:
+                  vals[unifield_prop] = account_id
+
+            company_obj.write(cr, uid, company_id, vals)
+
+            # configure cost center for FX gain loss
+            if config.has_option('accounting', 'cost_center_code_for_fx_gain_loss'):
+                cc_code = config_dict['accounting'].get('cost_center_code_for_fx_gain_loss')
+                if cc_code:
+                    cc_code = cc_code.upper()
+                    analytic_account_module = self.pool.get('account.analytic.account')
+                    cc_id = analytic_account_module.search(cr, uid, [('code', '=', cc_code)])
+                    analytic_account_module.write(cr, uid, cc_id, {'for_fx_gain_loss': True})
+
+            # send imported data and configuration
+            self.pool.get('sync.client.entity').sync(cr, uid)
 
             self.write(cr, 1, creation_id,
                        {'state': 'done'}, context=context)
