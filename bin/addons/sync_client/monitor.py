@@ -341,17 +341,16 @@ class sync_version_instance_monitor(osv.osv):
 
     def _get_default_posgresql_disk_space(self, cr, uid, context=None):
         if os.name == 'nt':
-            # get the pass from the process command line
-            proc_list = [proc for proc in psutil.process_iter() if proc.name() == 'postgres.exe']
-            if proc_list:
-                postgres_path = os.path.split(proc_list[0].cmdline())
-                postgres_path = postgres_path and postgres_path[0] or False
+            # get the pass from the database
+            cr.execute('SHOW data_directory')
+            postgres_path = cr.fetchone()
+            postgres_path = postgres_path  and postgres_path[0] or None
         else:
             # for linux (RB)
             postgres_path = '/var/lib/postgresql/'
         return self.get_path_disk_usage(cr, uid, postgres_path)
 
-    def _get_default_unifield_space(self, cr, uid, context=None):
+    def _get_default_unifield_disk_space(self, cr, uid, context=None):
         unifield_path = tools.config['root_path']
         return self.get_path_disk_usage(cr, uid, unifield_path)
 
@@ -375,8 +374,6 @@ class sync_version_instance_monitor(osv.osv):
     _defaults = {
         'backup_date' : fields.datetime.now,
         'instance_id': _get_default_instance_id,
-        'postgresql_disk_space': _get_default_posgresql_disk_space,
-        'unifield_disk_space': _get_default_unifield_space,
     }
 
     _sql_constraints = [
