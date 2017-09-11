@@ -67,7 +67,6 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
         '''
         Return the move's order type object
         '''
-        obj_id = False
         obj = False
         acronym_type = False
 
@@ -82,10 +81,9 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 obj_id = obj_obj.search(cr, uid, [('name', 'like', obj_name + '-')])
                 if not obj_id:
                     obj_id = obj_obj.search(cr, uid, [('name', 'like', obj_name)])
-
-            if obj_id:
-                obj = obj_obj.browse(cr, uid, obj_id[0])
-                break
+                if obj_id:
+                    obj = obj_obj.browse(cr, uid, obj_id[0])
+                    break
 
         return obj
 
@@ -142,7 +140,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                     po_state = po_found.state if po_found else 'none'
                     so_ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
                     if len(so_ids) > 0:
-                        so_found = po_obj.browse(self.cr, self.uid, so_ids[0])
+                        so_found = so_obj.browse(self.cr, self.uid, so_ids[0])
                         so_state = so_found.state if so_found else 'none'
                         if so_state == 'done' and po_state == 'done':
                             dict_check_done[move_ref] = 'Closed'
