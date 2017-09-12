@@ -171,7 +171,7 @@
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if o.balance:
-                <Cell ss:StyleID="line_right"><Data ss:Type="String">${o.balance|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${o.balance|x}</Data></Cell>
                 % else:
                 <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
                 %endif
