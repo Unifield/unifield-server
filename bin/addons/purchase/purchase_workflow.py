@@ -219,7 +219,7 @@ class purchase_order_line(osv.osv):
             'address_id': False,
             'date': context['common']['date'],
             'company_id': context['common']['company_id'],
-            'reason_type_id': context['common']['reason_type_id'],
+            'reason_type_id': self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1],
         }
         pick_id = self.pool.get('stock.picking').create(cr, uid, pick_values, context=context)
 
@@ -354,6 +354,7 @@ class purchase_order_line(osv.osv):
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
                     ('purchase_id', '=', pol.order_id.id),
                     ('state', 'not in', ['done']),
+                    ('type', '=', 'in'),
                 ])
                 created = False
                 if not in_id:
@@ -367,12 +368,27 @@ class purchase_order_line(osv.osv):
                     self.pool.get('stock.move').in_action_confirm(cr, uid, move_id, context)
 
             # create internal moves (INT):
-            if False: #TODO
+            if True: #TODO
                 internal_pick = self.pool.get('stock.picking').search(cr, uid, [('type', '=', 'internal'), ('purchase_id', '=', pol.order_id.id)], context=context)
+                created = False
                 if not internal_pick:
                     internal_pick = self.create_int(cr, uid, ids, context=context)
                     internal_pick = [internal_pick]
+                    created = True
+
+                # create and update stock.move:
                 move_id = self.pool.get('purchase.order').create_picking_line(cr, uid, internal_pick[0], pol, context)
+                move = self.pool.get('stock.move').browse(cr, uid, move_id, context=context)
+                input_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+                input_loc = self.pool.get('stock.location').browse(cr, uid, input_id, context=context)
+                self.pool.get('stock.move').write(cr, uid, [move_id], {
+                    'location_id': input_id,
+                    'location_dest_id': self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=move.product_id, context=context)[0].id,    
+                }, context=context)
+                if created:
+                    self.pool.get('stock.picking').draft_force_assign(cr, uid, internal_pick, context=context)
+                else:
+                    self.pool.get('stock.move').action_confirm(cr, uid, [move_id], context=context)
                 
             # if line created in PO, then create a FO line that match with it:
             if not pol.linked_sol_id and pol.origin:
