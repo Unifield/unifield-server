@@ -139,7 +139,7 @@ class account_move_line_compute_currency(osv.osv):
                 if rline.debit > highest_debit_amount:
                     highest_debit_amount = rline.debit
                     highest_debit_line = rline
-                if rline.credit > highest_credit_amount:
+                elif rline.credit > highest_credit_amount:
                     highest_credit_amount = rline.credit
                     highest_credit_line = rline
                 account_id = (rline.account_id and rline.account_id.id) or False
