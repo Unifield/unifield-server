@@ -96,6 +96,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
         po_obj = self.pool.get('purchase.order')
         result = []
         sm_list = []
+# TODO: we must search on counterpart if filter is used on wizard
         for move in report.sm_ids:
             sm_list.append(self.pool.get('stock.move').browse(self.cr, self.uid, move))
 
