@@ -1516,7 +1516,7 @@ class purchase_order(osv.osv):
             'price_currency_id': order.pricelist_id.currency_id.id,
             'price_unit': order_line.price_unit,
             'date': order_line.confirmed_delivery_date,
-            'date_expected': order_line.confirmed_delivery_date,
+            'date_expected': order_line.confirmed_delivery_date or order_line.date_planned,
             'line_number': order_line.line_number,
             'comment': order_line.comment or '',
         }
