@@ -107,13 +107,13 @@
         ## Qty Out
         <Column ss:AutoFitWidth="1" ss:Width="54.25"  />
         ## Unit Price
-        <Column ss:AutoFitWidth="1" ss:Width="57.25"  />
+        <Column ss:AutoFitWidth="1" ss:Width="57.75"  />
         ## Currency (FX)
         <Column ss:AutoFitWidth="1" ss:Width="65.75"  />
         ## Total Value
         <Column ss:AutoFitWidth="1" ss:Width="67.25"  />
         ## Instance
-        <Column ss:AutoFitWidth="1" ss:Width="97.25"  />
+        <Column ss:AutoFitWidth="1" ss:Width="150.75"  />
 
         <%
             headers_list = [
@@ -165,22 +165,10 @@
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
                 <Cell ss:StyleID="line_right"><Data ss:Type="Number">0.00</Data></Cell>
                 % endif
-                % if o.price_unit:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 2)|x}</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.product_id.standard_price, 2)|x}</Data></Cell>
-                % endif
-                % if o.price_currency_id.name:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.price_currency_id.name|x}</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.product_id.currency_id.name or ''|x}</Data></Cell>
-                % endif
-                % if o.price_unit:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 2) * getQty(o)|x}</Data></Cell>
-                % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.product_id.standard_price, 2) * getQty(o)|x}</Data></Cell>
-                % endif
-                <Cell ss:StyleID="line_right"><Data ss:Type="String">${getInstance()|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${computeCurrency(o)|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${userCompany['currency_id'].name|x}</Data></Cell>
+                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${computeCurrency(o) * getQty(o)|x}</Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="String">${userCompany['instance_id'].name|x}</Data></Cell>
             </Row>
         % endfor
 

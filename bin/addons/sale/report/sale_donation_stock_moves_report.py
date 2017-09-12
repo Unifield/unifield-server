@@ -30,12 +30,14 @@ class sale_donation_stock_moves_report_parser(report_sxw.rml_parse):
         super(sale_donation_stock_moves_report_parser, self).__init__(cr, uid, name, context=context)
         self.cr = cr
         self.uid = uid
+        self.user_company = self._get_user_company()
         self.localcontext.update({
             'time': time,
             'getMoves': self._get_moves,
             'isQtyOut': self._is_qty_out,
             'getQty': self._get_qty,
-            'getInstance': self._get_instance,
+            'computeCurrency': self._compute_currency,
+            'userCompany': self.user_company,
         })
 
     def _get_moves(self, report):
@@ -71,11 +73,36 @@ class sale_donation_stock_moves_report_parser(report_sxw.rml_parse):
 
         return qty
 
-    def _get_instance(self):
+    def _get_user_company(self):
         '''
-        Return user's current instance
+        Return user's current company
         '''
-        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.name
+        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id
+
+    def _compute_currency(self, move):
+        '''
+        Compute an amount of a given currency to the instance's currency
+        '''
+        currency_obj = self.pool.get('res.currency')
+
+        if not move.price_currency_id:
+            if move.price_unit is None:
+                return round(move.product_id.standard_price, 2)
+            if move.type == 'in':
+                from_currency_id = move.partner_id.property_product_pricelist_purchase.currency_id.id
+            else:
+                from_currency_id = move.partner_id.property_product_pricelist.currency_id.id
+        else:
+            from_currency_id = move.price_currency_id.id
+
+        context = {'date': move.date}
+        to_currency_id = self.user_company['currency_id'].id
+
+        if from_currency_id == to_currency_id:
+            return round(move.price_unit, 2)
+
+        return round(currency_obj.compute(self.cr, self.uid, from_currency_id, to_currency_id, move.price_unit, round=False, context=context), 2)
+
 
 class sale_donation_stock_moves_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
