@@ -368,7 +368,7 @@ class purchase_order_line(osv.osv):
                     self.pool.get('stock.move').in_action_confirm(cr, uid, move_id, context)
 
             # create internal moves (INT):
-            if True: #TODO
+            if pol.order_id.location_id.input_ok: 
                 internal_pick = self.pool.get('stock.picking').search(cr, uid, [('type', '=', 'internal'), ('purchase_id', '=', pol.order_id.id)], context=context)
                 created = False
                 if not internal_pick:
