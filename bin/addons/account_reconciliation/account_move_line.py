@@ -243,6 +243,7 @@ class account_move_line(osv.osv):
             account_id = line['account_id']['id']
             partner_id = (line['partner_id'] and line['partner_id']['id']) or False
         func_balance = func_debit - func_credit
+        book_balance = debit - credit
 
         cr.execute('SELECT account_id, reconcile_id '\
                    'FROM account_move_line '\
@@ -256,12 +257,18 @@ class account_move_line(osv.osv):
         if not unrec_lines:
             raise osv.except_osv(_('Error'), _('Entry is already reconciled'))
         account = account_obj.browse(cr, uid, account_id, context=context)
-        if not context.get('fy_closing', False) and not account.reconcile:
+        if not context.get('fy_closing', False) and not context.get('fy_hq_closing', False) and not account.reconcile:
             raise osv.except_osv(_('Error'), _('The account is not defined to be reconciled !'))
         if r[0][1] != None:
             raise osv.except_osv(_('Error'), _('Some entries are already reconciled !'))
 
-        if abs(func_balance) > 10**-3: # FIX UF-1903 problem
+        if context.get('fy_hq_closing', False):
+            if abs(func_balance) > 10**-3 or abs(book_balance) > 10**-3:
+                # yearly move to zero entries should be balanced in functional and booking currency
+                raise osv.except_osv(_('Error'),
+                                     _("The entries included in the yearly move to zero can't be reconciled together "
+                                       "because they are unbalanced."))
+        elif abs(func_balance) > 10**-3:  # FIX UF-1903 problem
             partner_line_id = self.create_addendum_line(cr, uid, [x.id for x in unrec_lines], func_balance)
             if partner_line_id:
                 # Add partner_line to do total reconciliation
@@ -315,7 +322,7 @@ class account_move_line(osv.osv):
         Returns a tuple with the date and the period to use for the reversal FX entry.
         Rules:
         - if the period of the original FXA is Open, the reversal FXA uses its posting date and Period
-        - if the period isn't Open, the posting date is the first date of the next open period. Period 13-16 are excluded.
+        - if the period isn't Open, the posting date is the first date of the next open period. Periods 0 and 16 are excluded.
         - note that the Document date is always the same as the Posting Date (to avoid FY differences)
         '''
         period_obj = self.pool.get('account.period')
@@ -325,10 +332,10 @@ class account_move_line(osv.osv):
         else:
             period_ids = period_obj.search(
                 cr, uid,
-                [('date_start', '>', fxa_period.date_start),
+                [('date_start', '>=', fxa_period.date_start),
                  ('state', '=', 'draft'),
-                 ('number', '>', 0), ('number', '<', 13)],
-                order='date_start', limit=1, context=context)
+                 ('number', 'not in', [0, 16])],
+                order='date_start, number', limit=1, context=context)
             if not period_ids:
                 raise osv.except_osv(_('Warning !'),
                                      _('There is no open period to book the reversal FX entry.'))
@@ -529,57 +536,6 @@ class account_move_reconcile(osv.osv):
                     sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"
                     cr.execute(sql, (name, tuple(p+t)))
         return res
-
-    def reset_addendum_line(self, cr, uid, fxa_line_ids, context):
-        '''
-        For each addendum line in parameter, put the amount back to 0.0 for:
-        - the addendum line and its counterpart (JIs)
-        - the related AJI
-        '''
-        aml_obj = self.pool.get('account.move.line')
-        for fxa_line in aml_obj.browse(cr, uid, fxa_line_ids, context=context, fields_to_fetch=['move_id']):
-            account_move_id = fxa_line.move_id.id
-            counterpart_id = aml_obj.search(cr, uid, [('move_id', '=', account_move_id), ('id', '!=', fxa_line.id)],
-                                            order='NO_ORDER', limit=1, context=context)
-            counterpart_id = counterpart_id and counterpart_id[0]
-            aji = counterpart_id and aml_obj.browse(cr, uid, counterpart_id, context=context,
-                                                    fields_to_fetch=['analytic_lines']).analytic_lines
-            aji_id = aji and aji[0].id
-            # reset the JIs
-            # We use an UPDATE in SQL instead of a "write" otherwise we'll end up with a value in functional
-            sql_ji = """
-                UPDATE account_move_line
-                SET debit_currency=0.0, credit_currency=0.0, amount_currency=0.0, debit=0.0, credit=0.0,
-                unreconcile_txt=reconcile_txt, unreconcile_date=reconcile_date,
-                reconcile_id=NULL, reconcile_txt='', reconcile_date=NULL
-                WHERE id IN %s;
-            """
-            cr.execute(sql_ji, (tuple([fxa_line.id, counterpart_id]),))
-            # reset the AJI
-            if aji_id:
-                sql_aji = """
-                UPDATE account_analytic_line
-                SET amount=0.0, amount_currency=0.0
-                WHERE id = %s;
-                """
-                cr.execute(sql_aji, (aji_id,))
-
-    def unlink(self, cr, uid, ids, context=None):
-        aml_obj = self.pool.get('account.move.line')
-        if context is None:
-            context = {}
-        if context.get('sync_update_execution'):
-            # US-1997 While synchronizing if there is an FXA line linked to the reconciliation about to be deleted,
-            # update the FXA line with the amount "0.0" (don't delete it to avoid gaps in FX entry sequences).
-            # (Cover the use case where balanced entries from an instance are reconciled in an upper instance,
-            # sync is done in the upper instance, entries are unreconciled in the upper instance, sync is done in the
-            # upper instance and only then sync is done in the lower instance
-            # ==> it wrongly creates an FXA line in the lower instance with the amount of one of the legs)
-            fxa_line_ids = aml_obj.search(cr, uid, [('reconcile_id', '=', ids), ('is_addendum_line', '=', True)],
-                                          context=context, order='NO_ORDER')
-            if fxa_line_ids:
-                self.reset_addendum_line(cr, uid, fxa_line_ids, context)
-        return super(account_move_reconcile, self).unlink(cr, uid, ids, context=context)
 
 account_move_reconcile()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

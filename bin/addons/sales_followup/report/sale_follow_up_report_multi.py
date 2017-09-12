@@ -151,6 +151,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         'product_name': line.product_id.name,
                         'product_code': line.product_id.code,
                         'is_delivered': False,
+                        'backordered_qty': 0.00,
                     }
                     if first_line:
                         data.update({
@@ -165,7 +166,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         eta = ''
                         is_delivered = False
                         is_shipment_done = False
-                        if ppl: 
+                        if ppl:
                             packing = move.picking_id.previous_step_id.name or ''
                             shipment = move.picking_id.shipment_id and move.picking_id.shipment_id.name or ''
                             eta = datetime.strptime(move.picking_id.shipment_id.shipment_actual_date[0:10], '%Y-%m-%d')
@@ -224,7 +225,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         keys.append(key)
                         lines.append(data)
                         if data.get('first_line'):
-                            fl_index= m_index
+                            fl_index = m_index
                         m_index += 1
 
             # No move found

@@ -164,8 +164,8 @@
           <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
           <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
           <Cell ss:StyleID="sumline"><Data ss:Type="String"></Data></Cell>
-          <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(prd['sum_qty'])|x}</Data></Cell>
-          <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(prd['sum_value'])|x}</Data></Cell>
+          <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(round(prd['sum_qty'], 2))|x}</Data></Cell>
+          <Cell ss:StyleID="sumline"><Data ss:Type="Number">${(round(prd['sum_value'], 2))|x}</Data></Cell>
       </Row>
         % for line in prd['lines'].itervalues():
           % if line['qty']:
@@ -179,8 +179,8 @@
             % else:
             <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
             % endif
-            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['qty'])|x}</Data></Cell>
-            <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['value'])|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${(round(line['qty'], 2))|x}</Data></Cell>
+            <Cell ss:StyleID="line"><Data ss:Type="Number">${(round(line['value'], 2))|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
           </Row>

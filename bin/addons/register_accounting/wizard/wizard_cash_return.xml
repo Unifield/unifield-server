@@ -6,8 +6,7 @@
             <field name='model'>wizard.cash.return</field>
             <field name='type'>form</field>
             <field name='arch' type='xml'>
-                <form string="Cash Return- Wizard">
-                    <label string="Cash Return Wizard will help you book advances return." colspan="4"/>
+                <form string="Advance Return - Wizard">
                     <separator string="Necessary Information" colspan="4"/>
                     <field name="initial_amount"/>
                     <field name="additional_amount" on_change="onchange_addl_amount(returned_amount)"/>

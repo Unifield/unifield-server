@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="report_sale_donation_stock_moves_xls"
+            name="sale.donation.stock.moves.report_xls"
+            model="sale.donation.stock.moves"
+            string="Donation Report"
+            file="sale/report/sale_donation_stock_moves_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+    </data>
+</openerp>

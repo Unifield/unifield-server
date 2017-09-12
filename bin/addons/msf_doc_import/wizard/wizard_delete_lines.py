@@ -573,26 +573,44 @@ class wizard_delete_lines(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for wiz in self.browse(cr, uid, ids, context=context):
-            line_obj = self.pool.get(wiz.to_remove_type)
-            line_ids = []
-            # Parse the content of 'line_ids' field (text field) to retrieve
-            # the id of lines to remove.
-            for line in wiz.line_ids:
-                for l in line[2]:
-                    line_ids.append(l)
+        # only for FO
+        if context['active_model'] == 'sale.order' \
+                and (not context.get('procurement_request') or not context['procurement_request']):
+            lines_ids = []
+            for wiz in self.browse(cr, uid, ids, context=context):
+                # the id of lines to remove.
+                for line in wiz.line_ids:
+                    for l in line[2]:
+                        lines_ids.append(l)
 
-            context['noraise'] = True
-            context.update({
-                'noraise': True,
-                'from_del_wizard': True,
-            })
-            if wiz.to_remove_type in ('purchase.order.line', 'tender.line'):
-                line_obj.fake_unlink(cr, uid, line_ids, context=context)
-            else:
-                line_obj.unlink(cr, uid, line_ids, context=context)
+            context['from_del_wizard'] = False
+            ids = lines_ids
+            model = 'delete.sale.order.line.wizard'
+            name = _('Warning!')
+            wiz_obj = self.pool.get('wizard')
+            if len(ids) > 0:
+                # open the selected wizard
+                return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
+        else:
+            for wiz in self.browse(cr, uid, ids, context=context):
+                line_obj = self.pool.get(wiz.to_remove_type)
+                line_ids = []
+                # Parse the content of 'line_ids' field (text field) to retrieve
+                # the id of lines to remove.
+                for line in wiz.line_ids:
+                    for l in line[2]:
+                        line_ids.append(l)
 
-        context['from_del_wizard'] = False
+                context['noraise'] = True
+                context.update({
+                    'noraise': True,
+                    'from_del_wizard': True,
+                })
+                if wiz.to_remove_type in ('purchase.order.line', 'tender.line', 'delete.sale.order.line.wizard'):
+                    line_obj.fake_unlink(cr, uid, line_ids, context=context)
+                else:
+                    line_obj.unlink(cr, uid, line_ids, context=context)
+            context['from_del_wizard'] = False
 
         return {'type': 'ir.actions.act_window_close'}
 

@@ -901,7 +901,7 @@ class account_period(osv.osv):
     _description = "Account period"
     _columns = {
         'name': fields.char('Period Name', size=64, required=True),
-        'code': fields.char('Code', size=12),
+        'code': fields.char('Code', size=24),
         'special': fields.boolean('Opening/Closing Period', size=12,
                                   help="These periods can overlap."),
         'date_start': fields.date('Start of Period', required=True, states={'done':[('readonly',True)]}),
@@ -1019,7 +1019,20 @@ class account_period(osv.osv):
             domain += [ ('date_start', '>=', period_date_start), ]
         if period_date_stop:
             domain += [ ('date_stop', '<=', period_date_stop), ]
-        return self.search(cr, uid, domain)
+        search_result = self.search(cr, uid, domain, order='date_start, number, id')
+
+        # start_date and stop_date is not enough to select a period as more
+        # than one have the same start/stop_date (Dec, periods 13, 14, 15 & 16)
+        # if Dec 2016 is selected for period_from AND period_to, then only this
+        # period should be returned.
+        if period_from_id and period_from_id in search_result:
+            from_index = search_result.index(period_from_id)
+            search_result = search_result[from_index:]
+        if period_to_id and period_to_id in search_result:
+            to_index = search_result.index(period_to_id)
+            if len(search_result) >= to_index+1:
+                search_result = search_result[:to_index+1]
+        return search_result
 
 account_period()
 
