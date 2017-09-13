@@ -1269,8 +1269,11 @@ class stock_picking(osv.osv):
                         bo_values.update(av_values)
                         context['keepLineNumber'] = True
                         context['from_button'] = False
-                        move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
+                        new_bo_move_id = move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
                         context['keepLineNumber'] = False
+                        # update linked INT move with new BO move id:
+                        internal_move = move_obj.search(cr, uid, [('linked_incoming_move', '=', bo_move.id)], context=context)
+                        move_obj.write(cr, uid, internal_move, {'linked_incoming_move': new_bo_move_id}, context=context)
 
                 # Put the done moves in this new picking
                 done_values = {'picking_id': backorder_id}
