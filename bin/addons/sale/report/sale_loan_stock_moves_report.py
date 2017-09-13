@@ -63,35 +63,10 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
 
         return qty
 
-    def _get_move_obj(self, cr, uid, obj_obj, move):
-        '''
-        Return the move's order type object
-        '''
-        obj = False
-        acronym_type = False
-
-        for split_origin in move.origin.split(":"):
-            if obj_obj == self.pool.get('sale.order'):
-                acronym_type = 'FO'
-            elif obj_obj == self.pool.get('purchase.order'):
-                acronym_type = 'PO'
-
-            if acronym_type and acronym_type in split_origin:
-                obj_name = str(split_origin.rsplit('-', 1)[0])
-                obj_id = obj_obj.search(cr, uid, [('name', 'like', obj_name + '-')])
-                if not obj_id:
-                    obj_id = obj_obj.search(cr, uid, [('name', 'like', obj_name)])
-                if obj_id:
-                    obj = obj_obj.browse(cr, uid, obj_id[0])
-                    break
-
-        return obj
-
     def _get_moves(self, report):
         '''
         Return the moves for the report and set their qty balance
         '''
-        usr_obj = self.pool.get('res.users')
         so_obj = self.pool.get('sale.order')
         po_obj = self.pool.get('purchase.order')
         result = []
@@ -101,8 +76,6 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
 
         sm_list = sorted(sm_list, key=lambda sm: (sm['product_id']['default_code'], sm['origin'].split(":")[-1], sm['create_date']))
         balance = 0
-        # dict used to check if the loan flow is done
-        dict_check_done = {}
         for index, move in enumerate(sm_list, start=0):
             move.balance = balance
             if self._is_qty_out(move):
@@ -110,79 +83,46 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
             else:
                 balance += self._get_qty(move)
 
-            # check if cost center code in the move's origin is not from the same instance
-            cost_center_code = usr_obj.browse(self.cr, self.uid, self.uid).company_id.instance_id.po_fo_cost_center_id.code
-            synced = False
-            for split_name in move.origin.split(':'):
-                if cost_center_code not in split_name and 'IR' not in split_name.rsplit('/', 1)[-1]:
-                    synced = True
-            # check if the flow exists in the dict
-            move.status = 'Open'
-            if synced:
-                if '-' in move.origin.split(':')[0].split('/')[-1]:
-                    move_ref = str(move.origin.split(':')[0].rsplit('-', 1)[0])
+            dom = []
+            status = 'Open'
+            if move.purchase_line_id:
+                is_cp = move.purchase_line_id.order_id.is_a_counterpart
+                from_name = move.purchase_line_id.order_id.name
+                if move.purchase_line_id.order_id.loan_id:
+                    ids = [move.purchase_line_id.order_id.loan_id.id]
+                elif move.purchase_line_id.order_id.origin[-2:] in ['-1', '-2', '-3']:
+                    ids = so_obj.search(self.cr, self.uid, [('name', '=', move.purchase_line_id.order_id.origin)])
+                    if not ids:
+                        ids = so_obj.search(self.cr, self.uid, [('name', '=', move.purchase_line_id.order_id.origin[-2:])])
                 else:
-                    move_ref = str(move.origin.split(':')[0])
-            else:
-                if '-' in move.origin.split(':')[-1].split('/')[-1]:
-                    move_ref = str(move.origin.split(':')[-1].rsplit('-', 1)[0])
+                    dom = [move.purchase_line_id.order_id.origin]
+                    ids = so_obj.search(self.cr, self.uid, [('name', '=', move.purchase_line_id.origin)])
+                    if not ids:
+                        dom = ['%s-%s' % (move.purchase_line_id.order_id.origin, i) for i in [1, 2, 3]]
+                        ids = so_obj.search(self.cr, self.uid, [('name', 'in', dom)])
+                if ids:
+                    po_found = po_obj.browse(self.cr, self.uid, move.purchase_line_id.order_id.id)
+                    so_found = so_obj.browse(self.cr, self.uid, ids[0])
+                    if so_found and so_found.state == po_found.state == 'done':
+                        status = 'Closed'
+            elif move.sale_line_id:
+                is_cp = move.sale_line_id.order_id.is_a_counterpart
+                from_name = move.sale_line_id.order_id.name
+                if move.sale_line_id.order_id.loan_id:
+                    ids = [move.sale_line_id.order_id.loan_id.id]
+                elif move.sale_line_id.order_id.name[-2:] in ['-1', '-2', '-3']:
+                    ids = po_obj.search(self.cr, self.uid, [('origin', '=', move.sale_line_id.order_id.name)])
+                    if not ids:
+                        ids = po_obj.search(self.cr, self.uid, [('origin', '=', move.sale_line_id.order_id.name[0:-2])])
                 else:
-                    move_ref = str(move.origin.split(':')[-1])
-            if not dict_check_done.get(move_ref, []):
-                if 'FO' in move.origin and 'PO' in move.origin:
-                    po_found = self._get_move_obj(self.cr, self.uid, po_obj, move)
-                    po_state = po_found.state if po_found else 'none'
-                    if synced:
-                        so_ids = so_obj.search(self.cr, self.uid, [('name', 'like', po_found.origin.rsplit('-', 1)[0] + '-')])
-                        if not so_ids:
-                            so_ids = so_obj.search(self.cr, self.uid, [('name', 'like', po_found.origin.rsplit('-', 1)[0])])
-                        if len(so_ids) > 0:
-                            so_found = so_obj.browse(self.cr, self.uid, so_ids[0])
-                        else:
-                            so_found = False
-                    else:
-                        so_found = self._get_move_obj(self.cr, self.uid, so_obj, move)
-                    so_state = so_found.state if so_found else 'none'
-                    if so_state == 'done' and po_state == 'done':
-                        dict_check_done[move_ref] = 'Closed'
-                    else:
-                        dict_check_done[move_ref] = 'Open'
-                elif 'FO' in move.origin and 'PO' not in move.origin:
-                    so_found = self._get_move_obj(self.cr, self.uid, so_obj, move)
-                    so_state = so_found.state if so_found else 'none'
-                    po_ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
-                    if not po_ids and so_found.origin:
-                        po_ids = po_obj.search(self.cr, self.uid, [('name', '=', so_found.origin)])
-                    if not po_ids and '-' not in so_found.name.split('/')[-1]:
-                        po_ids = po_obj.search(self.cr, self.uid, [('origin', 'like', so_found.name + '-')])
-                    if not po_ids and '-' in so_found.name.split('/')[-1]:
-                        po_ids = po_obj.search(self.cr, self.uid, [('origin', 'like', so_found.name.rsplit('-', 1)[0])])
-                    if len(po_ids) > 0:
-                        po_found = po_obj.browse(self.cr, self.uid, po_ids[0])
-                        po_state = po_found.state if po_found else 'none'
-                        if so_state == 'done' and po_state == 'done':
-                            dict_check_done[move_ref] = 'Closed'
-                        else:
-                            dict_check_done[move_ref] = 'Open'
-                    else:
-                        dict_check_done[move_ref] = 'Open'
-                elif 'FO' not in move.origin and 'PO' in move.origin:
-                    po_found = self._get_move_obj(self.cr, self.uid, po_obj, move)
-                    po_state = po_found.state if po_found else 'none'
-                    so_ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
-                    if not so_ids:
-                        so_ids = so_obj.search(self.cr, self.uid, [('origin', '=', po_found.name)])
-                    if len(so_ids) > 0:
-                        so_found = so_obj.browse(self.cr, self.uid, so_ids[0])
-                        so_state = so_found.state if so_found else 'none'
-                        if so_state == 'done' and po_state == 'done':
-                            dict_check_done[move_ref] = 'Closed'
-                        else:
-                            dict_check_done[move_ref] = 'Open'
-                    else:
-                        dict_check_done[move_ref] = 'Open'
+                    ids = po_obj.search(self.cr, self.uid, [('origin', '=', move.sale_line_id.order_id.name)])
+                if ids:
+                    so_found = so_obj.browse(self.cr, self.uid, move.sale_line_id.order_id.id)
+                    po_found = po_obj.browse(self.cr, self.uid, ids[0])
+                    if po_found and so_found.state == po_found.state == 'done':
+                        status = 'Closed'
             # set the state according to the flow status
-            setattr(move, 'status', dict_check_done[move_ref])
+            setattr(move, 'status', status)
 
             # if the move is the last in the list
             if move is sm_list[-1]:
@@ -195,19 +135,9 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                     result.append(move)
                 balance = 0
             else:
-                # check if cost center code in the next move's origin is not from the same instance
-                next_synced = False
-                for split_name in sm_list[index + 1].origin.split(':'):
-                    if cost_center_code not in split_name and 'IR' not in split_name.rsplit('/', 1)[-1]:
-                        next_synced = True
-                po_found = self._get_move_obj(self.cr, self.uid, po_obj, move)
-                so_found = self._get_move_obj(self.cr, self.uid, so_obj, move)
-                next_po_found = self._get_move_obj(self.cr, self.uid, po_obj, sm_list[index + 1])
-                next_so_found = self._get_move_obj(self.cr, self.uid, so_obj, sm_list[index + 1])
                 # if the move's origin is different than the next one
-                if not synced and not next_synced and move.origin.split(":")[-1] \
-                        not in sm_list[index+1].origin.split(":")[-1] and sm_list[index + 1].origin.split(":")[-1] \
-                        not in move.origin.split(":")[-1]:
+                if so_found and po_found and so_found.name not in sm_list[index + 1].origin\
+                        and po_found.name not in sm_list[index + 1].origin:
                     setattr(move, 'balance', balance)
                     # remove closed flows
                     if report.remove_completed:
@@ -216,65 +146,6 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                     else:
                         result.append(move)
                     balance = 0
-                elif not synced and not next_synced and (so_found and not po_found and not next_so_found
-                                                         and next_po_found and so_found.name == next_po_found.origin):
-                    setattr(move, 'balance', 0)
-                    # remove closed flows
-                    if report.remove_completed:
-                        if move.status == 'Open':
-                            result.append(move)
-                    else:
-                        result.append(move)
-                elif not synced and not next_synced and (not so_found and po_found and next_so_found
-                                                         and not next_so_found and next_so_found.name == po_found.origin):
-                    setattr(move, 'balance', 0)
-                    # remove closed flows
-                    if report.remove_completed:
-                        if move.status == 'Open':
-                            result.append(move)
-                    else:
-                        result.append(move)
-                elif synced or next_synced:
-                    # if this move and/or the next one is synced, look if their origin SO is the same
-                    if synced:
-                        so_ids = so_obj.search(self.cr, self.uid, [('name', 'like', po_found.origin.rsplit('-', 1)[0] + '-')])
-                        if not so_ids:
-                            so_ids = so_obj.search(self.cr, self.uid, [('name', 'like', po_found.origin.rsplit('-', 1)[0])])
-                        if len(so_ids) > 0:
-                            so_found = so_obj.browse(self.cr, self.uid, so_ids[0])
-                    if next_synced:
-                        next_so_ids = so_obj.search(self.cr, self.uid, [('name', 'like', next_po_found.origin.rsplit('-', 1)[0] + '-')])
-                        if not next_so_ids:
-                            next_so_ids = so_obj.search(self.cr, self.uid, [('name', 'like', next_po_found.origin.rsplit('-', 1)[0])])
-                        if len(next_so_ids) > 0:
-                            next_so_found = so_obj.browse(self.cr, self.uid, next_so_ids[0])
-                    if so_found and next_so_found and so_found == next_so_found:
-                        setattr(move, 'balance', 0)
-                        # remove closed flows
-                        if report.remove_completed:
-                            if move.status == 'Open':
-                                result.append(move)
-                        else:
-                            result.append(move)
-                    else:
-                        # if the move's product is different than the next one
-                        if move.product_id.id != sm_list[index + 1].product_id.id:
-                            setattr(move, 'balance', balance)
-                            # remove closed flows
-                            if report.remove_completed:
-                                if move.status == 'Open':
-                                    result.append(move)
-                            else:
-                                result.append(move)
-                            balance = 0
-                        else:
-                            setattr(move, 'balance', 0)
-                            # remove closed flows
-                            if report.remove_completed:
-                                if move.status == 'Open':
-                                    result.append(move)
-                            else:
-                                result.append(move)
                 else:
                     # if the move's product is different than the next one
                     if move.product_id.id != sm_list[index+1].product_id.id:
