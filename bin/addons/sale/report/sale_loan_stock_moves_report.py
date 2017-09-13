@@ -98,7 +98,7 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                     elif po_found.origin[-2:] in ['-1', '-2', '-3']:
                         ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
                         if not ids:
-                            ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin[-2:])])
+                            ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin[0:-2])])
                     else:
                         ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
                         if not ids:
