@@ -281,7 +281,13 @@ function error_display(msg) {
                             .text('OK')
                         )
                 ));
-    window.top.jQuery.fancybox(error, {scrolling: 'no'});
+    error.find('.button-a').focus()
+    window.top.jQuery.fancybox(error, {
+        scrolling: 'no',
+        onComplete: function () {
+            $(this).find(".button-a").focus()
+        }
+    });
 }
 
 function get_sidebar_status(args, noterp) {
