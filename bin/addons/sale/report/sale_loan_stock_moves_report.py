@@ -62,31 +62,6 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
 
         return qty
 
-    def _get_move_obj(self, cr, uid, obj_obj, move):
-        '''
-        Return the move's order type object
-        '''
-        obj = False
-        acronym_type = False
-
-        for split_origin in move.origin.split(":"):
-            if obj_obj == self.pool.get('sale.order'):
-                acronym_type = 'FO'
-            elif obj_obj == self.pool.get('purchase.order'):
-                acronym_type = 'PO'
-
-            if acronym_type and acronym_type in split_origin:
-                obj_name = str(split_origin)
-                if '-' in obj_name.split('/')[-1]:
-                    obj_name = obj_name.rsplit('-', 1)[0]
-                obj_id = obj_obj.search(cr, uid, [('name', 'like', obj_name + '-')])
-                if not obj_id:
-                    obj_id = obj_obj.search(cr, uid, [('name', 'like', obj_name)])
-                if obj_id:
-                    obj = obj_obj.browse(cr, uid, obj_id[0])
-                    break
-
-        return obj
 
     def _get_moves(self, report):
         '''
@@ -94,16 +69,19 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
         '''
         so_obj = self.pool.get('sale.order')
         po_obj = self.pool.get('purchase.order')
-        result = []
         sm_list = []
 # TODO: we must search on counterpart if filter is used on wizard
         for move in report.sm_ids:
             sm_list.append(self.pool.get('stock.move').browse(self.cr, self.uid, move))
 
-        sm_list = sorted(sm_list, key=lambda sm: (sm['product_id']['default_code'], sm['origin'].split(":")[-1], sm['create_date']))
+        sm_list = sorted(sm_list, key=lambda sm: sm['create_date'])
         move_by_fo_po_prod = {}
         keys_order = []
-        for index, move in enumerate(sm_list, start=0):
+
+        get_so_from_po_id = {}
+        get_po_from_so_id = {}
+
+        for move in sm_list:
             if self._is_qty_out(move):
                 qty = -1 * self._get_qty(move)
             else:
@@ -112,45 +90,61 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
             dom = []
             status = 'Open'
             if move.purchase_line_id:
-                if move.purchase_line_id.order_id.loan_id:
-                    ids = [move.purchase_line_id.order_id.loan_id.id]
-                elif move.purchase_line_id.order_id.origin[-2:] in ['-1', '-2', '-3']:
-                    ids = so_obj.search(self.cr, self.uid, [('name', '=', move.purchase_line_id.order_id.origin)])
-                    if not ids:
-                        ids = so_obj.search(self.cr, self.uid, [('name', '=', move.purchase_line_id.order_id.origin[-2:])])
-                else:
-                    dom = [move.purchase_line_id.order_id.origin]
-                    ids = so_obj.search(self.cr, self.uid, [('name', '=', move.purchase_line_id.origin)])
-                    if not ids:
-                        dom = ['%s-%s' % (move.purchase_line_id.order_id.origin, i) for i in [1, 2, 3]]
-                        ids = so_obj.search(self.cr, self.uid, [('name', 'in', dom)])
-                if ids:
-                    po_found = po_obj.browse(self.cr, self.uid, move.purchase_line_id.order_id.id)
-                    so_found = so_obj.browse(self.cr, self.uid, ids[0])
-#TODO: PO/FO split
-                    if so_found and so_found.state == po_found.state == 'done':
-                        status = 'Closed'
+                po_found = move.purchase_line_id.order_id
+                if po_found.id not in get_so_from_po_id:
+		    if po_found.loan_id:
+		        ids = [po_found.id]
+		    elif po_found.origin[-2:] in ['-1', '-2', '-3']:
+		        ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
+		        if not ids:
+		            ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin[-2:])])
+	            else:
+		        ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
+                        if not ids:
+                            dom = ['%s-%s' % (po_found.origin, i) for i in [1, 2, 3]]
+                            ids = so_obj.search(self.cr, self.uid, [('name', 'in', dom)])
+                    if ids:
+                        so = so_obj.browse(self.cr, self.uid, ids[0])
+                        if so.split_type_sale_order:
+                            ids = so_obj.search(self.cr, self.uid, [('name', '=', '%s-2' % so.name)])
+                            if ids:
+                                so = so_obj.browse(self.cr, self.uid, ids[0])
+                        get_so_from_po_id[po_found.id] = so
+           
+                so_found = get_so_from_po_id.get(po_found.id)             
+                if so_found and so_found.state == po_found.state == 'done':
+                    status = 'Closed'
             elif move.sale_line_id:
-                if move.sale_line_id.order_id.loan_id:
-                    ids = [move.sale_line_id.order_id.loan_id.id]
-                elif move.sale_line_id.order_id.name[-2:] in ['-1', '-2', '-3']:
-                    ids = po_obj.search(self.cr, self.uid, [('origin', '=', move.sale_line_id.order_id.name)])
-                    if not ids:
-                        ids = po_obj.search(self.cr, self.uid, [('origin', '=', move.sale_line_id.order_id.name[0:-2])])
-                else:
-                    ids = po_obj.search(self.cr, self.uid, [('origin', '=', move.sale_line_id.order_id.name)])
-                if ids:
-                    so_found = so_obj.browse(self.cr, self.uid, move.sale_line_id.order_id.id)
-                    po_found = po_obj.browse(self.cr, self.uid, ids[0])
-#TODO: PO/FO split
-                    if po_found and so_found.state == po_found.state == 'done':
-                        status = 'Closed'
+                so_found = move.sale_line_id.order_id
+                if so_found.id not in get_po_from_so_id:
+                    if so_found.loan_id:
+                        ids = [so_found.loan_id.id]
+                    elif so_found.name[-2:] in ['-1', '-2', '-3']:
+                        ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
+                        if not ids:
+                            ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name[0:-2])])
+                    else:
+                        ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
+                    if ids:
+                        po_found = po_obj.browse(self.cr, self.uid, ids[0])
+                        if po_found.state == 'split':
+                            ids = po_obj.search(self.cr, self.uid, [('name', '=', '%s-2' % po_found.name)])
+                            po_found = po_obj.browse(self.cr, self.uid, ids[0])
+                        get_po_from_so_id[so_found.id] = po_found
+
+                po_found = get_po_from_so_id.get(so_found.id)
+                if po_found and so_found.state == po_found.state == 'done':
+                    status = 'Closed'
 
             if status != 'Closed' or not report.remove_completed:
                 setattr(move, 'status', status)
                 setattr(move, 'balance', 0)
-#TODO: if not found
-                key = (so_found.id, po_found.id, move.product_id.id)
+                
+                key = (
+                    so_found and so_found.id or 'NF%s' % po_found.id,
+                    po_found and po_found.id or 'NF%s' % so_found.id, 
+                    move.product_id.id
+                )
                 if key not in move_by_fo_po_prod:
                     keys_order.append(key)
                     move_by_fo_po_prod[key] =  {'balance': 0, 'moves': []}
@@ -158,11 +152,11 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
                 move_by_fo_po_prod[key]['moves'].append(move)
 
 
+        result = []
         for key in keys_order:
-            result += move_by_fo_po_prod[key]['moves']
-            result[-1].balance = move_by_fo_po_prod[key]['balance']
-
-
+            move_by_fo_po_prod[key]['moves'][-1].balance = move_by_fo_po_prod[key]['balance']
+            result.append(move_by_fo_po_prod[key]['moves'])
+        
         return result
 
     def _get_instance(self):

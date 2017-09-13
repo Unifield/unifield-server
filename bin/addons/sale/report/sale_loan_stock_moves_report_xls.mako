@@ -39,7 +39,7 @@
     </Style>
 
     <!-- Lines -->
-    <Style ss:ID="line_left">
+    <Style ss:ID="line_left0">
         <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -49,7 +49,7 @@
         </Borders>
         <Font ss:Size="10"/>
     </Style>
-    <Style ss:ID="line_right">
+    <Style ss:ID="line_right0">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
         <Borders>
             <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -58,6 +58,29 @@
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
         <Font ss:Size="10"/>
+        <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+    <Style ss:ID="line_left1">
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="10"/>
+        <Interior ss:Color="#dddddd" ss:Pattern="Solid"/>
+    </Style>
+    <Style ss:ID="line_right1">
+        <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
+        <Font ss:Size="10"/>
+        <Interior ss:Color="#dddddd" ss:Pattern="Solid"/>
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
      <Style ss:ID="line_center">
@@ -71,7 +94,7 @@
         <Font ss:Size="10"/>
         <NumberFormat ss:Format="#,##0.00"/>
     </Style>
-    <Style ss:ID="sShortDate">
+    <Style ss:ID="sShortDate0">
         <NumberFormat ss:Format="Short Date"/>
         <Alignment ss:Vertical="Center" ss:WrapText="1"/>
         <Borders>
@@ -80,6 +103,17 @@
         <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
         </Borders>
+    </Style>
+    <Style ss:ID="sShortDate1">
+        <NumberFormat ss:Format="Short Date"/>
+        <Alignment ss:Vertical="Center" ss:WrapText="1"/>
+        <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+        </Borders>
+        <Interior ss:Color="#dddddd" ss:Pattern="Solid"/>
     </Style>
  </Styles>
 
@@ -149,51 +183,55 @@
         % endfor
         </Row>
 
-        % for o in getMoves(r):
+        <% i = 0 %>
+        % for flow in getMoves(r):
+           <% i = 1 - i %>
+           % for o in flow:
             <Row ss:Height="14.25">
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.product_id.default_code|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.product_id.name|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.reason_type_id.name|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.product_id.default_code|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.product_id.name|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.reason_type_id.name|x}</Data></Cell>
                 %if o.date and isDateTime(o.date):
-                <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${o.date[:10]|n}T${o.date[-8:]|n}.000</Data></Cell>
+                <Cell ss:StyleID="sShortDate${i}"><Data ss:Type="DateTime">${o.date[:10]|n}T${o.date[-8:]|n}.000</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String"></Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.picking_id.name or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id.name or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.partner_id.partner_type or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="String">${getInstance()|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.picking_id.name or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.partner_id.name or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.partner_id.partner_type or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="String">${getInstance()|x}</Data></Cell>
                 % if isQtyOut(o):
-                <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
-                <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${getQty(o)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="String"></Data></Cell>
                 % endif
                 % if o.balance:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${o.balance|x}</Data></Cell>
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${o.balance|x}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="String"></Data></Cell>
                 %endif
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.origin|x}</Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${getFirstSplitOnUnderscore(o.purchase_line_id.sync_order_line_db_id) or getFirstSplitOnUnderscore(o.sale_line_id.sync_order_line_db_id) or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.origin|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${getFirstSplitOnUnderscore(o.purchase_line_id.sync_order_line_db_id) or getFirstSplitOnUnderscore(o.sale_line_id.sync_order_line_db_id) or ''|x}</Data></Cell>
                 % if o.price_unit:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 3)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${round(o.price_unit, 3)|x}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.product_id.standard_price, 3)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${round(o.product_id.standard_price, 3)|x}</Data></Cell>
                 % endif
                 % if o.price_currency_id.name:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.price_currency_id.name|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.price_currency_id.name|x}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.product_id.currency_id.name or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.product_id.currency_id.name or ''|x}</Data></Cell>
                 % endif
                 % if o.price_unit:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.price_unit, 3) * getQty(o)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${round(o.price_unit, 3) * getQty(o)|x}</Data></Cell>
                 % else:
-                <Cell ss:StyleID="line_right"><Data ss:Type="Number">${round(o.product_id.standard_price, 3) * getQty(o)|x}</Data></Cell>
+                <Cell ss:StyleID="line_right${i}"><Data ss:Type="Number">${round(o.product_id.standard_price, 3) * getQty(o)|x}</Data></Cell>
                 % endif
-                <Cell ss:StyleID="line_left"><Data ss:Type="String">${o.status|x}</Data></Cell>
+                <Cell ss:StyleID="line_left${i}"><Data ss:Type="String">${o.status|x}</Data></Cell>
             </Row>
+            % endfor
         % endfor
 
     </Table>
