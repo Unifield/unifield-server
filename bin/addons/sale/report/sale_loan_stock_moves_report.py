@@ -31,25 +31,26 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
         super(sale_loan_stock_moves_report_parser, self).__init__(cr, uid, name, context=context)
         self.cr = cr
         self.uid = uid
+        self.user_company = self._get_user_company()
         self.localcontext.update({
             'time': time,
             'getMoves': self._get_moves,
             'isQtyOut': self._is_qty_out,
             'getQty': self._get_qty,
-            'getInstance': self._get_instance,
+            'getUserCompany': self._get_user_company,
             'getFirstSplitOnUnderscore': self._get_first_split_on_underscore,
+            'computeCurrency': self._compute_currency,
         })
 
     def _is_qty_out(self, move):
         '''
         Check if the move is an in or an out
         '''
-        out = False
 
         if (move.location_id.usage == 'internal') and (move.location_dest_id and move.location_dest_id.usage in ('customer', 'supplier')):
-            out = True
+            return True
 
-        return out
+        return False
 
     def _get_qty(self, move):
         '''
@@ -69,110 +70,100 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
         '''
         so_obj = self.pool.get('sale.order')
         po_obj = self.pool.get('purchase.order')
-        result = []
         sm_list = []
+        # TODO: we must search on counterpart if filter is used on wizard
         for move in report.sm_ids:
             sm_list.append(self.pool.get('stock.move').browse(self.cr, self.uid, move))
 
-        sm_list = sorted(sm_list, key=lambda sm: (sm['product_id']['default_code'], sm['origin'].split(":")[-1], sm['create_date']))
-        balance = 0
-        for index, move in enumerate(sm_list, start=0):
-            move.balance = balance
+        sm_list = sorted(sm_list, key=lambda sm: sm['create_date'])
+        move_by_fo_po_prod = {}
+        keys_order = []
+
+        get_so_from_po_id = {}
+        get_po_from_so_id = {}
+
+        for move in sm_list:
             if self._is_qty_out(move):
-                balance -= self._get_qty(move)
+                qty = -1 * self._get_qty(move)
             else:
-                balance += self._get_qty(move)
+                qty = self._get_qty(move)
 
             dom = []
             status = 'Open'
             if move.purchase_line_id:
-                is_cp = move.purchase_line_id.order_id.is_a_counterpart
-                from_name = move.purchase_line_id.order_id.name
-                if move.purchase_line_id.order_id.loan_id:
-                    ids = [move.purchase_line_id.order_id.loan_id.id]
-                elif move.purchase_line_id.order_id.origin[-2:] in ['-1', '-2', '-3']:
-                    ids = so_obj.search(self.cr, self.uid, [('name', '=', move.purchase_line_id.order_id.origin)])
-                    if not ids:
-                        ids = so_obj.search(self.cr, self.uid, [('name', '=', move.purchase_line_id.order_id.origin[-2:])])
-                else:
-                    dom = [move.purchase_line_id.order_id.origin]
-                    ids = so_obj.search(self.cr, self.uid, [('name', '=', move.purchase_line_id.origin)])
-                    if not ids:
-                        dom = ['%s-%s' % (move.purchase_line_id.order_id.origin, i) for i in [1, 2, 3]]
-                        ids = so_obj.search(self.cr, self.uid, [('name', 'in', dom)])
-                if ids:
-                    po_found = po_obj.browse(self.cr, self.uid, move.purchase_line_id.order_id.id)
-                    so_found = so_obj.browse(self.cr, self.uid, ids[0])
-                    if so_found and so_found.state == po_found.state == 'done':
-                        status = 'Closed'
+                po_found = move.purchase_line_id.order_id
+                if po_found.id not in get_so_from_po_id:
+                    if po_found.loan_id:
+                        ids = [po_found.loan_id.id]
+                    elif po_found.origin[-2:] in ['-1', '-2', '-3']:
+                        ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
+                        if not ids:
+                            ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin[-2:])])
+                    else:
+                        ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
+                        if not ids:
+                            dom = ['%s-%s' % (po_found.origin, i) for i in [1, 2, 3]]
+                            ids = so_obj.search(self.cr, self.uid, [('name', 'in', dom)])
+                    if ids:
+                        so = so_obj.browse(self.cr, self.uid, ids[0])
+                        if so.split_type_sale_order:
+                            ids = so_obj.search(self.cr, self.uid, [('name', '=', '%s-2' % so.name)])
+                            if ids:
+                                so = so_obj.browse(self.cr, self.uid, ids[0])
+                        get_so_from_po_id[po_found.id] = so
+           
+                so_found = get_so_from_po_id.get(po_found.id)             
+                if so_found and so_found.state == po_found.state == 'done':
+                    status = 'Closed'
             elif move.sale_line_id:
-                is_cp = move.sale_line_id.order_id.is_a_counterpart
-                from_name = move.sale_line_id.order_id.name
-                if move.sale_line_id.order_id.loan_id:
-                    ids = [move.sale_line_id.order_id.loan_id.id]
-                elif move.sale_line_id.order_id.name[-2:] in ['-1', '-2', '-3']:
-                    ids = po_obj.search(self.cr, self.uid, [('origin', '=', move.sale_line_id.order_id.name)])
-                    if not ids:
-                        ids = po_obj.search(self.cr, self.uid, [('origin', '=', move.sale_line_id.order_id.name[0:-2])])
-                else:
-                    ids = po_obj.search(self.cr, self.uid, [('origin', '=', move.sale_line_id.order_id.name)])
-                if ids:
-                    so_found = so_obj.browse(self.cr, self.uid, move.sale_line_id.order_id.id)
-                    po_found = po_obj.browse(self.cr, self.uid, ids[0])
-                    if po_found and so_found.state == po_found.state == 'done':
-                        status = 'Closed'
-            # set the state according to the flow status
-            setattr(move, 'status', status)
+                so_found = move.sale_line_id.order_id
+                if so_found.id not in get_po_from_so_id:
+                    if so_found.loan_id:
+                        ids = [so_found.loan_id.id]
+                    elif so_found.name[-2:] in ['-1', '-2', '-3']:
+                        ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
+                        if not ids:
+                            ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name[0:-2])])
+                    else:
+                        ids = po_obj.search(self.cr, self.uid, [('origin', '=', so_found.name)])
+                    if ids:
+                        po_found = po_obj.browse(self.cr, self.uid, ids[0])
+                        if po_found.state == 'split':
+                            ids = po_obj.search(self.cr, self.uid, [('name', '=', '%s-2' % po_found.name)])
+                            po_found = po_obj.browse(self.cr, self.uid, ids[0])
+                        get_po_from_so_id[so_found.id] = po_found
 
-            # if the move is the last in the list
-            if move is sm_list[-1]:
-                setattr(move, 'balance', balance)
-                # remove closed flows
-                if report.remove_completed:
-                    if move.status == 'Open':
-                        result.append(move)
-                else:
-                    result.append(move)
-                balance = 0
-            else:
-                # if the move's origin is different than the next one
-                if so_found and po_found and so_found.name not in sm_list[index + 1].origin\
-                        and po_found.name not in sm_list[index + 1].origin:
-                    setattr(move, 'balance', balance)
-                    # remove closed flows
-                    if report.remove_completed:
-                        if move.status == 'Open':
-                            result.append(move)
-                    else:
-                        result.append(move)
-                    balance = 0
-                else:
-                    # if the move's product is different than the next one
-                    if move.product_id.id != sm_list[index+1].product_id.id:
-                        setattr(move, 'balance', balance)
-                        # remove closed flows
-                        if report.remove_completed:
-                            if move.status == 'Open':
-                                result.append(move)
-                        else:
-                            result.append(move)
-                        balance = 0
-                    else:
-                        setattr(move, 'balance', 0)
-                        # remove closed flows
-                        if report.remove_completed:
-                            if move.status == 'Open':
-                                result.append(move)
-                        else:
-                            result.append(move)
+                po_found = get_po_from_so_id.get(so_found.id)
+                if po_found and so_found.state == po_found.state == 'done':
+                    status = 'Closed'
+
+            if status != 'Closed' or not report.remove_completed:
+                setattr(move, 'status', status)
+                setattr(move, 'balance', 0)
+                
+                key = (
+                    so_found and so_found.id or 'NF%s' % po_found.id,
+                    po_found and po_found.id or 'NF%s' % so_found.id, 
+                    move.product_id.id
+                )
+                if key not in move_by_fo_po_prod:
+                    keys_order.append(key)
+                    move_by_fo_po_prod[key] = {'balance': 0, 'moves': []}
+                move_by_fo_po_prod[key]['balance'] += qty
+                move_by_fo_po_prod[key]['moves'].append(move)
+
+        result = []
+        for key in keys_order:
+            move_by_fo_po_prod[key]['moves'][-1].balance = move_by_fo_po_prod[key]['balance']
+            result.append(move_by_fo_po_prod[key]['moves'])
 
         return result
 
-    def _get_instance(self):
+    def _get_user_company(self):
         '''
-        Return user's current instance
+        Return user's current company
         '''
-        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.name
+        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id
 
     def _get_first_split_on_underscore(self, name):
         '''
@@ -183,6 +174,31 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
             res = name.rsplit('_', 1)[0]
 
         return res
+
+    def _compute_currency(self, move):
+        '''
+        Compute an amount of a given currency to the instance's currency
+        '''
+        currency_obj = self.pool.get('res.currency')
+
+        if not move.price_currency_id:
+            if move.price_unit is None:
+                return round(move.product_id.standard_price, 2)
+            if move.type == 'in':
+                from_currency_id = move.partner_id.property_product_pricelist_purchase.currency_id.id
+            else:
+                from_currency_id = move.partner_id.property_product_pricelist.currency_id.id
+        else:
+            from_currency_id = move.price_currency_id.id
+
+        context = {'date': move.date}
+        to_currency_id = self.user_company['currency_id'].id
+
+        if from_currency_id == to_currency_id:
+            return round(move.price_unit, 2)
+
+        return round(currency_obj.compute(self.cr, self.uid, from_currency_id, to_currency_id, move.price_unit, round=False, context=context), 2)
+
 
 class sale_loan_stock_moves_report_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
