@@ -218,11 +218,6 @@ function openAction(action_url, target, terp_id, keep_open) {
                 // base model
             	window.top.editRecord(terp_id);
             }
-            else {
-                // no terp_id specified, or within a dialog: simply reload the
-                // current view on base model
-                jQuery("#view-selector .active").click();
-            }
             break;
         case 'iframe':
             openLinkFrame(action_url);

@@ -155,7 +155,9 @@ $.ctrlshift('S', function() {
         }
     });
     $('.oe_form_button_save').each(function() {
-        fake_click(this);
+        if (! saved) {
+            fake_click(this);
+        }
     });
 });
 
