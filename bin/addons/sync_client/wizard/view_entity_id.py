@@ -43,7 +43,7 @@ class view_entity_id(osv.osv_memory):
             hw_id = self.pool.get("sync.client.entity")._hardware_id or ''
 
             doc = etree.XML(res['arch'])
-            nodes = doc.xpath("//label[@string='name']")
+            nodes = doc.xpath("//label[@string]")
             if nodes:
                 nodes[0].set('string', hw_id)
             res['arch'] = etree.tostring(doc)
