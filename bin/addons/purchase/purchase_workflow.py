@@ -352,7 +352,7 @@ class purchase_order_line(osv.osv):
                 # create incoming shipment (IN):
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
                     ('purchase_id', '=', pol.order_id.id),
-                    ('state', 'not in', ['done']),
+                    ('state', 'not in', ['done', 'cancel']),
                     ('type', '=', 'in'),
                 ])
                 created = False
@@ -368,7 +368,11 @@ class purchase_order_line(osv.osv):
 
                 # create internal moves (INT):
                 if pol.order_id.location_id.input_ok: 
-                    internal_pick = self.pool.get('stock.picking').search(cr, uid, [('type', '=', 'internal'), ('purchase_id', '=', pol.order_id.id)], context=context)
+                    internal_pick = self.pool.get('stock.picking').search(cr, uid, [
+                        ('type', '=', 'internal'), 
+                        ('purchase_id', '=', pol.order_id.id),
+                        ('state', 'not in', ['done', 'cancel']),
+                    ], context=context)
                     created = False
                     if not internal_pick:
                         internal_pick = self.create_int(cr, uid, ids, context=context)
