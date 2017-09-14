@@ -681,7 +681,7 @@ ManyToOne.prototype.getOnclick = function(evt) {
         if(arguments[0] === "close") {
             return close($this, arguments[1]);
         } else {
-            return open($this, arguments[0]);
+            return open($this, arguments[0]).focus();
         }
     };
 })(jQuery);
