@@ -3,7 +3,6 @@
 from osv import osv
 import netsvc
 from tools.translate import _
-import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -434,8 +433,9 @@ class purchase_order_line(osv.osv):
             # no PICK/OUT needed in this cases; close SO line:
             internal_ir = pol.linked_sol_id and pol.linked_sol_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal' or False # PO line from Internal IR
             dpo = pol.order_id.order_type == 'direct' or False # direct PO
+            ir_non_stockable = pol.linked_sol_id and pol.linked_sol_id.procurement_request and pol.linked_sol_id.product_id.type in ('consu', 'service', 'service_recep') or False
 
-            if internal_ir or dpo:
+            if internal_ir or dpo or ir_non_stockable:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'done', cr)
 
         self.write(cr, uid, ids, {'state': 'done'}, context=context)

@@ -243,7 +243,8 @@ class sale_order_line(osv.osv):
                 ('linked_sol_id', '=', sol.id),
                 ('order_id.order_type', '=', 'direct'),
             ], context=context)
-            if not linked_to_dpo:
+            ir_non_stockable = sol.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep')
+            if not linked_to_dpo and not ir_non_stockable:
                 # create or update PICK/OUT:
                 picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
                 pick_to_use = self.pool.get('stock.picking').search(cr, uid, [
