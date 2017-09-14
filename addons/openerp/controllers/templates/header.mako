@@ -153,6 +153,6 @@ version = release.version
             src:this.href
         }, null, {
             height: 350
-        });
+        }).focus();
     });
 </script>

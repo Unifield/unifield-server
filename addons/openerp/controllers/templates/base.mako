@@ -8,13 +8,13 @@
     <script type="text/javascript" src="/openerp/static/javascript/openerp/openerp.ui.textarea.js"></script>
 
     <script type="text/javascript" src="/openerp/static/javascript/scripts.js"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/form.js?v=2.7b1"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/form.js?v=2.8"></script>
     <script type="text/javascript" src="/openerp/static/javascript/form_state.js?v=2.3b2"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/listgrid.js?v=2.8b1"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/listgrid.js?v=2.9"></script>
 
-    <script type="text/javascript" src="/openerp/static/javascript/m2o.js?v=2.6b4"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/m2o.js?v=2.7"></script>
     <script type="text/javascript" src="/openerp/static/javascript/m2m.js"></script>
-    <script type="text/javascript" src="/openerp/static/javascript/o2m.js"></script>
+    <script type="text/javascript" src="/openerp/static/javascript/o2m.js?v=2.7"></script>
     <script type="text/javascript" src="/openerp/static/javascript/binary.js"></script>
     <script type="text/javascript" src="/openerp/static/jscal/calendar.js"></script>
     <script type="text/javascript" src="/openerp/static/jscal/calendar-setup.js"></script>
