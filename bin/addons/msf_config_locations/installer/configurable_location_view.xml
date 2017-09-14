@@ -23,7 +23,7 @@
           <group string="res_config_contents" position="replace">
               <group colspan="5">
               	<field name="reactivate" invisible="1" />
-				<separator colspan="4" string="Location configuration" />
+			<separator colspan="4" string="Location configuration" />
 				<field name="location_usage" colspan="4" required="1" />
 				<newline />
 				<field name="location_type" attrs="{'invisible': [('location_usage', '!=', 'consumption_unit')],
@@ -73,7 +73,8 @@
     <record id="configurable_location_setup_todo" model="ir.actions.todo">
         <field name="action_id" ref="action_configurable_location_setup"/>
         <field name="sequence">18</field>
-        <field name="restart">onskip</field>
+        <field name="restart">never</field>
+        <field name="state">done</field>
     </record>
   </data>
 </openerp>

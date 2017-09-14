@@ -178,6 +178,7 @@
                         <field name="partner_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'validated'])]}"/>
                         <field name="shipped"/>
                         <field name="push_fo" invisible="1"/>
+                        <field name="is_a_counterpart" invisible="1" />
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" />
                         <field name="priority" />
                         <newline />
@@ -242,7 +243,7 @@
                             <group colspan="2" col="2">
                                 <separator string="Delivery" colspan="2"/>
                                 <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
-                                    on_change="on_change_dest_partner_id(dest_partner_id)" />
+                                    on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('partner_type', '=', 'internal')]"/>
                                 <field name="dest_address_id" domain="[('dest_address', '=', dest_partner_id)]" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
 
                                 <field name="minimum_planned_date"/>
@@ -307,6 +308,7 @@
             <field name="name">purchase.view.purchase.order.filter</field>
             <field name="model">purchase.order</field>
             <field name="type">search</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <search string="Search Purchase Orders">
                     <group col="8" colspan="4">
@@ -449,6 +451,7 @@
                             <field colspan="4" name="name"/>
                             <field name="date_planned" widget="date"/>
                             <field name="price_unit"/>
+                            <field name="stock_take_date"/>
                             <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                             <field name="account_analytic_id" colspan="4" groups="analytic.group_analytic_accounting" domain="[('parent_id','!=',False)]" />
                             <field name="vat_ok" invisible="1" />

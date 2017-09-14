@@ -322,7 +322,7 @@ class stock_move(osv.osv):
                     for move in self.browse(cr, uid, move_ids, context=context):
                         pick = move.picking_id
                         cond1 = move.picking_id.subtype == 'standard'
-                        cond2 = move.product_qty != 0.00 and pick.subtype == 'picking' and not pick.backorder_id and pick.state == 'draft'
+                        cond2 = move.product_qty != 0.00 and pick.subtype == 'picking' and (not pick.backorder_id or pick.backorder_id.subtype == 'standard') and pick.state == 'draft'
                         # move from draft picking or standard picking
                         if cond2 or cond1:
                             integrity_check.append(move)
@@ -621,9 +621,6 @@ class stock_picking(osv.osv):
                                                                    'product_uos': data_back['product_uom'],
                                                                    'product_uos_qty': diff_qty, }, context=context)
                 move_obj.action_confirm(cr, uid, [new_move_id], context=context)
-#                if present_qty == 0.00:
-#                    move_obj.write(cr, uid, [out_move_id], {'state': 'draft'})
-#                    move_obj.unlink(cr, uid, out_move_id, context=context)
             else:
                 move_obj.write(cr, uid, [out_move_id], {'product_qty': new_qty,
                                                         'product_uom': data['product_uom'][0],
@@ -920,7 +917,6 @@ class stock_picking(osv.osv):
         # Objects
         inc_proc_obj = self.pool.get('stock.incoming.processor')
         move_proc_obj = self.pool.get('stock.move.in.processor')
-        proc_obj = self.pool.get('procurement.order')
         loc_obj = self.pool.get('stock.location')
         uom_obj = self.pool.get('product.uom')
         move_obj = self.pool.get('stock.move')
@@ -950,7 +946,6 @@ class stock_picking(osv.osv):
         backorder_id = False
 
         internal_loc = loc_obj.search(cr, uid, [('usage', '=', 'internal'), ('cross_docking_location_ok', '=', False)])
-        proc_loc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'location_procurement')[1]
         context['location'] = internal_loc
 
         product_availability = {}

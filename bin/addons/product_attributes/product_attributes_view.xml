@@ -236,6 +236,7 @@
                                     <field name="editable" invisible="1" />
                                     <field name="sequence_bis"/>
                                     <field name="name"/>
+                                    <field name="product_code" />
                                     <field name="delay"/>
                                     <field name="catalogue_id"/>
                                     <field name="get_from_date"/>

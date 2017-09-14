@@ -5,7 +5,6 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 from osv import osv, fields
-import netsvc
 from tools.translate import _
 import decimal_precision as dp
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION, PURCHASE_ORDER_LINE_STATE_SELECTION
@@ -189,6 +188,21 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def _get_stock_take_date(self, cr, uid, context=None):
+        '''
+            Returns stock take date
+        '''
+        if context is None:
+            context = {}
+        order_obj = self.pool.get('purchase.order')
+        res = False
+
+        if context.get('purchase_id', False):
+            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
+            res = po.stock_take_date
+
+        return res
+
 
     _columns = {
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
@@ -273,6 +287,7 @@ class purchase_order_line(osv.osv):
         'invoiced': fields.boolean('Invoiced', readonly=True),
         'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
         'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
+        'stock_take_date': fields.date(string='Date of Stock Take', required=False),
     }
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
@@ -287,6 +302,7 @@ class purchase_order_line(osv.osv):
         'state': lambda *args: 'draft',
         'invoiced': lambda *a: 0,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+        'stock_take_date': _get_stock_take_date,
     }
 
     def _get_destination_ok(self, cr, uid, lines, context):
@@ -302,7 +318,7 @@ class purchase_order_line(osv.osv):
                 raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
         return dest_ok
 
-    def check_analytic_distribution(self, cr, uid, ids, context=None):
+    def check_analytic_distribution(self, cr, uid, ids, context=None, create_missing=False):
         """
         Check analytic distribution validity for given PO line.
         Also check that partner have a donation account (is PO is in_kind)
@@ -311,24 +327,53 @@ class purchase_order_line(osv.osv):
         ad_obj = self.pool.get('analytic.distribution')
         ccdl_obj = self.pool.get('cost.center.distribution.line')
         pol_obj = self.pool.get('purchase.order.line')
+        imd_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        try:
+            intermission_cc = imd_obj.get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_project_intermission')[1]
+        except ValueError:
+            intermission_cc = 0
+
+        po_info = {}
         for pol in self.browse(cr, uid, ids, context=context):
             po = pol.order_id
+            if po.id not in po_info:
+                donation_intersection = po.order_type in ['donation_exp', 'donation_st'] and po.partner_type and po.partner_type == 'section'
+                if po.order_type == 'in_kind' or donation_intersection:
+                    if not po.partner_id.donation_payable_account:
+                        raise osv.except_osv(_('Error'), _('No donation account on this partner: %s') % (po.partner_id.name or '',))
+
+                if po.partner_id and po.partner_id.partner_type == 'intermission':
+                    if not intermission_cc:
+                        raise osv.except_osv(_('Error'), _('No Intermission Cost Center found!'))
+
+            po_info[po.id] = True
+
+
             distrib = pol.analytic_distribution_id or po.analytic_distribution_id or False
+
+
             # Raise an error if no analytic distribution found
             if not distrib:
                 # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
-                if po.order_type not in ('loan', 'donation_st', 'donation_exp', 'in_kind') and not po.push_fo:
+                if po.order_type not in ('loan', 'donation_st', 'donation_exp', 'in_kind') or po.push_fo:
+                    return True
+                if create_missing and po.partner_id and po.partner_id.partner_type == 'intermission':
+                    # intermission push flow, new line added: AD needed
+                    destination_id = pol.account_4_distribution and pol.account_4_distribution.default_destination_id and pol.account_4_distribution.default_destination_id.id or False
+                    ad_obj.create(cr, uid, {
+                        'purchase_line_ids': [(4, pol.id)],
+                        'cost_center_lines': [(0, 0, {'destination_id': destination_id, 'analytic_id': intermission_cc , 'percentage':'100', 'currency_id': po.currency_id.id})]
+                    })
+                else:
                     raise osv.except_osv(_('Warning'),
                                          _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
 
-                # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
-                return True
             elif pol.analytic_distribution_state != 'valid':
                 id_ad = ad_obj.create(cr, uid, {})
                 ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
@@ -707,7 +752,6 @@ class purchase_order_line(osv.osv):
         po_obj = self.pool.get('purchase.order')
         seq_pool = self.pool.get('ir.sequence')
         so_obj = self.pool.get('sale.order')
-        sol_obj = self.pool.get('sale.order.line')
 
         order_id = vals.get('order_id')
         product_id = vals.get('product_id')
@@ -989,8 +1033,6 @@ class purchase_order_line(osv.osv):
         '''
         Update the merged line
         '''
-        po_obj = self.pool.get('purchase.order')
-
         if context is None:
             context = {}
 

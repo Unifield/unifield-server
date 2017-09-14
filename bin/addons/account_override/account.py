@@ -250,7 +250,7 @@ class account_account(osv.osv):
                 # HEADER of Intermission Voucher OUT:
                 # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash
                 # + prevent from using donation accounts
-                arg = [('type_for_register', '!=', 'donation'),
+                arg = [('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
                        '|', '|', ('is_intermission_counterpart', '=', True),
                        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
                        '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash'])]
@@ -258,7 +258,7 @@ class account_account(osv.osv):
                 # HEADER of Intermission Voucher IN:
                 # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables
                 # + prevent from using donation accounts
-                arg = [('type_for_register', '!=', 'donation'),
+                arg = [('type_for_register', 'not in', ['donation', 'advance', 'transfer', 'transfer_same']),
                        '|', '|', ('is_intermission_counterpart', '=', True),
                        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
                        '&', ('user_type_code', '=', 'payables'), ('type', '=', 'payable')]
@@ -497,16 +497,49 @@ class account_account(osv.osv):
                 'has_partner_type_section' in vals and not vals['has_partner_type_section']:
             raise osv.except_osv(_('Warning !'), _('At least one Allowed Partner type must be selected.'))
 
+    def _check_reconcile_status(self, cr, uid, vals, account_id=None, context=None):
+        """
+        Prevent an account from being set as reconcilable if it is included in the yearly move to 0.
+        """
+        if context is None:
+            context = {}
+        reconcile = False
+        include_in_yearly_move = False
+        account = False
+        # if one of the fields to check isn't in vals, use its current value if it exists
+        if 'reconcile' in vals:
+            reconcile = vals['reconcile']
+        elif account_id is not None:
+            account = self.browse(cr, uid, account_id,
+                                  fields_to_fetch=['reconcile', 'include_in_yearly_move'], context=context)
+            reconcile = account.reconcile
+        if 'include_in_yearly_move' in vals:
+            include_in_yearly_move = vals['include_in_yearly_move']
+        elif account_id is not None:
+            account = account or self.browse(cr, uid, account_id,
+                                             fields_to_fetch=['include_in_yearly_move'], context=context)
+            include_in_yearly_move = account.include_in_yearly_move
+        if reconcile and include_in_yearly_move:
+            raise osv.except_osv(_('Warning !'),
+                                 _("An account can't be both reconcilable and included in the yearly move to 0."))
+
     def create(self, cr, uid, vals, context=None):
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
+        self._check_reconcile_status(cr, uid, vals, context=context)
         return super(account_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
         self._check_date(vals)
         self._check_allowed_partner_type(vals)
+        for account_id in ids:
+            self._check_reconcile_status(cr, uid, vals, account_id=account_id, context=context)
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -579,6 +612,46 @@ class account_account(osv.osv):
             context.update({'allowed_partner_field': allowed_partner_field})
         return allowed_partner_field
 
+    def _display_account_partner_compatibility_error(self, cr, uid, not_compatible_ids,
+                                                     context=None, type_for_specific_treatment=False):
+        """
+        Raises an error with the list of the accounts which are incompatible with the partner used
+        """
+        if context is None:
+            context = {}
+        error_msg = ''
+        acc_obj = self.pool.get('account.account')
+        if not_compatible_ids:
+            errors = [_('following accounts are not compatible with partner:')]
+            for acc in acc_obj.browse(cr, uid, not_compatible_ids, fields_to_fetch=['code', 'name'], context=context):
+                errors.append(_('%s - %s') % (acc.code, acc.name))
+                error_msg = "\n- ".join(errors)
+                if type_for_specific_treatment:
+                    error_msg += '%s%s' % ('\n\n', _('Please check the Type for specific treatment of the accounts used.'))
+            raise osv.except_osv(_('Error'), error_msg)
+
+    def check_type_for_specific_treatment(self, cr, uid, account_ids, partner_id=False, employee_id=False,
+                                          journal_id=False, context=None):
+        """
+        Checks if the Third parties and accounts in parameter are compatible regarding the "Type for specific treatment"
+        of the accounts (raises an error if not)
+        """
+        if isinstance(account_ids, (int, long)):
+            account_ids = [account_ids]
+        if context is None:
+            context = {}
+        acc_obj = self.pool.get('account.account')
+        not_compatible_ids = []
+        for acc_id in acc_obj.browse(cr, uid, account_ids, fields_to_fetch=['type_for_register'], context=context):
+            acc_type = acc_id.type_for_register
+            transfer_not_ok = acc_type in ['transfer', 'transfer_same'] and (not journal_id or partner_id or employee_id)
+            advance_not_ok = acc_type == 'advance' and (not employee_id or journal_id or partner_id)
+            dp_payroll_not_ok = acc_type in ['down_payment', 'payroll'] and (not partner_id or journal_id or employee_id)
+            if transfer_not_ok or advance_not_ok or dp_payroll_not_ok:
+                not_compatible_ids.append(acc_id.id)
+        if not_compatible_ids:
+            self._display_account_partner_compatibility_error(cr, uid, not_compatible_ids, context, type_for_specific_treatment=True)
+
     def is_allowed_for_thirdparty(self, cr, uid, ids, partner_type=False, partner_txt=False, employee_id=False,
                                   transfer_journal_id=False, partner_id=False, from_vals=False, raise_it=False, context=None):
         """
@@ -620,11 +693,7 @@ class account_account(osv.osv):
         if raise_it:
             not_compatible_ids = [ id for id in res if not res[id] ]
             if not_compatible_ids:
-                errors = [_('following accounts are not compatible with partner:')]
-                for r in self.pool.get('account.account').browse(cr, uid, not_compatible_ids,
-                                                                 fields_to_fetch=['code', 'name'], context=context):
-                    errors.append(_('%s - %s') % (r.code, r.name))
-                raise osv.except_osv(_('Error'), "\n- ".join(errors))
+                self._display_account_partner_compatibility_error(cr, uid, not_compatible_ids, context)
         return res
 
     def activate_destination(self, cr, uid, ids, context=None):
@@ -695,23 +764,20 @@ class account_journal(osv.osv):
             self_instance = self.pool.get('res.users').browse(cr, uid, [uid],
                                                               context=context)[0].company_id.instance_id
             if self_instance:
-                forbid_levels = []
                 if self_instance.level:
                     if self_instance.level == 'coordo':
                         # BKLG-19/7: forbid creation of MANUAL journal entries
                         # from COORDO on a PROJECT journal
-                        forbid_levels = ['project']
+                        msf_instance_obj = self.pool.get('msf.instance')
+                        forbid_instance_ids = msf_instance_obj.search(cr, uid, 
+                                                                      [('level', '=', 'project')], context=context)
+                        if forbid_instance_ids:
+                            return [('instance_id', 'not in', forbid_instance_ids)]
                     elif self_instance.level == 'project':
                         # US-896: project should only see project journals
                         # (coordo register journals sync down to project for
                         #  example)
-                        forbid_levels = ['coordo', 'section']
-                if forbid_levels:
-                    msf_instance_obj = self.pool.get('msf.instance')
-                    forbid_instance_ids = msf_instance_obj.search(cr, uid, 
-                                                                  [('level', 'in', forbid_levels)], context=context)
-                    if forbid_instance_ids:
-                        res = [('instance_id', 'not in', forbid_instance_ids)]
+                        return [('is_current_instance', '=', True)]
         return res
 
     _columns = {
@@ -876,8 +942,9 @@ class account_move(osv.osv):
                 raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (vals['date'] or ''))
             period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
             # UF-2479: If the period is not open yet, raise exception for the move
-            if period and (period.state == 'created' or \
-                           (manual_je and period.state != 'draft')):  # don't save manual JE in a non-open period
+            # US-2563: do not raise in case of duplicate
+            if not context.get('copy', False) and period and (period.state == 'created' or \
+                                                              (manual_je and period.state != 'draft')):  # don't save manual JE in a non-open period
                 raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Journal Entry is created') % (period.name,))
 
             # Context is very important to fetch the RIGHT sequence linked to the fiscalyear!

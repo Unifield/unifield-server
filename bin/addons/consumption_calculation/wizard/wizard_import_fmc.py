@@ -30,41 +30,39 @@ import time
 class wizard_import_fmc(osv.osv_memory):
     _name = 'wizard.import.fmc'
     _description = 'Import FMC from Excel sheet'
-    
+
     _columns = {
         'file': fields.binary(string='File to import', required=True),
         'message': fields.text(string='Message', readonly=True),
         'rmc_id': fields.many2one('monthly.review.consumption', string='Monthly review consumption', required=True),
     }
-    
-    _defaults = {
-        'message': lambda *a : _("""
-        IMPORTANT : The fourth first lines will be ignored by the system.
-        
-        The file should be in Excel xml 2003 format.
-        The columns should be in this order :
-          * Product Code
-          * Product Description
-          * UoM (not imported)
-          * FMC
-          * Safety Stock (qty) - (not imported)
-          * Valid until (DD-MMM-YYYY)
-        """)
-    }
-    
+
+
     def default_get(self, cr, uid, fields, context=None):
         '''
         Set rmc_id with the active_id value in context
         '''
         if not context or not context.get('active_id'):
             raise osv.except_osv(_('Error !'), _('No Monthly review consumption found !'))
-        else:
-            rmc_id = context.get('active_id')
-            res = super(wizard_import_fmc, self).default_get(cr, uid, fields, context=context)
-            res['rmc_id'] = rmc_id
-            
+
+        rmc_id = context.get('active_id')
+        res = super(wizard_import_fmc, self).default_get(cr, uid, fields, context=context)
+        res['rmc_id'] = rmc_id
+        res['message'] =  _("""
+        IMPORTANT: The four first lines will be ignored by the system.
+        
+        The file should be in Excel xml 2003 format.
+        The columns should be in this order :
+          * Product Code
+          * Product Description
+          * UoM (not imported)
+          * AMC
+          * FMC
+          * Safety Stock (qty) - (not imported)
+          * Valid Until (DD-MMM-YYYY)
+        """)
         return res
-    
+
     def import_file(self, cr, uid, ids, context=None):
         '''
         Import lines form file
@@ -90,12 +88,23 @@ class wizard_import_fmc(osv.osv_memory):
 
         # iterator on rows
         rows = fileobj.getRows()
-        
-        # ignore the first row
-        rows.next()
-        rows.next()
-        rows.next()
-        rows.next()
+
+        # check import template:
+        for i in range(3):
+            row = rows.next()
+            if any([cell.data for cell in row.cells[2:]]): # if cells #2 to end are not empty
+                raise osv.except_osv(_('Error'), _('Import template not recognized, please use the same as exports'))
+
+        header = rows.next() # skip main table header
+
+        doc_headers = self.pool.get('wizard.export.fmc').get_headers(context=context)
+        if len(header) != len(doc_headers):
+            raise osv.except_osv(_('Error'), _('Import template not recognized, please use the same as exports'))
+
+        for i, h in enumerate(doc_headers):
+            if h.lower().strip() != header[i].data.lower().strip():
+                raise osv.except_osv(_('Error'), _("""Column %d mismatches, expected: %s, found: %s""") % (i+1, h, header[i].data))
+
         line_num = 1
         to_write = {}
         error = ''
@@ -112,7 +121,7 @@ class wizard_import_fmc(osv.osv_memory):
             line_num += 1
             # Check length of the row
             if len(row) != 7:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 6 columns in this order:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
 Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Until"""))
 
             # Cell 0: Product Code
@@ -164,7 +173,7 @@ Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Un
                 error += _("Line %s in your Excel file: %s: %s\n") % (line_num, osv_name, osv_value)
                 ignore_lines += 1
             complete_lines += 1
-                
+
         self.write(cr, uid, ids, {'message': _('''Importation completed !
                                                 # of imported lines : %s
                                                 # of lines to correct: %s
@@ -173,9 +182,9 @@ Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Un
                                                 Reported errors :
                                                 %s
                                              ''') % (complete_lines, lines_to_correct, ignore_lines, error or _('No error !'))}, context=context)
-        
+
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'wizard_to_import_fmc_end')[1],
-        
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.fmc',
                 'view_type': 'form',
@@ -184,13 +193,13 @@ Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Un
                 'res_id': ids[0],
                 'view_id': [view_id],
                 }
-        
+
     def close_import(self, cr, uid, ids, context=None):
         '''
         Return to the initial view
         '''
         return {'type': 'ir.actions.act_window_close'}
-    
+
 wizard_import_fmc()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

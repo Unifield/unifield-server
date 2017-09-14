@@ -25,16 +25,6 @@ import netsvc
 import decimal_precision as dp
 
 
-ORDER_TYPES_SELECTION = [
-    ('regular', _('Regular')),
-    ('donation_exp', _('Donation before expiry')),
-    ('donation_st', _('Standard donation')),
-    ('loan', _('Loan')),
-    ('in_kind', _('In Kind Donation')),
-    ('purchase_list', _('Purchase List')),
-    ('direct', _('Direct Purchase Order')),
-]
-
 
 class purchase_order_confirm_wizard(osv.osv):
     _name = 'purchase.order.confirm.wizard'
