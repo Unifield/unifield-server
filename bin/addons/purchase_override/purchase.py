@@ -1162,6 +1162,22 @@ class purchase_order(osv.osv):
 
         return True
 
+    def check_if_stock_take_date_with_esc_partner(self, cr, uid, ids, context=None):
+        """
+        Check if the PO and all lines have a date of stock take with an ESC Partner
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.partner_type == 'esc':
+                if not po.stock_take_date and self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', '=', po.id), ('stock_take_date', '=', False)], context=context):
+                    raise osv.except_osv(_('Warning !'), _(
+                        'The Date of Stock Take is required for a Purchase Order if the Partner is an ESC.'))
+                if self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', '=', po.id), ('stock_take_date', '=', False)], context=context):
+                    raise osv.except_osv(_('Warning !'), _('The Date of Stock Take is required for all Purchase Order lines if the Partner is an ESC.'))
+        return True
+
     def wkf_picking_done(self, cr, uid, ids, context=None):
         '''
         Change the shipped boolean and the state of the PO
@@ -1369,6 +1385,7 @@ stock moves which are already processed : '''
         '''
         Update the confirmation date of the PO at confirmation.
         Check analytic distribution.
+        Check Date of Stock Take for ESC Partner
         '''
         # Objects
         po_line_obj = self.pool.get('purchase.order.line')
@@ -1448,6 +1465,7 @@ stock moves which are already processed : '''
 
         self.ssl_products_in_line(cr, uid, ids, context=context)
         self.check_analytic_distribution(cr, uid, ids, context=context)
+        self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
 
         return True
 
@@ -1457,6 +1475,7 @@ stock moves which are already processed : '''
         update corresponding date at line level if needed.
         Check analytic distribution
         Check that no line have a 0 price unit.
+        Check Date of Stock Take for ESC Partner
         '''
         # Objects
         po_line_obj = self.pool.get('purchase.order.line')
@@ -1469,6 +1488,7 @@ stock moves which are already processed : '''
 
         # Check analytic distribution
         self.check_analytic_distribution(cr, uid, ids, context=context)
+        self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
         for po in self.read(cr, uid, ids, ['order_type', 'state', 'delivery_confirmed_date'], context=context):
             # prepare some values
             is_regular = po['order_type'] == 'regular' # True if order_type is regular, else False
@@ -1771,6 +1791,10 @@ stock moves which are already processed : '''
                         line_confirmed = self.compute_confirmed_delivery_date(cr, uid, ids, line.confirmed_delivery_date,
                                                                               prep_lt, ship_lt, so.est_transport_lead_time,
                                                                               db_date_format, context=context)
+                    line_stock_take = False
+                    # date of stock take for line
+                    if line.stock_take_date:
+                        line_stock_take = line.stock_take_date
 
                     # we update the corresponding sale order line
                     # {sol: pol}
@@ -1828,6 +1852,7 @@ stock moves which are already processed : '''
                                   'nomen_sub_4': line.nomen_sub_4 and line.nomen_sub_4.id or False,
                                   'nomen_sub_5': line.nomen_sub_5 and line.nomen_sub_5.id or False,
                                   'confirmed_delivery_date': line_confirmed,
+                                  'stock_take_date': line_stock_take,
                                   #'is_line_split': line.is_line_split,
                                   }
                     """
@@ -1998,6 +2023,7 @@ stock moves which are already processed : '''
                                                                         db_date_format, context=context)
                     # write data to so
                     so_obj.write(cr, uid, [so['id']], {'delivery_confirmed_date': so_confirmed,
+                                                       'stock_take_date': po.stock_take_date,
                                                        'ready_to_ship_date': so_rts}, context=context)
                     wf_service.trg_write(uid, 'sale.order', so['id'], cr)
 

@@ -28,6 +28,8 @@ import tools
 import os
 import logging
 from threading import Lock
+import time
+import xmlrpclib
 
 from msf_field_access_rights.osv_override import _get_instance_level
 
@@ -59,6 +61,48 @@ class patch_scripts(osv.osv):
             cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''code'']' where model='account.analytic.journal' and res_id in
                 (select id from account_analytic_journal where code='ENGI')
             ''')
+        return True
+
+    def us_3048_patch(self, cr, uid, *a, **b):
+        '''
+        some protocol are now removed from possible protocols
+        If an instance was using a removed protocol, change the connexion to
+        use XMLRPCS
+        '''
+        server_connection = self.pool.get('sync.client.sync_server_connection')
+        if not server_connection:
+            return True
+        connection_ids = server_connection.search(cr, uid, [])
+        read_result = server_connection.read(cr, uid, connection_ids,
+                                             ['protocol', 'port', 'host'])
+        connection = read_result[0]
+        if connection['protocol'] not in ['xmlrpc', 'gzipxmlrpcs']:
+            # check port 443 permit to connect to sync_server
+            from sync_client.timeout_transport import TimeoutTransport
+            transport = TimeoutTransport(timeout=10.0)
+            try:
+                sock = xmlrpclib.ServerProxy('http://%s:%s/xmlrpc/db'%(connection['host'], 443), transport=transport)
+                sock.server_version()
+            except Exception:
+                vals = {
+                    'protocol': 'xmlrpc',
+                    'port': 8069,
+                }
+            else:
+                vals = {
+                    'protocol': 'gzipxmlrpcs',
+                    'port': 443,
+                }
+            server_connection.write(cr, uid, [connection['id']], vals)
+
+    def us_2647(self, cr, uid, *a, **b):
+        cr.execute('''update stock_inventory_line set dont_move='t' where id not in (
+                select l.id from stock_inventory_line l
+                    inner join stock_inventory_move_rel r on l.inventory_id = r.inventory_id
+                    inner join stock_move m on m.id = r.move_id and m.product_id = l.product_id and coalesce(m.prodlot_id,0) = coalesce(l.prod_lot_id,0)
+            ) and inventory_id in (select id from stock_inventory where state='done')
+            ''')
+
         return True
 
     def us_2444_touch_liquidity_journals(self, cr, uid, *a, **b):
@@ -185,7 +229,7 @@ class patch_scripts(osv.osv):
     def us_2730_patch(self, cr, uid, *a, **b):
         '''
         remove all translations, and then re-import them
-        so that the {*}_MF.po files are authoratative
+        so that the {*}_MF.po files are authoritative
         '''
         cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
             select id from ir_translation where lang = 'fr_MF' and type != 'model'
@@ -1141,7 +1185,7 @@ class patch_scripts(osv.osv):
         cr.execute(sql)
         return True
 
-    def us_1452_patch(self, cr, uid, *a, **b):
+    def us_1452_patch_bis(self, cr, uid, *a, **b):
         """
         Put 1.00 as cost price for all product with cost price = 0.00
         """
@@ -1152,8 +1196,19 @@ class patch_scripts(osv.osv):
             sale_percent = 1 + (setup_br.sale_price/100.00)
 
 
-        sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00"""
+        sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00 RETURNING id"""
         cr.execute(sql, (sale_percent, ))
+
+
+        prod_templ_ids = [x[0] for x in cr.fetchall()]
+        if prod_templ_ids:
+            now = time.strftime('%Y-%m-%d %H:%M:%S')
+            p_ids = self.pool.get('product.product').search(cr, uid, [('product_tmpl_id', 'in', prod_templ_ids)])
+            for p_id in p_ids:
+                cr.execute("""insert into standard_price_track_changes (create_uid, create_date, new_standard_price, user_id, product_id, change_date, transaction_name, old_standard_price) VALUES
+                        (1, NOW(), 1, 1, %s, %s, 'Product price reset 1', 0)
+                """, (p_id, now))
+            cr.execute('update product_product set uf_write_date=%s where id in %s', (now, tuple(p_ids)))
         return True
 
     def us_1430_patch(self, cr, uid, *a, **b):
@@ -1705,6 +1760,7 @@ class email_configuration(osv.osv):
     ]
 email_configuration()
 
+
 class ir_cron_linux(osv.osv_memory):
     _name = 'ir.cron.linux'
     _description = 'Start memory cleaning cron job from linux crontab'
@@ -1745,3 +1801,73 @@ class ir_cron_linux(osv.osv_memory):
         return True
 
 ir_cron_linux()
+
+
+class communication_config(osv.osv):
+    """ Communication configuration """
+    _name = "communication.config"
+    _description = "Communication configuration"
+
+    _columns = {
+        'message': fields.text('Message to display',
+                               help="Enter the message you want to display as a banner. Nothing more than the information entered here will be displayed."),
+        'from_date': fields.datetime('Broadcast start date', help='If defined, the display of the message will start at this date'),
+        'to_date': fields.datetime('Broadcast stop date', help='If defined, the display of the message will stop at this date'),
+    }
+
+    def display_banner(self, cr, uid, ids=None, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if ids is None:
+            ids = self.search(cr, 1, [], context=context)
+
+        com_obj = self.read(cr, 1, ids[0], ['message', 'from_date',
+                                            'to_date'], context=context)
+        if not com_obj['message']:
+            return False
+
+        if not com_obj['from_date'] and not com_obj['to_date']:
+            return True
+
+        current_date = fields.datetime.now()
+        if not com_obj['from_date'] and com_obj['to_date']\
+                and com_obj['to_date'] > current_date:
+            return True
+
+        if com_obj['from_date'] and not com_obj['to_date']\
+                and com_obj['from_date'] < current_date:
+            return True
+
+        if com_obj['from_date'] and com_obj['to_date']\
+                and com_obj['from_date'] < current_date\
+                and com_obj['to_date'] > current_date:
+            return True
+
+        return False
+
+    def get_message(self, cr, uid, ids=None, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if ids is None:
+            ids = self.search(cr, 1, [], context=context)
+        return self.read(cr, 1, ids[0], ['message'],
+                         context=context)['message']
+
+    def _check_only_one_obj(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        obj = self.search(cr, 1, [], context=context)
+        if len(obj) > 1:
+            return False
+        return True
+
+    _constraints = [
+        (_check_only_one_obj, 'You cannot have more than one Communication configuration', ['message']),
+    ]
+
+communication_config()

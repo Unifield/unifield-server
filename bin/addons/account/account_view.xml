@@ -13,7 +13,7 @@
             <field name="arch" type="xml">
                 <form string="Fiscalyear">
                     <group>
-                    <field name="name"/>
+                    <field name="name" default_focus="1"/>
                     <field name="code"/>
                     <field name="date_start"/>
                     <field name="date_stop"/>

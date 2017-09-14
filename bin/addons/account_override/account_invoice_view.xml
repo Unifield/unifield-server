@@ -415,7 +415,7 @@
                                     <field name="inactive_error" invisible="1" />
                                 </tree>
                                 <form string="Donation Line">
-                                    <field name="product_id" on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"/>
+                                    <field name="product_id" on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)" default_focus="1"/>
                                     <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]"/>
                                     <field name="name" colspan="4" />
                                     <field name="quantity" on_change="onchange_donation_qty_price(quantity, price_unit, context)"/>
@@ -536,7 +536,7 @@
                                 <form string="Intermission Voucher Lines">
                                     <notebook>
                                         <page string="Line">
-                                            <field name="name"/>
+                                            <field name="name" default_focus="1"/>
                                             <field name="account_id" domain="[('restricted_area', '=', 'intermission_lines')]"/>
                                             <field name="quantity"/>
                                             <field name="uos_id" string="UOM" invisible="1"/>

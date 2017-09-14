@@ -60,6 +60,7 @@ if os.name == 'nt':
                 "imaplib", "smtplib", "email", "yaml",
                 "uuid", "commands", "mx.DateTime", "json",
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
+                "psutil",
             ],
             'dist_dir': 'dist',
             'excludes' : ["Tkconstants","Tkinter","tcl"],
@@ -123,6 +124,7 @@ def data_files():
         files.append(('.', [join('bin', 'histogram.py')]))
         files.append(('.', [join('bin', 'unifield-version.txt')]))
         files.append(('tools', [join('bin', 'tools', 'import_po.dtd')]))
+        files.append(('fonts', filter(isfile, glob.glob('bin/fonts/*'))))
         os.chdir('bin')
         for (dp, dn, names) in os.walk('addons'):
             files.append((dp, map(lambda x: join('bin', dp, x), names)))
@@ -228,6 +230,7 @@ setup(name             = name,
           'passlib==1.7.1',
           'bcrypt==3.1.3',
           'xlwt==1.2.0',
+          'psutil==5.2.2',
           'bsdiff4==1.1.4',
       ],
       **py2exe_keywords

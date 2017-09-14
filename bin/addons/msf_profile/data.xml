@@ -83,5 +83,8 @@
         <field name="smtp_server">127.0.0.1</field>
         <field name="email_from">no-reply@unifield.org</field>
     </record>
+    <record id="communication_config_default" model="communication.config">
+        <field name="message"></field>
+    </record>
 </data>
 </openerp>

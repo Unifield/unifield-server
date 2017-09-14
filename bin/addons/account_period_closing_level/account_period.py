@@ -193,9 +193,9 @@ class account_period(osv.osv):
 
                 # first verify that all existent registers for this period are closed
                 reg_ids = reg_obj.search(cr, uid, [('period_id', '=', period.id)], context=context)
-                linked_prev_reg_ids = []
+                journal_ok = []
                 for register in reg_obj.browse(cr, uid, reg_ids, context=context):
-                    register.prev_reg_id and linked_prev_reg_ids.append(register.prev_reg_id.id)
+                    journal_ok.append(register.journal_id.id)
                     if register.state not in ['confirm']:
                         raise osv.except_osv(_('Warning'), _("The register '%s' is not closed. Please close it before closing period") % (register.name,))
 
@@ -204,11 +204,10 @@ class account_period(osv.osv):
                 if not period.special:
                     prev_period_id = register_tools.previous_period_id(self, cr, uid, period.id, context=context, raise_error=False)
                     if prev_period_id:
-                        all_prev_reg_ids = reg_obj.search(cr, uid, [('period_id', '=', prev_period_id)], order='NO_ORDER', context=context)
+                        all_prev_reg_ids = reg_obj.search(cr, uid, [('period_id', '=', prev_period_id), ('journal_id.type', 'in', ['bank', 'cash']), ('journal_id', 'not in', journal_ok)], order='NO_ORDER', context=context)
                         # get the registers of the previous period which are NOT linked to a register of the period to close
-                        orphan_prev_reg_ids = [reg_id for reg_id in all_prev_reg_ids if reg_id not in linked_prev_reg_ids]
                         reg_ko = []
-                        for reg in reg_obj.browse(cr, uid, orphan_prev_reg_ids,
+                        for reg in reg_obj.browse(cr, uid, all_prev_reg_ids,
                                                   fields_to_fetch=['balance_end', 'balance_end_real', 'balance_end_cash', 'name'],
                                                   context=context):
                             if abs(reg.balance_end) > 10**-3 or abs(reg.balance_end_real) > 10**-3 or abs(reg.balance_end_cash) > 10**-3:

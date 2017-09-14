@@ -242,7 +242,7 @@ def previous_period_id(self, cr, uid, period_id, context=None, raise_error=True)
         return previous_period_ids[0]
     return False
 
-def previous_register_id(self, cr, uid, period_id, journal_id, context=None):
+def previous_register_id(self, cr, uid, period_id, journal_id, context=None, raise_error=True):
     """
     Give the previous register id regarding some criteria:
      - period_id: the period of current register
@@ -257,7 +257,9 @@ def previous_register_id(self, cr, uid, period_id, journal_id, context=None):
     # Prepare some values
     st_obj = self.pool.get('account.bank.statement')
     # Search journal_ids that have the type we search
-    prev_period_id = previous_period_id(self, cr, uid, period_id, context=context)
+    prev_period_id = previous_period_id(self, cr, uid, period_id, context=context, raise_error=raise_error)
+    if not prev_period_id:
+        return False
     previous_reg_ids = st_obj.search(cr, uid, [('journal_id', '=', journal_id), ('period_id', '=', prev_period_id)], context=context)
     if len(previous_reg_ids) != 1:
         return False

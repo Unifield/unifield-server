@@ -523,6 +523,19 @@ class WebKitParser(report_sxw):
                     cell.text = cell.text.replace(char, '')
                     xml_modified = True
 
+            # check the number is really a number, if not, set it to zero
+            try:
+                if cell.text:
+                    float(cell.text)
+            except (ValueError, TypeError):
+                error_message = 'Line %s of document %s is corrupted, a '\
+                    'Number cell contain other things than number: %r. '\
+                    'It has been replaced by 0.0.' % \
+                    (cell.sourceline, report_name, cell.text)
+                logger.warning(error_message)
+                cell.text = '0.0'
+                xml_modified = True
+
         if xml_modified:
             # return modified xml
             return etree.tostring(file_dom, xml_declaration=True, encoding="utf-8")

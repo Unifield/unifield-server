@@ -264,7 +264,8 @@ class sale_order(osv.osv):
         'invoice_quantity': fields.selection([('order', 'Ordered Quantities'), ('procurement', 'Shipped Quantities')], 'Invoice on', help="The sale order will automatically create the invoice proposition (draft invoice). Ordered and delivered quantities may not be the same. You have to choose if you want your invoice based on ordered or shipped quantities. If the product is a service, shipped quantities means hours spent on the associated tasks.", required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'payment_term': fields.many2one('account.payment.term', 'Payment Term'),
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position'),
-        'company_id': fields.related('shop_id','company_id',type='many2one',relation='res.company',string='Company',store=True,readonly=True)
+        'company_id': fields.related('shop_id','company_id',type='many2one',relation='res.company',string='Company',store=True,readonly=True),
+        'stock_take_date': fields.date(string='Date of Stock Take', required=False),
     }
     _defaults = {
         'picking_policy': 'direct',
@@ -1000,6 +1001,21 @@ class sale_order_line(osv.osv):
                 res[line.id] = 1
         return res
 
+    def _get_stock_take_date(self, cr, uid, context=None):
+        '''
+            Returns stock take date
+        '''
+        if context is None:
+            context = {}
+        order_obj = self.pool.get('sale.order')
+        res = False
+
+        if context.get('sale_id', False):
+            so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
+            res = so.stock_take_date
+
+        return res
+
     _name = 'sale.order.line'
     _description = 'Sales Order Line'
     _columns = {
@@ -1033,6 +1049,7 @@ class sale_order_line(osv.osv):
                     \n* The \'Exception\' state is set when the related sales order is set as exception. \
                     \n* The \'Done\' state is set when the sales order line has been picked. \
                     \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
+        'stock_take_date': fields.date('Date of Stock Take', required=False),
         'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer'),
         'salesman_id':fields.related('order_id', 'user_id', type='many2one', relation='res.users', store=True, string='Salesman'),
         'company_id': fields.related('order_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
@@ -1049,6 +1066,7 @@ class sale_order_line(osv.osv):
         'type': 'make_to_stock',
         'product_packaging': False,
         'price_unit': 0.0,
+        'stock_take_date': _get_stock_take_date,
     }
 
     def invoice_line_create(self, cr, uid, ids, context=None):
