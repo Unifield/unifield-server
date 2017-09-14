@@ -69,5 +69,19 @@ class account_analytic_journal(osv.osv):
             res += [(rs.get('id'), txt)]
         return res
 
+    def copy(self, cr, uid, journal_id, default=None, context=None):
+        """
+        Analytic journal duplication: don't copy the link with analytic lines
+        """
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        default.update({
+            'line_ids': [],
+        })
+        return super(account_analytic_journal, self).copy(cr, uid, journal_id, default, context=context)
+
+
 account_analytic_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
