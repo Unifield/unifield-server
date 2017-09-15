@@ -326,7 +326,7 @@ class purchase_order_line(osv.osv):
 
         po_to_check = {}
         for pol in self.browse(cr, uid, ids):
-            po_to_check[pol.order.id] = True
+            po_to_check[pol.order_id.id] = True
             if pol.order_type != 'direct': # create IN:
                 # Search existing IN for PO line
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
