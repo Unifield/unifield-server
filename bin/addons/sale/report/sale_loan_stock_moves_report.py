@@ -92,18 +92,20 @@ class sale_loan_stock_moves_report_parser(report_sxw.rml_parse):
             status = 'Open'
             if move.purchase_line_id:
                 po_found = move.purchase_line_id.order_id
+                ids = []
                 if po_found.id not in get_so_from_po_id:
                     if po_found.loan_id:
                         ids = [po_found.loan_id.id]
-                    elif po_found.origin[-2:] in ['-1', '-2', '-3']:
-                        ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
-                        if not ids:
-                            ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin[0:-2])])
-                    else:
-                        ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
-                        if not ids:
-                            dom = ['%s-%s' % (po_found.origin, i) for i in [1, 2, 3]]
-                            ids = so_obj.search(self.cr, self.uid, [('name', 'in', dom)])
+                    elif po_found.origin:
+                        if po_found.origin[-2:] in ['-1', '-2', '-3']:
+                            ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
+                            if not ids:
+                                ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin[0:-2])])
+                        else:
+                            ids = so_obj.search(self.cr, self.uid, [('name', '=', po_found.origin)])
+                            if not ids:
+                                dom = ['%s-%s' % (po_found.origin, i) for i in [1, 2, 3]]
+                                ids = so_obj.search(self.cr, self.uid, [('name', 'in', dom)])
                     if ids:
                         so = so_obj.browse(self.cr, self.uid, ids[0])
                         if so.split_type_sale_order:
