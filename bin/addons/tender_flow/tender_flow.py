@@ -1500,10 +1500,12 @@ class purchase_order(osv.osv):
                 'valid_till': fields.date(string='Valid Till', states={'rfq_updated': [('required', True), ('readonly', True)], 'rfq_sent':[('required',False), ('readonly', False),]}, readonly=True,),
                 # add readonly when state is Done
                 'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True),
+                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated')], 'Order state', required=True, readonly=True),
                 }
 
     _defaults = {
         'rfq_ok': lambda self, cr, uid, c: c.get('rfq_ok', False),
+        'rfq_state': 'draft',
     }
 
     _constraints = [

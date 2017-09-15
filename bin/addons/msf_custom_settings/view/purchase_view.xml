@@ -81,7 +81,8 @@
                         <newline/>
 
                         <group colspan="4" col="16">
-                            <field name="state" readonly="1"/>
+                            <field name="state" attrs="{'invisible': [('rfq_ok', '=', True)]}" readonly="1"/>
+                            <field name="rfq_state" attrs="{'invisible': [('rfq_ok', '=', False)]}" readonly="1"/>
                             <field name="from_procurement" invisible="1" />
                             <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test"
                                 attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}" />

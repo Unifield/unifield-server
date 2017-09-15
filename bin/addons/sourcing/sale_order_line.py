@@ -1361,6 +1361,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 ('state', 'in', ['draft']),
                 ('related_sourcing_id', '=', sourcing_line.related_sourcing_id.id or False), # Column "Group"
                 ('delivery_requested_date', '=', sourcing_line.date_planned),
+                ('rfq_ok', '=', False),
             ]
             if sourcing_line.po_cft == 'po':
                 domain.append(('order_type', '=', 'regular'))
