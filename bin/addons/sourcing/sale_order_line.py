@@ -1438,7 +1438,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         sol = self.browse(cr, uid, ids[0], context=context)
 
-        tender_to_use = self.pool.get('tender').search(cr, uid, [('sale_order_id', '=', sol.order_id.id)], context=context)
+        tender_to_use = self.pool.get('tender').search(cr, uid, [
+            ('sale_order_id', '=', sol.order_id.id),
+            ('state', '=', 'draft'),
+        ], context=context)
 
         return tender_to_use[0] if tender_to_use else False
 
