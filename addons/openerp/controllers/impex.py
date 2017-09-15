@@ -584,7 +584,9 @@ class ImpEx(SecuredController):
 
         #Inverting the header into column names
         try:
-            res = rpc.session.execute('object', 'execute', params.model, 'import_data', fields, datas, 'init', '', False, ctx)
+            res = rpc.session.execute('object', 'execute', params.model,
+                    'import_data', fields, datas, 'init', '', False, ctx,
+                    False, True)
         except Exception, e:
             error = {'message':ustr(e), 'title':_('XML-RPC error')}
             return self.imp(error=error, **kw)
