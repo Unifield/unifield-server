@@ -41,7 +41,11 @@
                             <field name="origin" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" widget="char"/>
                             <field name="internal_type" string="Zone"  />
                             <field name="customer_ref" widget="char" />
-                            <label colspan="2"></label>
+                            <group colspan="2" col="3">
+                                <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed'))]}" />
+                                <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent"
+                                    attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
+                            </group>
                             <field name="pricelist_id" string="Currency" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"
                             colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
                         </group>

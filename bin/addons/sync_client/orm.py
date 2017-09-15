@@ -122,13 +122,9 @@ SELECT res_id
     WHERE module = 'sd' AND
           model = %s AND
           """+add_sql+"""
-          ("""+field+""" < last_modification OR """+field+""" IS NULL) AND
-          (create_date is NULL or create_date <= NOW())""",
+          ("""+field+""" < last_modification OR """+field+""" IS NULL)
+          """,
                        sql_params)
-        # NOW() is the sql transaction begin date
-        # can't use (sync_date IS NULL or last_modification <= NOW()) bc UTP-1201 use case failed
-        # can't use (last_modification <= NOW()) bc a record created before the sync but updated during the sync will not be sent
-        #                                        and if this record is used in a m2o it will be set to false
             result = [row[0] for row in cr.fetchall()]
         else:
             touched_fields = set(touched_fields)
@@ -138,8 +134,8 @@ SELECT res_id, touched
     WHERE module = 'sd' AND
           model = %s AND
           """+add_sql+"""
-          ("""+field+""" < last_modification OR """+field+""" IS NULL) AND
-          (create_date is NULL or create_date <= NOW())""",
+          ("""+field+""" < last_modification OR """+field+""" IS NULL) 
+          """,
                        sql_params)
             result = [row[0] for row in cr.fetchall()
                       if row[1] is None \

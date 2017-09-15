@@ -32,6 +32,7 @@ import os
 import math
 import hashlib
 from psycopg2 import OperationalError
+from psycopg2.extensions import ISOLATION_LEVEL_REPEATABLE_READ, TransactionRollbackError
 
 import logging
 from sync_common import get_md5, check_md5
@@ -295,6 +296,11 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                     entity = self.get_entity(cr, uid, context=context)
                     proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
                     proxy.end_synchronization(entity.identifier, self._hardware_id)
+                    cr.execute('SHOW server_version')
+                    result = cr.fetchone()
+                    pg_version = result and result[0] or 'pgversion not found'
+                    proxy.set_pg_version(entity.identifier, self._hardware_id,
+                                         pg_version)
             except SkipStep:
                 # res failed but without exception
                 assert is_step, "Cannot have a SkipTest error outside a sync step process!"
@@ -336,14 +342,16 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                     logger.append(res, step)
             finally:
                 # gotcha!
-                if make_log:
-                    all_status = logger.info.values()
-                    if 'ok' in all_status and step == 'status' and logger.info.get(step) in ('failed', 'aborted'):
-                        try:
-                            self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'after%ssync' % context.get('sync_type', 'manual'), context=context)
-                        except Exception, e:
-                            self._logger.exception("Can't create backup %s" % tools.ustr(e))
-                sync_lock.release()
+                try:
+                    if make_log:
+                        all_status = logger.info.values()
+                        if 'ok' in all_status and step == 'status' and logger.info.get(step) in ('failed', 'aborted'):
+                            try:
+                                self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'after%ssync' % context.get('sync_type', 'manual'), context=context)
+                            except Exception, e:
+                                self._logger.exception("Can't create backup %s" % tools.ustr(e))
+                finally:
+                    sync_lock.release()
                 if make_log:
                     logger.close()
                     if self.sync_cursor is not None:
@@ -632,24 +640,53 @@ class Entity(osv.osv):
         return True
 
     @sync_subprocess('data_push_create')
-    def create_update(self, cr, uid, context=None):
-        context = context or {}
-        updates = self.pool.get(context.get('update_to_send_model', 'sync.client.update_to_send'))
+    def create_update(self, oldcr, uid, context=None):
+        cr = pooler.get_db(oldcr.dbname).cursor()
+        cr._cnx.set_isolation_level(ISOLATION_LEVEL_REPEATABLE_READ)
+        nb_tries = 1
+        MAX_TRIES = 10
+        while True:
+            try:
+                context = context or {}
+                logger = context.get('logger')
+                updates = self.pool.get(context.get('update_to_send_model', 'sync.client.update_to_send'))
 
-        def prepare_update(session):
-            updates_count = 0
-            for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [('type', '!=', 'USB')], context=context):
-                updates_count += sum(updates.create_update(
-                    cr, uid, rule_id, session, context=context))
-            return updates_count
+                def prepare_update(session):
+                    updates_count = 0
+                    for rule_id in self.pool.get('sync.client.rule').search(cr, uid, [('type', '!=', 'USB')], context=context):
+                        updates_count += sum(updates.create_update(
+                            cr, uid, rule_id, session, context=context))
+                    return updates_count
 
-        entity = self.get_entity(cr, uid, context)
-        session = str(uuid.uuid1())
-        updates_count = prepare_update(session)
-        if updates_count > 0:
-            self.write(cr, uid, [entity.id], {'session_id' : session})
-        return updates_count
-        #state init => update_send
+                entity = self.get_entity(cr, uid, context)
+                session = str(uuid.uuid1())
+                updates_count = prepare_update(session)
+                if updates_count > 0:
+                    self.write(cr, uid, [entity.id], {'session_id' : session})
+                cr.commit()
+                cr.close(True)
+                return updates_count
+            except TransactionRollbackError:
+                cr.rollback()
+                if nb_tries == MAX_TRIES:
+                    msg = _("Unable to generate updates after %d tries") % MAX_TRIES
+                    if logger:
+                        logger.append(msg)
+                        logger.write()
+                    self._logger.info(msg)
+                    cr.close(True)
+                    raise
+                msg = _("Unable to generate updates, retrying %d/%d") % (nb_tries, MAX_TRIES)
+                if logger:
+                    logger.append(msg)
+                    logger.write()
+                self._logger.info(msg)
+                nb_tries += 1
+            except:
+                cr.rollback()
+                cr.close(True)
+                raise
+
 
     @sync_subprocess('data_push_send')
     def send_update(self, cr, uid, context=None):
@@ -775,40 +812,54 @@ class Entity(osv.osv):
 
         entity = self.get_entity(cr, uid, context)
         last_seq = entity.update_last
-        max_seq = entity.max_update
+        total_max_seq = entity.max_update
         offset = (0, entity.update_offset)
         offset_recovery = entity.update_offset
-        last = (last_seq >= max_seq)
+        last = (last_seq >= total_max_seq)
         updates_count = 0
         logger_index = None
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        while not last:
-            res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
-            if res and res[0]:
-                if res[1]: check_md5(res[3], res[1], _('method get_update'))
-                increment_to_offset = 0
-                for package in (res[1] or []):
-                    updates_count += updates.unfold_package(cr, uid, package, context=context)
 
-                    if logger and updates_count:
-                        if logger_index is None: logger_index = logger.append()
-                        logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
-                        logger.write()
-                    if package:
-                        increment_to_offset = package['offset'][1]
-                        offset = (package['update_id'], 0)
+        # ask only max_seq_pack sequences to the sync server
+        max_seq_pack = 500
 
-                offset_recovery += increment_to_offset
-                self.write(cr, uid, entity.id, {'update_offset' : offset_recovery}, context=context)
-                last = res[2]
-            elif res and not res[0]:
-                raise Exception, res[1]
+        max_seq = min(last_seq+max_seq_pack, total_max_seq)
+        while max_seq <= total_max_seq:
+            while not last:
+                res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
+                if res and res[0]:
+                    if res[1]: check_md5(res[3], res[1], _('method get_update'))
+                    increment_to_offset = 0
+                    for package in (res[1] or []):
+                        updates_count += updates.unfold_package(cr, uid, package, context=context)
+
+                        if logger and updates_count:
+                            if logger_index is None: logger_index = logger.append()
+                            logger.replace(logger_index, _("Update(s) received: %d") % updates_count)
+                            logger.write()
+                        if package:
+                            increment_to_offset = package['offset'][1]
+                            offset = (package['update_id'], 0)
+
+                    offset_recovery += increment_to_offset
+                    self.write(cr, uid, entity.id, {'update_offset' : offset_recovery}, context=context)
+                    last = res[2]
+                elif res and not res[0]:
+                    raise Exception, res[1]
+                cr.commit()
+
+            self.write(cr, uid, entity.id, {'update_offset' : 0,
+                                            'max_update' : 0,
+                                            'update_last' : max_seq}, context=context)
             cr.commit()
+            if max_seq == total_max_seq:
+                break
+            last = False
+            last_seq = max_seq
+            offset = (0, 0)
+            offset_recovery = 0
+            max_seq = min(max_seq+max_seq_pack, total_max_seq)
 
-        self.write(cr, uid, entity.id, {'update_offset' : 0,
-                                        'max_update' : 0,
-                                        'update_last' : max_seq}, context=context)
-        cr.commit()
         return updates_count
 
     @sync_subprocess('data_pull_execute')
@@ -825,7 +876,7 @@ class Entity(osv.osv):
 
         # Get a list of updates to execute
         # Warning: execution order matter
-        update_ids = updates.search(cr, uid, [('run', '=', False)], order='sequence_number, rule_sequence, id asc', context=context)
+        update_ids = updates.search(cr, uid, [('run', '=', False)], order='sequence_number, is_deleted, rule_sequence, id asc', context=context)
         update_count = len(update_ids)
         if not update_count: return 0
 
@@ -1268,7 +1319,7 @@ class Connection(osv.osv):
         'active': fields.boolean('Active'),
         'host': fields.char('Host', help='Synchronization server host name', size=256, required=True),
         'port': fields.integer('Port', help='Synchronization server connection port'),
-        'protocol': fields.selection([('xmlrpc', 'XMLRPC'), ('gzipxmlrpc', 'compressed XMLRPC'), ('xmlrpcs', 'secured XMLRPC'), ('gzipxmlrpcs', 'secured compressed XMLRPC'), ('netrpc', 'NetRPC'), ('netrpc_gzip', 'compressed NetRPC')], 'Protocol', help='Changing protocol may imply changing the port number'),
+        'protocol': fields.selection([('xmlrpc', 'XMLRPC'), ('gzipxmlrpcs', 'secured compressed XMLRPC')], 'Protocol', help='Changing protocol may imply changing the port number'),
         'database' : fields.char('Database Name', size=64),
         'login':fields.char('Login on synchro server', size=64),
         'uid': fields.function(_get_uid, string='Uid on synchro server', readonly=True, type='char', method=True),
@@ -1286,8 +1337,8 @@ class Connection(osv.osv):
     _defaults = {
         'active': True,
         'host' : 'sync.unifield.net',
-        'port' : 8070,
-        'protocol': 'netrpc_gzip',
+        'port' : 443,
+        'protocol': 'gzipxmlrpcs',
         'login' : 'admin',
         'max_size' : 500,
         'database' : 'SYNC_SERVER',
@@ -1314,38 +1365,50 @@ class Connection(osv.osv):
                 result.setdefault('value', {}).update({name: 23.98}) # 23.98 == 23h59
         return result
 
-    def is_automatic_patching_allowed(self, cr, uid, context=None):
+    def is_automatic_patching_allowed(self, cr, uid, date=None, automatic_patching=None,
+                                      hour_from=None, hour_to=None, context=None):
         """
-        return True if the current time is in the range of hour_from, hour_to
+        return True if the passed date is in the range of hour_from, hour_to
         False othewise
+        If no date is passed as parameter, datetime.today() is used
         """
         connection = self._get_connection_manager(cr, uid)
-        if not connection.automatic_patching:
+        if automatic_patching is None:
+            automatic_patching = connection.automatic_patching
+        if not automatic_patching:
             return False
 
-        now = datetime.today()
+        if date is None:
+            date = datetime.today()
 
-        hour_from = int(math.floor(abs(connection.automatic_patching_hour_from)))
-        min_from = int(round(abs(connection.automatic_patching_hour_from)%1+0.01,2) * 60)
-        hour_to = int(math.floor(abs(connection.automatic_patching_hour_to)))
-        min_to = int(round(abs(connection.automatic_patching_hour_to)%1+0.01,2) * 60)
+        if not hour_from:
+            hour_from = connection.automatic_patching_hour_from
+        if not hour_to:
+            hour_to = connection.automatic_patching_hour_to
 
-        from_date = datetime(now.year, now.month, now.day, hour_from, min_from)
-        to_date = datetime(now.year, now.month, now.day, hour_to, min_to)
+        hour_from_decimal = int(math.floor(abs(hour_from)))
+        min_from_decimal = int(round(abs(hour_from)%1+0.01,2) * 60)
+        hour_to_decimal = int(math.floor(abs(hour_to)))
+        min_to_decimal = int(round(abs(hour_to)%1+0.01,2) * 60)
+
+        from_date = datetime(date.year, date.month, date.day,
+                             hour_from_decimal, min_from_decimal)
+        to_date = datetime(date.year, date.month, date.day, hour_to_decimal,
+                           min_to_decimal)
 
         # from_date and to_date are not the same day:
         if from_date > to_date:
             # case 1: the from date is in the past
             # ex. it is 3h, from_date=19h, to_date=7h
-            if from_date > now:
+            if from_date > date:
                 from_date = from_date - timedelta(days=1)
 
             # case 2: the to_date is in the future
             # ex. it is 20h, from_date=19h, to_date=7h
-            elif now > to_date:
+            elif date > to_date:
                 to_date = to_date + timedelta(days=1)
 
-        return now > from_date and now < to_date
+        return date > from_date and date < to_date
 
     def _get_connection_manager(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
@@ -1464,7 +1527,7 @@ class Connection(osv.osv):
         self.disconnect(cr, uid, context=context)
         return {}
 
-    def write(self, *args, **kwargs):
+    def write(self, cr, uid, ids, vals, context=None):
         # reset connection flag when connection data changed
         connection_property_list = [
             'database',
@@ -1479,14 +1542,50 @@ class Connection(osv.osv):
             'xmlrpc_retry'
         ]
 
-        new_values = args[3]
-        current_values = self.read(*args)[0]
+        new_values = vals
+        current_values = self.read(cr, uid, ids, vals.keys())[0]
         for key, value in new_values.items():
             if current_values[key] != value and \
                     key in connection_property_list:
                 self._uid = False
                 break
-        return super(Connection, self).write(*args, **kwargs)
+
+        # check the new properties match the automatic sync task
+        if set(('automatic_patching', 'automatic_patching_hour_from',
+                'automatic_patching_hour_to')).issubset(vals.keys()) and\
+                vals['automatic_patching']:
+
+            try:
+                model, auto_sync_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
+                                                                                          'sync_client', 'ir_cron_automaticsynchronization0')
+                cron_obj = self.pool.get(model)
+                sync_cron = cron_obj.read(cr, uid, auto_sync_id,
+                                          ['nextcall','interval_type',
+                                           'interval_number',
+                                           'active', 'numbercall'],
+                                          context=context)
+                if not sync_cron['active']:
+                    raise osv.except_osv(_('Error!'),
+                                         _('Automatic Synchronization must be '
+                                           'activated to perform Silent Upgrade'))
+                try:
+                    cron_obj.check_upgrade_time_range(cr, uid,
+                                                      sync_cron['nextcall'], sync_cron['interval_type'],
+                                                      sync_cron['interval_number'],
+                                                      vals['automatic_patching_hour_from'],
+                                                      vals['automatic_patching_hour_to'],
+                                                      vals['automatic_patching'], context=context)
+                except osv.except_osv:
+                    nextcall_time = datetime.strptime(sync_cron['nextcall'],
+                                                      '%Y-%m-%d %H:%M:%S').strftime('%H:%M')
+                    raise osv.except_osv(_('Error!'),
+                                         _('Silent Upgrade time range must include '
+                                           'the Automatic Synchronization time (%s)') % nextcall_time)
+            except ValueError:
+                pass  # the reference don't exists
+
+        return super(Connection, self).write(cr, uid, ids, vals,
+                                             context=context)
 
     def change_host(self, cr, uid, ids, host, proto, context=None):
         if host in ('127.0.0.1', 'localhost'):

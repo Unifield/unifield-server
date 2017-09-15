@@ -28,6 +28,8 @@ import tools
 import os
 import logging
 from threading import Lock
+import time
+import xmlrpclib
 
 from msf_field_access_rights.osv_override import _get_instance_level
 
@@ -45,6 +47,147 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    def us_3048_patch(self, cr, uid, *a, **b):
+        '''
+        some protocol are now removed from possible protocols
+        If an instance was using a removed protocol, change the connexion to
+        use XMLRPCS
+        '''
+        server_connection = self.pool.get('sync.client.sync_server_connection')
+        if not server_connection:
+            return True
+        connection_ids = server_connection.search(cr, uid, [])
+        read_result = server_connection.read(cr, uid, connection_ids,
+                                             ['protocol', 'port', 'host'])
+        connection = read_result[0]
+        if connection['protocol'] not in ['xmlrpc', 'gzipxmlrpcs']:
+            # check port 443 permit to connect to sync_server
+            from sync_client.timeout_transport import TimeoutTransport
+            transport = TimeoutTransport(timeout=10.0)
+            try:
+                sock = xmlrpclib.ServerProxy('http://%s:%s/xmlrpc/db'%(connection['host'], 443), transport=transport)
+                sock.server_version()
+            except Exception:
+                vals = {
+                    'protocol': 'xmlrpc',
+                    'port': 8069,
+                }
+            else:
+                vals = {
+                    'protocol': 'gzipxmlrpcs',
+                    'port': 443,
+                }
+            server_connection.write(cr, uid, [connection['id']], vals)
+
+    def us_2647(self, cr, uid, *a, **b):
+        cr.execute('''update stock_inventory_line set dont_move='t' where id not in (
+                select l.id from stock_inventory_line l
+                    inner join stock_inventory_move_rel r on l.inventory_id = r.inventory_id
+                    inner join stock_move m on m.id = r.move_id and m.product_id = l.product_id and coalesce(m.prodlot_id,0) = coalesce(l.prod_lot_id,0)
+            ) and inventory_id in (select id from stock_inventory where state='done')
+            ''')
+
+        return True
+
+    def us_2444_touch_liquidity_journals(self, cr, uid, *a, **b):
+        if _get_instance_level(self, cr, uid) == 'project':
+            cr.execute('''
+                update ir_model_data set last_modification=NOW(), touched='[''type'']'
+                where module='sd' and model='account.journal' and res_id in (
+                    select id from account_journal where type in ('bank', 'cash', 'cheque') and is_current_instance='t'
+                )
+            ''')
+
+    def us_3098_patch(self, cr, uid, *a, **b):
+        cr.execute("""
+            SELECT id, name
+            FROM res_partner
+            WHERE name IN (select name from res_partner where partner_type = 'internal')
+            AND name IN (select name from res_partner where partner_type = 'intermission')
+            AND partner_type = 'intermission';
+        """)
+        wrong_partners = cr.fetchall()
+
+        updated_doc = []
+        for partner in wrong_partners:
+            intermission_partner_id = partner[0]
+            partner_name = partner[1]
+            internal_partner_id = self.pool.get('res.partner').search(cr, uid, [
+                ('name', '=', partner_name),
+                ('partner_type', '=', 'internal'),
+            ])[0]
+            address_id = self.pool.get('res.partner.address').search(cr, uid, [
+                ('partner_id', '=', internal_partner_id),
+                ('type', '=', 'default'),
+            ])
+            if not address_id:
+                address_id = self.pool.get('res.partner.address').search(cr, uid, [
+                    ('partner_id', '=', internal_partner_id),
+                ])
+
+            address_id = address_id[0]
+
+            cr.execute("SELECT name FROM stock_picking WHERE partner_id = %s AND state not in ('done', 'cancel');", (intermission_partner_id,))
+            updated_doc += [x[0] for x in cr.fetchall()]
+            cr.execute("""
+                UPDATE stock_picking
+                SET partner_id = %s, partner_id2 = %s, address_id = %s, partner_type_stock_picking = 'internal', invoice_state = 'none'
+                WHERE partner_id = %s
+                AND state not in ('done', 'cancel');
+            """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id) )
+            cr.execute("""
+                UPDATE stock_move
+                SET partner_id = %s, partner_id2 = %s, address_id = %s
+                WHERE (partner_id = %s OR partner_id2 = %s) AND state not in ('done', 'cancel');
+            """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id, intermission_partner_id) )
+
+            cr.execute("SELECT name FROM purchase_order WHERE partner_id = %s AND state not in ('done', 'cancel');", (intermission_partner_id,))
+            updated_doc += [x[0] for x in cr.fetchall()]
+            cr.execute("""
+                UPDATE purchase_order
+                SET partner_id = %s, partner_address_id = %s, partner_type = 'internal'
+                WHERE partner_id = %s
+                AND state not in ('done', 'cancel');
+            """, (internal_partner_id, address_id, intermission_partner_id) )
+            cr.execute("""
+                UPDATE purchase_order_line pol
+                SET partner_id = %s
+                FROM purchase_order po
+                WHERE pol.order_id = po.id
+                AND pol.partner_id = %s
+                AND po.state not in ('done', 'cancel');
+            """, (internal_partner_id, intermission_partner_id) )
+
+            cr.execute("SELECT name FROM sale_order WHERE partner_id = %s AND state not in ('done', 'cancel');", (intermission_partner_id,))
+            updated_doc += [x[0] for x in cr.fetchall()]
+            cr.execute("""
+                UPDATE sale_order
+                SET partner_id = %s, partner_invoice_id = %s, partner_order_id = %s, partner_shipping_id = %s, partner_type = 'internal'
+                WHERE partner_id = %s
+                AND state not in ('done', 'cancel');
+            """, (internal_partner_id, address_id, address_id, address_id, intermission_partner_id) )
+            cr.execute("""
+                UPDATE sale_order_line sol
+                SET order_partner_id = %s
+                FROM sale_order so
+                WHERE sol.order_id = so.id
+                AND sol.order_partner_id = %s
+                AND so.state not in ('done', 'cancel');
+            """, (internal_partner_id, intermission_partner_id) )
+
+            cr.execute("SELECT name FROM shipment WHERE partner_id = %s AND state not in ('done', 'cancel', 'delivered');", (intermission_partner_id,))
+            updated_doc += [x[0] for x in cr.fetchall()]
+            cr.execute("""
+                UPDATE shipment
+                SET partner_id = %s, partner_id2 = %s, address_id = %s
+                WHERE partner_id = %s
+                AND state not in ('done', 'cancel', 'delivered');
+            """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id) )
+
+        self._logger.warn("Following documents have been updated with internal partner: %s" % ", ".join(updated_doc))
+
+        return True
 
     def us_2257_patch(self, cr, uid, *a, **b):
         context = {}
@@ -71,7 +214,7 @@ class patch_scripts(osv.osv):
     def us_2730_patch(self, cr, uid, *a, **b):
         '''
         remove all translations, and then re-import them
-        so that the {*}_MF.po files are authoratative
+        so that the {*}_MF.po files are authoritative
         '''
         cr.execute("""delete from ir_model_data where model='ir.translation' and res_id in (
             select id from ir_translation where lang = 'fr_MF' and type != 'model'
@@ -1027,7 +1170,7 @@ class patch_scripts(osv.osv):
         cr.execute(sql)
         return True
 
-    def us_1452_patch(self, cr, uid, *a, **b):
+    def us_1452_patch_bis(self, cr, uid, *a, **b):
         """
         Put 1.00 as cost price for all product with cost price = 0.00
         """
@@ -1038,8 +1181,19 @@ class patch_scripts(osv.osv):
             sale_percent = 1 + (setup_br.sale_price/100.00)
 
 
-        sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00"""
+        sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00 RETURNING id"""
         cr.execute(sql, (sale_percent, ))
+
+
+        prod_templ_ids = [x[0] for x in cr.fetchall()]
+        if prod_templ_ids:
+            now = time.strftime('%Y-%m-%d %H:%M:%S')
+            p_ids = self.pool.get('product.product').search(cr, uid, [('product_tmpl_id', 'in', prod_templ_ids)])
+            for p_id in p_ids:
+                cr.execute("""insert into standard_price_track_changes (create_uid, create_date, new_standard_price, user_id, product_id, change_date, transaction_name, old_standard_price) VALUES
+                        (1, NOW(), 1, 1, %s, %s, 'Product price reset 1', 0)
+                """, (p_id, now))
+            cr.execute('update product_product set uf_write_date=%s where id in %s', (now, tuple(p_ids)))
         return True
 
     def us_1430_patch(self, cr, uid, *a, **b):
@@ -1273,6 +1427,25 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_1562_rename_special_periods(self, cr, uid, *a, **b):
+        """
+        Update the name and code of the special Periods from "Period xx" to "Period xx YYYY" (ex: Period 13 2017)
+        """
+        update_name_and_code = """
+            UPDATE account_period AS p
+            SET name = name || ' ' || (SELECT SUBSTR(code, 3, 4) FROM account_fiscalyear AS fy WHERE p.fiscalyear_id = fy.id),
+            code = code || ' ' || (SELECT SUBSTR(code, 3, 4) FROM account_fiscalyear AS fy WHERE p.fiscalyear_id = fy.id)
+            WHERE name like 'Period %';
+            """
+        update_translation = """
+            UPDATE ir_translation AS t 
+            SET src = (SELECT t.src || ' ' || to_char(date_start,'YYYY') FROM account_period WHERE id=t.res_id), 
+            value = (SELECT t.value || ' ' || to_char(date_start,'YYYY') FROM account_period WHERE id=t.res_id) 
+            WHERE name='account.period,name' AND src LIKE 'Period%' AND type='model';
+        """
+        cr.execute(update_name_and_code)
+        cr.execute(update_translation)
+
 
 patch_scripts()
 
@@ -1499,9 +1672,23 @@ class res_users(osv.osv):
             return 'en_MF'
         return 'en_US'
 
+    def set_default_partner_lang(self, cr, uid, context=None):
+        """
+            when base module is installed en_US is the default lang for partner
+            overwrite this default value
+        """
+
+        values_obj = self.pool.get('ir.values')
+        default_value = values_obj.get(cr, uid, 'default', False, ['res.partner'])
+        if not default_value or 'lang' not in [x[1] for x in default_value] or ('lang', 'en_US') in [(x[1], x[2]) for x in default_value]:
+            values_obj.set(cr, uid, 'default', False, 'lang', ['res.partner'], 'en_MF')
+
+        return True
+
     _defaults = {
         'context_lang': _get_default_ctx_lang,
     }
+
 res_users()
 
 class email_configuration(osv.osv):
@@ -1558,6 +1745,7 @@ class email_configuration(osv.osv):
     ]
 email_configuration()
 
+
 class ir_cron_linux(osv.osv_memory):
     _name = 'ir.cron.linux'
     _description = 'Start memory cleaning cron job from linux crontab'
@@ -1598,3 +1786,73 @@ class ir_cron_linux(osv.osv_memory):
         return True
 
 ir_cron_linux()
+
+
+class communication_config(osv.osv):
+    """ Communication configuration """
+    _name = "communication.config"
+    _description = "Communication configuration"
+
+    _columns = {
+        'message': fields.text('Message to display',
+                               help="Enter the message you want to display as a banner. Nothing more than the information entered here will be displayed."),
+        'from_date': fields.datetime('Broadcast start date', help='If defined, the display of the message will start at this date'),
+        'to_date': fields.datetime('Broadcast stop date', help='If defined, the display of the message will stop at this date'),
+    }
+
+    def display_banner(self, cr, uid, ids=None, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if ids is None:
+            ids = self.search(cr, 1, [], context=context)
+
+        com_obj = self.read(cr, 1, ids[0], ['message', 'from_date',
+                                            'to_date'], context=context)
+        if not com_obj['message']:
+            return False
+
+        if not com_obj['from_date'] and not com_obj['to_date']:
+            return True
+
+        current_date = fields.datetime.now()
+        if not com_obj['from_date'] and com_obj['to_date']\
+                and com_obj['to_date'] > current_date:
+            return True
+
+        if com_obj['from_date'] and not com_obj['to_date']\
+                and com_obj['from_date'] < current_date:
+            return True
+
+        if com_obj['from_date'] and com_obj['to_date']\
+                and com_obj['from_date'] < current_date\
+                and com_obj['to_date'] > current_date:
+            return True
+
+        return False
+
+    def get_message(self, cr, uid, ids=None, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if ids is None:
+            ids = self.search(cr, 1, [], context=context)
+        return self.read(cr, 1, ids[0], ['message'],
+                         context=context)['message']
+
+    def _check_only_one_obj(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        obj = self.search(cr, 1, [], context=context)
+        if len(obj) > 1:
+            return False
+        return True
+
+    _constraints = [
+        (_check_only_one_obj, 'You cannot have more than one Communication configuration', ['message']),
+    ]
+
+communication_config()

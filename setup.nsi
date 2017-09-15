@@ -1,4 +1,4 @@
-#####################################################################################
+ï»¿#####################################################################################
 #
 # Copyright (c) 2004-TODAY OpenERP S.A. (http://www.openerp.com) All Rights Reserved.
 #
@@ -162,9 +162,9 @@ LangString DESC_FinishPage_Link ${LANG_FRENCH} "Contactez OpenERP pour un Parten
 LangString WARNING_HostNameIsEmpty ${LANG_FRENCH} "L'adresse pour la connection au serveur PostgreSQL est vide"
 LangString WARNING_UserNameIsEmpty ${LANG_FRENCH} "Le nom d'utilisateur pour la connection au serveur PostgreSQL est vide"
 LangString WARNING_PasswordIsEmpty ${LANG_FRENCH} "Le mot de passe pour la connection au serveur PostgreSQL est vide"
-LangString WARNING_PortIsWrong ${LANG_FRENCH} "Le port pour la connection au serveur PostgreSQL est erroné (défaut: 5432)"
+LangString WARNING_PortIsWrong ${LANG_FRENCH} "Le port pour la connection au serveur PostgreSQL est erronÃ© (dÃ©faut: 5432)"
 LangString DESC_PostgreSQLPage ${LANG_FRENCH} "Configurez les informations de connection pour le serveur PostgreSQL"
-LangString DESC_PostgreSQL_Hostname ${LANG_FRENCH} "Hôte"
+LangString DESC_PostgreSQL_Hostname ${LANG_FRENCH} "HÃ´te"
 LangString DESC_PostgreSQL_Port ${LANG_FRENCH} "Port"
 LangString DESC_PostgreSQL_Username ${LANG_FRENCH} "Utilisateur"
 LangString DESC_PostgreSQL_Password ${LANG_FRENCH} "Mot de passe"

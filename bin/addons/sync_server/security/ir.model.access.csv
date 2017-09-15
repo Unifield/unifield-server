@@ -46,3 +46,8 @@
 "sync_read_ir_exports_line_id","sync_read_ir_exports_line","ir.exports.line",1,0,0,0,"sync_common.sync_read_group"
 "sync_read_ir_ui_view_sc_id","sync_read_ir_ui_view_sc","ir.ui.view_sc",1,1,1,1,"sync_common.sync_read_group"
 "sync_read_ir_property_id","sync_read_ir_property","ir.property",1,0,0,0,"sync_common.sync_read_group"
+"access_res_users_user_sync_read","res_users_user sync_read","res.users",1,1,1,0,"sync_common.sync_read_group"
+"access_res_groups_user_sync_read","res_groups_user sync_read","res.groups",1,1,1,0,"sync_common.sync_read_group"
+"access_unifield_setup_configuration_all","model_unifield_setup_configuration","unifield.setup.configuration",1,1,1,1,
+"access_res_partner_address_sync_read","model_res_partner_address","res.partner.address",1,1,1,0,sync_common.sync_read_group
+"access_sync_server_entity_group_sync_read","model_sync_server_entity_group","sync.server.entity_group",1,1,1,0,sync_common.sync_read_group

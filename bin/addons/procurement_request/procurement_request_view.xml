@@ -55,13 +55,18 @@
                         <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
                         <field name="functional_currency_id" />
                         <field name="categ" on_change="onchange_categ(categ)" />
+                        <group colspan="2" col="3">
+                            <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ('draft', 'validated'))]}" />
+                            <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent"
+                                attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}" />
+                        </group>
                         <field name="fo_to_resource" invisible="1" />
                         <field name="parent_order_name" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
                     </group>
                     <notebook colspan="5">
                         <page string="Products">
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
+                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
                                 <tree string="Products" editable="top" >
                                     <field name="product_id" on_change="requested_product_id_change(product_id, comment, parent.categ)" 
                                     context="available_for_restriction='consumption',search_default_not_restricted=1"
@@ -99,6 +104,7 @@
                                         domain="[('supplier', '=', True), ('id', '!=', my_company_id), ('check_partner_ir', '=', True)]"
                                         />
                                     <field name="fake_state" invisible="1" />
+                                    <field name="stock_take_date"/>
                                     <field name="price_subtotal" sum="Total"/>
                                     <button name="open_split_wizard"
                                         type="object"

@@ -61,7 +61,7 @@
           </td>
           <td>
             <para>Bank journal code: <b>[[ o.journal_id and o.journal_id.code or '' ]]</b></para>
-            <para>Cheque journal code: <b>[[ o.journal_id.cheque_journal_id and o.journal_id.cheque_journal_id[0].code or '-' ]]</b></para>
+            <para>Cheque journal code(s): <b>[[ o.journal_id.cheque_journal_id and ", ".join([ c.code for c in o.journal_id.cheque_journal_id]) or '-' ]]</b></para>
             <para>Journal name: <b>[[ o.journal_id and o.journal_id.name or '' ]]</b></para>
           </td>
         </tr>

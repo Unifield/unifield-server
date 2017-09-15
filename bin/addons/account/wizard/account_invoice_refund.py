@@ -218,6 +218,7 @@ class account_invoice_refund(osv.osv_memory):
                         invoice_lines = inv_obj._refund_cleanup_lines(cr, uid, invoice_lines)
                         tax_lines = inv_tax_obj.read(cr, uid, invoice['tax_line'], context=context)
                         tax_lines = inv_obj._refund_cleanup_lines(cr, uid, tax_lines)
+                        source_doc = invoice.get('number', False)
                         invoice.update({
                             'type': inv.type,
                             'date_invoice': date,
@@ -226,7 +227,8 @@ class account_invoice_refund(osv.osv_memory):
                             'invoice_line': invoice_lines,
                             'tax_line': tax_lines,
                             'period_id': False,
-                            'name': description
+                            'name': description,
+                            'origin': source_doc,
                         })
                         for field in self._hook_fields_m2o_for_modify_refund(cr, uid):
                             invoice[field] = invoice[field] and invoice[field][0]
