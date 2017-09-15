@@ -24,6 +24,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 class account_analytic_journal(osv.osv):
     _name = 'account.analytic.journal'
@@ -68,6 +69,38 @@ class account_analytic_journal(osv.osv):
             txt = rs.get('code', '')
             res += [(rs.get('id'), txt)]
         return res
+
+    def _check_code_duplication(self, cr, uid, vals, current_id=None, context=None):
+        """
+        Raises a warning if the Analytic Journal Code is already in use in the current instance
+        """
+        if context is None:
+            context = {}
+        if vals.get('code') and not context.get('sync_update_execution'):
+            journal_domain = [('code', '=ilike', vals['code']), ('is_current_instance', '=', True)]
+            if current_id:
+                # exclude the current journal being modified
+                journal_domain.append(('id', '!=', current_id))
+            if self.search_exist(cr, uid, journal_domain, context=context):
+                raise osv.except_osv(_('Warning'),
+                                     _('An analytic journal with the code %s already exists in the current instance.') % vals['code'].upper())
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        self._check_code_duplication(cr, uid, vals, context=context)
+        return super(account_analytic_journal, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        for journal_id in self.browse(cr, uid, ids, fields_to_fetch=['is_current_instance'], context=context):
+            self._check_code_duplication(cr, uid, vals, current_id=journal_id.id, context=context)
+        return super(account_analytic_journal, self).write(cr, uid, ids, vals, context=context)
 
 account_analytic_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
