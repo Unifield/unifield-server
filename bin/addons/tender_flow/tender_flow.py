@@ -392,7 +392,18 @@ class tender(osv.osv):
         '''
         tender is done
         '''
-        # cleaned for partial confirmation (US-3185)
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for tender in self.browse(cr, uid, ids, context=context):
+            self.write(cr, uid, [tender.id], {'state':'done'}, context=context)
+            self.infolog(cr, uid, "The tender id:%s (%s) has been closed" % (
+                tender.id,
+                tender.name,
+            ))
+
         return True
 
     def tender_integrity(self, cr, uid, tender, context=None):
@@ -402,17 +413,17 @@ class tender(osv.osv):
         po_obj = self.pool.get('purchase.order')
         # no rfq in done state
         rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
-                                          ('state', 'in', ('done',)),], context=context)
+                                          ('rfq_state', 'in', ('done',)),], context=context)
         if rfq_ids:
             raise osv.except_osv(_('Error !'), _("Some RfQ are already Closed. Integrity failure."))
         # all rfqs must have been treated
         rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
-                                          ('state', 'in', ('draft', 'rfq_sent',)),], context=context)
+                                          ('rfq_state', 'in', ('draft', 'sent',)),], context=context)
         if rfq_ids:
             raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Cancelled."))
         # at least one rfq must be updated and not canceled
         rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
-                                          ('state', 'in', ('rfq_updated',)),], context=context)
+                                          ('rfq_state', 'in', ('updated',)),], context=context)
         if not rfq_ids:
             raise osv.except_osv(_('Warning !'), _("At least one RfQ must be in state Updated."))
 
@@ -1500,7 +1511,7 @@ class purchase_order(osv.osv):
                 'valid_till': fields.date(string='Valid Till'),
                 # add readonly when state is Done
                 'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True),
-                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated')], 'Order state', required=True, readonly=True),
+                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated'), ('done', 'Closed')], 'Order state', required=True, readonly=True),
                 }
 
     _defaults = {
