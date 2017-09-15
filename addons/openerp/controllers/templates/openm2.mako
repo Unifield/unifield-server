@@ -45,11 +45,11 @@
                         <tr>
                             % if form.screen.editable:
                                 <td class="save_close">
-                                    <a class="button-a" onclick="submit_form('save')" href="javascript: void(0)">${_("Save")}</a>
+                                    <a class="button-a oe_form_button_save_close" onclick="submit_form('save')" href="javascript: void(0)">${_("Save")}</a>
                                 </td>
                             % endif
                             <td class="save_close">
-                            	<a class="button-a" onclick="jQuery.${self.relation()}('close');" href="javascript: void(0)">${_("Close")}</a>
+                            	<a class="button-a oe_form_button_close" onclick="jQuery.${self.relation()}('close');" href="javascript: void(0)">${_("Close")}</a>
                             </td>
                             <td width="100%">
                             </td>

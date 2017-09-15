@@ -91,7 +91,7 @@ setup(
     url=url,
     download_url=download_url,
     license=license,
-    python_requires = ">=2.7.13",
+    python_requires = ">=2.7.12",
     install_requires=[
         "CherryPy==10.2.1",
         "Mako==1.0.6",

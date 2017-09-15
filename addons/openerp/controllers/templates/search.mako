@@ -132,11 +132,11 @@
                                 % if params.selectable != 1:
                                     <a class="button-a select-link" href="javascript: void(0)" onclick="do_select()">${_("Select")}</a>
                                 % endif
-                            	<a class="button-a" href="javascript: void(0)" onclick="search_filter()" >${_("Search")}</a>
+                            	<a class="button-a oe_form_button_search" href="javascript: void(0)" onclick="search_filter()" >${_("Search")}</a>
                                 % if not form.screen.widget.hide_new_button:
-                           	    <a class="button-a" href="javascript: void(0)" onclick="do_create()">${_("New")}</a>
+                           	    <a class="button-a oe_form_button_create" href="javascript: void(0)" onclick="do_create()">${_("New")}</a>
                                 % endif
-                            	<a class="button-a" href="javascript: void(0)" onclick="close_dialog();">${_("Close")}</a>
+                            	<a class="button-a oe_form_button_close" href="javascript: void(0)" onclick="close_dialog();">${_("Close")}</a>
 	                            
                             </td>
                         </tr>
@@ -153,7 +153,7 @@
                                 <p>${_("No record found : '%(searched_string)s'.", searched_string=params.context['default_name'])}</p>
                                 % if not form.screen.widget.hide_new_button:
                                 <p>
-                                    <a class="button-a" href="javascript: void(0)" onclick="do_create()">${_("Create")}</a>
+                                    <a class="button-a oe_form_button_create" href="javascript: void(0)" onclick="do_create()">${_("Create")}</a>
                                 </p>
                                 % endif
                             </div>

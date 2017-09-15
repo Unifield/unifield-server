@@ -358,7 +358,7 @@ ManyToOne.prototype.on_keydown = function(evt) {
     }
 
     // F2
-    if(evt.which == 113 || (evt.which == 13 && !this.text.value && !jQuery(this.text).hasClass('listfields'))) {
+    if(evt.which == 113 || (evt.which == 13 && !this.text.value)) {
         this.select(evt);
         evt.stopPropagation();
         evt.preventDefault();

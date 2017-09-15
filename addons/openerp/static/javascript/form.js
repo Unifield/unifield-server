@@ -162,14 +162,9 @@ function editSelectedRecord(){
 }
 
 function switchView(view_type, src){
-	if (view_type=='diagram' && !jQuery('#_terp_ids').val()) {
+    if (view_type=='diagram' && !jQuery('#_terp_ids').val()) {
     	alert('There are no records to display diagram view.')
     	return;
-    }
-
-    var args = {
-        '_terp_source': src,
-        '_terp_source_view_type': view_type
     }
 
     if (openobject.dom.get('_terp_list')) {
@@ -178,9 +173,10 @@ function switchView(view_type, src){
             openobject.dom.get('_terp_id').value = ids[0];
         }
     }
+
     submit_form(get_form_action('switch', {
-        '_terp_source': src,
-        '_terp_source_view_type': view_type
+            '_terp_source': src,
+            '_terp_source_view_type': view_type
     }));
 }
 
