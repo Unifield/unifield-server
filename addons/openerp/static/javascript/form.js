@@ -934,7 +934,18 @@ function eval_domain_context_request(options){
         }
 
         if (obj.error) {
-            return error_popup(obj.error)
+            // 'TinyForm' error case : obj.error is a string
+            if (obj.error_field) {
+                // Retrieve the label associated to the label and display the
+                // error
+                var error_field_label = $('label[for="'+obj.error_field+'"]').text().trim()
+                return error_display(error_field_label+" : "+obj.error);
+            }
+            // General exception case (no obj.error_field given)
+            // obj.error is a full HTML page (and error_popup will display it)
+            else {
+                return error_popup(obj); 
+            }
         }
 
         return obj;
@@ -1316,9 +1327,8 @@ function removeAttachment() {
         dataType: 'json',
         success: function(obj) {
             if(obj.error) {
-                error_popup(obj.error);
+                error_display(obj.error);
             }
-
             $attachment_line.remove();
         }
     });
