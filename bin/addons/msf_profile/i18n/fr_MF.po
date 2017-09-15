@@ -99937,3 +99937,9 @@ msgstr "Impossible de générer les data après %d tentatives"
 #, python-format
 msgid "Unable to generate updates, retrying %d/%d"
 msgstr "Impossible de générer les data, nouvel essai %d/%d"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export.py:699
+#, python-format
+msgid "New line characters in the field '%s' not allowed. Please fix entry :\n'%s'"
+msgstr "Le caractère de retour à la ligne dans le champ '%s' est interdit. Veuillez corriger l'entrée:\n'%s'"

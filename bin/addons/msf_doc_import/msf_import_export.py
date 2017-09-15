@@ -694,6 +694,12 @@ WHERE n3.level = 3)
                 for n, h in enumerate(header_codes):
                     if isinstance(line_data[n], basestring):
                         line_data[n] = line_data[n].rstrip()
+                        if len(line_data[n].splitlines()) > 1:
+                            # US-2661 do not allowed newline character in char fields
+                            save_error(_("New line characters in the field '%s' not allowed. Please fix entry :\n'%s'") % (h, line_data[n]), row_index)
+                            nb_error += 1
+                            line_ok = False
+                            break
 
                     # UFTP-327
                     # if required reject cells with exceeded field length
