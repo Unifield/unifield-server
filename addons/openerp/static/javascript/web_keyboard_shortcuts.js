@@ -77,7 +77,8 @@ $.ctrlshift = function(key, callback, args) {
                             key_to_display = 'Del.'
                         }
                         else if (key == '13') {
-                            key_to_display = '&#8629;'  // Enter
+                            key_to_display = 'Enter&nbsp;&#8629;'  // Enter
+                            //key_to_display = 'Enter'  // Enter
                         }
                         else if (key == '38') {
                             key_to_display = '&#8679;'  // UP
