@@ -1497,7 +1497,7 @@ class purchase_order(osv.osv):
                 'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True),
                 'from_procurement': fields.boolean(string='RfQ created by a procurement order'),
                 'rfq_ok': fields.boolean(string='Is RfQ ?'),
-                'valid_till': fields.date(string='Valid Till', states={'rfq_updated': [('required', True), ('readonly', True)], 'rfq_sent':[('required',False), ('readonly', False),]}, readonly=True,),
+                'valid_till': fields.date(string='Valid Till'),
                 # add readonly when state is Done
                 'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True),
                 'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated')], 'Order state', required=True, readonly=True),
@@ -1604,21 +1604,36 @@ class purchase_order(osv.osv):
             ) 
         return res
 
+    def action_sent(self, cr, uid, ids, context=None):
+        '''
+        Method called when calling button Sent RfQ
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {
+            'rfq_state': 'sent',
+            'date_confirm': time.strftime('%Y-%m-%d'),
+        }, context=context)
+
+        return True
 
     def rfq_sent(self, cr, uid, ids, context=None):
         if not ids:
             return {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
+
         self.hook_rfq_sent_check_lines(cr, uid, ids, context=context)
         for rfq in self.browse(cr, uid, ids, context=context):
-            wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_sent', cr)
+            self.action_sent(cr, uid, [rfq.id], context=context)
             self.infolog(cr, uid, "The RfQ id:%s (%s) has been sent." % (
                 rfq.id, rfq.name,
             ))
-
-        self.write(cr, uid, ids, {'date_confirm': time.strftime('%Y-%m-%d')}, context=context)
 
         datas = {'ids': ids}
         if len(ids) == 1:
@@ -1629,6 +1644,19 @@ class purchase_order(osv.osv):
                 'report_name': 'msf.purchase.quotation',
                 'datas': datas}
 
+    def action_updated(self, cr, uid, ids, context=None):
+        '''
+        method called when getting the updated state (case of RfQ)
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'rfq_state': 'updated'}, context=context)
+
+        return True
+
     def check_rfq_updated(self, cr, uid, ids, context=None):
         tl_obj = self.pool.get('tender.line')
         line_obj = self.pool.get('purchase.order.line')
@@ -1636,7 +1664,6 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        wf_service = netsvc.LocalService("workflow")
         for rfq in self.browse(cr, uid, ids, context=context):
             if not rfq.valid_till:
                 raise osv.except_osv(_('Error'), _('You must specify a Valid Till date.'))
@@ -1670,7 +1697,7 @@ class purchase_order(osv.osv):
 price. Please set unit price on these lines or cancel them'''),
                     )
 
-            wf_service.trg_validate(uid, 'purchase.order', rfq.id, 'rfq_updated', cr)
+            self.action_updated(cr, uid, [rfq.id], context=context)
             self.infolog(cr, uid, "The RfQ id:%s (%s) has been updated" % (
                 rfq.id, rfq.name,
             ))

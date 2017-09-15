@@ -87,7 +87,7 @@
                             <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test"
                                 attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}" />
                             <button name="purchase_cancel" type="object"
-                            attrs="{'invisible': ['|', ('state', 'not in', ['draft', 'validated', 'rfq_sent']), '&amp;',('partner_type', 'not in', ('external', 'esc')), ('state', '=', 'validated')]}" 
+                            attrs="{'invisible': ['|', ('rfq_state', 'not in', ['draft', 'validated', 'sent']), '&amp;',('partner_type', 'not in', ('external', 'esc')), ('state', '=', 'validated')]}" 
                             string="Cancel" icon="gtk-cancel"/>
                             <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}" />
                             <!-- UTP-469 − Remove the cancel button
@@ -95,13 +95,13 @@
                             <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
                             <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_invoice')]}"/>
                             <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
-                            <button name="validate_lines" states="draft,draft_p" string="Validate lines" type="object" icon="gtk-go-forward"/>
+                            <button name="validate_lines" states="draft,draft_p" string="Validate lines" type="object" icon="gtk-go-forward" attrs="{'invisible': [('rfq_ok', '=', True)]}" />
                             <button name="confirm_lines" states="validated,validated_p" string="Confirm lines" icon="gtk-go-forward" type="object" />
-                            <button name="rfq_sent" type="object" states="draft" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'draft')]}" />
-                            <button name="check_rfq_updated" type="object" states="rfq_sent" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('state', '!=', 'rfq_sent')]}" />
-                            <button name="generate_po_from_rfq" states="done" type="object" string="Generate Po" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated'), ('from_procurement', '=', True)], 'readonly': [('amount_total', '=', 0.00)]}" />
-                            <button name="rfq_done" states="rfq_updated" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated'), ('from_procurement', '=', True)]}" />
-                            <button name="rfq_done" states="rfq_updated" string="Continue sourcing" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('state', '!=', 'rfq_updated'), ('from_procurement', '=', False)]}" />
+                            <button name="rfq_sent" type="object" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('rfq_state', '!=', 'draft')]}" />
+                            <button name="check_rfq_updated" type="object" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('rfq_state', '!=', 'sent')]}" />
+                            <button name="generate_po_from_rfq" type="object" string="Generate Po" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', True)], 'readonly': [('amount_total', '=', 0.00)]}" />
+                            <button name="rfq_done" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', True)]}" />
+                            <button name="rfq_done" string="Continue sourcing" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', False)]}" />
                         </group>
                     </xpath>
                     <xpath expr="/form//field[@name='pricelist_id']" position="replace">
