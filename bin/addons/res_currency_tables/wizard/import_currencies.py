@@ -92,6 +92,10 @@ class import_currencies(osv.osv_memory):
         # Some checks
         if context is None:
             context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         # Prepare some values
         currency_obj = self.pool.get('res.currency')
         currency_rate_obj = self.pool.get('res.currency.rate')

@@ -216,6 +216,9 @@ class wizard_budget_import(osv.osv_memory):
         if context is None:
             context = {}
 
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         # Prepare some values
         budgets_2be_approved = {}
         tool_obj = self.pool.get('msf.budget.tools')
