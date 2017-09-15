@@ -31,12 +31,17 @@ class wizard_add_cost_centers(osv.osv_memory):
     def add_cost_centers(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+        cc_obj = self.pool.get('account.target.costcenter')
+        active_id = context.get('active_id')
         # create vals
         for wizard in self.browse(cr, uid, ids, context=context):
             for cost_center in wizard.cost_center_ids:
-                self.pool.get('account.target.costcenter').create(cr, uid, {'instance_id': context['active_id'],
-                                                                            'cost_center_id': cost_center.id,
-                                                                            'target': False}, context=context)
+                # if the link CC => instance doesn't exist yet, create it
+                cc_domain = [('instance_id', '=', active_id), ('cost_center_id', '=', cost_center.id)]
+                if active_id and not cc_obj.search_exist(cr, uid, cc_domain, context=context):
+                    cc_obj.create(cr, uid, {'instance_id': active_id,
+                                            'cost_center_id': cost_center.id,
+                                            'target': False}, context=context)
         return {'type' : 'ir.actions.act_window_close'}
 
 wizard_add_cost_centers()

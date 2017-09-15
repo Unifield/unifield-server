@@ -66,6 +66,10 @@
         'board_sale_view.xml',
         'sale_order_allocation_report.xml',
         # 'process/sale_process.xml',
+        'wizard/sale_donation_stock_moves_view.xml',
+        'report/sale_donation_stock_moves_report.xml',
+        'wizard/sale_loan_stock_moves_view.xml',
+        'report/sale_loan_stock_moves_report.xml',
     ],
     'demo_xml': ['sale_demo.xml'],
     'test': [

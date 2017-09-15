@@ -62,6 +62,7 @@ class account_mcdb(osv.osv):
                                              string="Account type"),
         'reconcile_id': fields.many2one('account.move.reconcile', string="Reconcile Reference"),
         'reconcile_date': fields.date("Reconciled at"),
+        'open_items': fields.many2one('account.period', string='Open Items at', domain=[('state', '!=', 'created')]),
         'ref': fields.char(string='Reference', size=255),
         'name': fields.char(string='Description', size=255),
         'rev_account_ids': fields.boolean('Exclude account selection'),
@@ -402,6 +403,10 @@ class account_mcdb(osv.osv):
                 domain.append(('reconcile_date', '<=', wiz.reconcile_date))
             # note that for US-533 JI search is overrided in
             # account_reconcile/account_move_line.py
+
+            # OPEN ITEMS field
+            if res_model == 'account.move.line' and wiz.open_items:
+                domain.append(('open_items', '=', wiz.open_items.id))
 
             # REALLOCATION field
             if wiz.reallocated:

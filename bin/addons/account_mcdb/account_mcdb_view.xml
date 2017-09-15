@@ -70,6 +70,7 @@
                     <field name="reconciled"/>
                     <field name="reconcile_date" string="At"/>
                     <field name="reconcile_id"/>
+                    <field name="open_items"/>
 
                     &currency;
                     <group colspan="4" col="6">

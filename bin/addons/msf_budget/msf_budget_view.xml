@@ -197,7 +197,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Local Expenses">
-                    <field name="cost_center_id"/>
+                    <field name="cost_center_id" default_focus="1"/>
                     <field name="fiscalyear_id"/>
                     <field name="start_period_id"/>
                     <field name="end_period_id"/>

@@ -22,5 +22,7 @@
 import sale_make_invoice
 import sale_line_invoice
 import sale_make_invoice_advance
+import sale_donation_stock_moves
+import sale_loan_stock_moves
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
