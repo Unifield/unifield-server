@@ -334,11 +334,11 @@
             <field name="arch" type="xml">
                 <search string="Search Purchase Order">
                   <group col='10' colspan='4'>
-                    <filter icon="terp-document-new" name="draft_rfq" string="Draft" domain="[('state','=','draft')]" separator="1" help="Requests for Quotation which are in draft state"/>
-                    <filter icon="gtk-apply" name="sent" string="Sent" domain="[('state','=','rfq_sent')]" separator="1" />
-                    <filter icon="terp-camera_test" name="updated" string="Updated" domain="[('state','=','rfq_updated')]" separator="1" />
-                    <filter icon="gtk-yes" name="done" string="Closed" domain="[('state','=','done')]" separator="1" />
-                    <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state','=','cancel')]" separator="1" />
+                    <filter icon="terp-document-new" name="draft_rfq" string="Draft" domain="[('rfq_state','=','draft')]" separator="1" help="Requests for Quotation which are in draft state"/>
+                    <filter icon="gtk-apply" name="sent" string="Sent" domain="[('rfq_state','=','sent')]" separator="1" />
+                    <filter icon="terp-camera_test" name="updated" string="Updated" domain="[('rfq_state','=','updated')]" separator="1" />
+                    <filter icon="gtk-yes" name="done" string="Closed" domain="[('rfq_state','=','done')]" separator="1" />
+                    <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('rfq_state','=','cancel')]" separator="1" />
                     <field name="partner_id" select="1" string="Supplier" />
                     <field name="product_id" select="1" />
                     <field name="origin" />
@@ -405,7 +405,8 @@
                     <field name="delivery_requested_date" />
                     <field name="origin" />
                     <field name="amount_total" />
-                    <field name="state" />
+                    <field name="rfq_state" />
+                    <field name="state" invisible="1"/>
                 </tree>
             </field>
         </record>

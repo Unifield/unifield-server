@@ -1599,7 +1599,7 @@ class purchase_order(osv.osv):
                 'valid_till': fields.date(string='Valid Till'),
                 # add readonly when state is Done
                 'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True),
-                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated'), ('done', 'Closed')], 'Order state', required=True, readonly=True),
+                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated'), ('done', 'Closed'), ('cancel', 'Cancel')], 'Order state', required=True, readonly=True),
                 }
 
     _defaults = {
