@@ -25,6 +25,15 @@
             /*
             % endif
             */
+            /*
+            % if auto_refresh :
+            */
+            setTimeout(function() {
+                location.reload();
+            }, ${auto_refresh}*1000);
+            /*
+            % endif
+            */
             setTimeout(function() {
                 jQuery('[autofocus="autofocus"]').focus();
             }, 10);
