@@ -788,7 +788,7 @@ class purchase_order_line(osv.osv):
             linked_so = False
             if vals.get('linked_sol_id'):
                 sol_data = self.pool.get('sale.order.line').read(cr, uid, vals.get('linked_sol_id'), ['order_id'])
-                linked_so = sol_data['order_id']
+                linked_so = sol_data['order_id'] and sol_data['order_id'][0] or False
                 vals.update({'link_so_id': linked_so})
             elif vals.get('origin'):
                 vals.update(self.update_origin_link(cr, uid, vals.get('origin'), context=context))
@@ -958,7 +958,7 @@ class purchase_order_line(osv.osv):
                 linked_so = False
                 if vals.get('linked_sol_id', line.linked_sol_id):
                     sol_data = self.pool.get('sale.order.line').read(cr, uid, vals.get('linked_sol_id', line.linked_sol_id.id), ['order_id'])
-                    linked_so = sol_data['order_id']
+                    linked_so = sol_data['order_id'] and sol_data['order_id'][0] or False
                     new_vals.update({'link_so_id': linked_so})
                 elif vals.get('origin'):
                     new_vals.update(self.update_origin_link(cr, uid, vals.get('origin'), context=context))
