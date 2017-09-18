@@ -21,7 +21,7 @@
 
 from osv import osv
 from xml.sax.saxutils import escape
-
+import netsvc
 
 class delete_sale_order_line_wizard(osv.osv_memory):
     _name = 'delete.sale.order.line.wizard'
@@ -70,8 +70,8 @@ class delete_sale_order_line_wizard(osv.osv_memory):
                 escaped_default_code = escape(names)
                 _moves_arch_lst = """
                                 <form>
-                                <separator colspan="6" string="You are about to delete the products %s, are you sure you wish to proceed ?"/>
-                                <button name="fake_unlink" string="OK, delete lines" type="object" icon="gtk-apply"
+                                <separator colspan="6" string="You are about to cancel the products %s, are you sure you wish to proceed ?"/>
+                                <button name="fake_unlink" string="OK, cancel lines" type="object" icon="gtk-apply"
                                     context="{'ids': %s, 'order_id': %s}"/>
                                 <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
                                 """ % (escaped_default_code, line_ids, parent_so_id)
@@ -85,7 +85,7 @@ class delete_sale_order_line_wizard(osv.osv_memory):
                 _moves_arch_lst = """
                                 <form>
                                 <separator colspan="6" string="You are about to delete the product %s, are you sure you wish to proceed ?"/>
-                                <button name="fake_unlink" string="OK, delete line" type="object" icon="gtk-apply" 
+                                <button name="fake_unlink" string="OK, cancel line" type="object" icon="gtk-apply" 
                                     context="{'line_id': %s, 'order_id': %s}"/>
                                 <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
                                 """ % (escaped_default_code, line.id, line.order_id.id)
@@ -101,11 +101,13 @@ class delete_sale_order_line_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
+        wf_service = netsvc.LocalService("workflow")
+
         if context.get('ids', []) and len(context['ids']) > 1:
             for line_id in context.get('ids'):
-                self.pool.get('sale.order.line').unlink(cr, uid, line_id, context=context)
+                wf_service.trg_validate(uid, 'sale.order.line', line_id, 'cancel', cr)
         else:
-            self.pool.get('sale.order.line').unlink(cr, uid, context.get('line_id', []), context=context)
+            wf_service.trg_validate(uid, 'sale.order.line', context.get('line_id', []), 'cancel', cr)
 
             parent_so = self.pool.get('sale.order').browse(cr, uid, context.get('order_id', []), context=context)
             if len(parent_so['order_line']) == 0:

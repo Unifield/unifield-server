@@ -205,7 +205,6 @@
                                     <button string="Validate" icon="terp-check" name="validated" type="workflow" 
                                         attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                     <button string="Delete" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object"
-                                            confirm="Do you really want to delete selected record ?"
                                             attrs="{'invisible': [('fake_state', 'in', ('cancel', 'cancel_r' 'done'))]}" />
                                 </tree>
                             </field>

@@ -42,7 +42,7 @@ p_ids = oerp.get('res.partner').search([('name', '=', 'ESC'), ('active', 'in', [
 if p_ids:
     print 'Update Partner'
     sync_needed = True
-    oerp.get('res.partner').write(p_ids, {'active': True, 'name': 'MSF supply'})
+    oerp.get('res.partner').write(p_ids, {'active': True})
 
 loc_o = oerp.get('stock.location')
 loc_ids = loc_o.search([('name', '=', 'LOG')])

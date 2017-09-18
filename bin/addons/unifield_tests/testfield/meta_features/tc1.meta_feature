@@ -7,7 +7,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 #PARAMETRIZATION: 
 # HQ1C1P1: need to have Ext CU Sara as external Consumption Unit
 # HQ1C1: need to have 100000 quantiy of DINJACIV2V- with BN: lot1 and ED:30/Apr/2018
-# HQ1C1: need to create "MSF supply" as ESC supplier
+# HQ1C1: need to create "ESC" as ESC supplier
 
 
    ###################################################################
@@ -825,7 +825,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click "Edit" on line:
         | PRODUCT                                                           | QTY |
         | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. |   25.00  |
-	I fill "MSF supply" within column "SUPPLIER"
+	I fill "ESC" within column "SUPPLIER"
 	I validate the line
 	I click "Source Line" on line:
         | PRODUCT                                                           | QTY |
@@ -930,7 +930,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 
     I click "Edit" on line:
         | SOURCE DOCUMENT      | SUPPLIER     |
-        | *{{FO_REFERENCE_2}}* |  MSF supply |    
+        | *{{FO_REFERENCE_2}}* |  ESC |    
 
 	I click "Validate" on line:
        | PRODUCT CODE | PRODUCT DESCRIPTION                                  | STATE | QUANTITY |
@@ -956,7 +956,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 
     I click "Edit" on line:
         | SOURCE DOCUMENT      | SUPPLIER     |
-        | *{{FO_REFERENCE_2}}* |  MSF supply |    
+        | *{{FO_REFERENCE_2}}* |  ESC |    
 
 	I click "Confirm" on line:
        | PRODUCT CODE | PRODUCT DESCRIPTION                                  | STATE     | QUANTITY |
