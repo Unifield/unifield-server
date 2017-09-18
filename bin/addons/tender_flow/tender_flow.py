@@ -390,7 +390,8 @@ class tender(osv.osv):
 
     def wkf_action_done(self, cr, uid, ids, context=None):
         '''
-        tender is done
+        check all rfq are updated (or cancel)
+        create or update PO to selected suppliers
         '''
         if context is None:
             context = {}
@@ -398,6 +399,29 @@ class tender(osv.osv):
             ids = [ids]
 
         for tender in self.browse(cr, uid, ids, context=context):
+            # close linked RfQ:
+            rfq_list = []
+            for rfq in tender.rfq_ids:
+                if rfq.rfq_state not in ('updated', 'cancel'): 
+                    rfq_list.append(rfq.id)
+                else:
+                    self.pool.get('purchase.order').write(cr, uid, [rfq.id], {'rfq_state': 'done'}, context=context)
+            if rfq_list: # if some rfq have wrong state, we display a message
+                raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Cancelled."))
+
+            for tender_line in tender.tender_line_ids:
+                po_to_use = self.pool.get('sale.order.line').get_existing_po(cr, uid, [tender_line.id], context=context)
+                if not po_to_use: # then create new PO:
+                    po_to_use = self.pool.get('tender.line').create_po_from_tender_line(cr, uid, [tender_line.id], context=context)
+                    # log new PO:
+                    po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
+                    self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                    self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                # copy existing rfq line to the wanted PO:
+                self.pool.get('purchase.order.line').copy(cr, uid, tender_line.purchase_order_line_id.id, {
+                    'order_id': po_to_use,
+                }, context=context)
+
             self.write(cr, uid, [tender.id], {'state':'done'}, context=context)
             self.infolog(cr, uid, "The tender id:%s (%s) has been closed" % (
                 tender.id,
@@ -1132,6 +1156,70 @@ class tender_line(osv.osv):
                 'res_id': tender_id,
                 'target': 'crush',
                 'context': context}
+
+
+    def get_existing_po(self, cr, uid, ids, context=None):
+        """
+        SOURCING PROCESS: Do we have to create new PO/DPO or use an existing one ?
+        If an existing one can be used, then returns his ID, otherwise returns False
+        @return ID (int) of document to use or False
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res_id = False
+        for tender_line in self.browse(cr, uid, ids, context=context):
+            rfq_line = tender_line.purchase_order_line_id
+            # common domain:
+            domain = [
+                ('partner_id', '=', rfq_line.partner_id.id),
+                ('state', 'in', ['draft']),
+                ('delivery_requested_date', '=', rfq_line.delivery_requested_date),
+                ('rfq_ok', '=', False),
+                ('order_type', '=', 'regular'),
+            ]
+            res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
+        
+        if res_id and isinstance(res_id, list):
+            res_id = res_id[0]
+
+        return res_id or False
+
+    def create_po_from_tender_line(self, cr, uid, ids, context=None):
+        '''
+        SOURCING PROCESS: Create an new PO/DPO from tender line
+        @return id of the newly created PO
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for tender_line in self.browse(cr, uid, ids, context=context):
+            # commom fields:
+            po_values = {
+                'origin': tender_line.tender_id.name,
+                'partner_id': tender_line.supplier_id.id,
+                'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [tender_line.supplier_id.id], ['default'])['default'],
+                'customer_id': tender_line.sale_order_line_id and tender_line.sale_order_line_id.order_id.partner_id.id or False,    
+                'location_id': self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0],
+                'cross_docking_ok': True if tender_line.sale_order_line_id else False,
+                'pricelist_id': tender_line.supplier_id.property_product_pricelist_purchase.id,
+                'fiscal_position': tender_line.supplier_id.property_account_position and tender_line.supplier_id.property_account_position.id or False,
+                'warehouse_id': tender_line.tender_id.warehouse_id.id,
+                'categ': tender_line.tender_id.categ,
+                'priority': tender_line.tender_id.priority,
+                'details': tender_line.tender_id.details,
+                'delivery_requested_date': tender_line.tender_id.requested_date,
+                'related_sourcing_id': tender_line.sale_order_line_id and tender_line.sale_order_line_id.related_sourcing_id.id or False,
+                'unique_fo_id': tender_line.supplier_id.po_by_project == 'isolated' and tender_line.sale_order_line_id and tender_line.sale_order_line_id.order_id.id or False,
+                'order_type': 'regular',    
+            }
+
+        return self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
+
 
 tender_line()
 

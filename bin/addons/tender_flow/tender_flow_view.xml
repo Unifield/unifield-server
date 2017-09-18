@@ -84,7 +84,7 @@
                         <button name="compare_rfqs" states="comparison" string="Compare RfQs" type="object" icon="gtk-find" />
                         <button name="update_supplier_info" states="comparison" string="Update Product's Suppliers" type="object" icon="gtk-edit"
                             attrs="{'invisible':['|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison')]}" />
-                        <button name="button_done" states="comparison" string="Continue Sourcing Process" icon="gtk-go-forward"
+                        <button name="wkf_action_done" states="comparison" type="object" string="Continue Sourcing Process" icon="gtk-go-forward"
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','=', False)]}" />
                         <button name="create_po" states="comparison" string="Create PO" type="object" icon="gtk-add"
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />

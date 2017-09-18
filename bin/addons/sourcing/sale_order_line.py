@@ -1363,7 +1363,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 ('delivery_requested_date', '=', sourcing_line.date_planned),
                 ('rfq_ok', '=', False),
             ]
-            if sourcing_line.po_cft == 'po':
+            if sourcing_line.po_cft in ('po', 'cft', 'rfq'):
                 domain.append(('order_type', '=', 'regular'))
             elif sourcing_line.po_cft == 'dpo':
                 domain.append(('order_type', '=', 'direct'))
