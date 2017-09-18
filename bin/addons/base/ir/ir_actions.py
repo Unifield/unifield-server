@@ -296,7 +296,7 @@ class act_window(osv.osv):
         'views': fields.function(_views_get_fnc, method=True, type='binary', string='Views'),
         'limit': fields.integer('Limit', help='Default limit for the list view'),
         'auto_refresh': fields.integer('Auto-Refresh',
-                                       help='Add an auto-refresh on the view'),
+                                       help='Auto refresh the view after X seconds'),
         'groups_id': fields.many2many('res.groups', 'ir_act_window_group_rel',
                                       'act_id', 'gid', 'Groups'),
         'search_view_id': fields.many2one('ir.ui.view', 'Search View Ref.'),
