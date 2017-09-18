@@ -697,7 +697,7 @@ class account_journal(osv.osv):
                 if move_lines:
                     raise osv.except_osv(_('Warning !'), _('You cannot modify company of this journal as its related record exist in Entry Lines'))
             if not journal.is_current_instance and not context.get('sync_update_execution'):
-                raise osv.except_osv(_('Warning'), _("You can't edit a Journal that does not belong to the current instance."))
+                raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
         return super(account_journal, self).write(cr, uid, ids, vals, context=context)
 
     def create_sequence(self, cr, uid, vals, context=None):

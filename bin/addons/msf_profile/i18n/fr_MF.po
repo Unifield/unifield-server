@@ -99653,11 +99653,11 @@ msgstr "Un journal analytique avec le code %s existe déjà dans l'instance actu
 #. module: account
 #: code:addons/account/account.py:700
 #, python-format
-msgid "You can't edit a Journal that does not belong to the current instance."
+msgid "You can't edit a Journal that doesn't belong to the current instance."
 msgstr "Vous ne pouvez pas modifier un Journal qui n'appartient pas à l'instance actuelle."
 
 #. module: account_journal
 #: code:addons/account_journal/project/project.py:135
 #, python-format
-msgid "You can't edit an Analytic Journal that does not belong to the current instance."
+msgid "You can't edit an Analytic Journal that doesn't belong to the current instance."
 msgstr "Vous ne pouvez pas modifier un Journal Analytique qui n'appartient pas à l'instance actuelle."

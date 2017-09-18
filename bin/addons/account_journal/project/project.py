@@ -132,7 +132,7 @@ class account_analytic_journal(osv.osv):
             context = {}
         for journal_id in self.browse(cr, uid, ids, fields_to_fetch=['is_current_instance'], context=context):
             if not journal_id.is_current_instance and not context.get('sync_update_execution'):
-                raise osv.except_osv(_('Warning'), _("You can't edit an Analytic Journal that does not belong to the current instance."))
+                raise osv.except_osv(_('Warning'), _("You can't edit an Analytic Journal that doesn't belong to the current instance."))
             self._check_code_duplication(cr, uid, vals, current_id=journal_id.id, context=context)
         return super(account_analytic_journal, self).write(cr, uid, ids, vals, context=context)
 
