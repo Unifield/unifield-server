@@ -365,7 +365,10 @@
                                 <field name="origin" groups="base.group_extended" widget="char"/>
                                 <field name="internal_type"/>
                                 <field name="customer_ref" widget="char"/>
-                                <field name="pricelist_id" string="Currency"/>
+                                <group colspan="4">
+                                    <field name="pricelist_id" string="Currency"/>
+                                    <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': [('state', 'in', ['rfq_updated', 'done', 'cancel'])]}" />
+                                </group>
                             </group>
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('rfq_state', '!=', 'draft')]}" />
                             <newline/>

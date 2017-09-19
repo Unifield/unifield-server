@@ -483,7 +483,7 @@ class purchase_order(osv.osv):
                                           ),
         'warehouse_id': fields.many2one('stock.warehouse', 'Warehouse', states={'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'location_id': fields.many2one('stock.location', 'Destination', required=True, domain=[('usage','<>','view')]),
-        'pricelist_id':fields.many2one('product.pricelist', 'Pricelist', required=True, states={'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
+        'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, states={'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
         'state': fields.function(_get_less_advanced_pol_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
                                  'purchase.order.line': (_get_order, ['state'], 10), 
