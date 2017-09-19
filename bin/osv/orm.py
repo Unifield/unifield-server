@@ -1044,13 +1044,23 @@ class orm_template(object):
         error_list = []
         while position<len(datas):
             res = {}
-
-            (res, position, warning, res_id, xml_id) = \
-                process_liness(self, datas, [], current_module, self._name, fields_def, position=position)
+            try:
+                (res, position, warning, res_id, xml_id) = \
+                    process_liness(self, datas, [], current_module, self._name, fields_def, position=position)
+            except Exception as e:
+                if display_all_errors:
+                    res = None
+                    position += 1
+                    warning = [str(e)]
+                    res_id = False
+                    xml_id = False
+                else:
+                    raise
             if len(warning):
                 if display_all_errors:
                     error_list.append(_('Line %s: %s') % (str(position),
                         '\n'.join(warning)))
+                    cr.rollback()
                     continue
                 else:
                     cr.rollback()
@@ -1064,6 +1074,7 @@ class orm_template(object):
                 if display_all_errors:
                     error_list.append(_('Line %s: %s') % (str(position),
                         tools.ustr(e.value)))
+                    cr.rollback()
                     continue
                 else:
                     cr.rollback()
@@ -1088,9 +1099,8 @@ class orm_template(object):
                     self._parent_store_compute(cr)
                 cr.commit()
 
-            if error_list:
-                cr.rollback()
-                return (-1, {}, '\n'.join(error_list), '')
+        if error_list:
+            return (-1, {}, '\n'.join(error_list), '')
 
         if context.get('defer_parent_store_computation'):
             self._parent_store_compute(cr)
