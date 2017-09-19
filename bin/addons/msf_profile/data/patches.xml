@@ -1,10 +1,22 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="us_3048_patch" model="patch.scripts">
+            <field name="method">us_3048_patch</field>
+        </record>
+
+        <record id="us_2647_patch" model="patch.scripts">
+            <field name="method">us_2647</field>
+        </record>
+
+        <record id="us_244_patch" model="patch.scripts">
+            <field name="method">us_2444_touch_liquidity_journals</field>
+        </record>
+
         <record id="us_3098_patch" model="patch.scripts">
             <field name="method">us_3098_patch</field>
         </record>
-        
+
         <record id="us_2257_patch" model="patch.scripts">
             <field name="method">us_2257_patch</field>
         </record>
@@ -133,8 +145,8 @@
             <field name="method">us_1427_patch</field>
         </record>
 
-        <record id="us_1452_patch" model="patch.scripts">
-            <field name="method">us_1452_patch</field>
+        <record id="us_1452_patch_bis" model="patch.scripts">
+            <field name="method">us_1452_patch_bis</field>
         </record>
 
         <record id="us_1469_patch" model="patch.scripts">
@@ -188,6 +200,10 @@
 
         <record id="us_1359_update_move_shipment" model="patch.scripts">
             <field name="method">us_1359_update_move_shipment</field>
+        </record>
+
+        <record id="us_1562_rename_special_periods" model="patch.scripts">
+            <field name="method">us_1562_rename_special_periods</field>
         </record>
     </data>
 </openerp>

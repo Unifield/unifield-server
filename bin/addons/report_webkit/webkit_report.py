@@ -499,7 +499,7 @@ class WebKitParser(report_sxw):
             if 'False' in element.text:
                 error_message = 'Line %s of document %s is corrupted, ' \
                     'DateTime cannot contain \'False\': %s' % \
-                        (element.sourceline, report_name, element.text)
+                    (element.sourceline, report_name, element.text)
                 logger.error(error_message)
                 element_to_remove.append(element)
         for element in element_to_remove:
@@ -513,15 +513,28 @@ class WebKitParser(report_sxw):
                                       namespaces=namespaces)
         for cell in number_cells:
             # if space in the in Numbers, remove them
-            forbidden_chars = [' ', u'\xa0']
+            forbidden_chars = [' ', u'\xc2\xa0', u'\xa0']
             for char in forbidden_chars:
-                if isinstance(cell.text, str) and char in cell.text:
+                if isinstance(cell.text, basestring) and char in cell.text:
                     error_message = 'Line %s of document %s is corrupted, a '\
-                        'Number cannot contain characters or spaces: %s' % \
-                            (cell.sourceline, report_name, cell.text)
+                        'Number cannot contain characters or spaces: %r' % \
+                        (cell.sourceline, report_name, cell.text)
                     logger.warning(error_message)
                     cell.text = cell.text.replace(char, '')
                     xml_modified = True
+
+            # check the number is really a number, if not, set it to zero
+            try:
+                if cell.text:
+                    float(cell.text)
+            except (ValueError, TypeError):
+                error_message = 'Line %s of document %s is corrupted, a '\
+                    'Number cell contain other things than number: %r. '\
+                    'It has been replaced by 0.0.' % \
+                    (cell.sourceline, report_name, cell.text)
+                logger.warning(error_message)
+                cell.text = '0.0'
+                xml_modified = True
 
         if xml_modified:
             # return modified xml

@@ -26,7 +26,7 @@
 	  <field eval="1" name="interval_number"/>
 	  <field name="model">operations.count</field>
 	</record>
-	
+
 	<record forcecreate="True" id="ir_cron_ops_counts_write" model="ir.cron">
 	  <field name="name">Write Operation Counts</field>
 	  <field name="function">write_counts</field>
@@ -38,6 +38,33 @@
 	  <field eval="1" name="active"/>
 	  <field eval="15" name="interval_number"/>
 	  <field name="model">operations.count</field>
+	</record>
+
+	<record forcecreate="True" id="ir_cron_memory_usage_create" model="ir.cron">
+	  <field name="name">Add memory usage entry</field>
+	  <field name="function">create_memory_entries</field>
+	  <field name="user_id">1</field>
+	  <field name="interval_type">minutes</field>
+	  <field eval="-1" name="numbercall"/>
+	  <field eval="5" name="priority"/>
+	  <field eval="0" name="doall"/>
+	  <field eval="1" name="active"/>
+	  <field eval="5" name="interval_number"/>
+	  <field name="model">memory.usage</field>
+	</record>
+
+	<record forcecreate="True" id="ir_cron_memory_ops_memory" model="ir.cron">
+	  <field name="name">Add operational event memory</field>
+	  <field name="function">log_memory_usage</field>
+	  <field name="user_id">1</field>
+	  <field name="interval_type">hours</field>
+	  <field eval="-1" name="numbercall"/>
+	  <field eval="5" name="priority"/>
+	  <field eval="0" name="doall"/>
+	  <field eval="1" name="active"/>
+	  <field eval="12" name="interval_number"/>
+      <field name="nextcall">2017-08-01 08:00:00</field>
+	  <field name="model">operations.event</field>
 	</record>
   </data>
 </openerp>

@@ -13,7 +13,7 @@
             <field name="arch" type="xml">
                 <form string="Fiscalyear">
                     <group>
-                    <field name="name"/>
+                    <field name="name" default_focus="1"/>
                     <field name="code"/>
                     <field name="date_start"/>
                     <field name="date_stop"/>
@@ -975,8 +975,12 @@
                                   <field name="type"/>
                                   <field name="amount" attrs="{'readonly':[('type','in',('none', 'code', 'balance'))]}"/>
                                   <separator colspan="4" string="Accounting Information"/>
-                                  <field name="account_collected_id" required="1" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation'),('user_type.code','not in',['income','expense'])]"/>
-                                  <field name="account_paid_id" required="1" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation'),('user_type.code','not in',['income','expense'])]"/>
+                                  <field name="account_collected_id" required="1"
+                                         domain="[('type', 'not in', ['view', 'consolidation']),
+                                                  ('user_type_code', '=', 'tax')]"/>
+                                  <field name="account_paid_id" required="1"
+                                         domain="[('type', 'not in', ['view', 'consolidation']),
+                                                  ('user_type_code', '=', 'tax')]"/>
                                   <separator colspan="4" string="Tax Declaration: Invoices"/>
                                   <field name="base_code_id"/>
                                   <field name="base_sign"/>
@@ -2736,6 +2740,22 @@ action = self.pool.get('res.config').next(cr, uid, [], context)
             <field name="view_id" ref="account_cash_statement_graph"/>
             <field name="act_window_id" ref="action_view_bank_statement_tree"/>
         </record>
+
+        <record id="action_aml_related_entries" model="ir.actions.server">
+            <field name="name">Related Entries</field>
+            <field name="model_id" ref="model_account_move_line"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_related_entries(context=context)</field>
+        </record>
+        <record id="ir_related_entries_search" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">account.move.line</field>
+            <field name="name">Related Entries</field>
+            <field eval="'ir.actions.server,%d'%action_aml_related_entries" name="value"/>
+            <field eval="True" name="object"/>
+            <field name="sequence" eval="105"/>
+        </record>
+
         <menuitem action="action_view_bank_statement_tree" id="journal_cash_move_lines"
             parent="menu_finance_bank_and_cash"/>
 

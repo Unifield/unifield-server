@@ -152,6 +152,7 @@
                     	<field name="so_state_stored" invisible="True" />
                         <field name="date_planned" attrs="{'readonly': [('so_state_stored', 'not in', ['draft', 'validated'])]}" />
                         <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}" />
+                        <field name="stock_take_date" />
                     </xpath>
                     
                     <!-- Give the context when create a new SO line -->

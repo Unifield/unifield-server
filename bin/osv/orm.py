@@ -83,9 +83,10 @@ def intersect(la, lb):
     #return list(set(la).intersection(lb)) # this is less compatible, see US-867
 
 class except_orm(Exception):
-    def __init__(self, name, value):
+    def __init__(self, name, value, ir_rule_error=False):
         self.name = name
         self.value = value
+        self.ir_rule_error = ir_rule_error
         self.args = (name, value)
 
 class BrowseRecordError(Exception):
@@ -156,8 +157,6 @@ class browse_record(object):
 
         if not (id and isinstance(id, (int, long,))):
             raise BrowseRecordError(_('Wrong ID for the browse record, got %r, expected an integer.') % (id,))
-#        if not table.exists(cr, uid, id, context):
-#            raise BrowseRecordError(_('Object %s does not exists') % (self,))
 
         if id not in self._data:
             self._data[id] = {'id': id}
@@ -212,7 +211,14 @@ class browse_record(object):
                 fields_to_fetch = [x for x in fields_to_fetch if x[0] in
                                    self._fields_to_fetch]
             field_names = [x[0] for x in fields_to_fetch]
-            field_values = self._table.read(self._cr, self._uid, ids, field_names, context=self._context, load="_classic_write")
+            try:
+                field_values = self._table.read(self._cr, self._uid, ids, field_names, context=self._context, load="_classic_write")
+            except except_orm, e:
+                if e.ir_rule_error:
+                    # read more ids than asked, but this could raise an ir.rule error (read prev_reg_id on register but user is not allowed to read it)
+                    field_values = self._table.read(self._cr, self._uid, [self._id], field_names, context=self._context, load="_classic_write")
+                else:
+                    raise
 
             # TODO: improve this, very slow for reports
             if self._fields_process:
@@ -3519,7 +3525,8 @@ class orm(orm_template):
                     if cr.rowcount != len(local_ids):
                         raise except_orm(_('AccessError'),
                                          _('Operation prohibited by access rules, or performed on an already deleted document (Operation: read, Document type: %s).')
-                                         % (self._description,))
+                                         % (self._description,),
+                                         ir_rule_error=True)
                 else:
                     cr.execute(query, (tuple(local_ids),))
                 res.extend(cr.dictfetchall())
@@ -4187,7 +4194,7 @@ class orm(orm_template):
 
             if record_id is None or not record_id:
                 record_id = self.pool.get(table).create(cr, user, tocreate[table], context=context)
-            else:
+            elif tocreate[table]:
                 self.pool.get(table).write(cr, user, [record_id], tocreate[table], context=context)
 
             upd0 += ',' + self._inherits[table]

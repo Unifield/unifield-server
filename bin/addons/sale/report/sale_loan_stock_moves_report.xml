@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="report_sale_loan_stock_moves_xls"
+            name="sale.loan.stock.moves.report_xls"
+            model="sale.loan.stock.moves"
+            string="Loan Report"
+            file="sale/report/sale_loan_stock_moves_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+    </data>
+</openerp>

@@ -811,6 +811,15 @@ class shipment(osv.osv):
                 picking = family.draft_packing_id
                 draft_picking = family.ppl_id and family.ppl_id.previous_step_id and family.ppl_id.previous_step_id.backorder_id or False
 
+                # get the linked "save as draft" wizard if has:
+                picking_processor_wiz = []
+                if draft_picking:
+                    picking_processor_wiz = self.pool.get('create.picking.processor').search(cr, uid, [
+                        ('picking_id', '=', draft_picking.id),
+                        ('draft', '=', True),
+                    ], context=context)
+                    if picking_processor_wiz:
+                        picking_processor_wiz = self.pool.get('create.picking.processor').browse(cr, uid, picking_processor_wiz[0], context=context)
 
                 # UF-2531: Store some important info for the return pack messages
                 return_info.setdefault(str(counter), {
@@ -864,6 +873,7 @@ class shipment(osv.osv):
                     """
                     cp_vals = {
                         'product_qty': return_qty,
+                        'date_expected': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                         'line_number': move.line_number,
                         'location_dest_id': move.initial_location.id,
                         'from_pack': family.to_pack - family.selected_number + 1,
@@ -883,6 +893,24 @@ class shipment(osv.osv):
                     draft_initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
                     draft_initial_qty += return_qty
                     move_obj.write(cr, uid, [draft_move.id], {'product_qty': draft_initial_qty}, context=context)
+
+                    # Update or create "save as draft" lines with returned qty:
+                    if picking_processor_wiz:
+                        save_as_draft_move = self.pool.get('create.picking.move.processor').search(cr, uid, [
+                            ('wizard_id', '=', picking_processor_wiz.id),
+                            ('move_id', '=', draft_move.id),
+                        ], context=context)
+                        if not save_as_draft_move: # then create the SaD line:
+                            move_data = self.pool.get('create.picking.move.processor')._get_line_data(cr, uid, wizard=picking_processor_wiz, move=draft_move, context=context)
+                            move_data.update({'quantity': return_qty})
+                            save_as_draft_move = self.pool.get('create.picking.move.processor').create(cr, uid, move_data, context=context)
+                            save_as_draft_move = [save_as_draft_move]
+                        else: # update Sad line
+                            for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
+                                self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
+                                    'ordered_quantity': sad_move.ordered_quantity + return_qty,
+                                    'quantity': sad_move.quantity + return_qty,
+                                }, context=context)
 
             # log the increase action - display the picking ticket view form - log message for each draft packing because each corresponds to a different draft picking
             if not log_flag:
@@ -3505,9 +3533,16 @@ class stock_picking(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
 
-        processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
-        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        # if wizard already exists, then open it (able save as draft/reset functionnality):
+        wiz_ids = proc_obj.search(cr, uid, [('picking_id', 'in', ids), ('draft', '=', True)], context=context)
+        if wiz_ids:
+            processor_id = wiz_ids[0]
+        else:
+            processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
+            proc_obj.create_lines(cr, uid, processor_id, context=context)
 
         return {
             'type': 'ir.actions.act_window',
@@ -3516,6 +3551,7 @@ class stock_picking(osv.osv):
             'view_type': 'form',
             'view_mode': 'form',
             'target': 'new',
+            'context': context,
         }
 
     def do_create_picking(self, cr, uid, wizard_ids, context=None):
@@ -3697,8 +3733,13 @@ class stock_picking(osv.osv):
                 _('The picking ticket is not in \'Available\' state. Please check this and re-try')
             )
 
-        processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
-        proc_obj.create_lines(cr, uid, processor_id, context=context)
+        # if wizard already exists, then open it (able save as draft/reset functionnality):
+        wiz_ids = proc_obj.search(cr, uid, [('picking_id', 'in', ids), ('draft', '=', True)], context=context)
+        if wiz_ids:
+            processor_id = wiz_ids[0]
+        else:
+            processor_id = proc_obj.create(cr, uid, {'picking_id': ids[0]}, context=context)
+            proc_obj.create_lines(cr, uid, processor_id, context=context)
 
         return {
             'type': 'ir.actions.act_window',
@@ -4318,6 +4359,16 @@ class stock_picking(osv.osv):
             picking = wizard.picking_id
             draft_picking_id = picking.previous_step_id.backorder_id.id
 
+            # get the linked "save as draft" wizard if has:
+            picking_processor_wiz = []
+            if draft_picking_id:
+                picking_processor_wiz = self.pool.get('create.picking.processor').search(cr, uid, [
+                    ('picking_id', '=', draft_picking_id),
+                    ('draft', '=', True),
+                ], context=context)
+                if picking_processor_wiz:
+                    picking_processor_wiz = self.pool.get('create.picking.processor').browse(cr, uid, picking_processor_wiz[0], context=context)
+
             for line in wizard.move_ids:
                 return_qty = line.quantity
 
@@ -4340,6 +4391,7 @@ class stock_picking(osv.osv):
 
                 move_values = {
                     'product_qty': initial_qty,
+                    'date_expected': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 }
 
                 if not initial_qty:
@@ -4366,11 +4418,27 @@ class stock_picking(osv.osv):
 
                 # Increase the draft move with the returned quantity
                 draft_move_id = line.move_id.backmove_id.id
-                draft_initial_qty = move_obj.read(cr, uid, [draft_move_id], ['product_qty'], context=context)[0]['product_qty']
-                draft_initial_qty += return_qty
-                move_obj.write(cr, uid, [draft_move_id], {'product_qty': draft_initial_qty}, context=context)
+                draft_move_qty = move_obj.read(cr, uid, [draft_move_id], ['product_qty'], context=context)[0]['product_qty']
+                draft_move_qty += return_qty
+                move_obj.write(cr, uid, [draft_move_id], {'product_qty': draft_move_qty}, context=context)
 
-
+                # Update or create "save as draft" lines with returned qty:
+                if picking_processor_wiz:
+                    save_as_draft_move = self.pool.get('create.picking.move.processor').search(cr, uid, [
+                        ('wizard_id', '=', picking_processor_wiz.id),
+                        ('move_id', '=', draft_move_id),
+                    ], context=context)
+                    if not save_as_draft_move: # then create the SaD line:
+                        move_data = self.pool.get('create.picking.move.processor')._get_line_data(cr, uid, wizard=picking_processor_wiz, move=line.move_id.backmove_id, context=context)
+                        move_data.update({'quantity': return_qty})
+                        save_as_draft_move = self.pool.get('create.picking.move.processor').create(cr, uid, move_data, context=context)
+                        save_as_draft_move = [save_as_draft_move]
+                    else: # update Sad line
+                        for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
+                            self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
+                                'ordered_quantity': sad_move.ordered_quantity + return_qty,
+                                'quantity': sad_move.quantity + return_qty,
+                            }, context=context)
 
             # Log message for PPL
             ppl_view = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_ppl_form')[1]
@@ -4480,6 +4548,14 @@ class stock_picking(osv.osv):
                 # get the draft picking
                 draft_picking_id = picking.backorder_id.id
 
+                # get the linked "save as draft" wizard if has:
+                picking_processor_wiz = self.pool.get('create.picking.processor').search(cr, uid, [
+                    ('picking_id', '=', draft_picking_id),
+                    ('draft', '=', True),
+                ], context=context)
+                if picking_processor_wiz:
+                    picking_processor_wiz = self.pool.get('create.picking.processor').browse(cr, uid, picking_processor_wiz[0], context=context)
+
                 # for each move from picking ticket - could be split moves
                 for move in picking.move_lines:
                     # find the corresponding move in draft
@@ -4489,6 +4565,25 @@ class stock_picking(osv.osv):
                         initial_qty = move_obj.read(cr, uid, [draft_move.id], ['product_qty'], context=context)[0]['product_qty']
                         initial_qty += move.product_qty
                         move_obj.write(cr, uid, [draft_move.id], {'product_qty': initial_qty}, context=context)
+
+                        # Update or create "save as draft" lines with returned qty:
+                        if picking_processor_wiz:
+                            save_as_draft_move = self.pool.get('create.picking.move.processor').search(cr, uid, [
+                                ('wizard_id', '=', picking_processor_wiz.id),
+                                ('move_id', '=', draft_move.id),
+                            ], context=context)
+                            if not save_as_draft_move: # then create the SaD line:
+                                move_data = self.pool.get('create.picking.move.processor')._get_line_data(cr, uid, wizard=picking_processor_wiz, move=move, context=context)
+                                move_data.update({'quantity': move.product_qty})
+                                save_as_draft_move = self.pool.get('create.picking.move.processor').create(cr, uid, move_data, context=context)
+                                save_as_draft_move = [save_as_draft_move]
+                            else: # update Sad line
+                                for sad_move in self.pool.get('create.picking.move.processor').browse(cr, uid, save_as_draft_move, context=context):
+                                    self.pool.get('create.picking.move.processor').write(cr, uid, sad_move.id, {
+                                        'ordered_quantity': sad_move.ordered_quantity + move.product_qty,
+                                        'quantity': sad_move.quantity + move.product_qty,
+                                    }, context=context)
+
                         # log the increase action
                         # TODO refactoring needed
                         obj_data = self.pool.get('ir.model.data')

@@ -28,6 +28,7 @@ import tools
 from tools.translate import _
 
 from account_override import ACCOUNT_RESTRICTED_AREA
+from msf_field_access_rights.osv_override import _get_instance_level
 
 class account_journal(osv.osv):
     _inherit = "account.journal"
@@ -226,6 +227,10 @@ class account_journal(osv.osv):
                 and not context.get('sync_update_execution', False) and \
                 not reg_obj.search_exist(cr, uid, [('journal_id', '=', journal_id)], context=context):
 
+            if _get_instance_level(self, cr, uid) == 'project' and self.search_exist(cr, uid, [('id', '=', journal_id), ('is_current_instance', '=', False)], context=context):
+                # no way: you are on P1 and you're trying to create a P2 register !
+                return False
+
             # 'from_journal_creation' in context permits to pass register creation that have a
             #  'prev_reg_id' mandatory field. This is because this register is the first register from this journal.
             context.update({'from_journal_creation': True})
@@ -234,8 +239,8 @@ class account_journal(osv.osv):
             current_date = datetime.date.today().strftime('%Y-%m-%d')
             periods = self.pool.get('account.period').search(cr, uid, [
                 ('date_stop', '>=',current_date),
-                    ('state', '=', 'draft'),
-                    ('special', '=', False),
+                ('state', '=', 'draft'),
+                ('special', '=', False),
             ], context=context, limit=1, order='date_stop')
             if not periods:
                 raise osv.except_osv(_('Warning'), _('Sorry, No open period for creating the register!'))
@@ -256,8 +261,8 @@ class account_journal(osv.osv):
             not context.get('allow_journal_system_create', False) and \
                 vals.get('type', '') == 'system':
                     # user not allowed to create 'system' journal
-                    raise osv.except_osv(_('Warning'),
-                                         _('You can not create a System journal'))
+            raise osv.except_osv(_('Warning'),
+                                 _('You can not create a System journal'))
 
         # Prepare some values
         seq_pool = self.pool.get('ir.sequence')

@@ -113,7 +113,7 @@ class account_cash_statement(osv.osv):
                 vals.update({'balance_start': prev_reg.balance_end_real})
 
         if not prev_reg and sync_update and vals.get('period_id') and vals.get('journal_id'):
-            prev_reg_id = previous_register_id(self, cr, uid, vals['period_id'], vals['journal_id'], context=context)
+            prev_reg_id = previous_register_id(self, cr, uid, vals['period_id'], vals['journal_id'], context=context, raise_error=False)
             if prev_reg_id:
                 prev_reg = self.browse(cr, uid, [prev_reg_id], fields_to_fetch=['responsible_ids'], context=context)[0]
 

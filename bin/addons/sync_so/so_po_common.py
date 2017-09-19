@@ -215,6 +215,8 @@ class so_po_common(osv.osv_memory):
             header_result['transport_type'] = header_info.get('transport_type')
         if 'ready_to_ship_date' in header_info:
             header_result['ready_to_ship_date'] = header_info.get('ready_to_ship_date')
+        if 'stock_take_date' in header_info:
+            header_result['stock_take_date'] = header_info.get('stock_take_date')
 
         # US-830: If the PO is intermission/intersection, don't take the AD from the sync. message
         partner_type = self.get_partner_type(cr, uid, source, context)
@@ -306,6 +308,8 @@ class so_po_common(osv.osv_memory):
             header_result['delivery_requested_date'] = header_info.get('delivery_requested_date')
         if 'is_a_counterpart' in header_info:
             header_result['is_a_counterpart'] = header_info.get('is_a_counterpart')
+        if 'stock_take_date' in header_info:
+            header_result['stock_take_date'] = header_info.get('stock_take_date')
 
         # UTP-952: only retrieve the AD from the source if the partner type is not intermission or section
         partner_type = self.get_partner_type(cr, uid, source, context)
@@ -428,6 +432,9 @@ class so_po_common(osv.osv_memory):
                 values['price_unit'] = line.price_unit
             else:
                 values['price_unit'] = 0 # This case is for the line that has price unit False (actually 0 but OpenERP converted to False)
+
+            if line_dict.get('stock_take_date'):
+                values['stock_take_date'] = line_dict['stock_take_date']
 
             #US-172: Added the cost_price to IR, for FO line it's not required.
             if line_dict.get('cost_price'):

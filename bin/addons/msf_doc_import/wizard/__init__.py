@@ -118,6 +118,7 @@ ACCOUNT_INVOICE_COLUMNS_FOR_IMPORT = [x for (x,y) in ACCOUNT_INVOICE_COLUMNS_HEA
 SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT = [
     (_('Product Code'), 'string'),
     (_('Product Description'), 'string'),
+    (_('Supplier Code'), 'string'),
     (_('UoM'), 'string'),
     (_('Min. Qty'), 'number'),
     (_('Unit Price'), 'number',),
