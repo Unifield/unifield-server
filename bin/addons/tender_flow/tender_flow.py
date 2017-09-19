@@ -1639,6 +1639,10 @@ class purchase_order(osv.osv):
         elif not vals.get('name', False):
             vals.update({'name': self.pool.get('ir.sequence').get(cr, uid, 'purchase.order')})
 
+        if context.get('rfq_ok', False) and not vals.get('location_id'):
+            input_loc = self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)
+            vals['location_id'] = input_loc and input_loc[0] or False
+
         return super(purchase_order, self).create(cr, uid, vals, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
