@@ -333,7 +333,7 @@
             <field name="priority">21</field>
             <field name="arch" type="xml">
                 <form string="Request for Quotation">
-                    <group col="6" colspan="4">
+                    <group col="6" colspan="4" attrs="{'readonly': [('rfq_state', 'in', ['done', 'cancel'])]}">
                         <field name="name"/>
                         <field name="date_order"/>
                         <field name="invoiced"/>
@@ -353,19 +353,20 @@
                         <field name="tender_id"/>
                         <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
                         <field name="rfq_delivery_address"/>
-
                         <field name="from_procurement" invisible="1"/>
                     </group>
                     <notebook colspan="4">
                         <page string="Request for Quotation">
-                            <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
-                            <field name="partner_type"/>
-                            <field name="allocation_setup" invisible="1" />
-                            <field name="partner_address_id"/>
-                            <field name="origin" groups="base.group_extended" widget="char"/>
-                            <field name="internal_type"/>
-                            <field name="customer_ref" widget="char"/>
-                            <field name="pricelist_id" string="Currency"/>
+                            <group attrs="{'readonly': [('rfq_state', 'in', ['done', 'cancel'])]}">
+                                <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
+                                <field name="partner_type"/>
+                                <field name="allocation_setup" invisible="1" />
+                                <field name="partner_address_id"/>
+                                <field name="origin" groups="base.group_extended" widget="char"/>
+                                <field name="internal_type"/>
+                                <field name="customer_ref" widget="char"/>
+                                <field name="pricelist_id" string="Currency"/>
+                            </group>
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('rfq_state', '!=', 'draft')]}" />
                             <newline/>
                             <button name="wizard_import_po_line" string="Import RfQ lines" colspan="4" icon="gtk-dnd" type="object" attrs="{'invisible':[('rfq_state', 'not in', ['sent', 'done'])]}"/>
