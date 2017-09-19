@@ -524,6 +524,10 @@ class ir_model_access(osv.osv):
             # TODO: exclude xml-rpc requests
             return True
 
+        if uid== self.pool.get('res.users')._get_sync_user_id(cr):
+            # User for sync have all accesses
+            return True
+
         assert mode in ['read','write','create','unlink'], 'Invalid access mode'
 
         if isinstance(model, browse_record):
