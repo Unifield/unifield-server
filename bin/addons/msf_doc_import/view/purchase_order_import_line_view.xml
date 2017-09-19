@@ -42,9 +42,6 @@
                     </field>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="before" >
-                    <button name="wizard_import_po_line" string="Import RfQ lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'rfq_sent')]}"/>
-                </xpath>
-                <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="before" >
                   <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                     <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" col="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                     <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': ['|', ('po_from_fo', '=', True), ('po_from_ir', '=', True)]}" />

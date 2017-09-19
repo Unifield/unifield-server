@@ -1832,23 +1832,28 @@ price. Please set unit price on these lines or cancel them'''),
                 view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'tender_flow', 'view_rfq_tree')
                 if view:
                     view_id = view[1]
+        if view_type == 'form':
+            if context.get('rfq_ok', False):
+                view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'tender_flow', 'view_rfq_form')
+                if view:
+                    view_id = view[1]
 
         # call super
         result = super(purchase_order, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        if view_type == 'form':
-            if context.get('rfq_ok', False):
-                # the title of the screen depends on po type
-                form = etree.fromstring(result['arch'])
+        # if view_type == 'form':
+        #     if context.get('rfq_ok', False):
+        #         # the title of the screen depends on po type
+        #         form = etree.fromstring(result['arch'])
 
-                fields = form.xpath('//form[@string="%s"]' % _('Purchase Order'))
-                for field in fields:
-                    field.set('string', _("Request for Quotation"))
+        #         fields = form.xpath('//form[@string="%s"]' % _('Purchase Order'))
+        #         for field in fields:
+        #             field.set('string', _("Request for Quotation"))
 
-                fields2 = form.xpath('//page[@string="%s"]' % _('Purchase Order'))
-                for field2 in fields2:
-                    field2.set('string', _("Request for Quotation"))
+        #         fields2 = form.xpath('//page[@string="%s"]' % _('Purchase Order'))
+        #         for field2 in fields2:
+        #             field2.set('string', _("Request for Quotation"))
 
-                result['arch'] = etree.tostring(form)
+        #         result['arch'] = etree.tostring(form)
 
         return result
 
