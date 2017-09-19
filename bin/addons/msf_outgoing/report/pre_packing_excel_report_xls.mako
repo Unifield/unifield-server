@@ -58,6 +58,16 @@
             <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
+        <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+    <Style ss:ID="line_left_no_digit">
+        <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
     </Style>
     <Style ss:ID="line_right">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
@@ -78,6 +88,15 @@
             <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
         </Borders>
         <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+    <Style ss:ID="line_center_no_digit">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+        <Borders>
+            <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+            <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+        </Borders>
     </Style>
     <Style ss:ID="line_left_date">
         <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
@@ -167,7 +186,7 @@
 
         ## WORKSHEET HEADER
         <Row>
-            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Reference*')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Reference')|x}</Data></Cell>
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${pt.name|x}</Data></Cell>
             <Cell ss:StyleID="line_header" ss:MergeAcross="2"><Data ss:Type="String">${_('Shipper')|x}</Data></Cell>
             <Cell ss:StyleID="line_header" ss:MergeAcross="4"><Data ss:Type="String">${_('Consignee')|x}</Data></Cell>
@@ -175,31 +194,31 @@
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Date')|x}</Data></Cell>
             <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${formatLang(time.strftime('%Y-%m-%d'), date=True)|x}</Data></Cell>
-            <Cell ss:StyleID="line_borders_top" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper(pt)[0].get('shipper_name', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_top" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_name', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_top" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_name', '')|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Requester Ref')|x}</Data></Cell>
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${pt.sale_id and pt.sale_id.client_order_ref or ''|x}</Data></Cell>
-            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper(pt)[0].get('shipper_contact', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_contact', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_contact', '')|x}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Our Ref*')|x}</Data></Cell>
+            <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Our Ref')|x}</Data></Cell>
             <Cell ss:StyleID="line_center"><Data ss:Type="String">${pt.sale_id and pt.sale_id.name or ''|x}</Data></Cell>
-            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper(pt)[0].get('shipper_addr_street', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_addr_street', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_addr_street', '')|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('FO Date')|x}</Data></Cell>
             <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${pt.sale_id and formatLang(pt.sale_id.date_order, date=True) or ''|x}</Data></Cell>
-            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper(pt)[0].get('shipper_addr_zip_city', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_addr_zip_city', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_addr_zip_city', '')|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Packing Date')|x}</Data></Cell>
             <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${pt.sale_id and formatLang(pt.sale_id.delivery_requested_date, date=True) or ''|x}</Data></Cell>
-            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getShipper()[0].get('shipper_phone', '')|x}</Data></Cell>
+            <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_phone', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_phone', '')|x}</Data></Cell>
         </Row>
         <Row>
@@ -219,20 +238,20 @@
 
         <%
             headers_list = [
-                _('Item*'),
-                _('Code*'),
+                _('Item'),
+                _('Code'),
                 _('Description'),
                 _('Comment'),
-                _('Total Qty to pack*'),
+                _('Total Qty to pack'),
                 _('Batch #'),
                 _('Expiry Date #'),
                 _('KC'),
                 _('DG'),
                 _('CS'),
                 _('Qty Packed'),
-                _('From pack*'),
-                _('To pack*'),
-                _('Weight per pack (kg)*'),
+                _('From pack'),
+                _('To pack'),
+                _('Weight per pack (kg)'),
                 _('Size (w x l x h) (cm)'),
                 _('Pack Type'),
             ]
@@ -246,20 +265,20 @@
 
         % for m in getLines(pt, False):
             <Row ss:Height="14.25">
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.line_number or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center_no_digit"><Data ss:Type="Number">${m.line_number|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${(m.sale_line_id and m.sale_line_id.product_id.default_code) or (m.product_id and m.product_id.default_code) or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${m.sale_line_id and m.sale_line_id.product_id.name or m.product_id.name or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${m.sale_line_id and m.comment or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${(formatLang(m.product_qty, digits=2) + ' ' + m.product_uom.name) or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${formatLang(m.product_qty, digits=2) or 0|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.prodlot_id and m.prodlot_id.name or ''|x}</Data></Cell>
                 <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${m.prodlot_id and formatLang(m.prodlot_id.life_date, date=True) or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.kc_txt or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.dg_txt or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.cs_txt or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
-                <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number"></Data></Cell>
+                <Cell ss:StyleID="line_left_no_digit"><Data ss:Type="Number"></Data></Cell>
+                <Cell ss:StyleID="line_left_no_digit"><Data ss:Type="Number"></Data></Cell>
+                <Cell ss:StyleID="line_left"><Data ss:Type="Number"></Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String"></Data></Cell>
             </Row>

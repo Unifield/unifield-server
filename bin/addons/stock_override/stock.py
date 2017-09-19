@@ -2908,7 +2908,7 @@ class ir_values(osv.osv):
                                     'tree_but_open': []}
 
         picking_accepted_values = {'client_action_multi': [],
-                                   'client_print_multi': ['Picking Ticket', 'Pre-Packing List', 'Labels', 'Pre-Packing Excel Export'],
+                                   'client_print_multi': ['Picking Ticket', 'Pre-Packing List', 'Pre-Packing Excel Export', 'Labels'],
                                    'client_action_relate': [''],
                                    'tree_but_action': [],
                                    'tree_but_open': []}

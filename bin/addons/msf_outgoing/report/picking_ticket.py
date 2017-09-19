@@ -133,58 +133,40 @@ class picking_ticket(report_sxw.rml_parse):
         """
         return [self.pool.get('shipment').default_get(self.cr, self.uid, [])]
 
-    def get_picking_shipper(self, picking):
+    def get_picking_shipper(self):
         """
-        Return values for shipper
-        @param picking: browse_record of the picking.ticket
-        @return: A dictionnary with consignee values
+        The 'Shipper' fields must be filled automatically with the
+        default address of the current instance
         """
+        user_obj = self.pool.get('res.users')
         partner_obj = self.pool.get('res.partner')
         addr_obj = self.pool.get('res.partner.address')
-        cr = self.cr
-        uid = self.uid
-        res = {}
 
-        if picking.partner_id:
-            shipper_partner = picking.partner_id
-            shipper_addr_id = partner_obj.address_get(cr, uid, shipper_partner.id)['default']
-            shipper_addr = None
+        instance_partner = user_obj.browse(self.cr, self.uid, self.uid).company_id.partner_id
+        instance_addr_id = partner_obj.address_get(self.cr,self. uid, instance_partner.id)['default']
+        instance_addr = addr_obj.browse(self.cr, self.uid, instance_addr_id)
 
-            addr = ''
-            addr_street = ''
-            addr_zip_city = ''
-            if shipper_addr_id:
-                shipper_addr = addr_obj.browse(cr, uid, shipper_addr_id)
-                if shipper_addr.street:
-                    addr += shipper_addr.street
-                    addr += ' '
-                    addr_street += shipper_addr.street + ' '
-                if shipper_addr.street2:
-                    addr += shipper_addr.street2
-                    addr += ' '
-                    addr_street += shipper_addr.street2
-                if shipper_addr.zip:
-                    addr += shipper_addr.zip
-                    addr += ' '
-                    addr_zip_city += shipper_addr.zip + ' '
-                if shipper_addr.city:
-                    addr += shipper_addr.city
-                    addr += ' '
-                    addr_zip_city += shipper_addr.city
-                if shipper_addr.country_id:
-                    addr += shipper_addr.country_id.name
+        addr_street = ''
+        addr_zip_city = ''
+        if instance_addr.street:
+            addr_street += instance_addr.street + ' '
+        if instance_addr.street2:
+            addr_street += instance_addr.street2
+        if instance_addr.zip:
+            addr_zip_city += instance_addr.zip + ' '
+        if instance_addr.city:
+            addr_zip_city += instance_addr.city + ' '
+        if instance_addr.country_id:
+            addr_zip_city += instance_addr.country_id.name
 
-            res.update({
-                'shipper_name': shipper_partner.name,
-                'shipper_contact': shipper_partner.partner_type == 'internal' and 'Supply responsible' or shipper_addr and shipper_addr.name or '',
-                'shipper_address': addr,
-                'shipper_phone': shipper_addr and shipper_addr.phone or '',
-                'shipper_email': shipper_addr and shipper_addr.email or '',
-                'shipper_addr_street': addr_street,
-                'shipper_addr_zip_city': addr_zip_city,
-            })
-
-        return [res]
+        return {
+            'shipper_name': instance_partner.name,
+            'shipper_contact': 'Supply responsible',
+            'shipper_addr_street': addr_street,
+            'shipper_addr_zip_city': addr_zip_city,
+            'shipper_phone': instance_addr.phone,
+            'shipper_email': instance_addr.email,
+        }
 
     def get_lines(self, picking, is_pdf=True):
         """

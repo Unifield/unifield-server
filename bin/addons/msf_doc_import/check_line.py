@@ -27,6 +27,7 @@ from tools.translate import _
 from mx import DateTime
 import logging
 import pooler
+import datetime
 
 def get_xml(value):
     new_value = []
@@ -240,6 +241,125 @@ def compute_location_value(cr, uid, **kwargs):
         if not loc_name:
             error_list.append(msg or _('The location was not valid.'))
     return {'location_id': loc_id, 'error_list': error_list}
+
+
+def pack_move_value_for_update(cr, uid, **kwargs):
+    """
+    Compute move values according to cells content.
+    Return from_pack, to_pack, weight, width, length, height, pack_type
+    """
+    pack_type_id = False
+    row = kwargs['row']
+    move_obj = kwargs['move_obj']
+    pack_type_obj = kwargs['pack_type_obj']
+    date_tools_obj = kwargs['date_tools_obj']
+    context = kwargs['context']
+    db_date_format = date_tools_obj.get_db_date_format(cr, uid, context=context)
+    date_format = date_tools_obj.get_date_format(cr, uid, context)
+    move = move_obj.browse(cr, uid, kwargs['move_id'])
+    # Tender does not have product_qty, it is set to 0
+    weight = kwargs['to_write'].get('weight', 0.00)
+    width = kwargs['to_write'].get('width', 0.00)
+    length = kwargs['to_write'].get('length', 0.00)
+    height = kwargs['to_write'].get('height', 0.00)
+    # Tender does not have value, it is False
+    from_pack = kwargs['to_write'].get('from_pack', False)
+    to_pack = kwargs['to_write'].get('to_pack', False)
+    error_list = kwargs['to_write']['error_list']
+    try:
+        # line number
+        if row.cells[0].data and row.cells[0].type == 'int':
+            if row.cells[0].data != move.line_number:
+                error_list.append(_(' The line number (%s) is not the same as %s (%s).')
+                                  % (row.cells[0].data, move.picking_id.name, move.line_number))
+        elif row.cells[0].data and row.cells[0].type != 'int':
+            error_list.append(_(' The Line Number has to be an integer.'))
+        else:
+            error_list.append(_(' The Line Number has to be defined.'))
+        # product default code
+        if row.cells[1].data and row.cells[1].type == 'str':
+            if row.cells[1].data != move.product_id.default_code:
+                error_list.append(_(' The Product Code (%s) is not the same as %s (%s).')
+                                  % (row.cells[1].data, move.picking_id.name, move.product_id.default_code))
+        elif row.cells[1].data and row.cells[1].type != 'str':
+                error_list.append(_(' The Product Code has to be a string.'))
+        else:
+            error_list.append(_(' The Product Code has to be defined.'))
+        # total qty to pack
+        if row.cells[4].data and row.cells[4].type in ('int', 'float'):
+            if row.cells[4].data != move.product_qty:
+                error_list.append(_(' The Product Qty (%s) is not the same as %s (%s).')
+                                  % (row.cells[4].data, move.picking_id.name, move.product_qty))
+        elif row.cells[4].data and row.cells[4].type != 'float':
+            error_list.append(_(' The Total Qty to Pack has to be an integer or a float.'))
+        else:
+            error_list.append(_(' The Total Qty to Pack has to be defined.'))
+        # batch
+        if row.cells[5].data and row.cells[6].data and move.prodlot_id:
+            move_expiry_date = datetime.datetime.strptime(move.prodlot_id.life_date, db_date_format) or False
+            if isinstance(row.cells[6].data, str):
+                cell_expiry_date = datetime.datetime.strptime(row.cells[6].data, date_format) or False
+            else:
+                cell_expiry_date = row.cells[6].data
+            if move_expiry_date and cell_expiry_date:
+                move_expiry_date_str = move_expiry_date.strftime(date_format)
+                cell_expiry_date_str = cell_expiry_date.strftime(date_format)
+                if move.prodlot_id.name == row.cells[5].data and move_expiry_date_str == cell_expiry_date_str:
+                    if row.cells[5].type != 'str':
+                        error_list.append(_(' The Batch Number has to be a string.'))
+                    if not isinstance(cell_expiry_date, datetime.date)\
+                            and not datetime.datetime.strptime(cell_expiry_date_str, date_format):
+                        error_list.append(_(' The Expiry Date has to be a date.'))
+                elif move.prodlot_id.name != row.cells[5].data or move_expiry_date_str != cell_expiry_date_str:
+                    if move.prodlot_id.name != row.cells[5].data:
+                        error_list.append(_(' The Batch Number (%s) is not the same as in %s (%s).')
+                                          % (row.cells[5].data, move.picking_id.name, move.prodlot_id.name))
+                    if move_expiry_date_str != cell_expiry_date_str:
+                        error_list.append(_(' The Expiry Date (%s) is not the same as in %s (%s).')
+                                          % (cell_expiry_date_str, move.picking_id.name, move_expiry_date_str))
+            else:
+                error_list.append(_(' The Expiry Date (%s) should have the format "DD/Mon/YYYY" or "DD-MM-YY".') % (row.cells[6].data))
+        elif row.cells[5].data and row.cells[6].data and not move.prodlot_id:
+            error_list.append(_(' No Batch Number or Expiry Date to be defined for this line.'))
+        elif (not row.cells[5].data or not row.cells[6].data) and move.prodlot_id:
+            error_list.append(_(' The Batch Number and its Expiry Date to be defined together.'))
+        # from pack and to pack
+        if row.cells[11].data and row.cells[12].data and row.cells[11].type == row.cells[12].type == 'int'\
+                and row.cells[11].data > 0 and row.cells[12].data > 0:
+            from_pack = row.cells[11].data
+            to_pack = row.cells[12].data
+        elif row.cells[11].data and row.cells[12].data and (row.cells[11].type != 'int' or row.cells[12].type != 'int'):
+            error_list.append(_(' From pack and To pack have to be integers.'))
+        else:
+            from_pack = 1
+            to_pack = 1
+            error_list.append(_(' From pack and To pack to be defined and over 0, set to 1 by default.'))
+        # weight per pack
+        if row.cells[13].data and row.cells[13].type in ('int', 'float') and row.cells[13].data > 0:
+            weight = row.cells[13].data
+        elif row.cells[13].data and row.cells[13].type not in ('int', 'float'):
+            error_list.append(_(' Weight per pack has to be an float.'))
+        else:
+            error_list.append(_(' Weight per pack has to be defined and over 0.'))
+        # pack type + width, length & height
+        if row.cells[15].data:
+            if row.cells[15].type == 'str':
+                pack_type_ids = pack_type_obj.search(cr, uid, [('name', '=', row.cells[15].data)])
+                if pack_type_ids:
+                    pack_type = pack_type_obj.browse(cr, uid, pack_type_ids[0])
+                    pack_type_id = pack_type.id
+                    width = pack_type.width
+                    length = pack_type.length
+                    height = pack_type.height
+                else:
+                    error_list.append(_(' This Pack Type doesn\'t exists.'))
+            else:
+                error_list.append(_(' Pack Type has to be a string.'))
+    # if more rows than moves
+    except IndexError:
+        error_list.append(_('No move found for this line.'))
+    return {'error_list': error_list, 'from_pack': from_pack, 'to_pack': to_pack, 'weight': weight, 'width': width,
+            'length': length, 'height': height, 'pack_type': pack_type_id}
 
 
 def product_value(cr, uid, **kwargs):

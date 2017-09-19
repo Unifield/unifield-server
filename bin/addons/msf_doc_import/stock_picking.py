@@ -33,6 +33,8 @@ from msf_doc_import.wizard import IN_COLUMNS_HEADER_FOR_IMPORT as columns_header
 from msf_doc_import.wizard import IN_LINE_COLUMNS_FOR_IMPORT as columns_for_incoming_import
 from msf_doc_import.wizard import OUT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_delivery_import
 from msf_doc_import.wizard import OUT_LINE_COLUMNS_FOR_IMPORT as columns_for_delivery_import
+from msf_doc_import.wizard import PPL_COLUMNS_LINES_HEADERS_FOR_IMPORT as ppl_columns_lines_headers_for_import
+from msf_doc_import.wizard import PPL_COLUMNS_LINES_FOR_IMPORT as ppl_columns_lines_for_import
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 
 
@@ -106,6 +108,48 @@ class stock_picking(osv.osv):
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.pick.line',
+                'res_id': export_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'crush',
+                'context': context,
+                }
+
+    def wizard_update_ppl_to_create_ship(self, cr, uid, ids, context=None):
+        '''
+        Launches the wizard to update lines from a file
+        '''
+        # Objects
+        wiz_obj = self.pool.get('wizard.import.ppl.to.create.ship')
+
+        context = context is None and {} or context
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        context.update({'active_id': ids[0]})
+
+        header_cols = ppl_columns_lines_headers_for_import
+        cols = ppl_columns_lines_for_import
+
+        columns_header = [(_(f[0]), f[1]) for f in header_cols]
+        default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
+        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        export_id = wiz_obj.create(cr, uid, {'file': file,
+                                             'filename_template': 'template.xls',
+                                             'filename': 'Lines_Not_Imported.xls',
+                                             'message': """        The file should be in XML 2003 format.
+
+For the main header, the first eight lines of the first column should have this values: Reference, Date, Requester Ref, \
+Our Ref, FO Date, Packing Date, RTS Date, Transport Mode. And the first line of the fourth and the seventh column \
+should have this values: Shipper, Consignee.
+There should also be a blank line between the main header and the lines header.
+The lines columns at the tenth line should be in this values: %s""" % ', '.join([_(f) for f in cols]),
+                                             'picking_id': ids[0],
+                                             'state': 'draft',}, context=context)
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'wizard.import.ppl.to.create.ship',
                 'res_id': export_id,
                 'view_type': 'form',
                 'view_mode': 'form',

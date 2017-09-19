@@ -127,6 +127,13 @@ SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT = [
 ]
 SUPPLIER_CATALOG_COLUMNS_FOR_IMPORT = [x for (x,y) in SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT]
 
+PPL_COLUMNS_LINES_HEADERS_FOR_IMPORT = [
+    (_('Item'), 'number'), (_('Code'), 'string'), (_('Description'), 'string'), (_('Comment'), 'string'), (_('Total Qty to pack'), 'string'), (_('Batch #'), 'string'), (_('Expiry Date #'), 'date'),
+    (_('KC'), 'string'), (_('DG'), 'string'), (_('CS'), 'string'), (_('Qty Packed'), 'number'), (_('From pack'), 'number'), (_('To pack'), 'number'), (_('Weight per pack (kg)'), 'number'),
+    (_('Size (w x l x h) (cm)'), 'number'), (_('Pack Type'), 'string')
+]
+PPL_COLUMNS_LINES_FOR_IMPORT = [x for (x,y) in PPL_COLUMNS_LINES_HEADERS_FOR_IMPORT]
+
 import wizard_import_po
 import stock_partial_picking
 import wizard_import_po_line
@@ -145,6 +152,7 @@ import wizard_import_product_list
 import wizard_import_supplier_catalogue
 import wizard_po_simulation_screen
 import wizard_in_simulation_screen
+import wizard_import_ppl_to_create_ship
 
 import abstract_wizard_import
 import wizard_import_batch
