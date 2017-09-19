@@ -388,7 +388,7 @@
                                 <tree string="Lines" hide_delete_button="True">
                                     <field name="line_number"/>
                                     <field name="default_code"/>
-                                    <field name="name"/>
+                                    <field name="default_name"/>
                                     <field name="comment"/>
                                     <field name="nomenclature_description"/>
                                     <field name="supplier_code"/>
@@ -407,16 +407,11 @@
                             </field>
                         </page>
                         <page string="Notes">
-                            <field name="import_in_progress"/>
                             <field colspan="4" name="notes" nolabel="1"/>
                             <separator colspan="4" string="Message ESC" />
                             <field name="message_esc" colspan="4" nolabel="1" readonly="1" attrs="{'invisible': [('partner_type', '!=', 'esc')]}" />
                             <separator colspan="4" string="Project info" />
                             <field name="project_ref" readonly="1" />
-                            <separator colspan="4" string="Sourcing group" />
-                            <field name="related_sourcing_id"/>
-                            <separator colspan="4" string="Import filenames" />
-                            <field name="import_filenames"/>
                         </page>
                     </notebook>
                     <group col="12" colspan="4">
