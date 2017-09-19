@@ -1844,25 +1844,19 @@ price. Please set unit price on these lines or cancel them'''),
 
         return super(purchase_order, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
 
-    def wkf_act_rfq_done(self, cr, uid, ids, context=None):
+    def rfq_closed(self, cr, uid, ids, context=None):
         '''
-        Set the state to done and update the price unit in the procurement order
+        close the Request for Quotation
         '''
-
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
 
         for rfq in self.browse(cr, uid, ids, context=context):
             self.infolog(cr, uid, "The RfQ id:%s (%s) has been closed" % (rfq.id, rfq.name))
-            if rfq.from_procurement:
-                for line in rfq.order_line:
-                    if line.procurement_id:
-                        vals = {'price_unit': line.price_unit}
-                        self.pool.get('procurement.order').write(cr, uid, [line.procurement_id.id], vals, context=context)
-        self.create_extra_lines_on_fo(cr, uid, ids, context=context)
 
-
-        return self.write(cr, uid, ids, {'state': 'done'}, context=context)
+        return self.write(cr, uid, ids, {'rfq_state': 'done'}, context=context)
 
 purchase_order()
 
