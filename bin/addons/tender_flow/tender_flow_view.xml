@@ -417,7 +417,7 @@
                             <field name="import_filenames"/>
                         </page>
                     </notebook>
-                    <group col="7" colspan="4">
+                    <group col="12" colspan="4">
                         <field name="currency_id"/>
                         <field name="amount_untaxed" sum="Untaxed amount"/>
                         <field name="amount_tax"/>
