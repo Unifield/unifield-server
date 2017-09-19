@@ -430,6 +430,7 @@
                         <field name="functional_amount_total"/>
                     </group>
                     <group col="11" colspan="4">
+                        <field name="state" invisible="1"/>
                         <field name="rfq_state" readonly="1"/>
                         <button name="purchase_cancel"  type="object" attrs="{'invisible': [('rfq_state', 'not in', ['draft', 'sent'])]}" string="Cancel" icon="gtk-cancel"/>
                         <button name="rfq_sent" type="object" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': [('rfq_state', '!=', 'draft')]}" />
