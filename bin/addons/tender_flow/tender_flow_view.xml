@@ -334,23 +334,6 @@
             <field name="arch" type="xml">
                 <form string="Request for Quotation">
                     <group col="6" colspan="4">
-                        <field name="requested_date_in_past" invisible="1" />
-                        <group colspan="6">
-                            <html>
-                                <p id="view_order_requested_in_past"
-                                    style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
-                                    <translate>WARNING: The requested date of this Request for Quotation is in the past.</translate>
-                                    <br />
-                                </p>
-                                <script language="javascript">
-                                    var is_in_past = $('#requested_date_in_past').val();
-                                    if (is_in_past == "1") {
-                                        msg_dom = $('#view_order_requested_in_past');
-                                        msg_dom.show();
-                                    }
-                                </script>
-                            </html>
-                        </group>
                         <field name="name"/>
                         <field name="date_order"/>
                         <field name="invoiced"/>
@@ -370,6 +353,8 @@
                         <field name="tender_id"/>
                         <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
                         <field name="rfq_delivery_address"/>
+
+                        <field name="from_procurement" invisible="1"/>
                     </group>
                     <notebook colspan="4">
                         <page string="Request for Quotation">
@@ -432,6 +417,9 @@
                         <button name="purchase_cancel"  type="object" attrs="{'invisible': [('rfq_state', 'not in', ['draft', 'sent'])]}" string="Cancel" icon="gtk-cancel"/>
                         <button name="rfq_sent" type="object" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': [('rfq_state', '!=', 'draft')]}" />
                         <button name="check_rfq_updated" type="object" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': [('rfq_state', '!=', 'sent')]}" />
+                        <button name="generate_po_from_rfq" type="object" string="Generate Po" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', True)], 'readonly': [('amount_total', '=', 0.00)]}" />
+                        <button name="rfq_done" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', True)]}" />
+                        <button name="rfq_done" string="Continue sourcing" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', False)]}" />
                     </group>
                 </form>
             </field>
