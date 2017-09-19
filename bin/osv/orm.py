@@ -2242,7 +2242,7 @@ class orm_memory(orm_template):
 
     def _check_access(self, cr, uid, object_id, mode):
         user_obj = self.pool.get('res.users')
-        if uid != 1 and uid != user_obj._get_sync_user_id() and self.datas[object_id]['internal.create_uid'] != uid:
+        if uid != 1 and uid != user_obj._get_sync_user_id(cr) and self.datas[object_id]['internal.create_uid'] != uid:
             raise except_orm(_('AccessError'), '%s access is only allowed on your own records for osv_memory objects except for the super-user' % mode.capitalize())
 
     def vaccum(self, cr, uid, force=False):
