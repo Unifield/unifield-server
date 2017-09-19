@@ -1059,6 +1059,9 @@ class Entity(osv.osv):
     def execute_message(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
+        # force user to user_sync
+        uid = self.pool.get('res.users')._get_sync_user_id(cr)
+
         messages = self.pool.get(context.get('message_received_model', 'sync.client.message_received'))
 
         # Get the whole list of messages to execute
