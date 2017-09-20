@@ -4,7 +4,6 @@ try:
     ROOT = cp.request.pool.get_controller("/openerp")
     SHORTCUTS = cp.request.pool.get_controller("/openerp/shortcuts")
     REQUESTS = cp.request.pool.get_controller("/openerp/requests")
-    UF_VERSION = cp.request.pool.get_controller("/openerp/unifield_version")
 
     shortcuts = SHORTCUTS.my()
     requests, total_request = REQUESTS.my()
