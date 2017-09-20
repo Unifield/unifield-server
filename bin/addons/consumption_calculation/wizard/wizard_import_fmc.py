@@ -99,8 +99,7 @@ class wizard_import_fmc(osv.osv_memory):
 
         doc_headers = self.pool.get('wizard.export.fmc').get_headers(context=context)
         if len(header) != len(doc_headers):
-            raise osv.except_osv(_('Error'), _("""You should have exactly 7 columns in this order:
-Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Until"""))
+            raise osv.except_osv(_('Error'), _('Import template not recognized, please use the same as exports'))
 
         for i, h in enumerate(doc_headers):
             if h.lower().strip() != header[i].data.lower().strip():
