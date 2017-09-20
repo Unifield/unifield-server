@@ -1856,7 +1856,7 @@ price. Please set unit price on these lines or cancel them'''),
         for rfq in self.browse(cr, uid, ids, context=context):
             self.infolog(cr, uid, "The RfQ id:%s (%s) has been closed" % (rfq.id, rfq.name))
 
-        return self.write(cr, uid, ids, {'rfq_state': 'done'}, context=context)
+        return self.write(cr, uid, ids, {'rfq_state': 'done', 'state': 'done'}, context=context)
 
 purchase_order()
 
