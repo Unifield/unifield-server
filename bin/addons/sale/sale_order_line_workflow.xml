@@ -138,6 +138,11 @@
                 <field name="act_to" ref="act_sol_sourced_n"/>
                 <field name="condition">set_as_sourced_n == True</field>
             </record>
+            <record id="trans_sol_validated_sourced_n" model="workflow.transition">
+                <field name="act_from" ref="act_sol_validated"/>
+                <field name="act_to" ref="act_sol_sourced_n"/>
+                <field name="condition">set_as_sourced_n == True</field>
+            </record>
             <record id="trans_sol_sourced_n_to_confirmed" model="workflow.transition">
                 <field name="act_from" ref="act_sol_sourced_n"/>
                 <field name="act_to" ref="act_sol_confirmed"/>
