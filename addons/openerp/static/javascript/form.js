@@ -255,11 +255,11 @@ function validate_binary_size(form){
 }
 
 
-function error_display(msg) {
+function error_display(msg, title='Warning Message') {
     var error = jQuery("<table>",{'width': '100%', 'height': '100%'}
                 ).append(
                     jQuery("<tr>").append(
-                        jQuery("<td>", {'colspan': 2, 'class': 'error_message_header'}).text(_('Warning Message'))
+                        jQuery("<td>", {'colspan': 2, 'class': 'error_message_header'}).text(_(title))
                     ),
                     jQuery("<tr>").append(
                         jQuery("<td>", {'css': 'padding: 4px 2px;'}).append(

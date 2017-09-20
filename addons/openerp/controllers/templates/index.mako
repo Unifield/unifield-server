@@ -94,6 +94,9 @@
             <tr>
                 <%include file="banner.mako"/>
             </tr>
+            <tr>
+                <%include file="shortcut_tooltip.mako"/>
+            </tr>
             % if tools is not None:
                 <tr>
                     <td id="secondary" class="sidenav-open">
