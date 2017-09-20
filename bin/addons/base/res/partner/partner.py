@@ -308,7 +308,8 @@ class res_partner_address(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
 
-        if "email" in vals:
+        # If a non-empty email field is given
+        if "email" in vals and vals["email"]:
             is_valid, error = validate_email(vals["email"])
             if not is_valid:
                 raise osv.except_osv(_('Error'),
