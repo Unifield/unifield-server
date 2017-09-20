@@ -1237,6 +1237,24 @@ class Entity(osv.osv):
                 % (_(monitor.status_dict[last_log[0]]), last_log[1], last_log[2], last_log[3])
         return "Connected"
 
+    def update_nb_shortcut_used(self, cr, uid, nb_shortcut_used, context=None):
+        '''
+        if the current have used some shorcut, update his counter and last date of use accordingly
+        '''
+        if context is None:
+            context = {}
+        if not nb_shortcut_used:
+            return
+        user_obj = self.pool.get('res.users')
+        current_date = datetime.now()
+        previous_nb_shortcut_used = user_obj.read(cr, uid, uid,
+                                                  ['nb_shortcut_used'],
+                                                  context=context)['nb_shortcut_used']
+        total_shortcut_used = previous_nb_shortcut_used + nb_shortcut_used
+        user_obj.write(cr, uid, uid, {'last_use_shortcut': current_date,
+                                      'nb_shortcut_used': total_shortcut_used,
+                                     }, context=context)
+
     def interrupt_sync(self, cr, uid, context=None):
         if self.is_syncing():
             #try:
