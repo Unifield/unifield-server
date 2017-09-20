@@ -276,9 +276,9 @@ class purchase_order_line(osv.osv):
         return True
 
 
-    def action_sourced_s(self, cr, uid, ids, context=None):
+    def action_sourced_sy(self, cr, uid, ids, context=None):
         '''
-        wkf method when PO line get the sourced_s state
+        wkf method when PO line get the sourced_sy state
         '''
         if context is None:
             context = {}
@@ -286,13 +286,13 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
-        self.write(cr, uid, ids, {'state': 'sourced_s'}, context=context)
+        self.write(cr, uid, ids, {'state': 'sourced_sy'}, context=context)
 
         self.update_fo_lines(cr, uid, ids, context=context)
-        # update linked sol (same instance) to sourced-s (if has)
+        # update linked sol (same instance) to sourced-sy (if has)
         for po in self.browse(cr, uid, ids, context=context):
             if po.linked_sol_id:
-                wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_s', cr)
+                wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_sy', cr)
 
         return True
         

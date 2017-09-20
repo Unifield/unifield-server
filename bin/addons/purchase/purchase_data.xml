@@ -59,8 +59,8 @@
             <field name="name">validated</field>
             <field name="sequence">20</field>
         </record>
-        <record id="pol_state_sourced_s" model="purchase.order.line.state">
-            <field name="name">sourced_s</field>
+        <record id="pol_state_sourced_sy" model="purchase.order.line.state">
+            <field name="name">sourced_sy</field>
             <field name="sequence">40</field>
         </record>
         <record id="pol_state_sourced_v" model="purchase.order.line.state">

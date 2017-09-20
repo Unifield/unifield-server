@@ -194,16 +194,16 @@ class sale_order_line(osv.osv):
         return True
 
 
-    def action_sourced_s(self, cr, uid, ids, context=None):
+    def action_sourced_sy(self, cr, uid, ids, context=None):
         '''
-        Workflow method called when the sale.order.line get the sourced_s state
+        Workflow method called when the sale.order.line get the sourced_sy state
         '''
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'state': 'sourced_s'}, context=context)
+        self.write(cr, uid, ids, {'state': 'sourced_sy'}, context=context)
 
         return True
 
