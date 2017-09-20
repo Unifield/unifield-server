@@ -29,9 +29,6 @@ css_style = ""
 add_style = cp.config('server.environment') in css_style_dict.keys()
 if add_style:
     css_style = css_style_dict.get(cp.config('server.environment'), "")
-
-from openobject import release
-version = release.version
 %>
 <td id="top"
     % if add_style:
