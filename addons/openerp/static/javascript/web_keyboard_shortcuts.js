@@ -123,6 +123,12 @@ $.ctrlshift = function(key, callback, args) {
         if(!args) args=[]; // IE barks when args is null
         if((e.keyCode == key.charCodeAt(0) || e.keyCode == key) && e.ctrlKey && e.shiftKey) {
             e.preventDefault();  // override the browser shortcut keys
+            if (!document.nb_shortcut_used){
+                document.nb_shortcut_used = 1;
+            }
+            else{
+                document.nb_shortcut_used += 1;
+            }
             callback.apply(this, args);
             return false;
         }
