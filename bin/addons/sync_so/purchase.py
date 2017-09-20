@@ -87,7 +87,7 @@ class purchase_order_line_sync(osv.osv):
                         resourced_sol_id = self.pool.get('sale.order.line').search(cr, uid, [('resourced_original_line', '=', orig_po_line.linked_sol_id.id)], context=context)
                         linked = False
                         if resourced_sol_id:
-                            pol_values['linked_sol_id']=  resourced_sol_id[0]
+                            pol_values['linked_sol_id'] = resourced_sol_id[0]
                             linked = True
                             self.pool.get('sale.order.line').write(cr, uid, resourced_sol_id, {'set_as_sourced_n': True}, context=context)
                         if not linked:
