@@ -166,10 +166,7 @@
                     % if buttons.pager:
                         ${pager.display()}
                     % endif
-                        
-                    % if tg_errors:
-                    <span class="inline-b left w50" style="color:#ff0000;">${_("The form contains errors.")}</span>
-                    % endif
+
                 </div>
                 % endif
                 <div${ " class='non-editable'" if not form.screen.editable and form.screen.view_type == 'form' else "" | n }>${form.display()}</div>
@@ -213,6 +210,10 @@
                 $hide.click();
                 return false;
             })
+                        
+            % if tg_errors:
+            error_display(_("The form contains errors."));
+            % endif
         })
     </script>
 </%def>
