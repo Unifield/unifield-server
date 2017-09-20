@@ -1273,18 +1273,15 @@ class Entity(osv.osv):
         if result['nb_shortcut_used'] and result['nb_shortcut_used'] > 100:
             # once the user have used the shortcut a lot of times, do not
             # bother him with warning message
-            print 'display_shortcut_message1, return False'
             return False
         if not result['last_use_shortcut']:
             # user have never used the shortcut
-            print 'display_shortcut_message2, return %s' % (random() < 0.1)
             return random() < 0.1
         last_date = result['last_use_shortcut']
         last_date = datetime.strptime(last_date[:19],'%Y-%m-%d %H:%M:%S')
         current_date = datetime.now()
         if current_date - last_date > timedelta(days=1):
             # the user didn't use the shortcut since long time
-            print 'display_shortcut_message3, return %s' % (random() < 0.1)
             return random() < 0.1
         return False
 
