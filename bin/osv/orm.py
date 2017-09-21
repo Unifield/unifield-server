@@ -816,7 +816,7 @@ class orm_template(object):
         for d in list_data:
             i += 1
             try:
-                res = self.import_data(cr, uid, headers, [d])
+                res = self.import_data(cr, uid, headers, [d], has_header=True)
                 if res[0] == -1:
                     rejected.append((i, d, res[2]))
                 else:
@@ -830,7 +830,7 @@ class orm_template(object):
 
     def import_data(self, cr, uid, fields, datas, mode='init',
             current_module='', noupdate=False, context=None, filename=None,
-            display_all_errors=False):
+            display_all_errors=False, has_header=False):
         """
         Import given data in given module
 
@@ -843,6 +843,8 @@ class orm_template(object):
         :param noupdate: flag for record creation
         :param context: context arguments, like lang, time zone,
         :param filename: optional file to store partial import state for recovery
+        :param display_all_errors: display only the first error by default
+        :param has_header: flag to add 1 to the total line in error message
         :rtype: tuple
 
         This method is used when importing data via client menu.
@@ -1066,13 +1068,13 @@ class orm_template(object):
                     raise
             if len(warning):
                 if display_all_errors:
-                    error_list.append(_('Line %s: %s') % (str(position),
+                    error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
                         '\n'.join(warning)))
                     cr.rollback()
                     continue
                 else:
                     cr.rollback()
-                    return (-1, res, 'Line ' + str(position) +' : ' + '!\n'.join(warning), '')
+                    return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + '!\n'.join(warning), '')
 
             try:
                 ir_model_data_obj._update(cr, uid, self._name,
@@ -1080,24 +1082,24 @@ class orm_template(object):
                                           noupdate=noupdate, res_id=res_id, context=context)
             except except_osv, e:
                 if display_all_errors:
-                    error_list.append(_('Line %s: %s') % (str(position),
+                    error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
                         tools.ustr(e.value)))
                     cr.rollback()
                     continue
                 else:
                     cr.rollback()
-                    return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
+                    return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e.value), '')
             except Exception, e:
                 #US-88: If this from an import account analytic, and there is sql error, AND not sync context, then just clear the cache
                 if 'account.analytic.account' in self._name and not context.get('sync_update_execution', False):
                     cache.clean_caches_for_db(cr.dbname)
                 if display_all_errors:
-                    error_list.append(_('Line %s: %s') % (str(position),
+                    error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
                         tools.ustr(e) + "\n" +
                         tools.ustr(traceback.format_exc())))
                     continue
                 else:
-                    return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
+                    return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
 
             if not error_list and config.get('import_partial', False) and filename and (not (position%100)):
                 data = pickle.load(file(config.get('import_partial')))
