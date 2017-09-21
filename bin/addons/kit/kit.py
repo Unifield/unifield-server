@@ -297,21 +297,44 @@ class composition_kit(osv.osv):
             prodlot_id = datas[0]['composition_lot_id'][0]
         # update the context with needed data
         context.update(kit_id=kit_id, product_id=product_id, prodlot_id=prodlot_id)
-        
+
         return context
-    
+
+    def assert_available_stock(self, cr, uid, ids, context=None):
+
+        for kit in self.browse(cr, uid, ids, context=context):
+
+            # For kits with a batch, take the stock of the batch
+            # Otherwise, take the global stock of the product
+            if kit.composition_reference:
+                stock = kit.composition_product_id.qty_available
+                if stock <= 0:
+                    raise osv.except_osv(_('Error'),
+                                         _('This kit product is not available in stock !'))
+            else:
+                stock = kit.composition_lot_id.stock_available
+                if stock <= 0:
+                    raise osv.except_osv(_('Error'),
+                                         _('This kit product / batch is not available in stock !'))
+
+
     def substitute_items(self, cr, uid, ids, context=None):
         '''
         substitute lines from the composition kit with created new lines
         '''
+
         # we need the context for the wizard switch
         if context is None:
             context = {}
+
+        self.assert_available_stock(cr, uid, ids, context=context)
+
         # data
         name = _("Substitute Kit Items")
         model = 'substitute'
         step = 'substitute' # this value is used in substitute wizard for attrs of src location
         wiz_obj = self.pool.get('wizard')
+
         # get a context with needed data
         wiz_context = self._get_new_context(cr, uid, ids, context=dict(context))
         # open the selected wizard
@@ -336,6 +359,9 @@ class composition_kit(osv.osv):
         # we need the context for the wizard switch
         if context is None:
             context = {}
+
+        self.assert_available_stock(cr, uid, ids, context=context)
+
         # data
         name = _("De-Kitting")
         model = 'substitute'

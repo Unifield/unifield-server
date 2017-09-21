@@ -51,25 +51,29 @@ class substitute(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         for obj in self.browse(cr, uid, ids, context=context):
             for item in obj.composition_item_ids:
                 # integrity is not met
                 if item.integrity_status_func_substitute_item != 'empty':
                     return False
-        
+
         return True
-    
+
     def validate_item_from_stock(self, cr, uid, ids, context=None):
         '''
         both integrity and availability must be OK
-        
+
         'availability_status_func_substitute_item'
         'integrity_status_func_substitute_item'
-        
+
         return True or False
         '''
+
         for obj in self.browse(cr, uid, ids, context=context):
+
+            obj.kit_id.assert_available_stock()
+
             for item in obj.replacement_item_ids:
                 # integrity is not met
                 if item.integrity_status_func_substitute_item != 'empty':
@@ -376,36 +380,12 @@ class substitute(osv.osv_memory):
             available_qty = res['value']['qty_substitute_item']
             if available_qty < 1.0:
                 # we display the back button - hide close button
-                return self.confirmation_de_kitting(cr, uid, ids, context=dict(context, display_back_confirm=True, display_close_confirm=False))
+                raise osv.except_osv(_("Error"),
+                                     _("The Kit \'%s\' is not available from selected source location \'%s\'"
+                                     %(obj.product_id_substitute.name, obj.source_location_id.name)))
             else:
                 return self._do_de_kitting(cr, uid, ids, context=context)
-    
-    def confirmation_de_kitting(self, cr, uid, ids, context=None):
-        '''
-        open confirmation wizard
-        '''
-        # objects
-        wiz_obj = self.pool.get('wizard')
-        
-        # to de kitting
-        for obj in self.browse(cr, uid, ids, context=context):
-            # data
-            name = _("The Kit \'%s\' is not available from selected source location \'%s\'. Are you sure you want to process the Dekitting?")%(obj.product_id_substitute.name, obj.source_location_id.name)
-            model = 'confirm'
-            step = context.get('step', 'default')
-            question = 'The Kit \'%s\' is not available from selected source location \'%s\'. Are you sure you want to process the Dekitting?'
-            clazz = 'substitute'
-            func = '_do_de_kitting'
-            args = [ids]
-            kwargs = {}
-            # open the selected wizard - context['active_ids']
-            res = wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, step=step, context=dict(context, question=question,
-                                                                                                    callback={'clazz': clazz,
-                                                                                                              'func': func,
-                                                                                                              'args': args,
-                                                                                                              'kwargs': kwargs}))
-        return res
-    
+
     def _do_de_kitting(self, cr, uid, ids, context=None):
         '''
         de-kitting method
