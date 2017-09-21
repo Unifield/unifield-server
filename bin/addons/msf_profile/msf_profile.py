@@ -55,7 +55,19 @@ class patch_scripts(osv.osv):
         '''
         update_module = self.pool.get('sync.server.update')
         if update_module:
-            cr.execute("UPDATE sync_server_update SET values=replace(values,E'\\\\n',' ') WHERE model='res.partner' and values like '%'||'\\\\n'||'%'")
+            cr.execute("SELECT id from sync_server_update WHERE model='res.partner' and values like '%'||'\\\\n'||'%'")
+            update_ids = [x[0] for x in cr.fetchall()]
+            for update in update_module.browse(cr, uid, update_ids):
+                update_fields = eval(update.fields)
+                if 'name' not in update_fields:
+                    continue
+                name_index = update_fields.index('name')
+                update_values = eval(update.values)
+                name_value = update_values[name_index]
+                new_name_value = ' '.join(name_value.splitlines())
+                if new_name_value != name_value:
+                    update_values[name_index] = new_name_value
+                    update_module.write(cr, uid, update.id, {'values': str(update_values)})
         else:
             # this is not a sync server, check all partner names
             cr.execute("UPDATE res_partner SET name=replace(name,E'\\n',' ') WHERE name like '%'||'\\\n'||'%'")  # yes, it is not exact same syntax than the previous one, but it work like this on production data and not the other way, I don't know why
