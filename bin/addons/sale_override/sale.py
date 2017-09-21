@@ -3181,12 +3181,17 @@ class sale_order_line(osv.osv):
         '''
         if not default:
             default = {}
+        if context is None:
+            context = {}
         # if the po link is not in default, we set both to False (both values are closely related)
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
             default.update({
                 'so_back_update_dest_po_id_sale_order_line': False,
                 'so_back_update_dest_pol_id_sale_order_line': False,
             })
+
+        if not context.get('keepDateAndDistrib') and 'source_sync_line_id' not in default:
+            default['source_sync_line_id'] = False
 
         default.update({
             'sync_order_line_db_id': False,
