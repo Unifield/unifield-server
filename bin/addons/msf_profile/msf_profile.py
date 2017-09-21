@@ -48,6 +48,19 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2661_patch(self, cr, uid, *a, **b):
+        '''
+        remove all new line characters in res.partners values on SYNC_SERVER
+        updates
+        '''
+        update_module = self.pool.get('sync.server.update')
+        if update_module:
+            cr.execute("UPDATE sync_server_update SET values=replace(values,E'\\\\n',' ') WHERE model='res.partner' and values like '%'||'\\\\n'||'%'")
+        else:
+            # this is not a sync server, check all partner names
+            cr.execute("UPDATE res_partner SET name=replace(name,E'\\n',' ') WHERE name like '%'||'\\\n'||'%'")  # yes, it is not exact same syntax than the previous one, but it work like this on production data and not the other way, I don't know why
+        cr.commit()
+
     def us_3048_patch(self, cr, uid, *a, **b):
         '''
         some protocol are now removed from possible protocols
