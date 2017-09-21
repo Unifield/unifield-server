@@ -1771,6 +1771,8 @@ class sale_order_line(osv.osv):
                 elif sol.state.startswith('sourced'):
                     if sol.state in ('sourced_v', 'sourced_n'):
                         res[sol.id] = 'Resourced-pv'
+                    elif sol.state == 'sourced_sy':
+                        res[sol.id] = 'Resourced-sy'
                     else:
                         res[sol.id] = 'Resourced-s'
                 elif sol.state.startswith('confirmed'):
