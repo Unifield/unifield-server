@@ -10934,6 +10934,7 @@ msgstr "Référence Fournisseur:"
 
 #. module: msf_doc_import
 #: field:wizard.import.pick.line,picking_id:0
+#: field:wizard.import.ppl.to.create.ship,picking_id:0
 msgid "Stock Picking"
 msgstr "Stock Picking"
 
@@ -12570,12 +12571,6 @@ msgstr "Produit - Champ"
 #: field:assign.to.kit,qty_assign_to_kit:0
 msgid "Qty Available"
 msgstr "Qté Disponible"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/check_line.py:319
-#, python-format
-msgid "The Product Quantity is required to be greater than 0, it is set to 1 by default"
-msgstr "The Product Quantity is required to be greater than 0, it is set to 1 by default"
 
 #. module: sync_so
 #: field:stock.move,date_cancel:0
@@ -40783,12 +40778,6 @@ msgstr "Règles du stock minimum"
 msgid "A gap exist in the sequence"
 msgstr "A gap exist in the sequence"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/check_line.py:317
-#, python-format
-msgid "The Product Quantity was not a number and it is required to be greater than 0, it is set to 1 by default."
-msgstr "La quantité n'était pas un nombre et doit être supérieure à 0, par défaut elle est mise à 1."
-
 #. module: financing_contract
 #: field:financing.contract.donor,code:0
 msgid "Donor code"
@@ -56468,6 +56457,7 @@ msgstr "Prix"
 #. module: msf_doc_import
 #: view:wizard.import.po:0
 #: view:wizard.import.po.line:0
+#: view:wizard.import.ppl.to.create.ship:0
 msgid "Purchase information"
 msgstr "Information Achat"
 
@@ -60882,7 +60872,7 @@ msgstr "Has processing info"
 #: code:addons/msf_doc_import/wizard/wiz_common_import.py:108
 #, python-format
 msgid "The column \"%s\" is not taken into account. Please correct it. The list of columns accepted is: %s"
-msgstr "La colone \"%s\" n'est pas prise en compte. Merci de corriger. La liste des colonnes acceptée est : %s"
+msgstr "La colonne \"%s\" n'est pas prise en compte. Merci de corriger. La liste des colonnes acceptée est : %s"
 
 #. module: account
 #: code:addons/account/invoice.py:411
@@ -78346,7 +78336,7 @@ msgstr "Lorsque la valorisation en temps réel de l'inventaire, ceci est le Jour
 #: selection:import_nomenclature,import_mode:0
 #: selection:sync.client.logs,type:0
 msgid "Update"
-msgstr "Update"
+msgstr "Mise à jour"
 
 #. module: account_accountant
 #: model:ir.module.module,description:account_accountant.module_meta_information
@@ -98702,7 +98692,7 @@ msgstr "    "Importation terminée en %s!\n"
 #, python-format
 msgid "Import in progress, please leave this window open and press the button 'Update' when you think that the import is done.\n"
 "Otherwise, you can continue to use Unifield."
-msgstr "Import en cours, veuillez laisser cette fenêtre ouverte et appuyer sur le bouton 'Mettre à jour' lorsque vous pensez que l'import est fait.\n"
+msgstr "Import en cours, veuillez laisser cette fenêtre ouverte et appuyer sur le bouton 'Mise à jour' lorsque vous pensez que l'import est fait.\n"
 "Sinon, vous pouvez continuer à utiliser Unifield."
 
 #. module: msf_doc_import
@@ -98711,7 +98701,7 @@ msgstr "Import en cours, veuillez laisser cette fenêtre ouverte et appuyer sur 
 msgid "\n"
 "The first line of the fourth column must be named \"Shipper\" in the file."
 msgstr "\n"
-"La première ligne de la quatrième colonne doit être nommée \"Shipper\" dans le fichier."
+"La première ligne de la quatrième colonne doit être nommée \"Expéditeur\" dans le fichier."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:106
@@ -98734,7 +98724,7 @@ msgstr "La ligne %s du fichier Excel a été ajoutée au fichier des lignes en e
 msgid "\n"
 "The sixth line of the first column must be named \"Packing Date\" in the file."
 msgstr "\n"
-"La sixième ligne de la première colonne doit être nommée \"Packing Date\" dans le fichier."
+"La sixième ligne de la première colonne doit être nommée \"Date de Colisage\" dans le fichier."
 
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_wizard_import_ppl_to_create_ship
@@ -98747,14 +98737,14 @@ msgstr "Import des Lignes de Colisage depuis Excel pour créer une Expédition"
 msgid "\n"
 "The fourth line of the first column must be named \"Our Ref\" in the file."
 msgstr "\n"
-"La quatrième ligne de la première colonne doit être nommée \"Our Ref\" dans le fichier."
+"La quatrième ligne de la première colonne doit être nommée \"Notre Réf\" dans le fichier."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:328
 #, python-format
 msgid "From pack - To pack sequences errors : \n"
 ""
-msgstr "Erreurs des séquences Du colis - Au colis : \n"
+msgstr "Erreurs des séquences Du colis - Vers colis : \n"
 ""
 
 #. module: msf_doc_import
@@ -98776,7 +98766,7 @@ msgstr "Ligne %s dans le fichier Excel: %s: %s\n"
 #, python-format
 msgid "A gap exists with the sequence From pack - To Pack of line %s.\n"
 ""
-msgstr "Un écart existe avec la séquence Du colis - Au colis ligne %s.\n"
+msgstr "Un écart existe avec la séquence Du colis - Vers colis ligne %s.\n"
 ""
 
 #. module: msf_doc_import
@@ -98793,7 +98783,7 @@ msgstr "\n"
 #, python-format
 msgid "The sequence From pack - To Pack of line %s overlaps a previous one.\n"
 ""
-msgstr "La séquence Du colis - Au colis de la ligne %s empiète sur une précédente.\n"
+msgstr "La séquence Du colis - Vers colis de la ligne %s empiète sur une précédente.\n"
 ""
 
 #. module: msf_doc_import
@@ -98802,7 +98792,7 @@ msgstr "La séquence Du colis - Au colis de la ligne %s empiète sur une précé
 msgid "\n"
 "The first line of the first column must be named \"Reference\" in the file."
 msgstr "\n"
-"La première ligne de la première colonne doit être nommée \"Reference\" dans le fichier."
+"La première ligne de la première colonne doit être nommée \"Référence\" dans le fichier."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:78
@@ -98818,7 +98808,7 @@ msgstr "\n"
 msgid "\n"
 "The first line of the seventh column must be named \"Consignee\" in the file."
 msgstr "\n"
-"La première ligne de la septième colonne doit être nommée \"Consignee\" dans le fichier."
+"La première ligne de la septième colonne doit être nommée \"Destinataire\" dans le fichier."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:218
@@ -98846,7 +98836,7 @@ msgstr "Veuillez sélectionner un fichier à importer avant d'essayer d'importer
 msgid "\n"
 "The seventh line of the first column must be named \"RTS Date\" in the file."
 msgstr "\n"
-"La septième ligne de la première colonne doit être nommée \"RTS Date\" in the file."
+"La septième ligne de la première colonne doit être nommée \"Date de Livraison Prévue\" dans le fichier."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:368
@@ -98866,7 +98856,7 @@ msgstr "Une erreur est survenue. Détails : %s"
 #, python-format
 msgid "To pack must be greater than From pack on line %s.\n"
 ""
-msgstr "Au colis doit être plus grand que Du colis %s.\n"
+msgstr "Vers colis doit être plus grand que Du colis %s.\n"
 ""
 
 #. module: msf_doc_import
@@ -98875,7 +98865,7 @@ msgstr "Au colis doit être plus grand que Du colis %s.\n"
 msgid "\n"
 "The eighth line of the first column must be named \"Transport mode\" in the file."
 msgstr "\n"
-"La huitième ligne de la première colonne doit être nommée \"Transport mode\" dans le fichier."
+"La huitième ligne de la première colonne doit être nommée \"Mode de Transport\" dans le fichier."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:103
@@ -98891,7 +98881,7 @@ msgstr "\n"
 msgid "\n"
 "The third line of the first column must be named \"Requester Ref\" in the file."
 msgstr "\n"
-"La troisième ligne de la première colonne doit être nommée \"Requester Ref\" dans le fichier."
+"La troisième ligne de la première colonne doit être nommée \"Réf du Demandeur\" dans le fichier."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:84
@@ -98899,7 +98889,7 @@ msgstr "\n"
 msgid "\n"
 "The fifth line of the first column must be named \"FO Date\" in the file."
 msgstr "\n"
-"La cinquième ligne de la première colonne doit être nommée \"FO Date\" dans le fichier."
+"La cinquième ligne de la première colonne doit être nommée \"Date de Commande de Terrain\" dans le fichier."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_ppl_to_create_ship.py:288
@@ -99920,3 +99910,270 @@ msgstr "Impossible de générer les data après %d tentatives"
 #, python-format
 msgid "Unable to generate updates, retrying %d/%d"
 msgstr "Impossible de générer les data, nouvel essai %d/%d"
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid " Update Packing with import "
+msgstr " Mettre à jour le Colisage avec un import "
+
+#. module: msf_outgoing
+#: view:stock.picking:0
+msgid "Update Packing with import"
+msgstr "Mettre à jour le Colisage avec un import"
+
+#. module: msf_outgoing
+#: model:ir.actions.report.xml,name:msf_outgoing.pre_packing_excel_export
+msgid "Pre-Packing Excel Export"
+msgstr "Export Excel du pré-colisage"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:135
+#, python-format
+msgid "ppl_import_update_packed"
+msgstr "Qté Emballée"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:134
+#, python-format
+msgid "ppl_import_update_kc"
+msgstr "KC"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:136
+#, python-format
+msgid "ppl_import_update_to_p"
+msgstr "Vers colis"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:136
+#, python-format
+msgid "ppl_import_update_size"
+msgstr "Taille (lar x lon x h) (cm)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:132
+#, python-format
+msgid "ppl_import_update_code"
+msgstr "Code"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:136
+#, python-format
+msgid "ppl_import_update_weight"
+msgstr "Poids par colis (kg)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:133
+#, python-format
+msgid "ppl_import_update_batch"
+msgstr "Numéro de Lot"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:134
+#, python-format
+msgid "ppl_import_update_expiry"
+msgstr "Date d'Expiration"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:133
+#, python-format
+msgid "ppl_import_update_tot_qty"
+msgstr "Qté Totale à emballer"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:132
+#, python-format
+msgid "ppl_import_update_item"
+msgstr "Article"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:134
+#, python-format
+msgid "ppl_import_update_dg"
+msgstr "DG"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:137
+#, python-format
+msgid "ppl_import_update_pack_t"
+msgstr "Type de Colis"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:135
+#, python-format
+msgid "ppl_import_update_cs"
+msgstr "CS"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:132
+#, python-format
+msgid "ppl_import_update_description"
+msgstr "Description"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:135
+#, python-format
+msgid "ppl_import_update_from_p"
+msgstr "Du colis"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:133
+#, python-format
+msgid "ppl_import_update_comment"
+msgstr "Commentaire"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:255
+#, python-format
+msgid "Description"
+msgstr "Description"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:258
+msgid "Batch #"
+msgstr "Numéro de Lot"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:264
+#: report:empty.picking.ticket:0
+msgid "From pack"
+msgstr "Du colis"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:265
+msgid "To pack"
+msgstr "Vers colis"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:233
+msgid "RTS Date"
+msgstr "Date de Livraison Prévue"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:263
+#: report:empty.picking.ticket:0
+msgid "Qty Packed"
+msgstr "Qté Emballée"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:262
+msgid "CS"
+msgstr "CS"
+
+#. modules: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:253
+msgid "Item"
+msgstr "Article"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:268
+#: field:ppl.family.processor,pack_type:0
+#: field:return.pack.shipment.family.processor,pack_type:0
+#: field:return.shipment.family.processor,pack_type:0
+#: field:shipment.additional.line.processor,pack_type:0
+#: field:shipment.family.processor,pack_type:0
+msgid "Pack Type"
+msgstr "Type de Colis"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:191
+msgid "Shipper"
+msgstr "Expéditeur"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:254
+#, python-format
+msgid "Code"
+msgstr "Code"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:223
+msgid "Packing Date"
+msgstr "Date de Colisage"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:257
+#: report:empty.picking.ticket:0
+msgid "Total Qty to pack"
+msgstr "Qté Totale à emballer"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:195
+msgid "Date"
+msgstr "Date"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:201
+msgid "Requester Ref"
+msgstr "Réf du Demandeur"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:266
+#: report:empty.picking.ticket:0
+msgid "Weight per pack (kg)"
+msgstr "Poids par colis (kg)"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:256
+msgid "Comment"
+msgstr "Commentaire"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:261
+msgid "CS"
+msgstr "CS"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:267
+#: report:empty.picking.ticket:0
+msgid "Size (w x l x h) (cm)"
+msgstr "Taille (lar x lon x h) (cm)"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:207
+msgid "Our Ref"
+msgstr "Notre Réf"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:192
+msgid "Consignee"
+msgstr "Destinataire"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:259
+msgid "Expiry Date #"
+msgstr "Date d'Expiration"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:243
+msgid "Transport mode"
+msgstr "Mode de Transport"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:260
+msgid "KC"
+msgstr "KC"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:189
+msgid "Reference"
+msgstr "Référence"
+
+#. module: msf_outgoing
+#: report:addons/msf_outgoing/report/pre_packing_excel_report_xls.mako:213
+msgid "FO Date"
+msgstr "Date de Commande de Terrain"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/__init__.py:39
+#, python-format
+msgid "        The file should be in XML 2003 format.\n"
+"\n"
+"For the main header, the first eight lines of the first column should have this values: Reference, Date, Requester Ref, Our Ref, FO Date, Packing Date, RTS Date, Transport Mode. And the first line of the fourth and the seventh column should have this values: Shipper, Consignee.\n"
+"There should also be a blank line between the main header and the lines header.\n"
+"The lines columns at the tenth line should be in this values:"
+msgstr "        Le fichier doit être dans le format XML 2003.\n"
+"\n"
+"Pour l'entête, les huit premières lignes de la première colonne doivent être dans ces valeurs: Référence, Date, Réf du Demandeur, Notre Réf, Date de Commande de Terrain, Date de Colisage, Date de Livraison Prévue, Mode de Transport. Et la première ligne des quatrième et septième colonnes doivent être dans ces valeurs: Expéditeur, Destinataire.\n"
+"Il doit aussi y avoir une ligne vide entre l'entête et l'entête des lignes.\n"
+"Les colonnes des lignes à la dixième ligne doivent être dans ces valeurs:"

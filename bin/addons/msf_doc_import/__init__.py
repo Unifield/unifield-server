@@ -36,6 +36,13 @@ ACCOUNTING_IMPORT_JOURNALS = [
     'migration',
     'sale',  # US-70/3
 ]
+PPL_IMPORT_FOR_UPDATE_MESSAGE = _("""        The file should be in XML 2003 format.
+
+For the main header, the first eight lines of the first column should have this values: Reference, Date, Requester Ref, \
+Our Ref, FO Date, Packing Date, RTS Date, Transport Mode. And the first line of the fourth and the seventh column \
+should have this values: Shipper, Consignee.
+There should also be a blank line between the main header and the lines header.
+The lines columns at the tenth line should be in this values:""")
 
 import tender
 import purchase_order

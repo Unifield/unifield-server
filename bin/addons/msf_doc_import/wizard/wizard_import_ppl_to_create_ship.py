@@ -49,7 +49,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         return res
 
     _columns = {
-        'file': fields.binary(string='File to import', required=True, readonly=True,
+        'file': fields.binary(string='Lines to import', required=True, readonly=True,
                               states={'draft': [('readonly', False)]}),
         'message': fields.text(string='Message', readonly=True, translate=True),
         'picking_id': fields.many2one('stock.picking', string='Stock Picking', required=True),
@@ -68,25 +68,25 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         Check the main header names
         '''
         error_log = ''
-        if header_data[0][0] != 'Reference':
+        if header_data[0][0] not in ('Reference', 'Référence'):
             error_log += _('\nThe first line of the first column must be named "Reference" in the file.')
-        if header_data[0][3] != 'Shipper':
+        if header_data[0][3] not in ('Shipper', 'Expéditeur'):
             error_log += _('\nThe first line of the fourth column must be named "Shipper" in the file.')
-        if header_data[0][6] != 'Consignee':
-                error_log += _('\nThe first line of the seventh column must be named "Consignee" in the file.')
+        if header_data[0][6] not in ('Consignee', 'Destinataire'):
+            error_log += _('\nThe first line of the seventh column must be named "Consignee" in the file.')
         if header_data[1][0] != 'Date':
             error_log += _('\nThe second line of the first column must be named "Date" in the file.')
-        if header_data[2][0] != 'Requester Ref':
+        if header_data[2][0] not in ('Requester Ref', 'Réf du Demandeur'):
             error_log += _('\nThe third line of the first column must be named "Requester Ref" in the file.')
-        if header_data[3][0] != 'Our Ref':
+        if header_data[3][0] not in ('Our Ref', 'Notre Réf'):
             error_log += _('\nThe fourth line of the first column must be named "Our Ref" in the file.')
-        if header_data[4][0] != 'FO Date':
+        if header_data[4][0] not in ('FO Date', 'Date de Commande de Terrain'):
             error_log += _('\nThe fifth line of the first column must be named "FO Date" in the file.')
-        if header_data[5][0] != 'Packing Date':
+        if header_data[5][0] not in ('Packing Date', 'Date de Colisage'):
             error_log += _('\nThe sixth line of the first column must be named "Packing Date" in the file.')
-        if header_data[6][0] != 'RTS Date':
+        if header_data[6][0] not in ('RTS Date', 'Date de Livraison Prévue'):
             error_log += _('\nThe seventh line of the first column must be named "RTS Date" in the file.')
-        if header_data[7][0] != 'Transport mode':
+        if header_data[7][0] not in ('Transport mode', 'Mode de Transport'):
             error_log += _('\nThe eighth line of the first column must be named "Transport mode" in the file.')
 
         if error_log:
@@ -160,7 +160,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
         pack_type_obj = self.pool.get('pack.type')
-        date_tools_obj = self.pool.get('date.tools')
+        import_cell_data_obj = self.pool.get('import.cell.data')
 
         context = context is None and {} or context
 
@@ -173,9 +173,10 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         # Variables
         context.update({'import_in_progress': True, 'noraise': True})
         start_time = time.time()
-        date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
         line_with_error = []
         error_log = ''
+        # List of sequences for from_pack and to_pack
+        sequences = []
 
         for wiz_browse in self.browse(cr, uid, ids, context):
             try:
@@ -212,8 +213,6 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking.id)], order='line_number')
                 # List of data to update moves
                 updated_data = []
-                # List of sequences for from_pack and to_pack
-                sequences = []
                 if (total_line_num - 1) != len(move_ids):
                     raise osv.except_osv(_('Error'), _('There is not the same number of lines in the file and in the Pre-Packing List'))
                 for i, row in enumerate(rows):
@@ -255,10 +254,11 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                             continue
 
                         # Stock Move
-                        m_value = check_line.pack_move_value_for_update(cr, uid, move_obj=move_obj, row=row,
+                        m_value = check_line.pack_move_value_for_update(cr, uid, ids, move_obj=move_obj, row=row,
                                                                         to_write=to_update, pack_type_obj=pack_type_obj,
-                                                                        date_tools_obj=date_tools_obj,
-                                                                        move_id=move_ids[i], context=context)
+                                                                        import_cell_data_obj=import_cell_data_obj,
+                                                                        move_id=move_ids[i], line_num=line_num,
+                                                                        context=context)
 
                         to_update.update({'error_list': m_value['error_list'], 'from_pack': m_value['from_pack'],
                                           'to_pack': m_value['to_pack'], 'weight': m_value['weight'],
@@ -351,8 +351,8 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 pick_obj.write(cr, uid, picking.id, {'state': picking.state_before_import, 'import_in_progress': False},
                                context)
 
-                cr.commit()
-                cr.close()
+        cr.commit()
+        cr.close(True)
 
         return True
 

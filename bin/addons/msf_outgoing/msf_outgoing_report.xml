@@ -95,7 +95,7 @@
                 name="pre.packing.excel.export"
                 model="stock.picking"
                 string="Pre-Packing Excel Export"
-                file="addons/msf_outgoing/report/pre_packing_excel_report_xls.mako"
+                file="msf_outgoing/report/pre_packing_excel_report_xls.mako"
                 report_type="webkit"
                 header="False"
                 auto="False" />

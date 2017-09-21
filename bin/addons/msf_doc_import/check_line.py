@@ -243,7 +243,7 @@ def compute_location_value(cr, uid, **kwargs):
     return {'location_id': loc_id, 'error_list': error_list}
 
 
-def pack_move_value_for_update(cr, uid, **kwargs):
+def pack_move_value_for_update(cr, uid, ids, **kwargs):
     """
     Compute move values according to cells content.
     Return from_pack, to_pack, weight, width, length, height, pack_type
@@ -252,10 +252,9 @@ def pack_move_value_for_update(cr, uid, **kwargs):
     row = kwargs['row']
     move_obj = kwargs['move_obj']
     pack_type_obj = kwargs['pack_type_obj']
-    date_tools_obj = kwargs['date_tools_obj']
+    import_cell_data_obj = kwargs['import_cell_data_obj']
+    line_num = kwargs['line_num']
     context = kwargs['context']
-    db_date_format = date_tools_obj.get_db_date_format(cr, uid, context=context)
-    date_format = date_tools_obj.get_date_format(cr, uid, context)
     move = move_obj.browse(cr, uid, kwargs['move_id'])
     # Tender does not have product_qty, it is set to 0
     weight = kwargs['to_write'].get('weight', 0.00)
@@ -279,7 +278,7 @@ def pack_move_value_for_update(cr, uid, **kwargs):
         # product default code
         if row.cells[1].data and row.cells[1].type == 'str':
             if row.cells[1].data != move.product_id.default_code:
-                error_list.append(_(' The Product Code (%s) is not the same as %s (%s).')
+                error_list.append(_(' The Product Code (%s) is not the same as in %s (%s).')
                                   % (row.cells[1].data, move.picking_id.name, move.product_id.default_code))
         elif row.cells[1].data and row.cells[1].type != 'str':
                 error_list.append(_(' The Product Code has to be a string.'))
@@ -288,7 +287,7 @@ def pack_move_value_for_update(cr, uid, **kwargs):
         # total qty to pack
         if row.cells[4].data and row.cells[4].type in ('int', 'float'):
             if row.cells[4].data != move.product_qty:
-                error_list.append(_(' The Product Qty (%s) is not the same as %s (%s).')
+                error_list.append(_(' The Product Qty (%s) is not the same as in %s (%s).')
                                   % (row.cells[4].data, move.picking_id.name, move.product_qty))
         elif row.cells[4].data and row.cells[4].type != 'float':
             error_list.append(_(' The Total Qty to Pack has to be an integer or a float.'))
@@ -296,30 +295,21 @@ def pack_move_value_for_update(cr, uid, **kwargs):
             error_list.append(_(' The Total Qty to Pack has to be defined.'))
         # batch
         if row.cells[5].data and row.cells[6].data and move.prodlot_id:
-            move_expiry_date = datetime.datetime.strptime(move.prodlot_id.life_date, db_date_format) or False
-            if isinstance(row.cells[6].data, str):
-                cell_expiry_date = datetime.datetime.strptime(row.cells[6].data, date_format) or False
+            if move.prodlot_id.name == row.cells[5].data:
+                if row.cells[5].type != 'str':
+                    error_list.append(_(' The Batch Number has to be a string.'))
             else:
-                cell_expiry_date = row.cells[6].data
-            if move_expiry_date and cell_expiry_date:
-                move_expiry_date_str = move_expiry_date.strftime(date_format)
-                cell_expiry_date_str = cell_expiry_date.strftime(date_format)
-                if move.prodlot_id.name == row.cells[5].data and move_expiry_date_str == cell_expiry_date_str:
-                    if row.cells[5].type != 'str':
-                        error_list.append(_(' The Batch Number has to be a string.'))
-                    if not isinstance(cell_expiry_date, datetime.date)\
-                            and not datetime.datetime.strptime(cell_expiry_date_str, date_format):
-                        error_list.append(_(' The Expiry Date has to be a date.'))
-                elif move.prodlot_id.name != row.cells[5].data or move_expiry_date_str != cell_expiry_date_str:
-                    if move.prodlot_id.name != row.cells[5].data:
-                        error_list.append(_(' The Batch Number (%s) is not the same as in %s (%s).')
-                                          % (row.cells[5].data, move.picking_id.name, move.prodlot_id.name))
-                    if move_expiry_date_str != cell_expiry_date_str:
-                        error_list.append(_(' The Expiry Date (%s) is not the same as in %s (%s).')
-                                          % (cell_expiry_date_str, move.picking_id.name, move_expiry_date_str))
+                error_list.append(_(' The Batch Number (%s) is not the same as in %s (%s).')
+                                  % (row.cells[5].data, move.picking_id.name, move.prodlot_id.name))
+            # check date format
+            cell_expiry_date = import_cell_data_obj.get_expired_date(cr, uid, ids, row, 6, error_list, line_num, context)
+            if cell_expiry_date:
+                if move.prodlot_id.life_date != cell_expiry_date:
+                    error_list.append(_(' The Expiry Date (%s) is not the same as in %s (%s).')
+                                      % (cell_expiry_date, move.picking_id.name, move.prodlot_id.life_date))
             else:
-                error_list.append(_(' The Expiry Date (%s) should have the format "DD/Mon/YYYY" or "DD-MM-YY".') % (row.cells[6].data))
-        elif row.cells[5].data and row.cells[6].data and not move.prodlot_id:
+                error_list.append(_(' The Expiry Date (%s) does not have a good date format.') % (row.cells[6].data))
+        elif (row.cells[5].data or row.cells[6].data) and not move.prodlot_id:
             error_list.append(_(' No Batch Number or Expiry Date to be defined for this line.'))
         elif (not row.cells[5].data or not row.cells[6].data) and move.prodlot_id:
             error_list.append(_(' The Batch Number and its Expiry Date to be defined together.'))

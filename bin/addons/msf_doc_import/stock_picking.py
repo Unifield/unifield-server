@@ -26,7 +26,7 @@ from osv import fields
 from osv import osv
 from tools.translate import _
 
-from msf_doc_import import GENERIC_MESSAGE
+from msf_doc_import import GENERIC_MESSAGE, PPL_IMPORT_FOR_UPDATE_MESSAGE
 from msf_doc_import.wizard import INT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_internal_import
 from msf_doc_import.wizard import INT_LINE_COLUMNS_FOR_IMPORT as columns_for_internal_import
 from msf_doc_import.wizard import IN_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_incoming_import
@@ -138,13 +138,8 @@ class stock_picking(osv.osv):
         export_id = wiz_obj.create(cr, uid, {'file': file,
                                              'filename_template': 'template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
-                                             'message': """        The file should be in XML 2003 format.
-
-For the main header, the first eight lines of the first column should have this values: Reference, Date, Requester Ref, \
-Our Ref, FO Date, Packing Date, RTS Date, Transport Mode. And the first line of the fourth and the seventh column \
-should have this values: Shipper, Consignee.
-There should also be a blank line between the main header and the lines header.
-The lines columns at the tenth line should be in this values: %s""" % ', '.join([_(f) for f in cols]),
+                                             'message': """%s %s"""
+                                                        % (PPL_IMPORT_FOR_UPDATE_MESSAGE, ', '.join([_(f) for f in cols])),
                                              'picking_id': ids[0],
                                              'state': 'draft',}, context=context)
 

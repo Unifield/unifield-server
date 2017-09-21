@@ -154,7 +154,7 @@
         ## Item
         <Column ss:AutoFitWidth="1" ss:Width="30.0" />
         ## Code
-        <Column ss:AutoFitWidth="1" ss:Width="85.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="92.0" />
         ## Description
         <Column ss:AutoFitWidth="1" ss:Width="250.0" />
         ## Comment
@@ -193,7 +193,7 @@
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Date')|x}</Data></Cell>
-            <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${formatLang(time.strftime('%Y-%m-%d'), date=True)|x}</Data></Cell>
+            <Cell ss:StyleID="short_date_center"><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data></Cell>
             <Cell ss:StyleID="line_borders_top" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_name', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_top" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_name', '')|x}</Data></Cell>
         </Row>
@@ -211,19 +211,31 @@
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('FO Date')|x}</Data></Cell>
-            <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${pt.sale_id and formatLang(pt.sale_id.date_order, date=True) or ''|x}</Data></Cell>
+            % if pt.sale_id:
+            <Cell ss:StyleID="short_date_center"><Data ss:Type="DateTime">${pt.sale_id.date_order|n}T00:00:00.000</Data></Cell>
+            % else:
+            <Cell ss:StyleID="short_date_center"><Data ss:Type="String"></Data></Cell>
+            % endif
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_addr_zip_city', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_addr_zip_city', '')|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('Packing Date')|x}</Data></Cell>
-            <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${pt.sale_id and formatLang(pt.sale_id.delivery_requested_date, date=True) or ''|x}</Data></Cell>
+            % if pt.sale_id:
+            <Cell ss:StyleID="short_date_center"><Data ss:Type="DateTime">${pt.sale_id.delivery_requested_date|n}T00:00:00.000</Data></Cell>
+            % else:
+            <Cell ss:StyleID="short_date_center"><Data ss:Type="String"></Data></Cell>
+            % endif
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String">${getPickingShipper().get('shipper_phone', '')|x}</Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String">${getConsignee(pt)[0].get('consignee_phone', '')|x}</Data></Cell>
         </Row>
         <Row>
             <Cell ss:StyleID="line_header" ss:MergeAcross="1"><Data ss:Type="String">${_('RTS Date')|x}</Data></Cell>
-            <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${pt.sale_id and formatLang(pt.sale_id.ready_to_ship_date, date=True)|x}</Data></Cell>
+            % if pt.sale_id:
+            <Cell ss:StyleID="short_date_center"><Data ss:Type="DateTime">${pt.sale_id.ready_to_ship_date|n}T00:00:00.000</Data></Cell>
+            % else:
+            <Cell ss:StyleID="short_date_center"><Data ss:Type="String"></Data></Cell>
+            % endif
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="line_borders_middle" ss:MergeAcross="4"><Data ss:Type="String"></Data></Cell>
         </Row>
@@ -269,9 +281,14 @@
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${(m.sale_line_id and m.sale_line_id.product_id.default_code) or (m.product_id and m.product_id.default_code) or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${m.sale_line_id and m.sale_line_id.product_id.name or m.product_id.name or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_left"><Data ss:Type="String">${m.sale_line_id and m.comment or ''|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${formatLang(m.product_qty, digits=2) or 0|x}</Data></Cell>
-                <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.prodlot_id and m.prodlot_id.name or ''|x}</Data></Cell>
-                <Cell ss:StyleID="short_date_center"><Data ss:Type="String">${m.prodlot_id and formatLang(m.prodlot_id.life_date, date=True) or ''|x}</Data></Cell>
+                <Cell ss:StyleID="line_center"><Data ss:Type="Number">${m.product_qty or 0|x}</Data></Cell>
+                % if m.prodlot_id:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.prodlot_id.name or ''|x}</Data></Cell>
+                <Cell ss:StyleID="short_date_center"><Data ss:Type="DateTime">${m.prodlot_id.life_date|n}T00:00:00.000</Data></Cell>
+                % else:
+                <Cell ss:StyleID="line_center"><Data ss:Type="String"></Data></Cell>
+                <Cell ss:StyleID="short_date_center"><Data ss:Type="String"></Data></Cell>
+                % endif
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.kc_txt or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.dg_txt or ''|x}</Data></Cell>
                 <Cell ss:StyleID="line_center"><Data ss:Type="String">${m.product_id.cs_txt or ''|x}</Data></Cell>

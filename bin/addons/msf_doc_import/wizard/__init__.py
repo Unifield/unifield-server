@@ -129,9 +129,12 @@ SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT = [
 SUPPLIER_CATALOG_COLUMNS_FOR_IMPORT = [x for (x,y) in SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT]
 
 PPL_COLUMNS_LINES_HEADERS_FOR_IMPORT = [
-    (_('Item'), 'number'), (_('Code'), 'string'), (_('Description'), 'string'), (_('Comment'), 'string'), (_('Total Qty to pack'), 'string'), (_('Batch #'), 'string'), (_('Expiry Date #'), 'date'),
-    (_('KC'), 'string'), (_('DG'), 'string'), (_('CS'), 'string'), (_('Qty Packed'), 'number'), (_('From pack'), 'number'), (_('To pack'), 'number'), (_('Weight per pack (kg)'), 'number'),
-    (_('Size (w x l x h) (cm)'), 'number'), (_('Pack Type'), 'string')
+    (_('ppl_import_update_item'), 'number'), (_('ppl_import_update_code'), 'string'), (_('ppl_import_update_description'), 'string'),
+    (_('ppl_import_update_comment'), 'string'), (_('ppl_import_update_tot_qty'), 'string'), (_('ppl_import_update_batch'), 'string'),
+    (_('ppl_import_update_expiry'), 'date'), (_('ppl_import_update_kc'), 'string'), (_('ppl_import_update_dg'), 'string'),
+    (_('ppl_import_update_cs'), 'string'), (_('ppl_import_update_packed'), 'number'), (_('ppl_import_update_from_p'), 'number'),
+    (_('ppl_import_update_to_p'), 'number'), (_('ppl_import_update_weight'), 'number'), (_('ppl_import_update_size'), 'number'),
+    (_('ppl_import_update_pack_t'), 'string')
 ]
 PPL_COLUMNS_LINES_FOR_IMPORT = [x for (x,y) in PPL_COLUMNS_LINES_HEADERS_FOR_IMPORT]
 
