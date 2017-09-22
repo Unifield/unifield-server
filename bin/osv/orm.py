@@ -1053,7 +1053,7 @@ class orm_template(object):
                 if display_all_errors:
                     res = None
                     position += 1
-                    warning = [str(e)]
+                    warning = [tools.ustr(e)]
                     res_id = False
                     xml_id = False
                 else:
