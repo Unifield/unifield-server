@@ -197,7 +197,7 @@ class msf_budget(osv.osv):
                 if analytic_acc_obj.search_exist(cr, uid, [('parent_id', '=', cc_child_id)], context=context):
                     self._get_children(cr, uid, cc_child_id, cc_children_list, context)
 
-    def _check_all_done(self, cr, uid, budget, cost_center_id, cc_children_list, cc_parent_list, context=None):
+    def _check_all_done(self, cr, uid, budget, cost_center_id, cc_children_list, context=None):
         """
         Returns True if all the children budgets have the state "done", False otherwise.
         """
