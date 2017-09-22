@@ -300,9 +300,9 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE      | 
-        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Sourced-s |
-        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Sourced-s |	
-		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Sourced-s |
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Sourced-sy |
+        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Sourced-sy |	
+		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Sourced-sy |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Validated |
 
     I open tab menu "ORDERS"
@@ -313,9 +313,9 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 
 	I should see in the main table the following data:
         | PRODUCT                               |STATE      | 
-        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Sourced-s |
-        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Sourced-s |
-		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25     | Sourced-s |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Sourced-sy |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Sourced-sy |
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25     | Sourced-sy |
         | [ADAPMEMK1--] MEMORY KEY, USB                                  | Sourced-v |
 
     I should see "Sourced-p" in "Order state"
