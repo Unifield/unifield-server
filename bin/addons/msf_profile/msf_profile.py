@@ -67,7 +67,7 @@ class patch_scripts(osv.osv):
                 new_name_value = ' '.join(name_value.splitlines())
                 if new_name_value != name_value:
                     update_values[name_index] = new_name_value
-                    update_module.write(cr, uid, update.id, {'values': str(update_values)})
+                    update_module.write(cr, uid, update.id, {'values': tools.ustr(update_values)})
         else:
             # this is not a sync server, check all partner names
             cr.execute("UPDATE res_partner SET name=replace(name,E'\\n',' ') WHERE name like '%'||'\\\n'||'%'")  # yes, it is not exact same syntax than the previous one, but it work like this on production data and not the other way, I don't know why

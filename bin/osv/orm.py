@@ -823,7 +823,7 @@ class orm_template(object):
                     processed.append((i, d))
                 cr.commit()
             except Exception as e:
-                rejected.append((i, d, str(e)))
+                rejected.append((i, d, tools.ustr(e)))
                 cr.commit()
 
         return processed, rejected, headers
@@ -1061,7 +1061,7 @@ class orm_template(object):
                 if display_all_errors:
                     res = None
                     position += 1
-                    warning = [str(e)]
+                    warning = [tools.ustr(e)]
                     res_id = False
                     xml_id = False
                 else:
