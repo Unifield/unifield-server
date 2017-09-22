@@ -428,6 +428,9 @@ class so_po_common(osv.osv_memory):
         else:
             res['price_unit'] = 0 # This case is for the line that has price unit False (actually 0 but OpenERP converted to False)
 
+        if 'stock_take_date' in src_values:
+            res['stock_take_date'] = src_values['stock_take_date']
+
         #US-172: Added the cost_price to IR, for FO line it's not required.
         if src_values.get('cost_price'):
             res['cost_price'] = order_line.cost_price
