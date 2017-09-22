@@ -192,12 +192,12 @@ class msf_budget(osv.osv):
         analytic_acc_obj = self.pool.get('account.analytic.account')
         cc_children_ids = analytic_acc_obj.search(cr, uid, [('parent_id', '=', cost_center_id)], order='NO_ORDER', context=context)
         for cc_child_id in cc_children_ids:
-            if cc_child_id not in cc_children_list:
+            if cc_child_id not in cc_children_list:  # avoid process repetition and recursion issues
                 cc_children_list.append(cc_child_id)
                 if analytic_acc_obj.search_exist(cr, uid, [('parent_id', '=', cc_child_id)], context=context):
                     self._get_children(cr, uid, cc_child_id, cc_children_list, context)
 
-    def _check_all_done(self, cr, uid, budget, cost_center_id, cc_children_list, context=None):
+    def _check_all_done(self, cr, uid, budget, cost_center_id, cc_children_list, cc_parent_list, context=None):
         """
         Returns True if all the children budgets have the state "done", False otherwise.
         """
@@ -216,7 +216,7 @@ class msf_budget(osv.osv):
                 break
         return all_done
 
-    def _set_to_done(self, cr, uid, budget, cost_center, cc_children_list, context=None):
+    def _set_to_done(self, cr, uid, budget, cost_center, cc_children_list, cc_parent_list, context=None):
         """
         Sets the state "done" to the parent of the Cost Center in parameter if all its children have the state "done".
         If so, does the same for the parent's parent, and so forth.
@@ -225,14 +225,15 @@ class msf_budget(osv.osv):
             context = {}
         cc_parent = cost_center.parent_id
         if cc_parent and self._check_all_done(cr, uid, budget, cc_parent.id, cc_children_list, context):
+            cc_parent_list.append(cc_parent.id)
             budget_parent_ids = self.search(cr, uid,
                                             [('cost_center_id', '=', cc_parent.id),
                                              ('decision_moment_id', '=', budget.decision_moment_id.id),
                                              ('fiscalyear_id', '=', budget.fiscalyear_id.id),
                                              ('state', '!=', 'done')], order='NO_ORDER', context=context)
             self.write(cr, uid, budget_parent_ids, {'state': 'done'}, context=context)
-            if cc_parent.parent_id:
-                self._set_to_done(cr, uid, budget, cc_parent, cc_children_list, context)
+            if cc_parent.parent_id and cc_parent.parent_id.id not in cc_parent_list:  # avoid recursion issues
+                self._set_to_done(cr, uid, budget, cc_parent, cc_children_list, cc_parent_list, context)
 
     def write(self, cr, uid, ids, vals, context=None):
         """
@@ -255,7 +256,8 @@ class msf_budget(osv.osv):
         if budget.type == 'normal' and vals.get('state') == 'done':  # do not process for view accounts
             # set the parent budgets to 'done' IF all their children budgets are 'done'
             cc_children_list = []
-            self._set_to_done(cr, uid, budget, budget.cost_center_id, cc_children_list, context)
+            cc_parent_list = []
+            self._set_to_done(cr, uid, budget, budget.cost_center_id, cc_children_list, cc_parent_list, context)
         return res
 
     def update(self, cr, uid, ids, context=None):
