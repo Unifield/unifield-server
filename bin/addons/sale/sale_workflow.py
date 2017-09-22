@@ -316,7 +316,7 @@ class sale_order_line(osv.osv):
                 self.copy_analytic_distribution_on_lines(cr, uid, [sol.id], context=context)
 
                 # force make to stock in case of loan:
-                if sol.order_id.order_type == 'loan' and sol.type == 'make_to_order':
+                if sol.loan_type and sol.type == 'make_to_order':
                     self.write(cr, uid, [sol.id], {'type': 'make_to_stock'}, context=context)
 
             elif sol.procurement_request: # in case of IR
