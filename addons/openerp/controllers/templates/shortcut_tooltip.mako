@@ -3,7 +3,7 @@
 try:
     SHORTCUT = cp.request.pool.get_controller("/openerp/shortcut_tooltip")
     display_message = SHORTCUT.get_show_shortcut()
-    message = "You haven't recently used a keyboard shortcut. You can see what shortcuts are available on this screen by holding SHIFT + CTRL."
+    message = _("You haven't recently used a keyboard shortcut. You can see what shortcuts are available on this screen by holding SHIFT + CTRL.")
 except:
     display_message = False
     message = 'toto'
