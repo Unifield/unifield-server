@@ -195,7 +195,7 @@ class msf_budget(osv.osv):
             if cc_child_id not in cc_children_list:
                 cc_children_list.append(cc_child_id)
                 if analytic_acc_obj.search_exist(cr, uid, [('parent_id', '=', cc_child_id)], context=context):
-                    self._get_children(cr, uid, cc_child_id, cc_children_list, context=None)
+                    self._get_children(cr, uid, cc_child_id, cc_children_list, context)
 
     def _check_all_done(self, cr, uid, budget, cost_center_id, cc_children_list, context=None):
         """
@@ -207,7 +207,7 @@ class msf_budget(osv.osv):
         children_budget_ids = self.search(cr, uid, [('cost_center_id', 'in', cc_children_list),
                                                     ('decision_moment_id', '=', budget.decision_moment_id.id),
                                                     ('fiscalyear_id', '=', budget.fiscalyear_id.id),
-                                                    '!', ('id', '=', budget.id)], order='NO_ORDER', context=context)
+                                                    ('id', '!=', budget.id)], order='NO_ORDER', context=context)
         children_budgets = self.read(cr, uid, children_budget_ids, ['state'], context=context)
         all_done = True
         for budget in children_budgets:
@@ -218,7 +218,7 @@ class msf_budget(osv.osv):
 
     def _set_to_done(self, cr, uid, budget, cost_center, cc_children_list, context=None):
         """
-        Sets to the state "done" to the parent of the Cost Center in parameter if all its children are "done".
+        Sets the state "done" to the parent of the Cost Center in parameter if all its children have the state "done".
         If so, does the same for the parent's parent, and so forth.
         """
         if context is None:
@@ -228,8 +228,8 @@ class msf_budget(osv.osv):
             budget_parent_ids = self.search(cr, uid,
                                             [('cost_center_id', '=', cc_parent.id),
                                              ('decision_moment_id', '=', budget.decision_moment_id.id),
-                                             ('fiscalyear_id', '=', budget.fiscalyear_id.id), '!',
-                                             ('state', '=', 'done')], context=context)
+                                             ('fiscalyear_id', '=', budget.fiscalyear_id.id),
+                                             ('state', '!=', 'done')], order='NO_ORDER', context=context)
             self.write(cr, uid, budget_parent_ids, {'state': 'done'}, context=context)
             if cc_parent.parent_id:
                 self._set_to_done(cr, uid, budget, cc_parent, cc_children_list, context)
