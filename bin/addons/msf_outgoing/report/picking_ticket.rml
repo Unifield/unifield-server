@@ -204,7 +204,7 @@
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="30.0,60.0,220.0,80.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesHeader">
+        <blockTable colWidths="30.0,100.0,220.0,40.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesHeader">
             <tr>
                 <td>
                     <para style="LineHeader">Item</para>
@@ -288,7 +288,7 @@
 
         <pto>
             <pto_header>
-                <blockTable colWidths="30.0,60.0,220.0,80.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesHeader">
+                <blockTable colWidths="30.0,100.0,220.0,40.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" style="LinesHeader">
                     <tr>
                         <td>
                             <para style="LineHeader">Item</para>
@@ -372,7 +372,7 @@
             </pto_header>
 
             <!-- Lines -->
-            <blockTable colWidths="30.0,60.0,220.0,80.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" rowHeights="15.0" style="LinesValues">
+            <blockTable colWidths="30.0,100.0,220.0,40.0,55.0,55.0,55.0,55.0,75.0,65.0,20.0,20.0,20.0" rowHeights="15.0" style="LinesValues">
                 [[ repeatIn(getLines(pt), 'm', 'blockTable') ]]
                 [[ m.state == 'cancel' and removeParentNode('blockTable') ]]
                 <tr>

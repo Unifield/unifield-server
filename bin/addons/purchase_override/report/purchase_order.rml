@@ -564,7 +564,7 @@
             </tr>
         </blockTable>
 
-        <blockTable colWidths="20.0,62.5,62.5,290.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
+        <blockTable colWidths="20.0,62.5,97.5,280.5,90.0,55.5,60.0,51.0,55.0" style="LinesTable">
             <tr >
                 <td>
                     <para style="Lines"><i>Line</i></para>
@@ -597,7 +597,7 @@
         </blockTable>
 
         <section>
-            <blockTable colWidths="20.0,62.5,62.5,290.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
+            <blockTable colWidths="20.0,62.5,97.5,280.5,90.0,55.5,60.0,51.0,55.0" style="LinesTable">
                 [[ repeatIn(objects[0].order_line, 'line') ]]
                 <tr>
                     <td>
