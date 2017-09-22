@@ -34,11 +34,11 @@
             <field name="kind">function</field>
             <field name="action">action_sourced_v()</field>
         </record>
-        <record id="act_sol_sourced_s" model="workflow.activity">
-            <field name="name">sourced_s</field>
+        <record id="act_sol_sourced_sy" model="workflow.activity">
+            <field name="name">sourced_sy</field>
             <field name="wkf_id" ref="wkf_sale_order_line"/>
             <field name="kind">function</field>
-            <field name="action">action_sourced_s()</field>
+            <field name="action">action_sourced_sy()</field>
         </record>
         <record id="act_sol_sourced_n" model="workflow.activity">
             <field name="name">sourced_n</field>
@@ -95,21 +95,21 @@
         </record>
 
         <!-- specific transition for sourced-XXX state -->
-            <record id="trans_sol_sourced_to_sourced_s" model="workflow.transition">
+            <record id="trans_sol_sourced_to_sourced_sy" model="workflow.transition">
                 <field name="act_from" ref="act_sol_sourced"/>
-                <field name="act_to" ref="act_sol_sourced_s"/>
-                <field name="signal">sourced_s</field>
+                <field name="act_to" ref="act_sol_sourced_sy"/>
+                <field name="signal">sourced_sy</field>
             </record>
-            <record id="trans_sol_sourced_v_to_sourced_s" model="workflow.transition">
+            <record id="trans_sol_sourced_v_to_sourced_sy" model="workflow.transition">
                 <field name="act_from" ref="act_sol_sourced_v"/>
-                <field name="act_to" ref="act_sol_sourced_s"/>
-                <field name="signal">sourced_s</field>
+                <field name="act_to" ref="act_sol_sourced_sy"/>
+                <field name="signal">sourced_sy</field>
             </record>
 
-            <record id="trans_sol_sourced_n_to_sourced_s" model="workflow.transition">
+            <record id="trans_sol_sourced_n_to_sourced_sy" model="workflow.transition">
                 <field name="act_from" ref="act_sol_sourced_n"/>
-                <field name="act_to" ref="act_sol_sourced_s"/>
-                <field name="signal">sourced_s</field>
+                <field name="act_to" ref="act_sol_sourced_sy"/>
+                <field name="signal">sourced_sy</field>
             </record>
 
             <record id="trans_sol_sourced_to_sourced_v" model="workflow.transition">
@@ -117,13 +117,13 @@
                 <field name="act_to" ref="act_sol_sourced_v"/>
                 <field name="signal">sourced_v</field>
             </record>
-            <record id="trans_sol_sourced_s_to_sourced_v" model="workflow.transition">
-                <field name="act_from" ref="act_sol_sourced_s"/>
+            <record id="trans_sol_sourced_sy_to_sourced_v" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_sy"/>
                 <field name="act_to" ref="act_sol_sourced_v"/>
                 <field name="signal">sourced_v</field>
             </record>
-            <record id="trans_sol_sourced_s_to_confirmed" model="workflow.transition"> <!-- may be useless depending on the way we generate sync msg ...-->
-                <field name="act_from" ref="act_sol_sourced_s"/>
+            <record id="trans_sol_sourced_sy_to_confirmed" model="workflow.transition"> <!-- may be useless depending on the way we generate sync msg ...-->
+                <field name="act_from" ref="act_sol_sourced_sy"/>
                 <field name="act_to" ref="act_sol_confirmed"/>
                 <field name="signal">confirmed</field>
             </record>
@@ -135,6 +135,11 @@
             
             <record id="trans_sol_draft_sourced_n" model="workflow.transition">
                 <field name="act_from" ref="act_sol_draft"/>
+                <field name="act_to" ref="act_sol_sourced_n"/>
+                <field name="condition">set_as_sourced_n == True</field>
+            </record>
+            <record id="trans_sol_validated_sourced_n" model="workflow.transition">
+                <field name="act_from" ref="act_sol_validated"/>
                 <field name="act_to" ref="act_sol_sourced_n"/>
                 <field name="condition">set_as_sourced_n == True</field>
             </record>
@@ -177,8 +182,8 @@
                 <field name="act_to" ref="act_sol_cancel"/>
                 <field name="signal">cancel</field>
             </record>
-            <record id="trans_sol_sourced_s_cancel" model="workflow.transition">
-                <field name="act_from" ref="act_sol_sourced_s"/>
+            <record id="trans_sol_sourced_sy_cancel" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_sy"/>
                 <field name="act_to" ref="act_sol_cancel"/>
                 <field name="signal">cancel</field>
             </record>
@@ -212,8 +217,8 @@
                 <field name="act_to" ref="act_sol_cancel_r"/>
                 <field name="signal">cancel_r</field>
             </record>
-            <record id="trans_sol_sourced_s_cancel_r" model="workflow.transition">
-                <field name="act_from" ref="act_sol_sourced_s"/>
+            <record id="trans_sol_sourced_sy_cancel_r" model="workflow.transition">
+                <field name="act_from" ref="act_sol_sourced_sy"/>
                 <field name="act_to" ref="act_sol_cancel_r"/>
                 <field name="signal">cancel_r</field>
             </record>

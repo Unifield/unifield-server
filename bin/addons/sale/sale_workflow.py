@@ -194,16 +194,16 @@ class sale_order_line(osv.osv):
         return True
 
 
-    def action_sourced_s(self, cr, uid, ids, context=None):
+    def action_sourced_sy(self, cr, uid, ids, context=None):
         '''
-        Workflow method called when the sale.order.line get the sourced_s state
+        Workflow method called when the sale.order.line get the sourced_sy state
         '''
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        self.write(cr, uid, ids, {'state': 'sourced_s'}, context=context)
+        self.write(cr, uid, ids, {'state': 'sourced_sy'}, context=context)
 
         return True
 
@@ -245,7 +245,8 @@ class sale_order_line(osv.osv):
                 ('linked_sol_id', '=', sol.id),
                 ('order_id.order_type', '=', 'direct'),
             ], context=context)
-            if not linked_to_dpo:
+            ir_non_stockable = sol.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep')
+            if not linked_to_dpo and not ir_non_stockable:
                 # create or update PICK/OUT:
                 picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
                 pick_to_use = self.pool.get('stock.picking').search(cr, uid, [

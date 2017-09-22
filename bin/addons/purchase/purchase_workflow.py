@@ -2,6 +2,7 @@
 
 from osv import osv
 import netsvc
+from tools.translate import _
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
@@ -202,6 +203,43 @@ class purchase_order_line(osv.osv):
         return new_sol_id
 
 
+    def create_int(self, cr, uid, ids, context=None):
+        '''
+        create internal (INT) picking object
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        if not ids:
+            raise Exception , "No PO line given"
+
+        # load common data into context:
+        self.pool.get('data.tools').load_common_data(cr, uid, ids, context=context)
+
+        # create INT:
+        pol = self.browse(cr, uid, ids, context=context)[0]
+        name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
+        pick_values = {
+            'name': name,
+            'origin': pol.order_id.name,
+            'type': 'internal',
+            'state': 'draft',
+            'sale_id': False,
+            'purchase_id': pol.order_id.id,
+            'address_id': False,
+            'date': context['common']['date'],
+            'company_id': context['common']['company_id'],
+            'reason_type_id': self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_internal_move')[1],
+        }
+        pick_id = self.pool.get('stock.picking').create(cr, uid, pick_values, context=context)
+
+        # log picking creation
+        self.pool.get('stock.picking').log(cr, uid, pick_id, _('The new internal Picking %s has been created.')%name)
+
+        return pick_id
+
+
     def action_validated_n(self, cr, uid, ids, context=None):
         '''
         wkf method to validate the PO line
@@ -255,9 +293,9 @@ class purchase_order_line(osv.osv):
         return True
 
 
-    def action_sourced_s(self, cr, uid, ids, context=None):
+    def action_sourced_sy(self, cr, uid, ids, context=None):
         '''
-        wkf method when PO line get the sourced_s state
+        wkf method when PO line get the sourced_sy state
         '''
         if context is None:
             context = {}
@@ -265,13 +303,13 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
-        self.write(cr, uid, ids, {'state': 'sourced_s'}, context=context)
+        self.write(cr, uid, ids, {'state': 'sourced_sy'}, context=context)
 
         self.update_fo_lines(cr, uid, ids, context=context)
-        # update linked sol (same instance) to sourced-s (if has)
+        # update linked sol (same instance) to sourced-sy (if has)
         for po in self.browse(cr, uid, ids, context=context):
             if po.linked_sol_id:
-                wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_s', cr)
+                wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_sy', cr)
 
         return True
         
@@ -327,24 +365,51 @@ class purchase_order_line(osv.osv):
         po_to_check = {}
         for pol in self.browse(cr, uid, ids):
             po_to_check[pol.order_id.id] = True
-            if pol.order_type != 'direct': # create IN:
-                # Search existing IN for PO line
+            if pol.order_type != 'direct':
+                # create incoming shipment (IN):
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
                     ('purchase_id', '=', pol.order_id.id),
-                    ('state', 'not in', ['done']),
+                    ('state', 'not in', ['done', 'cancel']),
+                    ('type', '=', 'in'),
                 ])
                 created = False
-                if len(in_id) < 1:
+                if not in_id:
                     in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context)
+                    in_id = [in_id]
                     created = True
-                else:
-                    in_id = in_id[0]
-                move_id = self.pool.get('purchase.order').create_picking_line(cr, uid, in_id, pol, context)
+                incoming_move_id = self.pool.get('purchase.order').create_picking_line(cr, uid, in_id[0], pol, context)
                 if created:
-                    wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_confirm', cr)
+                    wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_confirm', cr)
                 else:
-                    self.pool.get('stock.move').in_action_confirm(cr, uid, move_id, context)
+                    self.pool.get('stock.move').in_action_confirm(cr, uid, incoming_move_id, context)
 
+                # create internal moves (INT):
+                if pol.order_id.location_id.input_ok: 
+                    internal_pick = self.pool.get('stock.picking').search(cr, uid, [
+                        ('type', '=', 'internal'), 
+                        ('purchase_id', '=', pol.order_id.id),
+                        ('state', 'not in', ['done', 'cancel']),
+                    ], context=context)
+                    created = False
+                    if not internal_pick:
+                        internal_pick = self.create_int(cr, uid, ids, context=context)
+                        internal_pick = [internal_pick]
+                        created = True
+                    # create and update stock.move:
+                    int_move_id = self.pool.get('purchase.order').create_picking_line(cr, uid, internal_pick[0], pol, context)
+                    move = self.pool.get('stock.move').browse(cr, uid, int_move_id, context=context)
+                    input_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+                    input_loc = self.pool.get('stock.location').browse(cr, uid, input_id, context=context)
+                    self.pool.get('stock.move').write(cr, uid, [int_move_id], {
+                        'location_id': input_id,
+                        'location_dest_id': self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=move.product_id, context=context)[0].id,    
+                        'linked_incoming_move': incoming_move_id,
+                    }, context=context)
+                    if created:
+                        self.pool.get('stock.picking').draft_force_assign(cr, uid, internal_pick, context=context)
+                    else:
+                        self.pool.get('stock.move').action_confirm(cr, uid, [int_move_id], context=context)
+                
             # if line created in PO, then create a FO line that match with it:
             if not pol.linked_sol_id and pol.origin:
                 fo_id = self.update_origin_link(cr, uid, pol.origin, context=context)
@@ -389,8 +454,9 @@ class purchase_order_line(osv.osv):
             # no PICK/OUT needed in this cases; close SO line:
             internal_ir = pol.linked_sol_id and pol.linked_sol_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal' or False # PO line from Internal IR
             dpo = pol.order_id.order_type == 'direct' or False # direct PO
+            ir_non_stockable = pol.linked_sol_id and pol.linked_sol_id.procurement_request and pol.linked_sol_id.product_id.type in ('consu', 'service', 'service_recep') or False
 
-            if internal_ir or dpo:
+            if internal_ir or dpo or ir_non_stockable:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'done', cr)
 
         self.write(cr, uid, ids, {'state': 'done'}, context=context)

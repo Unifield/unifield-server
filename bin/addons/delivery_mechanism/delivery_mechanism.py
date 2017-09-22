@@ -1166,6 +1166,10 @@ class stock_picking(osv.osv):
                 # and the remaining quantity to list of moves to put in backorder
                 if diff_qty > 0.00 and move.state != 'cancel':
                     backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values))
+                    # decrement qty of linked INTernal move:
+                    internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
+                    if internal_move:
+                        move_obj.write(cr, uid, internal_move, {'product_qty': diff_qty, 'product_uos_qty': diff_qty}, context=context)
                 else:
                     for sptc_values in move_sptc_values:
                         # track change that will be created:
@@ -1174,6 +1178,10 @@ class stock_picking(osv.osv):
                             'transaction_name': _('Reception %s') % move.picking_id.name,
                             'sptc_values': sptc_values.copy(),
                         })
+                    # cancel linked INTernal move (INT):
+                    internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
+                    if internal_move:
+                        move_obj.action_cancel(cr, uid, internal_move, context=context)
 
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'progress_line': _('Done (%s/%s)') % (move_done, total_moves),
@@ -1256,8 +1264,11 @@ class stock_picking(osv.osv):
                         bo_values.update(av_values)
                         context['keepLineNumber'] = True
                         context['from_button'] = False
-                        move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
+                        new_bo_move_id = move_obj.copy(cr, uid, bo_move.id, bo_values, context=context)
                         context['keepLineNumber'] = False
+                        # update linked INT move with new BO move id:
+                        internal_move = move_obj.search(cr, uid, [('linked_incoming_move', '=', bo_move.id)], context=context)
+                        move_obj.write(cr, uid, internal_move, {'linked_incoming_move': new_bo_move_id}, context=context)
 
                 # Put the done moves in this new picking
                 done_values = {'picking_id': backorder_id}

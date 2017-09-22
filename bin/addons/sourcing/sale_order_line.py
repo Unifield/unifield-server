@@ -1220,7 +1220,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         :rtype boolean
         """
         # Objects
-        po_auto_obj = self.pool.get('po.automation.config')
         data_obj = self.pool.get('ir.model.data')
         product_obj = self.pool.get('product.product')
 
@@ -1361,8 +1360,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 ('state', 'in', ['draft']),
                 ('related_sourcing_id', '=', sourcing_line.related_sourcing_id.id or False), # Column "Group"
                 ('delivery_requested_date', '=', sourcing_line.date_planned),
+                ('rfq_ok', '=', False),
             ]
-            if sourcing_line.po_cft == 'po':
+            if sourcing_line.po_cft in ('po', 'cft', 'rfq'):
                 domain.append(('order_type', '=', 'regular'))
             elif sourcing_line.po_cft == 'dpo':
                 domain.append(('order_type', '=', 'direct'))
@@ -1438,7 +1438,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         sol = self.browse(cr, uid, ids[0], context=context)
 
-        tender_to_use = self.pool.get('tender').search(cr, uid, [('sale_order_id', '=', sol.order_id.id)], context=context)
+        tender_to_use = self.pool.get('tender').search(cr, uid, [
+            ('sale_order_id', '=', sol.order_id.id),
+            ('state', '=', 'draft'),
+        ], context=context)
 
         return tender_to_use[0] if tender_to_use else False
 
@@ -1620,7 +1623,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     # attach tender line:
                     proc_location_id = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'procurement')], context=context)
                     proc_location_id = proc_location_id[0] if proc_location_id else False
-                    tender_line_id = self.pool.get('tender.line').create(cr, uid, {
+                    self.pool.get('tender.line').create(cr, uid, {
                         'product_id': sourcing_line.product_id.id,
                         'comment': sourcing_line.comment,
                         'qty': sourcing_line.product_uom_qty,

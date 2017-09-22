@@ -2353,6 +2353,10 @@ class stock_move(osv.osv):
                 self.write(cr, uid, [move.move_dest_id.id], state)
                 if context.get('call_unlink',False) and move.move_dest_id.picking_id:
                     wf_service.trg_write(uid, 'stock.picking', move.move_dest_id.picking_id.id, cr)
+            # cancel linked internal move if has, to keep the virtual stock consistent:
+            internal_move = self.search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
+            if internal_move:
+                self.action_cancel(cr, uid, internal_move, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel', 'move_dest_id': False})
         

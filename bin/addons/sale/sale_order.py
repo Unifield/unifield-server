@@ -1770,8 +1770,10 @@ class sale_order_line(osv.osv):
                 if sol.state.startswith('validated'):
                     res[sol.id] = 'Resourced-v'
                 elif sol.state.startswith('sourced'):
-                    if sol.state == 'sourced_v':
+                    if sol.state in ('sourced_v', 'sourced_n'):
                         res[sol.id] = 'Resourced-pv'
+                    elif sol.state == 'sourced_sy':
+                        res[sol.id] = 'Resourced-sy'
                     else:
                         res[sol.id] = 'Resourced-s'
                 elif sol.state.startswith('confirmed'):
@@ -2010,6 +2012,7 @@ class sale_order_line(osv.osv):
             'move_ids': [],
             'invoiced': False,
             'invoice_lines': [],
+            'set_as_sourced_n': False,
         })
 
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)

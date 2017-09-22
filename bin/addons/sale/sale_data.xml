@@ -44,8 +44,8 @@
             <field name="name">sourced</field>
             <field name="sequence">30</field>
         </record>
-        <record id="sol_state_sourced_s" model="sale.order.line.state">
-            <field name="name">sourced_s</field>
+        <record id="sol_state_sourced_sy" model="sale.order.line.state">
+            <field name="name">sourced_sy</field>
             <field name="sequence">40</field>
         </record>
         <record id="sol_state_sourced_v" model="sale.order.line.state">

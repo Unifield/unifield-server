@@ -16,7 +16,7 @@ PURCHASE_ORDER_LINE_STATE_SELECTION = [
 	('draft', 'Draft'),
 	('validated_n', 'Validated-n'),
 	('validated', 'Validated'),
-	('sourced_s', 'Sourced-s'),
+	('sourced_sy', 'Sourced-sy'),
 	('sourced_v', 'Sourced-v'),
 	('sourced_n', 'Sourced-n'),
 	('confirmed', 'Confirmed'),

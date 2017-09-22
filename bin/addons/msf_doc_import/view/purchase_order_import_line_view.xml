@@ -42,9 +42,6 @@
                     </field>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="before" >
-                    <button name="wizard_import_po_line" string="Import RfQ lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'rfq_sent')]}"/>
-                </xpath>
-                <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="before" >
                   <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
                     <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" col="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                     <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': ['|', ('po_from_fo', '=', True), ('po_from_ir', '=', True)]}" />
@@ -54,6 +51,58 @@
                 </group>
                 <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_n', 'validated_p'])]}"/>
                 <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_n', 'validated_p'])]}"/>
+                </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="rfq_form_import" model="ir.ui.view">
+            <field name="name">rfq.form.import</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="priority">110</field>
+            <field name="inherit_id" ref="tender_flow.view_rfq_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name="noteditable">import_in_progress==True or update_in_progress==True</attribute>
+                    </xpath>
+                    <xpath expr="/form//field" position="before">
+                        <field name="update_in_progress" invisible="1" readonly="1" />
+                    </xpath>
+
+                <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='currency_id']" position="after">
+                    <field name="to_correct_ok" invisible="1"/>
+                </xpath>
+                <xpath expr="/form/notebook/page/field[@name='order_line']/tree//field[@name='default_name']" position="after">
+                    <field name="inactive_product" invisible="1" />
+                    <field name="soq_updated" invisible="1" readonly="1" />
+                </xpath>
+                <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes" >
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True or red_color == True; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True</attribute>
+                </xpath>
+                <xpath expr="/form/notebook/page[@string='Notes']/field[@name='notes']" position="before">
+                    <field name="import_in_progress" readonly="1" invisible="0" />
+                </xpath>
+                <xpath expr="/form/notebook/page[@string='Notes']/field[@name='project_ref']" position="after">
+                    <separator colspan="4" string="Sourcing group" />
+                    <field name="related_sourcing_id" readonly="True" />
+                    <separator colspan="4" string="Import filenames" />
+                    <field name="import_filenames" mode="tree" readonly="1" nolabel="1" colspan="4">
+                        <tree string="Imported filenames">
+                            <field name="timestamp" />
+                            <field name="filename" />
+                        </tree>
+                    </field>
+                </xpath>
+                <xpath expr="/form/notebook/page/field[@name='order_line']" position="before" >
+                    <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('rfq_state', '!=', 'draft')]}">
+                        <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" col="1" type="object"/>
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': ['|', ('po_from_fo', '=', True), ('po_from_ir', '=', True)]}" />
+                        <button name="button_remove_lines" string="Delete Lines" confirm="This document originated from an IR/FO, if you delete these products now, they will all be deleted. If you wish to Cancel &amp; Resource them, please do this line by line." icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': [('po_from_fo', '=', False), ('po_from_ir', '=', False)]}" />
+                        <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': rfq_ok}"/>
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
+                    </group>
                 </xpath>
                 </data>
             </field>

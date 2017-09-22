@@ -155,6 +155,8 @@ class purchase_order_line(osv.osv):
                 elif pol.state.startswith('sourced'):
                     if pol.state == 'sourced_v':
                         res[pol.id] = 'Resourced-pv'
+                    elif pol.state == 'sourced_sy':
+                        res[pol.id] = 'Resourced-sy'
                     else:
                         res[pol.id] = 'Resourced-s'
                 elif pol.state.startswith('confirmed'):
@@ -169,7 +171,7 @@ class purchase_order_line(osv.osv):
 
     def _get_display_resourced_orig_line(self, cr, uid, ids, field_name, args, context=None):
         '''
-        return the original PO line (from which the current on has been resourced) formatted as wanted
+        return the original PO line (from which the current one has been resourced) formatted as wanted
         '''
         if context is None:
             context = {}

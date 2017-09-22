@@ -6,14 +6,13 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
    
 #PARAMETRIZATION: 
 # HQ1C1P1: need to have Ext CU Sara as external Consumption Unit
-# HQ1C1: need to have 100000 quantiy of DINJACIV2V- with BN: lot1 and ED:30/Apr/2018
-# HQ1C1: need to create "ESC" as ESC supplier
+# HQ1C1P1: need to have 100000 quantity of ADAPCABL2S- in LOG
+# HQ1C1: need to have 100000 quantity of ADAPCABL1S- in LOG
 
 
    ###################################################################
     ## CREATE AN IR IN HQ1C1P1 (reference in IR_REFERENCE)
     ###################################################################
-
 
     I log into instance "HQ1C1P1"
     I open tab menu "ORDERS"
@@ -89,6 +88,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		| [AZAZA] Product test                                                    | Draft     |
 		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Draft     |
 		| [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab.       | Draft     |
+
 	I click on "Save"
 	I should see "Draft-p" in "Order State"
 	
@@ -362,6 +362,11 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | [AZAZA] Product test                                  | Confirmed |	
 	      
 
+		  
+    ####################
+    ## SYNCHRONIZATION
+    ###################
+		  
     I synchronize "HQ1C1P1"
     I log out
     I synchronize "HQ1C1"
@@ -385,6 +390,9 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Validated |	
        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Draft     |
 
+	I click on "Save"
+    I should see "Draft-p" in "State"
+	
 	I store "Order Reference" in "FO_REFERENCE"	
 
 	I click on menu "Orders Sourcing Tool"
@@ -410,8 +418,11 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE     |
        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Confirmed |	
        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Draft     |
-
-
+   
+	   
+    ####################
+    ## SYNCHRONIZATION
+    ###################
 	   
     I synchronize "HQ1C1"
 	I log out
@@ -430,7 +441,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | *{{IR_REFERENCE}}* |	
 
 	I should see in the main table the following data:
-        | PRODUCT                                                              | STATE     |
+        | PRODUCT                                                               | STATE     |
         | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem) | Confirmed |
  
     I open tab menu "PURCHASES"
@@ -438,11 +449,11 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I fill "REFERENCE" with "{{PO_REF_COO_1}}"
 
     I click "Search" until I see:
-        | REFERENCE          |
-        | *{{PO_REF_COO_1}}* |
+        | REFERENCE        |
+        | {{PO_REF_COO_1}} |
     I click "Edit" on line:
-        | REFERENCE          |
-        | *{{PO_REF_COO_1}}* |	
+        | REFERENCE        |
+        | {{PO_REF_COO_1}} |	
 	
 	I should see in the main table the following data:
        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE     |
@@ -481,7 +492,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | {{FO_REFERENCE}}  |
 	I click "Edit" on line:
         | ORIGIN           | LINES STATE |
-        | {{FO_REFERENCE}} |  Available  |
+        | {{FO_REFERENCE}} |  *vailable* |
 	
 	I should see in the main table the following data:
         | PRODUCT                                                                | STATE     |
@@ -509,44 +520,48 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | *{{FO_REFERENCE}} |	
 
 	I should see in the main table the following data:
-       | PRODUCT CODE | PRODUCT DESCRIPTION                                       | STATE  |
-       | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem)   | Closed |	
-       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                   | Draft  |    
+       | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE  |
+       | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed |	
+       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Draft  |
+
 
     I should see "Draft-p" in "State"	   
 	
 	I click "Edit" on line and open the window:
-       | PRODUCT CODE | PRODUCT DESCRIPTION                                       | 	
-       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                   |   
+       | PRODUCT CODE | PRODUCT DESCRIPTION                     | 	
+       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING |
+
 	
 	I fill "Quantity (UoM)" with "50.00"
 	I fill "Unit Price" with "5.00"
 	I click on "Save & Close" and close the window
-	
-    I click "Validate" on line:
-       | PRODUCT CODE |
-       | ADAPCART02-  |
+
+	I click "Validate" on line:
+       | PRODUCT CODE | PRODUCT DESCRIPTION                     | 	
+       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING |
 
 	I should see in the main table the following data:
-       | PRODUCT CODE | PRODUCT DESCRIPTION                                       | STATE     |
-       | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem)   | Closed    |	
-       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                   | Validated |    
+       | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE     |
+       | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed    |	
+       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Validated |    
 
     I click on "Save"
     I should see "Validated-p" in "State"
 
+	
 	I click on menu "Orders Sourcing Tool"
 	I fill "Order" with "{{FO_REFERENCE}}"
 	I click on "Search"
 
     I click "Edit" on line:
-        | PRODUCT                                                                 |
-        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   |
+       | PRODUCT                                               |
+       | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING |
+	   
 	I fill "ITCompany" within column "SUPPLIER"
 	I validate the line
 	I click "Source Line" on line:
-        | PRODUCT                                                                 |
-        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   |
+        | PRODUCT                                               |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING |
 	
 	I open tab menu "ORDERS"
     I click on menu "Field Orders"
@@ -555,17 +570,19 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | ORDER REFERENCE   |
         | *{{FO_REFERENCE}} |	
 
-
 	I should see in the main table the following data:
-       | PRODUCT CODE | PRODUCT DESCRIPTION                                       | STATE     |	
-       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                   | Sourced   |    
+       | PRODUCT CODE | PRODUCT DESCRIPTION                     | STATE   |	
+       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING | Sourced |    
 
     I should see "Sourced-p" in "State"
 
 
+    ####################
+    ## SYNCHRONIZATION
+    ###################
+	
 	I synchronize "HQ1C1"
     I synchronize "HQ1C1P1"
-
 	I log into instance "HQ1C1P1"
 
     I open tab menu "PURCHASES"
@@ -575,22 +592,24 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click on "Search"
 
     I click "Edit" on line:
-        | REFERENCE          |
-        | *{{PO_REF_COO_1}}* |	
+        | REFERENCE        |
+        | {{PO_REF_COO_1}} |	
 	
 	I should see in the main table the following data:
        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE     |
        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Confirmed |	
-       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Sourced-s |	
+       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Sourced-sy |	
+	   
+	I should see "Sourced-p" in "Order State"   
 
     I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
 	I click on menu "Incoming Shipments"
 
 	I click "Edit" on line:
-		| PURCHASE ORDER     | STATE             |
-		| *{{PO_REF_COO_1}}* | Available Shipped | 
-
+		| PURCHASE ORDER   | STATE             |
+		| {{PO_REF_COO_1}} | Available Shipped | 
+	
 	I should see in the main table the following data:
         | PRODUCT                                                                | STATE     |
         | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)  | Available |
@@ -603,7 +622,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	
 	I should see "Closed" in "State"
 	
-
     I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
     I fill "REFERENCE" with "{{PO_REF_COO_1}}"
@@ -617,7 +635,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	I should see in the main table the following data:
        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE     |
        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed    |	
-       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Sourced-s |	
+       | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Sourced-sy |	
 	   
     I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
@@ -630,17 +648,17 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 
     I click on "Process" and open the window
 	I click on "Copy all"
+	
+		I click "Edit" on line:
+        | PRODUCT                                          |
+        | [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial |
 
-    I click "Edit" on line:
-         | PRODUCT |
-         | *DINJCEFA1V* |
-
-    I fill "batchO{{ID}}" within column "Batch Number" and open the window
-    I click on "Create"
-    I fill "Expiry Date" with "21/Jun/2018"
+	I fill "batch{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/May/2020"
     I click on "Save" and close the window
-    And I validate the line
-
+    I validate the line
+	
     I click on "Process" and close the window if necessary
     I click on "Refresh" until "Done" in "Processing of lines" if a window is open
     I click on "Close" and close the window if a window is open
@@ -659,7 +677,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 
     I click on "Search"
     I click "Edit" on line:
-        | REFERENCE   |
+        | REFERENCE         |
         | *{{PO_REF_LOCM}}* |	
 	
 	I should see in the main table the following data:
@@ -669,8 +687,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	   
 	
     I open tab menu "WAREHOUSE"
-    I open accordion menu "Warehouse Management"
-
+	I open accordion menu "Warehouse Management"
 	I click on menu "Deliveries|Delivery Orders"
 
 	I click "Edit" on line:
@@ -699,17 +716,14 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | ORDER REFERENCE    |
         | *{{IR_REFERENCE}}* |
 
-
-# WARNING Sourced-s in excel, Sourced-v in RB
+		
 	I should see in the main table the following data:
-       | PRODUCT                                                                 | STATE   |
-       | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)   | Closed  |
-       | [ADAPCABL2S-] (computer) CABLE, SERIAL interface PC/Mini-M, female/male | Closed  |
-       | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   | Sourced-s |
-       | [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Closed  |
-       | [AZAZA] Product test                                                    | Closed  |	
-
-
+       | PRODUCT                                                                 | STATE     |
+       | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)   | Closed    |
+       | [ADAPCABL2S-] (computer) CABLE, SERIAL interface PC/Mini-M, female/male | Closed    |
+       | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   | Sourced-sy |
+       | [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Closed    |
+       | [AZAZA] Product test                                                    | Closed    |	
 
     I click on menu "Orders Sourcing Tool"
 	I fill "Order" with "{{IR_REFERENCE}}"
@@ -733,8 +747,8 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	I should see in the main table the following data:
        | PRODUCT                                                           | STATE   |
        | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Sourced |
-    I should see "Sourced-p" in "Order State"
 
+	I should see "Sourced-p" in "Order State"
 
     I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
@@ -745,15 +759,15 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | *{{IR_REFERENCE}}* |
     I click "Edit" on line:
         | SOURCE DOCUMENT    | SUPPLIER |
-        | *{{IR_REFERENCE}}* | *HQ1C1*    | 
+        | *{{IR_REFERENCE}}* | *HQ1C1   | 
 
-    I click on "Analytical Distribution" and open the window
-    I click on "New"
-    I fill "SUP" within column "DESTINATION"
-    I fill "HT101" within column "COST CENTER"
-    I validate the line
-    I click on "Save" and close the window
-
+	I click on "Analytical Distribution" and open the window
+	I click on "New"
+	I fill "SUP" within column "DESTINATION"
+	I fill "HT101" within column "COST CENTER"
+	I validate the line
+	I click on "Save" and close the window
+		
 	I click "Validate" on line:
         | PRODUCT CODE | PRODUCT DESCRIPTION                                 |STATE  | 
         | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Draft |
@@ -764,7 +778,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	I click on "Save"
     I should see "Validated" in "Order State"
 
-
     I open tab menu "ORDERS"
     I click on menu "Internal Requests"
 	I click "Edit" on line:
@@ -774,11 +787,16 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	I should see in the main table the following data:
        | PRODUCT                                                           | STATE     |
        | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Sourced-v |
-    I should see "Sourced-p" in "Order State"
+
+	   I should see "Sourced-p" in "Order State"
+
+
+    ####################
+    ## SYNCHRONIZATION
+    ###################
 	
     I synchronize "HQ1C1P1"
     I synchronize "HQ1C1"
-
     I log out
     I log into instance "HQ1C1"	
 	
@@ -812,25 +830,28 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. |
 	I fill "New line quantity" with "25.00"
 	I click on "Split line" and close the window
+
 	
     I click "Edit" on line:
-        | PRODUCT                                                           | QTY |
-        | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. |   5.00   |
+        | PRODUCT                                                           | QTY  |
+        | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | 5.00 |
+
 	I fill "ITCompany" within column "SUPPLIER"
 	I validate the line
 	I click "Source Line" on line:
-        | PRODUCT                                                           | QTY |
+        | PRODUCT                                                           | QTY      |
         | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. |   5.00   |
-	
+
+		
     I click "Edit" on line:
-        | PRODUCT                                                           | QTY |
+        | PRODUCT                                                           | QTY      |
         | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. |   25.00  |
+		
 	I fill "ESC" within column "SUPPLIER"
 	I validate the line
 	I click "Source Line" on line:
-        | PRODUCT                                                           | QTY |
-        | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. |   25.00  |
-	
+        | PRODUCT                                                           | QTY      |
+        | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. |   25.00  | 
 
     I open tab menu "ORDERS"
     I click on menu "Field Orders"
@@ -851,9 +872,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click on menu "Purchase Orders"
     I toggle on "DRAFT"
 
-    I click "Search" until I see:
-        | SOURCE DOCUMENT    |
-        | *{{FO_REFERENCE}}* |
     I click "Edit" on line:
         | SOURCE DOCUMENT    | SUPPLIER   |
         | *{{FO_REFERENCE}}* |  ITCompany |    
@@ -862,11 +880,12 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                                 |STATE      | Quantity |
-        | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Validated |   5.00  |
+        | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Validated |    5.00  |
 	    | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING             | Validated |   50.00  |
 
-	I store "Order Reference" in "PO_REF_EXT_COO"		
-    
+	I store "Order Reference" in "PO_REF_EXT_COO"
+	
+   
 	I open tab menu "ORDERS"
     I click on menu "Field Orders"
 	I click "Edit" on line:
@@ -929,13 +948,15 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click on menu "Purchase Orders"
 
     I click "Edit" on line:
-        | SOURCE DOCUMENT      | SUPPLIER     |
-        | *{{FO_REFERENCE_2}}* |  ESC |    
+        | SOURCE DOCUMENT      | SUPPLIER |
+        | *{{FO_REFERENCE_2}}* |  ESC     |    
 
 	I click "Validate" on line:
        | PRODUCT CODE | PRODUCT DESCRIPTION                                  | STATE | QUANTITY |
        | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Draft | 25.00    |
 
+	I store "Order Reference" in "PO_REF_ESC_COO"   
+	
 	I open tab menu "ORDERS"	
 	I click on menu "Field Orders"
 	I click "Edit" on line:
@@ -948,15 +969,15 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
       | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Sourced-v | 25.00 |
 
     I should see "Sourced-p" in "State"
-	I store "Order Reference" in "PO_REF_ESC_COO"	
+		
 
 	
 	I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
 
     I click "Edit" on line:
-        | SOURCE DOCUMENT      | SUPPLIER     |
-        | *{{FO_REFERENCE_2}}* |  ESC |    
+        | SOURCE DOCUMENT      | SUPPLIER |
+        | *{{FO_REFERENCE_2}}* |  ESC     |    
 
 	I click "Confirm" on line:
        | PRODUCT CODE | PRODUCT DESCRIPTION                                  | STATE     | QUANTITY |
@@ -975,13 +996,14 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 
     I should see "Sourced-p" in "State"
 	
-	
+    ####################
+    ## SYNCHRONIZATION
+    ###################	
 	
     I log out
     I synchronize "HQ1C1"
     I synchronize "HQ1C1P1"
-	
-    I log into instance "HQ1C1P1"
+	I log into instance "HQ1C1P1"
 
 
     I open tab menu "ORDERS"
@@ -993,19 +1015,18 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click "Edit" on line:
 	    | ORDER REFERENCE    |
         | *{{IR_REFERENCE}}* |	
-
+		
 	I should see in the main table the following data:
         | PRODUCT                                                                 | STATE     | QUANTITY (UOM) | UNIT PRICE |
         | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)   | Closed    |   25.00        |  20.00     |
         | [ADAPCABL2S-] (computer) CABLE, SERIAL interface PC/Mini-M, female/male | Closed    |   10.00        |   *        |
-        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   |	Confirmed |	  50.00        |   *        |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   |	Confirmed |	  50.00        |   5.00     |
 		| [AZAZA] Product test                                                    | Closed    |   30.00        |   *        |
 		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Closed    |   30.00        |   *        | 
-		| [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab.       | Sourced-s |    5.00        |   *        |
+		| [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab.       | Sourced-sy |    5.00        |   *        |
 	    | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab.       | Confirmed |   25.00        |   *        |
 
 	I should see "Sourced-p" in "Order State"
-	
 	
     I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
@@ -1014,9 +1035,9 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | *{{PO_REF_COO_1}}* | 
 
 	I should see in the main table the following data:
-        | PRODUCT CODE | PRODUCT DESCRIPTION                                    |STATE      | 
-        | ADAPCABL1S- | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed    |
-        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                | Confirmed |
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     |STATE      | 
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed    |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Confirmed |
 
     I should see "Confirmed-p" in "Order State"		
 
@@ -1028,12 +1049,11 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                                 |STATE      | 
-        | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Sourced-s |
+        | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Sourced-sy |
         | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Confirmed |
 
     I should see "Sourced-p" in "Order State"	
 
-	
 	
 	I log into instance "HQ1C1"
 	
@@ -1052,10 +1072,12 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | PRODUCT CODE | PRODUCT DESCRIPTION                                 | STATE     |
 	    | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING             | Confirmed |
 	    | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Confirmed |
-
-    I click on "Cancel"
+    
+# letmefix with Testfield  => JF has "I click on "cancel" ?! 
+    I click on "Save"  
     I should see "Confirmed" in "Order State"
 
+	
 	I open tab menu "ORDERS"	
 	I click on menu "Field Orders"
 	I click "Edit" on line:
@@ -1068,7 +1090,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
       | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Confirmed | 25.00 |
 
     I should see "Confirmed" in "State"
-
 
 	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
@@ -1084,9 +1105,10 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | PRODUCT                                               |
 	    | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING |
 		
-	I fill "50" within column "QUANTITY TO PROCESS" 
+	I fill "50.000" within column "QUANTITY TO PROCESS" 
 	I validate the line
 
+	
     I click on "Process" and close the window if necessary
     I click on "Refresh" until "Done" in "Processing of lines" if a window is open
     I click on "Close" and close the window if a window is open
@@ -1104,17 +1126,21 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		
 	I should see "Confirmed-p" in "Order State"
 
+
 	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
 	I click on menu "Deliveries|Picking"
 
+	
 	I click "Edit" on line:
-        | ORIGIN           | LINES STATE  |
-        | {{FO_REFERENCE}} | Available    |
 
-    I click on "Create Picking..." and open the window
-    I click on "Copy all"
-    I click on "Create Picking" and close the window
+	    | ORIGIN           | LINES STATE |
+        | {{FO_REFERENCE}} | *vailable*  |
+	
+	I click on "Create Picking..." and open the window
+	I click on "Copy all"
+	I click on "Create Picking" and close the window
+		
 	I click on "Validate Picking..." and open the window
 	I click on "Copy all"
 	I click on "Validate Picking" and close the window
@@ -1157,20 +1183,21 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	I click on menu "Incoming Shipments"
 
 	I click "Edit" on line:
-		| ORIGIN       |
-		| *{{PO_REF_ESC_COO}}* | 
 
+	    | PURCHASE ORDER       |
+		| *{{PO_REF_ESC_COO}}* |  
 
     I click on "Process" and open the window
 	I click on "Copy all"
-    
-    I click "Edit" on line:
-        | PRODUCT |
-        | *DORADIDA15T* |
+	
+	I click "Edit" on line:
+        | PRODUCT                                                           |
+        | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. |
 
-    I fill "21/Jun/2018" within column "Expiry Date"
-    And I validate the line
 
+    I fill "20/May/2022" within column "EXPIRY DATE"
+    I validate the line
+	
     I click on "Process" and close the window if necessary
     I click on "Refresh" until "Done" in "Processing of lines" if a window is open
     I click on "Close" and close the window if a window is open	
@@ -1178,9 +1205,8 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	
 	I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
-
     I click "Edit" on line:
-        | Source Document      |
+        | REFERENCE            |
         | *{{PO_REF_ESC_COO}}* |  
 	
 	I should see in the main table the following data:
@@ -1188,17 +1214,22 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Closed |
 	
     I should see "Closed" in "Order State"	
+	
+
 	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
 	I click on menu "Deliveries|Picking"
 
+	
 	I click "Edit" on line:
-        | ORIGIN             | LINES STATE           |
-        | {{FO_REFERENCE_2}} | Partially available   |
 
-    I click on "Create Picking..." and open the window
-    I click on "Copy all"
-    I click on "Create Picking" and close the window
+	    | ORIGIN             |  LINES STATE |
+        | {{FO_REFERENCE_2}} | *vailable*   |
+
+	I click on "Create Picking..." and open the window
+	I click on "Copy all"
+	I click on "Create Picking" and close the window
+
 	I click on "Validate Picking..." and open the window
 	I click on "Copy all"
 	I click on "Validate Picking" and close the window
@@ -1221,6 +1252,11 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 
 	I store "Reference" in "SHIPREF_2"
 
+	####################
+    ## SYNCHRONIZATION
+    ###################
+	
+	
     I log out
     I synchronize "HQ1C1"
     I synchronize "HQ1C1P1"
@@ -1244,6 +1280,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 
 	I should see "Confirmed-p" in "Order State"
 
+	
 	I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
 
@@ -1300,7 +1337,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click on "Process" and close the window if necessary
     I click on "Refresh" until "Done" in "Processing of lines" if a window is open
     I click on "Close" and close the window if a window is open	
-
 	
 	I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
@@ -1311,10 +1347,12 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 
 	I should see in the main table the following data:
       | PRODUCT CODE | PRODUCT DESCRIPTION                                  | STATE     | QUANTITY   |
-      | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Confirmed |  5.00 |
-      | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Closed    | 25.00 |
+      | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Confirmed |   5.00     |
+      | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Closed    |  25.00     |
 	   
     I should see "Confirmed-p" in "Order State"		
+	
+	
 	
 	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
@@ -1348,9 +1386,30 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		| [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Confirmed |    5.00        |
 	    | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Closed    |   25.00        | 
 
+    ####################
+    ## SYNCHRONIZATION
+    ###################
 		
 		
+    I synchronize "HQ1C1P1"
+	I log out
+    I synchronize "HQ1C1"
 	I log into instance "HQ1C1"
+	
+	I open tab menu "ORDERS"	
+	I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{FO_REFERENCE_2}}|	
+	   
+	I should see in the main table the following data:
+       | PRODUCT CODE | PRODUCT DESCRIPTION                                 | STATE     | QTY   |
+       | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Confirmed |  5.00 |
+       | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Closed    | 25.00 |
+
+    I should see "Confirmed-p" in "State"
+
+
 	
 	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
@@ -1360,17 +1419,17 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		| PURCHASE ORDER       |
 		| *{{PO_REF_EXT_COO}}* |
 
+		
     I click on "Process" and open the window
 	I click on "Copy all"
-
-
-    I click "Edit" on line:
-        | PRODUCT |
+	
+	I click "Edit" on line:
+        | PRODUCT       |
         | *DORADIDA15T* |
-
-    I fill "29/Jun/2018" within column "Expiry Date"
+		
+	I fill "29/Jun/2018" within column "EXPIRY DATE"
     And I validate the line
-
+	
     I click on "Process" and close the window if necessary
     I click on "Refresh" until "Done" in "Processing of lines" if a window is open
     I click on "Close" and close the window if a window is open	
@@ -1383,23 +1442,27 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | *{{PO_REF_EXT_COO}}* |  
 
 	I should see in the main table the following data:
-     | PRODUCT CODE | PRODUCT DESCRIPTION                                  | STATE     | QUANTITY   |
-     | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING              | Closed    | 50.00 |
-     | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Closed    | 5.00 |
+     | PRODUCT CODE | PRODUCT DESCRIPTION                                  | STATE     | QUANTITY |
+     | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING              | Closed    |   50.00  |
+     | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Closed    |    5.00  |
 	   
     I should see "Closed" in "Order State"	
 	
+
 	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
 	I click on menu "Deliveries|Picking"
 
-	I click "Edit" on line:
-        | ORIGIN             | LINES STATE |
-        | {{FO_REFERENCE_2}} | Available   |
 
-    I click on "Create Picking..." and open the window
-    I click on "Copy all"
-    I click on "Create Picking" and close the window
+	I click "Edit" on line:
+
+	    | ORIGIN             | LINES STATE |
+        | {{FO_REFERENCE_2}} | *vailable*  |
+
+	I click on "Create Picking..." and open the window
+	I click on "Copy all"
+	I click on "Create Picking" and close the window
+
 	I click on "Validate Picking..." and open the window
 	I click on "Copy all"
 	I click on "Validate Picking" and close the window
@@ -1437,6 +1500,9 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I should see "Closed" in "State"	
 
 	
+    ####################
+    ## SYNCHRONIZATION
+    ###################	
 	
 	I synchronize "HQ1C1"
     I synchronize "HQ1C1P1"
@@ -1493,3 +1559,5 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	    | [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab.      | Closed    |   25.00        | 
 		
 	I should see "Closed" in "Order State"	
+	
+	
