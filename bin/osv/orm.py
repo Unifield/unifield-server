@@ -815,7 +815,7 @@ class orm_template(object):
                     processed.append((i, d))
                 cr.commit()
             except Exception as e:
-                rejected.append((i, d, str(e)))
+                rejected.append((i, d, tools.ustr(e)))
                 cr.commit()
 
         return processed, rejected, headers
