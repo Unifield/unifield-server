@@ -951,7 +951,7 @@ class orm_template(object):
                             and len(value.splitlines()) > 1:
                         # US-2661 do not allowed newline character in char fields
                         res = False
-                        warning += [_("New line characters in the field '%s' not allowed. Please fix entry :\n'%s'") % (field[len(prefix)], value)]
+                        warning += [_("New line characters in the field '%s' not allowed. Please fix entry :\n'%s'") % (field[len(prefix)], tools.ustr(value))]
                     else:
                         res = value
                 elif field_type == 'one2many':
