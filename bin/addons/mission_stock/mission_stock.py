@@ -34,6 +34,7 @@ import csv
 import codecs
 import cStringIO
 import base64
+from msf_field_access_rights.osv_override import _get_instance_level
 from xlwt import Workbook, easyxf, Borders
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
@@ -478,7 +479,10 @@ class stock_mission_report(osv.osv):
         msr_in_progress = self.pool.get('msr_in_progress')
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
 
-        report_ids = self.search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
+        if _get_instance_level(self, cr, uid) not in ('coordo', 'hq'):
+            report_ids = self.search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
+        else:
+            report_ids = self.search(cr, uid, [('full_view', '=', False)], context=context)
         full_report_ids = self.search(cr, uid, [('full_view', '=', True)], context=context)
 
         # Create a local report if no exist
@@ -591,7 +595,7 @@ class stock_mission_report(osv.osv):
                     }, context=context)
 
                 # Don't update lines for full view or non local reports
-                if not report['local_report']:
+                if _get_instance_level(self, cr, uid) not in ('coordo', 'hq') and not report['local_report']:
                     continue
 
                 msr_in_progress = self.pool.get('msr_in_progress')
