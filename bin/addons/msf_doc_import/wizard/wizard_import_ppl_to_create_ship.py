@@ -182,6 +182,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
         start_time = time.time()
         line_with_error = []
         error_log = ''
+        move_ids = False
         # List of sequences for from_pack and to_pack
         sequences = []
 
@@ -319,7 +320,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                     error_log = _("Reported errors : \n") + error_log
 
                 # checking the number of lines
-                if line_num != len(move_ids):
+                if move_ids and line_num != len(move_ids):
                     error_log += _("There is %s lines in the file and %s lines in %s. Please import the same number of lines.\n") \
                                  % (line_num, len(move_ids), picking.name)
                     lines_to_correct += abs(len(move_ids) - line_num)
