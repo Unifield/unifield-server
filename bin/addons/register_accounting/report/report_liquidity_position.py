@@ -155,7 +155,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
                 'currency': journal.currency.name,
                 'func_calculated_balance': func_calc_bal,
                 'func_register_balance': func_reg_bal
-                })
+            })
 
             # Add register types amounts
             reg_types[journal.type]['func_amount_calculated'] += func_calc_bal
@@ -199,7 +199,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
             reg_for_selected_period = reg_obj.browse(self.cr, self.uid, reg_for_selected_period_id)[0]
             # get the value from the selection field ("Closed" instead of "confirm", etc.)
             state = reg_for_selected_period.state and \
-                    dict(reg_obj._columns['state'].selection).get(reg_for_selected_period.state) or ''
+                dict(reg_obj._columns['state'].selection).get(reg_for_selected_period.state) or ''
         else:
             state = _('Not Created')
         return state
@@ -218,7 +218,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
             'registers': {},
             'currency_amounts': {},
             'total_cheque': 0.0,
-            }
+        }
         pool = pooler.get_pool(self.cr.dbname)
         reg_obj = pool.get('account.bank.statement')
         aml_obj = pool.get('account.move.line')
@@ -237,10 +237,9 @@ class report_liquidity_position3(report_sxw.rml_parse):
             # Search register lines
             journal = reg.journal_id
             account_ids = [journal.default_debit_account_id.id, journal.default_credit_account_id.id]
-            aml_ids = aml_obj.search(self.cr, self.uid, [('statement_id', '=', reg.id), ('is_reconciled', '=', False),
-                                                         ('account_id', 'in', account_ids),])
-            if isinstance(aml_ids, (int, long)):
-                aml_ids = [aml_ids]
+            # include in the report only the JIs that are either not reconciled,
+            # or reconciled (totally or partially) with at least one entry belonging to a later period
+            aml_ids = reg_obj.get_pending_cheque_ids(self.cr, self.uid, [reg.id], account_ids, self.getPeriod().date_stop)
             lines = aml_obj.browse(self.cr, self.uid, aml_ids)
 
             # Get the amounts in booking and functional currency

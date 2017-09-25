@@ -43,6 +43,9 @@
             <field name="priority">60</field>
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']/tree/field[@name='price_subtotal']" position="before">
+                            <field name="stock_take_date"/>
+                    </xpath>
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']/tree/field[@name='price_subtotal']" position="after">
                             <field name="currency_id"/>
                     </xpath>

@@ -47,9 +47,12 @@ class so_po_common(osv.osv_memory):
             context = {}
         context.update({'active_test': False})
         partner_obj = self.pool.get('res.partner')
-        ids = partner_obj.search(cr, uid, [('name', '=', partner_name)], context=context)
+        domain = [('name', '=', partner_name)]
+        ids = partner_obj.search(cr, uid, domain + [('partner_type', '=', 'internal')], context=context)
         if not ids:
-            raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
+            ids = partner_obj.search(cr, uid, domain, context=context)
+            if not ids:
+                raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
 
         return partner_obj.read(cr, uid, ids, ['partner_type'], context=context)[0]['partner_type']
 
@@ -57,9 +60,12 @@ class so_po_common(osv.osv_memory):
         if not context:
             context = {}
         context.update({'active_test': False})
-        ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', partner_name)], context=context)
+        domain = [('name', '=', partner_name)]
+        ids = self.pool.get('res.partner').search(cr, uid, domain + [('partner_type', '=', 'internal')], context=context)
         if not ids:
-            raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
+            ids = self.pool.get('res.partner').search(cr, uid, domain, context=context)
+            if not ids:
+                raise Exception("The partner %s is not found in the system. The operation is thus interrupted." % partner_name)
         return ids[0]
 
     def get_partner_address_id(self, cr, uid, partner_id, context=None):
@@ -209,6 +215,8 @@ class so_po_common(osv.osv_memory):
             header_result['transport_type'] = header_info.get('transport_type')
         if 'ready_to_ship_date' in header_info:
             header_result['ready_to_ship_date'] = header_info.get('ready_to_ship_date')
+        if 'stock_take_date' in header_info:
+            header_result['stock_take_date'] = header_info.get('stock_take_date')
 
         # US-830: If the PO is intermission/intersection, don't take the AD from the sync. message
         partner_type = self.get_partner_type(cr, uid, source, context)
@@ -300,6 +308,8 @@ class so_po_common(osv.osv_memory):
             header_result['delivery_requested_date'] = header_info.get('delivery_requested_date')
         if 'is_a_counterpart' in header_info:
             header_result['is_a_counterpart'] = header_info.get('is_a_counterpart')
+        if 'stock_take_date' in header_info:
+            header_result['stock_take_date'] = header_info.get('stock_take_date')
 
         # UTP-952: only retrieve the AD from the source if the partner type is not intermission or section
         partner_type = self.get_partner_type(cr, uid, source, context)
@@ -417,6 +427,9 @@ class so_po_common(osv.osv_memory):
             res['price_unit'] = order_line.price_unit
         else:
             res['price_unit'] = 0 # This case is for the line that has price unit False (actually 0 but OpenERP converted to False)
+
+        if 'stock_take_date' in src_values:
+            res['stock_take_date'] = src_values['stock_take_date']
 
         #US-172: Added the cost_price to IR, for FO line it's not required.
         if src_values.get('cost_price'):
@@ -545,6 +558,9 @@ class so_po_common(osv.osv_memory):
                 values['price_unit'] = line.price_unit
             else:
                 values['price_unit'] = 0 # This case is for the line that has price unit False (actually 0 but OpenERP converted to False)
+
+            if line_dict.get('stock_take_date'):
+                values['stock_take_date'] = line_dict['stock_take_date']
 
             #US-172: Added the cost_price to IR, for FO line it's not required.
             if line_dict.get('cost_price'):
@@ -696,7 +712,7 @@ class so_po_common(osv.osv_memory):
                 # look for the correct PO line for updating the value - corresponding to the SO line
                 existing_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', so_id)], context=context)
 
-            if (existing_line_ids and update_lines) or (line_vals_dict.get('state', False) == 'done' and existing_line_ids):
+            if existing_line_ids or (line_vals_dict.get('state', False) == 'done' and existing_line_ids):
                 for existing_line in existing_line_ids:
                     if existing_line not in update_lines:
                         if po_id:

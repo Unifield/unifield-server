@@ -221,7 +221,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	 
     I click "Source lines" in the side panel and open the window
 
-    I fill "Supplier" with "MSF supply"	
+    I fill "Supplier" with "ESC"	
     I click on "Save & source" and close the window	
 
 	
@@ -488,6 +488,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | PRODUCT CODE | PRODUCT DESCRIPTION |STATE | 
        | ADAPMEMK1--  | MEMORY KEY, USB     | Draft|
 
+        I click on "OK, cancel line" and close the window
 	   
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
@@ -630,6 +631,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | PRODUCT                                                    | STATE         | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Available     |
         | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Available     |
+        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | Not Available |
 
 #LINE 19
 

@@ -28,15 +28,24 @@ from osv.orm import browse_record, browse_null
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 import logging
 import pooler
+import json
 import threading
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from mx.DateTime import Parser
-from mx.DateTime import RelativeDateTime
 from workflow.wkf_expr import _eval_expr
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 from account_override.period import get_period_from_date
 from account_override.period import get_date_in_period
+
+ORDER_TYPES_SELECTION = [
+    ('regular', _('Regular')),
+    ('donation_exp', _('Donation before expiry')),
+    ('donation_st', _('Standard donation')),
+    ('loan', _('Loan')),
+    ('in_kind', _('In Kind Donation')),
+    ('purchase_list', _('Purchase List')),
+    ('direct', _('Direct Purchase Order')),
+]
 
 
 class purchase_order(osv.osv):
@@ -410,12 +419,70 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _is_fixed_type(self, cr, uid, ids, field_name, args, context=None):
+        """
+        For each PO, set is the Order Type of the PO can be changed or not
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of purchase.order records to check
+        :param field_name: Name of the field to compute
+        :param args: Extra parameters
+        :param context: Context of the call
+        :return: A dictionnary with ID of the purchase.order record as keys and True/Fales as values
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context is None:
+            context =  {}
+
+        context['procurement_request'] = True
+
+        res = {}
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['po_from_fo', 'po_from_ir'], context=context):
+            if po.po_from_fo or po.po_from_ir:
+                src_type = set()
+                sale_ids = self.get_so_ids_from_po_ids(cr, uid, [po.id], context=context)
+                if sale_ids:
+                    for sale in self.pool.get('sale.order').read(cr, uid, sale_ids, ['procurement_request', 'order_type'], context=context):
+                        if sale['procurement_request'] or sale['order_type'] == 'regular':
+                            src_type.add('regular')
+                            src_type.add('purchase_list')
+
+                        if not sale['procurement_request']:
+                            if sale['order_type'] == 'regular':
+                                src_type.add('direct')
+                            elif sale['order_type'] == 'loan':
+                                src_type.add('loan')
+                            elif sale['order_type'] == 'donation_exp':
+                                src_type.add('donation_exp')
+                            elif sale['order_type'] == 'donation_st':
+                                src_type.add('donation_st')
+                res[po.id] = json.dumps(list(src_type))
+            else:
+                res[po.id] = json.dumps([x[0] for x in ORDER_TYPES_SELECTION])
+
+        return res
+
+    def _order_line_order_type(self, cr, uid, ids, context=None):
+        """
+        Return the list of ID of purchase.order records to update
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of purchase.order.line records updated
+        :param context: Context of the call
+        :return: A list that represents a domain to apply on purchase.order records
+        """
+        lines = self.read(cr, uid, ids, ['order_id'], context=context)
+        po_ids = set()
+        for l in lines:
+            po_ids.add(l['order_id'][0])
+
+        return list(po_ids)
+
 
     _columns = {
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
-                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'),
-                                        ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
-                                        ('direct', 'Direct Purchase Order')], string='Order Type', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
@@ -431,7 +498,7 @@ class purchase_order(osv.osv):
         'partner_id': fields.many2one('res.partner', 'Supplier', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)],'cancel':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
         'partner_address_id': fields.many2one('res.partner.address', 'Address', required=True,
                                               states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
-        'dest_partner_id': fields.many2one('res.partner', string='Destination partner', domain=[('partner_type', '=', 'internal')]),
+        'dest_partner_id': fields.many2one('res.partner', string='Destination partner'),
         'invoice_address_id': fields.many2one('res.partner.address', string='Invoicing address', required=True,
                                               help="The address where the invoice will be sent."),
         'invoice_method': fields.selection([('manual','Manual'),('order','From Order'),('picking','From Picking')], 'Invoicing Control', required=True, readonly=True,
@@ -518,6 +585,12 @@ class purchase_order(osv.osv):
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position'),
         'create_uid':  fields.many2one('res.users', 'Responsible'),
         'company_id': fields.many2one('res.company','Company',required=True,select=1),
+        'stock_take_date': fields.date(string='Date of Stock Take', required=False),
+        'fixed_order_type': fields.function(_is_fixed_type, method=True, type='char', size=256, string='Possible order types', store={
+                'purchase.order': (lambda obj, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                'purchase.order.line': (_order_line_order_type, ['order_id'], 10),
+            },
+        ),
     }
     _defaults = {
         'po_confirmed': lambda *a: False,
@@ -544,6 +617,7 @@ class purchase_order(osv.osv):
         'partner_address_id': lambda self, cr, uid, context: context.get('partner_id', False) and self.pool.get('res.partner').address_get(cr, uid, [context['partner_id']], ['default'])['default'],
         'pricelist_id': lambda self, cr, uid, context: context.get('partner_id', False) and self.pool.get('res.partner').browse(cr, uid, context['partner_id']).property_product_pricelist_purchase.id,
         'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'purchase.order', context=c),
+        'fixed_order_type': lambda *a: json.dumps([]),
     }
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
@@ -557,8 +631,39 @@ class purchase_order(osv.osv):
                 return False
         return True
 
+    def _check_order_type(self, cr, uid, ids, context=None):
+        '''
+        Check the integrity of the order type and the source order type
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of sale.order to check
+        :param context: Context of the call
+        :return: True if the integrity is ok.
+        '''
+        err = []
+
+        order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
+
+        for order in self.read(cr, uid, ids, ['name', 'fixed_order_type', 'order_type', 'is_a_counterpart'], context=context):
+            if order['is_a_counterpart'] and order['order_type'] != 'loan':
+                err.append(_('%s: This purchase order is a loan counterpart. You cannot change its order type') % order['name'])
+            else:
+                json_info = json.loads(order['fixed_order_type'])
+                if json_info and order['order_type'] not in json_info:
+                    allowed_type = ' / '.join(order_types_dict.get(x) for x in json_info)
+                    err.append(_('%s: Only %s order types are allowed for this purchase order') % (order['name'], allowed_type))
+
+        if err:
+            raise osv.except_osv(
+                _('Error'),
+                '\n'.join(x for x in err),
+            )
+
+        return True
+
     _constraints = [
         (_check_po_from_fo, 'You cannot choose an internal supplier for this purchase order', []),
+        (_check_order_type, 'The order type of the order is not consistent with the order type of the source', ['order_type'])
     ]
 
     def default_get(self, cr, uid, fields, context=None):
@@ -585,7 +690,9 @@ class purchase_order(osv.osv):
             context = {}
 
         if vals.get('order_type'):
-            if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
+            if vals.get('order_type') in ['donation_exp', 'donation_st']:
+                vals.update({'invoice_method': vals.get('partner_type', '') == 'section' and 'picking' or 'manual'})
+            elif vals.get('order_type') == 'loan':
                 vals.update({'invoice_method': 'manual'})
             elif vals.get('order_type') in ['direct']:
                 vals.update({'invoice_method': 'order'})
@@ -617,7 +724,9 @@ class purchase_order(osv.osv):
         for order in self.read(cr, uid, ids, ['partner_id', 'warehouse_id'], context=context):
             partner_type = res_partner_obj.read(cr, uid, int(vals.get('partner_id', order['partner_id'][0])), ['partner_type'], context=context)['partner_type']
             if vals.get('order_type'):
-                if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
+                if vals.get('order_type') in ['donation_exp', 'donation_st']:
+                    vals.update({'invoice_method': partner_type == 'section' and 'picking' or 'manual'})
+                elif vals.get('order_type') == 'loan':
                     vals.update({'invoice_method': 'manual'})
                 elif vals.get('order_type') in ['direct',] and partner_type != 'esc':
                     vals.update({'invoice_method': 'order'})
@@ -1062,16 +1171,41 @@ class purchase_order(osv.osv):
         v = {}
         # the domain on the onchange was replace by a several fields.function that you can retrieve in the
         # file msf_custom_settings/view/purchase_view.xml: domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', order_type),  ('check_partner_rfq', '=', tender_id)]"
-#        d = {'partner_id': []}
         w = {}
         local_market = None
+        partner = partner_id and partner_obj.read(cr, uid, partner_id, ['partner_type']) or False
+
+        if ids:
+            order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
+            err = []
+            for order in self.read(cr, uid, ids, ['name', 'fixed_order_type', 'order_type', 'is_a_counterpart']):
+                if order['is_a_counterpart'] and order_type != 'loan':
+                    err.append(_('%s: This purchase order is a loan counterpart. You cannot change its order type') % order['name'])
+                else:
+                    json_info = json.loads(order['fixed_order_type'])
+                    if json_info and order_type not in json_info:
+                        allowed_type = ' / '.join(order_types_dict.get(x) for x in json_info)
+                        err.append(
+                            _('%s: Only %s order types are allowed for this purchase order') % (order['name'], allowed_type))
+
+                if err:
+                    return {
+                        'warning': {
+                            'title': _('Error'),
+                            'message': '\n'.join(x for x in err),
+                        },
+                        'value': {
+                            'order_type': order['order_type'],
+                        }
+                    }
 
         # check if the current PO was created from scratch :
-        proc_obj = self.pool.get('procurement.order')
         if order_type == 'direct':
-            if not proc_obj.search_exist(cr, uid, [('purchase_id', 'in', ids)]):
+            if not self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', 'in', ids), ('linked_sol_id', '=', False)]):
+                order_type_value = self.read(cr, uid, ids, ['order_type'])
+                order_type_value = order_type_value[0].get('order_type', 'regular') if order_type_value else 'regular'
                 return {
-                    'value': {'order_type': 'regular'},
+                    'value': {'order_type': order_type_value},
                     'warning': {
                         'title': _('Error'),
                         'message': _('You cannot create a direct purchase order from scratch')
@@ -1096,7 +1230,9 @@ class purchase_order(osv.osv):
                         'warning': {'title': 'Error',
                                     'message': 'The Field orders feature is not activated on your system, so, you cannot create a Loan Purchase Order !'}}
 
-        if order_type in ['donation_exp', 'donation_st', 'loan']:
+        if order_type in ['donation_exp', 'donation_st']:
+            v['invoice_method'] = partner and partner['partner_type'] == 'section' and 'picking' or 'manual'
+        elif order_type == 'loan':
             v['invoice_method'] = 'manual'
         elif order_type in ['direct']:
             v['invoice_method'] = 'order'
@@ -1116,8 +1252,7 @@ class purchase_order(osv.osv):
             cp_address_id = self.pool.get('res.partner').address_get(cr, uid, company_id, ['delivery'])['delivery']
             v.update({'dest_address_id': cp_address_id, 'dest_partner_id': company_id})
 
-        if partner_id and partner_id != local_market:
-            partner = partner_obj.read(cr, uid, partner_id, ['partner_type'])
+        if partner and partner_id != local_market:
             if partner['partner_type'] in ('internal', 'esc') and order_type in ('regular', 'direct'):
                 v['invoice_method'] = 'manual'
             elif partner['partner_type'] not in ('external', 'esc') and order_type == 'direct':
@@ -1276,16 +1411,13 @@ class purchase_order(osv.osv):
                 raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
         return dest_ok
 
-    def check_analytic_distribution(self, cr, uid, ids, context=None):
+    def check_analytic_distribution(self, cr, uid, ids, context=None, create_missing=False):
         """
         Check analytic distribution validity for given PO.
         Also check that partner have a donation account (is PO is in_kind)
         """
         # Objects
-        ad_obj = self.pool.get('analytic.distribution')
-        ccdl_obj = self.pool.get('cost.center.distribution.line')
         pol_obj = self.pool.get('purchase.order.line')
-        imd_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -1293,60 +1425,25 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # Analytic distribution verification
+        po_line_ids = pol_obj.search(cr, uid, [('oder_id', 'in', id), ('state', '!=', 'cancelled')], context=context)
+        if po_line_ids:
+            return pol_obj.check_analytic_distribution(cr, uid, po_line_ids, context=context, create_missing=create_missing)
+        return True
+
+    def check_if_stock_take_date_with_esc_partner(self, cr, uid, ids, context=None):
+        """
+        Check if the PO and all lines have a date of stock take with an ESC Partner
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         for po in self.browse(cr, uid, ids, context=context):
-            try:
-                intermission_cc = imd_obj.get_object_reference(cr, uid, 'analytic_distribution',
-                                                               'analytic_account_project_intermission')[1]
-            except ValueError:
-                intermission_cc = 0
-
-            if po.order_type == 'in_kind' and not po.partner_id.donation_payable_account:
-                if not po.partner_id.donation_payable_account:
-                    raise osv.except_osv(_('Error'), _('No donation account on this partner: %s') % (po.partner_id.name or '',))
-
-            if po.partner_id and po.partner_id.partner_type == 'intermission':
-                if not intermission_cc:
-                    raise osv.except_osv(_('Error'), _('No Intermission Cost Center found!'))
-
-            for pol in po.order_line:
-                distrib = pol.analytic_distribution_id  or po.analytic_distribution_id  or False
-                # Raise an error if no analytic distribution found
-                if not distrib:
-                    # UFTP-336: For the case of a new line added from Coordo, it's a push flow, no need to check the AD! VERY SPECIAL CASE
-                    if po.order_type not in ('loan', 'donation_st', 'donation_exp', 'in_kind') and not po.push_fo:
-                        raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
-
-                    # UF-2031: If no distrib accepted (for loan, donation), then do not process the distrib
-                    return True
-                elif pol.analytic_distribution_state != 'valid':
-                    id_ad = ad_obj.create(cr, uid, {})
-                    ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
-                    bro_dests = self._get_destination_ok(cr, uid, [pol], context=context)
-                    for line in ad_lines:
-                        # fetch compatible destinations then use on of them:
-                        # - destination if compatible
-                        # - else default destination of given account
-                        if line.destination_id in bro_dests:
-                            bro_dest_ok = line.destination_id
-                        else:
-                            bro_dest_ok = pol.account_4_distribution.default_destination_id
-                        # Copy cost center line to the new distribution
-                        ccdl_obj.copy(cr, uid, line.id, {
-                            'distribution_id': id_ad,
-                            'destination_id': bro_dest_ok.id,
-                            'partner_type': pol.order_id.partner_id.partner_type,
-                        })
-                    # Write result
-                    pol_obj.write(cr, uid, [pol.id], {'analytic_distribution_id': id_ad})
-                else:
-                    ad_lines = pol.analytic_distribution_id and pol.analytic_distribution_id.cost_center_lines or po.analytic_distribution_id.cost_center_lines
-                    line_ids_to_write = [line.id for line in ad_lines if not
-                                         line.partner_type]
-                    ccdl_obj.write(cr, uid, line_ids_to_write, {
-                        'partner_type': pol.order_id.partner_id.partner_type,
-                    })
-
+            if po.partner_type == 'esc':
+                if not po.stock_take_date and self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', '=', po.id), ('stock_take_date', '=', False)], context=context):
+                    raise osv.except_osv(_('Warning !'), _(
+                        'The Date of Stock Take is required for a Purchase Order if the Partner is an ESC.'))
+                if self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', '=', po.id), ('stock_take_date', '=', False)], context=context):
+                    raise osv.except_osv(_('Warning !'), _('The Date of Stock Take is required for all Purchase Order lines if the Partner is an ESC.'))
         return True
 
     def get_so_ids_from_po_ids(self, cr, uid, ids, context=None):
@@ -1518,7 +1615,7 @@ class purchase_order(osv.osv):
             'date': order_line.confirmed_delivery_date,
             'date_expected': order_line.confirmed_delivery_date or order_line.date_planned,
             'line_number': order_line.line_number,
-            'comment': order_line.comment or '',
+            'comment': order_line.comment,
         }
 
         if picking_id.reason_type_id:
@@ -1909,7 +2006,6 @@ class purchase_order(osv.osv):
         return commit_id
 
 purchase_order()
-
 
 
 class stock_invoice_onshipping(osv.osv_memory):

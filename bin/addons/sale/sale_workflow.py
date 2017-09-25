@@ -238,6 +238,8 @@ class sale_order_line(osv.osv):
             ids = [ids]
 
         for sol in self.browse(cr, uid, ids, context=context):
+            if not sol.stock_take_date and sol.order_id.stock_take_date:
+                self.write(cr, uid, sol.id, {'stock_take_date': sol.order_id.stock_take_date}, context=context)
             # we do not create PICK/OUT in case of DPO:
             linked_to_dpo = self.pool.get('purchase.order.line').search_exist(cr, uid, [
                 ('linked_sol_id', '=', sol.id),
@@ -304,6 +306,9 @@ class sale_order_line(osv.osv):
             ids = [ids] 
 
         for sol in self.browse(cr, uid, ids, context=context):
+            to_write = {}
+            if not sol.stock_take_date and sol.order_id.stock_take_date:
+                to_write['stock_take_date'] = sol.order_id.stock_take_date
             if not sol.procurement_request: # in case of FO
                 # check unit price:
                 if not sol.price_unit or sol.price_unit <= 0:
@@ -315,12 +320,14 @@ class sale_order_line(osv.osv):
                 self.analytic_distribution_checks(cr, uid, [sol.id], context=context)
                 self.copy_analytic_distribution_on_lines(cr, uid, [sol.id], context=context)
 
-                # force make to stock in case of loan:
-                if sol.loan_type and sol.type == 'make_to_order':
-                    self.write(cr, uid, [sol.id], {'type': 'make_to_stock'}, context=context)
+                if sol.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] and sol.type != 'make_to_stock':
+                    to_write['type'] = 'make_to_stock'
 
             elif sol.procurement_request: # in case of IR
                 pass #TODO
+
+            if to_write:
+                self.write(cr, uid, sol.id, to_write, context=context)
 
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 

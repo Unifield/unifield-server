@@ -113,7 +113,9 @@
                         <field name="warehouse_id" required="1" />
                         <field name="client_order_ref" attrs= "{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
                         <field name="shipped"/>
-                        <field name="order_type" />
+                        <field name="is_a_counterpart" invisible="1" />
+                        <field name="fo_created_by_po_sync" invisible="1" />
+                        <field name="order_type" attrs="{'readonly': [('fo_created_by_po_sync', '=', True), ('state', '=', 'draft')]}"/>
                         <field name="priority" />
                         <field name="categ" on_change="onchange_categ(categ)" />
                         <group colspan="2" col="2">
@@ -145,6 +147,7 @@
                                                 name="product_id"
                                                 on_change="product_id_on_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], True, parent.date_order, product_packaging, parent.fiscal_position, False, context)" 
                                                 domain="[('sale_ok', '=', True)]"
+                                                default_focus="1"
                                                 />
                                             <field
                                                 context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom"
@@ -191,6 +194,7 @@
                                     <field name="product_uom" string="UoM"/>
                                     <field name="discount"/>
                                     <field name="price_unit"/>
+                                    <field name="stock_take_date"/>
                                     <field name="price_subtotal"/>
                                     <field name="state" invisible="1"/>
                                     <field name="fake_state" invisible="1" />
@@ -200,8 +204,7 @@
                                             attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}" />
                                     <button string="Validate" icon="terp-check" name="validated" type="workflow" 
                                         attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
-                                    <button string="Delete" icon="gtk-del" type="object" name="ask_unlink"
-                                            confirm="Do you really want to delete selected record ?"
+                                    <button string="Delete" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object"
                                             attrs="{'invisible': [('fake_state', 'in', ('cancel', 'cancel_r' 'done'))]}" />
                                 </tree>
                             </field>
@@ -645,7 +648,7 @@
             <field name="name">sale.order.line.to.correct.form</field>
             <field name="model">sale.order.line</field>
             <field name="type">form</field>
-            <field name="priority" eval="4" />
+            <field name="priority" eval="17" />
             <field name="arch" type="xml">
             <form>
                   <notebook>

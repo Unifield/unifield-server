@@ -1221,7 +1221,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         :rtype boolean
         """
         # Objects
-        po_auto_obj = self.pool.get('po.automation.config')
         data_obj = self.pool.get('ir.model.data')
         product_obj = self.pool.get('product.product')
 
@@ -1659,7 +1658,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     # attach tender line:
                     proc_location_id = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'procurement')], context=context)
                     proc_location_id = proc_location_id[0] if proc_location_id else False
-                    tender_line_id = self.pool.get('tender.line').create(cr, uid, {
+                    self.pool.get('tender.line').create(cr, uid, {
                         'product_id': sourcing_line.product_id.id,
                         'comment': sourcing_line.comment,
                         'qty': sourcing_line.product_uom_qty,

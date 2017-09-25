@@ -29477,7 +29477,7 @@ msgstr ""
 #: code:addons/account_reconciliation/account_move_line.py:149
 #: code:addons/res_currency_functional/account_move_line_compute_currency.py:131
 #, python-format
-msgid "No Currency Adjustement journal found!"
+msgid "No Currency Adjustment journal found!"
 msgstr ""
 
 #. module: hr

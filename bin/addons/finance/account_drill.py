@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import osv
-from osv import fields
 from tools.translate import _
 
 
@@ -95,9 +94,9 @@ class AccountDrill(object):
         WHERE l.account_id = %s and per.number = 0{query}
         GROUP BY l.currency_id'''
 
-    def __init__(self, pool, cr, uid, query, query_ib, move_states=None,
-        include_accounts=False, account_report_types=False,
-        with_balance_only=False, reconcile_filter='', context=None):
+    def __init__(self, pool, cr, uid, query, query_ib,
+                 include_accounts=False, account_report_types=False,
+                 with_balance_only=False, reconcile_filter='', context=None):
         super(AccountDrill, self).__init__()
         self.pool = pool
         self.cr = cr
@@ -105,14 +104,11 @@ class AccountDrill(object):
         self.context = context
         if self.context is None:
             self.context = {}
-        if move_states is None:
-            move_states = []
         self.model = self.pool.get('account.account')
 
         # passed params
         self.query = query or ''
         self.query_ib = query_ib or ''
-        self.move_states = move_states or [ 'draft', 'posted', ]
         self.include_accounts = include_accounts
         self.account_report_types = account_report_types
         self.with_balance_only = with_balance_only
@@ -123,7 +119,7 @@ class AccountDrill(object):
                 ('report_type', 'in' , self.account_report_types),
             ]
             if 'asset' in self.account_report_types \
-                or 'liability' in self.account_report_types:
+                    or 'liability' in self.account_report_types:
                 # US-227 include tax account for BS accounts selection
                 domain = [ '|', ('code', '=', 'tax') ] + domain
             account_types_ids = self.pool.get('account.account.type').search(
@@ -192,7 +188,7 @@ class AccountDrill(object):
                     set_attributes(n)
 
                     if not n.is_view and self.with_balance_only \
-                        and n.is_zero_bal:
+                            and n.is_zero_bal:
                         # JI level:
                         # with only balance filter: do not agregate account
                         # debit/credit with a zero balance
@@ -229,7 +225,7 @@ class AccountDrill(object):
             for id in child_ids:
                 if self.is_view(id) or not self.include_accounts or id in self.include_accounts:
                     node = self._create_node(parent=parent, level=level,
-                        account_id=id)
+                                             account_id=id)
                     if node:
                         self._map_dive(node, level + 1)
 
@@ -261,7 +257,7 @@ class AccountDrill(object):
                 total_credit = 0.
 
                 for debit, credit, debit_ccy, credit_ccy, ccy_name \
-                    in cr.fetchall():
+                        in cr.fetchall():
                     if not append or ccy_name not in node.data:
                         node.data[ccy_name] = {}
                         for k in keys:
@@ -279,7 +275,7 @@ class AccountDrill(object):
                 node.data['*']['credit'] += total_credit
 
         node = AccountDrillNode(self, parent=parent, level=level,
-            account_id=account_id)
+                                account_id=account_id)
         node.is_view = self.is_view(account_id)
         self.nodes_flat.append(node)
         self.nodes_by_id[account_id] = node
@@ -294,7 +290,7 @@ class AccountDrill(object):
 
             # regular query
             sql = prepare_sql(self.sql, self.query, node)
-            self.cr.execute(sql, (account_id, tuple(self.move_states), ))
+            self.cr.execute(sql)
             register_sql_result(self.cr, node)
 
             # initial balance
@@ -307,11 +303,11 @@ class AccountDrill(object):
 
     def _search(self, domain):
         return self.model.search(self.cr, self.uid, domain,
-            context=self.context)
+                                 context=self.context)
 
     def is_view(self, account_id):
         return self.pool.get('account.account').read(self.cr, self.uid,
-            account_id, ['type'])['type'] == 'view'
+                                                     account_id, ['type'])['type'] == 'view'
 
     def next_node(self):
         if self._next_node_index >= self.nodes_count:
@@ -319,7 +315,7 @@ class AccountDrill(object):
         node = self.nodes_flat[self._next_node_index]
         if not node.name:
             node.obj = self.model.browse(self.cr, self.uid, node.account_id,
-                self.context)
+                                         self.context)
             node.code = node.obj.code
             node.name = "%s %s" % (node.code, node.obj.name, )
             if self._next_node_index == 0:
@@ -334,10 +330,10 @@ class account_drill(osv.osv):
     _name = "account.drill"
     _auto = False
 
-    def build_tree(self, cr, uid, query, query_ib, move_states=[],
-        include_accounts=False, account_report_types=False,
-        with_balance_only=False, reconcile_filter='',
-        context=None):
+    def build_tree(self, cr, uid, query, query_ib,
+                   include_accounts=False, account_report_types=False,
+                   with_balance_only=False, reconcile_filter='',
+                   context=None):
         """
         build account amounts consolidated tree
         using query for where clause for regular move lines
@@ -353,12 +349,11 @@ class account_drill(osv.osv):
             accounts with a balance to zero)
         """
         ac = AccountDrill(self.pool, cr, uid, query, query_ib,
-            move_states=move_states,
-            include_accounts=include_accounts,
-            account_report_types=account_report_types,
-            with_balance_only=with_balance_only,
-            reconcile_filter=reconcile_filter,
-            context=context)
+                          include_accounts=include_accounts,
+                          account_report_types=account_report_types,
+                          with_balance_only=with_balance_only,
+                          reconcile_filter=reconcile_filter,
+                          context=context)
         ac.map()
         ac.reduce()
         return ac

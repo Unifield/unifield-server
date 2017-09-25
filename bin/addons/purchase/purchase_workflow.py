@@ -73,6 +73,12 @@ class purchase_order_line(osv.osv):
                 line_confirmed = self.pool.get('purchase.order').compute_confirmed_delivery_date(cr, uid, pol.order_id, pol.confirmed_delivery_date,
                                                                                                  prep_lt, ship_lt, sale_order.est_transport_lead_time, db_date_format, context=context)
 
+            line_stock_take = False
+            if pol.stock_take_date:
+                line_stock_take = pol.stock_take_date
+
+
+
             sol_values = {
                 'product_id': pol.product_id and pol.product_id.id or False,
                 'name': pol.name,
@@ -97,6 +103,7 @@ class purchase_order_line(osv.osv):
                 'nomen_sub_4': pol.nomen_sub_4 and pol.nomen_sub_4.id or False,
                 'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
                 'confirmed_delivery_date': line_confirmed,
+                'stock_take_date': line_stock_take,
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
                 'type': 'make_to_order',
             }
@@ -151,6 +158,10 @@ class purchase_order_line(osv.osv):
                 line_confirmed = self.pool.get('purchase.order').compute_confirmed_delivery_date(cr, uid, pol.order_id, pol.confirmed_delivery_date,
                                                                                                  prep_lt, ship_lt, sale_order.est_transport_lead_time, db_date_format, context=context)
 
+            line_stock_take = False
+            if pol.stock_take_date:
+                line_stock_take = pol.stock_take_date
+
             sol_values = {
                 'order_id': fo_id,
                 'product_id': pol.product_id and pol.product_id.id or False,
@@ -177,6 +188,7 @@ class purchase_order_line(osv.osv):
                 'nomen_sub_4': pol.nomen_sub_4 and pol.nomen_sub_4.id or False,
                 'nomen_sub_5': pol.nomen_sub_5 and pol.nomen_sub_5.id or False,
                 'confirmed_delivery_date': line_confirmed,
+                'stock_take_date': line_stock_take,
                 'date_planned': (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d'),
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
                 'set_as_sourced_n': True,
@@ -267,9 +279,14 @@ class purchase_order_line(osv.osv):
 
         # update FO lines:
         self.update_fo_lines(cr, uid, ids, context=context)
+        po_to_check = {}
         for pol in self.browse(cr, uid, ids, context=context):
+            po_to_check[pol.order_id.id] = True
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_v', cr)
+
+        if po_to_check:
+            self.pool.get('purchase.order').check_if_stock_take_date_with_esc_partner(cr, uid, po_to_check.keys(), context=context)
 
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
@@ -345,8 +362,9 @@ class purchase_order_line(osv.osv):
         # update FO line with change on PO line
         self.update_fo_lines(cr, uid, ids, context=context)
 
+        po_to_check = {}
         for pol in self.browse(cr, uid, ids):
-
+            po_to_check[pol.order_id.id] = True
             if pol.order_type != 'direct':
                 # create incoming shipment (IN):
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
@@ -412,6 +430,9 @@ class purchase_order_line(osv.osv):
 
             if pol.order_id.order_type == 'direct':
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
+
+        if po_to_check:
+            self.pool.get('purchase.order').check_if_stock_take_date_with_esc_partner(cr, uid, po_to_check.keys(), context=context)
 
         # create or update the linked commitment voucher:
         self.create_or_update_commitment_voucher(cr, uid, ids, context=context)

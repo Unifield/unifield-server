@@ -67,6 +67,10 @@
         "wizard/split_order_line_view.xml",
         "wizard/order_change_currency_view.xml",
         'sale_order_line_workflow.xml',
+        'wizard/sale_donation_stock_moves_view.xml',
+        'report/sale_donation_stock_moves_report.xml',
+        'wizard/sale_loan_stock_moves_view.xml',
+        'report/sale_loan_stock_moves_report.xml',
     ],
     'demo_xml': ['sale_demo.xml'],
     'test': [

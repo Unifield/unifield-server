@@ -66,7 +66,7 @@ class account_move_line_compute_currency(osv.osv):
 
         Since US-236: default document and posting dates should belong to the
         first open period found after the highest posting date involved in the
-        reconciliation
+        reconciliation (Period 0 and 16 are excluded)
         """
         if context is None:
             context = {}
@@ -114,7 +114,7 @@ class account_move_line_compute_currency(osv.osv):
         j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj'),
                                        ('is_current_instance', '=', True)], order='id', context=context)
         if not j_ids:
-            raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
+            raise osv.except_osv(_('Error'), _('No Currency Adjustment journal found!'))
         journal_id = j_ids[0]
         # Get default debit and credit account for addendum_line (given by default credit/debit on journal)
         journal = j_obj.browse(cr, uid, journal_id)
@@ -164,7 +164,8 @@ class account_move_line_compute_currency(osv.osv):
             period_ids = period_obj.search(cr, uid, [
                 ('date_start', '>=', period_from),
                 ('state', '=', 'draft'),  # first opened period since 
-            ], limit=1, order='date_start, name', context=context)
+                ('number', 'not in', [0, 16]),
+            ], limit=1, order='date_start, number', context=context)
             if not period_ids:
                 raise osv.except_osv(_('Warning'),
                                      _('No open period found since this date: %s') % base_date)
@@ -283,7 +284,7 @@ class account_move_line_compute_currency(osv.osv):
         j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj'),
                                        ('is_current_instance', '=', True)], order='id', context=context)
         if not j_ids:
-            raise osv.except_osv(_('Error'), _('No Currency Adjustement journal found!'))
+            raise osv.except_osv(_('Error'), _('No Currency Adjustment journal found!'))
         journal_id = j_ids[0]
         # Get default debit and credit account for addendum_line (given by default credit/debit on journal)
         journal = j_obj.browse(cr, uid, journal_id)
