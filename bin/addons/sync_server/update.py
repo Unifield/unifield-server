@@ -30,8 +30,7 @@ pp = pprint.PrettyPrinter(indent=4)
 import logging
 from tools.safe_eval import safe_eval as eval
 import threading
-import time
-from sync_common import add_sdref_column, translate_column, fancy_integer
+from sync_common import add_sdref_column, fancy_integer
 
 class SavePullerCache(object):
     def __init__(self, model):
@@ -58,7 +57,6 @@ class SavePullerCache(object):
             return
         with self.__lock__:
             cache, self.__cache__ = self.__cache__, type(self.__cache__)()
-        todo = {}
         for entity_id, updates in cache:
             for update_id in updates:
                 self.__model__.pool.get('sync.server.puller_logs').create(cr, uid, {
@@ -470,7 +468,7 @@ class update(osv.osv):
 
         return update_to_send
 
-    def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
+    def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, init_sync=False, context=None):
         """
             Called by XML RPC get_update method to give a list of updates to pull to the client instance.
 
@@ -514,7 +512,7 @@ class update(osv.osv):
         if not rules:
             return None
 
-        if not recover and last_seq == 0:
+        if not recover and init_sync:
             # first sync get only master data
             cr.execute("select id from sync_server_sync_rule where id in (" + ','.join(map(str, rules)) + ") and master_data='t'");
             rules = [x[0] for x in cr.fetchall()]
@@ -554,7 +552,7 @@ class update(osv.osv):
         offset_increment = 0
         packet_size = 0
 
-        self._logger.info("::::::::[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, '/'.join(map(str, offset)), max_size))
+        self._logger.info("::::::::[%s] Data pull get package:: init sync = %s, last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (init_sync, entity.name, last_seq, max_seq, '/'.join(map(str, offset)), max_size))
 
         while not ids or packet_size < max_size:
             query = base_query % (offset[0], offset[1], max_size)

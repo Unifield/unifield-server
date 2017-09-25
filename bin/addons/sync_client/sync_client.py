@@ -810,6 +810,9 @@ class Entity(osv.osv):
         logger = context.get('logger')
         updates = self.pool.get(context.get('update_received_model', 'sync.client.update_received'))
 
+        company = self.pool.get('res.users').company_get(cr, uid, uid)
+        init_sync = bool(company.instance_id)
+
         entity = self.get_entity(cr, uid, context)
         last_seq = entity.update_last
         total_max_seq = entity.max_update
@@ -821,12 +824,12 @@ class Entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
 
         # ask only max_seq_pack sequences to the sync server
-        max_seq_pack = 500
+        max_seq_pack = max_packet_size
 
         max_seq = min(last_seq+max_seq_pack, total_max_seq)
         while max_seq <= total_max_seq:
             while not last:
-                res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover)
+                res = proxy.get_update(entity.identifier, self._hardware_id, last_seq, offset, max_packet_size, max_seq, recover, init_sync)
                 if res and res[0]:
                     if res[1]: check_md5(res[3], res[1], _('method get_update'))
                     increment_to_offset = 0
