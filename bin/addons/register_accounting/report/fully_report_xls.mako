@@ -332,7 +332,7 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
-    <!-- Grey color for deleted entries, DP Reversals, Payable Entries... -->
+    <!-- Grey color for deleted entries, manual entries, DP Reversals, Payable Entries... -->
     <Style ss:ID="grey_left_bold">
       <Font ss:Bold="1" ss:Color="#9E9E9E"/>
       <Alignment ss:Horizontal="Left" ss:Indent="0"/>
@@ -919,7 +919,7 @@ if line.free_analytic_lines and not line.invoice_id and not line.imported_invoic
     a_lines = line.free_analytic_lines
 %>
 % if a_lines:
-% for ana_line in sorted(a_lines, key=lambda x: x.id):
+% for ana_line in sorted(getDownPaymentReversals, key=lambda x: x.id):
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:
@@ -971,6 +971,73 @@ endif
 % endfor
 % endif
 
+% endfor
+
+<!-- MANUAL ENTRIES -->
+<% manual_amls = getManualAmls(o) %>
+% for aml in sorted(manual_amls, key=lambda x: x.move_id.name):
+    <Row ss:Height="14.5134">
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('Manual Journal Entry')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="date">
+          <Data ss:Type="DateTime">${aml.document_date|n}T00:00:00.000</Data>
+        </Cell>
+        <Cell ss:StyleID="date">
+          <Data ss:Type="DateTime">${aml.date|n}T00:00:00.000</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <!-- SEQUENCE -->
+          <Data ss:Type="String">${aml.move_id.name|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${aml.name|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${aml.ref or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:StyleID="grey_centre">
+            <Data ss:Type="String"></Data>
+          </Cell>
+        % endif
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${"%s %s" % (aml.account_id.code, aml.account_id.name)|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <Data ss:Type="String">${aml.partner_txt or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">${aml.credit_currency or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">${aml.debit_currency or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${aml.reconcile_id and 'X' or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${aml.move_id.state and getSel(aml.move_id, 'state') or ''|x}</Data>
+        </Cell>
+    </Row>
 % endfor
 
 <!-- DELETED ENTRIES -->

@@ -33,6 +33,7 @@ class report_fully_report(report_sxw.rml_parse):
             'getRegRef': self.getRegRef,
             'getFreeRef': self.getFreeRef,
             'getDownPaymentReversals': self.getDownPaymentReversals,
+            'getManualAmls': self.getManualAmls,
         })
 
     def getRegRef(self, reg_line):
@@ -186,6 +187,22 @@ class report_fully_report(report_sxw.rml_parse):
             if second_acc_move_line_id:
                 dp_reversals = acc_move_line_obj.browse(self.cr, self.uid, second_acc_move_line_id)
         return dp_reversals
+
+    def getManualAmls(self, o):
+        """
+        Returns of list of manual Journal Items booked on the same liquidity journal as the register (o),
+        and with a posting date belonging to the register period
+        (= a JI booked in Period 13 is visible in the December register)
+        """
+        db = pooler.get_pool(self.cr.dbname)
+        aml_obj = db.get('account.move.line')
+        aml_ids = aml_obj.search(self.cr, self.uid, [('journal_id', '=', o.journal_id.id),
+                                                     ('status_move', '=', 'manu'),
+                                                     ('date', '>=', o.period_id.date_start),
+                                                     ('date', '<=', o.period_id.date_stop)])
+        amls = aml_obj.browse(self.cr, self.uid, aml_ids)
+        return [aml for aml in amls]
+
 
 SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
