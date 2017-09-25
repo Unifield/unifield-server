@@ -530,7 +530,8 @@ class update(osv.osv):
             filters.append("direction = 'up' AND source IN (" + (','.join(map(str,children))) + ")")
         if ancestor:
             filters.append("direction = 'down' AND source IN (" + (','.join(map(str,ancestor))) + ")")
-        filters.append("direction = 'bidirectional'")
+        if children or ancestor:
+            filters.append("direction = 'bidirectional' AND source IN (" + (','.join(map(str,children+ancestor))) + ")")
         if recover:
             filters.append("source = %s" % (entity.id, ))
         filters.append("direction = 'bi-private' AND (is_deleted = 't' OR owner IN (" + (','.join(map(str, children + [entity.id]))) + "))")
@@ -552,10 +553,12 @@ class update(osv.osv):
         offset_increment = 0
         packet_size = 0
 
-        self._logger.info("::::::::[%s] Data pull get package:: init sync = %s, last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (init_sync, entity.name, last_seq, max_seq, '/'.join(map(str, offset)), max_size))
+        self._logger.info("::::::::[%s] Data pull get package:: init sync = %s, last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, init_sync, last_seq, max_seq, '/'.join(map(str, offset)), max_size))
 
         while not ids or packet_size < max_size:
             query = base_query % (offset[0], offset[1], max_size)
+            ##### TODO DEBUG ONLY TO REMOVE
+            self._logger.info("::::::::[%s] query %s" % (entity.name, cr.mogrify(query)))
             cr.execute(query)
             ids = map(lambda x:x[0], cr.fetchall())
             if not ids:
