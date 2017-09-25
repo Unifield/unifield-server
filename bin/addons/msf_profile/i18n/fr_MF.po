@@ -99638,3 +99638,8 @@ msgstr "Impossible de générer les data après %d tentatives"
 #, python-format
 msgid "Unable to generate updates, retrying %d/%d"
 msgstr "Impossible de générer les data, nouvel essai %d/%d"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:1006
+msgid "Manual Journal Entry"
+msgstr "Écriture Comptable Manuelle"
