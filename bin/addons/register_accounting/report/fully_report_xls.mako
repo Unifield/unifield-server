@@ -933,7 +933,7 @@ if line.free_analytic_lines and not line.invoice_id and not line.imported_invoic
     a_lines = line.free_analytic_lines
 %>
 % if a_lines:
-% for ana_line in sorted(getDownPaymentReversals, key=lambda x: x.id):
+% for ana_line in sorted(a_lines, key=lambda x: x.id):
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:
