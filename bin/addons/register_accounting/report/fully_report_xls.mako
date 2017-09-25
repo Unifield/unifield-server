@@ -1006,22 +1006,22 @@ endif
           <Data ss:Type="String">${_('Manual Journal Entry')|x}</Data>
         </Cell>
         % if isDate(aml.document_date):
-        <Cell ss:StyleID="grey_date">
-          <Data ss:Type="DateTime">${aml.document_date|n}T00:00:00.000</Data>
-        </Cell>
+          <Cell ss:StyleID="grey_date">
+            <Data ss:Type="DateTime">${aml.document_date|n}T00:00:00.000</Data>
+          </Cell>
         % else:
-        <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String"></Data>
-        </Cell>
+          <Cell ss:StyleID="grey_centre">
+            <Data ss:Type="String"></Data>
+          </Cell>
         % endif
         % if isDate(aml.date):
-        <Cell ss:StyleID="grey_date">
-          <Data ss:Type="DateTime">${aml.date|n}T00:00:00.000</Data>
-        </Cell>
+          <Cell ss:StyleID="grey_date">
+            <Data ss:Type="DateTime">${aml.date|n}T00:00:00.000</Data>
+          </Cell>
         % else:
-        <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String"></Data>
-        </Cell>
+          <Cell ss:StyleID="grey_centre">
+            <Data ss:Type="String"></Data>
+          </Cell>
         % endif
         <Cell ss:StyleID="grey_left_bold">
           <!-- SEQUENCE -->
