@@ -374,6 +374,17 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
+    <Style ss:ID="grey_date">
+      <Alignment ss:Horizontal="Center" ss:Indent="0"/>
+      <NumberFormat ss:Format="Short Date"/>
+      <Font ss:Bold="1" ss:Color="#9E9E9E"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
   </Styles>
   <Worksheet ss:Name="Info">
     <Table>
@@ -994,12 +1005,24 @@ endif
         <Cell ss:StyleID="grey_centre">
           <Data ss:Type="String">${_('Manual Journal Entry')|x}</Data>
         </Cell>
-        <Cell ss:StyleID="date">
+        % if isDate(aml.document_date):
+        <Cell ss:StyleID="grey_date">
           <Data ss:Type="DateTime">${aml.document_date|n}T00:00:00.000</Data>
         </Cell>
-        <Cell ss:StyleID="date">
+        % else:
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % endif
+        % if isDate(aml.date):
+        <Cell ss:StyleID="grey_date">
           <Data ss:Type="DateTime">${aml.date|n}T00:00:00.000</Data>
         </Cell>
+        % else:
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % endif
         <Cell ss:StyleID="grey_left_bold">
           <!-- SEQUENCE -->
           <Data ss:Type="String">${aml.move_id.name|x}</Data>

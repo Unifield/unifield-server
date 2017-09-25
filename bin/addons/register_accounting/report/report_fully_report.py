@@ -192,7 +192,7 @@ class report_fully_report(report_sxw.rml_parse):
         """
         Returns of list of manual Journal Items booked on the same liquidity journal as the register (o),
         and with a posting date belonging to the register period
-        (= a JI booked in Period 13 is visible in the December register)
+        (= a JI booked in Period 13 is visible in the December register report)
         """
         db = pooler.get_pool(self.cr.dbname)
         aml_obj = db.get('account.move.line')
