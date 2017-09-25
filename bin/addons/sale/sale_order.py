@@ -3523,10 +3523,6 @@ class sale_order_line_state(osv.osv):
         'sequence': fields.integer(string='Sequence'),
     }
 
-    _sql_constraints = [
-        ('sequence_uniq', 'unique(sequence)', 'FO line state sequence must be unique !'),
-    ]
-
     def get_less_advanced_state(self, cr, uid, ids, states, context=None):
         '''
         Return the less advanced state of gives sale order line states
