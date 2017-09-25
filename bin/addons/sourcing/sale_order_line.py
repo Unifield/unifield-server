@@ -922,7 +922,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self._check_browse_param(line, method='_check_loan_conditions')
 
         l_type = line.type == 'make_to_order'
-        o_state = line.order_id and line.order_id.state != 'draft' or False
+        o_state = line.state not in ('draft', 'confirmed') or False
         ctx_cond = not context.get('fromOrderLine')
         o_type = line.order_id and line.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] or False
 
