@@ -15790,7 +15790,7 @@ msgstr "Code de Compte"
 #. module: msf_doc_import
 #: view:wizard.import.ppl.to.create.ship:0
 msgid "File to import"
-msgstr "File to import"
+msgstr "Fichier à importer"
 
 #. module: msf_field_access_rights
 #: view:msf_field_access_rights.field_access_rule:0
@@ -56683,7 +56683,7 @@ msgstr "Instances"
 #. module: msf_doc_import
 #: field:wizard.import.ppl.to.create.ship,file:0
 msgid "Lines to import"
-msgstr "Lines to import"
+msgstr "Lignes à importer"
 
 #. module: sync_client
 #: view:sync.client.update_to_send:0
@@ -59486,7 +59486,7 @@ msgstr "Vous ne pouvez pas créer des écritures dans un journal clôturé."
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:304
 #, python-format
 msgid "State"
-msgstr "State"
+msgstr "État"
 
 #. modules: msf_cross_docking, purchase_override, unifield_setup
 #: selection:stock.move,allocation_setup:0
@@ -63593,7 +63593,7 @@ msgstr "ZAMBIAN KWACHA"
 #: view:account.partner.ledger:0
 #: view:wizard.import.ppl.to.create.ship:0
 msgid "Cancel"
-msgstr "Cancel"
+msgstr "Annuler"
 
 #. module: base
 #: view:workflow.activity:0
@@ -80412,7 +80412,7 @@ msgstr "Lorsque la valorisation en temps réel de l'inventaire, ceci est le Jour
 #: view:wizard.import.ppl.to.create.ship:0
 #: view:hr.payroll.validation:0
 msgid "Update"
-msgstr "Update"
+msgstr "Mettre à jour"
 
 #. module: account_accountant
 #: model:ir.module.module,description:account_accountant.module_meta_information
