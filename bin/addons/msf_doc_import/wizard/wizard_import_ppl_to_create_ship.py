@@ -63,62 +63,69 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                                   string="State", required=True, readonly=True),
     }
 
-    def _check_main_header_names(self, header_data):
+    def _check_main_header_names(self, header_data, context):
         '''
         Check the main header names
         '''
+        header_names = {
+            '0-0': _('Reference'), '0-3': _('Shipper'), '0-6': _('Consignee'), '1-0': _('Date'),
+            '2-0': _('Requester Ref'), '3-0': _('Our Ref'), '4-0': _('FO Date'), '5-0': _('Packing Date'),
+            '6-0': _('RTS Date'), '7-0': _('Transport mode')
+        }
         error_log = ''
-        if header_data[0][0] not in ('Reference', 'Référence'):
-            error_log += _('\nThe first line of the first column must be named "Reference" in the file.')
-        if header_data[0][3] not in ('Shipper', 'Expéditeur'):
-            error_log += _('\nThe first line of the fourth column must be named "Shipper" in the file.')
-        if header_data[0][6] not in ('Consignee', 'Destinataire'):
-            error_log += _('\nThe first line of the seventh column must be named "Consignee" in the file.')
-        if header_data[1][0] != 'Date':
-            error_log += _('\nThe second line of the first column must be named "Date" in the file.')
-        if header_data[2][0] not in ('Requester Ref', 'Réf du Demandeur'):
-            error_log += _('\nThe third line of the first column must be named "Requester Ref" in the file.')
-        if header_data[3][0] not in ('Our Ref', 'Notre Réf'):
-            error_log += _('\nThe fourth line of the first column must be named "Our Ref" in the file.')
-        if header_data[4][0] not in ('FO Date', 'Date de Commande de Terrain'):
-            error_log += _('\nThe fifth line of the first column must be named "FO Date" in the file.')
-        if header_data[5][0] not in ('Packing Date', 'Date de Colisage'):
-            error_log += _('\nThe sixth line of the first column must be named "Packing Date" in the file.')
-        if header_data[6][0] not in ('RTS Date', 'Date de Livraison Prévue'):
-            error_log += _('\nThe seventh line of the first column must be named "RTS Date" in the file.')
-        if header_data[7][0] not in ('Transport mode', 'Mode de Transport'):
-            error_log += _('\nThe eighth line of the first column must be named "Transport mode" in the file.')
+        if header_data[0][0].lower() != header_names['0-0'].lower():
+            error_log += _('\nThe line 1 of the column 1 must be named "Reference" in the file.')
+        if header_data[0][3].lower() != header_names['0-3'].lower():
+            error_log += _('\nThe line 1 of the column 4 must be named "Shipper" in the file.')
+        if header_data[0][6].lower() != header_names['0-6'].lower():
+            error_log += _('\nThe line 1 of the column 7 must be named "Consignee" in the file.')
+        if header_data[1][0].lower() != header_names['1-0'].lower():
+            error_log += _('\nThe line 2 of the column 1 must be named "Date" in the file.')
+        if header_data[2][0].lower() != header_names['2-0'].lower():
+            error_log += _('\nThe line 3 of the column 1 must be named "Requester Ref" in the file.')
+        if header_data[3][0].lower() != header_names['3-0'].lower():
+            error_log += _('\nThe line 4 of the column 1 must be named "Our Ref" in the file.')
+        if header_data[4][0].lower() != header_names['4-0'].lower():
+            error_log += _('\nThe line 5 of the column 1 must be named "FO Date" in the file.')
+        if header_data[5][0].lower() != header_names['5-0'].lower():
+            error_log += _('\nThe line 6 of the column 1 must be named "Packing Date" in the file.')
+        if header_data[6][0].lower() != header_names['6-0'].lower():
+            error_log += _('\nThe line 7 of the column 1 must be named "RTS Date" in the file.')
+        if header_data[7][0].lower() != header_names['7-0'].lower():
+            error_log += _('\nThe line 8 of the column 1 must be named "Transport mode" in the file.')
 
         if error_log:
             raise osv.except_osv(_('Error'), error_log)
 
         return True
 
-    def _check_main_header_data(self, header_data, picking):
+    def _check_main_header_data(self, header_data, picking, context):
         '''
         Check the main headers data
         '''
         error_log = ''
         if not header_data[0][2]:
-            error_log += _('\nThe Packing reference is mandatory.')
+            error_log += _(' The Packing reference is mandatory.')
         else:
             if header_data[0][2] != picking.name:
-                error_log += _('\nThe Packing reference in the file doesn\'t match the one from the Pre-Packing header')
+                error_log += _(' The Packing reference in the file doesn\'t match the one from the Pre-Packing header.')
         if not header_data[3][2]:
-            error_log += _('\nThe Origin is mandatory.')
+            error_log += _(' Our Ref (origin) is mandatory.')
         else:
             if header_data[3][2] != picking.origin:
-                error_log += _('\nThe Origin in the file doesn\'t match the one from the Pre-Packing header')
+                error_log += _(' Our Ref (origin) in the file doesn\'t match the one from the Pre-Packing header.')
 
         if error_log:
             raise osv.except_osv(_('Error'), error_log)
 
         return True
 
-    def _check_from_to_pack_integrity(self, sequences=None):
+    def _check_from_to_pack_integrity(self, sequences=None, context=None):
         '''
         Check if nothing is wrong with from_pack and to_pack
         '''
+        if context is None:
+            context = {}
         error_log = ''
 
         if sequences:
@@ -183,7 +190,6 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 picking = wiz_browse.picking_id
 
                 complete_lines, lines_to_correct = 0, 0
-                line_ignored_num = []
                 error_list = []
                 error_log = ''
                 message = ''
@@ -196,25 +202,22 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 # get the lines corresponding to the header data
                 header_data = []
                 for i, row in enumerate(rows):
-                    header_data.append(
-                        wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=False, line_num=i, context=context))
+                    header_data.append(wiz_common_import.get_line_values(
+                        cr, uid, ids, row, cell_nb=False, error_list=False, line_num=i, context=context))
                     if i >= 7:
-                        # ignore the blank line
-                        rows.next()
                         break
-                self._check_main_header_data(header_data, picking)
+                self._check_main_header_data(header_data, picking, context)
                 # ignore the lines headers
-                rows.next()
+                current_row = rows.next()
+                if not current_row.cells:
+                    rows.next()
                 line_num = 0
                 to_update = {}
-                # the number 9 is the number of previously ignored lines (header)
-                total_line_num = len([row for row in file_obj.getRows()]) - 9
+                total_line_num = len([row for row in file_obj.getRows()])
                 percent_completed = 0
                 move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking.id)], order='line_number')
                 # List of data to update moves
                 updated_data = []
-                if (total_line_num - 1) != len(move_ids):
-                    raise osv.except_osv(_('Error'), _('There is not the same number of lines in the file and in the Pre-Packing List'))
                 for i, row in enumerate(rows):
                     line_num += 1
                     # default values
@@ -241,7 +244,6 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                         line_with_error.append(
                             wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list,
                                                               line_num=line_num, context=context))
-                        line_ignored_num.append(line_num)
                         percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
                         self.write(cr, uid, ids, {'percent_completed': percent_completed})
                         continue
@@ -277,20 +279,16 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
 
                         # update move line on picking
                         if to_update['error_list']:
-                            error_list += ['Line %s:' % (line_num)] + to_update['error_list'] + ['\n']
+                            error_list += [_('Line %s:') % (line_num)] + to_update['error_list'] + ['\n']
                             lines_to_correct += 1
                             raise osv.except_osv(_('Error'), ''.join(x for x in m_value['error_list']))
                         updated_data.append(to_update)
                         complete_lines += 1
                         percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
-                    except IndexError, e:
-                        error_log += _(
-                            "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (
-                                     line_num, template_col_count, e)
+                    except IndexError:
                         line_with_error.append(
                             wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list,
                                                               line_num=line_num, context=context))
-                        line_ignored_num.append(line_num)
                         percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
                         continue
                     except osv.except_osv as osv_error:
@@ -303,13 +301,11 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                         percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
                         continue
                     except AttributeError as e:
-                        error_log += _(
-                            'Line %s in the Excel file was added to the file of the lines with error, an error is occurred. Details : %s') % (
-                                     line_num, e)
+                        error_log += _('Line %s in the Excel file was added to the file of the lines with error, an error is occurred. Details : %s')\
+                                     % (line_num, e)
                         line_with_error.append(
                             wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list,
                                                               line_num=line_num, context=context))
-                        line_ignored_num.append(line_num)
                         percent_completed = float(line_num) / float(total_line_num - 1) / 100.0
                         continue
                     finally:
@@ -322,8 +318,14 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 if error_log:
                     error_log = _("Reported errors : \n") + error_log
 
+                # checking the number of lines
+                if line_num != len(move_ids):
+                    error_log += _("There is %s lines in the file and %s lines in %s. Please import the same number of lines.\n") \
+                                 % (line_num, len(move_ids), picking.name)
+                    lines_to_correct += abs(len(move_ids) - line_num)
+
                 # checking integrity of from_pack and to_pack
-                from_to_pack_errors = self._check_from_to_pack_integrity(sequences)
+                from_to_pack_errors = self._check_from_to_pack_integrity(sequences, context=context)
                 if from_to_pack_errors:
                     from_to_pack_errors = _("From pack - To pack sequences errors : \n") + from_to_pack_errors
 
@@ -340,7 +342,7 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
 
     %s
     ''') % (total_time, complete_lines, line_num, lines_to_correct, error_log, from_to_pack_errors, message)
-                wizard_vals = {'message': final_message, 'state': 'done'}
+                wizard_vals = {'message': final_message, 'state': 'done', 'percent_completed': 100}
                 if line_with_error:
                     file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids,
                                                                               line_with_error=line_with_error,
@@ -375,19 +377,22 @@ class wizard_import_ppl_to_create_ship(osv.osv_memory):
                 for i, row in enumerate(reader):
                     header_data.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=False, line_num=i, context=context))
                     if i >= 7:
-                        # ignore the blank line
-                        reader.next()
                         break
-                if len(header_data) < 8:
-                    raise osv.except_osv(_('Error'), _('Please select a file to import before trying to import'))
+                if len([row for row in fileobj.getRows()]) < 11 and len(header_data) != 8:
+                    raise osv.except_osv(_('Error'), _('Please select a file with the same model as the PPL Excel Export'))
                 else:
-                    self._check_main_header_names(header_data)
+                    self._check_main_header_names(header_data, context)
                 reader_iterator = iter(reader)
-                # get first line
+                # get first lines headers
                 lines_header_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(cr, uid, ids, lines_header_row, error_list=[], line_num=0, context=context)
+                # ignore the blank line if there's one
+                if not header_index:
+                    header_index = wiz_common_import.\
+                        get_header_index(cr, uid, ids, next(reader_iterator), error_list=[], line_num=0, context=context)
                 context.update({'picking_id': picking_id, 'header_index': header_index})
-                res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, ppl_columns_lines_for_import)
+                res, res1 = wiz_common_import.\
+                    check_header_values(cr, uid, ids, context, header_index, ppl_columns_lines_for_import, ignore_case=True)
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
             except osv.except_osv as osv_error:

@@ -129,17 +129,18 @@ class stock_picking(osv.osv):
 
         context.update({'active_id': ids[0]})
 
-        header_cols = ppl_columns_lines_headers_for_import
+        # header_cols = ppl_columns_lines_headers_for_import
         cols = ppl_columns_lines_for_import
 
-        columns_header = [(_(f[0]), f[1]) for f in header_cols]
-        default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
-        file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
-        export_id = wiz_obj.create(cr, uid, {'file': file,
+        # TODO: Create a specific template for this case (US-2269)
+        # columns_header = [(_(f[0]), f[1]) for f in header_cols]
+        # default_template = SpreadsheetCreator(_('Template of import'), columns_header, [])
+        # file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
+        export_id = wiz_obj.create(cr, uid, {'file': False,
                                              'filename_template': 'template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
                                              'message': """%s %s"""
-                                                        % (PPL_IMPORT_FOR_UPDATE_MESSAGE, ', '.join([_(f) for f in cols])),
+                                                        % (_(PPL_IMPORT_FOR_UPDATE_MESSAGE), ', '.join([_(f) for f in cols])),
                                              'picking_id': ids[0],
                                              'state': 'draft',}, context=context)
 

@@ -269,7 +269,7 @@ def pack_move_value_for_update(cr, uid, ids, **kwargs):
         # line number
         if row.cells[0].data and row.cells[0].type == 'int':
             if row.cells[0].data != move.line_number:
-                error_list.append(_(' The line number (%s) is not the same as %s (%s).')
+                error_list.append(_(' The line number (%s) is not the same as in %s (%s).')
                                   % (row.cells[0].data, move.picking_id.name, move.line_number))
         elif row.cells[0].data and row.cells[0].type != 'int':
             error_list.append(_(' The Line Number has to be an integer.'))
@@ -287,10 +287,10 @@ def pack_move_value_for_update(cr, uid, ids, **kwargs):
         # total qty to pack
         if row.cells[4].data and row.cells[4].type in ('int', 'float'):
             if row.cells[4].data != move.product_qty:
-                error_list.append(_(' The Product Qty (%s) is not the same as in %s (%s).')
+                error_list.append(_(' The Total Qty to pack (%s) is not the same as in %s (%s).')
                                   % (row.cells[4].data, move.picking_id.name, move.product_qty))
         elif row.cells[4].data and row.cells[4].type != 'float':
-            error_list.append(_(' The Total Qty to Pack has to be an integer or a float.'))
+            error_list.append(_(' The Total Qty to pack has to be an integer or a float.'))
         else:
             error_list.append(_(' The Total Qty to Pack has to be defined.'))
         # batch

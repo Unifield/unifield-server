@@ -152,19 +152,19 @@
 <ss:Worksheet ss:Name="Pre-Packing Excel Report">
     <Table x:FullColumns="1" x:FullRows="1">
         ## Item
-        <Column ss:AutoFitWidth="1" ss:Width="30.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="40.0" />
         ## Code
-        <Column ss:AutoFitWidth="1" ss:Width="92.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="110.0" />
         ## Description
         <Column ss:AutoFitWidth="1" ss:Width="250.0" />
         ## Comment
         <Column ss:AutoFitWidth="1" ss:Width="250.0" />
         ## Total Qty to pack
-        <Column ss:AutoFitWidth="1" ss:Width="90.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="110.0" />
         ## Batch #
         <Column ss:AutoFitWidth="1" ss:Width="100.0" />
         ## Expiry Date #
-        <Column ss:AutoFitWidth="1" ss:Width="65.0" />
+        <Column ss:AutoFitWidth="1" ss:Width="85.0" />
         ## KC
         <Column ss:AutoFitWidth="1" ss:Width="20.0" />
         ## DG
@@ -172,7 +172,7 @@
         ## CS
         <Column ss:AutoFitWidth="1" ss:Width="20.0" />
         ## Qty Packed
-        <Column ss:AutoFitWidth="1" ss:Width="60.0"  />
+        <Column ss:AutoFitWidth="1" ss:Width="70.0"  />
         ## From pack
         <Column ss:AutoFitWidth="1" ss:Width="55.0"  />
         ## To pack
@@ -180,7 +180,7 @@
         ## Weight per pack (kg)
         <Column ss:AutoFitWidth="1" ss:Width="105.0"  />
         ## Size (w x l x h) (cm)
-        <Column ss:AutoFitWidth="1" ss:Width="105.0"  />
+        <Column ss:AutoFitWidth="1" ss:Width="125.0"  />
         ## Pack Type
         <Column ss:AutoFitWidth="1" ss:Width="80.0"  />
 
