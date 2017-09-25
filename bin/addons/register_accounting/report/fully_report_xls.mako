@@ -343,6 +343,16 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
+    <Style ss:ID="grey_left">
+      <Font ss:Color="#9E9E9E"/>
+      <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
     <Style ss:ID="grey_centre">
       <Alignment ss:Horizontal="Center" ss:Indent="0"/>
       <Font ss:Bold="1" ss:Color="#9E9E9E"/>
@@ -404,18 +414,22 @@
       <NamedRange ss:Name="Print_Titles" ss:RefersTo="=!R11"/>
     </Names>
     <Table>
-      <Column ss:Width="105.9527"/>
+      <Column ss:Width="115"/>
       <Column ss:Width="70" ss:Span="1"/>
       <Column ss:Width="155"/>
       <Column ss:Width="135"/>
       <Column ss:Width="170"/>
       <Column ss:Width="170"/>
-      <Column ss:Width="55"/>
-      <Column ss:Width="65"/>
+      % if o.journal_id.type == 'cheque':
+        <Column ss:Width="65"/>
+      % endif
+      <Column ss:Width="80"/>
+      <Column ss:Width="80"/>
       <Column ss:Width="60"/>
       <Column ss:Width="66"/>
       <Column ss:Width="72" ss:Span="4"/>
-      <Column ss:Width="36" ss:Span="1"/>
+      <Column ss:Width="36"/>
+      <Column ss:Width="50"/>
       <Row ss:Height="19.3039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
           <Data ss:Type="String">${o.journal_id.type == 'cash' and _('CASH REGISTER') or o.journal_id.type == 'bank' and _('BANK REGISTER') or o.journal_id.type == 'cheque' and _('CHEQUE REGISTER') or ''|x} REPORT</Data>
@@ -1004,7 +1018,7 @@ endif
             <Data ss:Type="String"></Data>
           </Cell>
         % endif
-        <Cell ss:StyleID="grey_centre">
+        <Cell ss:StyleID="grey_left">
           <Data ss:Type="String">${"%s %s" % (aml.account_id.code, aml.account_id.name)|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_left_bold">
