@@ -1798,11 +1798,7 @@ class sale_order_line(osv.osv):
         for sol in self.browse(cr, uid, ids, context=context):
             res[sol.id] = False
             if sol.resourced_original_line:
-                res[sol.id] = '[%s] %s (ln:%s)' % (
-                    sol.resourced_original_line.product_code, 
-                    sol.resourced_original_line.name, 
-                    sol.resourced_original_line.line_number
-                )
+                res[sol.id] = '%s' % (sol.resourced_original_line.line_number)
 
         return res
 

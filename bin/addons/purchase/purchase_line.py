@@ -182,11 +182,7 @@ class purchase_order_line(osv.osv):
         for pol in self.browse(cr, uid, ids, context=context):
             res[pol.id] = False
             if pol.resourced_original_line:
-                res[pol.id] = '[%s] %s (ln:%s)' % (
-                    pol.resourced_original_line.product_id.default_code, 
-                    pol.resourced_original_line.name,
-                    pol.resourced_original_line.line_number
-                )
+                res[pol.id] = '%s' % (pol.resourced_original_line.line_number)
 
         return res
 
