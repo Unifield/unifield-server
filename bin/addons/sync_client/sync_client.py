@@ -810,7 +810,7 @@ class Entity(osv.osv):
         logger = context.get('logger')
         updates = self.pool.get(context.get('update_received_model', 'sync.client.update_received'))
 
-        init_sync = bool(self.pool.get('res.users').get_browse_user_instance(cr, uid))
+        init_sync = not bool(self.pool.get('res.users').get_browse_user_instance(cr, uid))
 
         entity = self.get_entity(cr, uid, context)
         last_seq = entity.update_last
