@@ -493,11 +493,6 @@ class update(osv.osv):
                      - A dict that format a packet for the client
         """
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pulling updates...'))
-        restrict_oc_version = entity.version == 1
-        if not restrict_oc_version and offset == (0, 0):
-            self._logger.info("::::::::[%s] Set entity version = 1" % (entity.name,))
-            self.pool.get('sync.server.entity').write(cr, 1, [entity.id], {'version': 1})
-            restrict_oc_version = True
         top = entity
         while top.parent_id:
             top = top.parent_id
@@ -539,10 +534,7 @@ class update(osv.osv):
 
         ## Recover add own client updates to the list
         if not recover:
-            if restrict_oc_version:
-                base_query += " AND sync_server_update.source in (%s)" % (tree_str,)
-            else:
-                base_query += " AND sync_server_update.source != %s" % entity.id
+            base_query += " AND sync_server_update.source in (%s)" % (tree_str,)
 
         base_query += " AND sync_server_update.id > %s ORDER BY id ASC, sequence ASC OFFSET %s LIMIT %s"
 
