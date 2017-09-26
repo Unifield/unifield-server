@@ -133,8 +133,8 @@
       </Borders>
       <Font ss:Color="#9E9E9E"/>
     </Style>
-    <!-- Darkblue left string for analytic distribution lines -->
-    <Style ss:ID="darkblue_ana_left">
+    <!-- Purple left string for analytic distribution lines -->
+    <Style ss:ID="purple_ana_left">
       <Alignment ss:Horizontal="Left" ss:Indent="0"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
@@ -288,8 +288,8 @@
       </Borders>
       <Font ss:Color="#9E9E9E"/>
     </Style>
-    <!-- Formated Number (with thousand separator) for analytic distribution amounts (in darkblue font color) -->
-    <Style ss:ID="darkblue_ana_amount">
+    <!-- Formated Number (with thousand separator) for analytic distribution amounts (in purple font color) -->
+    <Style ss:ID="purple_ana_amount">
       <Alignment ss:Horizontal="Right" ss:Indent="0"/>
       <NumberFormat ss:Format="Standard"/>
       <Borders>
@@ -852,7 +852,7 @@
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:
-    line_color = 'darkblue'
+    line_color = 'purple'
 elif ana_line.is_reversal:
     line_color = 'green'
 elif ana_line.last_corrected_id:
@@ -912,7 +912,7 @@ if line.fp_analytic_lines and not line.invoice_id and not line.imported_invoice_
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:
-    line_color = 'darkblue'
+    line_color = 'purple'
 elif ana_line.is_reversal:
     line_color = 'green'
 elif ana_line.last_corrected_id:
@@ -971,7 +971,7 @@ if line.free_analytic_lines and not line.invoice_id and not line.imported_invoic
 <%
 line_color = 'blue'
 if ana_line.is_reallocated:
-    line_color = 'darkblue'
+    line_color = 'purple'
 elif ana_line.is_reversal:
     line_color = 'green'
 elif ana_line.last_corrected_id:

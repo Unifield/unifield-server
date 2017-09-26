@@ -232,7 +232,7 @@ class report_fully_report(report_sxw.rml_parse):
         """
         color = 'grey'
         if aal.is_reallocated:
-            color = 'darkblue'
+            color = 'purple'
         elif aal.is_reversal:
             color = 'green'
         elif aal.last_corrected_id:
