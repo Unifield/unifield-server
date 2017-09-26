@@ -250,7 +250,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | PRODUCT CODE  | PRODUCT DESCRIPTION                                      |
        | ADAPCABL1S-   | (computer) CABLE, SERIAL interface for two PC (fem/fem)  |
     I click on "New"   
-    I fill "HT111" within column "COST CENTER"
+    I fill "HT211" within column "COST CENTER"
     I validate the line
     I click on "Save" and close the window
         
@@ -815,6 +815,13 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click "Edit" on line:
         | CUSTOMER REFERENCE |
         | *{{PO_REF_COO_2}}  |  
+
+    I click on "Analytical Distribution" and open the window
+    I click on "New"
+    I fill "SUP" within column "DESTINATION"
+    I fill "HT101" within column "COST CENTER"
+    I validate the line
+    I click on "Save" and close the window
 
     I click "Validate" on line:
        | PRODUCT CODE | PRODUCT DESCRIPTION                                  | STATE |
