@@ -831,10 +831,12 @@ class stock_mission_report(osv.osv):
         attachment_obj = self.pool.get('ir.attachment')
         try:
             attachments_path = attachment_obj.get_root_path(cr, uid)
-        except:
-            logger.warning("___ attachments_path %s doesn't exists. The report will be stored in the database" % attachments_path)
+        except osv.except_osv, e:
+            logger.warning("___ %s The report will be stored in the database." % e.value)
 
         write_attachment_in_db = False
+        # for MSR reports, the migration is ignored, if the path is defined and
+        # usable, it is used, migration done or not.
         if attachment_obj.store_data_in_db(cr, uid,
                                            ignore_migration=True):
             write_attachment_in_db = True
