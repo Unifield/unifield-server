@@ -476,13 +476,30 @@ class stock_mission_report(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # delete all previous reports
+        self.delete_previous_reports_attachments(cr, uid, self.search(cr, uid, []))
+
         msr_in_progress = self.pool.get('msr_in_progress')
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
 
-        if _get_instance_level(self, cr, uid) not in ('coordo', 'hq'):
+        instance_level = _get_instance_level(self, cr, uid)
+        if instance_level == 'project':
+            # on project we want to pregenerate only local_reports
             report_ids = self.search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
         else:
-            report_ids = self.search(cr, uid, [('full_view', '=', False)], context=context)
+            if instance_level == 'hq':
+                # on HQ we want to pregenerate HQ and Coordo MSR
+                search_level = ('section', 'coordo')
+            else:
+                # on Coordo we want to pregenerate Coordo and Project MSR
+                search_level = ('coordo', 'poject')
+            instance_obj = self.pool.get('msf.instance')
+            instance_ids = instance_obj.search(cr, uid,
+                                               [('level', 'in', search_level)],
+                                               context=context)
+            report_ids = self.search(cr, uid, [('full_view', '=', False),
+                                               ('instance_id', 'in', instance_ids)],
+                                               context=context)
         full_report_ids = self.search(cr, uid, [('full_view', '=', True)], context=context)
 
         # Create a local report if no exist
@@ -558,9 +575,14 @@ class stock_mission_report(osv.osv):
 
         return True
 
-    def check_new_product_and_create_export(self, cr, uid, report_ids, product_values, context=None):
+    def check_new_product_and_create_export(self, cr, uid, report_ids, product_values,
+                                            csv=True, xls=True, with_valuation=True,
+                                            split_stock=True, context=None):
         if context is None:
             context = {}
+        if isinstance(report_ids, (int, long)):
+            report_ids = [report_ids]
+
         logger = logging.getLogger('MSR')
 
         line_obj = self.pool.get('stock.mission.report.line')
@@ -614,7 +636,9 @@ class stock_mission_report(osv.osv):
 
                 logger.info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
                 self._get_export(cr, uid, report['id'], product_values,
-                                 context=context)
+                                 csv=csv, xls=xls,
+                                 with_valuation=with_valuation,
+                                 split_stock=split_stock, context=context)
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
@@ -812,7 +836,8 @@ class stock_mission_report(osv.osv):
                 except:
                     pass
 
-    def _get_export(self, cr, uid, ids, product_values, context=None):
+    def _get_export(self, cr, uid, ids, product_values, csv=True, xls=True,
+                    with_valuation=True, split_stock=True, context=None):
         '''
         Get the CSV files of the stock mission report.
         This method generates 4 files (according to option set) :
@@ -849,6 +874,10 @@ class stock_mission_report(osv.osv):
 
             logger.info('___ Start CSV and XLS generation...')
             for report_type in HEADER_DICT.keys():
+                if split_stock and report_type in ('ns_nv_vals', 'ns_v_vals'):
+                    continue
+                if  with_valuation and report_type in ('ns_nv_vals', 's_nv_vals'):
+                    continue
                 params = {
                     'report_id': report_id,
                     'report_type': report_type,
@@ -858,10 +887,12 @@ class stock_mission_report(osv.osv):
                     'product_values': product_values,}
 
                 # generate CSV file
-                self.generate_csv_files(cr, uid, request_result, **params)
+                if csv:
+                    self.generate_csv_files(cr, uid, request_result, **params)
 
                 # generate XLS files
-                self.generate_xls_files(cr, uid, request_result, **params)
+                if xls:
+                    self.generate_xls_files(cr, uid, request_result, **params)
 
                 self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
             logger.info('___ CSV & XLS generation finished !')
