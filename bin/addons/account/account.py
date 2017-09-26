@@ -29,7 +29,7 @@ import pooler
 from osv import fields, osv
 import decimal_precision as dp
 from tools.translate import _
-from account_override.period import get_period_from_date
+
 
 def check_cycle(self, cr, uid, ids, context=None):
     """ climbs the ``self._table.parent_id`` chains for 100 levels or
@@ -1386,9 +1386,10 @@ class account_move(osv.osv):
             context = {}
         reg_obj = self.pool.get('account.bank.statement')
         deleted_regline_obj = self.pool.get('account.bank.statement.line.deleted')
+        period_obj = self.pool.get('account.period')
         is_liquidity = move.journal_id.type in ['bank', 'cheque', 'cash']
         if is_liquidity and move.status == 'manu' and not context.get('sync_update_execution', False):
-            period_ids = get_period_from_date(self, cr, uid, move.date, context=context)  # exclude special periods by default
+            period_ids = period_obj.get_period_from_date(cr, uid, move.date, context=context)  # exclude special periods by default
             if period_ids:
                 reg_domain = [('journal_id', '=', move.journal_id.id), ('period_id', '=', period_ids[0])]
                 reg_ids = reg_obj.search(cr, uid, reg_domain, context=context, order='NO_ORDER', limit=1)
