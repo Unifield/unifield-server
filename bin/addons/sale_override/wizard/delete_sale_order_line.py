@@ -21,6 +21,7 @@
 
 from osv import osv
 from xml.sax.saxutils import escape
+from tools.translate import _
 
 
 class delete_sale_order_line_wizard(osv.osv_memory):
@@ -57,39 +58,41 @@ class delete_sale_order_line_wizard(osv.osv_memory):
             parent_so_id = 0
             for index, line_id in enumerate(line_ids, start=1):
                 line = so_line.browse(cr, uid, line_id, context=context)
+                name = _('line %s') % (line.line_number)
+                if line.product_id:
+                    name = line.product_id.default_code
                 if hasattr(line, 'name'):
                     if index == 1:
-                        names += line.product_id.default_code
+                        names += name
                         parent_so_id = line.order_id.id
                     elif index == len(line_ids):
-                        names += ' and ' + line.product_id.default_code
+                        names += _(' and %s') % (name)
                     else:
-                        names += ', ' + line.product_id.default_code
+                        names += _(', %s') % (name)
 
             if parent_so_id != 0:
                 escaped_default_code = escape(names)
-                _moves_arch_lst = """
-                                <form>
-                                <separator colspan="6" string="You are about to delete the products %s, are you sure you wish to proceed ?"/>
-                                <button name="fake_unlink" string="OK, delete lines" type="object" icon="gtk-apply"
-                                    context="{'ids': %s, 'order_id': %s}"/>
-                                <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
-                                """ % (escaped_default_code, line_ids, parent_so_id)
-                _moves_arch_lst += """</form>"""
+                _moves_arch_lst = _("""<form>
+<separator colspan="6" string="You are about to delete the products %s, are you sure you wish to proceed ?"/>
+<button name="fake_unlink" string="OK, delete lines" type="object" icon="gtk-apply" context="{'ids': %s, 'order_id': %s}"/>
+<button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
+</form>
+""") % (escaped_default_code, line_ids, parent_so_id)
                 result['arch'] = _moves_arch_lst
         else:
             line = so_line.browse(cr, uid, line_ids[0], context=context)
+            name = _('line %s') % (line.line_number)
+            if line.product_id:
+                name = line.product_id.default_code
 
             if hasattr(line, 'name'):
-                escaped_default_code = escape(line.product_id.default_code)
-                _moves_arch_lst = """
-                                <form>
-                                <separator colspan="6" string="You are about to delete the product %s, are you sure you wish to proceed ?"/>
-                                <button name="fake_unlink" string="OK, delete line" type="object" icon="gtk-apply" 
-                                    context="{'line_id': %s, 'order_id': %s}"/>
-                                <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
-                                """ % (escaped_default_code, line.id, line.order_id.id)
-                _moves_arch_lst += """</form>"""
+                escaped_default_code = escape(name)
+                _moves_arch_lst = _("""<form>
+<separator colspan="6" string="You are about to delete the product %s, are you sure you wish to proceed ?"/>
+<button name="fake_unlink" string="OK, delete line" type="object" icon="gtk-apply" context="{'line_id': %s, 'order_id': %s}"/>
+<button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
+</form>
+""") % (escaped_default_code, line.id, line.order_id.id)
                 result['arch'] = _moves_arch_lst
 
         return result

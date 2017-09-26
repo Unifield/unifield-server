@@ -99638,3 +99638,54 @@ msgstr "Impossible de générer les data après %d tentatives"
 #, python-format
 msgid "Unable to generate updates, retrying %d/%d"
 msgstr "Impossible de générer les data, nouvel essai %d/%d"
+
+#. module: sale_override
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:90
+#, python-format
+msgid "<form>\n"
+"<separator colspan=\"6\" string=\"You are about to delete the product %s, are you sure you wish to proceed ?\"/>\n"
+"<button name=\"fake_unlink\" string=\"OK, delete line\" type=\"object\" icon=\"gtk-apply\" context=\"{'line_id': %s, 'order_id': %s}\"/>\n"
+"<button special=\"cancel\" string=\"Return to previous screen\" icon=\"gtk-cancel\"/>\n"
+"</form>\n"
+""
+msgstr "<form>\n"
+"<separator colspan=\"6\" string=\"Vous êtes sur le point de supprimer le produit %s, êtes vous sûr(e) de vouloir continuer ?\"/>\n"
+"<button name=\"fake_unlink\" string=\"OK, supprimer la ligne\" type=\"object\" icon=\"gtk-apply\" context=\"{'line_id': %s, 'order_id': %s}\"/>\n"
+"<button special=\"cancel\" string=\"Retour à l'écran précédent\" icon=\"gtk-cancel\"/>\n"
+"</form>\n"
+""
+
+#. module: sale_override
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:75
+#, python-format
+msgid "<form>\n"
+"<separator colspan=\"6\" string=\"You are about to delete the products %s, are you sure you wish to proceed ?\"/>\n"
+"<button name=\"fake_unlink\" string=\"OK, delete lines\" type=\"object\" icon=\"gtk-apply\" context=\"{'ids': %s, 'order_id': %s}\"/>\n"
+"<button special=\"cancel\" string=\"Return to previous screen\" icon=\"gtk-cancel\"/>\n"
+"</form>\n"
+""
+msgstr "<form>\n"
+"<separator colspan=\"6\" string=\"Vous êtes sur le point de supprimer les produits %s, êtes vous sûr(e) de vouloir continuer ?\"/>\n"
+"<button name=\"fake_unlink\" string=\"OK, supprimer les lignes\" type=\"object\" icon=\"gtk-apply\" context=\"{'ids': %s, 'order_id': %s}\"/>\n"
+"<button special=\"cancel\" string=\"Retour à l'écran précédent\" icon=\"gtk-cancel\"/>\n"
+"</form>\n"
+""
+
+#. module: sale_override
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:61
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:84
+#, python-format
+msgid "line %s"
+msgstr "ligne %s"
+
+#. module: sale_override
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:71
+#, python-format
+msgid ", %s"
+msgstr ", %s"
+
+#. module: sale_override
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:69
+#, python-format
+msgid " and %s"
+msgstr " et %s"
