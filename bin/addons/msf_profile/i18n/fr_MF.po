@@ -49856,7 +49856,7 @@ msgstr "Aucun fichier à importer. Veuillez sélectionner un fichier ou téléch
 #: report:addons/register_accounting/report/fully_report_xls.mako:1022
 #: report:addons/register_accounting/report/fully_report_xls.mako:1025
 msgid "FALSE"
-msgstr "FALSE"
+msgstr "FAUX"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
