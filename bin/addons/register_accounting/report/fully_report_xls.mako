@@ -122,6 +122,17 @@
       </Borders>
       <Font ss:Color="#0000ff"/>
     </Style>
+    <!-- Grey left string for analytic distribution lines -->
+    <Style ss:ID="grey_ana_left">
+      <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#9E9E9E"/>
+    </Style>
     <!-- Darkblue left string for analytic distribution lines -->
     <Style ss:ID="darkblue_ana_left">
       <Alignment ss:Horizontal="Left" ss:Indent="0"/>
@@ -264,6 +275,18 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
       <Font ss:Color="#0000ff"/>
+    </Style>
+    <!-- Formated Number (with thousand separator) for analytic distribution amounts (in grey font color) -->
+    <Style ss:ID="grey_ana_amount">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+      <NumberFormat ss:Format="Standard"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+      <Font ss:Color="#9E9E9E"/>
     </Style>
     <!-- Formated Number (with thousand separator) for analytic distribution amounts (in darkblue font color) -->
     <Style ss:ID="darkblue_ana_amount">
@@ -1075,6 +1098,98 @@ endif
           <Data ss:Type="String">${aml.move_id.state and getSel(aml.move_id, 'state') or ''|x}</Data>
         </Cell>
     </Row>
+
+    <!-- ANALYTIC LINES linked to this manual Journal Item -->
+    <%
+    manual_aal_lines = getManualAjis(aml)
+    %>
+    % for manual_aal in sorted(manual_aal_lines, key=lambda x: x.id):
+        <%
+        aal_color = getManualAalColor(manual_aal)
+        %>
+          <Row>
+            <%
+            cell_index = o.journal_id.type == 'cheque' and 9 or 8
+            %>
+            <Cell ss:Index="${cell_index}" ss:StyleID="${aal_color}_ana_left">
+              <Data ss:Type="String">${"%s %s" % (manual_aal.general_account_id.code, manual_aal.general_account_id.name)|x}</Data>
+            </Cell>
+            <Cell>
+              <Data ss:Type="String"></Data>
+            </Cell>
+            <Cell>
+              <Data ss:Type="String"></Data>
+            </Cell>
+            <Cell ss:StyleID="${aal_color}_ana_amount">
+              <Data ss:Type="Number">${manual_aal.amount_currency}</Data>
+            </Cell>
+            <Cell ss:StyleID="${aal_color}_ana_left">
+              <Data ss:Type="String">${manual_aal.destination_id and manual_aal.destination_id.code or ''|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="${aal_color}_ana_left">
+              <Data ss:Type="String">${manual_aal.cost_center_id and manual_aal.cost_center_id.code or ''|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="${aal_color}_ana_left">
+              <Data ss:Type="String">${manual_aal.account_id and manual_aal.account_id.code or ''|x}</Data>
+            </Cell>
+            <Cell ss:StyleID="${aal_color}_ana_left">
+              <Data ss:Type="String"></Data>
+            </Cell>
+            <Cell ss:StyleID="${aal_color}_ana_left">
+              <Data ss:Type="String"></Data>
+            </Cell>
+            <Cell ss:StyleID="${aal_color}_ana_left">
+              <Data ss:Type="String">${(manual_aal.is_reallocated and _('Corrected')) or (manual_aal.is_reversal and _('Reversal')) or ''|x}</Data>
+            </Cell>
+          </Row>
+    % endfor
+
+    <!-- FREE1/FREE2 LINES linked to this manual Journal Item -->
+    <%
+    manual_free_lines = getManualFreeLines(aml)
+    %>
+    % for free_line in sorted(manual_free_lines, key=lambda x: x.id):
+      <%
+      aal_color = getManualAalColor(manual_aal)
+      %>
+      <Row>
+        <%
+        cell_index = o.journal_id.type == 'cheque' and 9 or 8
+        %>
+        <Cell ss:Index="${cell_index}" ss:StyleID="${aal_color}_ana_left">
+          <Data ss:Type="String">${"%s %s" % (free_line.general_account_id.code, free_line.general_account_id.name)|x}</Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${aal_color}_ana_amount">
+          <Data ss:Type="Number">${free_line.amount_currency}</Data>
+        </Cell>
+        <Cell ss:StyleID="${aal_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${aal_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${aal_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${aal_color}_ana_left">
+          <Data ss:Type="String">${free_line.distrib_line_id and free_line.distrib_line_id._name == 'free.1.distribution.line' and \
+                                   free_line.account_id and free_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${aal_color}_ana_left">
+          <Data ss:Type="String">${free_line.distrib_line_id and free_line.distrib_line_id._name == 'free.2.distribution.line' and \
+                                   free_line.account_id and free_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${aal_color}_ana_left">
+          <Data ss:Type="String">${(free_line.is_reallocated and _('Corrected')) or (free_line.is_reversal and _('Reversal')) or ''}</Data>
+        </Cell>
+      </Row>
+    % endfor
 % endfor
 
 <!-- DELETED ENTRIES -->

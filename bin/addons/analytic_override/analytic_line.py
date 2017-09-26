@@ -67,6 +67,21 @@ class account_analytic_line(osv.osv):
                 res[al.id] = True
         return res
 
+    def _search_is_free(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Returns a domain that, according to the args used, includes or excludes the Free1 / Free2 Analytic Accounts
+        """
+        domain = []
+        if args:
+            if args[0][1] != '=' or len(args[0]) < 3 or not isinstance(args[0][2], bool):
+                raise osv.except_osv(_('Error'), _('Filter not implemented.'))
+            if args[0][2] is True:
+                operator = 'in'
+            else:
+                operator = 'not in'
+            domain.append(('account_id.category', operator, ['FREE1', 'FREE2']))
+        return domain
+
     def _get_reversal_origin_txt(cr, uid, ids, field_names, args, context=None):
         ret = {}
         if not ids:
@@ -91,7 +106,7 @@ class account_analytic_line(osv.osv):
         'from_write_off': fields.boolean(string='Write-off?', readonly=True, help="Indicates that this line come from a write-off account line."),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]"),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
-        'free_account': fields.function(_get_is_free, method=True, type='boolean', string='Free account?', help="Is that line comes from a Free 1 or Free 2 account?"),
+        'free_account': fields.function(_get_is_free, fnct_search=_search_is_free, method=True, type='boolean', string='Free account?', help="Does that line come from a Free 1 or Free 2 account?"),
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
         'reversal_origin_txt': fields.function(_get_reversal_origin_txt, string="Reversal origin", type='char', size=256,
                                                store={

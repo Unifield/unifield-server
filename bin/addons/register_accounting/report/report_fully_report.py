@@ -34,6 +34,9 @@ class report_fully_report(report_sxw.rml_parse):
             'getFreeRef': self.getFreeRef,
             'getDownPaymentReversals': self.getDownPaymentReversals,
             'getManualAmls': self.getManualAmls,
+            'getManualAjis': self.getManualAjis,
+            'getManualFreeLines': self.getManualFreeLines,
+            'getManualAalColor': self.getManualAalColor,
         })
 
     def getRegRef(self, reg_line):
@@ -202,6 +205,39 @@ class report_fully_report(report_sxw.rml_parse):
                                                      ('date', '<=', o.period_id.date_stop)])
         amls = aml_obj.browse(self.cr, self.uid, aml_ids)
         return [aml for aml in amls]
+
+    def getManualAjis(self, aml, free=False):
+        """
+        Returns of list of Account Analytic Lines linked to the manual JI in parameter
+        If free = False returns only non Free1/2 lines, if free = True returns only Free lines.
+        """
+        if not aml:
+            return []
+        db = pooler.get_pool(self.cr.dbname)
+        aji_obj = db.get('account.analytic.line')
+        aji_ids = aji_obj.search(self.cr, self.uid, [('move_id', '=', aml.id), ('free_account', '=', free)])
+        ajis = aji_obj.browse(self.cr, self.uid, aji_ids)
+        return [aji for aji in ajis]
+
+    def getManualFreeLines(self, aml, free=False):
+        """
+        Returns of list of Free1/Free2 Lines linked to the manual JI in parameter
+        """
+        return self.getManualAjis(aml, free=True)
+
+    def getManualAalColor(self, aal):
+        """
+        :param aal: Analytic Line linked to a manual JI
+        :return: the color to use (str) for the display of the Analytic line
+        """
+        color = 'grey'
+        if aal.is_reallocated:
+            color = 'darkblue'
+        elif aal.is_reversal:
+            color = 'green'
+        elif aal.last_corrected_id:
+            color = 'red'
+        return color
 
 
 SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
