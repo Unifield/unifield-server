@@ -72,6 +72,9 @@ class account_analytic_line(osv.osv):
         Returns a domain that, according to the args used, includes or excludes the Free1 / Free2 Analytic Accounts
         """
         domain = []
+        if context is None:
+            context = {}
+        analytic_acc_obj = self.pool.get('account.analytic.account')
         if args:
             if args[0][1] != '=' or len(args[0]) < 3 or not isinstance(args[0][2], bool):
                 raise osv.except_osv(_('Error'), _('Filter not implemented.'))
@@ -79,7 +82,8 @@ class account_analytic_line(osv.osv):
                 operator = 'in'
             else:
                 operator = 'not in'
-            domain.append(('account_id.category', operator, ['FREE1', 'FREE2']))
+            free_account_ids = analytic_acc_obj.search(cr, uid, [('category', 'in', ['FREE1', 'FREE2'])], order='NO_ORDER', context=context)
+            domain.append(('account_id', operator, free_account_ids))
         return domain
 
     def _get_reversal_origin_txt(cr, uid, ids, field_names, args, context=None):
