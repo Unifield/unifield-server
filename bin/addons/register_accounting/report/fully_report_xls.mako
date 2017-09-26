@@ -1107,41 +1107,41 @@ endif
         <%
         aal_color = getManualAalColor(manual_aal)
         %>
-          <Row>
-            <%
-            cell_index = o.journal_id.type == 'cheque' and 9 or 8
-            %>
-            <Cell ss:Index="${cell_index}" ss:StyleID="${aal_color}_ana_left">
-              <Data ss:Type="String">${"%s %s" % (manual_aal.general_account_id.code, manual_aal.general_account_id.name)|x}</Data>
-            </Cell>
-            <Cell>
-              <Data ss:Type="String"></Data>
-            </Cell>
-            <Cell>
-              <Data ss:Type="String"></Data>
-            </Cell>
-            <Cell ss:StyleID="${aal_color}_ana_amount">
-              <Data ss:Type="Number">${manual_aal.amount_currency}</Data>
-            </Cell>
-            <Cell ss:StyleID="${aal_color}_ana_left">
-              <Data ss:Type="String">${manual_aal.destination_id and manual_aal.destination_id.code or ''|x}</Data>
-            </Cell>
-            <Cell ss:StyleID="${aal_color}_ana_left">
-              <Data ss:Type="String">${manual_aal.cost_center_id and manual_aal.cost_center_id.code or ''|x}</Data>
-            </Cell>
-            <Cell ss:StyleID="${aal_color}_ana_left">
-              <Data ss:Type="String">${manual_aal.account_id and manual_aal.account_id.code or ''|x}</Data>
-            </Cell>
-            <Cell ss:StyleID="${aal_color}_ana_left">
-              <Data ss:Type="String"></Data>
-            </Cell>
-            <Cell ss:StyleID="${aal_color}_ana_left">
-              <Data ss:Type="String"></Data>
-            </Cell>
-            <Cell ss:StyleID="${aal_color}_ana_left">
-              <Data ss:Type="String">${(manual_aal.is_reallocated and _('Corrected')) or (manual_aal.is_reversal and _('Reversal')) or ''|x}</Data>
-            </Cell>
-          </Row>
+        <Row>
+          <%
+          cell_index = o.journal_id.type == 'cheque' and 9 or 8
+          %>
+          <Cell ss:Index="${cell_index}" ss:StyleID="${aal_color}_ana_left">
+            <Data ss:Type="String">${"%s %s" % (manual_aal.general_account_id.code, manual_aal.general_account_id.name)|x}</Data>
+          </Cell>
+          <Cell>
+            <Data ss:Type="String"></Data>
+          </Cell>
+          <Cell>
+            <Data ss:Type="String"></Data>
+          </Cell>
+          <Cell ss:StyleID="${aal_color}_ana_amount">
+            <Data ss:Type="Number">${manual_aal.amount_currency}</Data>
+          </Cell>
+          <Cell ss:StyleID="${aal_color}_ana_left">
+            <Data ss:Type="String">${manual_aal.destination_id and manual_aal.destination_id.code or ''|x}</Data>
+          </Cell>
+          <Cell ss:StyleID="${aal_color}_ana_left">
+            <Data ss:Type="String">${manual_aal.cost_center_id and manual_aal.cost_center_id.code or ''|x}</Data>
+          </Cell>
+          <Cell ss:StyleID="${aal_color}_ana_left">
+            <Data ss:Type="String">${manual_aal.account_id and manual_aal.account_id.code or ''|x}</Data>
+          </Cell>
+          <Cell ss:StyleID="${aal_color}_ana_left">
+            <Data ss:Type="String"></Data>
+          </Cell>
+          <Cell ss:StyleID="${aal_color}_ana_left">
+            <Data ss:Type="String"></Data>
+          </Cell>
+          <Cell ss:StyleID="${aal_color}_ana_left">
+            <Data ss:Type="String">${(manual_aal.is_reallocated and _('Corrected')) or (manual_aal.is_reversal and _('Reversal')) or ''|x}</Data>
+          </Cell>
+        </Row>
     % endfor
 
     <!-- FREE1/FREE2 LINES linked to this manual Journal Item -->
@@ -1150,7 +1150,7 @@ endif
     %>
     % for free_line in sorted(manual_free_lines, key=lambda x: x.id):
       <%
-      aal_color = getManualAalColor(manual_aal)
+      aal_color = getManualAalColor(free_line)
       %>
       <Row>
         <%
@@ -1186,7 +1186,7 @@ endif
                                    free_line.account_id and free_line.account_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${aal_color}_ana_left">
-          <Data ss:Type="String">${(free_line.is_reallocated and _('Corrected')) or (free_line.is_reversal and _('Reversal')) or ''}</Data>
+          <Data ss:Type="String">${(free_line.is_reallocated and _('Corrected')) or (free_line.is_reversal and _('Reversal')) or ''|x}</Data>
         </Cell>
       </Row>
     % endfor
