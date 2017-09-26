@@ -410,13 +410,19 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             
         res = {}
         for so in self.browse(cr, uid, ids, context=context):
-            sol_states = set([line.state for line in so.order_line])
+            sol_states = set()
+            for sol in so.order_line:
+                if sol.state.startswith('cancel'): # cancel state must be ignored at this level (only accurate when all lines are canceled)
+                    continue
+                elif sol.resourced_at_state:
+                    # if line has been resourced, then we take the state of the original line at resourcing
+                    sol_states.add(sol.resourced_at_state)
+                else:
+                    sol_states.add(sol.state)
+            
             if all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
             else: # else compute the less advanced state:
-                # cancel state must be ignored:
-                sol_states.discard('cancel') 
-                sol_states.discard('cancel_r')
                 res[so.id] = self.pool.get('sale.order.line.state').get_less_advanced_state(cr, uid, ids, sol_states, context=context)
 
                 if res[so.id] == 'draft': # set the draft-p state ?
@@ -2363,6 +2369,8 @@ class sale_order_line(osv.osv):
         values = {
             'order_id': order_id,
             'resourced_original_line': line.id,
+            'resourced_original_remote_line': line.sync_linked_pol,
+            'resourced_at_state': line.state,
             'product_uom_qty': qty_diff,
             'product_uos_qty': qty_diff,
         }
