@@ -71,7 +71,6 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         Verify that percentage or amount are correctly set
         """
         res = super(analytic_distribution_wizard_lines, self).default_get(cr, uid, fields, context=context)
-        # Fetch some values
         if not context or not context.get('mode', False) or not context.get('parent_id', False):
             return res
         if not 'percentage' in fields or not 'amount' in fields:
@@ -81,14 +80,6 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         amount = abs(res.get('amount', 0.0))
         wiz = self.pool.get('analytic.distribution.wizard').browse(cr, uid, [context.get('parent_id')], context=context)
         if wiz and wiz[0]:
-            #purchase = wiz[0].purchase_id or wiz[0].purchase_line_id.order_id
-            # UTP-952: Remove the default intermission CC
-            #            if purchase and wiz[0].partner_type == 'intermission':
-            #                try:
-            #                    res['analytic_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-            #                            'analytic_account_project_intermission')[1]
-            #                except ValueError:
-            #                    pass
             if 'destination_id' in fields and wiz[0].account_id:
                 res['destination_id'] = wiz[0].account_id.default_destination_id and wiz[0].account_id.default_destination_id.id or False
 
@@ -495,7 +486,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             if el.purchase_id and el.purchase_id.state not in ['draft', 'draft_p', 'validated_n', 'validated']:
                 res[el.id] = False
             # verify purchase line state
-            if el.purchase_line_id and el.purchase_line_id.order_id and el.purchase_line_id.order_id.state not in ['draft', 'validated_n', 'validated']:
+            if el.purchase_line_id and el.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
                 res[el.id] = False
             # verify invoice state
             if el.invoice_id and el.invoice_id.state in ['open', 'paid']:
@@ -745,10 +736,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             ids = [ids]
         for wiz in self.browse(cr, uid, ids, context=context):
             # Verify that purchase is in good state if necessary
-            if wiz.purchase_id and wiz.purchase_id.state in ['approved', 'done']:
+            if wiz.purchase_id and wiz.purchase_id.state not in ['draft', 'validated_n', 'validated', 'draft_p', 'validated_p']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that purchase from purchase line is in good state if necessary
-            if wiz.purchase_line_id and wiz.purchase_line_id.order_id and wiz.purchase_line_id.order_id.state in ['approved', 'done']:
+            if wiz.purchase_line_id and wiz.purchase_line_id.state not in ['draft', 'validated_n', 'validated']:
                 raise osv.except_osv(_('Error'), _('You cannot change the distribution.'))
             # Verify that invoice is in good state if necessary
             if wiz.invoice_id and wiz.invoice_id.state in ['open', 'paid']:
