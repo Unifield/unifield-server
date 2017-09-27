@@ -38,6 +38,16 @@ MODEL_DICT = {
         'domain_type': 'supply',
         'model': 'product.category',
     },
+    'product_list': {
+        'name': 'Products Lists',
+        'domain_type': 'supply',
+        'model': 'product.list',
+    },
+    'product_list_line': {
+        'name': 'Products Lists Lines',
+        'domain_type': 'supply',
+        'model': 'product.list.line',
+    },
     'suppliers': {
         'name': 'Suppliers',
         'domain_type': 'supply',
@@ -50,7 +60,7 @@ MODEL_DICT = {
         'model': 'supplier.catalogue',
     },
     'supplier_catalogues_lines': {
-        'name': 'Supplier catalogue lines',
+        'name': 'Supplier Catalogue Lines',
         'domain_type': 'supply',
         'model': 'supplier.catalogue.line',
     },
@@ -237,6 +247,31 @@ MODEL_DATA_DICT = {
             'name',
             'family_id',
             'msfid',
+        ],
+    },
+    'product_list': {
+        'header_list': [
+            'name',
+            'type',
+            'creator',
+            'ref',
+        ],
+        'required_field_list': [
+            'name',
+            'type',
+            'creator',
+        ],
+    },
+    'product_list_line': {
+        'header_list': [
+            'list_id.name',
+            'ref',
+            'name',
+            'comment',
+        ],
+        'required_field_list': [
+            'ref',
+            'name',
         ],
     },
     'suppliers': {
