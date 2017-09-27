@@ -19,6 +19,8 @@
                 <field name="with_valuation" />
                 <separator colspan="4" string="Split Stock" />
                 <field name="split_stock" />
+                <separator colspan="4" string="Product in stock" />
+                <field name="display_only_in_stock" />
                 <group colspan="4" attrs="{'invisible': [('export_error_msg', '=', False)]}">
                     <separator colspan="4" string="Errors"/>
                     <field name="export_error_msg" colspan="4" />

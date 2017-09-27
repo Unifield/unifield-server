@@ -288,9 +288,11 @@ class stock_mission_report(osv.osv):
 
     def generate_export_file(self, cr, uid, request_result, report_id, report_type,
                            attachments_path, header, write_attachment_in_db,
-                           product_values, file_type='xls'):
+                           product_values, file_type='xls',
+                           display_only_in_stock=False):
+        in_stock = display_only_in_stock and '_only_stock' or ''
         file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id,
-                                                         report_type + '.' + file_type)
+                                                         report_type + in_stock + '.' + file_type)
         if not write_attachment_in_db:
             export_file = open(os.path.join(attachments_path, file_name), 'wb')
         else:
@@ -365,6 +367,11 @@ class stock_mission_report(osv.osv):
                         data_list_append(eval(row.get(property_name, False)))
                     else:
                         data_list_append(row.get(property_name, False))
+
+                # remove the 5 firsts column are they are not stock qty
+                # and check if there is any other value than 0 on this last columns
+                if display_only_in_stock and not any(data_list[5:]):
+                    continue
 
                 if file_type == 'xls':
                     self.xls_write_row(sheet, data_list, row_count, row_style)
@@ -525,17 +532,20 @@ class stock_mission_report(osv.osv):
             product_values[product_dict['id']]['reviewed_consumption'] = product_dict['reviewed_consumption']
 
         # Check in each report if new products are in the database and not in the report
-        self.check_new_product_and_create_export(cr, uid, report_ids, product_values, context=context)
+        self.check_new_product_and_create_export(cr, uid, report_ids, product_values, all_products=True, display_only_in_stock=True, context=context)
 
         # After update of all normal reports, update the full view report
         context.update({'update_full_report': True})
-        self.check_new_product_and_create_export(cr, uid, full_report_ids, product_values, context=context)
+        self.check_new_product_and_create_export(cr, uid, full_report_ids, product_values, all_products=True, display_only_in_stock=True, context=context)
 
         return True
 
     def check_new_product_and_create_export(self, cr, uid, report_ids, product_values,
                                             csv=True, xls=True, with_valuation=True,
-                                            split_stock=True, context=None):
+                                            split_stock=True,
+                                            all_products=True,
+                                            display_only_in_stock=False,
+                                            context=None):
         if context is None:
             context = {}
         if isinstance(report_ids, (int, long)):
@@ -596,7 +606,10 @@ class stock_mission_report(osv.osv):
                 self._get_export(cr, uid, report['id'], product_values,
                                  csv=csv, xls=xls,
                                  with_valuation=with_valuation,
-                                 split_stock=split_stock, context=context)
+                                 split_stock=split_stock,
+                                 all_products=all_products,
+                                 display_only_in_stock=display_only_in_stock,
+                                 context=context)
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
@@ -778,14 +791,16 @@ class stock_mission_report(osv.osv):
             for report_type in HEADER_DICT.keys():
                 csv_file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.csv')
                 xml_file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.xls')
-                file_name_list = [csv_file_name, xml_file_name]
+                csv_file_name_in_stock = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '_only_stock' + '.csv')
+                xml_file_name_in_stock = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '_only_stock' + '.xls')
+                file_name_list = [csv_file_name, xml_file_name, csv_file_name_in_stock, xml_file_name_in_stock]
                 attachment_ids = ir_attachment_obj.search(cr, uid,
                                                           [('datas_fname', 'in', file_name_list)],
                                                           context=context)
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
                 try:
                     # in case reports are stored on file system, delete them
-                    attachments_path = self.pool.get('ir.attachment').get_root_path(cr, uid)
+                    attachments_path = ir_attachment_obj.get_root_path(cr, uid)
                     for file_name in file_name_list:
                         complete_path = os.path.join(attachments_path,
                                                      file_name)
@@ -795,7 +810,8 @@ class stock_mission_report(osv.osv):
                     pass
 
     def _get_export(self, cr, uid, ids, product_values, csv=True, xls=True,
-                    with_valuation=True, split_stock=True, context=None):
+                    with_valuation=True, split_stock=True, all_products=True,
+                    display_only_in_stock=False, context=None):
         '''
         Get the CSV files of the stock mission report.
         This method generates 4 files (according to option set) :
@@ -850,12 +866,18 @@ class stock_mission_report(osv.osv):
             # generate CSV file
             if csv:
                 logger.info('___ Start CSV generation...')
-                self.generate_export_file(cr, uid, request_result, file_type='csv', **params)
+                if display_only_in_stock:
+                    self.generate_export_file(cr, uid, request_result, file_type='csv', display_only_in_stock=True,  **params)
+                if all_products:
+                    self.generate_export_file(cr, uid, request_result, file_type='csv', display_only_in_stock=False,  **params)
 
             # generate XLS files
             if xls:
                 logger.info('___ Start XLS generation...')
-                self.generate_export_file(cr, uid, request_result, file_type='xls', **params)
+                if display_only_in_stock:
+                    self.generate_export_file(cr, uid, request_result, file_type='xls', display_only_in_stock=True,  **params)
+                if all_products:
+                    self.generate_export_file(cr, uid, request_result, file_type='xls', display_only_in_stock=False,  **params)
 
             self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
             logger.info('___ CSV/XLS generation finished !')

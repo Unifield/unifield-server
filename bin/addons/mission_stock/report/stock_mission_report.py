@@ -51,6 +51,9 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
         report_id = data.get('report_id', None)
         field_name = data.get('field_name', '')
         file_format = data.get('file_format', '')
+        display_only_in_stock = data.get('display_only_in_stock', False)
+        if display_only_in_stock:
+            field_name += '_only_stock'
         file_name = mission_stock.STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, field_name + '.%s' % file_format)
 
         # get the attachment_path
@@ -75,17 +78,20 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
                 # if the requeted attachment don't exists, create it
                 msr_obj = pool.get('stock.mission.report')
                 with_valuation = split_stock = False
-                if field_name == 'ns_v_vals':
+                if field_name.startswith('ns_v_vals'):
                     with_valuation = True
-                if field_name == 's_nv_vals':
+                if field_name.startswith('s_nv_vals'):
                     split_stock = True
-                if field_name == 's_v_vals':
+                if field_name.startswith('s_v_vals'):
                     with_valuation = split_stock = True
 
                 msr_obj.check_new_product_and_create_export(cr, uid,
                         [report_id], {}, csv=file_format=='csv',
                         xls=file_format=='xls', with_valuation=with_valuation,
-                        split_stock=split_stock, context=context)
+                        split_stock=split_stock,
+                        all_products=not display_only_in_stock,  # no need to generate both on demand
+                        display_only_in_stock=display_only_in_stock,
+                        context=context)
 
         if store_in_db:
             # then get the attachment in the old way : in the database
