@@ -75,7 +75,7 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
                 # if the requeted attachment don't exists, create it
                 msr_obj = pool.get('stock.mission.report')
                 with_valuation = split_stock = False
-                if field_name == 's_v_vals':
+                if field_name == 'ns_v_vals':
                     with_valuation = True
                 if field_name == 's_nv_vals':
                     split_stock = True
