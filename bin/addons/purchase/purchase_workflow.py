@@ -365,6 +365,9 @@ class purchase_order_line(osv.osv):
         po_to_check = {}
         for pol in self.browse(cr, uid, ids):
             po_to_check[pol.order_id.id] = True
+            if not pol.confirmed_delivery_date and not pol.order_id.delivery_confirmed_date:
+                raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+
             if pol.order_type != 'direct':
                 # create incoming shipment (IN):
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
@@ -409,7 +412,7 @@ class purchase_order_line(osv.osv):
                         self.pool.get('stock.picking').draft_force_assign(cr, uid, internal_pick, context=context)
                     else:
                         self.pool.get('stock.move').action_confirm(cr, uid, [int_move_id], context=context)
-                
+
             # if line created in PO, then create a FO line that match with it:
             if not pol.linked_sol_id and pol.origin:
                 fo_id = self.update_origin_link(cr, uid, pol.origin, context=context)
@@ -426,7 +429,10 @@ class purchase_order_line(osv.osv):
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'confirmed', cr)
 
-            self.write(cr, uid, [pol.id], {'state': 'confirmed'}, context=context)
+            to_write = {'state': 'confirmed'}
+            if not pol.confirmed_delivery_date:
+                to_write['confirmed_delivery_date'] = pol.order_id.delivery_confirmed_date
+            self.write(cr, uid, [pol.id], to_write, context=context)
 
             if pol.order_id.order_type == 'direct':
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
