@@ -1257,13 +1257,31 @@ class purchase_order(osv.osv):
 
         return True
 
+
     def order_line_change(self, cr, uid, ids, order_line):
-        res = {'no_line': True}
+
+        assert (len(ids) == 1)
+
+        values = {'no_line': True}
 
         if order_line:
-            res = {'no_line': False}
+            values = {'no_line': False}
 
-        return {'value': res}
+        # Also update the 'state' of the purchase order
+        states = self.read(cr, uid, ids, ['state'])
+        values["state"] = states[0]["state"]
+
+        # We need to fetch and return also the "display strings" for state
+        # as it might be needed to update the read-only view...
+        raw_display_strings_state = dict(PURCHASE_ORDER_STATE_SELECTION)
+        display_strings_state = dict([(k, _(v)) \
+                                for k,v in raw_display_strings_state.items()])
+
+        display_strings = {}
+        display_strings["state"] = display_strings_state
+
+        return {'value': values, "display_strings": display_strings }
+
 
     def _get_destination_ok(self, cr, uid, lines, context):
         dest_ok = False

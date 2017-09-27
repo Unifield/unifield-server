@@ -192,7 +192,6 @@
                                     <field name="discount"/>
                                     <field name="price_unit"/>
                                     <field name="price_subtotal"/>
-                                    <field name="state" invisible="1"/>
                                     <field name="fake_state" invisible="1" />
                                     <field name="state_to_display"/>
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" 
