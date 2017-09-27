@@ -1324,44 +1324,88 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        msf_pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+
         for pol in self.browse(cr, uid, ids, context=context):
             # only create CV for external and ESC partners:
             if pol.order_id.partner_id.partner_type not in ['external', 'esc']:
                 return False
 
-            commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id)], context=context)
+            commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id), ('state', '=', 'draft')], context=context)
             if commitment_voucher_id:
                 commitment_voucher_id = commitment_voucher_id[0]
             else: # create commitment voucher
                 commitment_voucher_id = self.pool.get('purchase.order').create_commitment_voucher_from_po(cr, uid, [pol.order_id.id], context=context)
-            
+
             # group PO line by account_id:
             expense_account = pol.account_4_distribution and pol.account_4_distribution.id or False
             if not expense_account:
                 raise osv.except_osv(_('Error'), _('There is no expense account defined for this line: %s (id:%d)') % (pol.name or '', pol.id))
 
-            commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account), ], context=context)
+            if pol.analytic_distribution_id:
+                cc_lines = pol.analytic_distribution_id.cost_center_lines
+            else:
+                cc_lines = pol.order_id.analytic_distribution_id.cost_center_lines
+
+            commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account)], context=context)
             if not commit_line_id: # create new commitment line:
+                distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
                 commit_line_id = self.pool.get('account.commitment.line').create(cr, uid, {
                     'commit_id': commitment_voucher_id,
                     'account_id': expense_account,
                     'amount': pol.price_subtotal,
                     'initial_amount': pol.price_subtotal,
                     'purchase_order_line_ids': [(4, pol.id)],
+                    'analytic_distribution_id': distrib_id,
                 }, context=context)
+                for aline in cc_lines:
+                    vals = {
+                        'distribution_id': distrib_id,
+                        'analytic_id': aline.analytic_id.id,
+                        'currency_id': pol.order_id.currency_id.id,
+                        'destination_id': aline.destination_id.id,
+                        'percentage': aline.percentage,
+                    }
+                    self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)
+                self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [distrib_id], expense_account, context=context)
+
             else: # update existing commitment line:
                 commit_line_id = commit_line_id[0]
-                new_amount = self.pool.get('account.commitment.line').read(cr, uid, commit_line_id, ['amount'], context=context)['amount'] 
-                new_amount += pol.price_subtotal
+                cv_line = self.pool.get('account.commitment.line').browse(cr, uid, commit_line_id, fields_to_fetch=['amount', 'analytic_distribution_id'], context=context)
+
+                current_add = {}
+                if cv_line.analytic_distribution_id:
+                    distrib_id = cv_line.analytic_distribution_id.id
+                    for fp in cv_line.analytic_distribution_id.funding_pool_lines:
+                        key = (fp.analytic_id.id, fp.destination_id.id, fp.cost_center_id.id)
+                        current_add.setdefault(key, 0)
+                        current_add[key] += cv_line.amount * fp.percentage / 100
+                    self.pool.get('analytic.distribution').write(cr, uid, distrib_id, {'funding_pool_lines': [(6, 0, [])], 'cost_center_lines': [(6, 0, [])]}, context=context)
+                else:
+                    distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
+
+                for aline in cc_lines:
+                    key = (msf_pf_id, aline.destination_id.id, aline.analytic_id.id)
+                    current_add.setdefault(key, 0)
+                    current_add[key] += pol.price_subtotal * aline.percentage / 100
+
+                new_amount = (cv_line.amount or 0) + pol.price_subtotal
                 self.pool.get('account.commitment.line').write(cr, uid, [commit_line_id], {
                     'amount': new_amount,
                     'initial_amount': new_amount,
-                    'purchase_order_line_ids': [(4, pol.id)], 
-                }, 
-                    context=context)
+                    'purchase_order_line_ids': [(4, pol.id)],
+                    'analytic_distribution_id': distrib_id,
+                }, context=context)
 
-            # Create analytic distribution on this commitment line
-            self.pool.get('account.commitment.line').create_distribution_from_order_line(cr, uid, [pol.id], context=context)
+                for key in current_add:
+                    self.pool.get('funding.pool.distribution.line').create(cr, uid, {
+                        'analytic_id': key[0],
+                        'destination_id': key[1],
+                        'cost_center_id': key[2],
+                        'currency_id': pol.order_id.currency_id.id,
+                        'distribution_id': distrib_id,
+                        'percentage': (current_add[key] / new_amount) * 100,
+                    }, context=context)
 
         return True
 
