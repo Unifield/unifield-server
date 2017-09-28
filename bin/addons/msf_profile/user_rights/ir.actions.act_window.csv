@@ -1,0 +1,26 @@
+name,res_model,view_type,view_id,domain,groups_id,id
+All Analytic Entries,account.analytic.line,form,,[],"Fin_Accounting_Entries_Consult,Fin_Accounting_Entries_Act",sd.account_act_acc_analytic_acc_5_report_hr_timesheet_invoice_journal
+Mass reallocation,mass.reallocation.wizard,form,,[],Fin_Advanced_Accounting,sd.analytic_distribution_action_mass_reallocation
+Activate/Deactivate Currencies,activate.currencies,form,Activate/Deactivate Currencies,,"Fin_Config_HQ,Fin_Config_Full,Fin_Config_Coordo,Fin_Config_Project",sd.res_currency_functional_action_activate_currencies
+Post Journal Entries,validate.account.move.lines,form,Post Journal Entries,,Fin_Accounting_Entries_Act,sd.account_action_validate_account_move_line
+Unreconcile Entries,account.unreconcile,form,Unreconcile Entries,,Fin_Accounting_Entries_Act,sd.account_action_account_unreconcile
+Unreconcile Entries,account.move.line.unreconcile.select,form,account.move.line.unreconcile.select.form,,Fin_Accounting_Entries_Act,sd.account_action_account_unreconcile_select
+Unreconcile Entries,account.unreconcile.reconcile,form,Unreconcile Entries,,Fin_Accounting_Entries_Act,sd.account_action_account_unreconcile_reconcile
+Unreconcile entries,account.voucher.unreconcile,form,Account voucher unreconcile,,Fin_Accounting_Entries_Act,sd.account_voucher_action_view_account_voucher_unreconcile
+Reconcile Entries,account.move.line.reconcile.select,form,account.move.line.reconcile.select.form,,Fin_Accounting_Entries_Act,sd.account_action_account_reconcile_select
+Reconcile Entries,account.move.line.reconcile,form,account.move.line.reconcile.full.form,,Fin_Accounting_Entries_Act,sd.account_action_view_account_move_line_reconcile
+Reconciliation: Go to Next Partner,account.partner.reconcile.process,form,Partner Reconcilation Process,,Fin_Accounting_Entries_Act,sd.account_action_account_partner_reconcile
+Re-Open cash box,cashbox.write.off,form,,[],"Fin_Advanced_Accounting,Fin_Config_Coordo,Fin_Config_Project",sd.register_accounting_action_write_off
+Re-open partially closed register,cashbox.write.off,form,,[],"Fin_Advanced_Accounting,Fin_Config_Coordo,Fin_Config_Project",sd.register_accounting_action_write_off
+Re-open closed register,register.reopen,form,,[],Administration / Access Rights,sd.register_accounting_action_wizard_reopen_register
+Validate Accrual Lines,wizard.accrual.validation,form,,[],Fin_Config_Coordo,sd.msf_accrual_action_wizard_accrual_validation
+Post Accrual Reversal,wizard.accrual.reversal,form,,[],Fin_Config_Coordo,sd.msf_accrual_action_wizard_post_accrual_reversal
+Validate draft entries,hr.payroll.validation,form,payroll.validation.wizard,[],Fin_Local_Payroll,sd.msf_homere_interface_action_payroll_validation
+Delete draft entries,hr.payroll.deletion,form,payroll.deletion.wizard,[],Fin_Local_Payroll,sd.msf_homere_interface_action_payroll_deletion
+Payroll Analytic reallocation,hr.analytic.reallocation,form,analytic.reallocation.wizard,[],Fin_Local_Payroll,sd.msf_homere_interface_action_payroll_analytic_reallocation
+Employee Analytic reallocation,hr.analytic.reallocation,form,analytic.reallocation.wizard,[],Fin_Local_Payroll,sd.msf_homere_interface_action_employee_analytic_reallocation
+Change Account,hq.reallocation,form,hq.reallocation.wizard,[],Fin_HQ_Entries,sd.account_hq_entries_action_hq_reallocation
+Analytic reallocation,hq.analytic.reallocation,form,analytic.hq.reallocation.wizard,[],Fin_HQ_Entries,sd.account_hq_entries_action_hq_analytic_reallocation
+Mass reallocation - All search results,mass.reallocation.wizard,form,,[],Fin_Advanced_Accounting,sd.analytic_distribution_action_mass_reallocation_search
+Intl Commitments Analytic Reallocation,int.commitment.realloc.wizard,form,,[],Fin_Budget,sd.analytic_distribution_action_intl_commitment_realloc_wizard
+Clear intl commitments,int.commitment.clear.wizard,form,,[],Fin_Budget,sd.analytic_distribution_action_intl_commitment_clear_wizard
