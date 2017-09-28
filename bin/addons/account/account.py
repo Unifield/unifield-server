@@ -2389,6 +2389,8 @@ class account_subscription(osv.osv):
         return False
 
     def compute(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         for sub in self.browse(cr, uid, ids, context=context):
             if sub.model_id and sub.model_id.has_any_bad_ad_line_exp_in:
                 # UFTP-103: block compute if recurring model has line with
@@ -2411,12 +2413,16 @@ class account_subscription(osv.osv):
             # create the subscription lines if they don't exist yet
             existing_sub_lines = sub.lines_id or []
             existing_dates = [l.date for l in existing_sub_lines]
-            for date_sub in [d for d in date_list if d not in existing_dates]:
+            dates_to_create = [d for d in date_list if d not in existing_dates]
+            for date_sub in dates_to_create:
                 self.pool.get('account.subscription.line').create(cr, uid, {
                     'date': date_sub,
                     'subscription_id': sub.id,
                 })
-        self.write(cr, uid, ids, {'state':'running'})
+            if dates_to_create:
+                self.write(cr, uid, sub.id, {'state': 'running'}, context=context)
+            else:  # all the subscription lines were already created => the account subscription can be marked as "Done"
+                self.write(cr, uid, sub.id, {'state': 'done'}, context=context)
         return True
 account_subscription()
 
