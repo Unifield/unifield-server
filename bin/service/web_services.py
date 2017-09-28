@@ -53,7 +53,7 @@ import codecs
 from passlib.hash import bcrypt
 from report import report_sxw
 
-def _check_db_name(self, name):
+def _check_db_name(name):
     '''Return True if the name is composed only with allowed char, False
     otherwise.
     '''
