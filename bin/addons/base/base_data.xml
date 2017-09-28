@@ -1223,11 +1223,6 @@
             <field name="company_id" ref="main_company"/>
             <field name="currency_name">INDONESIAN RUPIAH</field>
         </record>
-        <record id="rateIDR1" model="res.currency.rate" forcecreate="0">
-            <field name="rate">14352.00</field>
-            <field name="currency_id" ref="IDR"/>
-            <field name="name">2014-01-01</field>
-        </record>
         <record id="rateIDR" model="res.currency.rate" forcecreate="0">
             <field name="rate">11796.39</field>
             <field name="currency_id" ref="IDR"/>

@@ -48,6 +48,38 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF7.0 patches
+    def us_3306(self, cr, uid, *a, **b):
+        '''setup currency rate constraint
+        '''
+        cr.execute("SELECT conname, pg_catalog.pg_get_constraintdef(oid, true) as condef FROM pg_constraint where conname='res_currency_rate_rate_unique';")
+        if not cr.fetchone():
+            # delete the double indonesian rupiah currency
+            currency_id = self.pool.get('res.currency').search(cr, uid,
+                                                               [('name', '=', 'IDR'),
+                                                                ('active', 'in', ('t', 'f'))])
+            if currency_id:
+                # remove the first rate added
+                rate_obj = self.pool.get('res.currency.rate')
+                rate_id = rate_obj.search(cr, uid,
+                                          [('currency_id', '=', currency_id[0]),
+                                           ('name', '=', '2014-01-01')], order='id',
+                                          limit=1)
+                if rate_id:
+                    rate_obj.unlink(cr, uid, rate_id)
+                    imd_obj = self.pool.get('ir.model.data')
+                    imd_ids = imd_obj.search(cr, uid, [('model', '=', 'res.currency.rate'), ('res_id', '=', rate_id[0])])
+                    imd_obj.unlink(cr, uid, imd_ids)
+                cr.commit()
+
+                # add the constraint
+                cr.execute("""
+                ALTER TABLE "%s" ADD CONSTRAINT "%s" %s
+                """ % ('res_currency_rate', 'res_currency_rate_rate_unique',
+                    'unique(name, currency_id)'))
+        return True
+
+    # OLD patches
     def us_3048_patch(self, cr, uid, *a, **b):
         '''
         some protocol are now removed from possible protocols
