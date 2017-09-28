@@ -97,13 +97,22 @@ class res_currency_rate_functional(osv.osv):
         """
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        old_rates = {}
+        for rate_id in ids:
+            old_rates[rate_id] = self.read(cr, uid, rate_id, ['rate'], context=context)['rate']
         res = super(res_currency_rate_functional, self).write(cr, uid, ids, vals, context)
-        if 'name' in vals:
-            self.refresh_move_lines(cr, uid, ids, date=vals['name'])
-            # Also update analytic move line that don't come from a move (engagement journal lines)
-            for rate in self.browse(cr, uid, ids, context=context):
-                currency_id = rate.currency_id and rate.currency_id.id or False
-                self.refresh_analytic_lines(cr, uid, ids, date=vals['name'], currency=currency_id, context=context)
+        if 'name' in vals and 'rate' in vals:
+            for r_id in ids:
+                if abs(vals['rate'] - old_rates[r_id]) > 10**-7:  # rates in Unifield have an accuracy of 6 digits after the comma
+                    self.refresh_move_lines(cr, uid, [r_id], date=vals['name'])
+                    # Also update analytic move lines that don't come from a move (engagement journal lines)
+                    rate = self.browse(cr, uid, r_id, fields_to_fetch=['currency_id'], context=context)
+                    currency_id = rate.currency_id and rate.currency_id.id or False
+                    self.refresh_analytic_lines(cr, uid, [r_id], date=vals['name'], currency=currency_id, context=context)
         return res
     
     def unlink(self, cr, uid, ids, context=None):
