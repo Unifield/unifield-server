@@ -784,16 +784,28 @@ class product_supplierinfo(osv.osv):
         res = cr.fetchone()
         return res and res[0] or False
 
+    def _get_seller_delay(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Returns the supplier lt
+        '''
+        res = {}
+        for price in self.browse(cr, uid, ids, context=context):
+            product_id = self.pool.get('product.product').search(cr, uid, [('product_tmpl_id', '=', price.id)])
+            product = self.pool.get('product.product').browse(cr, uid, product_id)
+            res[price.id] = (price.name and price.name.supplier_lt) or (product_id and int(product[0].procure_delay)) or 1
+
+        return res
+
     _columns = {
         'name' : fields.many2one('res.partner', 'Supplier', required=True,domain = [('supplier','=',True)], ondelete='cascade', help="Supplier of this product", select=True),
         'product_name': fields.char('Supplier Product Name', size=128, help="This supplier's product name will be used when printing a request for quotation. Keep empty to use the internal one."),
         'product_code': fields.char('Supplier Product Code', size=64, help="This supplier's product code will be used when printing a request for quotation. Keep empty to use the internal one."),
         'sequence' : fields.integer('Sequence', help="Assigns the priority to the list of product supplier."),
-        'product_uom': fields.many2one('product.uom', string="Supplier UoM", help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
+        'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom', help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
         'qty': fields.function(_calc_qty, method=True, store=True, type='float', string='Quantity', multi="qty", help="This is a quantity which is converted into Default Uom."),
         'product_id' : fields.many2one('product.template', 'Product', required=True, ondelete='cascade', select=True),
-        'delay' : fields.integer('Delivery Lead Time', required=True, help="Lead time in days between the confirmation of the purchase order and the reception of the products in your warehouse. Used by the scheduler for automatic computation of the purchase order planning."),
+        'delay': fields.function(_get_seller_delay, method=True, type='integer', string='Indicative Delivery LT', help='Lead time in days between the confirmation of the purchase order and the reception of the products in your warehouse. Used by the scheduler for automatic computation of the purchase order planning.'),
         'pricelist_ids': fields.one2many('pricelist.partnerinfo', 'suppinfo_id', 'Supplier Pricelist'),
         'company_id':fields.many2one('res.company','Company',select=1),
     }
