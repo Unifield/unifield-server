@@ -1,10 +1,10 @@
 <openerp>
-	<data noupdate="1">
-	
-		<record id="default_label_custo" model="ppl.customize.label">
+    <data noupdate="1">
+
+        <record id="default_label_custo" model="ppl.customize.label">
             <field name="name">Default Label</field>
         </record>
-        
+
         <record id="stock_location_packing" model="stock.location">
             <field name="name">Packing</field>
             <!-- <field name="location_id" ref="stock.stock_location_company"/> -->
@@ -18,5 +18,18 @@
             <!-- <field name="location_id" ref="stock.stock_location_company"/> -->
         </record>
 
-	</data>
+    <record id="stock.warehouse0" model="stock.warehouse">
+        <field model="res.company" name="name" search="[]" use="name"/>
+        <field name="lot_input_id" ref="stock.stock_location_stock"/>
+        <field name="lot_stock_id" ref="stock.stock_location_stock"/>
+        <field name="lot_output_id" ref="stock.stock_location_output"/>
+    </record>
+
+     <function
+             eval="('default',False,'warehouse_id', [('purchase.order', False)], ref('stock.warehouse0'), True, False, False, False, True)"
+             id="purchase.purchase_default_set"
+             model="ir.values"
+             name="set"/>
+
+    </data>
 </openerp>

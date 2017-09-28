@@ -1715,7 +1715,7 @@ class shipment_additionalitems(osv.osv):
                 'quantity': fields.float(digits=(16, 2), string='Quantity', required=True),
                 'uom': fields.many2one('product.uom', string='UOM', required=True),
                 'comment': fields.char(string='Comment', size=1024),
-                'volume': fields.float(digits=(16, 2), string='Volume[dm³]'),
+                'volume': fields.float(digits=(16, 2), string=u'Volume[dm³]'),
                 'weight': fields.float(digits=(16, 2), string='Weight[kg]', required=True),
                 }
 
@@ -1769,18 +1769,6 @@ class ppl_customize_label(osv.osv):
     label preferences
     '''
     _name = 'ppl.customize.label'
-
-    def init(self, cr):
-        """
-        Load msf_outgoing_data.xml before self
-        """
-        if hasattr(super(ppl_customize_label, self), 'init'):
-            super(ppl_customize_label, self).init(cr)
-
-        logging.getLogger('init').info('HOOK: module msf_outgoing: loading data/msf_outgoing_data.xml')
-        pathname = path.join('msf_outgoing', 'data/msf_outgoing_data.xml')
-        file_to_open = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'msf_outgoing', file_to_open, {}, mode='init', noupdate=False)
 
     _columns = {'name': fields.char(string='Name', size=1024,),
                 'notes': fields.text(string='Notes'),
