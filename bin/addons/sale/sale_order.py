@@ -219,6 +219,31 @@ class sale_order(osv.osv):
                 res[sale.id] = 0.0
         return res
 
+    def _picked_rate(self, cr, uid, ids, name, arg, context=None):
+        uom_obj = self.pool.get('product.uom')
+        if not ids:
+            return {}
+        res = {}
+
+        for order in self.browse(cr, uid, ids, context=context):
+            res[order.id] = 0.00
+            amount_total = 0.00
+            amount_received = 0.00
+            for line in order.order_line:
+                if line.state == 'cancel':
+                    continue
+
+                amount_total += line.product_uom_qty*line.price_unit
+                for move in line.move_ids:
+                    if move.state == 'done' and move.location_dest_id.usage == 'customer':
+                        move_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, line.product_uom.id)
+                        amount_received += move_qty*line.price_unit
+
+            if amount_total:
+                res[order.id] = (amount_received/amount_total)*100   
+
+        return res
+
     def _get_order(self, cr, uid, ids, context=None):
         result = {}
         for line in self.pool.get('sale.order.line').browse(cr, uid, ids, context=context):
@@ -509,6 +534,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                     fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
         'noinvoice': fields.function(_get_noinvoice, method=True, string="Don't create an invoice", type='boolean'),
+        'picked_rate': fields.function(_picked_rate, method=True, string='Picked', type='float'),
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=False),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'yml_module_name': fields.char(size=1024, string='Name of the module which created the object in the yml tests', readonly=True),
