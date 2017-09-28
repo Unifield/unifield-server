@@ -50,5 +50,19 @@ class account_subscription(osv.osv):
             raise osv.except_osv(_('Warning'), _('The value in the field "Repeat" must be greater than 0!'))
         return super(account_subscription, self).write(cr, uid, ids, vals, context)
 
+    def copy(self, cr, uid, acc_sub_id, default=None, context=None):
+        """
+        Account Subscription duplication: don't copy the link with subscription lines
+        """
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        default.update({
+            'lines_id': [],
+        })
+        return super(account_subscription, self).copy(cr, uid, acc_sub_id, default, context=context)
+
+
 account_subscription()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
