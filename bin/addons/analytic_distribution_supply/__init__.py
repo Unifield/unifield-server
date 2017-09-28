@@ -24,7 +24,6 @@
 import purchase
 import invoice
 import analytic_distribution
-import account_commitment
 import stock
 import sale
 
