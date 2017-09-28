@@ -257,7 +257,7 @@ class product_pricelist(osv.osv):
                         'product_pricelist_version AS v, product_pricelist AS pl '
                     'WHERE (product_tmpl_id IS NULL OR product_tmpl_id = %s) '
                         'AND (product_id IS NULL OR product_id = %s) '
-                        'AND (' + categ_where + ' OR (categ_id IS NULL)) '
+                        'AND (' + categ_where + ' OR (categ_id IS NULL)) '  # not_a_user_entry
                         'AND price_version_id = %s '
                         'AND (min_quantity IS NULL OR min_quantity <= %s) '
                         'AND i.price_version_id = v.id AND v.pricelist_id = pl.id '
@@ -399,7 +399,7 @@ class product_pricelist(osv.osv):
                     'product_pricelist_version AS v, product_pricelist AS pl '
                 'WHERE (product_tmpl_id IS NULL OR product_tmpl_id = %s) '
                     'AND (product_id IS NULL OR product_id = %s) '
-                    'AND (' + categ_where + ' OR (categ_id IS NULL)) '
+                    'AND (' + categ_where + ' OR (categ_id IS NULL)) '  # not_a_user_entry
                     'AND price_version_id = %s '
                     'AND (min_quantity IS NULL OR min_quantity <= %s) '
                     'AND i.price_version_id = v.id AND v.pricelist_id = pl.id '
@@ -517,7 +517,7 @@ class product_pricelist_version(osv.osv):
 
             cursor.execute('SELECT id ' \
                     'FROM product_pricelist_version ' \
-                    'WHERE '+' and '.join(where) + (where and ' and ' or '')+
+                    'WHERE '+' and '.join(where) + (where and ' and ' or '')+  # not_a_user_entry
                         'pricelist_id = %s ' \
                         'AND active ' \
                         'AND id <> %s', (
