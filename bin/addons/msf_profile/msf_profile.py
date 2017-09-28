@@ -217,7 +217,8 @@ class patch_scripts(osv.osv):
                 AND state not in ('done', 'cancel', 'delivered');
             """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id) )
 
-        self._logger.warn("Following documents have been updated with internal partner: %s" % ", ".join(updated_doc))
+        if updated_doc:
+            self._logger.warn("Following documents have been updated with internal partner: %s" % ", ".join(updated_doc))
 
         return True
 
@@ -341,7 +342,7 @@ class patch_scripts(osv.osv):
                                                ('domain', '!=', False)])
             if search_result:
                 obj_action.unlink(cr, uid, search_result)
-                self._logger.warn('%d Track changes action deleted' % (len(search_result),))
+                self._logger.info('%d Track changes action deleted' % (len(search_result),))
                 # call subscribe on all rule to recreate the Trach changes action
                 rule_obj = self.pool.get('audittrail.rule')
                 rules_ids = rule_obj.search(cr, uid, [])
@@ -1073,7 +1074,7 @@ class patch_scripts(osv.osv):
             logger.warn('Execute US-1527 script')
             self.another_other_translation_fix(cr, uid, *a, **b)
         else:
-            logger.warn('Do not execute US-1527 script')
+            logger.info('Do not execute US-1527 script')
         return True
 
     def another_other_translation_fix(self, cr, uid, *a, **b):
