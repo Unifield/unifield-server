@@ -171,17 +171,44 @@ class mission_stock_wizard(osv.osv_memory):
         c = context.copy()
         c.update({
             'mission_report_id': wiz_id.report_id.id,
-            'with_valuation': wiz_id.with_valuation == 'true' and True or False,
-            'split_stock': wiz_id.split_stock == 'true' and True or False,
-            'display_only_in_stock': wiz_id.display_only_in_stock == 'true' and True or False,
+            'with_valuation': wiz_id.with_valuation == 'true',
+            'split_stock': wiz_id.split_stock == 'true',
         })
+        display_only_in_stock =  wiz_id.display_only_in_stock == 'true'
+        if display_only_in_stock:
+            # the qty column are not depending on with_valuation but only on
+            # split_stock
+            if wiz_id.split_stock == 'true':
+                domain =[ '&', '|', '|', '|', '|', '|', '|', '|', '|',
+                        ('mission_report_id', '=', wiz_id.report_id.id),
+                        ('internal_qty', '!=', 0),
+                        ('wh_qty', '!=', 0),
+                        ('cross_qty', '!=', 0),
+                        ('secondary_qty', '!=', 0),
+                        ('cu_qty', '!=', 0),
+                        ('in_pipe_qty', '!=', 0),
+                        ('stock_qty', '!=', 0),
+                        ('central_qty', '!=', 0),
+                        ('cross_qty', '!=', 0),]
+            else:
+                # in case of split_stock is false, some fields are not
+                # displayed, so do not take into account this quantity
+                domain =[ '&', '|', '|', '|', '|', '|',
+                        ('mission_report_id', '=', wiz_id.report_id.id),
+                        ('internal_qty', '!=', 0),
+                        ('cross_qty', '!=', 0),
+                        ('secondary_qty', '!=', 0),
+                        ('cu_qty', '!=', 0),
+                        ('in_pipe_qty', '!=', 0),
+        else:
+            domain = [('mission_report_id', '=', wiz_id.report_id.id)]
 
         return {'type': 'ir.actions.act_window',
                 'name': '%s: %s' % (_('Stock mission report'), wiz_id.report_id.name),
                 'res_model': 'stock.mission.report.line',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
-                'domain': [('mission_report_id', '=', wiz_id.report_id.id)],
+                'domain': domain,
                 'context': c,
                 'target': 'current'}
 
