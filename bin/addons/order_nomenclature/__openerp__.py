@@ -33,7 +33,6 @@
     Add nomenclature abilities to orders (sale and purchase).
     """,
     'test': [
-             'test/order_nomenclature.yml',
              ],
     'update_xml': [
         'order_nomenclature_view.xml',

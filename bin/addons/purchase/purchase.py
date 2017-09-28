@@ -692,7 +692,6 @@ class purchase_order(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         """
-        Filled in 'from_yml_test' to True if we come from tests
         # UTP-114 demands purchase_list PO to be 'from picking'.
         """
         if not context:

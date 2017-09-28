@@ -41,8 +41,6 @@
     'demo_xml': [
     ],
     'test': [
-        'test/data.yml',
-        'test/import_list.yml',
     ],
     'installable': True,
     'active': False,

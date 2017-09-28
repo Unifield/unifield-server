@@ -51,9 +51,6 @@
     "demo_xml": [
     ],
     "test": [
-        "test/data.yml",
-        "test/purchase_test.yml",
-        "test/split_line.yml",
     ],
     "installable": True,
     "active": False,

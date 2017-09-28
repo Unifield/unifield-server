@@ -63,7 +63,6 @@ For FR
                  "account_view.xml",
                  "wizard/wizard_currency_revaluation_view.xml"],
     "update_xml": [],
-    #"test": ["test/currency_revaluation.yml"],
     "demo_xml": [],
     "installable": True,
     "active": False,

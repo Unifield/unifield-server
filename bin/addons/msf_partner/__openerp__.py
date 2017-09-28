@@ -43,7 +43,6 @@
         "partner_demo.xml",
     ],
     "test": [
-        "test/msf_partner.yml",
     ],
     "installable": True,
     "active": False,

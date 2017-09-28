@@ -28,7 +28,6 @@ PO Coordo,register_accounting.field_purchase_order_down_payment_ids,FALSE,FALSE,
 PO Coordo,msf_order_date.field_sale_order_est_transport_lead_time,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/27
 PO Coordo,sale.field_sale_order_fiscal_position,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/28
 PO Coordo,sync_so.field_purchase_order_from_sync,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/29
-PO Coordo,sale.field_sale_order_from_yml_test,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/30
 PO Coordo,transport_mgmt.field_purchase_order_func_total_price_include_transport,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/31
 PO Coordo,res_currency_functional.field_sale_order_functional_amount_tax,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/32
 PO Coordo,res_currency_functional.field_sale_order_functional_amount_total,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/33
@@ -120,7 +119,6 @@ PO Project,register_accounting.field_purchase_order_down_payment_ids,FALSE,FALSE
 PO Project,msf_order_date.field_sale_order_est_transport_lead_time,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/119
 PO Project,sale.field_sale_order_fiscal_position,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/120
 PO Project,sync_so.field_purchase_order_from_sync,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/121
-PO Project,sale.field_sale_order_from_yml_test,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/122
 PO Project,transport_mgmt.field_purchase_order_func_total_price_include_transport,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/123
 PO Project,res_currency_functional.field_sale_order_functional_amount_tax,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/124
 PO Project,res_currency_functional.field_sale_order_functional_amount_total,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/125
@@ -212,7 +210,6 @@ PO HQ,register_accounting.field_purchase_order_down_payment_ids,FALSE,FALSE,FALS
 PO HQ,msf_order_date.field_sale_order_est_transport_lead_time,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/211
 PO HQ,sale.field_sale_order_fiscal_position,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/212
 PO HQ,sync_so.field_purchase_order_from_sync,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/213
-PO HQ,sale.field_sale_order_from_yml_test,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/214
 PO HQ,transport_mgmt.field_purchase_order_func_total_price_include_transport,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/215
 PO HQ,res_currency_functional.field_sale_order_functional_amount_tax,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/216
 PO HQ,res_currency_functional.field_sale_order_functional_amount_total,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/217
@@ -296,7 +293,6 @@ Field Order HQ,sale.field_sale_order_details,FALSE,FALSE,FALSE,msf_profile/field
 Field Order HQ,msf_order_date.field_sale_order_est_transport_lead_time,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/295
 Field Order HQ,sale.field_sale_order_fiscal_position,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/296
 Field Order HQ,sale.field_sale_order_fo_created_by_po_sync,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/297
-Field Order HQ,sale.field_sale_order_from_yml_test,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/298
 Field Order HQ,res_currency_functional.field_sale_order_functional_amount_tax,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/299
 Field Order HQ,res_currency_functional.field_sale_order_functional_amount_total,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/300
 Field Order HQ,res_currency_functional.field_sale_order_functional_amount_untaxed,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/301
@@ -379,7 +375,6 @@ Field Order Coordo,sale.field_sale_order_details,TRUE,FALSE,FALSE,msf_profile/fi
 Field Order Coordo,msf_order_date.field_sale_order_est_transport_lead_time,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/379
 Field Order Coordo,sale.field_sale_order_fiscal_position,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/380
 Field Order Coordo,sale.field_sale_order_fo_created_by_po_sync,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/381
-Field Order Coordo,sale.field_sale_order_from_yml_test,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/382
 Field Order Coordo,res_currency_functional.field_sale_order_functional_amount_tax,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/383
 Field Order Coordo,res_currency_functional.field_sale_order_functional_amount_total,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/384
 Field Order Coordo,res_currency_functional.field_sale_order_functional_amount_untaxed,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/385
@@ -461,7 +456,6 @@ Field Order Project,sale.field_sale_order_details,TRUE,FALSE,FALSE,msf_profile/f
 Field Order Project,msf_order_date.field_sale_order_est_transport_lead_time,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/462
 Field Order Project,sale.field_sale_order_fiscal_position,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/463
 Field Order Project,sale.field_sale_order_fo_created_by_po_sync,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/464
-Field Order Project,sale.field_sale_order_from_yml_test,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/465
 Field Order Project,res_currency_functional.field_sale_order_functional_amount_tax,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/466
 Field Order Project,res_currency_functional.field_sale_order_functional_amount_total,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/467
 Field Order Project,res_currency_functional.field_sale_order_functional_amount_untaxed,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/468

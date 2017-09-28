@@ -12391,20 +12391,6 @@ msgstr "Semana del año"
 msgid "America/St_Lucia"
 msgstr "America / St_Lucia"
 
-#. modules: register_accounting, stock_override, purchase_override, account_override, sale_override, analytic_distribution
-#: field:account.invoice,from_yml_test:0
-#: field:account.invoice.line,from_yml_test:0
-#: field:account.commitment,from_yml_test:0
-#: field:account.commitment.line,from_yml_test:0
-#: field:purchase.order,from_yml_test:0
-#: field:wizard.account.invoice,from_yml_test:0
-#: field:wizard.account.invoice.line,from_yml_test:0
-#: field:sale.order,from_yml_test:0
-#: field:procurement.order,from_yml_test:0
-#: field:stock.picking,from_yml_test:0
-msgid "Only used to pass addons unit test"
-msgstr "Utilizado solo para pasar la prueba de unidad de addons "
-
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.kr
 #: selection:base.setup.company,country_id:0
@@ -16890,20 +16876,6 @@ msgstr "Referencia UdM"
 #: field:ir.model.fields,selection:0
 msgid "Selection Options"
 msgstr "Opciones de selección"
-
-#. modules: register_accounting, stock_override, purchase_override, account_override, sale_override, analytic_distribution
-#: help:account.invoice,from_yml_test:0
-#: help:account.invoice.line,from_yml_test:0
-#: help:account.commitment,from_yml_test:0
-#: help:account.commitment.line,from_yml_test:0
-#: help:purchase.order,from_yml_test:0
-#: help:wizard.account.invoice,from_yml_test:0
-#: help:wizard.account.invoice.line,from_yml_test:0
-#: help:sale.order,from_yml_test:0
-#: help:procurement.order,from_yml_test:0
-#: help:stock.picking,from_yml_test:0
-msgid "Never set this field to true !"
-msgstr "¡Nunca configure este campo en 'verdadero'!"
 
 #. module: base
 #: selection:res.config.users,context_tz:0

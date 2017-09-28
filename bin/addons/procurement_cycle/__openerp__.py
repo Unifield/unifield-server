@@ -56,8 +56,6 @@
     'demo_xml': [
     ],
     'test': [
-        'test/data.yml',
-        'test/proc_cycle.yml',
     ],
     'installable': True,
     'active': False,

@@ -36,7 +36,6 @@
         'wizard/wizard_accrual_reversal_view.xml'
     ],
     'test': [
-        #'test/accrual_test.yml'
     ],
     'demo_xml': [
     ],

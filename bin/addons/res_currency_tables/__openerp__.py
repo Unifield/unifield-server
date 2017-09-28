@@ -39,7 +39,6 @@
         'wizard/wizard_report_currency_table_view.xml',
     ],
     'test': [
-        'test/currency_pricelist.yml',
     ],
     'demo_xml': [],
     'installable': True,

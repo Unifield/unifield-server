@@ -467,20 +467,17 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
         res = {}
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
-            if line.from_yml_test:
-                res[line.id] = 'valid'
-            else:
-                # UF-2115: test for elements
-                line_distribution_id = False
-                invoice_distribution_id = False
-                line_account_id = False
-                if line.analytic_distribution_id:
-                    line_distribution_id = line.analytic_distribution_id.id
-                if line.invoice_wizard_id and line.invoice_wizard_id.analytic_distribution_id:
-                    invoice_distribution_id = line.invoice_wizard_id.analytic_distribution_id.id
-                if line.account_id:
-                    line_account_id = line.account_id.id
-                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distribution_id, invoice_distribution_id, line_account_id)
+            # UF-2115: test for elements
+            line_distribution_id = False
+            invoice_distribution_id = False
+            line_account_id = False
+            if line.analytic_distribution_id:
+                line_distribution_id = line.analytic_distribution_id.id
+            if line.invoice_wizard_id and line.invoice_wizard_id.analytic_distribution_id:
+                invoice_distribution_id = line.invoice_wizard_id.analytic_distribution_id.id
+            if line.account_id:
+                line_account_id = line.account_id.id
+            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distribution_id, invoice_distribution_id, line_account_id)
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
@@ -580,8 +577,6 @@ class account_direct_invoice_wizard_line(osv.osv_memory):
             help="Informs you about analaytic distribution state among 'none',"
             " 'valid', 'invalid', from header or not, or no analytic distribution"),
         'create_date': fields.datetime('Created', readonly=True),
-        'from_yml_test': fields.boolean('Only used to pass addons unit test',
-            readonly=True, help='Never set this field to true !'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header,
             method=True, type='boolean', string='Header Distrib.?'),
         'inactive_product': fields.function(_get_inactive_product, method=True,

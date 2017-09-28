@@ -39,8 +39,6 @@
     ],
     'demo_xml' : [ ],
     'test': [
-        'test/normal_flow.yml',
-        'test/split_flow.yml',
              ],
     'installable': True,
 }

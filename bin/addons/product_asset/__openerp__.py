@@ -48,8 +48,6 @@
         "asset_type_data.xml",
     ],
     'test': [
-             'test/product_asset.yml',
-             'test/product_asset_report.yml',
              ],
     'update_xml': [
         'product_asset_view.xml',

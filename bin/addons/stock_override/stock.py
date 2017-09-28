@@ -105,15 +105,14 @@ class procurement_order(osv.osv):
                         'so_back_update_dest_pol_id_procurement_order': False})
         return super(procurement_order, self).copy_data(cr, uid, id, default, context=context)
 
-    _columns = {'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
-                # this field is used when the po is modified during on order process, and the so must be modified accordingly
-                # the resulting new purchase order line will be merged in specified po_id
-                'so_back_update_dest_po_id_procurement_order': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),
-                'so_back_update_dest_pol_id_procurement_order': fields.many2one('purchase.order.line', string='Original purchase order line', readonly=True),
-                }
+    _columns = {
+        'so_back_update_dest_po_id_procurement_order': fields.many2one('purchase.order', string='Destination of new purchase order line', readonly=True),
+        'so_back_update_dest_pol_id_procurement_order': fields.many2one('purchase.order.line', string='Original purchase order line', readonly=True),
+    }
 
-    _defaults = {'from_yml_test': lambda *a: False,
-                 }
+    _defaults = {
+    }
+
 
 procurement_order()
 
@@ -317,7 +316,6 @@ class stock_picking(osv.osv):
                  "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"\
                  "* Closed: has been processed, can't be modified or cancelled anymore\n"\
                  "* Cancelled: has been cancelled, can't be confirmed anymore"),
-        'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
         'ext_cu': fields.many2one('stock.location', string='Ext. C.U.'),
@@ -368,14 +366,14 @@ class stock_picking(osv.osv):
         'incoming_id': fields.many2one('stock.picking', string='Incoming ref', readonly=True),
     }
 
-    _defaults = {'from_yml_test': lambda *a: False,
-                 'from_wkf': lambda *a: False,
-                 'from_wkf_sourcing': lambda *a: False,
-                 'update_version_from_in_stock_picking': 0,
-                 'fake_type': 'in',
-                 'shipment_ref':False,
-                 'company_id2': lambda s,c,u,ids,ctx=None: s.pool.get('res.users').browse(c,u,u).company_id.partner_id.id,
-                 }
+    _defaults = {
+         'from_wkf': lambda *a: False,
+         'from_wkf_sourcing': lambda *a: False,
+         'update_version_from_in_stock_picking': 0,
+         'fake_type': 'in',
+         'shipment_ref':False,
+         'company_id2': lambda s,c,u,ids,ctx=None: s.pool.get('res.users').browse(c,u,u).company_id.partner_id.id,
+    }
 
 
     def on_change_ext_cu(self, cr, uid, ids, ext_cu, context=None):

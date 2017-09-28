@@ -34,7 +34,6 @@
     ],
     "update_xml" : [],
     "demo_xml" : [],
-    "test": ['test/vat_management.yml',],
     "installable": True,
     "active": False
 }

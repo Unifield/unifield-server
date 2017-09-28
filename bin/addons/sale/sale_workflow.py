@@ -53,14 +53,14 @@ class sale_order_line(osv.osv):
             distrib_id = l_ana_dist_id or o_ana_dist_id or False
 
             #US-830 : Remove the definition of a default AD for the inter-mission FO is no AD is defined
-            if not distrib_id and not so.from_yml_test and not so.order_type in ('loan', 'donation_st', 'donation_exp'):
+            if not distrib_id and not so.order_type in ('loan', 'donation_st', 'donation_exp'):
                 raise osv.except_osv(
                     _('Warning'),
                     _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',),
                 )
 
             # Check distribution state
-            if distrib_id and line.analytic_distribution_state != 'valid' and not so.from_yml_test:
+            if distrib_id and line.analytic_distribution_state != 'valid':
                 # Raise an error if no analytic distribution on line and NONE on header (because no possibility to change anything)
                 if (not line.analytic_distribution_id or line.analytic_distribution_state == 'none') and \
                    not so.analytic_distribution_id:

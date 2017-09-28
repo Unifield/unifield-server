@@ -39,7 +39,6 @@
         'order_line_view.xml',
     ],
     'test': [
-        'test/res_currency_functional.yml',
     ],
     'demo_xml': [],
     'installable': True,

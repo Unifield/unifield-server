@@ -141,8 +141,6 @@ class sale_order(osv.osv):
         """
         # Objects
         ana_obj = self.pool.get('analytic.distribution')
-        data_obj = self.pool.get('ir.model.data')
-        acc_obj = self.pool.get('account.account')
         sol_obj = self.pool.get('sale.order.line')
         distrib_line_obj = self.pool.get('cost.center.distribution.line')
 
@@ -167,27 +165,20 @@ class sale_order(osv.osv):
                 """
                 if line.created_by_tender or line.created_by_rfq:
                     continue
-                # Search intermission
-                intermission_cc = data_obj.get_object_reference(
-                    cr,
-                    uid,
-                    'analytic_distribution',
-                    'analytic_account_project_intermission',
-                )
                 # Check distribution presence
                 l_ana_dist_id = line.analytic_distribution_id and line.analytic_distribution_id.id
                 o_ana_dist_id = so.analytic_distribution_id and so.analytic_distribution_id.id
                 distrib_id = l_ana_dist_id or o_ana_dist_id or False
 
                 #US-830 : Remove the definition of a default AD for the inter-mission FO is no AD is defined
-                if not distrib_id and not so.from_yml_test and not so.order_type in ('loan', 'donation_st', 'donation_exp'):
+                if not distrib_id and not so.order_type in ('loan', 'donation_st', 'donation_exp'):
                     raise osv.except_osv(
                         _('Warning'),
                         _('Analytic distribution is mandatory for this line: %s!') % (line.name or '',),
                     )
 
                 # Check distribution state
-                if distrib_id and line.analytic_distribution_state != 'valid' and not so.from_yml_test:
+                if distrib_id and line.analytic_distribution_state != 'valid':
                     # Raise an error if no analytic distribution on line and NONE on header (because no possibility to change anything)
                     if (not line.analytic_distribution_id or line.analytic_distribution_state == 'none') and \
                        not so.analytic_distribution_id:
@@ -258,9 +249,7 @@ class sale_order_line(osv.osv):
         res = {}
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
-            if line.order_id and line.order_id.from_yml_test:
-                res[line.id] = 'valid'
-            elif line.order_id and (not line.order_id.analytic_distribution_id or not line.order_id.analytic_distribution_id.cost_center_lines) and (not line.analytic_distribution_id or not line.analytic_distribution_id.cost_center_lines) :
+            if line.order_id and (not line.order_id.analytic_distribution_id or not line.order_id.analytic_distribution_id.cost_center_lines) and (not line.analytic_distribution_id or not line.analytic_distribution_id.cost_center_lines) :
                 res[line.id] = 'none'
             else:
                 so_distrib_id = line.order_id and line.order_id.analytic_distribution_id and line.order_id.analytic_distribution_id.id or False

@@ -50,10 +50,6 @@
     'demo_xml': [
     ],
     'test': [
-        'test/data.yml',
-        'test/rac_report.yml',
-        'test/amc_review.yml',
-        'test/expiration.yml',
     ],
     'installable': True,
     'active': False,

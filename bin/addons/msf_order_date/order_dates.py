@@ -1302,9 +1302,6 @@ class procurement_order(osv.osv):
             context = {}
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         line = kwargs['line']
-        procurement = kwargs['procurement']
-        # update from yml flag
-        values['from_yml_test'] = procurement.from_yml_test
         # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
         # confirmed_delivery_date (confirmed date) = False
         # both values are taken from line

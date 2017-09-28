@@ -37,7 +37,6 @@
         'security/ir.model.access.csv',
     ],
     "test": [
-        'tests/rules.yml'
     ],
     "depends": [
         'msf_instance',

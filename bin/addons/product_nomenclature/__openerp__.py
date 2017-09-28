@@ -41,7 +41,6 @@
                  'product_nomenclature_demo.xml',
         ],
     'test': [
-             'test/product_nomenclature.yml',
              ],
     'installable': True,
 }

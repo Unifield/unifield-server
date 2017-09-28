@@ -38,7 +38,6 @@
         'account_year_end_closing.xml',
     ],
     "test": [
-        'test/account_period_closing_level.yml',
     ],
     'demo_xml': [
         'test/account_period_demo.xml'

@@ -40,7 +40,6 @@
     'init_xml' : [ ],
     'demo_xml' : [ ],
     'test': [
-             'test/purchase_order_lines.yml',
              ],
     'update_xml' : [
         'purchase_msf_view.xml',

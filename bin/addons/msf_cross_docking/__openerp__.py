@@ -40,8 +40,6 @@ you run the scheduler will have the option cross docking pre selected.
         'data/msf_cross_docking_data.xml',
     ],
     'test': [
-        'test/data.yml',
-        'test/msf_cross_docking.yml',
     ],
     'installable': True,
     'active': False,

@@ -42,10 +42,6 @@
     Add sourcing specification
     """,
     'test': [
-        'test/sourcing.yml',
-        'test/2lines_supplier.yml',
-        'test/grouped_po.yml',
-        'test/error_rfq_sourcing.yml',
         ],
     'update_xml': [
         'sourcing_view.xml',

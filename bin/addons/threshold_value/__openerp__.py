@@ -48,10 +48,6 @@
     ],
     'demo_xml': [
     ],
-    "test": [
-        "test/data.yml",
-        "test/threshold.yml",
-    ],
     'installable': True,
     'active': False,
 #    'certificate': 'certificate',

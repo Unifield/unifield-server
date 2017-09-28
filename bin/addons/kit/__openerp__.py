@@ -48,9 +48,7 @@
         'wizard/kit_mass_import_view.xml',
     ],
     "demo_xml": [],
-    'test': ['test/kit_data.yml',
-             'test/kit.yml',
-             'test/kitting.yml',
-             ],
+    'test': [
+    ],
     'installable': True,
 }

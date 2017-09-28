@@ -957,15 +957,10 @@ class stock_mission_report_line(osv.osv):
 
     def xmlid_code_migration(self, cr, ids):
         cr.execute('UPDATE stock_mission_report_line l set xmlid_code = (select xmlid_code from product_product p where p.id=l.product_id)')
-        print 'UPDATE stock_mission_report_line l set xmlid_code = (select xmlid_code from product_product p where p.id=l.product_id)'
-        print cr.statusmessage
         return True
 
     def is_migration(self, cr, ids):
         cr.execute('UPDATE stock_mission_report_line l set international_status = (select international_status from product_product p where p.id=l.product_id)')
-        print 'UPDATE stock_mission_report_line l set international_status = (select international_status from product_product p where p.id=l.product_id)'
-        print cr.statusmessage
-
         return True
 
     _columns = {

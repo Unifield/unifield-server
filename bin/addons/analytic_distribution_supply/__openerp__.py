@@ -36,8 +36,6 @@
     ],
     "demo_xml" : [],
     "test": [
-        "test/analytic_data.yml",
-        "test/commitment.yml",
     ],
     "installable": True,
     "active": False

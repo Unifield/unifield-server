@@ -50,7 +50,7 @@
         'hr_demo.xml',
         'hr_department_demo.xml',
         ],
-    'test': ['test/test_hr.yml'],
+    'test': [],
     'installable': True,
     'active': False,
     'certificate': '0086710558965',
