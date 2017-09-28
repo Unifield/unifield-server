@@ -14,7 +14,7 @@
                     </group>
                     <newline />
                     <separator string="Actions" />
-                    <button name="cancel_pol" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_only_pol" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
                     <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
                 </form>
             </field>

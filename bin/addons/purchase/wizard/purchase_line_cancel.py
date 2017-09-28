@@ -50,6 +50,9 @@ class purchase_order_line_cancel_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 
+    def cancel_only_pol(self, cr, uid, ids, context=None):
+        return self.cancel_pol(cr, uid, ids, resource=False, context=context)
+
     def cancel_and_resource(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
