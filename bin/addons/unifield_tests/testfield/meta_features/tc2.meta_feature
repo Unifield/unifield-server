@@ -1,7 +1,7 @@
-Feature: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
+Feature: SSL Mission flow with PO line addition and deletion
 
-@supply @irfoextcu
-Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
+@supply @irfoextcu @SSL
+Scenario: SSL Mission flow with PO line addition and deletion
 
    
 #PARAMETRIZATION: 
@@ -209,6 +209,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		
 #LINE 9
 				
+		
 	I click on menu "Orders Sourcing Tool"
 	I fill "Order" with "{{FO_REFERENCE}}"
 	I click on "Search"
@@ -250,8 +251,13 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | SOURCE DOCUMENT  |
         | {{FO_REFERENCE}} |
     I click "Edit" on line:
-        | SOURCE DOCUMENT        |
+        | SOURCE DOCUMENT  |
         | {{FO_REFERENCE}} |	
+
+
+    I fill "Date of Stock Take" with "28/Dec/2015"	
+	I click on "Update Lines" and open the window
+    I click on "Yes" and close the window	
 		
 	I click on "Validate lines"
 	
@@ -299,11 +305,11 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | {{PO_REFERENCE_1}} |	
 	
 	I should see in the main table the following data:
-        | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE      | 
+        | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE       | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Sourced-sy |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Sourced-sy |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Sourced-sy |
-        | ADAPMEMK1--  | MEMORY KEY, USB                                  | Validated |
+        | ADAPMEMK1--  | MEMORY KEY, USB                                  | Validated  |
 
     I open tab menu "ORDERS"
     I click on menu "Internal Requests"
@@ -312,11 +318,11 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | *{{IR_REFERENCE}}* |
 
 	I should see in the main table the following data:
-        | PRODUCT                               |STATE      | 
+        | PRODUCT                                                         | STATE      | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Sourced-sy |
-        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Sourced-sy |
-		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25     | Sourced-sy |
-        | [ADAPMEMK1--] MEMORY KEY, USB                                  | Sourced-v |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Sourced-sy |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Sourced-sy |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Sourced-v  |		
 
     I should see "Sourced-p" in "Order state"
 	
@@ -340,8 +346,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click "Edit" on line:
         | REFERENCE      |
         | {{PO_REF_COO}} |	
-
-
+	
     I click on "Import PO confirmation"
     I click on "add attachment"
     I fill "File to import" with "TC2 SSL VI import.xml"
@@ -349,7 +354,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click on "Simulate"
 	I should see "Simulation done" in "State"
 	I open tab "Details"
-
+	
 	I should see in the main table the following data:
       | PRODUCT                                                          |CHG  | PRODUCT_2                                                  | QTY_2 |                             
       | [ADAPCOLABAG] (laptop computer) CARRYING BAG                     |     | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | 20.00 |
@@ -358,52 +363,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	  |                                                                  | New | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | 25.00 |
 	
 	I click on "Import"
-
-    I click "Edit" on line and open the window:
-      | PRODUCT CODE |
-      | ADAPKBDAUSB  |
-
-    I click on button_id "order_line/select_fo_select" and open the window
-    I fill "ORDER REFERENCE" with "{{FO_REFERENCE}}"
-	I click on "Search"
-    I click "option" on line and close the window:
-       | ORDER REFERENCE |
-       | *{{FO_REFERENCE}}* |
-
-    # testfield patch needed
-    I fill "Order in sync. instance" with "{{IR_REFERENCE}}"
-
-    I click on "Save & Close" and close the window
-
-
-    # ref should be added on new line
-#Extra lines to compensate for impossibility to import new lines
-#    I click on "New" and open the window
-#	I fill "Product" with "[ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB"
-#    I click on button_id "order_line/select_fo_select" and open the window
-#    I fill "ORDER REFERENCE" with "{{FO_REFERENCE}}"
-#	I click on "Search"
-#    I click "option" on line and close the window:
-#       | ORDER REFERENCE |
-#       | *{{FO_REFERENCE}}* |
-
-#	I fill "Quantity" with "25.00"
-#    I fill "Order in sync. instance" with "{{IR_REFERENCE}}"
-#	I click on "Save & Close" and close the window
-
-#    I click "Delete" on line:
-#      | PRODUCT CODE |
-#      | ADAPDCDRB--  |
-
-#    I click "Edit" on line and open the window:
-#      | PRODUCT CODE |
-#      | ADAPCOLALOK |
-
-#    I fill "Product" with "ADAPMOUSOUS"
-#    I fill "Quantity" with "15.00"
-#    I click on "Save & Close" and close the window
-
-#End of extra lines to compensate for import 
 	
 	I should see in the main table the following data:
 	   | LINE  |  PRODUCT CODE  | PRODUCT DESCRIPTION                          | QUANTITY | STATE       |                       
@@ -412,23 +371,37 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        |   3   | ADAPDCDRB--    | DISK, CD-R (recordable), data, cakebox of 25 |  20.00   | Cancelled   |
 	   |   4   | ADAPKBDAUSB    | KEYBOARD, AZERTY, external, USB              |  25.00   | Validated-n |
 
-	   
+    I click "Edit" on line and open the window:
+      | PRODUCT CODE |
+      | ADAPKBDAUSB  |
+
+	  
+    I click on button_id "order_line/select_fo_select" and open the window
+    I fill "ORDER REFERENCE" with "{{FO_REFERENCE}}"
+	I click on "Search"
+    I click "option" on line and close the window:
+       | ORDER REFERENCE    |
+       | *{{FO_REFERENCE}}* |
+
+	  
+    I fill "Order in sync. instance" with "{{IR_REFERENCE}}"
+	
+	I click on "Save & Close" and close the window
+	
 	   
  	I open tab menu "ORDERS"   
     I click on menu "Field Orders"
 	I click "Edit" on line:
         | ORDER REFERENCE  |
         | {{FO_REFERENCE}} |	
-
 	   
 	I should see in the main table the following data:
-        | PRODUCT CODE | PRODUCT DESCRIPTION                          | STATE     |
-        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Sourced-v |
-        | ADAPCOLALOK  |*                                             | Sourced-v |
-		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
-        | ADAPMEMK1--  | MEMORY KEY, USB                              | Draft     |
-#	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Sourced-n |
-# to check with Sarah
+        | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE      | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Sourced-v |
+        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Sourced-v |	
+		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Cancelled |
+        | ADAPMEMK1--  | MEMORY KEY, USB                                  | Draft     |
+	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB                  | Sourced-n |  
 
 # LINE 14
 
@@ -439,8 +412,12 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click "Edit" on line:
         | REFERENCE      |
         | {{PO_REF_COO}} |	    		
-		
+
+	I open tab "Delivery"
+	I fill "Delivery Confirmed Date" with "28/May/2017"		
 	I click on "Confirm lines"
+
+    I open tab "Purchase Order"	
 	
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
@@ -449,7 +426,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
 	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  
 	
-
 	
 	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
@@ -459,10 +435,11 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		| PURCHASE ORDER   |
 		| *{{PO_REF_COO}}* | 
     I should see in the main table the following data:
-        | PRODUCT                                       | STATE     | QUANTITY       | 
-        | [ADAPCOLABAG] (laptop computer) CARRYING BAG  | Available |    20.000      |
-        | [ADAPMOUSOUS] MOUSE, optical, USB port        | Available |    15.000      |
-        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB | Available |    25.000      |	
+        | PRODUCT                                       | STATE     | QUANTITY  | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG  | Available |    20.000 |
+        | [ADAPMOUSOUS] MOUSE, optical, USB port        | Available |    15.000 |
+        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB | Available |    25.000 |	
+
 
 	I open tab menu "ORDERS"   
     I click on menu "Field Orders"
@@ -481,14 +458,13 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	
 	I should see "Draft-p" in "State"
 
-
-
 #LINE 15	
+
 	I click "Delete" on line:
        | PRODUCT CODE | PRODUCT DESCRIPTION |STATE | 
        | ADAPMEMK1--  | MEMORY KEY, USB     | Draft|
 
-        I click on "OK, cancel line" and close the window
+    I click on "OK, cancel line" and close the window	   
 	   
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
@@ -498,7 +474,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | ADAPMEMK1--  | MEMORY KEY, USB                              | Cancelled |
 	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  	
 
-    I click on "Save"
+	I click on "Save"
 	I should see "Confirmed" in "State"	   
 
 #LINE 16 &17
@@ -524,11 +500,9 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | [ADAPMOUSOUS] MOUSE, optical, USB port                      | Confirmed |
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25  | Cancelled |
         | [ADAPMEMK1--] MEMORY KEY, USB                               | Cancelled |
-#	   	| [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB               | Confirmed |
-# to check with Sarah
-
+	   	| [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB               | Confirmed |
+				
     I should see "Confirmed" in "Order state"
-
 
     I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
@@ -559,12 +533,12 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		| *{{PO_REFERENCE_1}}* | 
 		
     I should see in the main table the following data:
-        | PRODUCT                                       | STATE     |  QUANTITY      |
-        | [ADAPCOLABAG] (laptop computer) CARRYING BAG  | Available |    20.000      |
-        | [ADAPMOUSOUS] MOUSE, optical, USB port        | Available |    15.000      |
-        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB | Available |    25.000      |
+        | PRODUCT                                       | STATE     | QUANTITY  | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG  | Available |    20.000 |
+        | [ADAPMOUSOUS] MOUSE, optical, USB port        | Available |    15.000 |
+        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB | Available |    25.000 |	
 
-	I should see "Available" in "State"
+	I should see "Available" in "State"	
 	
 
 #LINE 18
@@ -592,11 +566,10 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click on "Process" and close the window if necessary
     I click on "Refresh" until "Done" in "Processing of lines" if a window is open
     I click on "Close" and close the window if a window is open
-
 	
     I should see in the main table the following data:
-        | PRODUCT                                       | STATE     | QUANTITY      | 
-        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB | Available |    25.000      |	
+        | PRODUCT                                       | STATE     | QUANTITY  | 
+        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB | Available |    25.000 |	
 
 
 		
@@ -624,14 +597,14 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	I click on menu "Deliveries|Picking"
 
 	I click "Edit" on line:
-        | ORIGIN           |  LINES STATE      |
-        | {{FO_REFERENCE}} | Partially available   |
+        | ORIGIN           | LINES STATE |
+        | {{FO_REFERENCE}} | *vailable*  |
 	
    I should see in the main table the following data:
         | PRODUCT                                                    | STATE         | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Available     |
         | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Available     |
-        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | Not Available |
+        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | Not Available |	
 
 #LINE 19
 
@@ -743,7 +716,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		| *{{PO_REF_COO}}* | Available |	
 		
 	I should see in the main table the following data:
-        | PRODUCT                                        | STATE     | 
+        | PRODUCT                                       | STATE     | 
 	    | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB | Available | 	
 		
 	I click on "Process" and open the window
@@ -777,14 +750,12 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	I click on menu "Deliveries|Picking"
 
 	I click "Edit" on line:
-        | ORIGIN           | LINES STATE  |
-        | {{FO_REFERENCE}} | Available    |
+        | ORIGIN           | LINES STATE |
+        | {{FO_REFERENCE}} | *vailable*   |
 	
    I should see in the main table the following data:
-        | PRODUCT                                                    | QTY    | STATE     |
-        | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | 0.000  | Available |
-        | [ADAPMOUSOUS] MOUSE, optical, USB port                     | 0.000  | Available |
-        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | 25.000 | Available |
+        | PRODUCT                                                    | STATE     | 
+        | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | Available |	
 	
 
 #LINE 24
@@ -880,7 +851,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	   | ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Closed    |  	
 	
     I should see "Closed" in "Order State"		
-
 	
  	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"	
@@ -913,12 +883,12 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | *{{IR_REFERENCE}}* |
 		
  	I should see in the main table the following data:
-        | PRODUCT                                                     |STATE      | 
-        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                | Closed    |
+        | PRODUCT                                                    |STATE      | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Closed    |
         | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Closed    |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
         | [ADAPMEMK1--] MEMORY KEY, USB                              | Cancelled |
-	   	| [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | Closed    |  	
+	   	| [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | Closed    | 	
 
     I should see "Closed" in "Order state"	
 	

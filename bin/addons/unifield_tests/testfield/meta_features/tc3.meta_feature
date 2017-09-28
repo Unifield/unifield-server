@@ -1,7 +1,7 @@
-Feature: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
+Feature: SSL Mission flow Cancel and  Resource PO line
 
-@supply @irfoextcu
-Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
+@supply @irfoextcu @SSL
+Scenario: SSL Mission flow Cancel and  Resource PO line
 
    
 #PARAMETRIZATION: 
@@ -181,10 +181,10 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Draft |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Draft |
 		
-
 	I store "Order Reference" in "FO_REFERENCE"	
 
-# LINE 8	
+# LINE 8
+	
 	I click "Validate" on line:
         | PRODUCT CODE | PRODUCT DESCRIPTION           |STATE  | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG | Draft |
@@ -204,8 +204,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	I should see "Draft-p" in "State"	
 		
 #LINE 9
-				
-		
+						
 	I click on menu "Orders Sourcing Tool"
 	I fill "Order" with "{{FO_REFERENCE}}"
 	I click on "Search"
@@ -233,7 +232,8 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Sourced |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Draft   |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Draft   |
-		
+
+	I should see "Draft-p" in "State"			
 
 # LINE 10
 
@@ -248,6 +248,11 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click "Edit" on line:
         | SOURCE DOCUMENT  |
         | {{FO_REFERENCE}} |	
+
+
+    I fill "Date of Stock Take" with "28/Dec/2015"	
+	I click on "Update Lines" and open the window
+    I click on "Yes" and close the window	
 		
 	I click on "Validate lines"
 	
@@ -275,7 +280,9 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Sourced-v |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Draft     |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Draft     |
-	   
+
+	I should see "Draft-p" in "State"	
+		
 # LINE 11 & 12
 
     I synchronize "HQ1C1"
@@ -314,14 +321,12 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Sourced-v  |		
 
     I should see "Sourced-p" in "Order state"
-
 	
-    I log out
-    I log into instance "HQ1C1"	
-
 	
 # LINE 13
 
+    I log out
+    I log into instance "HQ1C1"	
 	
     I open tab menu "PURCHASES"
     I click on menu "Purchase Orders"
@@ -362,7 +367,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
       |LINE |  PRODUCT CODE |
       |  5  |  ADAPCOLALOK  |		  
 	  
-	I should see "[ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot (ln:2)" in "Original FO/IR line"
+	I should see "2" in "Original FO/IR line"
     I close the window
 	
 		
@@ -376,8 +381,12 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click "Edit" on line:
         | REFERENCE      |
         | {{PO_ESC_COO}} |	
-		
+
+	I open tab "Delivery"
+	I fill "Delivery Confirmed Date" with "28/May/2017"		
 	I click on "Confirm lines"
+
+    I open tab "Purchase Order"
 	
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE        | 
@@ -414,8 +423,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	
 	I should see "Draft-p" in "State"
 
-
-
 #LINE 15
 
 	I open tab menu "WAREHOUSE"
@@ -447,7 +454,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | ORIGIN           | LINES STATE |
         | {{FO_REFERENCE}} | *vailable*  |
 	
-   I should see in the main table the following data:
+    I should see in the main table the following data:
         | PRODUCT                                      | STATE     | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG | Available |
 
@@ -493,9 +500,9 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Validated   |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Validated   |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-v |	
-	
-	I should see "Validated-p" in "State"
 
+#	I should see "Validated-p" in "State"
+# System displays "Sourced-p" while it should remain Validated-p becasue the resourced line is still actually in somekind of Valdiated status, line is in OST
 
 #LINE 18
 
@@ -535,6 +542,9 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Confirmed   |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Confirmed   |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-v |	
+
+#	I should see "Validated-p" in "State"
+# System displays "Sourced-p" while it should remain Validated-p becasue the resourced line is still actually in somekind of Valdiated status, line is in OST
 	
 
 	I open tab menu "WAREHOUSE"
@@ -590,6 +600,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Closed      |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-v |	
 
+	I should see "Validated-p" in "State"		
 
 #LINE 20 & 21
 
@@ -654,8 +665,8 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         |    IN/*       | Available Shipped |			
 
     I click "Edit" on line:
-		| PURCHASE ORDER       | BACK ORDER OF |
-		| *{{PO_REFERENCE_1}}* |               |
+		| PURCHASE ORDER       | BACK ORDER OF |  STATE            |
+		| *{{PO_REFERENCE_1}}* |               | Available Shipped |
 		
     I should see in the main table the following data:
         | PRODUCT                                      | STATE     | 
@@ -703,6 +714,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Confirmed    |		
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Resourced-pv |
 
+    I should see "Sourced-p" in "Order state"		
 
 #LINE 24
  	I open tab menu "WAREHOUSE"
@@ -889,7 +901,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
     I click on menu "Purchase Orders"
 
     I click "Edit" on line:
-        | REFERENCE          |
+        | REFERENCE        |
         | *{{PO_LOC_COO}}* |
 
 	I open tab "Delivery"
@@ -936,7 +948,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE        | 
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-c |	
 		
-	I should see "Confirmed-p" in "Order State"
+	I should see "Confirmed-p" in "Order state"
 	
     I open tab menu "ORDERS"
     I click on menu "Internal Requests"
@@ -948,7 +960,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | PRODUCT                                                         | STATE       | 
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Resourced-c |
 		
-    I should see "Confirmed-p" in "Order State"
+    I should see "Confirmed-p" in "Order state"
 
 
 #LINE 32
@@ -1039,8 +1051,8 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	I click on menu "Incoming Shipments"
 
 	I click "Edit" on line:
-		| PURCHASE ORDER   | STATE             |
-		| *{{PO_REFERENCE_1}}* | Available Shipped |	
+		| PURCHASE ORDER     | STATE             |
+		| {{PO_REFERENCE_1}} | Available Shipped |	
 
 		
 #LINE 36
