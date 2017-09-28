@@ -140,7 +140,7 @@
                 <field name="in_pipe_coor_val" invisible="not context.get('with_valuation')" / -->
                 <field name="stock_qty" invisible="not context.get('split_stock')" />
                 <field name="central_qty" invisible="not context.get('split_stock')" />
-      <field name="wh_qty" invisible="context.get('split_stock')" />
+                <field name="wh_qty" invisible="context.get('split_stock')" />
                 <field name="cross_qty" />
                 <!-- <field name="cross_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="secondary_qty" />
