@@ -70,22 +70,19 @@ class ir_translation(osv.osv):
     def _auto_init(self, cr, context={}):
         super(ir_translation, self)._auto_init(cr, context)
 
-        # FIXME: there is a size limit on btree indexed values so we can't index src column with normal btree.
-        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_ltns',))
-        if cr.fetchone():
-            #temporarily removed: cr.execute('CREATE INDEX ir_translation_ltns ON ir_translation (name, lang, type, src)')
-            cr.execute('DROP INDEX ir_translation_ltns')
-            cr.commit()
-        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_lts',))
-        if cr.fetchone():
-            #temporarily removed: cr.execute('CREATE INDEX ir_translation_lts ON ir_translation (lang, type, src)')
-            cr.execute('DROP INDEX ir_translation_lts')
-            cr.commit()
+        # there is a size limit on btree indexed values so we can't index src column with normal btree.
+        # hash indexes are not compatible with postgres streaming replication
+        for idx in ['ir_translation_ltns', 'ir_translation_lts', 'ir_translation_src_hash_idx']:
+            cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', (idx,))
+            if cr.fetchone():
+                query = 'DROP INDEX %s' % (idx,)
+                cr.execute(query)
+                cr.commit()
 
-        # add separate hash index on src (no size limit on values), as postgres 8.1+ is able to combine separate indexes
-        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_src_hash_idx',))
+        # Add separate md5 index on src (no size limit on values, and good performance).
+        cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_src_md5_idx',))
         if not cr.fetchone():
-            cr.execute('CREATE INDEX ir_translation_src_hash_idx ON ir_translation using hash (src)')
+            cr.execute('CREATE INDEX ir_translation_src_md5_idx ON ir_translation (md5(src))')
 
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = %s', ('ir_translation_ltn',))
         if not cr.fetchone():
