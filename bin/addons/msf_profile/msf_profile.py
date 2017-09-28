@@ -30,6 +30,7 @@ import logging
 from threading import Lock
 import time
 import xmlrpclib
+from tools.safe_eval import safe_eval as eval
 
 from msf_field_access_rights.osv_override import _get_instance_level
 
