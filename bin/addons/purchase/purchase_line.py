@@ -182,11 +182,7 @@ class purchase_order_line(osv.osv):
         for pol in self.browse(cr, uid, ids, context=context):
             res[pol.id] = False
             if pol.resourced_original_line:
-                res[pol.id] = '[%s] %s (ln:%s)' % (
-                    pol.resourced_original_line.product_id.default_code, 
-                    pol.resourced_original_line.name,
-                    pol.resourced_original_line.line_number
-                )
+                res[pol.id] = '%s' % (pol.resourced_original_line.line_number)
 
         return res
 
@@ -1421,10 +1417,6 @@ class purchase_order_line_state(osv.osv):
         'name': fields.text(string='PO state', store=True),
         'sequence': fields.integer(string='Sequence'),
     }
-
-    _sql_constraints = [
-        ('sequence_uniq', 'unique(sequence)', 'PO line state sequence must be unique !'),
-    ]
 
     def get_less_advanced_state(self, cr, uid, ids, states, context=None):
         '''

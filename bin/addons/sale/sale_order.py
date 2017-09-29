@@ -435,13 +435,19 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             
         res = {}
         for so in self.browse(cr, uid, ids, context=context):
-            sol_states = set([line.state for line in so.order_line])
+            sol_states = set()
+            for sol in so.order_line:
+                if sol.state.startswith('cancel'): # cancel state must be ignored at this level (only accurate when all lines are canceled)
+                    continue
+                elif sol.resourced_at_state:
+                    # if line has been resourced, then we take the state of the original line at resourcing
+                    sol_states.add(sol.resourced_at_state)
+                else:
+                    sol_states.add(sol.state)
+            
             if all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
             else: # else compute the less advanced state:
-                # cancel state must be ignored:
-                sol_states.discard('cancel') 
-                sol_states.discard('cancel_r')
                 res[so.id] = self.pool.get('sale.order.line.state').get_less_advanced_state(cr, uid, ids, sol_states, context=context)
 
                 if res[so.id] == 'draft': # set the draft-p state ?
@@ -1822,11 +1828,7 @@ class sale_order_line(osv.osv):
         for sol in self.browse(cr, uid, ids, context=context):
             res[sol.id] = False
             if sol.resourced_original_line:
-                res[sol.id] = '[%s] %s (ln:%s)' % (
-                    sol.resourced_original_line.product_code, 
-                    sol.resourced_original_line.name, 
-                    sol.resourced_original_line.line_number
-                )
+                res[sol.id] = '%s' % (sol.resourced_original_line.line_number)
 
         return res
 
@@ -1887,6 +1889,7 @@ class sale_order_line(osv.osv):
         ),
         'resourced_original_line': fields.many2one('sale.order.line', 'Original line', readonly=True, help='Original line from which the current one has been cancel and ressourced'),
         'display_resourced_orig_line': fields.function(_get_display_resourced_orig_line, method=True, type='char', readonly=True, string='Original FO/IR line', help='Original line from which the current one has been cancel and ressourced'),
+        'resourced_at_state': fields.char('Resourced at state', size=128, help='The state of the original line when the resourced line has been created'),
         'stock_take_date': fields.date('Date of Stock Take', required=False),
         'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer'),
         'salesman_id':fields.related('order_id', 'user_id', type='many2one', relation='res.users', store=True, string='Salesman'),
@@ -2390,6 +2393,8 @@ class sale_order_line(osv.osv):
         values = {
             'order_id': order_id,
             'resourced_original_line': line.id,
+            'resourced_original_remote_line': line.sync_linked_pol,
+            'resourced_at_state': line.state,
             'product_uom_qty': qty_diff,
             'product_uos_qty': qty_diff,
         }
@@ -3550,10 +3555,6 @@ class sale_order_line_state(osv.osv):
         'name': fields.text(string='FO state', store=True),
         'sequence': fields.integer(string='Sequence'),
     }
-
-    _sql_constraints = [
-        ('sequence_uniq', 'unique(sequence)', 'FO line state sequence must be unique !'),
-    ]
 
     def get_less_advanced_state(self, cr, uid, ids, states, context=None):
         '''

@@ -128,7 +128,11 @@ class sale_order_line(osv.osv):
 
         new_sol_id = False
         for sol in self.browse(cr, uid, ids, context=context):
-            new_sol_id = self.copy(cr, uid, sol.id, {'resourced_original_line': sol.id, 'resourced_original_remote_line': sol.sync_linked_pol}, context=context)
+            new_sol_id = self.copy(cr, uid, sol.id, {
+                'resourced_original_line': sol.id, 
+                'resourced_original_remote_line': sol.sync_linked_pol,
+                'resourced_at_state': sol.state,
+            }, context=context)
             wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 
         return new_sol_id
