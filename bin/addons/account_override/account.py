@@ -76,7 +76,6 @@ class account_account(osv.osv):
                 arg.append(('inactivation_date', '<=', cmp_date))
         return arg
 
-    #@@@override account.account_account.__compute
     def __compute(self, cr, uid, ids, field_names, arg=None, context=None,
                   query='', query_params=()):
         """ compute the balance, debit and/or credit for the provided
@@ -197,7 +196,6 @@ class account_account(osv.osv):
                     new_amount = currency_obj.compute(cr, uid, context.get('output_currency_id'), company_currency, res[i].get(f_name), context=context)
                     res[i][f_name] = new_amount
         return res
-    #@@@end
 
     def _get_restricted_area(self, cr, uid, ids, field_name, args, context=None):
         """
