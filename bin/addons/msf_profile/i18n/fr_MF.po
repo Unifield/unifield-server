@@ -99638,3 +99638,13 @@ msgstr "Impossible de générer les data après %d tentatives"
 #, python-format
 msgid "Unable to generate updates, retrying %d/%d"
 msgstr "Impossible de générer les data, nouvel essai %d/%d"
+
+#. module: account
+#: field:account.subscription,has_unposted_entries:0
+msgid "Has unposted entries"
+msgstr "A des écritures non comptabilisées"
+
+#. module: account
+#: view:account.subscription:0
+msgid "Delete Unposted Entries"
+msgstr "Supprimer les Écritures Non Comptabilisées"

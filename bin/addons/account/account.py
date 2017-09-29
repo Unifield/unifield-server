@@ -2342,6 +2342,25 @@ account_model_line()
 class account_subscription(osv.osv):
     _name = "account.subscription"
     _description = "Account Subscription"
+
+    def _get_has_unposted_entries(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns a dict with key = id of the subscription,
+        and value = True if an unposted JE is linked to one of the subscription lines, False otherwise
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for sub in self.browse(cr, uid, ids, fields_to_fetch=['lines_id'], context=context):
+            res[sub.id] = False
+            for subline in sub.lines_id:
+                if subline.move_id and subline.move_id.state == 'draft':  # draft = Unposted state
+                    res[sub.id] = True
+                    break
+        return res
+
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'ref': fields.char('Reference', size=16),
@@ -2353,7 +2372,9 @@ class account_subscription(osv.osv):
         'period_type': fields.selection([('day','days'),('month','month'),('year','year')], 'Period Type', required=True),
         'state': fields.selection([('draft','Draft'),('running','Running'),('done','Done')], 'State', required=True, readonly=True),
 
-        'lines_id': fields.one2many('account.subscription.line', 'subscription_id', 'Subscription Lines')
+        'lines_id': fields.one2many('account.subscription.line', 'subscription_id', 'Subscription Lines'),
+        'has_unposted_entries': fields.function(_get_has_unposted_entries, method=True, type='boolean',
+                                                store=False, string='Has unposted entries'),
     }
     _defaults = {
         'date_start': lambda *a: time.strftime('%Y-%m-%d'),
@@ -2387,6 +2408,36 @@ class account_subscription(osv.osv):
             self.pool.get('account.subscription.line').unlink(cr, uid, toremove)
         self.write(cr, uid, ids, {'state':'draft'})
         return False
+
+    def delete_unposted(self, cr, uid, ids, context=None):
+        """
+        This method:
+        - searches for the unposted Journal Entries linked to the account subscription(s)
+        - deletes the unposted JEs, and the related JIs and AJIs
+        - deletes all the Subscription Lines not linked to a Posted JE
+        - triggers the "Compute" method on the subscription(s) to get the correct lines and state
+        """
+        if context is None:
+            context = {}
+        subline_obj = self.pool.get('account.subscription.line')
+        je_obj = self.pool.get('account.move')
+        subline_to_delete_ids = []
+        je_to_delete_ids = []
+        for sub in self.browse(cr, uid, ids, fields_to_fetch=['lines_id'], context=context):
+            for subline in sub.lines_id:
+                if not subline.move_id:
+                    # also deletes the sub. lines without JE (covers the case where frequency has been modified
+                    # => avoids having inconsistent lines at the end of the process)
+                    subline_to_delete_ids.append(subline.id)
+                elif subline.move_id.state == 'draft':  # draft = Unposted state
+                    subline_to_delete_ids.append(subline.id)
+                    je_to_delete_ids.append(subline.move_id.id)
+        subline_obj.unlink(cr, uid, subline_to_delete_ids, context=context)
+        je_obj.unlink(cr, uid, je_to_delete_ids, context=context)
+        # retrigger the creation of the subscription lines "to be generated"
+        # and recompute the state of the subscription accordingly (= "Running" if lines have been generated)
+        self.compute(cr, uid, ids, context=context)
+        return True
 
     def compute(self, cr, uid, ids, context=None):
         if context is None:
@@ -2434,6 +2485,7 @@ class account_subscription_line(osv.osv):
         'date': fields.date('Date', required=True),
         'move_id': fields.many2one('account.move', 'Entry'),
     }
+    _order = 'date, id'
 
     def move_create(self, cr, uid, ids, context=None):
         tocheck = {}
