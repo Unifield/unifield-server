@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 class res_currency_rate_functional(osv.osv):
     _inherit = "res.currency.rate"
@@ -120,7 +121,16 @@ class res_currency_rate_functional(osv.osv):
         This method is used to re-compute all account move lines when a currency is modified.
         """
         res = True
-        for currency in self.read(cr, uid, ids, ['currency_id']):
+        period_obj = self.pool.get('account.period')
+        if context is None:
+            context = {}
+        for currency in self.read(cr, uid, ids, ['currency_id', 'name'], context=context):
+            period_ids = period_obj.get_period_from_date(cr, uid, currency['name'], context=context)
+            if period_ids:
+                period = period_obj.read(cr, uid, period_ids[0], ['state', 'name'], context=context)
+                if period['state'] != 'created':
+                    raise osv.except_osv(_('Error'),
+                                         _("You can't delete this FX rate as the period \"%s\" isn't in Draft state.") % period['name'])
             res = res & super(res_currency_rate_functional, self).unlink(cr, uid, ids, context)
             if currency['currency_id']:
                 currency_id = currency['currency_id'][0]

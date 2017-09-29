@@ -99638,3 +99638,9 @@ msgstr "Impossible de générer les data après %d tentatives"
 #, python-format
 msgid "Unable to generate updates, retrying %d/%d"
 msgstr "Impossible de générer les data, nouvel essai %d/%d"
+
+#. module: res_currency_functional
+#: code:addons/res_currency_functional/res_currency_rate_functional.py:134
+#, python-format
+msgid "You can't delete this FX rate as the period \"%s\" isn't in Draft state."
+msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'est pas en statut Brouillon."
