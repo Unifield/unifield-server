@@ -273,6 +273,7 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Confirmed   |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Confirmed   |
 
+    I should see "Confirmed" in "Order State"				
 	
     I open tab menu "ORDERS"
     I click on menu "Internal Requests"
@@ -329,6 +330,7 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Closed      |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Closed      |
 
+    I should see "Closed" in "Order State"				
 		
     I open tab menu "ORDERS"
     I click on menu "Internal Requests"
@@ -398,10 +400,6 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
 	I click on menu "Orders Sourcing Tool"
 	I fill "Order" with "{{IR_REFERENCE}}"
 	I click on "Search"
-	
-	I click on menu "Orders Sourcing Tool"
-	I fill "Order" with "{{IR_REFERENCE}}"
-	I click on "Search"
 
 	I click "Edit" on line:
         | PRODUCT                                      |
@@ -434,7 +432,7 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION           |STATE  | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG | Draft |
-
+		
 		
 #LINE 11
 		
@@ -451,6 +449,8 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
         | PRODUCT CODE | PRODUCT DESCRIPTION           |STATE      | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG | Validated |
 
+    I should see "Validated" in "Order State"				
+		
 	I store "Order Reference" in "PO_REFERENCE_2"	
 
 	

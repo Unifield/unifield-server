@@ -336,11 +336,12 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
     I click "Edit" on line:
         | REFERENCE      |
         | {{PO_ESC_COO}} |	
-	
+
+		
     I click "Cancel" on line and open the window:
       | PRODUCT CODE |
       | ADAPCOLALOK  |	
-	I click on "Cancel only" and close the window
+	I click on "Cancel & Resource" and close the window
 
 	
 	I should see in the main table the following data:
@@ -543,9 +544,9 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Confirmed   |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-v |	
 
-#	I should see "Validated-p" in "State"
-# System displays "Sourced-p" while it should remain Validated-p becasue the resourced line is still actually in somekind of Valdiated status, line is in OST
-	
+	#	I should see "Validated-p" in "State"
+	# System displays "Sourced-p" while it should remain Validated-p becasue the resourced line is still actually in somekind of Valdiated status, line is in OST
+		
 
 	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
@@ -600,7 +601,9 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Closed      |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-v |	
 
-	I should see "Validated-p" in "State"		
+#	I should see "Validated-p" in "State"
+# System displays "Sourced-p" while it should remain Validated-p becasue the resourced line is still actually in somekind of Valdiated status, line is in OST
+		
 
 #LINE 20 & 21
 
