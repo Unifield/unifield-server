@@ -199,7 +199,7 @@ class mission_stock_wizard(osv.osv_memory):
                         ('cross_qty', '!=', 0),
                         ('secondary_qty', '!=', 0),
                         ('cu_qty', '!=', 0),
-                        ('in_pipe_qty', '!=', 0),
+                        ('in_pipe_qty', '!=', 0),]
         else:
             domain = [('mission_report_id', '=', wiz_id.report_id.id)]
 
