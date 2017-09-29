@@ -37,24 +37,6 @@
             </field>
         </record>
 
-    <!-- Delete account_analytic_id from Purchase Order Line Form -->
-        <record id="analytic_purchase_order_line_form_view" model="ir.ui.view">
-            <field name="name">analytic.purchase.order.line.form.view</field>
-            <field name="model">purchase.order.line</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="purchase.purchase_order_line_form" />
-            <field name="priority">25</field>
-            <field name="arch" type="xml">
-                <field name="account_analytic_id" position="replace">
-                    <group colspan="6" attrs="{'invisible': [('rfq_ok', '=', True)]}">
-                            <field name="analytic_distribution_id" invisible="1"/>
-                            <field name="line_number" invisible="1"/>
-                            <label string=" " />
-                            <field name="account_4_distribution" invisible="1"/>
-                    </group>
-                </field>
-            </field>
-        </record>
 
     </data>
 </openerp>
