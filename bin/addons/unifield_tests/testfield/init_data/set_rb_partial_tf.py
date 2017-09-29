@@ -76,6 +76,14 @@ conn_manager.connect()
 if sync_needed:
     oerp.get('sync.client.entity').sync()
 
+ext_name = 'OFFICE'
+loc_o = oerp.get('stock.location')
+if not loc_o.search([('name', '=', ext_name)]):
+    print 'Create Loc'
+    stock_wiz = oerp.get('stock.location.configuration.wizard')
+    w_id = stock_wiz.create({'location_usage': 'consumption_unit', 'location_type': 'customer', 'location_name': ext_name})
+    stock_wiz.confirm_creation(w_id)
+
 
 
 
