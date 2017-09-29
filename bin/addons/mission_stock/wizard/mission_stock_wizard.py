@@ -193,7 +193,7 @@ class mission_stock_wizard(osv.osv_memory):
             else:
                 # in case of split_stock is false, some fields are not
                 # displayed, so do not take into account this quantity
-                domain =[ '&', '|', '|', '|', '|', '|',
+                domain =[ '&', '|', '|', '|', '|',
                         ('mission_report_id', '=', wiz_id.report_id.id),
                         ('internal_qty', '!=', 0),
                         ('cross_qty', '!=', 0),
