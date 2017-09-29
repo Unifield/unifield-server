@@ -270,7 +270,7 @@ class real_average_consumption(osv.osv):
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN real_average_consumption rac ON l.rac_id = rac.id
-                          WHERE (t.type != 'service_recep' %s) AND rac.id in %%s LIMIT 1''' % transport_cat,
+                          WHERE (t.type != 'service_recep' %s) AND rac.id in %%s LIMIT 1''' % transport_cat,  # not_a_user_entry
                        (tuple(ids),))
             res = cr.fetchall()
 
@@ -802,7 +802,7 @@ class real_average_consumption_line(osv.osv):
                     # uf-1344 "quantity NOT in stock with this ED => line should be in red, no batch picked up"
                     prodlot_id = None
             #recursion: can't use write
-            cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, asset_mandatory=%s, prodlot_id=%s, expiry_date=%s, asset_id=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, asset_mandatory, prodlot_id, expiry_date, asset_id, obj.id))
+            cr.execute('UPDATE '+self._table+' SET product_qty=%s, batch_mandatory=%s, date_mandatory=%s, asset_mandatory=%s, prodlot_id=%s, expiry_date=%s, asset_id=%s  where id=%s', (product_qty, batch_mandatory, date_mandatory, asset_mandatory, prodlot_id, expiry_date, asset_id, obj.id))  # not_a_user_entry
 
         return True
 

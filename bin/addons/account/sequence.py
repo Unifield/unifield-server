@@ -49,8 +49,8 @@ class ir_sequence(osv.osv):
     def get_id(self, cr, uid, sequence_id, code_or_id='id', context=None):
         if context is None:
             context = {}
-        cr.execute('select id from ir_sequence where '
-                   + code_or_id + '=%s and active=%s', (sequence_id, True,))
+        cr.execute('''select id from ir_sequence
+            where %s=%%s and active=%%s''' % code_or_id, (sequence_id, True,))  # not_a_user_entry
         res = cr.dictfetchone()
         if res:
             for line in self.browse(cr, uid, res['id'],

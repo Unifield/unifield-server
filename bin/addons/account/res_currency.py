@@ -33,8 +33,8 @@ class res_currency_account(osv.osv):
         account_invert = context.get('res.currency.compute.account_invert')
         if account and account.currency_mode == 'average' and account.currency_id:
             query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
-            cr.execute('select sum(debit-credit),sum(amount_currency) from account_move_line l ' \
-              'where l.currency_id=%s and l.account_id=%s and '+query, (account.currency_id.id,account.id,))
+            cr.execute('''select sum(debit-credit),sum(amount_currency) from account_move_line l
+                where l.currency_id=%%s and l.account_id=%%s and %s''' % query, (account.currency_id.id,account.id,))  # not_a_user_entry
             tot1,tot2 = cr.fetchone()
             if tot2 and not account_invert:
                 rate = float(tot1)/float(tot2)
