@@ -2433,7 +2433,7 @@ class account_subscription(osv.osv):
                     subline_to_delete_ids.append(subline.id)
                     je_to_delete_ids.append(subline.move_id.id)
         subline_obj.unlink(cr, uid, subline_to_delete_ids, context=context)
-        je_obj.unlink(cr, uid, je_to_delete_ids, context=context)
+        je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
         # retrigger the creation of the subscription lines "to be generated"
         # and recompute the state of the subscription accordingly (= "Running" if lines have been generated)
         self.compute(cr, uid, ids, context=context)
