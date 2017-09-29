@@ -154,6 +154,8 @@ def main():
                 for filename in filenames:
                     if filename.endswith('.py'):
                         file_list.append(os.path.join(root,filename))
+        elif os.path.isfile(fname):
+            file_list.append(fname)
 
     for fname in file_list:
         these_errors = check(fname)
