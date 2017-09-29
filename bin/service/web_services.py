@@ -57,8 +57,9 @@ def _check_db_name(name):
     '''Return True if the name is composed only with allowed char, False
     otherwise.
     '''
-    if not re.match('^[a-zA-Z][a-zA-Z0-9_-]+$', name):
-        raise _("You must avoid all accents, space or special characters.")
+    if name and isinstance(name, basestring):
+        if not re.match('^[a-zA-Z][a-zA-Z0-9_-]+$', name):
+            raise _("You must avoid all accents, space or special characters.")
 
 def export_csv(fields, result, result_file_path):
     try:
@@ -444,9 +445,9 @@ class db(netsvc.ExportService):
         the unified-version.txt (old base)
             Used by the client to verify the compatibility with its own version
         """
-        _check_db_name(db_name)
         if not dbname:
             return release.version
+        _check_db_name(dbname)
 
         db = sql_db.db_connect(dbname)
         cr = db.cursor()

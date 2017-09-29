@@ -601,24 +601,25 @@ class many2many(_column):
         if self._limit is not None:
             limit_str = ' LIMIT %d' % self._limit
 
-        query = """SELECT %(rel)s.%(id2)s, %(rel)s.%(id1)s
-                   FROM %(rel)s, %(from_c)s
-                   WHERE %(rel)s.%(id1)s IN %%s
-                    AND %(rel)s.%(id2)s = %(tbl)s.id
-                 %(where_c)s
-                 %(order_by)s
-                 %(limit)s
-                 OFFSET %(offset)d' """ % {  # not_a_user_entry
-               'rel': self._rel,
-               'from_c': from_c,
-               'tbl': obj._table,
-               'id1': self._id1,
-               'id2': self._id2,
-               'where_c': where_c,
-               'limit': limit_str,
-               'order_by': order_by,
-               'offset': offset,
-               }
+        query = """
+        SELECT %(rel)s.%(id2)s, %(rel)s.%(id1)s
+        FROM %(rel)s, %(from_c)s
+        WHERE %(rel)s.%(id1)s IN %%s
+            AND %(rel)s.%(id2)s = %(tbl)s.id
+            %(where_c)s
+        %(order_by)s
+        %(limit)s
+        OFFSET %(offset)d""" % {  # not_a_user_entry
+            'rel': self._rel,
+            'from_c': from_c,
+            'tbl': obj._table,
+            'id1': self._id1,
+            'id2': self._id2,
+            'where_c': where_c,
+            'limit': limit_str,
+            'order_by': order_by,
+            'offset': offset,
+        }
         cr.execute(query, [tuple(ids),] + where_params)
         for r in cr.fetchall():
             res[r[1]].append(r[0])
