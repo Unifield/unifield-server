@@ -3,7 +3,7 @@
 import time
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-
+import netsvc
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
@@ -1049,13 +1049,10 @@ class purchase_order_line(osv.osv):
             if line['order_id'][0] not in order_ids:
                 order_ids.append(line['order_id'][0])
 
-        if context.get('from_del_wizard'):
-            return self.ask_unlink(cr, uid, ids, context=context)
-
         res = super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
 
         for pol in self.read(cr, uid, ids, ['line_number'], context=context):
-            self.infolog(cr, uid, "The PO/RfQ line id:%s (line number: %s) has been deleted" % (
+            self.infolog(cr, uid, u"The PO/RfQ line id:%s (line number: %s) has been deleted" % (
                 pol['id'], pol['name'],
             ))
 
@@ -1411,6 +1408,30 @@ class purchase_order_line(osv.osv):
                         'distribution_id': distrib_id,
                         'percentage': (current_add[key] / new_amount) * 100,
                     }, context=context)
+
+        return True
+
+    def fake_unlink(self, cr, uid, ids, context=None):
+        '''
+        Add an entry to cancel (and resource if needed) the line when the
+        PO will be confirmed
+        '''
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wf_service = netsvc.LocalService("workflow")
+
+        to_del = self.search(cr, uid, [('id', 'in', ids), ('state', 'in', ['draft', 'validated_n']), ('linked_sol_id', '=', False)], context=context)
+        to_cancel = self.search(cr, uid, [('id', 'in', ids), ('linked_sol_id', '!=', False), ('state', 'in', ['draft', 'validated_n', 'validated'])], context=context)
+        if to_del:
+            self.unlink(cr, uid, to_del, context=context)
+
+        for to_cancel_id in to_cancel:
+            wf_service.trg_validate(uid, 'purchase.order.line', to_cancel_id, 'cancel', cr)
+
 
         return True
 

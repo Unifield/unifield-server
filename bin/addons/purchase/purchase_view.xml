@@ -217,7 +217,7 @@
                                     <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('state', 'not in', ['draft', 'validated_n'])]}" />
                                     <button string="Confirm" icon="terp-check" name="confirmed" type="workflow" attrs="{'invisible': [('state', 'not in', ['validated'])]}" />
                                     <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}" />
-                                    <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': [('fake_state', 'in', ['cancel', 'cancel_r', 'done'])]}" />
+                                    <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'validated', 'validated_n'])]}" />
                                 </tree>
                                 <!-- default form view -->
                             </field>
