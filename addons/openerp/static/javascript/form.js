@@ -828,6 +828,22 @@ function onChange(caller){
                             }
                         }
                         break;
+                    case 'char':
+
+                        fld.value = value;
+                        fld.setAttribute("value",value);
+
+                        if ((obj['display_strings']) 
+                        &&  (obj['display_strings'][k]) 
+                        &&  (obj['display_strings'][k][value]))
+                        {
+                            fld.innerHTML = obj['display_strings'][k][value];
+                        }
+                        else
+                        {
+                            fld.innerHTML = value;
+                        }
+                        break;
                     default:
                     // do nothing on default
                 }

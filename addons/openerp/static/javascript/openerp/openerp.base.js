@@ -153,6 +153,10 @@ function doLoadingSuccess(app, url) {
                 if (parsed.reload) {
                     if (parsed.list_grid) {
                         new ListView(parsed.list_grid).reload();
+                        var o2mlist = openobject.dom.get('_o2m_' + parsed.list_grid);
+                        if (o2mlist) {
+                            onChange(o2mlist);
+                        }
                     } else {
                         window.location.reload();
                     }
