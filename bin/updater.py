@@ -836,7 +836,7 @@ def do_pg_update():
         pg_old_db2 = pg_old_db + "-trash"
         os.rename(pg_old_db, pg_old_db2)
         os.rename(pg_new_db, pg_old_db)
-        shutil.rmtree(pg_old_db2)
+        shutil.rmtree(pg_old_db2, True)
 
         # 6: commit to new bin dir
         if oldVer == '8.4.17':
