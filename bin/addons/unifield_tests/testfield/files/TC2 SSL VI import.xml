@@ -162,7 +162,7 @@
    </Row>
    <Row>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Origin</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">17/jfb-partial-0808_HQ1/HT101/FO00016</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
    </Row>
    <Row>
     <Cell ss:StyleID="s62"><Data ss:Type="String">Project Ref.</Data></Cell>
@@ -219,7 +219,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">27.880849999999999</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">17/jfb-partial-0808_HQ1/HT101/FO00016</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
@@ -244,7 +244,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">7.5</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">17/jfb-partial-0808_HQ1/HT101/FO00016</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
@@ -269,7 +269,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">0.32191999999999998</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">17/jfb-partial-0808_HQ1/HT101/FO00016</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>
@@ -293,7 +293,7 @@
     <Cell ss:StyleID="s63"><Data ss:Type="String">PCE</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="Number">20.100000000000001</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String">EUR</Data></Cell>
-    <Cell ss:StyleID="s63"><Data ss:Type="String">17/jfb-partial-0808_HQ1/HT101/FO00016</Data></Cell>
+    <Cell ss:StyleID="s63"><Data ss:Type="String">{{FO_REFERENCE}}</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s64"><Data ss:Type="DateTime">2017-08-13T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s63"><Data ss:Type="String"></Data></Cell>

@@ -432,6 +432,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        sols_obj = self.pool.get('sale.order.line.state')
             
         res = {}
         for so in self.browse(cr, uid, ids, context=context):
@@ -439,8 +440,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             for sol in so.order_line:
                 if sol.state.startswith('cancel'): # cancel state must be ignored at this level (only accurate when all lines are canceled)
                     continue
-                elif sol.resourced_at_state:
-                    # if line has been resourced, then we take the state of the original line at resourcing
+                elif sol.resourced_at_state and sols_obj.get_sequence(cr, uid, ids, sol.resourced_at_state, context=context) > sols_obj.get_sequence(cr, uid, ids, sol.state, context=context):
+                    # if line has been resourced and his resourced state is greater then his current state, then we take the state of the original line at resourcing
                     sol_states.add(sol.resourced_at_state)
                 else:
                     sol_states.add(sol.state)

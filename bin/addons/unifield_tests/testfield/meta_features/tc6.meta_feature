@@ -289,10 +289,9 @@ Scenario: SSL Instance Cancel and Resource IN with header validation
         | REFERENCE          |
         | {{PO_REFERENCE_1}} |	
 
-I wait		
 		
-#	I open tab "Delivery"
-#	I fill "Delivery Confirmed Date" with "28/May/2017"	
+	I open tab "Delivery"
+	I fill "Delivery Confirmed Date" with "28/May/2017"	
 
 #not possible to update Delivery tab, greyed out	
 

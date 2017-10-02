@@ -358,6 +358,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
+        self.check_analytic_distribution(cr, uid, ids, context=context)
 
         # update FO line with change on PO line
         self.update_fo_lines(cr, uid, ids, context=context)
