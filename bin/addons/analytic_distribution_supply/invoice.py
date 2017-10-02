@@ -24,7 +24,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from collections import defaultdict
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -128,21 +127,9 @@ class account_invoice(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Browse given invoices
+        cv_ids = {}
+        grouped_invl = {}
         for inv in self.browse(cr, uid, ids, context=context):
-            # Prepare some values
-            co_ids = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', 'in', [x.id for x in inv.purchase_ids])], context=context)
-            if not co_ids:
-                continue
-            if len(co_ids) > 1:
-                raise osv.except_osv(_('Error'), _('Multiple Commitment Voucher for the same invoice is not supported yet!'))
-            co = self.pool.get('account.commitment').browse(cr, uid, co_ids, context=context)[0]
-            # If Commitment voucher in draft state we change it to 'validated' without using workflow and engagement lines generation
-            # NB: This permits to avoid modification on commitment voucher when receiving some goods
-            if co.state == 'draft':
-                self.pool.get('account.commitment').write(cr, uid, [co.id], {'state': 'open'}, context=context)
-            # Try to update engagement lines regarding invoice line amounts and account
-            invoice_lines = defaultdict(list)
-            # Group by account (those from purchase order line)
             for invl in inv.invoice_line:
                 # Do not take invoice line that have no order_line_id (so that are not linked to a purchase order line)
                 if not invl.order_line_id:
@@ -166,32 +153,31 @@ class account_invoice(osv.osv):
                             raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (pol.product_id.name, pol.product_id.id,))
                     else:
                         a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
-                invoice_lines[a].append(invl)
+                for cv_line in invl.order_line_id.commitment_line_ids:
+                        cv_ids[cv_line.commit_id.id] = True
+                        key = cv_line
+                        if key not in grouped_invl:
+                            grouped_invl[key] = 0
+                        grouped_invl[key] += invl.price_subtotal
+            if cv_ids:
+                co_ids = self.pool.get('account.commitment').search(cr, uid, [('id', 'in', cv_ids.keys()), ('state', '=', 'draft')], context=context)
+                if co_ids:
+                # If Commitment voucher in draft state we change it to 'validated' without using workflow and engagement lines generation
+                # NB: This permits to avoid modification on commitment voucher when receiving some goods
+                    self.pool.get('account.commitment').write(cr, uid, co_ids, {'state': 'open'}, context=context)
+
             # Browse result
             diff_lines = []
-            processed_commitment_line = []
-            for account_id in invoice_lines:
-                total_amount = 0.0
-                # compute total amount of all invoice lines that have the same account_id
-                for line in invoice_lines[account_id]:
-                    total_amount += line.price_subtotal
-                # search for matching commitment line
-                cl_ids = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', co.id), ('account_id', '=', account_id)], limit=1,
-                                                                         context=context)
-                # Do nothing if no commitment line exists for this invoice line. FIXME: waiting for a decision about this case
-                if not cl_ids:
-                    continue
-                cl = self.pool.get('account.commitment.line').browse(cr, uid, cl_ids, context=context)[0]
+            for cl in grouped_invl.keys():
                 # if no difference between invoice lines and commitment line: delete engagement lines that come from this commitment_line
                 eng_ids = self.pool.get('account.analytic.line').search(cr, uid, [('commitment_line_id', '=', cl.id)], context=context)
-                if cl.amount == total_amount:
-                    processed_commitment_line.append(cl.id)
+                if abs(cl.amount - grouped_invl[key]) < 0.001:
                     if eng_ids:
                         self.pool.get('account.analytic.line').unlink(cr, uid, eng_ids, context=context)
                     self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': 0.0}, context=context)
                 else:
                     # Remember difference in diff_lines list
-                    diff_lines.append({'cl': cl, 'diff': cl.amount - total_amount, 'new_mnt': total_amount})
+                    diff_lines.append({'cl': cl, 'diff': cl.amount - grouped_invl[key], 'new_mnt': grouped_invl[key]})
             # Difference lines process
             if diff_lines:
                 for diff_line in diff_lines:
@@ -242,12 +228,10 @@ class account_invoice(osv.osv):
                     if commitment_line_new_amount < 0.0:
                         commitment_line_new_amount = 0.0
                     self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': commitment_line_new_amount}, context=context)
-                    # add cl to processed_commitment_line
-                    processed_commitment_line.append(cl.id)
             # Update commitment voucher state (if total_amount is inferior to 0.0, then state is done)
-            c_total = self.pool.get('account.commitment')._get_total(cr, uid, [co.id], {}, {}, context=context)
-            if c_total and c_total.get(co.id, 1.0) <= 0.0:
-                self.pool.get('account.commitment').action_commitment_done(cr, uid, [co.id], context=context)
+            for cv in self.pool.get('account.commitment').read(cr, uid, cv_ids.keys(), ['total'], context=context):
+                if abs(cv['total']) < 0.001:
+                    self.pool.get('account.commitment').action_commitment_done(cr, uid, [cv['id']], context=context)
         return True
 
     def action_open_invoice(self, cr, uid, ids, context=None):
