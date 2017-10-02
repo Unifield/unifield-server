@@ -205,6 +205,7 @@
                                     <field name="date_planned"/>
                                     <field name="name"/>
                                     <field name="product_qty"/>
+                                    <field name="original_changed" readonly="1"/>
                                     <field name="product_uom"/>
                                     <field name="price_unit"/>
                                     <field name="price_subtotal"/>
@@ -539,8 +540,17 @@
                                 <label string=" " />
                                 <field name="account_4_distribution" invisible="1"/>
                             </group>
+                            <group colspan="4">
+                                <group colspan="2">
+                                    <field name="original_qty" colspan="1" readonly="1"/>
+                                    <field name="original_price" colspan="1" readonly="1"/>
+                                    <field name="original_uom" colspan="1" readonly="1"/>
+                                    <field name="original_currency_id" colspan="1" readonly="1"/>
+                                </group>
+                                <field name="modification_comment" colspan="2"/>
+                            </group>
                             <field name="vat_ok" invisible="1" />
-                            <group colspan="4" col="4" groups="base.group_extended" attrs="{'invisible': [('vat_ok', '=', False)]}">
+                            <group colspan="4" col="4" attrs="{'invisible': [('vat_ok', '=', False)]}">
                                 <separator colspan="4" string="Taxes"/>
                                 <field colspan="4" nolabel="1" name="taxes_id"
                                     domain="[('parent_id','=',False),('type_tax_use','!=','sale')]"/>

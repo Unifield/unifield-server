@@ -478,6 +478,18 @@ class procurement_request(osv.osv):
         if not default.get('order_ids'):
             default['order_ids'] = None
 
+        if 'original_qty' not in default:
+            default.update({'original_qty': False})
+
+        if 'original_price' not in default:
+            default.update({'original_price': False})
+
+        if 'original_uom' not in default:
+            default.update({'original_uom': False})
+
+        if 'modification_comment' not in default:
+            default.update({'modification_comment': False})
+
         # bypass name sequence
         new_id = super(procurement_request, self).copy(cr, uid, id, default, context=context)
         if new_id:
@@ -542,6 +554,14 @@ class procurement_request(osv.osv):
 
                 if not line.stock_take_date:
                     line_obj.write(cr, uid, [line.id], {'stock_take_date': req.stock_take_date, }, context=context)
+
+                # update original qty, unit price, uom and currency on line level
+                line_update = {
+                    'original_qty': line.product_uom_qty,
+                    'original_price': line.cost_price,
+                    'original_uom': line.product_uom.id,
+                }
+                line_obj.write(cr, uid, line.id, line_update, context=context)
 
                 # 5/ Check if there is a temporary product in the sale order :
                 temp_prod_ids = self.pool.get('product.product').search(cr, uid, [('international_status', '=', 5)], context=context)
@@ -684,6 +704,26 @@ class procurement_request_line(osv.osv):
                 res[pol['id']] = False
         return res
 
+    def _check_changed(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Check if an original value has been changed
+        '''
+        if context is None:
+            context = {}
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            changed = False
+            if line.modification_comment\
+                    or (line.original_qty and line.original_price and line.original_uom and line.original_currency_id):
+                if line.modification_comment or line.product_uom_qty != line.original_qty \
+                        or line.cost_price != line.original_price or line.product_uom != line.original_uom:
+                    changed = True
+
+            res[line.id] = changed
+
+        return res
+
     _columns = {
         'cost_price': fields.float(string='Cost price', digits_compute=dp.get_precision('Sale Price Computation')),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
@@ -696,6 +736,10 @@ class procurement_request_line(osv.osv):
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
         'product_ok': fields.boolean('Product selected'),
         'comment_ok': fields.boolean('Comment written'),
+        'original_qty': fields.float('Original Qty', digits=(16, 2)),
+        'original_price': fields.float('Original Price'),
+        'original_uom': fields.many2one('product.uom', 'Original UOM'),
+        'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
     }
 
     def _get_planned_date(self, cr, uid, c=None):

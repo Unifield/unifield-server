@@ -159,7 +159,6 @@ class purchase_order_merged_line(osv.osv):
 
 purchase_order_merged_line()
 
-
 class purchase_order_group(osv.osv_memory):
     _name = "purchase.order.group"
     _inherit = "purchase.order.group"
