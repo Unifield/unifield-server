@@ -1012,7 +1012,14 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        wiz_id = self.pool.get('purchase.order.line.cancel.wizard').create(cr, uid, {'pol_id': ids[0]}, context=context)
+        pol = self.browse(cr, uid, ids[0], context=context)
+
+        # if the PO line is in draft state, then delete it:
+        if pol.state == 'draft':
+            self.pool.get('purchase.order.line').unlink(cr, uid, [pol.id], context=context)
+            return True
+
+        wiz_id = self.pool.get('purchase.order.line.cancel.wizard').create(cr, uid, {'pol_id': pol.id}, context=context)
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'purchase_line_cancel_form_view')[1]
 
         return {
