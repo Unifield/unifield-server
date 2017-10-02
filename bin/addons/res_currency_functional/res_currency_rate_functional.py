@@ -104,11 +104,17 @@ class res_currency_rate_functional(osv.osv):
             context = {}
         old_rates = {}
         for rate_id in ids:
-            old_rates[rate_id] = self.read(cr, uid, rate_id, ['rate'], context=context)['rate']
+            old_rates[rate_id] = {}
+            rate = self.read(cr, uid, rate_id, ['rate', 'name'], context=context)
+            old_rates[rate_id]['rate'] = rate['rate']
+            old_rates[rate_id]['date'] = rate['name']
         res = super(res_currency_rate_functional, self).write(cr, uid, ids, vals, context)
         if 'name' in vals and 'rate' in vals:
             for r_id in ids:
-                if abs(vals['rate'] - old_rates[r_id]) > 10**-7:  # rates in Unifield have an accuracy of 6 digits after the comma
+                date_changed = vals['name'] != old_rates[r_id]['date']
+                # check if the rate has changed (rates in Unifield have an accuracy of 6 digits after the comma)
+                rate_changed = abs(vals['rate'] - old_rates[r_id]['rate']) > 10**-7
+                if date_changed or rate_changed:
                     self.refresh_move_lines(cr, uid, [r_id], date=vals['name'])
                     # Also update analytic move lines that don't come from a move (engagement journal lines)
                     rate = self.browse(cr, uid, r_id, fields_to_fetch=['currency_id'], context=context)
