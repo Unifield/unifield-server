@@ -400,22 +400,16 @@
 
         <blockTable colWidths="800.0" >
             <tr><td></td></tr>
+            <tr>
+                <td>
+                    <para style="TextInformationGROS" alignment="CENTER"><b>[[ getWarning(objects[0]) or removeParentNode('tr')]]</b></para>
+                </td>
+            </tr>
         </blockTable>
 
         <blockTable colWidths="800.0" style="OrderInformations2" repeatRows="7">
 
-            <tr>
-                <td>
-                    <blockTable colWidths="800.0" style="OrderInformations3">
-                        <tr>
-                            <td>
-                                <para style="TextInformationGROS" alignment="CENTER"><b>[[ getWarning(objects[0]) ]]</b></para>
-                            </td>
-                        </tr>
-                    </blockTable>
-
-                </td>
-            </tr>
+            <tr><td></td></tr>
             <tr>
                 <td>
                     <blockTable colWidths="800.0" style="OrderInformations3">
@@ -489,7 +483,7 @@
                                 </td>
 
                                 <td>
-                                <blockTable colWidths="65,260" style="OrderInformations4">
+                                <blockTable colWidths="90,235" style="OrderInformations4">
                                     <tr>
                                         <td>
                                             <para style="TextInformation" alignment="LEFT">Code</para>
@@ -564,7 +558,7 @@
                                 </td>
 
                                 <td>
-                                <blockTable colWidths="65,260" style="OrderInformations4">
+                                <blockTable colWidths="90,235" style="OrderInformations4">
                                     <tr>
                                         <td>
                                             <para style="TextInformationSpe" alignment="CENTER">[[ line.product_id and line.product_id.default_code or False ]]</para>
