@@ -171,7 +171,7 @@ class sale_order(osv.osv):
 
         cursor.execute('SELECT rel.order_id ' \
                        'FROM sale_order_invoice_rel AS rel, account_invoice AS inv '+ sale_clause + \
-                       'WHERE rel.invoice_id = inv.id ' + clause)
+                       'WHERE rel.invoice_id = inv.id ' + clause)  # not_a_user_entry
         res = cursor.fetchall()
         if no_invoiced:
             cursor.execute('SELECT sale.id ' \

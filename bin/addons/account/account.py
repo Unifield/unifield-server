@@ -39,10 +39,11 @@ def check_cycle(self, cr, uid, ids, context=None):
     """
     level = 100
     while len(ids):
-        cr.execute('SELECT DISTINCT parent_id '\
-                   'FROM '+self._table+' '\
-                   'WHERE id IN %s '\
-                   'AND parent_id IS NOT NULL',(tuple(ids),))
+        cr.execute('''
+            SELECT DISTINCT parent_id
+            FROM %s
+            WHERE id IN %%s
+            AND parent_id IS NOT NULL''' % self._table, (tuple(ids),))  # not_a_user_entry
         ids = map(itemgetter(0), cr.fetchall())
         if not level:
             return False

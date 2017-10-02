@@ -76,7 +76,7 @@ class account_move_compute_currency(osv.osv):
         for arg in args:
             if args[0] and args[0][1] and args[0][1] in ['in', '='] and args[0][2]:
                 # create SQL request
-                sql = sql_base + ' in %s\nGROUP BY ml.id'
+                sql = sql_base + ' in %s\nGROUP BY ml.id'  # not_a_user_entry
                 second = args[0][2]
                 # execute it and fetch result
                 if isinstance(second, (int, long)):

@@ -33,8 +33,7 @@ class version(osv.osv):
     
     def _patch_needs_to_be_downloaded(self, cr, uid, ids, name, args, context=None):
         cr.execute("""\
-            SELECT id, patch IS NULL FROM %s WHERE id IN %%s""" % \
-            self._table, [tuple(ids)])
+            SELECT id, patch IS NULL FROM %s WHERE id IN %%s""" % self._table, [tuple(ids)])  # not_a_user_entry
         return dict(cr.fetchall())
 
     _columns = {

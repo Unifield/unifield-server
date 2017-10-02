@@ -350,7 +350,7 @@ class object_query(osv.osv):
                 if to_del:
                     self.pool.get('object.query.selection_data').unlink(cr, uid, to_del)
             if obj.object_id:
-                cr.execute("update "+self._table+" set newquery='f'");
+                cr.execute("update "+self._table+" set newquery='f'");  # not_a_user_entry
         return True
 
     _constraints = [
