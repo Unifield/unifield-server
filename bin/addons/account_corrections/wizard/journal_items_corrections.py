@@ -208,6 +208,7 @@ class journal_items_corrections(osv.osv_memory):
         'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="state"),
         'from_donation': fields.boolean('From Donation account?'),
         'from_register': fields.function(_get_from_register, type='boolean', string='From register?', method=True, store=False),
+        'is_manually_corrected': fields.boolean('Is Manually Corrected'),
     }
 
     _defaults = {
@@ -368,6 +369,7 @@ class journal_items_corrections(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        aml_obj = self.pool.get('account.move.line')
         # Verify that date is superior to line's date
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.move_line_id and wiz.move_line_id.date:
@@ -375,6 +377,12 @@ class journal_items_corrections(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), _('Please insert a correction date from the entry date onwards.'))
         # Retrieve values
         wizard = self.browse(cr, uid, ids[0], context=context)
+
+        # if the "Manually Corrected" checkbox is checked ignore all the other checks
+        if wizard.is_manually_corrected:
+            manual_corr_vals = {'corrected': True, 'have_an_historic': True}  # is_corrigible will be seen as "False"
+            aml_obj.write(cr, uid, wizard.move_line_id.id, manual_corr_vals, context=context)
+            return {'type': 'ir.actions.act_window_close'}
 
         # UFTP-388: Check if the given period is valid: period open, or not close, if not just block the correction
         correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)
@@ -384,7 +392,6 @@ class journal_items_corrections(osv.osv_memory):
             if cp.state != 'draft':
                 raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (cp.name,))
 
-        aml_obj = self.pool.get('account.move.line')
         # Fetch old line
         old_line = wizard.move_line_id
         # Verify what have changed between old line and new one
