@@ -99661,3 +99661,9 @@ msgstr "Vous ne pouvez pas modifier un Journal qui n'appartient pas à l'instanc
 #, python-format
 msgid "You can't edit an Analytic Journal that doesn't belong to the current instance."
 msgstr "Vous ne pouvez pas modifier un Journal Analytique qui n'appartient pas à l'instance actuelle."
+
+#. module: res_currency_functional
+#: code:addons/res_currency_functional/res_currency_rate_functional.py:134
+#, python-format
+msgid "You can't delete this FX rate as the period \"%s\" isn't in Draft state."
+msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'est pas en statut Brouillon."
