@@ -225,34 +225,6 @@ class payment_line(osv.osv):
                         break
         return result
 
-    def select_by_name(self, cr, uid, ids, name, args, context=None):
-        if not ids: return {}
-        partner_obj = self.pool.get('res.partner')
-
-        cr.execute("""SELECT pl.id, ml.%s
-            FROM account_move_line ml
-                INNER JOIN payment_line pl
-                ON (ml.id = pl.move_line_id)
-                WHERE pl.id IN %%s"""% self.translate(name),
-                   (tuple(ids),))
-        res = dict(cr.fetchall())
-
-        if name == 'partner_id':
-            partner_name = {}
-            for p_id, p_name in partner_obj.name_get(cr, uid,
-                filter(lambda x:x and x != 0,res.values()), context=context):
-                partner_name[p_id] = p_name
-
-            for id in ids:
-                if id in res and partner_name:
-                    res[id] = (res[id],partner_name[res[id]])
-                else:
-                    res[id] = (False,False)
-        else:
-            for id in ids:
-                res.setdefault(id, (False, ""))
-        return res
-
     def _amount(self, cursor, user, ids, name, args, context=None):
         if not ids:
             return {}
