@@ -64,8 +64,8 @@ class wizard_liquidity_position(osv.osv_memory):
             LEFT JOIN account_journal aj ON abs.journal_id = aj.id
             WHERE aj.type != 'cheque'
             AND abs.state != 'draft'
-            AND abs.period_id = """ + str(context['period_id'])
-        cr.execute(sql_register_ids)
+            AND abs.period_id = %s"""
+        cr.execute(sql_register_ids, (str(context['period_id']),))
 
         if not cr.fetchall():
             # No registers found

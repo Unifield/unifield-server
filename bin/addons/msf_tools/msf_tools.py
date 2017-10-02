@@ -221,7 +221,7 @@ class fields_tools(osv.osv):
         res_record = cr.fetchone()
         if res_record and res_record[0]:
             # drop existing constraint
-            tpl_drop_const = "alter table %s drop constraint %s" % sql_params
+            tpl_drop_const = "alter table %s drop constraint %s" % sql_params  # not_a_user_entry
             cr.execute(tpl_drop_const)
 
     def domain_get_field_index(self, domain, field_name):
@@ -424,7 +424,7 @@ class sequence_tools(osv.osv):
                             previous_values = dest_obj.read(cr, uid, [item_data[i]['id']], [seq_field], context=context)
                             audit_obj.audit_log(cr, uid, to_trace, dest_obj, [item_data[i]['id']], 'write', previous_values, {item_data[i]['id']: {seq_field: start_num}}, context=context)
 
-                        cr.execute("update "+dest_obj._table+" set "+seq_field+"=%s where id=%s", (start_num, item_data[i]['id']))
+                        cr.execute("update "+dest_obj._table+" set "+seq_field+"=%s where id=%s", (start_num, item_data[i]['id']))  # not_a_user_entry
                         #dest_obj.write(cr, uid, [item_data[i]['id']], {seq_field: start_num}, context=context)
 
             # reset sequence to start_num + 1 all time, checking if needed would take much time
@@ -729,9 +729,8 @@ class ir_translation(osv.osv):
             parent_name = translation.name.split(',')[0]
 
             obj = self.pool.get(parent_name)
-            sql = "SELECT id FROM " + obj._table + \
-                  " WHERE id=" + str(translation.res_id)
-            cr.execute(sql)
+            sql = "SELECT id FROM " + obj._table + " WHERE id=%s"  # not_a_user_entry
+            cr.execute(sql, (translation.res_id,))
             res = cr.fetchall()
             if not res:
                 unlink_ids.append(translation.id)

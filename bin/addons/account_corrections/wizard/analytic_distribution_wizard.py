@@ -348,7 +348,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     sql_to_cor += ['entry_sequence=%s', 'last_corrected_id=%s', 'ref=%s']
                     sql_data += [keep_seq_and_corrected[0], keep_seq_and_corrected[1], keep_seq_and_corrected[3] or '']
                 sql_data += [created_analytic_line_ids[new_distrib_line]]
-                cr.execute('update account_analytic_line set '+','.join(sql_to_cor)+' where id = %s',
+                cr.execute('update account_analytic_line set '+','.join(sql_to_cor)+' where id = %s',  # not_a_user_entry
                            sql_data)
             have_been_created.append(created_analytic_line_ids[new_distrib_line])
             if created_analytic_line_ids and greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:

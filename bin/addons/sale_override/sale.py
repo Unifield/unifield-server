@@ -257,7 +257,7 @@ class sale_order_sourcing_progress(osv.osv):
                     slsdr.document_id IN %%s
                     %s
                 GROUP BY sol.type
-            ''' % where_sql
+            ''' % where_sql  # not_a_user_entry
             cr.execute(sql, where_params)
             res = cr.dictfetchall()
 
@@ -685,7 +685,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         cursor.execute('SELECT rel.order_id ' \
                        'FROM sale_order_invoice_rel AS rel, account_invoice AS inv, sale_order AS sale, res_partner AS part ' + sale_clause + \
-                       'WHERE rel.invoice_id = inv.id AND rel.order_id = sale.id AND sale.partner_id = part.id ' + clause)
+                       'WHERE rel.invoice_id = inv.id AND rel.order_id = sale.id AND sale.partner_id = part.id ' + clause)  # not_a_user_entry
         res = cursor.fetchall()
         if no_invoiced:
             cursor.execute('SELECT sale.id ' \
@@ -1091,7 +1091,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN sale_order fo ON l.order_id = fo.id
-                          WHERE (t.type != 'service_recep' %s) AND fo.id in %%s LIMIT 1''' % transport_cat,
+                          WHERE (t.type != 'service_recep' %s) AND fo.id in %%s LIMIT 1''' % transport_cat,  # not_a_user_entry
                        (tuple(ids),))
             res = cr.fetchall()
 

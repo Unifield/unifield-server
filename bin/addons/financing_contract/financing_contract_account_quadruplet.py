@@ -68,7 +68,7 @@ class financing_contract_account_quadruplet(osv.osv):
         cr.execute('''select account_quadruplet_id
                         from financing_contract_actual_account_quadruplets
                         where actual_line_id in (select id from financing_contract_format_line
-                                                where format_id = %s and is_quadruplet is true)''' % (contract.format_id.id))
+                                                where format_id = %s and is_quadruplet is true)''', (contract.format_id.id,))
         rows = cr.fetchall()
         for id in [x[0] for x in rows]:
             exclude[id] = True
@@ -111,7 +111,7 @@ class financing_contract_account_quadruplet(osv.osv):
                                 from financing_contract_cost_center cc
                                 where cc.contract_id = %s
                                 and cc.cost_center_id =
-                                    financing_contract_account_quadruplet.cost_center_id)''' % (contract.format_id.id,contract.format_id.id))
+                                    financing_contract_account_quadruplet.cost_center_id)''', (contract.format_id.id,contract.format_id.id))
         for id in [x[0] for x in cr.fetchall()]:
             exclude[id] = True
         for id in ids:
@@ -140,7 +140,7 @@ class financing_contract_account_quadruplet(osv.osv):
                                 from financing_contract_cost_center cc
                                 where cc.contract_id = %s
                                 and cc.cost_center_id =
-                                    financing_contract_account_quadruplet.cost_center_id)''' % (contract.format_id.id,contract.format_id.id))
+                                    financing_contract_account_quadruplet.cost_center_id)''', (contract.format_id.id,contract.format_id.id))
         someids = []
         someids += [x[0] for x in cr.fetchall()]
         return [('id','in',someids)]
@@ -170,7 +170,7 @@ class financing_contract_account_quadruplet(osv.osv):
                                                           financing_contract_format_line l
                                                           where c.id = %s
                                                           and f.id = c.format_id
-                                                          and l.format_id = f.id)''' % (contract.format_id.id))
+                                                          and l.format_id = f.id)''', (contract.format_id.id,))
                     exclude += [x[0] for x in cr.fetchall()]
                 for account_quadruplet in line.account_quadruplet_ids:
                     exclude.append(account_quadruplet.id)

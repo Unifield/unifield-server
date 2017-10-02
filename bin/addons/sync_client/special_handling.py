@@ -252,7 +252,7 @@ class ir_model_data(osv.osv):
                 value_to_write.append(value[i])
 
         value_to_write.append(obj_id)
-        cr.execute('UPDATE '+pool_obj._table+' SET ('+','.join(fields)+') = ('+','.join(to_replace)+') WHERE id=%s', tuple(value_to_write))
+        cr.execute('UPDATE '+pool_obj._table+' SET ('+','.join(fields)+') = ('+','.join(to_replace)+') WHERE id=%s', tuple(value_to_write))  # not_a_user_entry
         return True
 
 

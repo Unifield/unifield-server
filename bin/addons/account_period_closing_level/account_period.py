@@ -47,8 +47,8 @@ class account_period(osv.osv):
         """
         Check that no oustanding unposted entries remain
         """
-        sql = """SELECT COUNT(id) FROM account_move WHERE period_id = %s AND state != 'posted'""" % period_id
-        cr.execute(sql)
+        sql = """SELECT COUNT(id) FROM account_move WHERE period_id = %s AND state != 'posted'"""
+        cr.execute(sql, (period_id,))
         sql_res = cr.fetchall()
         count_moves = sql_res and sql_res[0] and sql_res[0][0] or 0
         if count_moves > 0:
@@ -226,8 +226,8 @@ class account_period(osv.osv):
                 # retrieve currencies for this period (in account_move_lines)
                 sql = """SELECT DISTINCT currency_id
                 FROM account_move_line
-                WHERE period_id = %s""" % period.id
-                cr.execute(sql)
+                WHERE period_id = %s"""
+                cr.execute(sql, (period.id,))
                 res = [x[0] for x in cr.fetchall()]
                 comp_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
                 # for each currency do a verification about fx rate

@@ -1093,7 +1093,7 @@ class stock_production_lot(osv.osv):
                     stock_report_prodlots_virtual
                 where
                     location_id IN %s group by prodlot_id
-                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))
+                having  sum(qty) '''+ str(args[0][1]) + str(args[0][2]),(tuple(locations),))  # not_a_user_entry
             res = cr.fetchall()
             ids = [('id', 'in', map(lambda x: x[0], res))]
         return ids
@@ -1600,7 +1600,7 @@ class stock_inventory(osv.osv):
                 l.inventory_id in %%s
             GROUP BY l.product_id, l.location_id, l.%s, l.expiry_date
             HAVING count(l.id) > 1
-            ORDER BY count(l.id) DESC""" % (
+            ORDER BY count(l.id) DESC""" % (  # not_a_user_entry
             self._name.replace('.', '_'),
             self._name == 'stock.inventory' and 'prod_lot_id' or 'prodlot_name',
         )

@@ -213,7 +213,7 @@ class ir_values(osv.osv):
                 where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
                 params.append(uid)
             clause = ' and '.join(where)
-            cr.execute('select id,name,value,object,meta, key from ir_values where ' + clause, params)
+            cr.execute('select id,name,value,object,meta, key from ir_values where ' + clause, params)  # not_a_user_entry
             result = cr.fetchall()
             if result:
                 break

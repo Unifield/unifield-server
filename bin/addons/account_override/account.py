@@ -135,7 +135,8 @@ class account_account(osv.osv):
             # target_move from chart of account wizard
             filters = filters.replace("AND l.state <> 'draft'", '')
             prefilters = " "
-            if context.get('move_state', False):
+            possible_states = [x[0] for x in self.pool.get('account.move')._columns['state'].selection]
+            if context.get('move_state', False) and context['move_state'] in possible_states:
                 prefilters += "AND l.move_id = m.id AND m.state = '%s'" % context.get('move_state')
             else:
                 prefilters += "AND l.move_id = m.id AND m.state in ('posted', 'draft')"
@@ -149,12 +150,10 @@ class account_account(osv.osv):
             # INNER JOIN (VALUES (id1), (id2), (id3), ...) AS tmp (id)
             # ON l.account_id = tmp.id
             # or make _get_children_and_consol return a query and join on that
-            request = ("SELECT l.account_id as id, " +\
-                       ', '.join(map(mapping.__getitem__, field_names)) +
-                       " FROM account_move_line l, account_move m" +\
-                       " WHERE l.account_id IN %s " \
-                       + prefilters + filters +
-                       " GROUP BY l.account_id")
+            request = """SELECT l.account_id as id, %s
+                       FROM account_move_line l, account_move m
+                       WHERE l.account_id IN %%s %s
+                       GROUP BY l.account_id""" % (', '.join(map(mapping.__getitem__, field_names)), prefilters + filters)  # not_a_user_entry
             params = [tuple(children_and_consolidated)]
             if query_params:
                 for qp in query_params:

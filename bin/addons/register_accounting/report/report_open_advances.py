@@ -63,8 +63,8 @@ class report_open_advances(report_sxw.report_sxw):
                 line.reconcile_id IS NULL AND
                 line.date <= '%s'
             ORDER BY account_name, booking_currency.name, line.partner_txt, line.date
-        """ % (time.strftime('%Y-%m-%d'))
-        cr.execute(sql_open_advances)
+        """
+        cr.execute(sql_open_advances, (time.strftime('%Y-%m-%d'),))
         res = header + cr.fetchall()
 
         b = StringIO.StringIO()

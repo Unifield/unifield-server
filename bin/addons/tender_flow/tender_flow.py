@@ -264,8 +264,7 @@ class tender(osv.osv):
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
                             LEFT JOIN tender t ON l.tender_id = t.id
-                          WHERE (pt.type != 'service_recep' %s) AND t.id in %%s LIMIT 1''' % transport_cat,
-                       (tuple(ids),))
+                          WHERE (pt.type != 'service_recep' %s) AND t.id in %%s LIMIT 1''' % transport_cat, (tuple(ids),))  # not_a_user_entry
             res = cr.fetchall()
 
         if res:
