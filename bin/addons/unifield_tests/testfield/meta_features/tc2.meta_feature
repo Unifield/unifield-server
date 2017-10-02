@@ -372,7 +372,7 @@ Scenario: SSL Mission flow with PO line addition and deletion
 	   |   4   | ADAPKBDAUSB    | KEYBOARD, AZERTY, external, USB              |  25.00   | Validated-n |
 
 
-    I click "Analytical Distribution" on line and open the window:
+    I click "Analytical distribution" on line and open the window:
       | PRODUCT CODE |
       | ADAPKBDAUSB  |
 
