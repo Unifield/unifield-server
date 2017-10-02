@@ -1487,8 +1487,21 @@ function toggle_shortcut(){
 }
 
 
+// This function is triggered when a change occurs in a form. If some info
+// changed, it will set a flag 'is_form_changed' to true, such that later,
+// if user attempts to leave the page with unsaved changes, it will warn/ask
+// the user about them. (c.f. validate_action)
 function validateForm(){
     jQuery('#view_form table tr td:first').find('input:not([type=hidden]), select').change(function(e, automatic){
+
+        // Ignore some items
+        // (e.g. paging filters like the 'Show/hide cancel' selector for 
+        // order lines)
+        if (e.currentTarget.classList.contains("ignore_changes_when_leaving_page"))
+        {
+            return;
+        }
+
         if (!automatic) {
             jQuery('#view_form').data('is_form_changed', true);
         }

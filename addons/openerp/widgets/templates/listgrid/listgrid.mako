@@ -215,6 +215,17 @@
                                         % endif
                                     </td>
                                 % endif
+                                % if name == 'order_line':
+                                <td class="pager-cell" style="width: 90%">
+                                    <div class="pager">
+                                        <select id="${name}_filter" class="paging ignore_changes_when_leaving_page" onchange="new ListView('${name}').update_filter()">
+                                        <option value="showall" domain="">Show all</option>
+                                        <option value="hidecancelled" domain="('state', 'not in', ['cancel', 'cancel_r'])">Hide cancelled</option>
+                                        <option value="showcancelledonly" domain="('state', 'in', ['cancel', 'cancel_r'])">Show cancelled only</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                % endif
                                 <td class="pager-cell" style="width: 90%">
                                     ${pager.display()}
                                 </td>
