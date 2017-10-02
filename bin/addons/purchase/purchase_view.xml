@@ -171,15 +171,17 @@
                         </group>
 
                         <field name="name"/>
-                        <field name="date_order"/>
+                        <field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" />
                         <field name="invoiced"/>
                         <newline/>
                         <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection"/>
                         <field name="partner_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'validated'])]}"/>
                         <field name="shipped"/>
+                        <field name="internal_type" />
+                        <field name="shipped_rate" invisible="True" />
                         <field name="push_fo" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1" />
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" />
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': ['|', ('push_fo', '=', True), ('state', 'not in', ['draft', 'validated'])]}" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" />
@@ -191,13 +193,14 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Purchase Order">
-                            <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
+                            <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" />
+                            <field name="partner_type" />
                             <field name="allocation_setup" invisible="1" />
                             <field name="partner_address_id"/>
-                            <field domain="[('type','=','purchase')]" name="pricelist_id" on_change="onchange_pricelist_id(partner_id, pricelist_id, transport_currency_id)" />
+                            <field name="pricelist_id" on_change="onchange_pricelist_id(partner_id, pricelist_id, transport_currency_id)" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"/>
                             <field name="origin" groups="base.group_extended"/>
                             <newline/>
-                            <field colspan="4" name="order_line" nolabel="1" mode="tree,form">
+                            <field colspan="4" name="order_line" nolabel="1" mode="tree,form" context="{'purchase_id': active_id, 'partner_type': partner_type, 'categ': categ, 'pricelist_id': pricelist_id, 'rfq_ok': rfq_ok, 'from_fo': po_from_fo or po_from_ir or False}">
                                 <tree string="Purchase Order Lines" hide_delete_button="True">
                                     <field name="date_planned"/>
                                     <field name="name"/>
@@ -239,14 +242,35 @@
                                 <button name="%(report_purchase_order)d" string="Print" states="approved" type="action" icon="gtk-print"/>
                             </group>
                         </page>
-                        <page string="Delivery &amp; Invoicing" groups="base.group_extended">
+                        <page string="Delivery &amp; Invoicing">
+                            <group colspan="4" col="4">
+                                <separator colspan="4" string="Dates" />
+                                <group colspan="2" col="3">
+                                    <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ('draft', 'validated', 'validated_p'))]}"
+                                        on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)" />
+                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent"
+                                        attrs="{'invisible': [('state', 'not in', ('draft', 'validated'))]}" />
+                                </group>
+                                <group colspan="2" col="3">
+                                    <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ('draft', 'validated'))]}" />
+                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" 
+                                        attrs="{'invisible': [('state', 'not in', ('draft', 'validated'))]}" />
+                                </group>
+                                <field name="transport_type"
+                                    on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)"
+                                    attrs="{'readonly': [('state', 'not in', ('draft', 'validated'))]}" />
+                                <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ('draft', 'validated'))]}" />
+                                <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'in', ['split', 'sourced'])], 'invisible': [('partner_type', '=', 'external')]}" />
+                                <field name="shipment_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'in', ['split', 'sourced'])], 'invisible': [('partner_type', '=', 'external')]}" />
+                                <field name="arrival_date" attrs="{'readonly': ['|', ('shipped_rate', '!=', 0.0), ('state', '=', 'done')], 'invisible': [('internal_type', '!=', 'international')]}" />
+                            </group>
+
                             <group colspan="2" col="2">
                                 <separator string="Delivery" colspan="2"/>
                                 <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"
                                     on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('partner_type', '=', 'internal')]"/>
                                 <field name="dest_address_id" domain="[('dest_address', '=', dest_partner_id)]" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}" />
 
-                                <field name="minimum_planned_date"/>
                                 <field name="cross_docking_ok"
                                     attrs="{'readonly':['|', '|', '|', ('unallocation_ok', '=', True), ('order_type', '=', 'direct'), ('allocation_setup', '=', 'unallocated'), ('state', '!=', 'draft')]}"
                                     on_change="onchange_cross_docking_ok(cross_docking_ok, warehouse_id, categ)"
