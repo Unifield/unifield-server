@@ -211,15 +211,14 @@
                                     <field name="red_color" invisible="1" />
                                     <field name="rfq_ok" invisible="1" />
                                     <field name="tender_line_id" invisible="1" />
-                                    <field name="state" invisible="1"/>
                                     <field name="fake_state" invisible="1"/>
                                     <field name="state_to_display"/>
                                     <field name="order_state_purchase_order_line" invisible="True" />
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" 
                                         attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('fake_state', 'not in', ('draft', 'validated', 'validated_n'))]}" />
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('state', 'not in', ['draft', 'validated_n'])]}" />
-                                    <button string="Confirm" icon="terp-check" name="confirmed" type="workflow" attrs="{'invisible': [('state', 'not in', ['validated'])]}" />
-                                    <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}" />
+                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'validated_n'])]}" />
+                                    <button string="Confirm" icon="terp-check" name="confirmed" type="workflow" attrs="{'invisible': [('fake_state', 'not in', ['validated'])]}" />
+                                    <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', ('fake_state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}" />
                                     <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'validated', 'validated_n'])]}" />
                                 </tree>
                                 <!-- default form view -->
@@ -249,7 +248,7 @@
                                     <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ('draft', 'validated', 'validated_p'))]}"
                                         on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time, order_type, context)" />
                                     <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent"
-                                        attrs="{'invisible': [('state', 'not in', ('draft', 'validated'))]}" />
+                                        attrs="{'invisible': [('state', 'not in', ('draft', 'validated', 'validated_p'))]}" />
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft', 'validated', 'validated_p'])]}" />
