@@ -371,6 +371,15 @@ Scenario: SSL Mission flow with PO line addition and deletion
        |   3   | ADAPDCDRB--    | DISK, CD-R (recordable), data, cakebox of 25 |  20.00   | Cancelled   |
 	   |   4   | ADAPKBDAUSB    | KEYBOARD, AZERTY, external, USB              |  25.00   | Validated-n |
 
+    I click "Analytical Distribution" on line and open the window:
+      | PRODUCT CODE |
+      | ADAPKBDAUSB  |
+    I click on "New"
+    I fill "OPS" within column "Destination"
+    I fill "HT101" within column "Cost Center"
+    I validate the line
+    I click on "Save" and close the window
+
     I click "Edit" on line and open the window:
       | PRODUCT CODE |
       | ADAPKBDAUSB  |
