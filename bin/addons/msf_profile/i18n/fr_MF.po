@@ -99638,3 +99638,26 @@ msgstr "Impossible de générer les data après %d tentatives"
 #, python-format
 msgid "Unable to generate updates, retrying %d/%d"
 msgstr "Impossible de générer les data, nouvel essai %d/%d"
+
+#. module: account_journal
+#: field:account.analytic.journal,has_ajis:0
+msgid "Has Analytic Journal Items"
+msgstr "A des Lignes d'Ecritures Analytiques"
+
+#. module: account_journal
+#: code:addons/account_journal/project/project.py:118
+#, python-format
+msgid "An analytic journal with the code %s already exists in the current instance."
+msgstr "Un journal analytique avec le code %s existe déjà dans l'instance actuelle."
+
+#. module: account
+#: code:addons/account/account.py:700
+#, python-format
+msgid "You can't edit a Journal that doesn't belong to the current instance."
+msgstr "Vous ne pouvez pas modifier un Journal qui n'appartient pas à l'instance actuelle."
+
+#. module: account_journal
+#: code:addons/account_journal/project/project.py:135
+#, python-format
+msgid "You can't edit an Analytic Journal that doesn't belong to the current instance."
+msgstr "Vous ne pouvez pas modifier un Journal Analytique qui n'appartient pas à l'instance actuelle."
