@@ -90,6 +90,7 @@
                                     attrs="{'invisible': ['|', ('product_id_ok', '=', True), ('state', 'not in', ['draft', 'validated'])]}"
                                     icon="terp-go-week" />
                                     <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
+                                    <field name="original_changed" readonly="1"/>
                                     <field name="cost_price" string="Cost Price (FC)" />
                                     <field name="notes" />
                                     <field name="display_confirm_button" invisible="1" />

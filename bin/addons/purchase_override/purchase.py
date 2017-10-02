@@ -164,7 +164,7 @@ class purchase_order(osv.osv):
 
     def copy(self, cr, uid, p_id, default=None, context=None):
         '''
-        Remove loan_id field on new purchase.order
+        Remove loan_id and original fields on new purchase.order
         '''
         if not default:
             default = {}
@@ -1448,6 +1448,15 @@ stock moves which are already processed : '''
                 if not po.push_fo and line.product_id and line.product_id.state and line.product_id.state.id == stopped_id:
                     raise osv.except_osv(_('Error'), _('You can not validate a PO with stopped products (line %s).') % (line.line_number, ))
 
+                # update original qty, unit price, uom and currency on line level
+                line_update = {
+                    'original_qty': line.product_qty,
+                    'original_price': line.price_unit,
+                    'original_uom': line.product_uom.id,
+                    'original_currency_id': line.currency_id.id
+                }
+                po_line_obj.write(cr, uid, line.id, line_update, context=context)
+
             message = _("Purchase order '%s' is validated.") % (po.name,)
             self.log(cr, uid, po.id, message)
             self.infolog(cr, uid, "Purchase order id:%s (%s) is validated." % (
@@ -1796,6 +1805,11 @@ stock moves which are already processed : '''
                     if line.stock_take_date:
                         line_stock_take = line.stock_take_date
 
+                    # update modification comment if it is set
+                    line_modification_comment = False
+                    if line.modification_comment:
+                        line_modification_comment = line.modification_comment
+
                     # we update the corresponding sale order line
                     # {sol: pol}
                     # compute the price_unit value - we need to specify the date
@@ -1853,6 +1867,7 @@ stock moves which are already processed : '''
                                   'nomen_sub_5': line.nomen_sub_5 and line.nomen_sub_5.id or False,
                                   'confirmed_delivery_date': line_confirmed,
                                   'stock_take_date': line_stock_take,
+                                  'modification_comment': line_modification_comment,
                                   #'is_line_split': line.is_line_split,
                                   }
                     """
@@ -3494,6 +3509,21 @@ class purchase_order_line(osv.osv):
 
         if 'procurement_id' not in default:
             default.update({'procurement_id': False})
+
+        if 'original_qty' not in default:
+            default.update({'original_qty': False})
+
+        if 'original_price' not in default:
+            default.update({'original_price': False})
+
+        if 'original_uom' not in default:
+            default.update({'original_uom': False})
+
+        if 'original_currency_id' not in default:
+            default.update({'original_currency_id': False})
+
+        if 'modification_comment' not in default:
+            default.update({'modification_comment': False})
 
         default.update({'sync_order_line_db_id': False})
         return super(purchase_order_line, self).copy_data(cr, uid, p_id, default=default, context=context)

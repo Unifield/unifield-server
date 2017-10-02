@@ -1053,6 +1053,7 @@ class sale_order_line(osv.osv):
         'order_partner_id': fields.related('order_id', 'partner_id', type='many2one', relation='res.partner', store=True, string='Customer'),
         'salesman_id':fields.related('order_id', 'user_id', type='many2one', relation='res.users', store=True, string='Salesman'),
         'company_id': fields.related('order_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
+        'modification_comment': fields.char('Modification Comment', size=1024),
     }
     _order = 'sequence, id desc'
     _defaults = {

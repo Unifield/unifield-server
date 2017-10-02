@@ -694,6 +694,27 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def _check_changed(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Check if an original value has been changed
+        '''
+        if context is None:
+            context = {}
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            changed = False
+            if line.modification_comment\
+                    or (line.original_qty and line.original_price and line.original_uom and line.original_currency_id):
+                if line.modification_comment or line.product_qty != line.original_qty \
+                        or line.price_unit != line.original_price or line.product_uom != line.original_uom\
+                        or line.currency_id != line.original_currency_id:
+                    changed = True
+
+            res[line.id] = changed
+
+        return res
+
     _columns = {
         'name': fields.char('Description', size=256, required=True),
         'product_qty': fields.float('Quantity', required=True, digits=(16,2)),
@@ -719,6 +740,12 @@ class purchase_order_line(osv.osv):
         'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
         'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
+        'original_qty': fields.float('Original Qty', digits=(16, 2)),
+        'original_price': fields.float('Original Price'),
+        'original_uom': fields.many2one('product.uom', 'Original UOM'),
+        'original_currency_id': fields.many2one('res.currency', 'Original Currency'),
+        'modification_comment': fields.char('Modification Comment', size=1024),
+        'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
     }
     _defaults = {
         'product_qty': lambda *a: 1.0,
