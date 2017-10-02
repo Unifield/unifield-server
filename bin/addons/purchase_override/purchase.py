@@ -393,7 +393,7 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
 
-    def cancel_po(self, cr, uid, ids, resource=False, context=None):
+    def cancel_po(self, cr, uid, ids, context=None, resource=False):
         '''
         Cancel the PO and display his form
         @param resource: do we have to resource the cancelled line ?
@@ -422,7 +422,7 @@ class purchase_order_cancel_wizard(osv.osv_memory):
         if context is None:
             context = {}
 
-        return self.cancel_po(cr, uid, ids, resource=True, context=context)
+        return self.cancel_po(cr, uid, ids, context=context, resource=True)
 
 purchase_order_cancel_wizard()
 
