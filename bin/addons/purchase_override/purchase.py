@@ -1449,10 +1449,17 @@ stock moves which are already processed : '''
                     raise osv.except_osv(_('Error'), _('You can not validate a PO with stopped products (line %s).') % (line.line_number, ))
 
                 # update original qty, unit price, uom and currency on line level
+                # doesn't update original qty and uom if already set (from IR)
+                original_qty = line.product_qty
+                if line.original_qty:
+                    original_qty = line.original_qty
+                original_uom = line.product_uom.id
+                if line.original_uom:
+                    original_uom = line.original_uom.id
                 line_update = {
-                    'original_qty': line.product_qty,
+                    'original_qty': original_qty,
                     'original_price': line.price_unit,
-                    'original_uom': line.product_uom.id,
+                    'original_uom': original_uom,
                     'original_currency_id': line.currency_id.id
                 }
                 po_line_obj.write(cr, uid, line.id, line_update, context=context)

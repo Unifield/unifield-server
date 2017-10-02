@@ -480,18 +480,6 @@ class procurement_request(osv.osv):
         if not default.get('order_ids'):
             default['order_ids'] = None
 
-        if 'original_qty' not in default:
-            default.update({'original_qty': False})
-
-        if 'original_price' not in default:
-            default.update({'original_price': False})
-
-        if 'original_uom' not in default:
-            default.update({'original_uom': False})
-
-        if 'modification_comment' not in default:
-            default.update({'modification_comment': False})
-
         # bypass name sequence
         new_id = super(procurement_request, self).copy(cr, uid, id, default, context=context)
         if new_id:
@@ -790,8 +778,7 @@ class procurement_request_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             changed = False
-            if line.modification_comment\
-                    or (line.original_qty and line.original_price and line.original_uom and line.original_currency_id):
+            if line.modification_comment or (line.original_qty and line.original_price and line.original_uom):
                 if line.modification_comment or line.product_uom_qty != line.original_qty \
                         or line.cost_price != line.original_price or line.product_uom != line.original_uom:
                     changed = True

@@ -3197,6 +3197,20 @@ class sale_order_line(osv.osv):
             'created_by_rfq_line': False,
         })
 
+        if 'modification_comment' not in default:
+            default.update({'modification_comment': False})
+
+        # Copy from IR
+        if self.browse(cr, uid, id).order_id.procurement_request:
+            if 'original_qty' not in default:
+                default.update({'original_qty': False})
+
+            if 'original_price' not in default:
+                default.update({'original_price': False})
+
+            if 'original_uom' not in default:
+                default.update({'original_uom': False})
+
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
     def open_order_line_to_correct(self, cr, uid, ids, context=None):
