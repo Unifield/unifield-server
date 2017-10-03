@@ -1617,6 +1617,11 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'analytic_distribution_id': anal_dist,
                         'link_so_id': sourcing_line.order_id.id,
                     }
+                    if sourcing_line.procurement_request:
+                        pol_values.update({
+                            'original_qty': sourcing_line.original_qty,
+                            'original_uom': sourcing_line.original_uom.id,
+                        })
                     self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
                     self.pool.get('purchase.order').write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
 
@@ -1645,6 +1650,11 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'analytic_distribution_id': anal_dist,
                         'link_so_id': sourcing_line.order_id.id,
                     }
+                    if sourcing_line.procurement_request:
+                        rfq_line_values.update({
+                            'original_qty': sourcing_line.original_qty,
+                            'original_uom': sourcing_line.original_uom.id,
+                        })
                     self.pool.get('purchase.order.line').create(cr, uid, rfq_line_values, context=context)
 
                 elif sourcing_line.po_cft == 'cft':
@@ -1658,7 +1668,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     # attach tender line:
                     proc_location_id = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'procurement')], context=context)
                     proc_location_id = proc_location_id[0] if proc_location_id else False
-                    self.pool.get('tender.line').create(cr, uid, {
+                    tender_values = {
                         'product_id': sourcing_line.product_id.id,
                         'comment': sourcing_line.comment,
                         'qty': sourcing_line.product_uom_qty,
@@ -1666,7 +1676,13 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'tender_id': tender_to_use,
                         'sale_order_line_id': sourcing_line.id,
                         'location_id': proc_location_id,
-                    }, context=context)
+                    }
+                    if sourcing_line.procurement_request:
+                        tender_values.update({
+                            'original_qty': sourcing_line.original_qty,
+                            'original_uom': sourcing_line.original_uom.id,
+                        })
+                    self.pool.get('tender.line').create(cr, uid, tender_values, context=context)
 
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
 

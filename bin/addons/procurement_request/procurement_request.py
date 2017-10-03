@@ -543,14 +543,6 @@ class procurement_request(osv.osv):
                 if not line.stock_take_date:
                     line_obj.write(cr, uid, [line.id], {'stock_take_date': req.stock_take_date, }, context=context)
 
-                # update original qty, unit price, uom and currency on line level
-                line_update = {
-                    'original_qty': line.product_uom_qty,
-                    'original_price': line.cost_price,
-                    'original_uom': line.product_uom.id,
-                }
-                line_obj.write(cr, uid, line.id, line_update, context=context)
-
                 # 5/ Check if there is a temporary product in the sale order :
                 temp_prod_ids = self.pool.get('product.product').search(cr, uid, [('international_status', '=', 5)], context=context)
                 line_with_temp_ids = line_obj.search(cr, uid, [('order_id', '=', req.id), ('product_id', 'in', temp_prod_ids)], context=context)
@@ -704,7 +696,7 @@ class procurement_request_line(osv.osv):
             changed = False
             if line.modification_comment or (line.original_qty and line.original_price and line.original_uom):
                 if line.modification_comment or line.product_uom_qty != line.original_qty \
-                        or line.cost_price != line.original_price or line.product_uom != line.original_uom:
+                        or line.price_unit != line.original_price or line.product_uom != line.original_uom:
                     changed = True
 
             res[line.id] = changed

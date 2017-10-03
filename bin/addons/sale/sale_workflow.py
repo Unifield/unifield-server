@@ -327,8 +327,11 @@ class sale_order_line(osv.osv):
                 if sol.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] and sol.type != 'make_to_stock':
                     to_write['type'] = 'make_to_stock'
 
-            elif sol.procurement_request: # in case of IR
-                pass #TODO
+            elif sol.procurement_request:  # in case of IR
+                to_write['original_qty'] = sol.product_uom_qty
+                to_write['original_price'] = sol.price_unit
+                to_write['original_uom'] = sol.product_uom.id
+                # pass #TODO
 
             if to_write:
                 self.write(cr, uid, sol.id, to_write, context=context)

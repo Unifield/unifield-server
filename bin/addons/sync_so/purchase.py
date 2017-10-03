@@ -74,6 +74,7 @@ class purchase_order_line_sync(osv.osv):
         order_name = sol_dict['order_id']['name']
         pol_values['order_id'] = po_ids[0]
         pol_values['sync_linked_sol'] = sol_dict['sync_local_id']
+        pol_values['modification_comment'] = sol_dict.get('modification_comment', False)
         if 'line_number' in pol_values:
             del(pol_values['line_number'])
 
