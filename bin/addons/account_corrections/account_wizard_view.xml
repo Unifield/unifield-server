@@ -38,16 +38,16 @@
             <field name="arch" type="xml">
                 <form string="Journal items corrections Wizard">
                     <separator string="Correction"/>
-                    <group col="8" colspan="4">
+                    <group col="10" colspan="4">
                         <field name="date" on_change="onchange_date(date)" colspan="2"/>
-                        <field name="is_manually_corrected" invisible="not context.get('from_ji')" colspan="2"/>
+                        <field name="from_ji" invisible="1" colspan="2"/>
+                        <button name="correct_manually" type="object" string="Manually Corrected" colspan="2"
+                                icon="terp-gtk-go-back-rtl" attrs="{'invisible': [('from_ji', '=', False)]}" />
                         <label string="" colspan="2"/>
                         <field name="from_donation" invisible="1" colspan="2"/>
                     </group>
                     <newline/>
-                    <field name="to_be_corrected_ids" colspan="6"
-                           context="{'from_donation_account': from_donation}" nolabel="1"
-                           attrs="{'readonly':[('is_manually_corrected', '=', True)]}"/>
+                    <field name="to_be_corrected_ids" colspan="6" context="{'from_donation_account': from_donation}" nolabel="1"/>
                     <newline/>
                     <group colspan="4" col="6">
                         <label string ="" colspan="1"/>

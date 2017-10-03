@@ -208,7 +208,7 @@ class journal_items_corrections(osv.osv_memory):
         'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="state"),
         'from_donation': fields.boolean('From Donation account?'),
         'from_register': fields.function(_get_from_register, type='boolean', string='From register?', method=True, store=False),
-        'is_manually_corrected': fields.boolean('Is Manually Corrected'),
+        'from_ji': fields.boolean('Opened from the JI view?'),
     }
 
     _defaults = {
@@ -360,6 +360,33 @@ class journal_items_corrections(osv.osv_memory):
                                               employee_id=aml.employee_id or False, transfer_journal_id=aml.transfer_journal_id or False,
                                               partner_id=aml.partner_id or False, raise_it=True, context=context)
 
+    def correct_manually(self, cr, uid, ids, context=None):
+        """
+        Gets the JI displayed in the wizard and sets it as Manually Corrected
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        aml_obj = self.pool.get('account.move.line')
+        aal_obj = self.pool.get('account.analytic.line')
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        ji_id = wizard.move_line_id.id
+        # check that none of the AJIs linked to the JI has already been reallocated
+        aji_reallocated_domain = [('move_id', '=', ji_id), ('is_reallocated', '=', True)]
+        if aal_obj.search_exist(cr, uid, aji_reallocated_domain, context=context):
+            raise osv.except_osv(_('Error'), _('One AJI related to this entry has already been corrected.'))
+        # set the JI as corrected
+        manual_corr_vals = {'corrected': True,
+                            'have_an_historic': True}  # is_corrigible will be seen as "False"
+        aml_obj.write(cr, uid, wizard.move_line_id.id, manual_corr_vals, context=context)
+        # set the AJIs as corrected (get the aji_ids AFTER aml correction to get the new AJI ids generated)
+        aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji_id)], order='NO_ORDER', context=context)
+        aal_obj.write(cr, uid, aji_ids, {'is_reallocated': True}, context=context)
+        # Mark the JI as "corrected_upstream" if needed (to keep consistency with standard corrections)
+        aml_obj.corrected_upstream_marker(cr, uid, [ji_id], context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
     def action_confirm(self, cr, uid, ids, context=None, distrib_id=False):
         """
         Do a correction from the given line
@@ -370,7 +397,6 @@ class journal_items_corrections(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         aml_obj = self.pool.get('account.move.line')
-        aal_obj = self.pool.get('account.analytic.line')
         # Verify that date is superior to line's date
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.move_line_id and wiz.move_line_id.date:
@@ -378,23 +404,6 @@ class journal_items_corrections(osv.osv_memory):
                     raise osv.except_osv(_('Warning'), _('Please insert a correction date from the entry date onwards.'))
         # Retrieve values
         wizard = self.browse(cr, uid, ids[0], context=context)
-
-        # if the "Manually Corrected" checkbox is checked ignore all the other checks
-        if wizard.is_manually_corrected:
-            ji_id = wizard.move_line_id.id
-            # check that none of the related AJIs has already been reallocated
-            aji_reallocated_domain = [('move_id', '=', ji_id), ('is_reallocated', '=', True)]
-            if aal_obj.search_exist(cr, uid, aji_reallocated_domain, context=context):
-                raise osv.except_osv(_('Error'), _('One AJI related to this entry has already been corrected.'))
-            # set the JI as corrected
-            manual_corr_vals = {'corrected': True, 'have_an_historic': True}  # is_corrigible will be seen as "False"
-            aml_obj.write(cr, uid, wizard.move_line_id.id, manual_corr_vals, context=context)
-            # set the AJIs as corrected (get the aji_ids AFTER aml correction to get the new AJI ids generated)
-            aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji_id)], order='NO_ORDER', context=context)
-            aal_obj.write(cr, uid, aji_ids, {'is_reallocated': True}, context=context)
-            # Mark the JI as "corrected_upstream" if needed (to keep consistency with standard corrections)
-            aml_obj.corrected_upstream_marker(cr, uid, [ji_id], context=context)
-            return {'type': 'ir.actions.act_window_close'}
 
         # UFTP-388: Check if the given period is valid: period open, or not close, if not just block the correction
         correction_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wizard.date)

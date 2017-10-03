@@ -280,7 +280,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         wiz_obj = self.pool.get('wizard.journal.items.corrections')
         ml = self.browse(cr, uid, ids[0])
         # Create wizard
-        wizard = wiz_obj.create(cr, uid, {'move_line_id': ids[0]}, context=context)
+        wizard = wiz_obj.create(cr, uid, {'move_line_id': ids[0], 'from_ji': True}, context=context)
         # Change wizard state in order to change date requirement on wizard
         wiz_obj.write(cr, uid, [wizard], {'state': 'open'}, context=context)
         # Update context
@@ -295,8 +295,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if ml.account_id and ml.account_id.type_for_register and ml.account_id.type_for_register == 'donation':
             wiz_obj.write(cr, uid, [wizard], {'from_donation': True}, context=context)
         # Update context to inform wizard we come from a correction wizard
-        context.update({'from_correction': True,
-                        'from_ji': True, })
+        context.update({'from_correction': True,})
         return {
             'name': _("Accounting Corrections Wizard (from Journal Items)"),
             'type': 'ir.actions.act_window',
