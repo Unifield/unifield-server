@@ -384,7 +384,8 @@ class journal_items_corrections(osv.osv_memory):
         # set the AJIs as corrected (get the aji_ids AFTER aml correction to get the new AJI ids generated)
         aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji_id)], order='NO_ORDER', context=context)
         aal_obj.write(cr, uid, aji_ids, {'is_reallocated': True}, context=context)
-        # Mark the JI as "corrected_upstream" if needed (to keep consistency with standard corrections)
+        # Set the "corrected_upstream" flag on the JI if necessary
+        # (so that project lines marked as corrected in a upper level can't be "uncorrected" in project)
         aml_obj.corrected_upstream_marker(cr, uid, [ji_id], context=context)
         return {'type': 'ir.actions.act_window_close'}
 
