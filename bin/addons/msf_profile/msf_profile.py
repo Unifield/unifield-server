@@ -1278,13 +1278,13 @@ class patch_scripts(osv.osv):
                     select id from ir_translation t where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                     (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
                     and name like '%s%'
-                )""" % instance_id)
+                )""" % instance_id)  # not_a_user_entry
                 cr.execute("""delete from ir_translation t
                     where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                         (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
                     and id in
                         (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '%s%')
-                """ % instance_id)
+                """ % instance_id)  # not_a_user_entry
                 if coordo_id and instance_name in ('OCBHT118', 'OCBHT143'):
                     # also remove old UniData trans sent by coordo
                     cr.execute("""delete from ir_translation t
@@ -1292,7 +1292,7 @@ class patch_scripts(osv.osv):
                             (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
                         and id in
                             (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '%s%')
-                    """ % coordo_id)
+                    """ % coordo_id)  # not_a_user_entry
 
                 self._logger.warn('%s local translation for UniData products deleted' % (cr.rowcount,))
 
