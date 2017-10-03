@@ -23,7 +23,7 @@
                         <field name="analytic_distribution_id" invisible="1"/>
                         <group colspan="3"/>
                     </xpath>
-                    <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='state']" position="before">
+                    <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='fake_state']" position="before">
                         <button name="button_analytic_distribution" string="Analytical distribution" type="object"
                             icon="terp-stock_symbol-selection"/>
                         <field name="analytic_distribution_state_recap" />
