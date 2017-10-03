@@ -828,7 +828,7 @@ function onChange(caller){
                             }
                         }
                         break;
-                    case 'char':
+                    /*case 'char':
 
                         fld.value = value;
                         fld.setAttribute("value",value);
@@ -844,6 +844,7 @@ function onChange(caller){
                             fld.innerHTML = value;
                         }
                         break;
+		    */
                     default:
                     // do nothing on default
                 }
