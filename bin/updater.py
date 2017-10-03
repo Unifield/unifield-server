@@ -811,7 +811,11 @@ def do_pg_update():
         os.remove(cf.name)
         re_alter = True
 
-        # 4: stop old service
+        # 4: stop old service (US-3506: remove any dependency on it first)
+        try:
+            subprocess.call('sc config openerp-server-6.0 depend= ""', stdout=log, stderr=log)
+        except OSError as e:
+            warn('Trying to remove the service dependency gave error %s, continuing.'%e)
         subprocess.call('net stop %s' % svc, stdout=log, stderr=log)
         stopped = True
 
