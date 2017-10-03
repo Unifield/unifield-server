@@ -377,7 +377,9 @@ class journal_items_corrections(osv.osv_memory):
         if aal_obj.search_exist(cr, uid, aji_reallocated_domain, context=context):
             raise osv.except_osv(_('Error'), _('One AJI related to this entry has already been corrected.'))
         # set the JI as corrected
-        manual_corr_vals = {'corrected': True, 'have_an_historic': True}  # is_corrigible will be seen as "False"
+        manual_corr_vals = {'is_manually_corrected': True,
+                            'corrected': True,  # is_corrigible will be seen as "False"
+                            'have_an_historic': True}
         aml_obj.write(cr, uid, ji_id, manual_corr_vals, context=context)
         # set the AJIs as corrected (get the aji_ids AFTER aml correction to get the new AJI ids generated)
         aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji_id)], order='NO_ORDER', context=context)

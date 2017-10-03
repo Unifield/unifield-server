@@ -148,6 +148,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         'last_cor_was_only_analytic': fields.boolean(string="AD Corrected?",
                                                      invisible=True,
                                                      help="If true, this line has been corrected by an accounting correction wizard but with only an AD correction (no G/L correction)"),
+        'is_manually_corrected': fields.boolean('Is Manually Corrected'),
     }
 
     _defaults = {
@@ -156,6 +157,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         'have_an_historic': lambda *a: False,
         'is_corrigible': lambda *a: True,
         'last_cor_was_only_analytic': lambda *a: False,
+        'is_manually_corrected': lambda *a: False,
     }
 
     def copy(self, cr, uid, aml_id, default=None, context=None):
@@ -174,6 +176,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             'corrected': False,
             'reversal': False,
             'last_cor_was_only_analytic': False,
+            'is_manually_corrected': False,
         })
         if 'exported' not in default:
             default['exported'] = False
