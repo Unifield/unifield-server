@@ -151,7 +151,6 @@ class O2M(TinyInputWidget):
         if not current.domain:
             current.count = len(ids or [])
         else:
-            import pdb; pdb.set_trace()
             domain = current.domain
             domain.append(('id', 'in', ids))
             current.count = rpc.RPCProxy(self.model).search_count(domain, current.context)
