@@ -122,6 +122,7 @@
 
                     <xpath expr="/form//field[@name='order_line']" position="attributes">
                         <attribute name="on_change">order_line_change(order_line)</attribute>
+                        <attribute name="o2m_selectable">2</attribute>
                     </xpath>
                 </data>
             </field>
