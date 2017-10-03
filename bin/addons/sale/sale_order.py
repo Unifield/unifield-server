@@ -2044,6 +2044,10 @@ class sale_order_line(osv.osv):
             'set_as_sourced_n': False,
         })
 
+        for x in ['modification_comment', 'original_qty', 'original_price', 'original_uom']:
+            if x not in default:
+                default[x] = False
+
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
     def product_id_change_orig(self, cr, uid, ids, pricelist, product, qty=0,

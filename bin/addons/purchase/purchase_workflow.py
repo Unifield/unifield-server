@@ -290,12 +290,17 @@ class purchase_order_line(osv.osv):
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_v', cr)
             # update original qty, unit price, uom and currency on line level
+            # doesn't update original qty and uom if already set (from IR)
             line_update = {
-                    'original_qty': pol.product_qty,
                     'original_price': pol.price_unit,
-                    'original_uom': pol.product_uom.id,
                     'original_currency_id': pol.currency_id.id
                 }
+            if not pol.original_qty:
+                line_update['original_qty'] = pol.product_qty
+
+            if not pol.original_uom:
+                line_update['original_uom'] = pol.product_uom.id
+
             self.write(cr, uid, pol.id, line_update, context=context)
 
 
