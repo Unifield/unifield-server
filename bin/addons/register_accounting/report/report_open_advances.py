@@ -61,7 +61,7 @@ class report_open_advances(report_sxw.report_sxw):
                 account.type_for_register = 'advance' AND
                 line.state = 'valid' AND
                 line.reconcile_id IS NULL AND
-                line.date <= '%s'
+                line.date <= %s
             ORDER BY account_name, booking_currency.name, line.partner_txt, line.date
         """
         cr.execute(sql_open_advances, (time.strftime('%Y-%m-%d'),))

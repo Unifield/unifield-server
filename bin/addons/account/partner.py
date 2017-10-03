@@ -126,9 +126,9 @@ class res_partner(osv.osv):
                (SELECT id FROM account_account
                WHERE type=%%s AND active)
             AND reconcile_id IS NULL
-            AND '+query+' '
+            AND %s
             AND partner_id IS NOT NULL
-            GROUP BY partner_id HAVING %s''' % where),  # not_a_user_entry
+            GROUP BY partner_id HAVING %s''' % (query, where)),  # not_a_user_entry
                    (line_type,) + having_values)
         res = cr.fetchall()
         if not res:

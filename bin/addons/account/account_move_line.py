@@ -463,7 +463,7 @@ class account_move_line(osv.osv):
             return []
         where = ' AND '.join(map(lambda x: '(abs(sum(debit-credit))'+x[1]+str(x[2])+')',args))
         cursor.execute('SELECT id, SUM(debit-credit) FROM account_move_line \
-                GROUP BY id, debit, credit having '+where)  # not_a_user_entry
+                        GROUP BY id, debit, credit having '+where)  # not_a_user_entry
         res = cursor.fetchall()
         if not res:
             return [('id', '=', '0')]

@@ -96,7 +96,7 @@ SELECT 1
 FROM information_schema.columns c1
     LEFT JOIN information_schema.columns c2
     ON c2.table_name = c1.table_name AND c2.column_name = 'sequence_number'
-WHERE c1.table_name = '%s' AND c1.column_name = 'sequence' AND c2.column_name IS NULL;""" % self._table)  # not_a_user_entry
+WHERE c1.table_name = %s AND c1.column_name = 'sequence' AND c2.column_name IS NULL;""", (self._table,))  # not_a_user_entry
         if cr.fetchone():
             _logger.info("Replacing column sequence by sequence_number for table %s..." % self._table)
             cr.execute("""\

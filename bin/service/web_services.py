@@ -54,10 +54,10 @@ from passlib.hash import bcrypt
 from report import report_sxw
 
 def _check_db_name(name):
-    '''Return True if the name is composed only with allowed char, False
-    otherwise.
+    '''Raise if the name is composed with unauthorized characters
     '''
     if name and isinstance(name, basestring):
+        # allow char, number, _ and -
         if not re.match('^[a-zA-Z][a-zA-Z0-9_-]+$', name):
             raise _("You must avoid all accents, space or special characters.")
 

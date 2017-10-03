@@ -1661,7 +1661,7 @@ class shipment(osv.osv):
                 pick_obj._hook_create_sync_messages(cr, uid, packing.id, context)  # UF-1617: Create the sync message for batch and asset before shipping
 
                 # UF-1617: set the flag to this packing object to indicate that the SHIP has been done, for synchronisation purpose
-                cr.execute('update stock_picking set already_shipped=\'t\' where id=%s',  (packing.id,))
+                cr.execute('update stock_picking set already_shipped=\'t\' where id=%s', (packing.id,))
 
 
             # Create automatically the invoice

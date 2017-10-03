@@ -287,7 +287,7 @@ class patch_scripts(osv.osv):
                 self._logger.warn('The objects linked to the model(s) %s will be removed from ir_model_data.' % model_to_remove_pp)
 
                 for model in model_to_remove:
-                    cr.execute("DELETE FROM ir_model_data WHERE model='%s' AND module='sd'", (model,))
+                    cr.execute("DELETE FROM ir_model_data WHERE model=%s AND module='sd'", (model,))
                     current_count = cr.rowcount
                     removed_obj += current_count
                     self._logger.warn('ir.model.data, model=%s, %s objects deleted.' % (model, current_count))
@@ -366,7 +366,7 @@ class patch_scripts(osv.osv):
                         and d.model='res.partner'
                         and name not in ('msf_doc_import_supplier_tbd', 'order_types_res_partner_local_market')
                         and name not like '%s%%'
-                    ) """, (identifier, ))
+                    ) """ % (identifier, ))  # not_a_user_entry
                 self._logger.warn('%s non local partners updated' % (cr.rowcount,))
         return True
 
@@ -1278,13 +1278,13 @@ class patch_scripts(osv.osv):
                     select id from ir_translation t where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                     (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
                     and name like '%s%'
-                )""", (instance_id,))
+                )""" % instance_id)
                 cr.execute("""delete from ir_translation t
                     where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
                         (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
                     and id in
                         (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '%s%')
-                """, (instance_id, ))
+                """ % instance_id)
                 if coordo_id and instance_name in ('OCBHT118', 'OCBHT143'):
                     # also remove old UniData trans sent by coordo
                     cr.execute("""delete from ir_translation t
@@ -1292,7 +1292,7 @@ class patch_scripts(osv.osv):
                             (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
                         and id in
                             (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '%s%')
-                    """, (coordo_id,))
+                    """ % coordo_id)
 
                 self._logger.warn('%s local translation for UniData products deleted' % (cr.rowcount,))
 

@@ -63,9 +63,9 @@ class account_fiscalyear_close(osv.osv_memory):
         fy_id = data[0]['fy_id']
 
         cr.execute("SELECT id FROM account_period WHERE date_stop < (SELECT date_start FROM account_fiscalyear WHERE id = %s)", (str(data[0]['fy2_id']),))
-        fy_period_set = ','.join(map(lambda id: str(id[0]), cr.fetchall()))
+        fy_period_list = [x[0] for x in cr.fetchall()]
         cr.execute("SELECT id FROM account_period WHERE date_start > (SELECT date_stop FROM account_fiscalyear WHERE id = %s)", (str(fy_id),))
-        fy2_period_set = ','.join(map(lambda id: str(id[0]), cr.fetchall()))
+        fy2_period_list = [x[0] for x in cr.fetchall()]
 
         period = obj_acc_period.browse(cr, uid, data[0]['period_id'], context=context)
         new_fyear = obj_acc_fiscalyear.browse(cr, uid, data[0]['fy2_id'], context=context)
@@ -165,13 +165,13 @@ class account_fiscalyear_close(osv.osv_memory):
                                 b.amount_currency, b.currency_id, b.blocked, b.partner_id,
                                 b.date_maturity, b.date_created
                             FROM account_move_line a, account_move_line b
-                            WHERE b.account_id = %%s
+                            WHERE b.account_id = %s
                                 AND b.reconcile_id is NOT NULL
                                 AND a.reconcile_id = b.reconcile_id
-                                AND b.period_id IN (%s)
-                                AND a.period_id IN (%s)
+                                AND b.period_id IN %s
+                                AND a.period_id IN %s
                             ORDER BY id
-                            LIMIT %%s OFFSET %%s''' % (fy_period_set, fy2_period_set), (account.id, limit, offset))  # not_a_user_entry
+                            LIMIT %s OFFSET %s''', (account.id, fy_period_list, fy2_period_list, limit, offset))
                     result = cr.dictfetchall()
                     if not result:
                         break

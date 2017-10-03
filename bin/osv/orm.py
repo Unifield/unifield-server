@@ -3514,7 +3514,7 @@ class orm(orm_template):
             fields_pre2 = map(convert_field, fields_pre)
             order_by = self._parent_order or self._order
             select_fields = ','.join(fields_pre2 + [self._table + '.id'])
-            query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields,  # ignore_sql_check test commentaire additionnel
+            query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields,  # ignore_sql_check
                                                               ','.join(tables), self._table)
             if rule_clause:
                 query = ''.join((query, ' AND ', ' OR '.join(rule_clause)))
