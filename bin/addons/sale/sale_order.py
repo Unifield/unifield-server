@@ -1251,8 +1251,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             values = {'no_line': False}
 
         # Also update the 'state' of the purchase order
-        states = self.read(cr, uid, ids, ['state'])
+        states = self.read(cr, uid, ids, ['state', 'state_hidden_sale_order'])
         values["state"] = states[0]["state"]
+        values["state_hidden_sale_order"] = states[0]["state_hidden_sale_order"]
 
         # We need to fetch and return also the "display strings" for state
         # as it might be needed to update the read-only view...
@@ -1262,6 +1263,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         display_strings = {}
         display_strings["state"] = display_strings_state
+        display_strings["state_hidden_sale_order"] = display_strings_state
 
         return {'value': values, "display_strings": display_strings }
 
