@@ -211,7 +211,6 @@ class purchase_order_line_to_split(osv.osv):
             ondelete='cascade',
         ),
         'original_qty': fields.float(
-            digits=(16,2),
             string='Original qty',
             required=False,
             readonly=True,

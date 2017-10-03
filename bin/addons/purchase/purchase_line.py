@@ -311,7 +311,7 @@ class purchase_order_line(osv.osv):
         'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
         'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
-        'original_qty': fields.float('Original Qty', digits=(16, 2)),
+        'original_qty': fields.float('Original Qty'),
         'original_price': fields.float('Original Price'),
         'original_uom': fields.many2one('product.uom', 'Original UOM'),
         'original_currency_id': fields.many2one('res.currency', 'Original Currency'),

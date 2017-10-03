@@ -32,7 +32,7 @@ class split_sale_order_line_wizard(osv.osv_memory):
 
     _columns = {
         'sale_line_id': fields.many2one('sale.order.line', string='Line Id', readonly=True),
-        'original_qty': fields.float(digits=(16,2), string='Original Quantity', readonly=True),
+        'original_qty': fields.float(string='Original Quantity', readonly=True),
         'old_line_qty': fields.float(digits=(16,2), string='Old line quantity', readonly=True),
         'new_line_qty': fields.float(digits=(16,2), string='New line quantity', required=True),
     }

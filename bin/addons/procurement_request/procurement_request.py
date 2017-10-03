@@ -715,7 +715,7 @@ class procurement_request_line(osv.osv):
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
         'product_ok': fields.boolean('Product selected'),
         'comment_ok': fields.boolean('Comment written'),
-        'original_qty': fields.float('Original Qty', digits=(16, 2)),
+        'original_qty': fields.float('Original Qty'),
         'original_price': fields.float('Original Price'),
         'original_uom': fields.many2one('product.uom', 'Original UOM'),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
