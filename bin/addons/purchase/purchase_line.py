@@ -251,26 +251,6 @@ class purchase_order_line(osv.osv):
 
         return res
 
-    def _get_confirmed_date(self, cr, uid, context=None):
-        '''
-        Returns confirmed date
-
-        SPRINT3 validated
-        '''
-        if context is None:
-            context = {}
-        order_obj = self.pool.get('purchase.order')
-        # The PO counterpart created should get for all line a delivery confirmed date blank
-        if context.get('is_a_counterpart') or context.get('purchase_id', False) and order_obj.browse(cr, uid, context.get('purchase_id'), context=context).is_a_counterpart:
-            return
-        res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
-
-        if context.get('purchase_id', False):
-            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
-            res = po.delivery_confirmed_date
-
-        return res
-
     def _get_default_state(self, cr, uid, context=None):
         '''
         default value for state fields.related
@@ -397,7 +377,7 @@ class purchase_order_line(osv.osv):
         'po_state_stored': _get_default_state,
         'po_partner_type_stored': lambda obj, cr, uid, c: c and c.get('partner_type', False),
         'date_planned': _get_planned_date,
-        'confirmed_delivery_date': _get_confirmed_date,
+        'confirmed_delivery_date': False,
     }
 
     def _get_destination_ok(self, cr, uid, lines, context):
