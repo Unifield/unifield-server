@@ -1595,12 +1595,14 @@ class purchase_order(osv.osv):
 
         return {'value': v, 'warning': w}
 
-    def onchange_partner_id(self, cr, uid, ids, part, *a, **b):
+    def onchange_partner_id(self, cr, uid, ids, part=False, date_order=False, transport_lt=False, context=None, *a, **b):
         '''
         Fills the Requested and Confirmed delivery dates
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
 
         if not part:
             return  {'value':{'partner_address_id': False, 'fiscal_position': False}}
@@ -1644,12 +1646,7 @@ class purchase_order(osv.osv):
                     res['warning']['message'] += msg
                 else:
                     res['warning'] = {'title': _('Warning'), 'message': msg}
-
-        date_order = b.get('date_order', False)
-        transport_lt = b.get('transport_lt', False)
-        context = b.get('context', {})
-
-        res = common_onchange_partner_id(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        res = common_onchange_partner_id(self, cr, uid, ids, part=part.id, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
 
         return res
 
