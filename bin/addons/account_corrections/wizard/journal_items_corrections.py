@@ -370,6 +370,7 @@ class journal_items_corrections(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         aml_obj = self.pool.get('account.move.line')
+        aal_obj = self.pool.get('account.analytic.line')
         # Verify that date is superior to line's date
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.move_line_id and wiz.move_line_id.date:
@@ -382,6 +383,9 @@ class journal_items_corrections(osv.osv_memory):
         if wizard.is_manually_corrected:
             manual_corr_vals = {'corrected': True, 'have_an_historic': True}  # is_corrigible will be seen as "False"
             aml_obj.write(cr, uid, wizard.move_line_id.id, manual_corr_vals, context=context)
+            # also set the related AJIs as corrected
+            aji_ids = aal_obj.search(cr, uid, [('move_id', '=', wizard.move_line_id.id)], order='NO_ORDER', context=context)
+            aal_obj.write(cr, uid, aji_ids, {'is_reallocated': True}, context=context)
             return {'type': 'ir.actions.act_window_close'}
 
         # UFTP-388: Check if the given period is valid: period open, or not close, if not just block the correction
