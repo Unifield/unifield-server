@@ -461,7 +461,7 @@ class account_partner_balance_tree(osv.osv):
             query = """SELECT
                 sum(debit) AS debit, sum(credit) AS credit, sum(balance) as balance
                 FROM account_partner_balance_tree
-                WHERE account_type IN ('" %s "')
+                WHERE account_type IN ('%s')
                 AND uid = %%s
                 AND build_ts=%%s
                 """ % account_type  # not_a_user_entry
