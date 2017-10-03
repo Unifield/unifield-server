@@ -76,17 +76,22 @@ class workflow_service(netsvc.Service):
             instance.create(cr, ident, wkf_id)
 
     def trg_validate(self, uid, res_type, res_id, signal, cr):
+
+        if isinstance(res_id, (int, long)):
+            res_id = [res_id]
+
         result = False
-        ident = (uid,res_type,res_id)
+
         # ids of all active workflow instances for a corresponding resource (id, model_nam)
-        cr.execute('select id from wkf_instance where res_id=%s and res_type=%s and state=%s', (res_id, res_type, 'active'))
-        for (id,) in cr.fetchall():
-            res2 = instance.validate(cr, id, ident, signal)
+        cr.execute('select id, res_id from wkf_instance where res_id in %s and res_type=%s and state=%s', (tuple(res_id), res_type, 'active'))
+        for (wkf_id,res_id) in cr.fetchall():
+            ident = (uid,res_type,res_id)
+            res2 = instance.validate(cr, wkf_id, ident, signal)
             result = result or res2
         return result
-    
+
     # change the subflow of workitems attached to the 'main_ids' of 'main_type' object
-    # by the subflow of the new resource defined by the 'res_type' object and the 'res_ids' ids 
+    # by the subflow of the new resource defined by the 'res_type' object and the 'res_ids' ids
     def trg_change_subflow(self, uid, main_type, main_ids, res_type, res_ids, new_rid, cr, force=False):
         # get ids of wkf instances for the old resource (res_id)
 #CHECKME: shouldn't we get only active instances?
