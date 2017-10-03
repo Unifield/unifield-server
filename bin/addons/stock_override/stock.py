@@ -384,7 +384,7 @@ class stock_picking(osv.osv):
 
         if not ids:
             return {}
-            
+
         for pick in self.browse(cr, uid, ids, context=context):
             moves = [move.id for move in pick.move_lines]
             if not moves:
@@ -2143,6 +2143,7 @@ class stock_move(osv.osv):
                           'prodlot_id', 'asset_id', 'composition_list_id', 'line_number']
         stock_picking_obj = self.pool.get('stock.picking')
 
+        qty_data = {}
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
             picking_id = move_data['picking_id'] and move_data['picking_id'][0] or False
@@ -2166,8 +2167,18 @@ class stock_move(osv.osv):
             if move_ids:
                 move = self.read(cr, uid, move_ids[0], ['product_qty', 'product_uos_qty'], context=context)
                 res.append(move['id'])
-                self.write(cr, uid, [move['id']], {'product_qty': move['product_qty'] + move_data['product_qty'],
-                                                   'product_uos_qty': move['product_uos_qty'] + move_data['product_uos_qty']}, context=context)
+                if move_data['id'] not in qty_data:
+                    qty_data[move['id']] = {
+                        'product_qty': move['product_qty'] + move_data['product_qty'],
+                        'product_uos_qty': move['product_uos_qty'] + move_data['product_uos_qty'],
+                    }
+                else:
+                    qty_data[move['id']] = {
+                        'product_qty': move['product_qty'] + qty_data[move_data['id']]['product_qty'],
+                        'product_uos_qty': move['product_uos_qty'] + qty_data[move_data['id']]['product_uos_qty'],
+                    }
+
+                self.write(cr, uid, [move['id']], qty_data[move['id']].copy(), context=context)
 
                 # Update all link objects
                 proc_ids = self.pool.get('procurement.order').search(cr, uid,
