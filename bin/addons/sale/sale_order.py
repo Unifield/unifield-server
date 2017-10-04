@@ -433,7 +433,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if isinstance(ids, (int, long)):
             ids = [ids]
         sols_obj = self.pool.get('sale.order.line.state')
-            
+
         res = {}
         for so in self.browse(cr, uid, ids, context=context):
             sol_states = set()
@@ -445,7 +445,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     sol_states.add(sol.resourced_at_state)
                 else:
                     sol_states.add(sol.state)
-            
+
             if all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
             else: # else compute the less advanced state:
@@ -484,8 +484,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
         'state': fields.function(_get_less_advanced_sol_state, string='Order State', method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
-                                 'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-                                 'sale.order.line': (_get_order, ['state'], 10),    
+                                     'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                                     'sale.order.line': (_get_order, ['state'], 10),    
                                  },
                                  select=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'."
                                  ),
@@ -622,7 +622,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if order['state'] not in ('draft', 'cancel'):
                 type = order['procurement_request'] and _('Internal Request') or _('Field order')
                 raise osv.except_osv(_('Error'), _('Only Draft and Canceled %s can be deleted.') % type)
-                
+
         sale_orders = self.read(cr, uid, ids, ['state'], context=context)
         unlink_ids = []
         for s in sale_orders:
@@ -1036,7 +1036,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'type': eventtype
             }
             self.pool.get('res.partner.event').create(cr, uid, event)
-    
+
     def _check_own_company(self, cr, uid, company_id, context=None):
         '''
         Remove the possibility to make a SO to user's company
@@ -1283,17 +1283,19 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             values = {'no_line': False}
 
         # Also update the 'state' of the purchase order
-        states = self.read(cr, uid, ids, ['state'])
+        states = self.read(cr, uid, ids, ['state', 'state_hidden_sale_order'])
         values["state"] = states[0]["state"]
+        values["state_hidden_sale_order"] = states[0]["state_hidden_sale_order"]
 
         # We need to fetch and return also the "display strings" for state
         # as it might be needed to update the read-only view...
         raw_display_strings_state = dict(SALE_ORDER_STATE_SELECTION)
         display_strings_state = dict([(k, _(v)) \
-                                for k,v in raw_display_strings_state.items()])
+                                      for k,v in raw_display_strings_state.items()])
 
         display_strings = {}
         display_strings["state"] = display_strings_state
+        display_strings["state_hidden_sale_order"] = display_strings_state
 
         return {'value': values, "display_strings": display_strings }
 
@@ -1899,12 +1901,12 @@ class sale_order_line(osv.osv):
             \n* The \'Done\' state is set when the sales order line has been picked. \
             \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
         'state_to_display': fields.function(_get_state_to_display, method=True, type='text', string='State', readonly=True,
-            help='* The \'Draft\' state is set when the related sales order in draft state. \
+                                            help='* The \'Draft\' state is set when the related sales order in draft state. \
             \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
             \n* The \'Exception\' state is set when the related sales order is set as exception. \
             \n* The \'Done\' state is set when the sales order line has been picked. \
             \n* The \'Cancelled\' state is set when a user cancel the sales order related.'
-        ),
+                                            ),
         'resourced_original_line': fields.many2one('sale.order.line', 'Original line', readonly=True, help='Original line from which the current one has been cancel and ressourced'),
         'display_resourced_orig_line': fields.function(_get_display_resourced_orig_line, method=True, type='char', readonly=True, string='Original FO/IR line', help='Original line from which the current one has been cancel and ressourced'),
         'resourced_at_state': fields.char('Resourced at state', size=128, help='The state of the original line when the resourced line has been created'),
@@ -2359,8 +2361,8 @@ class sale_order_line(osv.osv):
                 if move['picking_id']:
                     picking_ids.add(move['picking_id'][0])
             if not context.get('no_cancel_out'):
-                    move_obj.write(cr, uid, out_moves, {'state': 'cancel'}, context=context)
-                    move_obj.action_cancel(cr, uid, out_moves, context=context)
+                move_obj.write(cr, uid, out_moves, {'state': 'cancel'}, context=context)
+                move_obj.action_cancel(cr, uid, out_moves, context=context)
 
             for pick in pick_obj.browse(cr, uid, list(picking_ids), context=context):
                 if not len(pick.move_lines) or (pick.subtype == 'standard' and all(m.state == 'cancel' for m in pick.move_lines)):

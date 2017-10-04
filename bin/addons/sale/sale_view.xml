@@ -223,10 +223,6 @@
                                             <group colspan="2" col="5">
                                                 <separator string="Optional Levels" colspan="4"/>
                                                 <group colspan="4" col="2">
-                                                    <!--
-										Added False as parent_id clause to enable global optional
-										levels (for med, log,...)
-									-->
                                                     <field name="nomen_sub_0" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
                                                     <field name="nomen_sub_1" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
                                                     <field name="nomen_sub_2" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
