@@ -191,7 +191,7 @@ One2Many.prototype = {
         if (readonly) {
             jQuery('table.one2many[id$="'+this.name+'"]').addClass('m2o_readonly');
             if(btn){btn.style.display='none';}
-            MochiKit.Base.map(function (el) {el.style.visibility='hidden';},MochiKit.Selector.findChildElements(grid,['.selector']));
+            //MochiKit.Base.map(function (el) {el.style.visibility='hidden';},MochiKit.Selector.findChildElements(grid,['.selector']));
             edit.value= 0;
             if (rows && rows.length) {
                 rows.each(function(index, row) {
