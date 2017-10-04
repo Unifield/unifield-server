@@ -29,7 +29,6 @@ class purchase_order_line_cancel_wizard(osv.osv_memory):
         'pol_id': fields.many2one('purchase.order.line', string='PO line to delete'),
     }
 
-
     def cancel_pol(self, cr, uid, ids, resource=False, context=None):
         '''
         Cancel the PO line 

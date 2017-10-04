@@ -9,6 +9,7 @@ from tools.translate import _
 import decimal_precision as dp
 from . import PURCHASE_ORDER_STATE_SELECTION
 from . import PURCHASE_ORDER_LINE_STATE_SELECTION
+from msf_partner import PARTNER_TYPE
 
 
 class purchase_order_line(osv.osv):
@@ -202,6 +203,69 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def _vals_get_order_date(self, cr, uid, ids, fields, arg, context=None):
+        '''
+        get values for functions
+        '''
+        if context is None:
+            context = {}
+        if isinstance(fields, str):
+            fields = [fields]
+
+        result = {}
+        for obj in self.browse(cr, uid, ids, context=context):
+            result[obj.id] = {}
+            for f in fields:
+                result[obj.id].update({f: False})
+            # po state
+            result[obj.id]['po_state_stored'] = obj.order_id.state
+            # po partner type
+            result[obj.id]['po_partner_type_stored'] = obj.order_id.partner_type
+
+        return result
+
+    def _get_line_ids_from_po_ids(self, cr, uid, ids, context=None):
+        '''
+        self is purchase.order
+        '''
+        if context is None:
+            context = {}
+        result = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', 'in', ids)], context=context)
+        return result
+
+    def _get_planned_date(self, cr, uid, context=None):
+        '''
+        Returns planned_date
+
+        SPRINT3 validated
+        '''
+        if context is None:
+            context = {}
+        order_obj = self.pool.get('purchase.order')
+        res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
+
+        if context.get('purchase_id', False):
+            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
+            res = po.delivery_requested_date
+
+        return res
+
+    def _get_default_state(self, cr, uid, context=None):
+        '''
+        default value for state fields.related
+
+        why, beacause if we try to pass state in the context,
+        the context is simply reset without any values specified...
+        '''
+        if context is None:
+            context = {}
+        if context.get('purchase_id', False):
+            order_obj = self.pool.get('purchase.order')
+            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
+            return po.state
+
+        return False
+
 
     _columns = {
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
@@ -248,7 +312,6 @@ class purchase_order_line(osv.osv):
                                         string="Customer ref."),
         'name': fields.char('Description', size=256, required=True),
         'product_qty': fields.float('Quantity', required=True, digits=(16, 2)),
-        'date_planned': fields.date('Scheduled Date', required=True, select=True),
         'taxes_id': fields.many2many('account.tax', 'purchase_order_taxe', 'ord_id', 'tax_id', 'Taxes'),
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=True, select=True),
         'product_id': fields.many2one('product.product', 'Product', domain=[('purchase_ok', '=', True)],
@@ -287,6 +350,14 @@ class purchase_order_line(osv.osv):
         'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
         'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
+        'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
+                                    help='Header level dates has to be populated by default with the possibility of manual updates'),
+        'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
+                                               help='Header level dates has to be populated by default with the possibility of manual updates.'),
+        # not replacing the po_state from sale_followup - should ?
+        'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
+        'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
+
     }
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
@@ -302,6 +373,10 @@ class purchase_order_line(osv.osv):
         'invoiced': lambda *a: 0,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'stock_take_date': _get_stock_take_date,
+        'po_state_stored': _get_default_state,
+        'po_partner_type_stored': lambda obj, cr, uid, c: c and c.get('partner_type', False),
+        'date_planned': _get_planned_date,
+        'confirmed_delivery_date': False,
     }
 
     def _get_destination_ok(self, cr, uid, lines, context):
@@ -902,6 +977,13 @@ class purchase_order_line(osv.osv):
             default.update({'move_dest_id': False})
 
         default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False})
+
+        if not context.get('keepDateAndDistrib'):
+            if 'confirmed_delivery_date' not in default:
+                default['confirmed_delivery_date'] = False
+            if 'date_planned' not in default:
+                default['date_planned'] = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
+
         return super(purchase_order_line, self).copy_data(cr, uid, p_id, default=default, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -1432,6 +1514,16 @@ class purchase_order_line(osv.osv):
 
 
         return True
+
+    def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context=None):
+        '''
+        Checks if dates are later than header dates
+
+        deprecated
+        '''
+        if context is None:
+            context = {}
+        return {'value': {'date_planned': requested_date, }}
 
 
 purchase_order_line()
