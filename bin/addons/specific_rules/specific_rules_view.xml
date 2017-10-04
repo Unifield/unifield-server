@@ -60,24 +60,6 @@
             </field>
         </record>
 
-        <record id="view_order_form" model="ir.ui.view">
-            <field name="name">sale.order.form</field>
-            <field name="model">sale.order</field>
-            <field name="type">form</field>
-            <field name="priority" eval="250" />
-            <field name="inherit_id" ref="sale.view_order_form" />
-            <field name="arch" type="xml">
-                <data>
-
-                    <xpath expr="//form[@string='Sales Order']//tree[@string='Sales Order Lines']/field[@name='product_uom']" position="after">
-                        <field name="kc_dg" />
-                    </xpath>
-
-                </data>
-            </field>
-        </record>
-
-
         <record id="view_production_lot_tree" model="ir.ui.view">
             <field name="name">stock.production.lot.tree</field>
             <field name="model">stock.production.lot</field>

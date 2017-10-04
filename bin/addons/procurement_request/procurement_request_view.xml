@@ -2,35 +2,6 @@
 <openerp>
     <data>
     
-        <!-- Add required fields on standard sale order view -->
-        <record id="sale_order_form_view_required" model="ir.ui.view">
-            <field name="name">sale.order.form.view.required</field>
-            <field name="model">sale.order</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="sale.view_order_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='partner_invoice_id']" position="replace">
-                       <field domain="[('partner_id','=',partner_id)]" name="partner_order_id" required="1" />
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='partner_order_id']" position="replace">
-                        <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" required="1" />
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='partner_shipping_id']" position="replace">
-                        <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" required="1" />
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='pricelist_id']" position="replace">
-                        <field domain="[('type','=','sale'), ('in_search', '=', partner_type)]" name="pricelist_id"
-                            on_change="pricelist_id_change(pricelist_id)"
-                            required="1" />
-                    </xpath>
-                    <xpath expr="/form//field[@name='order_line']/form//field[@name='type']" position="attributes">
-                        <attribute name="on_change">requested_type_change(product_id, type)</attribute>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-    
         <record id="procurement_request_form_view" model="ir.ui.view">
             <field name="name">procurement.request.form.view</field>
             <field name="model">sale.order</field>

@@ -40,7 +40,6 @@
     "init_xml": [],
     "update_xml": [
         'doc_import_report.xml',
-        'view/sale_order_import_lines_view.xml',
         'view/internal_request_import_line_view.xml',
         'view/tender_import_line_view.xml',
         'view/purchase_order_import_line_view.xml',
