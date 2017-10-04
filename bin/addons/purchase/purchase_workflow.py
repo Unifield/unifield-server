@@ -366,7 +366,7 @@ class purchase_order_line(osv.osv):
         po_to_check = {}
         for pol in self.browse(cr, uid, ids):
             po_to_check[pol.order_id.id] = True
-            if not pol.confirmed_delivery_date and not pol.order_id.delivery_confirmed_date:
+            if not pol.confirmed_delivery_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
 
             if pol.order_type != 'direct':
@@ -431,8 +431,6 @@ class purchase_order_line(osv.osv):
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'confirmed', cr)
 
             to_write = {'state': 'confirmed'}
-            if not pol.confirmed_delivery_date:
-                to_write['confirmed_delivery_date'] = pol.order_id.delivery_confirmed_date
             self.write(cr, uid, [pol.id], to_write, context=context)
 
             if pol.order_id.order_type == 'direct':
