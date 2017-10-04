@@ -344,23 +344,45 @@ Scenario: SSL Mission flow with PO line addition and deletion
     I click "Edit" on line:
         | REFERENCE      |
         | {{PO_REF_COO}} |	
+
+    I click "Edit" on line and open the window:
+	| PRODUCT CODE |
+    |  ADAPCOLALOK |
+    I fill "Product" with "[ADAPMOUSOUS] MOUSE, optical, USB port"
+	I fill "Quantity" with "15.00"
+	I click on "Save & Close" and close the window
+
+
+		
+    I click "Cancel" on line and open the window:
+	| PRODUCT CODE |
+    |  ADAPDCDRB-- |
 	
-    I click on "Import PO confirmation"
-    I click on "add attachment"
-    I fill "File to import" with "TC2 SSL VI import.xml"
-	
-    I click on "Simulate"
-	I should see "Simulation done" in "State"
-	I open tab "Details"
+	I click on "Cancel only" and close the window
 	
 	I should see in the main table the following data:
-      | PRODUCT                                                          |CHG  | PRODUCT_2                                                  | QTY_2 |                             
-      | [ADAPCOLABAG] (laptop computer) CARRYING BAG                     |     | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | 20.00 |
-	  | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot  |     | [ADAPMOUSOUS] MOUSE, optical, USB port                     | 15.00 |
-	  | [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25       | Del | [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25 | 20.00 |
-	  |                                                                  | New | [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | 25.00 |
+		| PRODUCT CODE | STATE     |
+        | ADAPDCDRB--  | Cancelled |
 	
-	I click on "Import"
+    
+	I click on "New" and open the window
+    I fill "Product" with "[ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB"
+	I fill "Quantity" with "25.00"
+	I fill "Unit Price" with "1.00"	
+
+#I click on "Save & Close" and close the window
+#I should see a popup with "*Invalid form, correct red fields."
+	
+    I click on button_id "order_line/select_fo_select" and open the window
+    I fill "ORDER REFERENCE" with "{{FO_REFERENCE}}"
+	I click on "Search"
+    I click "option" on line and close the window:
+       | ORDER REFERENCE    |
+       | *{{FO_REFERENCE}}* |
+	  
+    I fill "Order in sync. instance" with "{{IR_REFERENCE}}"
+	I click on "Save & Close" and close the window
+	
 	
 	I should see in the main table the following data:
 	   | LINE  |  PRODUCT CODE  | PRODUCT DESCRIPTION                          | QUANTITY | STATE       |                       
@@ -368,31 +390,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
 	   |   2   | ADAPMOUSOUS    | MOUSE, optical, USB port                     |  15.00   | Validated   |
        |   3   | ADAPDCDRB--    | DISK, CD-R (recordable), data, cakebox of 25 |  20.00   | Cancelled   |
 	   |   4   | ADAPKBDAUSB    | KEYBOARD, AZERTY, external, USB              |  25.00   | Validated-n |
-
-    I click "Edit" on line and open the window:
-      | PRODUCT CODE |
-      | ADAPKBDAUSB  |
-
-	  
-    I click on button_id "order_line/select_fo_select" and open the window
-    I fill "ORDER REFERENCE" with "{{FO_REFERENCE}}"
-	I click on "Search"
-    I click "option" on line and close the window:
-       | ORDER REFERENCE    |
-       | *{{FO_REFERENCE}}* |
-
-	  
-    I fill "Order in sync. instance" with "{{IR_REFERENCE}}"
-	
-	I click on "Save & Close" and close the window
-
-	I click "Analytical distribution" on line and open the window:
-       | PRODUCT CODE  |
-       | ADAPKBDAUSB   |
-	I click on "New"   
-	I fill "HT111" within column "COST CENTER"
-    I validate the line
-	I click on "Save" and close the window
 	
 	   
  	I open tab menu "ORDERS"   
@@ -424,10 +421,22 @@ Scenario: SSL Mission flow with PO line addition and deletion
 
     I click on "Apply to all lines" and open the window
 	I click on "Yes" and close the window
+
 	
 	I click on "Confirm lines"
+	
+	I should see a popup with "*Analytic allocation is mandatory for this line: KEYBOARD, AZERTY, external, USB!"
 
-    I open tab "Purchase Order"	
+    I open tab "Purchase Order"		
+	I click "Analytical distribution" on line and open the window:
+       | PRODUCT CODE  |
+       | ADAPKBDAUSB   |
+	I click on "New"   
+	I fill "HT111" within column "COST CENTER"
+    I validate the line
+	I click on "Save" and close the window	
+
+	I click on "Confirm lines"	
 	
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
