@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            id="report_po_track_changes_xls"
+            name="po.track.changes.report_xls"
+            model="po.track.changes.wizard"
+            string="Purchase Order Track Changes Excel Export"
+            file="purchase_followup/report/po_track_changes_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+
+    </data>
+</openerp>

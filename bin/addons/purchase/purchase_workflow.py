@@ -295,6 +295,9 @@ class purchase_order_line(osv.osv):
                     'original_price': pol.price_unit,
                     'original_currency_id': pol.currency_id.id
                 }
+            if not pol.original_product:
+                line_update['original_product'] = pol.product_id.id
+
             if not pol.original_qty:
                 line_update['original_qty'] = pol.product_qty
 
@@ -302,7 +305,6 @@ class purchase_order_line(osv.osv):
                 line_update['original_uom'] = pol.product_uom.id
 
             self.write(cr, uid, pol.id, line_update, context=context)
-
 
         if po_to_check:
             self.pool.get('purchase.order').check_if_stock_take_date_with_esc_partner(cr, uid, po_to_check.keys(), context=context)

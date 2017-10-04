@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            id="report_ir_track_changes_xls"
+            name="ir.track.changes.report_xls"
+            model="ir.track.changes.wizard"
+            string="Internal Request Track Changes Excel Export"
+            file="sales_followup/report/ir_track_changes_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+
+    </data>
+</openerp>

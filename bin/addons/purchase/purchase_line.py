@@ -311,9 +311,10 @@ class purchase_order_line(osv.osv):
         'partner_id': fields.related('order_id','partner_id',string='Partner',readonly=True,type="many2one", relation="res.partner", store=True),
         'date_order': fields.related('order_id','date_order',string='Order Date',readonly=True,type="date"),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
+        'original_product': fields.many2one('product.product', 'Original Product'),
         'original_qty': fields.float('Original Qty'),
         'original_price': fields.float('Original Price'),
-        'original_uom': fields.many2one('product.uom', 'Original UOM'),
+        'original_uom': fields.many2one('product.uom', 'Original UoM'),
         'original_currency_id': fields.many2one('res.currency', 'Original Currency'),
         'modification_comment': fields.char('Modification Comment', size=1024),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
@@ -926,9 +927,9 @@ class purchase_order_line(osv.osv):
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': []})
 
-        for field in ['origin', 'move_dest_id', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment']:
+        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment']:
             if field not in default:
-                default[field]= False
+                default[field] = False
 
         default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False})
         return super(purchase_order_line, self).copy_data(cr, uid, p_id, default=default, context=context)

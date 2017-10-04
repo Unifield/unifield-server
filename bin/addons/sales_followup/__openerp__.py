@@ -44,8 +44,10 @@
         "sale_followup_view.xml",
         "report/sale_follow_up_report.xml",
         "report/ir_follow_up_location_report.xml",
+        "report/ir_track_changes_report.xml",
         "wizard/sale_followup_multi_wizard_view.xml",
         "wizard/ir_followup_location_wizard_view.xml",
+        "wizard/ir_track_changes_wizard_view.xml",
     ],
     "demo_xml": [
     ],

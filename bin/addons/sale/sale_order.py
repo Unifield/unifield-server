@@ -2044,7 +2044,7 @@ class sale_order_line(osv.osv):
             'set_as_sourced_n': False,
         })
 
-        for x in ['modification_comment', 'original_qty', 'original_price', 'original_uom']:
+        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom']:
             if x not in default:
                 default[x] = False
 

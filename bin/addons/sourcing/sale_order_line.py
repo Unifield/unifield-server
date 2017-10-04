@@ -1619,6 +1619,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     if sourcing_line.procurement_request:
                         pol_values.update({
+                            'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         })
@@ -1652,6 +1653,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     if sourcing_line.procurement_request:
                         rfq_line_values.update({
+                            'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         })
@@ -1679,6 +1681,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     if sourcing_line.procurement_request:
                         tender_values.update({
+                            'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         })
