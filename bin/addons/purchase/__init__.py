@@ -45,7 +45,16 @@ PURCHASE_ORDER_LINE_STATE_SELECTION = [
     ('cancel_r', 'Cancelled-r'),
 ]
 
-PURCHASE_ORDER_STATE_SELECTION = PURCHASE_ORDER_LINE_STATE_SELECTION + [('draft_p', 'Draft-p'), ('validated_p', 'Validated-p'), ('sourced_p', 'Sourced-p'), ('confirmed_p', 'Confirmed-p')]
+PURCHASE_ORDER_STATE_SELECTION = [
+    ('draft', 'Draft'),
+    ('validated', 'Validated'),
+    ('validated_p', 'Validated-p'),
+    ('sourced_p', 'Sourced-p'),
+    ('confirmed', 'Confirmed'),
+    ('confirmed_p', 'Confirmed-p'),
+    ('done', 'Closed'),
+    ('cancel', 'Cancelled'),
+]
 
 import purchase
 import purchase_line
