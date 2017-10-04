@@ -84,5 +84,19 @@
             </field>
         </record>
 
+    <!-- Reversal Manual Correction Wizard -->
+        <record model="ir.ui.view" id="reverse_manual_correction_wizard_form">
+            <field name="name">reverse.manual.correction.wizard.form</field>
+            <field name="model">reverse.manual.correction.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <label string="This line has been manually corrected. Do you want to reverse the correction?" colspan="4"/>
+                    <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                    <button icon="terp-gtk-go-back-ltr" string="Reverse the correction" name="reverse_manual_correction" type="object"/>
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>

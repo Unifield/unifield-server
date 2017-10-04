@@ -319,6 +319,24 @@ receivable, item have not been corrected, item have not been reversed and accoun
             context={}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # if JI was marked as corrected manually: display the Reverse Manual Corr. wizard instead of the History wizard
+        reverse_corr_wiz_obj = self.pool.get('reverse.manual.correction.wizard')
+        if len(ids) == 1 and self.read(cr, uid, ids[0], ['is_manually_corrected'], context=context)['is_manually_corrected']:
+            context.update({
+                'active_id': ids[0],
+                'active_ids': ids,
+            })
+            reverse_corr_wizard = reverse_corr_wiz_obj.create(cr, uid, {}, context=context)
+            return {
+                'name': _("History Move Line"),  # same title as the History Wizard
+                'type': 'ir.actions.act_window',
+                'res_model': 'reverse.manual.correction.wizard',
+                'view_mode': 'form,tree',
+                'view_type': 'form',
+                'res_id': [reverse_corr_wizard],
+                'context': context,
+                'target': 'new',
+            }
         # Prepare some values
         domain_ids = []
         # Search ids to be open
@@ -974,4 +992,41 @@ class account_move(osv.osv):
         return reversed_move
 
 account_move()
+
+
+class reverse_manual_correction_wizard(osv.osv_memory):
+    _name = 'reverse.manual.correction.wizard'
+    _description = 'Manual Correction Reversal Wizard'
+
+    _columns = {
+    }
+
+    _defaults = {
+    }
+
+    def reverse_manual_correction(self, cr, uid, ids, context=None):
+        """
+        Cancels the "Manual Correction" on the JI and its AJIs so that they can be re-corrected
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        aml_obj = self.pool.get('account.move.line')
+        aal_obj = self.pool.get('account.analytic.line')
+        ji_id = context.get('active_id', False)
+        if ji_id:
+            # set the JI as non-corrected
+            reverse_corr_vals = {'is_manually_corrected': False,
+                                 'corrected': False,  # is_corrigible will be seen as "True"
+                                 'have_an_historic': False,
+                                 'corrected_upstream': False}
+            aml_obj.write(cr, uid, ji_id, reverse_corr_vals, context=context)
+            # set the AJIs as non-corrected
+            aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji_id)], order='NO_ORDER', context=context)
+            aal_obj.write(cr, uid, aji_ids, {'is_reallocated': False}, context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+
+reverse_manual_correction_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
