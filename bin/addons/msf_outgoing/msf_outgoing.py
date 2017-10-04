@@ -2690,17 +2690,6 @@ class stock_picking(osv.osv):
                 return res['last_value']
         return False
 
-    def alter_sequence_for_rw_pick(self, cr, uid, picking_type, value_to_force, context=None):
-        if not self._get_usb_entity_type(cr, uid, context):
-            return
-
-        cr.execute('SELECT id FROM ir_sequence WHERE code=%s and active=true ORDER BY id', (picking_type,))
-        res = cr.dictfetchone()
-        if res and res['id']:
-            seq = 'ir_sequence_%03d' % res['id']
-            cr.execute("ALTER SEQUENCE " + seq +" RESTART WITH " + str(value_to_force))  # not_a_user_entry
-        return
-
     def create(self, cr, uid, vals, context=None):
         '''
         creation of a stock.picking of subtype 'packing' triggers
