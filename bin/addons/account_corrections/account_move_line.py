@@ -1002,12 +1002,12 @@ receivable, item have not been corrected, item have not been reversed and accoun
                             'corrected': True,  # is_corrigible will be seen as "False"
                             'have_an_historic': True}
         self.write(cr, uid, ji_id, manual_corr_vals, context=context)
-        # set the AJIs as corrected (get the aji_ids AFTER aml correction to get the new AJI ids generated)
-        aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji_id)], order='NO_ORDER', context=context)
-        aal_obj.write(cr, uid, aji_ids, {'is_reallocated': True}, context=context)
         # Set the "corrected_upstream" flag on the JI if necessary
         # (so that project lines marked as corrected in a upper level can't be "uncorrected" in project)
         self.corrected_upstream_marker(cr, uid, [ji_id], context=context)
+        # set the AJIs as corrected (get the aji_ids AFTER aml correction to get the new AJI ids generated)
+        aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji_id)], order='NO_ORDER', context=context)
+        aal_obj.write(cr, uid, aji_ids, {'is_reallocated': True}, context=context)
 
 
 account_move_line()

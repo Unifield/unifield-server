@@ -238,6 +238,15 @@ class account_invoice_refund(osv.osv_memory):
                             if 'value' in data and data['value']:
                                 inv_obj.write(cr, uid, [inv_id], data['value'])
                         created_inv.append(inv_id)
+
+                    # Refund cancel/modify: set the invoice JI/AJIs as Corrected by the system so that they can't be
+                    # corrected manually. This must be done at the end of the refund process to handle the right AJI ids
+                    for aml in movelines:
+                        header_line = aml.account_id.id == inv.account_id.id and \
+                                      abs(abs(inv.amount_total) - abs(aml.amount_currency)) <= 10**-3
+                        if not header_line:  # don't display History Wizard on the header line
+                            account_m_line_obj.set_as_corrected(cr, uid, aml.id, manual=False, context=None)
+
             if inv.type in ('out_invoice', 'out_refund'):
                 xml_id = 'action_invoice_tree3'
             else:
@@ -250,26 +259,8 @@ class account_invoice_refund(osv.osv_memory):
             result['domain'] = invoice_domain
             return result
 
-    def _set_invoice_lines_as_corrected(self, cr, uid, invoice_ids, data_refund, context=None):
-        """
-        In case of a "refund cancel" or a "refund modify", sets the JIs and AJIs of the invoice(s) as "Corrected" by the
-        system so that they can't be corrected manually
-        """
-        if context is None:
-            context = {}
-        aml_obj = self.pool.get('account.move.line')
-        inv_obj = self.pool.get('account.invoice')
-        if data_refund in ('cancel', 'modify'):
-            for inv in inv_obj.browse(cr, uid, invoice_ids, fields_to_fetch=['move_id'], context=context):
-                amls = inv.move_id and inv.move_id.line_id or []
-                for aml in amls:
-                    aml_obj.set_as_corrected(cr, uid, aml.id, manual=False, context=None)
-
     def invoice_refund(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
         data_refund = self.read(cr, uid, ids[0], ['filter_refund'], context=context)['filter_refund']
-        self._set_invoice_lines_as_corrected(cr, uid, context.get('active_ids', []), data_refund, context=context)
         return self.compute_refund(cr, uid, ids, data_refund, context=context)
 
 
