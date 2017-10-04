@@ -833,15 +833,25 @@ function onChange(caller){
                         fld.value = value;
                         fld.setAttribute("value",value);
 
-                        if ((obj['display_strings']) 
-                        &&  (obj['display_strings'][k]) 
-                        &&  (obj['display_strings'][k][value]))
+                        // In 'Edit' mode, this is a <select> 
+                        if (fld.nodeName == "SELECT")
                         {
-                            fld.innerHTML = obj['display_strings'][k][value];
+                            $(fld).val(value)
                         }
+                        // In 'Read' mode, this is a <span>
                         else
                         {
-                            fld.innerHTML = value;
+
+                            if ((obj['display_strings']) 
+                            &&  (obj['display_strings'][k]) 
+                            &&  (obj['display_strings'][k][value]))
+                            {
+                                fld.innerHTML = obj['display_strings'][k][value];
+                            }
+                            else
+                            {
+                                fld.innerHTML = value;
+                            }
                         }
                         break;
                     default:
