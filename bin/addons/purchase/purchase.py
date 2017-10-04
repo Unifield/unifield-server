@@ -35,7 +35,6 @@ from dateutil.relativedelta import relativedelta
 from workflow.wkf_expr import _eval_expr
 from . import PURCHASE_ORDER_STATE_SELECTION
 from account_override.period import get_period_from_date
-from account_override.period import get_date_in_period
 
 ORDER_TYPES_SELECTION = [
     ('regular', _('Regular')),
@@ -2056,7 +2055,7 @@ class purchase_order(osv.osv):
         return new_po_id
 
 
-    def create_commitment_voucher_from_po(self, cr, uid, ids, context=None):
+    def create_commitment_voucher_from_po(self, cr, uid, ids, cv_date, context=None):
         '''
         Create a new commitment voucher from the given PO
         @param ids id of the Purchase order
@@ -2081,14 +2080,12 @@ class purchase_order(osv.osv):
                 'type': 'external' if po.partner_id.partner_type == 'external' else 'manual',
             }
             # prepare some values
-            today = time.strftime('%Y-%m-%d')
-            period_ids = get_period_from_date(self, cr, uid, po.delivery_confirmed_date or today, context=context)
+            period_ids = get_period_from_date(self, cr, uid, cv_date, context=context)
             period_id = period_ids and period_ids[0] or False
             if not period_id:
-                raise osv.except_osv(_('Error'), _('No period found for given date: %s.') % (po.delivery_confirmed_date or today))
-            date = get_date_in_period(self, cr, uid, po.delivery_confirmed_date or today, period_id, context=context)
+                raise osv.except_osv(_('Error'), _('No period found for given date: %s.') % (cv_date, ))
             vals.update({
-                'date': date,
+                'date': cv_date,
                 'period_id': period_id,
             })
             commit_id = self.pool.get('account.commitment').create(cr, uid, vals, context=context)

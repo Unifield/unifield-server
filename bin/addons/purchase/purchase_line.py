@@ -9,7 +9,6 @@ from tools.translate import _
 import decimal_precision as dp
 from . import PURCHASE_ORDER_STATE_SELECTION
 from . import PURCHASE_ORDER_LINE_STATE_SELECTION
-from account_override.period import get_period_from_date
 
 
 class purchase_order_line(osv.osv):
@@ -1330,7 +1329,9 @@ class purchase_order_line(osv.osv):
             if commitment_voucher_id:
                 commitment_voucher_id = commitment_voucher_id[0]
             else: # create commitment voucher
-                commitment_voucher_id = self.pool.get('purchase.order').create_commitment_voucher_from_po(cr, uid, [pol.order_id.id], context=context)
+                if not pol.confirmed_delivery_date:
+                    raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+                commitment_voucher_id = self.pool.get('purchase.order').create_commitment_voucher_from_po(cr, uid, [pol.order_id.id], cv_date=pol.confirmed_delivery_date, context=context)
 
             # group PO line by account_id:
             expense_account = pol.account_4_distribution and pol.account_4_distribution.id or False
@@ -1342,13 +1343,12 @@ class purchase_order_line(osv.osv):
             else:
                 cc_lines = pol.order_id.analytic_distribution_id.cost_center_lines
 
-            commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account)], context=context)
-            if not commit_line_id: # create new commitment line:
-                cv_date = pol.confirmed_delivery_date
-                period_ids = get_period_from_date(self, cr, uid, cv_date, context=context)
-                if not period_ids:
-                    raise osv.except_osv(_('Error'), _('No period found for given date: %s.') % (cv_date))
+            if not cc_lines:
+                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
 
+
+            commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account)], context=context)
+            if not commit_line_id: # create new commitment line
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
                 commit_line_id = self.pool.get('account.commitment.line').create(cr, uid, {
                     'commit_id': commitment_voucher_id,
@@ -1357,8 +1357,6 @@ class purchase_order_line(osv.osv):
                     'initial_amount': pol.price_subtotal,
                     'purchase_order_line_ids': [(4, pol.id)],
                     'analytic_distribution_id': distrib_id,
-                    'date': cv_date,
-                    'period_id': period_ids[0],
                 }, context=context)
                 for aline in cc_lines:
                     vals = {
