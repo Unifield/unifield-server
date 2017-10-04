@@ -41,7 +41,7 @@
                     <group col="10" colspan="4">
                         <field name="date" on_change="onchange_date(date)" colspan="2"/>
                         <field name="from_ji" invisible="1" colspan="2"/>
-                        <button name="correct_manually" type="object" string="Manually Corrected" colspan="2"
+                        <button name="correct_manually" type="object" string="Set as Corrected Manually" colspan="2"
                                 icon="terp-gtk-go-back-rtl" attrs="{'invisible': [('from_ji', '=', False)]}" />
                         <label string="" colspan="2"/>
                         <field name="from_donation" invisible="1" colspan="2"/>
