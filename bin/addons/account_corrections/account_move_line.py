@@ -320,8 +320,18 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if isinstance(ids, (int, long)):
             ids = [ids]
         # if JI was marked as corrected manually: display the Reverse Manual Corr. wizard instead of the History wizard
+        # except if it's a project line that was marked as Corrected in a upper level
         reverse_corr_wiz_obj = self.pool.get('reverse.manual.correction.wizard')
-        if len(ids) == 1 and self.read(cr, uid, ids[0], ['is_manually_corrected'], context=context)['is_manually_corrected']:
+        user_obj = self.pool.get('res.users')
+        display_reverse_corr_wiz = False
+        if len(ids) == 1:
+            ml = self.read(cr, uid, ids[0], ['is_manually_corrected', 'corrected_upstream'], context=context)
+            if ml['is_manually_corrected']:
+                company = user_obj.browse(cr, uid, uid, context=context).company_id
+                level = company.instance_id and company.instance_id.level
+                if not ml['corrected_upstream'] or level != 'project':
+                    display_reverse_corr_wiz = True
+        if display_reverse_corr_wiz:
             context.update({
                 'active_id': ids[0],
                 'active_ids': ids,
