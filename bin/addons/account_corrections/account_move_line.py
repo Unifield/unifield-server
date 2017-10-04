@@ -980,7 +980,38 @@ receivable, item have not been corrected, item have not been reversed and accoun
             self.write(cr, uid, ml_ids, {'corrected_upstream': True}, check=False, update_check=False, context=context)
         return True
 
+    def set_as_corrected(self, cr, uid, ji_id, manual=True, context=None):
+        """
+        Sets the JIs and its related AJIs as Corrected according to the following rules:
+        - if the JI or one of the AJIs has already been corrected it raises an error
+        - if manual = True, the Correction will be set as Manual (= the user will be able to reverse it manually)
+        """
+        if context is None:
+            context = {}
+        aal_obj = self.pool.get('account.analytic.line')
+        ji = self.browse(cr, uid, ji_id, fields_to_fetch=['corrected', 'move_id'], context=context)
+        # check that the JI isn't already corrected
+        if ji.corrected:
+            raise osv.except_osv(_('Error'), _('The entry %s has already been corrected.' % ji.move_id.name))
+        # check that none of the AJIs linked to the JI has already been reallocated
+        aji_reallocated_domain = [('move_id', '=', ji_id), ('is_reallocated', '=', True)]
+        if aal_obj.search_exist(cr, uid, aji_reallocated_domain, context=context):
+            raise osv.except_osv(_('Error'), _('One AJI related to the entry %s has already been corrected.' % ji.move_id.name))
+        # set the JI as corrected
+        manual_corr_vals = {'is_manually_corrected': manual,
+                            'corrected': True,  # is_corrigible will be seen as "False"
+                            'have_an_historic': True}
+        self.write(cr, uid, ji_id, manual_corr_vals, context=context)
+        # set the AJIs as corrected (get the aji_ids AFTER aml correction to get the new AJI ids generated)
+        aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji_id)], order='NO_ORDER', context=context)
+        aal_obj.write(cr, uid, aji_ids, {'is_reallocated': True}, context=context)
+        # Set the "corrected_upstream" flag on the JI if necessary
+        # (so that project lines marked as corrected in a upper level can't be "uncorrected" in project)
+        self.corrected_upstream_marker(cr, uid, [ji_id], context=context)
+
+
 account_move_line()
+
 
 class account_move(osv.osv):
     _name = 'account.move'

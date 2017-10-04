@@ -369,24 +369,9 @@ class journal_items_corrections(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         aml_obj = self.pool.get('account.move.line')
-        aal_obj = self.pool.get('account.analytic.line')
         wizard = self.browse(cr, uid, ids[0], context=context)
         ji_id = wizard.move_line_id.id
-        # check that none of the AJIs linked to the JI has already been reallocated
-        aji_reallocated_domain = [('move_id', '=', ji_id), ('is_reallocated', '=', True)]
-        if aal_obj.search_exist(cr, uid, aji_reallocated_domain, context=context):
-            raise osv.except_osv(_('Error'), _('One AJI related to this entry has already been corrected.'))
-        # set the JI as corrected
-        manual_corr_vals = {'is_manually_corrected': True,
-                            'corrected': True,  # is_corrigible will be seen as "False"
-                            'have_an_historic': True}
-        aml_obj.write(cr, uid, ji_id, manual_corr_vals, context=context)
-        # set the AJIs as corrected (get the aji_ids AFTER aml correction to get the new AJI ids generated)
-        aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji_id)], order='NO_ORDER', context=context)
-        aal_obj.write(cr, uid, aji_ids, {'is_reallocated': True}, context=context)
-        # Set the "corrected_upstream" flag on the JI if necessary
-        # (so that project lines marked as corrected in a upper level can't be "uncorrected" in project)
-        aml_obj.corrected_upstream_marker(cr, uid, [ji_id], context=context)
+        aml_obj.set_as_corrected(cr, uid, ji_id, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
     def action_confirm(self, cr, uid, ids, context=None, distrib_id=False):
