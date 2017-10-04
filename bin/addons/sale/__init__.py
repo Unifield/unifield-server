@@ -36,7 +36,18 @@ SALE_ORDER_LINE_STATE_SELECTION = [
      ('cancel_r', 'Cancelled-r'),
 ]
 
-SALE_ORDER_STATE_SELECTION = SALE_ORDER_LINE_STATE_SELECTION + [('draft_p', 'Draft-p'), ('validated_p', 'Validated-p'), ('sourced_p', 'Sourced-p'), ('confirmed_p', 'Confirmed-p')]
+SALE_ORDER_STATE_SELECTION = [
+     ('draft', 'Draft'),
+     ('draft_p', 'Draft-p'),
+     ('validated', 'Validated'),
+     ('validated_p', 'Validated-p'),
+     ('sourced', 'Sourced'),
+     ('sourced_p', 'Sourced-p'),
+     ('confirmed', 'Confirmed'),
+     ('confirmed_p', 'Confirmed-p'),
+     ('done', 'Closed'),
+     ('cancel', 'Cancelled'),
+]
 
 SALE_ORDER_SPLIT_SELECTION = [
      ('original_sale_order', 'Original'),
