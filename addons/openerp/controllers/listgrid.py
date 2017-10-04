@@ -343,6 +343,9 @@ class List(SecuredController):
         ctx = dict((params.context or {}), **rpc.session.context)
 
         ids = params.id or []
+        if not isinstance(ids, list):
+            ids = [ids]
+
         model = params.model
 
         list_grid = params.list_grid or '_terp_list'
