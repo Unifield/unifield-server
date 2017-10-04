@@ -28,7 +28,7 @@ import decimal_precision as dp
 import netsvc
 import time
 
-from purchase_override import PURCHASE_ORDER_STATE_SELECTION
+from purchase import PURCHASE_ORDER_STATE_SELECTION
 
 class tender(osv.osv):
     '''
@@ -1140,7 +1140,7 @@ class tender_line(osv.osv):
                 ('order_type', '=', 'regular'),
             ]
             res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
-        
+
         if res_id and isinstance(res_id, list):
             res_id = res_id[0]
 

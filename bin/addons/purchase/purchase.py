@@ -33,7 +33,7 @@ import threading
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from workflow.wkf_expr import _eval_expr
-from purchase_override import PURCHASE_ORDER_STATE_SELECTION
+from . import PURCHASE_ORDER_STATE_SELECTION
 from account_override.period import get_period_from_date
 from account_override.period import get_date_in_period
 
@@ -562,7 +562,7 @@ class purchase_order(osv.osv):
         'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, states={'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
         'state': fields.function(_get_less_advanced_pol_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
-                                 'purchase.order.line': (_get_order, ['state'], 10), 
+                                     'purchase.order.line': (_get_order, ['state'], 10), 
                                  },
                                  select=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception."
                                  ),
@@ -596,9 +596,9 @@ class purchase_order(osv.osv):
         'company_id': fields.many2one('res.company','Company',required=True,select=1),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
         'fixed_order_type': fields.function(_is_fixed_type, method=True, type='char', size=256, string='Possible order types', store={
-                'purchase.order': (lambda obj, cr, uid, ids, c={}: ids, ['order_line'], 10),
-                'purchase.order.line': (_order_line_order_type, ['order_id'], 10),
-            },
+            'purchase.order': (lambda obj, cr, uid, ids, c={}: ids, ['order_line'], 10),
+            'purchase.order.line': (_order_line_order_type, ['order_id'], 10),
+        },
         ),
     }
     _defaults = {
@@ -1501,7 +1501,7 @@ class purchase_order(osv.osv):
         # as it might be needed to update the read-only view...
         raw_display_strings_state = dict(PURCHASE_ORDER_STATE_SELECTION)
         display_strings_state = dict([(k, _(v)) \
-                                for k,v in raw_display_strings_state.items()])
+                                      for k,v in raw_display_strings_state.items()])
 
         display_strings = {}
         display_strings["state"] = display_strings_state

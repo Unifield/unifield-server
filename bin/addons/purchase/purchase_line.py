@@ -7,8 +7,8 @@ import netsvc
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
-from purchase_override import PURCHASE_ORDER_STATE_SELECTION, PURCHASE_ORDER_LINE_STATE_SELECTION
-
+from . import PURCHASE_ORDER_STATE_SELECTION
+from . import PURCHASE_ORDER_LINE_STATE_SELECTION
 from account_override.period import get_period_from_date
 
 
@@ -275,11 +275,11 @@ class purchase_order_line(osv.osv):
                                        \n* The \'Done\' state is set automatically when purchase order is set as done. \
                                        \n* The \'Cancelled\' state is set automatically when user cancel purchase order.'),
         'state_to_display': fields.function(_get_state_to_display, string='State', type='text', method=True, readonly=True,
-            help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
+                                            help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
                \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                \n* The \'Done\' state is set automatically when purchase order is set as done. \
                \n* The \'Cancelled\' state is set automatically when user cancel purchase order.'
-        ),
+                                            ),
         'resourced_original_line': fields.many2one('purchase.order.line', 'Original line', readonly=True, help='Original line from which the current one has been cancel and ressourced'),
         'display_resourced_orig_line': fields.function(_get_display_resourced_orig_line, method=True, type='char', readonly=True, string='Original PO line', help='Original line from which the current one has been cancel and ressourced'),
         'invoice_lines': fields.many2many('account.invoice.line', 'purchase_order_line_invoice_rel', 'order_line_id',
@@ -1467,7 +1467,7 @@ class purchase_order_line_state(osv.osv):
 
         return min_state[0] if min_state else False
 
-        
+
     def get_sequence(self, cr, uid, ids, state, context=None):
         '''
         return the sequence of the given state
