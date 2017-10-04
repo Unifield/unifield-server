@@ -74,6 +74,7 @@ class purchase_order_line_sync(osv.osv):
         order_name = sol_dict['order_id']['name']
         pol_values['order_id'] = po_ids[0]
         pol_values['sync_linked_sol'] = sol_dict['sync_local_id']
+        pol_values['modification_comment'] = sol_dict.get('modification_comment', False)
         if 'line_number' in pol_values:
             del(pol_values['line_number'])
 
@@ -210,7 +211,6 @@ class purchase_order_line_to_split(osv.osv):
             ondelete='cascade',
         ),
         'original_qty': fields.float(
-            digits=(16,2),
             string='Original qty',
             required=False,
             readonly=True,
@@ -464,7 +464,7 @@ class purchase_order_sync(osv.osv):
         name = self.browse(cr, uid, po_id, context=context).name
         message = "The PO " + name + " is created by sync and linked to the FO " + so_info.name + " by Push Flow at " + source
         self._logger.info(message)
-        
+
         return message
 
     def check_existing_po(self, cr, uid, source, so_dict):

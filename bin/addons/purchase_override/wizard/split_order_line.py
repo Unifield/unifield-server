@@ -23,7 +23,6 @@ from osv import osv, fields
 from product._common import rounding
 
 from tools.translate import _
-import netsvc
 
 class split_purchase_order_line_wizard(osv.osv_memory):
     _name = 'split.purchase.order.line.wizard'
@@ -51,7 +50,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
 
     _columns = {
         'purchase_line_id': fields.many2one('purchase.order.line', string='Line Id', readonly=True),
-        'original_qty': fields.float(digits=(16,2), string='Original Quantity', readonly=True),
+        'original_qty': fields.float(string='Original Quantity', readonly=True),
         'old_line_qty': fields.float(digits=(16,2), string='Old line quantity', readonly=True),
         'new_line_qty': fields.float(digits=(16,2), string='New line quantity', required=True),
         'impact_so_split_po_line_wizard': fields.boolean('Impact Field Order', help='Impact corresponding Field Order by creating a corresponding Field Order line.'),
@@ -72,8 +71,6 @@ class split_purchase_order_line_wizard(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        wf_service = netsvc.LocalService("workflow")
 
         context.update({'split_line': True})
         context.update({'keepDateAndDistrib': True})

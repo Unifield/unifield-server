@@ -684,6 +684,25 @@ class procurement_request_line(osv.osv):
                 res[pol['id']] = False
         return res
 
+    def _check_changed(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Check if an original value has been changed
+        '''
+        if context is None:
+            context = {}
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            changed = False
+            if line.modification_comment or (line.original_qty and line.original_price and line.original_uom):
+                if line.modification_comment or line.product_uom_qty != line.original_qty \
+                        or line.price_unit != line.original_price or line.product_uom != line.original_uom:
+                    changed = True
+
+            res[line.id] = changed
+
+        return res
+
     _columns = {
         'cost_price': fields.float(string='Cost price', digits_compute=dp.get_precision('Sale Price Computation')),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
@@ -696,6 +715,10 @@ class procurement_request_line(osv.osv):
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
         'product_ok': fields.boolean('Product selected'),
         'comment_ok': fields.boolean('Comment written'),
+        'original_qty': fields.float('Original Qty'),
+        'original_price': fields.float('Original Price'),
+        'original_uom': fields.many2one('product.uom', 'Original UOM'),
+        'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
     }
 
     def _get_planned_date(self, cr, uid, c=None):

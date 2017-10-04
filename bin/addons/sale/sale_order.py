@@ -1938,6 +1938,7 @@ class sale_order_line(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'soq_updated': fields.boolean(string='SoQ updated', readonly=True),
         'set_as_sourced_n': fields.boolean(string='Sourced-n line', help='Line created in a further PO, so we have to create it back in the flow'), # used for wkf transition
+        'modification_comment': fields.char('Modification Comment', size=1024),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2061,6 +2062,10 @@ class sale_order_line(osv.osv):
             'invoice_lines': [],
             'set_as_sourced_n': False,
         })
+
+        for x in ['modification_comment', 'original_qty', 'original_price', 'original_uom']:
+            if x not in default:
+                default[x] = False
 
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 

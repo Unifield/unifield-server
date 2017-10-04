@@ -18,7 +18,7 @@ class sale_order_line(osv.osv):
             if not dest_ok:
                 raise osv.except_osv(_('Error'), _('No destination found for this line: %s.') % (line.name or '',))
         return dest_ok
-        
+
 
     def analytic_distribution_checks(self, cr, uid, ids, context=None):
         """
@@ -111,7 +111,7 @@ class sale_order_line(osv.osv):
                 self.write(cr, uid, sol.id, {
                     'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, sol.order_id.analytic_distribution_id.id, {}, context=context),
                 })
-                
+
         return True
 
 
@@ -168,7 +168,7 @@ class sale_order_line(osv.osv):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'sourced'}, context=context)
-        
+
         # generate sync message manually :
         return_info = {}
         for sol_id in ids:
@@ -327,8 +327,11 @@ class sale_order_line(osv.osv):
                 if sol.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] and sol.type != 'make_to_stock':
                     to_write['type'] = 'make_to_stock'
 
-            elif sol.procurement_request: # in case of IR
-                pass #TODO
+            elif sol.procurement_request:  # in case of IR
+                to_write['original_qty'] = sol.product_uom_qty
+                to_write['original_price'] = sol.price_unit
+                to_write['original_uom'] = sol.product_uom.id
+                # pass #TODO
 
             if to_write:
                 self.write(cr, uid, sol.id, to_write, context=context)
@@ -352,7 +355,7 @@ class sale_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
 
         return True
@@ -373,7 +376,7 @@ class sale_order_line(osv.osv):
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
@@ -395,12 +398,12 @@ class sale_order_line(osv.osv):
         return_info = {}
         for sol_id in ids:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         # generate sync message for resourced line:
         self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', resourced_sol, return_info, 
-            'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
-        
+                                                                              'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+
         return True
 
 
@@ -422,7 +425,7 @@ class sale_order(osv.osv):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
-            
+
         for so in self.browse(cr, uid, ids, context=context):
             for sol_id in [sol.id for sol in so.order_line]:
                 wf_service.trg_validate(uid, 'sale.order.line', sol_id, 'validated', cr)

@@ -107,6 +107,11 @@ class purchase_order_line(osv.osv):
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
                 'type': 'make_to_order',
             }
+
+            # update modification comment if it is set
+            if pol.modification_comment:
+                sol_values['modification_comment'] = pol.modification_comment
+
             if create_line:
                 sol_values.update({
                     'order_id': so_id,
@@ -199,7 +204,7 @@ class purchase_order_line(osv.osv):
 
             # update current PO line:
             self.write(cr, uid, pol.id, {'link_so_id': fo_id, 'linked_sol_id': new_sol_id}, context=context)
-        
+
         return new_sol_id
 
 
@@ -284,6 +289,20 @@ class purchase_order_line(osv.osv):
             po_to_check[pol.order_id.id] = True
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_v', cr)
+            # update original qty, unit price, uom and currency on line level
+            # doesn't update original qty and uom if already set (from IR)
+            line_update = {
+                'original_price': pol.price_unit,
+                'original_currency_id': pol.currency_id.id
+            }
+            if not pol.original_qty:
+                line_update['original_qty'] = pol.product_qty
+
+            if not pol.original_uom:
+                line_update['original_uom'] = pol.product_uom.id
+
+            self.write(cr, uid, pol.id, line_update, context=context)
+
 
         if po_to_check:
             self.pool.get('purchase.order').check_if_stock_take_date_with_esc_partner(cr, uid, po_to_check.keys(), context=context)
@@ -312,8 +331,8 @@ class purchase_order_line(osv.osv):
                 wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_sy', cr)
 
         return True
-        
-        
+
+
     def action_sourced_v(self, cr, uid, ids, context=None):
         '''
         wkf method when PO line get the sourced_v state
@@ -568,6 +587,6 @@ class purchase_order(osv.osv):
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
 
         return True
-        
+
 
 purchase_order()

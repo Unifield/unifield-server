@@ -247,7 +247,29 @@ class purchase_order_line(osv.osv):
         if context.get('purchase_id', False):
             po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
             res = po.delivery_requested_date
+        return res
 
+    def _check_changed(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Check if an original value has been changed
+        '''
+        if context is None:
+            context = {}
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            changed = False
+            if line.modification_comment\
+                    or (line.original_qty and line.original_price and line.original_uom and line.original_currency_id):
+                if line.modification_comment or line.product_qty != line.original_qty \
+                        or line.price_unit != line.original_price or line.product_uom != line.original_uom\
+                        or line.currency_id != line.original_currency_id:
+                    changed = True
+            elif line.original_qty and line.original_uom and not line.original_price:  # From IR
+                if line.original_qty != line.product_qty or line.original_uom.id != line.product_uom.id:
+                    changed = True
+
+            res[line.id] = changed
         return res
 
     def _get_default_state(self, cr, uid, context=None):
@@ -265,7 +287,6 @@ class purchase_order_line(osv.osv):
             return po.state
 
         return False
-
 
     _columns = {
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
@@ -358,6 +379,12 @@ class purchase_order_line(osv.osv):
         'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
         'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
 
+        'original_qty': fields.float('Original Qty'),
+        'original_price': fields.float('Original Price'),
+        'original_uom': fields.many2one('product.uom', 'Original UOM'),
+        'original_currency_id': fields.many2one('res.currency', 'Original Currency'),
+        'modification_comment': fields.char('Modification Comment', size=1024),
+        'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
     }
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
@@ -970,11 +997,10 @@ class purchase_order_line(osv.osv):
             default = {}
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': []})
-        if 'origin' not in default:
-            default.update({'origin': False})
 
-        if 'move_dest_id' not in default:
-            default.update({'move_dest_id': False})
+        for field in ['origin', 'move_dest_id', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment']:
+            if field not in default:
+                default[field]= False
 
         default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False})
 
