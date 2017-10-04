@@ -108,7 +108,7 @@
                 <form string="Sales Order" noteditable="import_in_progress==True" hide_delete_button="1">
                     <group col="4" colspan="4">
                         <field name="name" required="1"/>
-                        <field name="date_order"/>
+                        <field name="date_order" attrs="{'readonly': [('state_hidden_sale_order', 'not in', ['draft'])]}" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)"/>
                         <field name="invoiced" string="Invoiced" invisible="1"/>
                         <field name="warehouse_id" required="1"/>
                         <field name="client_order_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"/>
@@ -184,7 +184,7 @@
                                             <field name="functional_subtotal"/>
                                             <field name="functional_currency_id"/>
                                             <field name="discount"/>
-                                            <field name="type" on_change="equested_type_change(product_id, type)"/>
+                                            <field name="type" on_change="requested_type_change(product_id, type)"/>
                                             <field name="so_state_stored" invisible="True"/>
                                             <field name="date_planned" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
                                             <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}"/>
