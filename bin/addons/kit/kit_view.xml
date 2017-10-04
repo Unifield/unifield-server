@@ -410,22 +410,6 @@
 		<menuitem action="kit_composition_real_action" id="kit_composition_real_menu" parent="kit_real" sequence="1" />
 		<menuitem action="kit_composition_real_item_action" id="kit_composition_real_item_menu" parent="kit_real" sequence="10" />
 		
-		<record id="purchase_order_form" model="ir.ui.view">
-            <field name="name">purchase.order.form</field>
-            <field name="model">purchase.order</field>
-			<field name="type">form</field>
-			<field name="inherit_id" ref="purchase.purchase_order_form" />
-            <field name="priority">20</field>
-			<field name="arch" type="xml">
-				<data>
-					<field name="price_subtotal" position="after">
-						<field name="kit_pol_check" invisible="True" />
-						<field name="po_state_stored" invisible="True" />
-						<button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check', '=', False), ('po_state_stored', '!=', 'confirmed')]}" />
-					</field>
-				</data>
-			</field>
-		</record>
 		
         <record id="view_order_form_inherit" model="ir.ui.view">
             <field name="name">sale.order.form.inherit</field>

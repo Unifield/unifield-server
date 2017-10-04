@@ -266,8 +266,5 @@
         						   'picking_type': 'internal_move'}</field>
         </record>
         
-        <delete model="ir.actions.report.xml" id="stock.report_move_labels" />
-        <delete model="ir.values" id="stock.ir_open_partial_move_wizard" />
-
     </data>
 </openerp>

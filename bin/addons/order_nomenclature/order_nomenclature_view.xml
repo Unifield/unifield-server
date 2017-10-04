@@ -175,46 +175,6 @@
 			</field>
 		</record>
 		
-		<record id="purchase_order_form" model="ir.ui.view">
-            <field name="name">purchase.order.form.inherit</field>
-            <field name="model">purchase.order</field>
-			<field name="type">form</field>
-			<field name="inherit_id" ref="purchase.purchase_order_form" />
-            <field name="priority">85</field>
-			<field name="arch" type="xml">
-				<data>
-					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='name']" position="replace">
-						<field name="default_name" />
-						<field name="inactive_error" invisible="1" />
-						<field name="comment" />
-					</xpath>
-					
-					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='default_name']" position="before">
-						<field name="default_code" />
-					</xpath>
-					
-					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='comment']" position="after">
-						<field name="nomenclature_description" />
-					</xpath>
-					
-					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='date_planned']" position="replace">
-					</xpath>
-					
-					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='price_unit']" position="replace">
-					</xpath>
-					
-					<xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='product_uom']" position="after">
-						<field name="date_planned" />
-						<field name="confirmed_delivery_date" />
-					</xpath>
-					
-					
-					
-				</data>
-			</field>
-		</record>
-
-
 
 	</data>
 </openerp>

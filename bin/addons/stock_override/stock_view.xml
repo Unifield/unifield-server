@@ -826,8 +826,6 @@
             </field>
         </record>
         
-        <delete model="ir.actions.act_window" id="stock.action_view_stock_fill_inventory" />
-        <delete model="ir.actions.act_window" id="stock.action_view_stock_merge_inventories" />
 
         <record id="purchase.stock_picking_in_inherit_purchase" model="ir.ui.view">
             <field name="name">Incoming Picking Inherited</field>

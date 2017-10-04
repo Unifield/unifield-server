@@ -242,19 +242,7 @@
                 </tree>
             </field>
         </record>
-        <record id="action_tracking_form" model="ir.actions.act_window">
-            <field name="name">Packs</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">stock.tracking</field>
-            <field name="view_type">form</field>
-            <field name="view_id" ref="view_tracking_tree"/>
-            <field name="help">This is the list of all your packs. When you select a Pack, you can get the upstream or downstream traceability of the products contained in the pack.</field>
-        </record>
         <menuitem id="menu_traceability" name="Traceability" parent="menu_stock_root" sequence="3"/>
-        <menuitem action="action_tracking_form" id="menu_action_tracking_form"
-            groups="base.group_extended"
-            sequence="6"
-            parent="menu_traceability"/>
 
         <record id="lot_line_tree" model="ir.ui.view">
             <field name="name">stock.tracking.tree</field>
@@ -1846,15 +1834,6 @@
             name="Related Picking"
             res_model="stock.picking"
             src_model="stock.move"/>
-
-        <act_window
-            context="{'search_default_future': 1,'search_default_product_id': [active_id]}"
-            domain="[('state','in',('waiting','confirmed','assigned'))]"
-            id="act_product_stock_move_futur_open"
-            name="Future Stock Moves"
-            res_model="stock.move"
-            src_model="product.product"
-            groups="base.group_extended"/>
 
         <record id="ir_act_product_location_open" model="ir.values">
             <field name="key2">tree_but_open</field>

@@ -42,7 +42,6 @@
     'init_xml': [],
     'update_xml': [
         'view/base.xml',
-        'view/purchase_view.xml',
         'view/sale_view.xml',
         'view/stock_view.xml',
         'view/delivery_mecanism_view.xml',
@@ -60,5 +59,5 @@
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
