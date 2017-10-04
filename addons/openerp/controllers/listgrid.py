@@ -383,10 +383,9 @@ class List(SecuredController):
                     cherrypy.session['wizard_parent_form'] = '/form'
                     cherrypy.session['wizard_parent_params'] = params
 
-                # TODO : correctly handle case here where multiple ids are
-                # given ...
-                # FIXME : untested piece of code, should be tested somehow
-                # before ending dev in this branch ...
+                # Only one ID used for now. To be adapted at some point if
+                # we need to support this kind of action on multiple ids at the
+                # same time.
                 id_ = ids[0] if ids else False
                 res = actions.execute_by_id(action_id, type=action_type, model=model, id=id_, ids=ids, context=ctx or {})
 
