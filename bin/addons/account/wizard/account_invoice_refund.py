@@ -241,11 +241,10 @@ class account_invoice_refund(osv.osv_memory):
 
                     # Refund cancel/modify: set the invoice JI/AJIs as Corrected by the system so that they can't be
                     # corrected manually. This must be done at the end of the refund process to handle the right AJI ids
-                    for aml in movelines:
-                        header_line = aml.account_id.id == inv.account_id.id and \
-                                      abs(abs(inv.amount_total) - abs(aml.amount_currency)) <= 10**-3
-                        if not header_line:  # don't display History Wizard on the header line
-                            account_m_line_obj.set_as_corrected(cr, uid, aml.id, manual=False, context=None)
+                    # get the list of move lines excluding invoice header
+                    ml_list = [ml.id for ml in movelines if not (ml.account_id.id == inv.account_id.id and
+                               abs(abs(inv.amount_total) - abs(ml.amount_currency)) <= 10**-3)]
+                    account_m_line_obj.set_as_corrected(cr, uid, ml_list, manual=False, context=None)
 
             if inv.type in ('out_invoice', 'out_refund'):
                 xml_id = 'action_invoice_tree3'

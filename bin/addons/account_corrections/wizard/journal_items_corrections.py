@@ -370,8 +370,7 @@ class journal_items_corrections(osv.osv_memory):
             ids = [ids]
         aml_obj = self.pool.get('account.move.line')
         wizard = self.browse(cr, uid, ids[0], context=context)
-        ji_id = wizard.move_line_id.id
-        aml_obj.set_as_corrected(cr, uid, ji_id, context=context)
+        aml_obj.set_as_corrected(cr, uid, [wizard.move_line_id.id], context=context)
         return {'type': 'ir.actions.act_window_close'}
 
     def action_confirm(self, cr, uid, ids, context=None, distrib_id=False):
