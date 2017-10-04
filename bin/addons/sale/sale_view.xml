@@ -202,8 +202,8 @@
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" 
                                             name="open_split_wizard" type="object" 
                                             attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}" />
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" 
-                                        attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
+                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" header="True" 
+                                            attrs="{'invisible': [('fake_state', '!=', 'draft')]}" />
                                     <button string="Delete" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object"
                                             attrs="{'invisible': [('fake_state', 'in', ('cancel', 'cancel_r' 'done'))]}" />
                                 </tree>

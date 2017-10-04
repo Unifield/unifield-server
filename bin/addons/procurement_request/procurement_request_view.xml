@@ -66,7 +66,7 @@
                     <notebook colspan="5">
                         <page string="Products">
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}">
+                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" o2m_selectable="2">
                                 <tree string="Products" editable="top" >
                                     <field name="product_id" on_change="requested_product_id_change(product_id, comment, parent.categ)" 
                                     context="available_for_restriction='consumption',search_default_not_restricted=1"
@@ -114,7 +114,8 @@
                                         icon="terp-stock_effects-object-colorize"
                                         attrs="{'invisible': [('fake_state', 'in', ('confirmed', 'cancel', 'cancel_r', 'done', 'exception'))]}"
                                         />
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
+                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" header="True"
+                                            attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                 </tree>
                                 <form>
                                    <field name="product_id" colspan="4" />
