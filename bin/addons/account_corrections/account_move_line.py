@@ -328,7 +328,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             ml = self.read(cr, uid, ids[0], ['is_manually_corrected', 'corrected_upstream'], context=context)
             if ml['is_manually_corrected']:
                 company = user_obj.browse(cr, uid, uid, context=context).company_id
-                level = company.instance_id and company.instance_id.level
+                level = company.instance_id and company.instance_id.level or ''
                 if not ml['corrected_upstream'] or level != 'project':
                     display_reverse_corr_wiz = True
         if display_reverse_corr_wiz:
