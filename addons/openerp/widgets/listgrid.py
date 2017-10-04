@@ -744,12 +744,13 @@ class Button(TinyInputWidget):
 
         self.width = attrs.get('width', 16)
 
+        self.header = attrs.get('header', False)
+
+
     def params_header(self):
 
-        visible = True if self.btype == "workflow" else False
-
         return dict(header=True,       \
-                    visible=visible    );
+                    visible=self.header);
 
     def params_from(self, data):
 
