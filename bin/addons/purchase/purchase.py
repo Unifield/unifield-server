@@ -242,9 +242,18 @@ class purchase_order(osv.osv):
 
         res = {}
         for po in self.browse(cr, uid, ids, context=context):
+            po_from_ir = False
+            po_from_fo = False
+            for pol in po.order_line:
+                # strange algorithm here (adaptation of what was existing before partial confirmation...)
+                if pol.linked_sol_id:
+                    po_from_ir = True
+                    if not pol.linked_sol_id.order_id.procurement_request:
+                        po_from_fo = True
+
             res[po.id] = {
-                'po_from_ir': False,
-                'po_from_fo': False,
+                'po_from_ir': po_from_ir,
+                'po_from_fo': po_from_fo,
             }
 
         return res
