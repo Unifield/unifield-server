@@ -1616,6 +1616,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'linked_sol_id': sourcing_line.id,
                         'analytic_distribution_id': anal_dist,
                         'link_so_id': sourcing_line.order_id.id,
+                        'nomen_manda_0': sourcing_line.nomen_manda_0.id or False,
+                        'nomen_manda_1': sourcing_line.nomen_manda_1.id or False,
+                        'nomen_manda_2': sourcing_line.nomen_manda_2.id or False,
+                        'nomen_manda_3': sourcing_line.nomen_manda_3.id or False,
                     }
                     if not sourcing_line.product_id:
                         pol_values['name'] = sourcing_line.comment
