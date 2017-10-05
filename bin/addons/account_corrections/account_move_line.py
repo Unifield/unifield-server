@@ -991,14 +991,18 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if isinstance(ji_ids, (int, long)):
             ji_ids = [ji_ids]
         aal_obj = self.pool.get('account.analytic.line')
+        # check that none of the AJIs linked to the JIs has already been reallocated
+        # This check must be done BEFORE any write on the JIs that would generate new AJIs
+        aji_reallocated_domain = [('move_id', 'in', ji_ids), ('is_reallocated', '=', True)]
+        aji_ko = aal_obj.search(cr, uid, aji_reallocated_domain, context=context, order='NO_ORDER', limit=1)
+        if aji_ko:
+            entry_seq = aal_obj.read(cr, uid, aji_ko[0], ['entry_sequence'], context=context)['entry_sequence']
+            raise osv.except_osv(_('Error'),
+                                 _('One AJI related to the entry %s has already been corrected.') % entry_seq)
         for ji in self.browse(cr, uid, ji_ids, fields_to_fetch=['corrected', 'move_id'], context=context):
             # check that the JI isn't already corrected
             if ji.corrected:
                 raise osv.except_osv(_('Error'), _('The entry %s has already been corrected.') % ji.move_id.name)
-            # check that none of the AJIs linked to the JI has already been reallocated
-            aji_reallocated_domain = [('move_id', '=', ji.id), ('is_reallocated', '=', True)]
-            if aal_obj.search_exist(cr, uid, aji_reallocated_domain, context=context):
-                raise osv.except_osv(_('Error'), _('One AJI related to the entry %s has already been corrected.') % ji.move_id.name)
             # set the JI as corrected
             manual_corr_vals = {'is_manually_corrected': manual,
                                 'corrected': True,  # is_corrigible will be seen as "False"
