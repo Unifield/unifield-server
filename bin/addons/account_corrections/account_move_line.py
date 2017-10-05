@@ -994,11 +994,11 @@ receivable, item have not been corrected, item have not been reversed and accoun
         for ji in self.browse(cr, uid, ji_ids, fields_to_fetch=['corrected', 'move_id'], context=context):
             # check that the JI isn't already corrected
             if ji.corrected:
-                raise osv.except_osv(_('Error'), _('The entry %s has already been corrected.' % ji.move_id.name))
+                raise osv.except_osv(_('Error'), _('The entry %s has already been corrected.') % ji.move_id.name)
             # check that none of the AJIs linked to the JI has already been reallocated
             aji_reallocated_domain = [('move_id', '=', ji.id), ('is_reallocated', '=', True)]
             if aal_obj.search_exist(cr, uid, aji_reallocated_domain, context=context):
-                raise osv.except_osv(_('Error'), _('One AJI related to the entry %s has already been corrected.' % ji.move_id.name))
+                raise osv.except_osv(_('Error'), _('One AJI related to the entry %s has already been corrected.') % ji.move_id.name)
             # set the JI as corrected
             manual_corr_vals = {'is_manually_corrected': manual,
                                 'corrected': True,  # is_corrigible will be seen as "False"
