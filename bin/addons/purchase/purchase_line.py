@@ -442,9 +442,6 @@ class purchase_order_line(osv.osv):
 
         po_info = {}
         for pol in self.browse(cr, uid, ids, context=context):
-            if not pol.product_id: # case of product with nomenclature description
-                continue
-
             po = pol.order_id
             if po.id not in po_info:
                 donation_intersection = po.order_type in ['donation_exp', 'donation_st'] and po.partner_type and po.partner_type == 'section'
