@@ -1606,10 +1606,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     # attach PO line:
                     pol_values = {
                         'order_id': po_to_use,
-                        'product_id': sourcing_line.product_id.id,
-                        'product_uom': sourcing_line.product_id.uom_id.id,
+                        'product_id': sourcing_line.product_id.id or False,
+                        'product_uom': sourcing_line.product_id and sourcing_line.product_id.uom_id.id or sourcing_line.product_uom.id,
                         'product_qty': sourcing_line.product_uom_qty,
-                        'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price,
+                        'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else (sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0),
                         'partner_id': sourcing_line.supplier.id,
                         'origin': sourcing_line.order_id.name,
                         'sale_order_line_id': sourcing_line.id,
@@ -1617,6 +1617,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'analytic_distribution_id': anal_dist,
                         'link_so_id': sourcing_line.order_id.id,
                     }
+                    if not sourcing_line.product_id:
+                        pol_values['name'] = sourcing_line.nomenclature_description
                     if sourcing_line.procurement_request:
                         pol_values.update({
                             'original_qty': sourcing_line.original_qty,
