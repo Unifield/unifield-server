@@ -1056,8 +1056,6 @@ class reverse_manual_correction_wizard(osv.osv_memory):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
         aml_obj = self.pool.get('account.move.line')
         aal_obj = self.pool.get('account.analytic.line')
         ji_id = context.get('active_id', False)
