@@ -1618,7 +1618,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'link_so_id': sourcing_line.order_id.id,
                     }
                     if not sourcing_line.product_id:
-                        pol_values['name'] = sourcing_line.nomenclature_description
+                        pol_values['name'] = sourcing_line.comment
                     if sourcing_line.procurement_request:
                         pol_values.update({
                             'original_qty': sourcing_line.original_qty,

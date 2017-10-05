@@ -341,7 +341,6 @@ class purchase_order_line(osv.osv):
 
             self.write(cr, uid, pol.id, line_update, context=context)
 
-
         if po_to_check:
             self.pool.get('purchase.order').check_if_stock_take_date_with_esc_partner(cr, uid, po_to_check.keys(), context=context)
 
