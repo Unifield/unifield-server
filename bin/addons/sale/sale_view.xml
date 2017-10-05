@@ -105,83 +105,98 @@
             <field name="model">sale.order</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Sales Order">
-                    <group col="6" colspan="4">
-                        <field name="name" required="1" />
-                        <field name="date_order"/>
+                <form string="Sales Order" noteditable="import_in_progress==True" hide_delete_button="1">
+                    <group col="4" colspan="4">
+                        <field name="name" required="1"/>
+                        <field name="date_order" attrs="{'readonly': [('state_hidden_sale_order', 'not in', ['draft'])]}" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)"/>
                         <field name="invoiced" string="Invoiced" invisible="1"/>
-                        <field name="warehouse_id" required="1" />
-                        <field name="client_order_ref" attrs= "{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
-                        <field name="shipped"/>
-                        <field name="is_a_counterpart" invisible="1" />
-                        <field name="fo_created_by_po_sync" invisible="1" />
-                        <field name="order_type" attrs="{'readonly': [('fo_created_by_po_sync', '=', True), ('state', '=', 'draft')]}"/>
-                        <field name="priority" />
-                        <field name="categ" on_change="onchange_categ(categ)" />
+                        <field name="warehouse_id" required="1"/>
+                        <field name="client_order_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"/>
+                        <field name="shipped" invisible="1"/>
+                        <field name="internal_type" invisible="1"/>
+                        <field name="picked_rate" invisible="1"/>
+                        <field name="is_a_counterpart" invisible="1"/>
+                        <field name="fo_created_by_po_sync" invisible="1"/>
+                        <field name="order_type" attrs="{'readonly': [('fo_created_by_po_sync', '=', True), ('state', '=', 'draft')]}" on_change="onchange_order_type(order_type, partner_id)"/>
+                        <field name="sourcing_trace_ok" invisible="1"/>
+                        <field name="priority"/>
+                        <field name="categ" on_change="onchange_categ(categ)"/>
                         <group colspan="2" col="2">
-                            <field name="fo_to_resource" invisible="1" />
-                            <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')], 'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('order_type', '!=', 'loan')]}" />
-                            <field name="parent_order_name" readonly="True" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
+                            <field name="fo_to_resource" invisible="1"/>
+                            <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')], 'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('order_type', '!=', 'loan')]}"/>
+                            <field name="parent_order_name" readonly="True" attrs="{'invisible': [('fo_to_resource', '=', False)]}"/>
                         </group>
-                        <field name="details" />
-                        <field name="noinvoice" invisible="1" />
+                        <field name="details"/>
+                        <field name="noinvoice" invisible="1"/>
                     </group>
-                        <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
-                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
-                            <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft,draft_p,validated,validated_p"/>
-                        </group>
-                        <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
-                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
-                            <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft,draft_p,validated,validated_p"/>
-                        </group>
-                        <field name="analytic_distribution_id" invisible="1"/>
-                        <group colspan="3"/>
+                    <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft,draft_p,validated,validated_p"/>
+                    </group>
+                    <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft,draft_p,validated,validated_p"/>
+                    </group>
+                    <field name="analytic_distribution_id" invisible="1"/>
+                    <group colspan="3"/>
                     <notebook colspan="5">
                         <page string="Sales Order">
-                            <field name="company_id2" invisible="1" />
-                            <field name="partner_id" on_change="onchange_partner_id(partner_id, order_type)" context="{'search_default_customer':1}" required="1" domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]"/>
-                            <field domain="[('partner_id','=',partner_id)]" name="partner_order_id"/>
-                            <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" groups="base.group_extended"/>
-                            <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" groups="base.group_extended"/>
-                            <field domain="[('type','=','sale')]" name="pricelist_id" groups="base.group_extended"/>
+                            <field name="company_id2" invisible="1"/>
+                            <field name="partner_id" on_change="onchange_partner_id(partner_id,order_type,date_order,est_transport_lead_time,context)" context="{'search_default_customer':1}" domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]"/>
+                            <field name="partner_type"/>
+                            <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" required="1"/>
+                            <field domain="[('partner_id','=',partner_id)]" name="partner_order_id" required="1"/>
+                            <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" required="1"/>
+                            <group colspan="2" col="3">
+                                <field name="no_line" invisible="1"/>
+                                <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'not in', ['draft', 'validated'])]}" domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]"/>
+                                <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'not in', ['draft', 'validated'])]}"/>
+                            </group>
+                            <group colspan="2" col="3">
+                                <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
+                                <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}"/>
+                            </group>
+                            <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                             <newline/>
-                            <field colspan="4" mode="tree,form,graph" name="order_line" nolabel="1" widget="one2many_list">
+                            <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                                <button name="wizard_import_fo_line" string="Import lines" icon="gtk-dnd" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                                <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object"/>
+                                <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>
+                                <newline/>
+                                <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object"/>
+                            </group>
+                            <field colspan="4" mode="tree,form,graph" name="order_line" nolabel="1" widget="one2many_list" context="{'sale_id': active_id, 'pricelist_id': pricelist_id, 'categ': categ, 'partner_id': partner_id}" on_change="order_line_change(order_line)">
                                 <form string="Sales Order Lines">
                                     <notebook>
                                         <page string="Order Line">
-                                            <field colspan="4"
-                                                context="categ=parent.categ,partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,warehouse=parent.warehouse_id,uom=product_uom,available_for_restriction=parent.partner_type,search_default_not_restricted=1"
-                                                name="product_id"
-                                                on_change="product_id_on_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], True, parent.date_order, product_packaging, parent.fiscal_position, False, context)" 
-                                                domain="[('sale_ok', '=', True)]"
-                                                default_focus="1"
-                                                />
-                                            <field
-                                                context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom"
-                                                name="product_uom_qty"
-                                                on_change="product_id_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, True)"
-                                                />
-                                                <field groups="product.group_uos" name="product_uos_qty" invisible="1" />
-                                                <field groups="product.group_uos" name="product_uos" invisible="1" />
-                                            <field name="product_uom"
-                                                on_change="product_uom_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order)" 
-                                                domain="[('uom_by_product', '=', product_id)]" />
-                                            <field
-                                                name="product_packaging"
-                                                context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom"
-                                                on_change="product_id_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, False)"
-                                                domain="[('product_id','=',product_id)]"
-                                                groups="base.group_extended"/>
-
-                                            <field colspan="4" name="name"/>
-                                            <field name="price_unit"/>
-                                            <field name="discount"/>
-                                            <field name="type" groups="base.group_extended"/>
-                                            <field name="delay" groups="base.group_extended"/>
-                                            <field name="display_resourced_orig_line"/>
+                                            <field colspan="4" context="categ=parent.categ,partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,warehouse=parent.warehouse_id,uom=product_uom,available_for_restriction=parent.partner_type,search_default_not_restricted=1" name="product_id" on_change="product_id_on_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], True, parent.date_order, product_packaging, parent.fiscal_position, False, context)" domain="[('sale_ok', '=', True)]" default_focus="1"/>
+                                            <field name="product_uom_qty" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_qty_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, True)"/>
+                                            <field groups="product.group_uos" name="product_uos_qty" invisible="1"/>
+                                            <field groups="product.group_uos" name="product_uos" invisible="1"/>
+                                            <field name="product_uom" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" domain="[('uom_by_product', '=', product_id)]"/>
+                                            <field name="product_packaging" context="partner_id=parent.partner_id,quantity=product_uom_qty,pricelist=parent.pricelist_id,shop=parent.shop_id,uom=product_uom" on_change="product_packaging_change(parent.pricelist_id,product_id,product_uom_qty,product_uom,product_uos_qty,product_uos,name,parent.partner_id, 'lang' in context and context['lang'], False, parent.date_order, product_packaging, parent.fiscal_position, False)" domain="[('product_id','=',product_id)]" invisible="1"/>
                                             <newline/>
-                                            <separator colspan="5" string="Taxes"/>
-                                            <field colspan="4" name="tax_id" nolabel="1" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
+                                            <field name="price_unit"/>
+                                            <field name="supplier" invisible="True"/>
+                                            <field name="po_cft" invisible="True"/>
+                                            <field name="currency_id" invisible="False"/>
+                                            <newline/>
+                                            <field name="functional_subtotal"/>
+                                            <field name="functional_currency_id"/>
+                                            <field name="discount"/>
+                                            <field name="type" on_change="requested_type_change(product_id, type)"/>
+                                            <field name="so_state_stored" invisible="True"/>
+                                            <field name="date_planned" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}"/>
+                                            <field name="confirmed_delivery_date" attrs="{'readonly': [('so_state_stored', 'in', ('cancel','done'))]}"/>
+                                            <field name="stock_take_date"/>
+                                            <field name="display_resourced_orig_line"/>
+                                            <field name="modification_comment"/>
+                                            <newline/>
+                                            <field name="vat_ok" invisible="1"/>
+                                            <group colspan="4" col="4" attrs="{'invisible': [('vat_ok', '=', False)]}">
+                                                <separator colspan="5" string="Taxes"/>
+                                                <field colspan="4" name="tax_id" nolabel="1" domain="[('parent_id','=',False),('type_tax_use','&lt;&gt;','purchase')]"/>
+                                            </group>
                                             <group colspan="4" col="5" groups="base.group_extended">
                                                 <separator colspan="5" string="States"/>
                                                 <field name="state"/>
@@ -190,93 +205,201 @@
                                                  </group>
                                             </group>
                                         </page>
+                                        <page string="Nomenclature Selection">
+                                            <group colspan="4" col="2">
+                                                <field name="nomenclature_code" colspan="2" invisible="True"/>
+                                                <field name="nomenclature_description" colspan="2" readonly="True"/>
+                                                <field name="comment" colspan="2" attrs="{'required':[('product_id', '=', False)]}"/>
+                                            </group>
+                                            <newline/>
+                                            <group colspan="2" col="5">
+                                                <separator string="Mandatory Levels" colspan="5"/>
+                                                <group colspan="4" col="2">
+                                                    <field name="nomen_manda_0" domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" widget="selection" on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}"/>
+                                                    <field name="nomen_manda_1" domain="[('level', '=', '1'), ('type', '=', 'mandatory')]" widget="selection" get_selection="get_nomen" on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}"/>
+                                                    <field name="nomen_manda_2" domain="[('level', '=', '2'), ('type', '=', 'mandatory'), ('category_id', '!=', False)]" widget="selection" get_selection="get_nomen" on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" attrs="{'required':[('product_id', '=', False)], 'readonly':[('product_id', '!=', False)]}"/>
+                                                    <field name="nomen_manda_3" domain="[('level', '=', '3'), ('type', '=', 'mandatory')]" widget="selection" get_selection="get_nomen" on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                                </group>
+                                            </group>
+                                            <group colspan="2" col="5">
+                                                <separator string="Optional Levels" colspan="4"/>
+                                                <group colspan="4" col="2">
+                                                    <field name="nomen_sub_0" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                                    <field name="nomen_sub_1" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                                    <field name="nomen_sub_2" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                                    <field name="nomen_sub_3" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                                    <field name="nomen_sub_4" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                                    <field name="nomen_sub_5" domain="[('type', '=', 'optional'), ('id', 'in', [0])]" widget="selection" get_selection="get_sub_nomen" on_change="onChangeSubNom(nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, nomen_sub_0, nomen_sub_1, nomen_sub_2, nomen_sub_3, nomen_sub_4, nomen_sub_5)" attrs="{'readonly':[('product_id', '!=', False)]}"/>
+                                                </group>
+                                            </group>
+                                        </page>
                                         <page string="Notes">
                                             <field colspan="4" name="notes" nolabel="1"/>
                                         </page>
                                     </notebook>
+                                    <newline/>
+                                    <field name="to_correct_ok" readonly="1" invisible="1"/>
+                                    <field name="show_msg_ok" readonly="1" invisible="1"/>
+                                    <field name="inactive_product" invisible="1"/>
+                                    <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
+                                        <html>
+                                            <style>
+                                    #error_message_unifield 
+                                    {
+                                        border-style: solid;
+                                        border-width: 1px;
+                                        border-radius: 5px;
+                                        border-color: black;
+                                        background-color: #F0EBA4;
+                                    }
+
+                                    #view_form #error_message_unifield .readonlyfield
+                                    {
+                                        border-style: none;
+                                        padding: 5px;
+                                        color: red;
+                                        background-color: #F0EBA4;
+                                        font-weight: bold;
+                                        text-transform: uppercase;
+                                        width: 98%%;
+                                    }
+
+                                    #error_message_unifield p, #error_message_unifield span
+                                    {
+                                        height: 1em;
+                                        min-height: 1em;
+                                        color: red;
+                                        font-weight: bold;
+                                        text-transform: uppercase;
+                                        padding: 5px;
+                                        width: 90%%;
+                                    }
+                                </style>
+                                            <div id="error_message_unifield">
+                                                <field name="text_error" nolabel="1" readonly="1" colspan="4" attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
+                                                <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="6"/>
+                                            </div>
+                                        </html>
+                                    </group>
+                                    <newline/>
                                 </form>
-                                <tree string="Sales Order Lines" hide_delete_button="True" >
-                                    <field colspan="4" name="name"/>
+                                <tree string="Sales Order Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True;blue:soq_updated == True">
+                                    <field name="line_number"/>
+                                    <field name="default_code"/>
+                                    <field name="default_name"/>
+                                    <field name="comment"/>
+                                    <field name="nomenclature_description"/>
                                     <field name="product_uom_qty" string="Qty"/>
                                     <field name="product_uom" string="UoM"/>
+                                    <field name="kc_dg"/>
+                                    <field name="date_planned"/>
+                                    <field name="confirmed_delivery_date"/>
                                     <field name="discount"/>
-                                    <field name="price_unit"/>
                                     <field name="stock_take_date"/>
                                     <field name="price_subtotal"/>
-				    <button name="button_analytic_distribution" string="Analytical distribution" type="object" icon="terp-stock_symbol-selection"/>
-				    <field name="analytic_distribution_state_recap" />
-				    <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
-                                    <field name="fake_state" invisible="1" />
+                                    <field name="currency_id"/>
+                                    <field name="kit_pol_check_sale_order_line" invisible="True"/>
+                                    <field name="so_state_stored" invisible="True"/>
+                                    <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check_sale_order_line', '=', False), ('so_state_stored', 'not in', ['draft', 'validated'])]}"/>
+                                    <button name="button_analytic_distribution" string="Analytical distribution" type="object" icon="terp-stock_symbol-selection"/>
+                                    <field name="analytic_distribution_state_recap"/>
+                                    <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
+                                    <field name="fake_state" invisible="1"/>
                                     <field name="state_to_display"/>
-                                    <button string="Split line" icon="terp-stock_effects-object-colorize" 
-                                            name="open_split_wizard" type="object" 
-                                            attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}" />
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" 
-                                        attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
-                                    <button string="Delete" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object"
-                                            attrs="{'invisible': [('fake_state', 'in', ('cancel', 'cancel_r' 'done'))]}" />
+                                    <field name="to_correct_ok" invisible="1"/>
+                                    <field name="inactive_product" invisible="1"/>
+                                    <field name="soq_updated" invisible="1" readonly="1"/>
+                                    <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
+                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
+                                    <button string="Delete" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'in', ('cancel', 'cancel_r' 'done'))]}"/>
                                 </tree>
                             </field>
                             <newline/>
-                            <group col="13" colspan="10">
-                                <field name="amount_untaxed" sum="Untaxed amount"/>
-                                <field name="amount_tax"/>
-                                <field name="amount_total"/>
-                                <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
-                                <button name="%(action_view_sale_advance_payment_inv)d" string="Advance Invoice"
-                                    type="action" icon="gtk-execute" states="draft,manual" groups="base.group_extended"/>
-                            </group>
-                            <group col="13" colspan="4">
-                                <field name="state"/>
-                                <button name="invoice_recreate" states="invoice_except" string="Recreate Invoice" icon="gtk-go-forward"/>
-                                <button name="invoice_corrected" states="invoice_except" string="Ignore Exception" icon="gtk-apply"/>
-                                <button name="ship_recreate" states="shipping_except" string="Recreate Packing" icon="gtk-ok"/>
-                                <button name="ship_corrected" states="shipping_except" string="Ignore Exception" icon="gtk-apply"/>
-                                <button name="action_cancel" states="manual,progress" string="Cancel Order" type="object" icon="gtk-cancel"/>
-                                <group colspan="1" col="1" attrs="{'invisible': [('noinvoice', '=', True)]}">
-                                    <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object"/>   
+                        </page>
+                        <page string="Order dates">
+                            <group colspan="4" col="4" name="date">
+                                <separator colspan="4" string="Dates"/>
+                                <group colspan="2" col="3">
+                                    <field name="delivery_requested_date" attrs="{'readonly': [('state', '!=', 'draft')]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)"/>
+                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                                 </group>
-                                <button name="ship_cancel" states="shipping_except" string="Cancel Order" icon="gtk-cancel"/>
-                                <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert"/>
-                                <button name="cancel" states="draft" string="Cancel Order" icon="gtk-cancel"/>
-                                <button name="invoice_cancel" states="invoice_except" string="Cancel Order" icon="gtk-cancel"/>
-                                <button name="order_confirm" states="draft" string="Confirm Order" icon="gtk-apply"/>
+                                <group colspan="2" col="3">
+                                    <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'in', ['cancel','done'])]}"/>
+                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'confirmed', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'in', ('cancel', 'done'))]}"/>
+                                </group>
+                                <field name="transport_type" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)"/>
+                                <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" on_change="onchange_transport_lt(delivery_requested_date,est_transport_lead_time,context)"/>
+                                <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'not in', ['draft', 'validated'])]}"/>
+                                <field name="shipment_date"/>
                             </group>
                         </page>
                         <page string="Other Information">
                             <group colspan="2" col="2" groups="base.group_extended" name="logistics">
                                 <separator string="Logistic" colspan="2"/>
-                                <field name="incoterm" widget="selection" attrs="{'readonly': [('state', '!=', 'state')], 'invisible': [('intl_customer_ok', '=', False)]  }" />
-                                <field name="picking_policy" required="True" invisible="1" />
+                                <field name="intl_customer_ok" invisible="1"/>
+                                <field name="incoterm" attrs="{'invisible': [('intl_customer_ok', '=', False)]}" widget="selection"/>
+                                <field name="picking_policy" required="True" invisible="1"/>
                                 <field name="order_policy" on_change="shipping_policy_change(order_policy)"/>
-                                <field name="invoice_quantity" readonly="1" />
+                                <field name="invoice_quantity" readonly="1"/>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="References" colspan="2"/>
-                                <field name="user_id" attrs="{'readonly': [('state', '!=', 'state')]}" />
-                                <field groups="base.group_extended" name="origin" attrs="{'readonly': [('state', '!=', 'state')]}" />
+                                <field name="user_id" attrs="{'readonly': [('state', '!=', 'state')]}"/>
+                                <field groups="base.group_extended" name="origin" attrs="{'readonly': [('state', '!=', 'state')]}"/>
                             </group>
                             <group colspan="2" col="2" groups="base.group_extended">
                                 <group colspan="2" col="2" attrs="{'invisible': [('vat_ok', '=', False)]}">
                                     <separator string="Conditions" colspan="2"/>
                                 </group>
-                                <field name="payment_term" widget="selection" attrs="{'readonly': [('state', '!=', 'state')]}" invisible="1" />
-                                <field name="fiscal_position" widget="selection" attrs="{'readonly': [('state', '!=', 'state')], 'invisible': [('vat_ok', '=', False)]}" />
+                                <field name="payment_term" widget="selection" attrs="{'readonly': [('state', '!=', 'state')]}" invisible="1"/>
+                                <field name="fiscal_position" widget="selection" attrs="{'readonly': [('state', '!=', 'state')], 'invisible': [('vat_ok', '=', False)]}"/>
                                 <field name="company_id" widget="selection" groups="base.group_multi_company"/>
                             </group>
                             <group colspan="2" col="2" groups="base.group_extended">
                             </group>
                             <separator colspan="4" string="Notes"/>
+                            <field name="import_in_progress" invisible="0" readonly="1"/>
                             <field colspan="4" name="note" nolabel="1"/>
                         </page>
                         <page string="History" attrs="{'invisible': [( 'intl_customer_ok', '=', False )]}">
                             <separator colspan="4" string="Invoices"/>
                             <field colspan="4" name="invoice_ids" nolabel="1" context="{'form_view_ref':'account.invoice_form'}"/>
                         </page>
+                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
+                            <field name="sourcing_trace" colspan="4" nolabel="1"/>
+                        </page>
                     </notebook>
+                    <field name="vat_ok" invisible="1"/>
+                    <group col="13" colspan="10">
+                        <field name="currency_id" readonly="1"/>
+                        <field name="amount_untaxed" sum="Untaxed amount" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
+                        <field name="amount_tax" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
+                        <field name="amount_total"/>
+                        <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
+                        <newline/>
+                        <field name="functional_currency_id" readonly="1"/>
+                        <field name="functional_amount_untaxed" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
+                        <field name="functional_amount_tax" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
+                        <field name="functional_amount_total"/>
+                    </group>
+                    <group col="14" colspan="4">
+                        <field name="state" invisible="True"/>
+                        <field name="state_hidden_sale_order"/>
+                        <button name="invoice_recreate" states="invoice_except" string="Recreate Invoice" icon="gtk-go-forward"/>
+                        <button name="invoice_corrected" states="invoice_except" string="Ignore Exception" icon="gtk-apply"/>
+                        <button name="ship_corrected" states="shipping_except" string="Manually corrected" icon="gtk-apply"/>
+                        <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object" invisible="1"/>
+                        <button name="ship_cancel" states="shipping_except" string="Cancel Order" icon="gtk-cancel"/>
+                        <button name="ask_resource_lines" states="draft,validated" string="Cancel Order" type="object" icon="gtk-cancel"/>
+                        <button name="invoice_cancel" states="invoice_except" string="Cancel Order" icon="gtk-cancel"/>
+                        <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply" invisible="True"/>
+                        <button name="do_order_confirm_method" type="object" states="validated" string="Confirm Order" icon="gtk-apply" confirm="You are about to confirm the Field Order without going through the sourcing tool. Are you sure?" attrs="{'readonly': [('no_line', '=', True)]}"/>
+                        <button name="validate_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('no_line', '=', True)]}"/>
+                    </group>
                 </form>
             </field>
         </record>
+
 
         <record id="view_sales_order_filter" model="ir.ui.view">
             <field name="name">sale.order.list.select</field>
@@ -297,7 +420,8 @@
                     <separator orientation="vertical"/>
                     <field name="name" select="1"/>
                     <field name="client_order_ref" />
-                    <field name="date_order" select="1" string="Order date" />
+                        <field name="date_order" attrs="{'readonly': [('state_hidden_sale_order', 'not in', ['draft'])]}"
+                            on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)"/>
                     <field name="partner_id" select="1"/>
                     <field name="user_id" select="1">
                         <filter domain="[('user_id','=',uid)]" help="My Sale Orders" icon="terp-personal"/>

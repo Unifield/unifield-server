@@ -200,80 +200,6 @@
         <menuitem icon="STOCK_INDENT" action="tender_action"
             id="menu_tender" parent="purchase.menu_procurement_management" sequence="3" />
 
-        <record id="purchase_order_form" model="ir.ui.view">
-            <field name="name">purchase.order.form</field>
-            <field name="model">purchase.order</field>
-            <field name="type">form</field>
-            <field name="priority">90</field>
-            <field name="inherit_id" ref="purchase.purchase_order_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <field name="details" position="after">
-                        <newline />
-                        <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('rfq_state', 'not in', ['sent', 'updated'])]}" />
-                        <field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('rfq_state', 'not in', ['draft', 'sent'])]}" />
-                        <field name="rfq_ok" invisible="1" />
-                        <field
-                            name="rfq_delivery_address"
-                            colspan="4"
-                            domain="[('dest_address', '=', company_id)]"
-                            attrs="{'invisible': [('rfq_ok', '=', False)], 'readonly': ['|', ('tender_id', '!=', False), ('state', 'not in', ['draft', 'sent'])]}" />
-                    </field>
-
-                    <xpath expr="/form/notebook//page[@string='Delivery &amp; Invoicing']" position="attributes">
-                        <attribute name="attrs">{'invisible': [('rfq_ok', '=', True)]}</attribute>
-                    </xpath>
-
-                    <xpath expr="/form/notebook//page[@string='Invoices']" position="attributes">
-                        <attribute name="attrs">{'invisible': [('rfq_ok', '=', True)]}</attribute>
-                    </xpath>
-
-                    <xpath expr="/form/notebook/page/field[@name='order_line']/tree" position="attributes">
-                        <attribute name="string">Lines</attribute>
-                    </xpath>
-
-                    <xpath expr="/form//field[@name='date_order']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form//field[@name='warehouse_id']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form//field[@name='order_type']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form//field[@name='priority']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form//field[@name='categ']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form//field[@name='invoiced']" position="attributes">
-                        <attribute name="readonly">True</attribute>
-                    </xpath>
-                    <xpath expr="/form//field[@name='shipped']" position="attributes">
-                        <attribute name="readonly">True</attribute>
-                    </xpath>
-                    <xpath expr="/form/notebook//field[@name='partner_id']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])],}</attribute>
-                        <attribute name="domain">[('check_partner_rfq', '=', tender_id)]</attribute>
-                    </xpath>
-                    <xpath expr="/form/notebook//field[@name='partner_address_id']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form/notebook//field[@name='pricelist_id']" position="attributes">
-                        <attribute name="string">Currency</attribute>
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form/notebook//field[@name='origin']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}</attribute>
-                    </xpath>
-                    <xpath expr="/form//field[@name='fiscal_position']" position="attributes">
-                        <attribute name="attrs">{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])], 'invisible': [('vat_ok', '=', False)]}</attribute>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
 
        <record id="product_supplierinfo_form_view" model="ir.ui.view">
             <field name="name">product.supplierinfo.form.view</field>
@@ -531,17 +457,6 @@
             <field name="sequence">1</field>
             <field name="view_mode">tree</field>
             <field name="view_id" ref="view_rfq_tree" />
-        </record>
-
-        <record id="purchase.purchase_form_action" model="ir.actions.act_window">
-            <field name="name">Purchase Orders</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">purchase.order</field>
-            <field name="view_mode">tree,form,graph,calendar</field>
-            <field name="context">{'search_default_approved': 1,'search_default_create_uid':uid, 'purchase_order': True}</field>
-            <field name="domain">[('rfq_ok', '=', False)]</field>
-            <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
-            <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
         </record>
 
         <record id="act_relate_tender_rfq" model="ir.actions.act_window">

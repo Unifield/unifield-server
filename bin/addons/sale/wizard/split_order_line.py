@@ -32,7 +32,7 @@ class split_sale_order_line_wizard(osv.osv_memory):
 
     _columns = {
         'sale_line_id': fields.many2one('sale.order.line', string='Line Id', readonly=True),
-        'original_qty': fields.float(digits=(16,2), string='Original Quantity', readonly=True),
+        'original_qty': fields.float(string='Original Quantity', readonly=True),
         'old_line_qty': fields.float(digits=(16,2), string='Old line quantity', readonly=True),
         'new_line_qty': fields.float(digits=(16,2), string='New line quantity', required=True),
     }
@@ -70,7 +70,7 @@ class split_sale_order_line_wizard(osv.osv_memory):
                 # generate sync message manually:
                 return_info = {}
                 self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', split.sale_line_id.id, return_info, 
-                    'purchase.order.line.sol_update_original_pol', self.pool.get('sale.order.line')._logger, check_identifier=False, context=context)
+                                                                                      'purchase.order.line.sol_update_original_pol', self.pool.get('sale.order.line')._logger, check_identifier=False, context=context)
 
                 # copy data
                 so_copy_data = {
@@ -108,7 +108,7 @@ class split_sale_order_line_wizard(osv.osv_memory):
             uom_id = line.sale_line_id.product_uom.id
             result = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, new_line_qty, 'new_line_qty', result=result)
             new_line_qty = result.get('value', {}).get('new_line_qty', new_line_qty)
-        
+
         vals = {'old_line_qty': original_qty - new_line_qty}
         result.setdefault('value', {}).update(vals)
 

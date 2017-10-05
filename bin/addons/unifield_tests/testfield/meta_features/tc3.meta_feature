@@ -200,7 +200,6 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Draft     |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Draft     |
 
-	I click on "Save"	
 	I should see "Draft-p" in "State"	
 		
 #LINE 9
@@ -263,7 +262,6 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Validated |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Validated |	
 	   
-	I click on "Save"
 	I should see "Validated" in "Order State"	
 
 	
@@ -384,7 +382,11 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
         | {{PO_ESC_COO}} |	
 
 	I open tab "Delivery"
-	I fill "Delivery Confirmed Date" with "28/May/2017"		
+	I fill "Delivery Confirmed Date" with "28/May/2017"
+
+    I click on "Apply to all lines" and open the window
+	I click on "Yes" and close the window
+	
 	I click on "Confirm lines"
 
     I open tab "Purchase Order"
@@ -909,6 +911,10 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
 
 	I open tab "Delivery"
 	I fill "Delivery Confirmed Date" with "28/May/2017"
+	
+    I click on "Apply to all lines" and open the window
+	I click on "Yes" and close the window	
+	
 	I click on "Confirm lines"
 	I should see "Confirmed" in "Order State"	
 

@@ -109,19 +109,6 @@
 	<!-- Invoice control -->
         <menuitem id="purchase.menu_action_stock_move_report_po" parent="stock.next_id_61" />
 
-        <!-- Invoice control -->
-        <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
-        
-<!--
-        <delete model="ir.ui.menu" id="purchase.menu_purchase_config_pricelist" />
-        <delete model="ir.ui.menu" id="purchase.menu_product_in_config_purchase" />
-    used in useability_dashboard_and_menu/menu/supply_config_menu.xml
--->
-<!--        <delete model="ir.ui.menu" id="purchase.action_supplier_address_form" /> -->
-
-        <!-- Here was an act_window to display all PO from products views.
-             This action is defined on product_attributes module -->
-
         <record id="purchase_order_cancel_wizard_form_view" model="ir.ui.view">
             <field name="name">purchase.order.cancel.wizard.form.view</field>
             <field name="model">purchase.order.cancel.wizard</field>

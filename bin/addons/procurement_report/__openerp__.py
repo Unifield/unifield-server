@@ -35,7 +35,6 @@
     ],
     'update_xml': [
         'procurement_report_view.xml',
-        'procurement_batch_data.xml',
         'procurement_batch_view.xml',
         'min_max_report_view.xml',
         'auto_supply_report_view.xml',
@@ -48,7 +47,7 @@
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -7,10 +7,9 @@ import netsvc
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
-from purchase_override import PURCHASE_ORDER_STATE_SELECTION, PURCHASE_ORDER_LINE_STATE_SELECTION
+from . import PURCHASE_ORDER_STATE_SELECTION
+from . import PURCHASE_ORDER_LINE_STATE_SELECTION
 from msf_partner import PARTNER_TYPE
-
-from account_override.period import get_period_from_date
 
 
 class purchase_order_line(osv.osv):
@@ -248,7 +247,29 @@ class purchase_order_line(osv.osv):
         if context.get('purchase_id', False):
             po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
             res = po.delivery_requested_date
+        return res
 
+    def _check_changed(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Check if an original value has been changed
+        '''
+        if context is None:
+            context = {}
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            changed = False
+            if line.modification_comment\
+                    or (line.original_qty and line.original_price and line.original_uom and line.original_currency_id):
+                if line.modification_comment or line.product_qty != line.original_qty \
+                        or line.price_unit != line.original_price or line.product_uom != line.original_uom\
+                        or line.currency_id != line.original_currency_id:
+                    changed = True
+            elif line.original_qty and line.original_uom and not line.original_price:  # From IR
+                if line.original_qty != line.product_qty or line.original_uom.id != line.product_uom.id:
+                    changed = True
+
+            res[line.id] = changed
         return res
 
     def _get_default_state(self, cr, uid, context=None):
@@ -266,7 +287,6 @@ class purchase_order_line(osv.osv):
             return po.state
 
         return False
-
 
     _columns = {
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
@@ -338,11 +358,11 @@ class purchase_order_line(osv.osv):
                                        \n* The \'Done\' state is set automatically when purchase order is set as done. \
                                        \n* The \'Cancelled\' state is set automatically when user cancel purchase order.'),
         'state_to_display': fields.function(_get_state_to_display, string='State', type='text', method=True, readonly=True,
-            help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
+                                            help=' * The \'Draft\' state is set automatically when purchase order in draft state. \
                \n* The \'Confirmed\' state is set automatically as confirm when purchase order in confirm state. \
                \n* The \'Done\' state is set automatically when purchase order is set as done. \
                \n* The \'Cancelled\' state is set automatically when user cancel purchase order.'
-        ),
+                                            ),
         'resourced_original_line': fields.many2one('purchase.order.line', 'Original line', readonly=True, help='Original line from which the current one has been cancel and ressourced'),
         'display_resourced_orig_line': fields.function(_get_display_resourced_orig_line, method=True, type='char', readonly=True, string='Original PO line', help='Original line from which the current one has been cancel and ressourced'),
         'invoice_lines': fields.many2many('account.invoice.line', 'purchase_order_line_invoice_rel', 'order_line_id',
@@ -359,6 +379,12 @@ class purchase_order_line(osv.osv):
         'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
         'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
 
+        'original_qty': fields.float('Original Qty'),
+        'original_price': fields.float('Original Price'),
+        'original_uom': fields.many2one('product.uom', 'Original UOM'),
+        'original_currency_id': fields.many2one('res.currency', 'Original Currency'),
+        'modification_comment': fields.char('Modification Comment', size=1024),
+        'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
     }
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
@@ -972,11 +998,10 @@ class purchase_order_line(osv.osv):
             default = {}
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': []})
-        if 'origin' not in default:
-            default.update({'origin': False})
 
-        if 'move_dest_id' not in default:
-            default.update({'move_dest_id': False})
+        for field in ['origin', 'move_dest_id', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment']:
+            if field not in default:
+                default[field]= False
 
         default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False})
 
@@ -1413,7 +1438,9 @@ class purchase_order_line(osv.osv):
             if commitment_voucher_id:
                 commitment_voucher_id = commitment_voucher_id[0]
             else: # create commitment voucher
-                commitment_voucher_id = self.pool.get('purchase.order').create_commitment_voucher_from_po(cr, uid, [pol.order_id.id], context=context)
+                if not pol.confirmed_delivery_date:
+                    raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
+                commitment_voucher_id = self.pool.get('purchase.order').create_commitment_voucher_from_po(cr, uid, [pol.order_id.id], cv_date=pol.confirmed_delivery_date, context=context)
 
             # group PO line by account_id:
             expense_account = pol.account_4_distribution and pol.account_4_distribution.id or False
@@ -1425,13 +1452,12 @@ class purchase_order_line(osv.osv):
             else:
                 cc_lines = pol.order_id.analytic_distribution_id.cost_center_lines
 
-            commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account)], context=context)
-            if not commit_line_id: # create new commitment line:
-                cv_date = pol.confirmed_delivery_date
-                period_ids = get_period_from_date(self, cr, uid, cv_date, context=context)
-                if not period_ids:
-                    raise osv.except_osv(_('Error'), _('No period found for given date: %s.') % (cv_date))
+            if not cc_lines:
+                raise osv.except_osv(_('Warning'), _('Analytic allocation is mandatory for this line: %s!') % (pol.name or '',))
 
+
+            commit_line_id = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', commitment_voucher_id), ('account_id', '=', expense_account)], context=context)
+            if not commit_line_id: # create new commitment line
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context=context)
                 commit_line_id = self.pool.get('account.commitment.line').create(cr, uid, {
                     'commit_id': commitment_voucher_id,
@@ -1440,8 +1466,6 @@ class purchase_order_line(osv.osv):
                     'initial_amount': pol.price_subtotal,
                     'purchase_order_line_ids': [(4, pol.id)],
                     'analytic_distribution_id': distrib_id,
-                    'date': cv_date,
-                    'period_id': period_ids[0],
                 }, context=context)
                 for aline in cc_lines:
                     vals = {
@@ -1560,7 +1584,7 @@ class purchase_order_line_state(osv.osv):
 
         return min_state[0] if min_state else False
 
-        
+
     def get_sequence(self, cr, uid, ids, state, context=None):
         '''
         return the sequence of the given state

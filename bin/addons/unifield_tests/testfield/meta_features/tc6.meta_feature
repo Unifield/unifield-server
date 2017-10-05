@@ -152,7 +152,6 @@ Scenario: SSL Instance Cancel and Resource IN with header validation
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Validated |
 
 
-	I click on "Save"		
     I should see "Draft-p" in "Order State"	
 
 	I store "Order Reference" in "PO_REFERENCE_1"	
@@ -182,7 +181,14 @@ Scenario: SSL Instance Cancel and Resource IN with header validation
     I click "Edit" on line:
         | REFERENCE          |
         | {{PO_REFERENCE_1}} |	
-		
+
+    I open tab "Delivery"		
+    I fill "Delivery Confirmed Date" with "05/Oct/2017"
+    I click on "Apply to all lines" and open the window
+    I click on "Yes" and close the window
+
+    I open tab "Purchase Order" 
+
 	I click "Confirm" on line:
         | PRODUCT CODE | PRODUCT DESCRIPTION           | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG |
@@ -235,8 +241,8 @@ Scenario: SSL Instance Cancel and Resource IN with header validation
 
 
     I should see in the main table the following data:
-        | PRODUCT                                                         | STATE     | 
-        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Available |
+        | PRODUCT                                      | STATE     | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG | Available |
 
 	I should not see in the main table the following data:
         | PRODUCT                                                         | STATE     | 
@@ -294,6 +300,9 @@ Scenario: SSL Instance Cancel and Resource IN with header validation
 	I fill "Delivery Confirmed Date" with "28/May/2017"	
 
 #not possible to update Delivery tab, greyed out	
+
+    I click on "Apply to all lines" and open the window
+	I click on "Yes" and close the window
 
 	I click on "Confirm lines"
 
@@ -522,10 +531,6 @@ Scenario: SSL Instance Cancel and Resource IN with header validation
 	I click on menu "Orders Sourcing Tool"
 	I fill "Order" with "{{IR_REFERENCE}}"
 	I click on "Search"
-	
-	I click on menu "Orders Sourcing Tool"
-	I fill "Order" with "{{IR_REFERENCE}}"
-	I click on "Search"
 
 	I click "Edit" on line:
         | PRODUCT                                      |
@@ -605,6 +610,10 @@ Scenario: SSL Instance Cancel and Resource IN with header validation
 	
 	I open tab "Delivery"
 	I fill "Delivery Confirmed Date" with "28/May/2017"
+	
+    I click on "Apply to all lines" and open the window
+	I click on "Yes" and close the window	
+	
 	I click on "Confirm lines"
 	I should see "Confirmed" in "Order State"
 

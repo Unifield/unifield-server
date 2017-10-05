@@ -33,9 +33,8 @@
     Add nomenclature abilities to orders (sale and purchase).
     """,
     'test': [
-             ],
+    ],
     'update_xml': [
-        'order_nomenclature_view.xml',
     ],
     'installable': True,
 }

@@ -31,7 +31,6 @@ from datetime import datetime
 from msf_partner import PARTNER_TYPE
 from msf_order_date import TRANSPORT_TYPE
 from msf_order_date import ZONE_SELECTION
-from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 from sale import SALE_ORDER_STATE_SELECTION
 
 class res_partner(osv.osv):

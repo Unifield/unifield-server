@@ -40,9 +40,8 @@
     'init_xml' : [ ],
     'demo_xml' : [ ],
     'test': [
-             ],
+    ],
     'update_xml' : [
-        'purchase_msf_view.xml',
         'security/ir.model.access.csv',
     ],
     'installable': True,

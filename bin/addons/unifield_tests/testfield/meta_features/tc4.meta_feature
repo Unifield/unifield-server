@@ -168,7 +168,11 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
         | {{PO_REFERENCE_1}} |	
 
 	I open tab "Delivery"
-	I fill "Delivery Confirmed Date" with "28/May/2017"		
+	I fill "Delivery Confirmed Date" with "28/May/2017"	
+
+    I click on "Apply to all lines" and open the window
+	I click on "Yes" and close the window
+	
 	I click on "Confirm lines"
 
     I open tab "Purchase Order"
@@ -481,6 +485,10 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
 	
 	I open tab "Delivery"
 	I fill "Delivery Confirmed Date" with "28/May/2017"
+	
+    I click on "Apply to all lines" and open the window
+	I click on "Yes" and close the window	
+	
 	I click on "Confirm lines"
 	I should see "Confirmed" in "Order State"
 	

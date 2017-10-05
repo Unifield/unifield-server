@@ -40,7 +40,6 @@
     "init_xml": [],
     "update_xml": [
         'doc_import_report.xml',
-        'view/sale_order_import_lines_view.xml',
         'view/internal_request_import_line_view.xml',
         'view/tender_import_line_view.xml',
         'view/purchase_order_import_line_view.xml',
@@ -71,7 +70,6 @@
         'data/msf_doc_import_data.xml',
         'data/inactive_categ.xml',
         'workflow/tender_flow_workflow.xml',
-        'workflow/procurement_request_workflow.xml',
         'doc_import_report.xml',
         'wizard/wizard_import_batch_view.xml',
         'wizard/wizard_import_invoice_line.xml',

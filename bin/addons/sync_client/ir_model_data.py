@@ -228,8 +228,6 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
                 DELETE FROM ir_model_data
                 WHERE module = 'sd' AND model = %s AND res_id = %s""",
                        [values['model'], values['res_id']])
-            if cr._obj.rowcount:
-                self._logger.warn("The following record has to be re-created: sd.%(name)s" % values)
 
         # idem for xmlids
         # different res_id means re-creation
@@ -238,7 +236,6 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
             WHERE module = %s AND name = %s""",
                    [values['module'], values['name']])
         if cr._obj.rowcount and values['module'] == 'sd':
-            self._logger.warn("The following record has to be re-created: sd.%(name)s" % values)
             values['force_recreation'] = not context.get('sync_update_execution', False)
 
         id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
@@ -259,8 +256,6 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
                        [sdref_name, values['model'], values['res_id']])
             values['force_recreation'] = cr._obj.rowcount > 0 \
                 and not context.get('sync_update_execution', False)
-            if values['force_recreation']:
-                self._logger.warn("The following record has to be re-created: sd.%(module)s_%(name)s" % values)
             cr.execute("""\
                 UPDATE ir_model_data sdref
                 SET

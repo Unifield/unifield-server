@@ -368,6 +368,7 @@
             <rng:optional><rng:attribute name="rowspan"/></rng:optional>
             <rng:optional><rng:attribute name="string"/></rng:optional>
             <rng:optional><rng:attribute name="col"/></rng:optional>
+			<rng:optional><rng:attribute name="attrs"/></rng:optional>
             <rng:optional><rng:attribute name="select"/></rng:optional>
             <rng:optional><rng:attribute name="orientation"/></rng:optional>
             <rng:zeroOrMore>

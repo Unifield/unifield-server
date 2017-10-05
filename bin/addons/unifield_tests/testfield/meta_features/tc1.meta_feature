@@ -91,7 +91,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Draft     |
 		| [DORADIDA15T] DIDANOSINE (ddI), 150 mg, chewable dispersable tab.       | Draft     |
 
-	I click on "Save"
 	I should see "Draft-p" in "Order State"
 	
 #LINE 4
@@ -285,7 +284,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Draft     |	10.00  |     *    |
 
 	   
-	I click on "Save"
 	I should see "Draft-p" in "Order State"
 
 #LINE 9	
@@ -336,7 +334,10 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	
 	I open tab "Delivery"
 	I fill "Delivery Confirmed Date" with "28/May/2017"
-
+	
+    I click on "Apply to all lines" and open the window
+	I click on "Yes" and close the window
+  
 	I click on "Confirm lines"
 	I store "Order Reference" in "PO_REF_LOCM"	
 
@@ -357,7 +358,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Validated |	
 
 	   
-	I click on "Save"
 	I should see "Validated" in "Order State"	   
 	   
     I open tab menu "ORDERS"
@@ -404,7 +404,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Validated |	
        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Draft     |
 
-	I click on "Save"
     I should see "Draft-p" in "State"
 	
 	I store "Order Reference" in "FO_REFERENCE"	
@@ -478,7 +477,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Validated |	
 
 	   
-	I click on "Save"
 	I should see "Validated-p" in "Order State"	
 	
 	
@@ -564,7 +562,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed    | 25.00	|
        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Validated | 50.00 |  
 
-    I click on "Save"
     I should see "Validated-p" in "State"
 
 #LINE 21	
@@ -828,10 +825,8 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | PRODUCT CODE | PRODUCT DESCRIPTION                                 |STATE  | 
         | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Draft |
 
-    I should see "Draft" in "Order State"		
 	I store "Order Reference" in "PO_REF_COO_2"	
 	
-	I click on "Save"
     I should see "Validated" in "Order State"
 
     I open tab menu "ORDERS"
@@ -875,7 +870,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
       | PRODUCT CODE | PRODUCT DESCRIPTION                                  | STATE     |
       | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Validated |
 
-	I click on "Save"
     I should see "Validated" in "State"	
 	I store "Order Reference" in "FO_REFERENCE_2"
 
@@ -983,6 +977,13 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | SOURCE DOCUMENT    | SUPPLIER   |
         | *{{FO_REFERENCE}}* |  ITCompany |    
 
+
+	I click "Edit" on line and open the window:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                     |
+	    | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING |
+   I fill "Delivery Confirmed Date" with "05/Oct/2017"	
+   I click on "Save & Close" and close the window
+
 	I click "Confirm" on line:
         | PRODUCT CODE | PRODUCT DESCRIPTION                     |
 	    | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING |
@@ -991,7 +992,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | PRODUCT CODE | PRODUCT DESCRIPTION                     | STATE     |
 	    | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING | Confirmed |
 	
-	I click on "Save"
 	I should see "Validated-p" in "Order State"
 
 	I open tab menu "ORDERS"	
@@ -1048,6 +1048,13 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | SOURCE DOCUMENT      | SUPPLIER |
         | *{{FO_REFERENCE_2}}* |  ESC     |    
 
+		
+    I click "Edit" on line and open the window:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                  | STATE     | QUANTITY |
+	    | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Validated | 25.00    |
+    I fill "Delivery Confirmed Date" with "05/Oct/2017"	
+    I click on "Save & Close" and close the window		
+		
 	I click "Confirm" on line:
        | PRODUCT CODE | PRODUCT DESCRIPTION                                  | STATE     | QUANTITY |
        | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Validated | 25.00    |
@@ -1134,6 +1141,13 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | SOURCE DOCUMENT    | SUPPLIER   |
         | *{{FO_REFERENCE}}* |  ITCompany |    
 
+		
+    I click "Edit" on line and open the window:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                  |
+	    | DORADIDA15T  |  DIDANOSINE (ddI), 150 mg, chewable dispersable tab. |
+    I fill "Delivery Confirmed Date" with "05/Oct/2017"	
+    I click on "Save & Close" and close the window			
+		
 	I click "Confirm" on line:
         | PRODUCT CODE | PRODUCT DESCRIPTION                                 |
 	    | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. |
@@ -1143,7 +1157,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	    | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING             | Confirmed |
 	    | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Confirmed |
     
-    I click on "Save"  
     I should see "Confirmed" in "Order State"
 
 	

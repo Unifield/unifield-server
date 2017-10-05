@@ -33,9 +33,8 @@ import threading
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from workflow.wkf_expr import _eval_expr
-from purchase_override import PURCHASE_ORDER_STATE_SELECTION
+from . import PURCHASE_ORDER_STATE_SELECTION
 from account_override.period import get_period_from_date
-from account_override.period import get_date_in_period
 from msf_order_date.order_dates import common_create, get_type, common_requested_date_change, common_onchange_transport_lt, common_onchange_date_order, common_onchange_transport_type, common_onchange_partner_id
 from msf_partner import PARTNER_TYPE
 from msf_order_date import TRANSPORT_TYPE
@@ -560,7 +559,7 @@ class purchase_order(osv.osv):
         'name': fields.char('Order Reference', size=64, required=True, select=True, readonly=True,
                             help="unique number of the purchase order,computed automatically when the purchase order is created"),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
-        'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft':[('readonly',False)], 'validated': [('readonly',False)]}),
+        'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft':[('readonly',False)], 'draft_p': [('readonly',False)], 'validated': [('readonly',False)], 'validated_p': [('readonly',False)]}),
         'partner_id': fields.many2one('res.partner', 'Supplier', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)],'cancel':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
         'partner_address_id': fields.many2one('res.partner.address', 'Address', required=True,
                                               states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
@@ -619,7 +618,7 @@ class purchase_order(osv.osv):
         'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, states={'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
         'state': fields.function(_get_less_advanced_pol_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
-                                 'purchase.order.line': (_get_order, ['state'], 10), 
+                                     'purchase.order.line': (_get_order, ['state'], 10), 
                                  },
                                  select=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception."
                                  ),
@@ -653,9 +652,9 @@ class purchase_order(osv.osv):
         'company_id': fields.many2one('res.company','Company',required=True,select=1),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
         'fixed_order_type': fields.function(_is_fixed_type, method=True, type='char', size=256, string='Possible order types', store={
-                'purchase.order': (lambda obj, cr, uid, ids, c={}: ids, ['order_line'], 10),
-                'purchase.order.line': (_order_line_order_type, ['order_id'], 10),
-            },
+            'purchase.order': (lambda obj, cr, uid, ids, c={}: ids, ['order_line'], 10),
+            'purchase.order.line': (_order_line_order_type, ['order_id'], 10),
+        },
         ),
         'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
         'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
@@ -1401,12 +1400,8 @@ class purchase_order(osv.osv):
         '''
         Call the wizard to ask if you want to re-source the line
         '''
-        line_obj = self.pool.get('purchase.order.line')
         wiz_obj = self.pool.get('purchase.order.cancel.wizard')
-        exp_sol_obj = self.pool.get('expected.sale.order.line')
-        so_obj = self.pool.get('sale.order')
         data_obj = self.pool.get('ir.model.data')
-        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -1722,7 +1717,7 @@ class purchase_order(osv.osv):
         # as it might be needed to update the read-only view...
         raw_display_strings_state = dict(PURCHASE_ORDER_STATE_SELECTION)
         display_strings_state = dict([(k, _(v)) \
-                                for k,v in raw_display_strings_state.items()])
+                                      for k,v in raw_display_strings_state.items()])
 
         display_strings = {}
         display_strings["state"] = display_strings_state
@@ -2277,7 +2272,7 @@ class purchase_order(osv.osv):
         return new_po_id
 
 
-    def create_commitment_voucher_from_po(self, cr, uid, ids, context=None):
+    def create_commitment_voucher_from_po(self, cr, uid, ids, cv_date, context=None):
         '''
         Create a new commitment voucher from the given PO
         @param ids id of the Purchase order
@@ -2302,14 +2297,12 @@ class purchase_order(osv.osv):
                 'type': 'external' if po.partner_id.partner_type == 'external' else 'manual',
             }
             # prepare some values
-            today = time.strftime('%Y-%m-%d')
-            period_ids = get_period_from_date(self, cr, uid, po.delivery_confirmed_date or today, context=context)
+            period_ids = get_period_from_date(self, cr, uid, cv_date, context=context)
             period_id = period_ids and period_ids[0] or False
             if not period_id:
-                raise osv.except_osv(_('Error'), _('No period found for given date: %s.') % (po.delivery_confirmed_date or today))
-            date = get_date_in_period(self, cr, uid, po.delivery_confirmed_date or today, period_id, context=context)
+                raise osv.except_osv(_('Error'), _('No period found for given date: %s.') % (cv_date, ))
             vals.update({
-                'date': date,
+                'date': cv_date,
                 'period_id': period_id,
             })
             commit_id = self.pool.get('account.commitment').create(cr, uid, vals, context=context)
