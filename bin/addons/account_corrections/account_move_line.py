@@ -991,32 +991,26 @@ receivable, item have not been corrected, item have not been reversed and accoun
         if isinstance(ji_ids, (int, long)):
             ji_ids = [ji_ids]
         aal_obj = self.pool.get('account.analytic.line')
-        # check that none of the AJIs linked to the JIs has already been reallocated
-        # This check must be done BEFORE any write on the JIs that would generate new AJIs
-        aji_reallocated_domain = [('move_id', 'in', ji_ids), ('is_reallocated', '=', True)]
-        aji_ko = aal_obj.search(cr, uid, aji_reallocated_domain, context=context, order='NO_ORDER', limit=1)
-        if aji_ko:
-            entry_seq = aal_obj.read(cr, uid, aji_ko[0], ['entry_sequence'], context=context)['entry_sequence']
-            raise osv.except_osv(_('Error'),
-                                 _('One AJI related to the entry %s has already been corrected.') % entry_seq)
         for ji in self.browse(cr, uid, ji_ids, fields_to_fetch=['corrected', 'move_id'], context=context):
             # check that the JI isn't already corrected
             if ji.corrected:
                 raise osv.except_osv(_('Error'), _('The entry %s has already been corrected.') % ji.move_id.name)
+            # check that none of the AJIs linked to the JIs has already been reallocated
+            aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji.id)], order='NO_ORDER', context=context)
+            for aji in aal_obj.read(cr, uid, aji_ids, ['is_reallocated'], context=context):
+                if aji['is_reallocated']:
+                    raise osv.except_osv(_('Error'), _('One AJI related to the entry %s has already been corrected.') % ji.move_id.name)
             # set the JI as corrected
             manual_corr_vals = {'is_manually_corrected': manual,
                                 'corrected': True,  # is_corrigible will be seen as "False"
                                 'have_an_historic': True}
-            self.write(cr, uid, ji.id, manual_corr_vals, context=context)
+            # write on JI without recreating AJIs
+            self.write(cr, uid, ji.id, manual_corr_vals, context=context, check=False, update_check=False)
             # Set the "corrected_upstream" flag on the JI if necessary
             # (so that project lines marked as corrected in a upper level can't be "uncorrected" in project)
             self.corrected_upstream_marker(cr, uid, [ji.id], context=context)
-        '''
-        WARNING: we must get the aji_ids AFTER ALL the corrections OF ALL the JIs have been done, 
-        in order to get the new AJI ids generated
-        '''
-        aji_ids = aal_obj.search(cr, uid, [('move_id', 'in', ji_ids)], order='NO_ORDER', context=context)
-        aal_obj.write(cr, uid, aji_ids, {'is_reallocated': True}, context=context)  # set the AJIs as corrected
+            # set the AJIs as corrected
+            aal_obj.write(cr, uid, aji_ids, {'is_reallocated': True}, context=context)
 
 
 account_move_line()
@@ -1071,7 +1065,7 @@ class reverse_manual_correction_wizard(osv.osv_memory):
                                  'corrected_upstream': False}
             # add a tag in context to allow the write on a system JI (ex: to cancel a manual corr. done on a SI line)
             context.update({'from_manual_corr_reversal': True})
-            aml_obj.write(cr, uid, ji_id, reverse_corr_vals, context=context)
+            aml_obj.write(cr, uid, ji_id, reverse_corr_vals, context=context, check=False, update_check=False)
             # set the AJIs as non-corrected
             aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji_id)], order='NO_ORDER', context=context)
             aal_obj.write(cr, uid, aji_ids, {'is_reallocated': False}, context=context)
