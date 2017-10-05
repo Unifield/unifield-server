@@ -863,6 +863,8 @@ class purchase_order_line(osv.osv):
         if vals.get('linked_sol_id'):
             sol_comment = self.pool.get('sale.order.line').read(cr, uid, vals.get('linked_sol_id'), ['comment'], context=context)['comment']
             vals.update({'comment': sol_comment})
+            if not product_id and not vals.get('name'):
+                vals.update({'name': 'None'})
 
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
