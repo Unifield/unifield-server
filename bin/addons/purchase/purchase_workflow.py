@@ -277,7 +277,8 @@ class purchase_order_line(osv.osv):
                 'context': context
             }
 
-        wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'confirmed', cr)
+        for pol_id in ids:
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'confirmed', cr)
 
         return True
 
