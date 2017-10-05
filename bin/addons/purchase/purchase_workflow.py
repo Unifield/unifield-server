@@ -240,6 +240,37 @@ class purchase_order_line(osv.osv):
         return pick_id
 
 
+    def button_confirmed(self, cr, uid, ids, context=None):
+        '''
+        Method called when trying to confirm a PO line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.order_id.partner_id.partner_type in ('internal', 'section', 'intermission'):
+                wiz_id = self.pool.get('purchase.order.line.manually.confirmed.wizard').create(cr, uid, {'pol_to_confirm': ids[0]}, context=context)
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'purchase_line_manually_confirmed_form_view')[1]
+
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'purchase.order.line.manually.confirmed.wizard',
+                    'res_id': wiz_id,
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'view_id': [view_id],
+                    'target': 'new',
+                    'context': context
+                }
+            else:
+                wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'confirmed', cr)
+
+        return True
+
+
     def action_validated_n(self, cr, uid, ids, context=None):
         '''
         wkf method to validate the PO line
