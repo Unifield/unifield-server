@@ -115,6 +115,23 @@ class sale_order_line(osv.osv):
         return True
 
 
+    def check_product_or_nomenclature(self, cr, uid, ids, context=None):
+        '''
+        check if sale.order.line has a product_id or a nomenclature description
+        If none of them are populated, then raise an error
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for sol in self.browse(cr, uid, ids, context=context):
+            if not sol.product_id and sol.comment and not sol.nomenclature_description:
+                raise osv.except_osv(_('Error'), _('Line %s: Please define the nomenclature levels.') % sol.line_number)
+
+        return True
+
+
     def create_resource_line(self, cr, uid, ids, context=None):
         '''
         create a new FO line (resourced) with given FO line (cancelled-r)
@@ -331,7 +348,8 @@ class sale_order_line(osv.osv):
                 to_write['original_qty'] = sol.product_uom_qty
                 to_write['original_price'] = sol.price_unit
                 to_write['original_uom'] = sol.product_uom.id
-                # pass #TODO
+                
+                self.check_product_or_nomenclature(cr, uid, ids, context=context)                    
 
             if to_write:
                 self.write(cr, uid, sol.id, to_write, context=context)
