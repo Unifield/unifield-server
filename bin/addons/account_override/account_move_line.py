@@ -557,7 +557,8 @@ class account_move_line(osv.osv):
                     reconciliation = ml.reconcile_id or ml.reconcile_partial_id or False
                     if reconciliation and reconciliation.type == 'auto':
                         raise osv.except_osv(_('Warning'), _('Only manually reconciled entries can be unreconciled.'))
-                elif ml.move_id and ml.move_id.status == 'sys':
+                # prevent from modifying system JIs except for reversing a manual correction
+                elif ml.move_id and ml.move_id.status == 'sys' and not context.get('from_manual_corr_reversal'):
                     raise osv.except_osv(_('Warning'), _('You cannot change Journal Items that comes from the system!'))
             # Check date validity with period
             self._check_date_validity(cr, uid, ids, vals)

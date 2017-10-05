@@ -1067,6 +1067,8 @@ class reverse_manual_correction_wizard(osv.osv_memory):
                                  'corrected': False,  # is_corrigible will be seen as "True"
                                  'have_an_historic': False,
                                  'corrected_upstream': False}
+            # add a tag in context to allow the write on a system JI (ex: to cancel a manual corr. done on a SI line)
+            context.update({'from_manual_corr_reversal': True})
             aml_obj.write(cr, uid, ji_id, reverse_corr_vals, context=context)
             # set the AJIs as non-corrected
             aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji_id)], order='NO_ORDER', context=context)
