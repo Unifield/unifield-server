@@ -34,7 +34,6 @@
                     <field name="max_size" required="1"/>
                     <field name="timeout" required="1"/>
                     <label string="" colspan="2" />
-                    <field name="netrpc_retry" required="1" />
                     <field name="xmlrpc_retry" required="1" />
                     <separator string="Upgrade information" colspan="4"/>
                     <field name="automatic_patching" />
