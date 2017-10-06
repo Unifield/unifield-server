@@ -1607,7 +1607,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     pol_values = {
                         'order_id': po_to_use,
                         'product_id': sourcing_line.product_id.id,
-                        'product_uom': sourcing_line.product_id.uom_id.id,
+                        'product_uom': sourcing_line.product_id.uom_id.id if sourcing_line.product_id else sourcing_line.product_uom.id,  # US-3530
                         'product_qty': sourcing_line.product_uom_qty,
                         'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price,
                         'partner_id': sourcing_line.supplier.id,
@@ -1619,6 +1619,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     if sourcing_line.procurement_request:
                         pol_values.update({
+                            'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         })
@@ -1652,6 +1653,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     if sourcing_line.procurement_request:
                         rfq_line_values.update({
+                            'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         })
@@ -1679,6 +1681,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     if sourcing_line.procurement_request:
                         tender_values.update({
+                            'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         })

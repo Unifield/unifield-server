@@ -30,15 +30,15 @@ class procurement_request_line_wizard(osv.osv_memory):
 
     _columns = {
         'id': fields.integer('id'),
-        'product_id': fields.many2one('product.product', 'Current Product'),
-        # 'original_product': fields.many2one('product.product', 'Original Product'),
-        'product_uom_qty': fields.float('Current Qty'),
-        'original_qty': fields.float('Original Qty'),
-        'price_unit': fields.float('Current Price'),
-        'original_price': fields.float('Original Price'),
-        'product_uom': fields.many2one('product.uom', 'Current UOM'),
-        'original_uom': fields.many2one('product.uom', 'Original UOM'),
-        'modification_comment': fields.char('Modification Comment', size=1024),
+        'product_id': fields.many2one('product.product', 'Current Product', readonly=True),
+        'original_product': fields.many2one('product.product', 'Original Product', readonly=True),
+        'product_uom_qty': fields.float('Current Qty', readonly=True),
+        'original_qty': fields.float('Original Qty', readonly=True),
+        'price_unit': fields.float('Current Price', readonly=True),
+        'original_price': fields.float('Original Price', readonly=True),
+        'product_uom': fields.many2one('product.uom', 'Current UOM', readonly=True),
+        'original_uom': fields.many2one('product.uom', 'Original UOM', readonly=True),
+        'modification_comment': fields.char('Modification Comment', size=1024, readonly=True),
     }
 
 

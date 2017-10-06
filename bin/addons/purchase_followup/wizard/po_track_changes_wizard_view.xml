@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+
+    <data>
+
+        <record id="po_track_changes_wizard_form_view" model="ir.ui.view">
+            <field name="name">po.track.changes.wizard.form.view</field>
+            <field name="model">po.track.changes.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="PURCHASE ORDER Track Changes">
+                    <separator colspan="4" string="Request parameters" />
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <field name="po_id" />
+                    <separator colspan="4" string="Actions" />
+                    <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <record id="action_po_track_changes_wizard" model="ir.actions.act_window">
+            <field name="name">PO Track Changes</field>
+            <field name="res_model">po.track.changes.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem
+            id="menu_po_track_changes"
+            action="action_po_track_changes_wizard"
+            parent="purchase.menu_procurement_management"
+            sequence="2"
+            />
+
+    </data>
+
+</openerp>

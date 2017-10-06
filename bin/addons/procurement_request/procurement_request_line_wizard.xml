@@ -8,8 +8,8 @@
             <field name="arch" type='xml'>
                 <form string="Original Data Internal Request Line">
                     <field name="product_id" colspan="2"/>
-                    <!--<field name="original_product" colspan="2"/>-->
-                    <!--<field name="product_uom_qty" colspan="2"/>-->
+                    <field name="original_product" colspan="2"/>
+                    <field name="product_uom_qty" colspan="2"/>
                     <field name="original_qty" colspan="2"/>
                     <field name="price_unit" colspan="2"/>
                     <field name="original_price" colspan="2"/>
