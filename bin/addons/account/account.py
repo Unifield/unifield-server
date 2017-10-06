@@ -1078,14 +1078,9 @@ class account_move(osv.osv):
             if isinstance(cond[2],(list,tuple)):
                 if cond[1] in ['in','not in']:
                     amount = tuple(cond[2])
-                    for cur_amount in amount:
-                        if not isinstance(cur_amount, (int, long, float)):
-                            raise osv.except_osv(_('Error'), _('The amount have to be a number'))
                 else:
                     continue
             else:
-                if not isinstance(amount, (int, long, float)):
-                    raise osv.except_osv(_('Error'), _('The amount have to be a number'))
                 if cond[1] in ['=like', 'like', 'not like', 'ilike', 'not ilike', 'in', 'not in', 'child_of']:
                     continue
 
@@ -1351,7 +1346,7 @@ class account_move(osv.osv):
 
         cr.execute('SELECT SUM(%s) FROM account_move_line WHERE move_id=%%s AND id!=%%s' % (mode,), (move.id, line_id2))  # not_a_user_entry
         result = cr.fetchone()[0] or 0.0
-        cr.execute('update account_move_line set %s=%%s where id=%%s' % mode2, (result, line_id))  # not_a_user_entry
+        cr.execute('update account_move_line set '+mode2+'=%s where id=%s', (result, line_id))  # not_a_user_entry
 
         #adjust also the amount in currency if needed
         cr.execute("select currency_id, sum(amount_currency) as amount_currency from account_move_line where move_id = %s and currency_id is not null group by currency_id", (move.id,))
@@ -1606,7 +1601,7 @@ class account_tax_code(osv.osv):
                         (invoice.move_id = move.id)
                 WHERE line.tax_code_id IN %%s %s
                     AND move.id = line.move_id
-                    AND ((invoice.state = \'paid\')
+                    AND ((invoice.state = 'paid')
                         OR (invoice.id IS NULL))
                 GROUP BY line.tax_code_id''' % where,  # not_a_user_entry
                 (parent_ids,) + where_params)
