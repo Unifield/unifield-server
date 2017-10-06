@@ -261,8 +261,6 @@ class purchase_order_line(osv.osv):
             changed = False
             if line.modification_comment or (line.original_qty and line.product_qty != line.original_qty):
                 changed = True
-            elif not line.original_price and (line.original_qty and line.original_qty != line.product_qty):  # From IR
-                changed = True
 
             res[line.id] = changed
         return res
