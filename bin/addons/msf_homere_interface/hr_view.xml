@@ -176,9 +176,11 @@
                 </xpath>
                 <xpath expr="//field[@name='job_id']" position="after">
                     <newline/>
-                    <field name="destination_id" domain="[('category','=','DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
-                    <field name="cost_center_id" domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
-                    <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open')]"/>
+                    <group>
+                        <field name="destination_id" domain="[('category','=','DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
+                        <field name="cost_center_id" domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
+                        <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open')]"/>
+                    </group>
                 </xpath>
             </data>
         </field>
@@ -196,11 +198,14 @@
                 <filter icon="terp-personal-" name="inactive" string="Show Inactive" domain="[('active', '=', False)]" />
                 <separator orientation="vertical" />
                 <field name="name"/>
+                <field name="identification_id"/>
                 <field name="job_id"/>
                 <newline/>
-                <field name="destination_id" domain="[('category','=','DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
-                <field name="cost_center_id" domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
-                <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open')]"/>
+                <group>
+                    <field name="destination_id" domain="[('category','=','DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
+                    <field name="cost_center_id" domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
+                    <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open')]"/>
+                </group>
                 <newline />
                 <group expand="0" string="Group By...">
                     <filter string="Job" icon="terp-gtk-select-all" domain="[]" context="{'group_by':'job_id'}"/>
