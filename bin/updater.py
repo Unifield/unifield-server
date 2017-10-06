@@ -210,6 +210,7 @@ def do_update():
         ## Now, update
         revisions = []
         files = None
+        rmtree_failed = False
         try:
             ## Revisions that going to be installed
             revisions = parse_version_file(new_version_file)
@@ -221,7 +222,11 @@ def do_update():
             if not os.path.exists('backup'):
                 os.mkdir('backup')
             else:
-                rmtree('backup')
+                try:
+                    rmtree('backup')
+                except:
+                    rmtree_failed = True
+                    raise
 
             if os.name == "nt":
                 import _winreg
@@ -250,7 +255,11 @@ def do_update():
             if not os.path.exists(webbackup):
                 os.mkdir(webbackup)
             else:
-                rmtree(webbackup)
+                try:
+                    rmtree(webbackup)
+                except:
+                    rmtree_failed = True
+                    raise
 
             webupdated = False
             ## Update Files
@@ -331,12 +340,15 @@ def do_update():
             warn(unicode(e))
             ## Restore backup and purge .update
             if files:
-                warn("Restoring...")
-                for f in reversed(files):
-                    target = os.path.join('backup', f)
-                    if os.path.isfile(target) or os.path.islink(target):
-                        warn("`%s' -> `%s'" % (target, f))
-                        os.rename(target, f)
+                if rmtree_failed:
+                    warn("Not possible to delete backup folder")
+                else:
+                    warn("Restoring...")
+                    for f in reversed(files):
+                        target = os.path.join('backup', f)
+                        if os.path.isfile(target) or os.path.islink(target):
+                            warn("`%s' -> `%s'" % (target, f))
+                            os.rename(target, f)
                 warn("Purging...")
                 Try(lambda:rmtree(update_dir))
         if os.name == 'nt':
