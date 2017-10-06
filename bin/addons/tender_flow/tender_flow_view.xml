@@ -88,7 +88,7 @@
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','=', False)]}" />
                         <button name="create_po" states="comparison" string="Create PO" type="object" icon="gtk-add"
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
-                        <button name="done" string="Closed" type="object" icon="gtk-go-forward"
+                        <button name="tender_done" string="Closed" type="object" icon="gtk-go-forward"
                             attrs="{'invisible':['|', '|', ('internal_state','!=', 'updated'), ('state', '!=', 'comparison'), ('sale_order_id','!=', False)]}" />
                     </group>
                 </form>
