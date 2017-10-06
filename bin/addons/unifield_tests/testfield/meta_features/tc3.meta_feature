@@ -199,7 +199,7 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Validated |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Draft     |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Draft     |
-
+	
 	I should see "Draft-p" in "State"	
 		
 #LINE 9
@@ -504,8 +504,7 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Validated   |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-v |	
 
-#	I should see "Validated-p" in "State"
-# System displays "Sourced-p" while it should remain Validated-p becasue the resourced line is still actually in somekind of Valdiated status, line is in OST
+	I should see "Validated-p" in "State"
 
 #LINE 18
 
@@ -546,9 +545,7 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Confirmed   |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-v |	
 
-	#	I should see "Validated-p" in "State"
-	# System displays "Sourced-p" while it should remain Validated-p becasue the resourced line is still actually in somekind of Valdiated status, line is in OST
-		
+	I should see "Validated-p" in "State"	
 
 	I open tab menu "WAREHOUSE"
 	I open accordion menu "Warehouse Management"
@@ -603,8 +600,7 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Closed      |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-v |	
 
-#	I should see "Validated-p" in "State"
-# System displays "Sourced-p" while it should remain Validated-p becasue the resourced line is still actually in somekind of Valdiated status, line is in OST
+	I should see "Validated-p" in "State"
 		
 
 #LINE 20 & 21
