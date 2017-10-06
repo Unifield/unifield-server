@@ -388,6 +388,24 @@ class tender(osv.osv):
         self.write(cr, uid, ids, {'state':'comparison'}, context=context)
         return True
 
+
+    def continue_sourcing(self, cr, uid, ids, context=None):
+        '''
+        call when pressing "coutinue sourcing progress" button on tender
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.create_po(cr, uid, ids, context=context)
+
+        wf_service = netsvc.LocalService("workflow")
+        for tender_id in ids:
+            wf_service.trg_validate(uid, 'tender', tender_id, 'button_done', cr)
+
+        return True
+
     def wkf_action_done(self, cr, uid, ids, context=None):
         '''
         check all rfq are updated (or cancel)
@@ -406,8 +424,6 @@ class tender(osv.osv):
                     rfq_list.append(rfq.id)
                 else:
                     self.pool.get('purchase.order').write(cr, uid, [rfq.id], {'rfq_state': 'done'}, context=context)
-            if rfq_list: # if some rfq have wrong state, we display a message
-                raise osv.except_osv(_('Warning !'), _("Generated RfQs must be Updated or Cancelled."))
 
             self.write(cr, uid, [tender.id], {'state':'done'}, context=context)
             self.infolog(cr, uid, "The tender id:%s (%s) has been closed" % (
@@ -423,8 +439,7 @@ class tender(osv.osv):
         '''
         po_obj = self.pool.get('purchase.order')
         # no rfq in done state
-        rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),
-                                          ('rfq_state', 'in', ('done',)),], context=context)
+        rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id), ('rfq_state', '=', 'done')], context=context)
         if rfq_ids:
             raise osv.except_osv(_('Error !'), _("Some RfQ are already Closed. Integrity failure."))
         # all rfqs must have been treated
@@ -527,22 +542,6 @@ class tender(osv.osv):
 
         return True
 
-    def tender_done(self, cr, uid, ids, context=None):
-        '''
-        method to perform checks before call to workflow
-        '''
-        po_obj = self.pool.get('purchase.order')
-        wf_service = netsvc.LocalService("workflow")
-        for tender in self.browse(cr, uid, ids, context=context):
-            # check if corresponding rfqs are in the good state
-            self.tender_integrity(cr, uid, tender, context=context)
-            wf_service.trg_validate(uid, 'tender', tender.id, 'button_done', cr)
-            # trigger all related rfqs
-            rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),], context=context)
-            for rfq_id in rfq_ids:
-                wf_service.trg_validate(uid, 'purchase.order', rfq_id, 'rfq_done', cr)
-
-        return True
 
     def create_po(self, cr, uid, ids, context=None):
         '''
@@ -592,7 +591,7 @@ class tender(osv.osv):
                 self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
 
             # when the po is generated, the tender is done - no more modification or comparison
-            self.tender_done(cr, uid, [tender.id], context=context)
+            self.wkf_action_done(cr, uid, [tender.id], context=context)
 
         return po_to_use
 
