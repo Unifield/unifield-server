@@ -441,8 +441,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if sol.state.startswith('cancel'): # cancel state must be ignored at this level (only accurate when all lines are canceled)
                     continue
                 elif sol.resourced_at_state and sols_obj.get_sequence(cr, uid, ids, sol.resourced_at_state, context=context) > sols_obj.get_sequence(cr, uid, ids, sol.state, context=context):
-                    # if line has been resourced and his resourced state is greater then his current state, then we take the state of the original line at resourcing
-                    # si l'etat < à létat de la ligne resourced alors on garde l'état de la ligne resourced
+                    # case of ressourced lines: 
+                    # resourced lines must not make the FO state going back
                     state_transformed = so.state.split('_')[0]
                     if sols_obj.get_sequence(cr, uid, ids, state_transformed, context=context) < sols_obj.get_sequence(cr, uid, ids, sol.state, context=context):
                         sol_states.add(sol.state)

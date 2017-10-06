@@ -1371,9 +1371,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             elif sourcing_line.po_cft == 'dpo':
                 domain.append(('order_type', '=', 'direct'))
 
-            if sourcing_line.loan_type:
-                domain.append(('order_type', '=', 'loan'))
-
             # supplier's order creation mode:
             if sourcing_line.supplier.po_by_project in ('project', 'category_project') or (sourcing_line.po_cft == 'dpo' and sourcing_line.supplier.po_by_project == 'all'):
                 domain.append(('customer_id', '=', sourcing_line.order_id.partner_id.id))
@@ -1382,6 +1379,63 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             if sourcing_line.supplier.po_by_project in ('category_project', 'category'): # Category requirements => Search a PO with the same category than the IR/FO category
                 domain.append(('categ', '=', sourcing_line.order_id.categ))
 
+            res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
+
+        if res_id and isinstance(res_id, list):
+            res_id = res_id[0]
+
+        return res_id or False
+
+
+    def get_existing_rfq(self, cr, uid, ids, context=None):
+        """
+        Do we have to create new RfQ or use an existing one ?
+        If an existing one can be used, then returns his ID, otherwise returns False
+        @return ID (int) of document to use or False
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res_id = False
+        for sourcing_line in self.browse(cr, uid, ids, context=context):
+            # common domain:
+            domain = [
+                ('partner_id', '=', sourcing_line.supplier.id),
+                ('state', 'in', ['draft']),
+                ('delivery_requested_date', '=', sourcing_line.date_planned),
+                ('rfq_ok', '=', True),
+                ('order_type', '=', 'regular'),
+            ]
+            res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
+
+        if res_id and isinstance(res_id, list):
+            res_id = res_id[0]
+
+        return res_id or False
+
+
+    def get_existing_po_loan_for_goods_return(self, cr, uid, ids, context=None):
+        """
+        Do we have to create new PO or use an existing one ?
+        If an existing one can be used, then returns his ID, otherwise returns False
+        @return ID (int) of document to use or False
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res_id = False
+        for sourcing_line in self.browse(cr, uid, ids, context=context):
+            # common domain:
+            domain = [
+                ('partner_id', '=', sourcing_line.partner_id.id),
+                ('state', 'in', ['draft']),
+                ('delivery_requested_date', '=', self.compute_delivery_requested_date(cr, uid, sourcing_line.id, context=context)),
+                ('order_type', '=', 'loan'),
+            ]
             res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
 
         if res_id and isinstance(res_id, list):
@@ -1431,6 +1485,23 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         return self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
 
+
+    def compute_delivery_requested_date(self, cr, uid, ids, context=None):
+        '''
+        compute delivery requested date for PO thanks to the date planned and the loan duration
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        sol = self.browse(cr, uid, ids[0], context=context)
+        delivery_requested_date = datetime.strptime(sol.date_planned, DEFAULT_SERVER_DATE_FORMAT)
+        delivery_requested_date = delivery_requested_date + relativedelta(months=sol.order_id.loan_duration or 0)
+        delivery_requested_date = delivery_requested_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
+
+        return delivery_requested_date
+
+
     def create_po_loan_for_goods_return(self, cr, uid, ids, context=None):
         '''
         Create PO to return loaned goods at expiry date
@@ -1441,10 +1512,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             ids = [ids]
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
-            delivery_requested_date = datetime.strptime(sourcing_line.date_planned, DEFAULT_SERVER_DATE_FORMAT)
-            delivery_requested_date = delivery_requested_date + relativedelta(months=sourcing_line.order_id.loan_duration or 0)
-            delivery_requested_date = delivery_requested_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
-
             po_values = {
                 'order_type': 'loan',
                 'origin': sourcing_line.order_id.name,
@@ -1456,7 +1523,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'categ': sourcing_line.categ,
                 'priority': sourcing_line.order_id.priority,
                 'details': sourcing_line.order_id.details,
-                'delivery_requested_date': delivery_requested_date,
+                'delivery_requested_date': self.compute_delivery_requested_date(cr, uid, sourcing_line.id, context=context),
                 'related_sourcing_id': sourcing_line.related_sourcing_id.id or False,
                 'unique_fo_id': sourcing_line.order_id.id if (sourcing_line.supplier and sourcing_line.supplier.po_by_project == 'isolated') else False,
             }
@@ -1562,7 +1629,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             if sourcing_line.type == 'make_to_stock':
                 if sourcing_line.loan_type:
                     # In case of loan, create the PO for later goods return:
-                    po_loan = self.get_existing_po(cr, uid, sourcing_line.id, context=context)
+                    po_loan = self.get_existing_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
                     if not po_loan:
                         po_loan = self.create_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
                         po = self.pool.get('purchase.order').browse(cr, uid, po_loan, context=context)
@@ -1632,7 +1699,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     self.pool.get('purchase.order').write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
 
                 elif sourcing_line.po_cft == 'rfq':
-                    rfq_to_use = self.get_existing_po(cr, uid, sourcing_line.id, context=context)
+                    rfq_to_use = self.get_existing_rfq(cr, uid, sourcing_line.id, context=context)
                     if not rfq_to_use:
                         rfq_to_use = self.create_rfq_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                         # log new RfQ:
