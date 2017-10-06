@@ -259,15 +259,10 @@ class purchase_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             changed = False
-            if line.modification_comment\
-                    or (line.original_qty and line.original_price and line.original_uom and line.original_currency_id):
-                if line.modification_comment or line.product_qty != line.original_qty \
-                        or line.price_unit != line.original_price or line.product_uom != line.original_uom\
-                        or line.currency_id != line.original_currency_id:
-                    changed = True
-            elif line.original_qty and line.original_uom and not line.original_price:  # From IR
-                if line.original_qty != line.product_qty or line.original_uom.id != line.product_uom.id:
-                    changed = True
+            if line.modification_comment or (line.original_qty and line.product_qty != line.original_qty):
+                changed = True
+            elif not line.original_price and (line.original_qty and line.original_qty != line.product_qty):  # From IR
+                changed = True
 
             res[line.id] = changed
         return res
