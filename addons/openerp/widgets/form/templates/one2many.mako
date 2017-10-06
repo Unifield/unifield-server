@@ -58,6 +58,7 @@
         <td class="o2m_cell">
             <input type="hidden" name="${name}/__id" id="${name}/__id" value="${id}" ${py.disabled(screen.view_type!="form")}/>
             <input type="hidden" name="${name}/_terp_default_get_ctx" id="${name}/_terp_default_get_ctx" value="${default_get_ctx}"/>
+            <input type="hidden" name="${name}/_terp_previously_selected" id="${name}/_terp_previously_selected" />
             % if default_value:
             	<input type="hidden" name="_terp_default_o2m/${name}" id="_terp_default_o2m/${name}" value="${default_value}"/>
             %endif

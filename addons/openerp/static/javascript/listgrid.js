@@ -600,6 +600,21 @@ MochiKit.Base.update(ListView.prototype, {
             return;
         }
 
+        // If id is not a number, we have an Array() of selected values
+        if (typeof id !== "number")
+        {
+            if (id.length > 0)
+            { 
+                id ="["+ id.join() + "]" 
+            }
+            // Ignore click if no id is given (e.g. we clicked on the button
+            // in header but did not select any line)
+            else
+            {
+                return;
+            }
+        }
+
         var self = this;
         var _list = this.name;
         var prefix = this.name == '_terp_list' ? '' : this.name + '/';
