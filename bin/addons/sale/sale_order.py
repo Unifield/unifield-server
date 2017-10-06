@@ -442,7 +442,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     continue
                 elif sol.resourced_at_state and sols_obj.get_sequence(cr, uid, ids, sol.resourced_at_state, context=context) > sols_obj.get_sequence(cr, uid, ids, sol.state, context=context):
                     # if line has been resourced and his resourced state is greater then his current state, then we take the state of the original line at resourcing
-                    sol_states.add(sol.resourced_at_state)
+                    # si l'etat < à létat de la ligne resourced alors on garde l'état de la ligne resourced
+                    state_transformed = so.state.split('_')[0]
+                    if sols_obj.get_sequence(cr, uid, ids, state_transformed, context=context) < sols_obj.get_sequence(cr, uid, ids, sol.state, context=context):
+                        sol_states.add(sol.state)
+                    else:
+                        sol_states.add(state_transformed)
                 else:
                     sol_states.add(sol.state)
 
