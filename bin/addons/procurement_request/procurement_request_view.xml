@@ -151,7 +151,7 @@
                 <search string="Internal Requests">
                     <group string="Filters" expand="1">
                         <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', 'in', ['draft','draft_p'])]" />
-                        <filter name="state_valid" string="Validated" icon="terp-camera_test" domain="[('state', '=', ['validated','validated_p'])]" />
+                        <filter name="state_valid" string="Validated" icon="terp-camera_test" domain="[('state', 'in', ['validated','validated_p'])]" />
                         <filter name="state_proc_progress" string="Confirmed" icon="terp-stage" domain="[('state', 'in', ('confirmed', 'confirmed_p'))]" />
                         <filter name="state_done" string="Closed" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
                         <separator orientation="vertical" />
