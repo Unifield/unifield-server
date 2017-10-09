@@ -40,7 +40,10 @@ class List(TinyWidget):
     template = "/openerp/widgets/templates/listgrid/listgrid.mako"
     params = ['name', 'data', 'columns', 'headers', 'model', 'selectable', 'editable', 'noteditable', 'resequencable',
               'pageable', 'selector', 'source', 'offset', 'limit', 'show_links', 'editors', 'view_mode',
-              'hiddens', 'edit_inline', 'field_total', 'field_real_total', 'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m', 'dashboard', 'impex', 'hide_new_button', 'hide_delete_button', 'hide_edit_button', 'notselectable']
+              'hiddens', 'edit_inline', 'field_total', 'field_real_total',
+              'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m',
+              'dashboard', 'impex', 'hide_new_button', 'hide_delete_button',
+              'hide_edit_button', 'notselectable', 'filter_selector' ]
 
     member_widgets = ['pager', 'buttons', 'editors', 'concurrency_info']
 
@@ -304,6 +307,11 @@ class List(TinyWidget):
         if self.pageable and len(self.data) > self.limit and self.limit != -1:
             self.data = self.data[self.offset:]
             self.data = self.data[:min(self.limit, len(self.data))]
+
+        self.filter_selector = attrs.get('filter_selector', None)
+        if self.filter_selector:
+            self.filter_selector = eval(self.filter_selector)
+
 
     def do_sum(self, data, field):
         sum = 0.0
