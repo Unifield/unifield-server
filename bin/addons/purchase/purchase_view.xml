@@ -404,14 +404,11 @@
             <field name="arch" type="xml">
                 <search string="Search Purchase Orders">
                     <group col="8" colspan="4">
-                        <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft'])]" separator="1" help="Purchase orders which are in draft state"/>
-                        <filter icon="terp-camera_test" name="confirmed" string="Validated" domain="[('state','in',['confirmed','wait'])]" separator="1" help="Purchase orders which are in validated state."/>
-                        <filter icon="gtk-paste-v" name="sourced" string="Sourced" domain="[('state','=','sourced')]" separator="1"/>
-                        <filter icon="terp-check" name="confirmed_wait" string="Confirmed (waiting)" domain="[('state', 'in', ['confirmed_wait'])]" separator="1" help="Purchase orders which are in approved state."/>
-                        <filter icon="terp-check" name="approved" string="Confirmed" domain="[('state', 'in', ['approved'])]" separator="1" help="Purchase orders which are in approved state."/>
+                        <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state', 'in', ['draft', 'draft_p'])]" separator="1" help="Purchase orders which are in draft state"/>
+                        <filter icon="terp-check" name="approved" string="Validated" domain="[('state', 'in', ['validated', 'validated_p'])]" separator="1" help="Purchase orders which are in approved state."/>
+                        <filter icon="gtk-paste-v" name="sourced" string="Sourced" domain="[('state','in',['sourced','sourced_p'])]" separator="1"/>
+                        <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','in',['confirmed','confirmed_p'])]" separator="1" help="Purchase orders which are in validated state."/>
                         <filter icon="gtk-close" name="done" string="Closed" domain="[('state', 'in', ['done'])]" separator="1" help="Purchase orders which are in done state."/>
-                        <separator orientation="vertical"/>
-                        <filter icon="gtk-missing-image" name="inactive" string="Show Split" domain="[('state','=','split')]" context="{'active_test': False}" separator="1"/>
                         <separator orientation="vertical"/>
                         <filter icon="gtk-cancel" name="cancelled" string="Cancelled" domain="[('state', 'in', ['cancel'])]" separator="1" help="Purchase orders which are in cancelled state."/>
                         <separator orientation="vertical"/>
