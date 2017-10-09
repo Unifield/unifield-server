@@ -828,6 +828,32 @@ function onChange(caller){
                             }
                         }
                         break;
+                    case 'char':
+
+                        fld.value = value;
+                        fld.setAttribute("value",value);
+
+                        // In 'Edit' mode, this is a <select> 
+                        if (fld.nodeName == "SELECT")
+                        {
+                            $(fld).val(value)
+                        }
+                        // In 'Read' mode, this is a <span>
+                        else
+                        {
+
+                            if ((obj['display_strings']) 
+                            &&  (obj['display_strings'][k]) 
+                            &&  (obj['display_strings'][k][value]))
+                            {
+                                fld.innerHTML = obj['display_strings'][k][value];
+                            }
+                            else
+                            {
+                                fld.innerHTML = value;
+                            }
+                        }
+                        break;
                     default:
                     // do nothing on default
                 }
@@ -1487,8 +1513,22 @@ function toggle_shortcut(){
 }
 
 
+// This function is triggered when a change occurs in a form. If some info
+// changed, it will set a flag 'is_form_changed' to true, such that later,
+// if user attempts to leave the page with unsaved changes, it will warn/ask
+// the user about them. (c.f. validate_action)
 function validateForm(){
     jQuery('#view_form table tr td:first').find('input:not([type=hidden]), select').change(function(e, automatic){
+
+        // Ignore some items
+        // (e.g. paging filters like the 'Show/hide cancel' selector for 
+        // order lines)
+        var eClassList = e.currentTarget.classList;
+        if (eClassList.contains("ignore_changes_when_leaving_page")
+        ||  eClassList.contains("readonlyfield"))
+        {
+            return;
+        }
         if (!automatic) {
             jQuery('#view_form').data('is_form_changed', true);
         }

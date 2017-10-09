@@ -281,6 +281,30 @@ MochiKit.Base.update(ListView.prototype, {
 
 // pagination & reordering
 MochiKit.Base.update(ListView.prototype, {
+    
+    update_filter: function() {
+
+        var filter = $(openobject.dom.get(this.name + '_filter'))[0];
+        var selected_filter_index = filter.selectedIndex;
+        var selected_filter_domain = filter[selected_filter_index].getAttribute("domain");
+        var terp_domains = openobject.dom.get(this.name + '/_terp_domain');
+
+        // TODO : in the future, if needed, properly add the domain to the
+        // existing domain list to be able to support multiple filters ?
+        var new_domains = "["+selected_filter_domain+"]";
+
+        // If we don't need to update anything, return immediately...
+        if (new_domains == terp_domains.value)
+        {
+            return;
+        }
+        
+        terp_domains.value = "["+selected_filter_domain+"]";
+
+        if(this.ids.length) {
+            this.reload();
+        }
+    },
 
     sort_by_order: function(column, field) {
         var $img = jQuery(field).find('img');
@@ -1048,6 +1072,21 @@ MochiKit.Base.update(ListView.prototype, {
                                 : 'arrow_up.gif'
                             )}));
                 }
+
+
+                var filter = $(openobject.dom.get(self.name + '_filter'))[0];
+                var terp_domains = openobject.dom.get(self.name + '/_terp_domain');
+                if ((filter) && (terp_domains.value))
+                {
+                    $(filter).find('option').each(function(index, element) {
+                        if ("["+element.getAttribute('domain')+"]" == terp_domains.value)
+                        {
+                            filter.selectedIndex = index;
+                        }
+                    })
+                }
+
+
                 updateConcurrencyInfo(obj.concurrency_info || {});
             }
         });

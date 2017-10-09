@@ -215,6 +215,19 @@
                                         % endif
                                     </td>
                                 % endif
+                                % if filter_selector:
+                                <td class="pager-cell" style="width: 90%">
+                                    <div class="pager">
+                                         <select id="${name}_filter" 
+                                                class="paging ignore_changes_when_leaving_page" 
+                                                onchange="new ListView('${name}').update_filter()" 
+                                                onload="new ListView('${name}').update_filter()">
+                                    </div>
+                                    % for filtername, domain in filter_selector:
+                                        <option domain="${domain}">${filtername}</option>
+                                    % endfor
+                                </td>
+                                % endif 
                                 <td class="pager-cell" style="width: 90%">
                                     ${pager.display()}
                                 </td>

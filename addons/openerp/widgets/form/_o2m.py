@@ -18,8 +18,6 @@
 #  You can see the MPL licence at: http://www.mozilla.org/MPL/MPL-1.1.html
 #
 ###############################################################################
-import time
-import copy
 import cherrypy
 
 from openerp.utils import TinyDict, expr_eval, rpc, node_attributes
@@ -141,12 +139,19 @@ class O2M(TinyInputWidget):
         if view_type == view_mode[-1]: self.switch_to = view_mode[0]
 
         ids = attrs.get('value') or []
+
         if not isinstance(ids, list):
             ids = [ids]
 
         current.offset = current.offset or 0
         current.limit = current.limit or 50
-        current.count = len(ids or [])
+
+        if not current.domain:
+            current.count = len(ids or [])
+        else:
+            domain = current.domain
+            domain.append(('id', 'in', ids))
+            current.count = rpc.RPCProxy(self.model).search_count(domain, current.context)
 
         if not current.force_limit:
             arch = attrs.get('views', {}).get('tree', {}).get('arch')
@@ -156,7 +161,7 @@ class O2M(TinyInputWidget):
                 if tree_attribute.get('limit'):
                     current.limit = tree_attribute.get('limit')
 
-        if current.limit != -1 and not params.sort_key:
+        if current.limit != -1 and not params.sort_key and not current.domain:
             ids = ids[current.offset: current.offset+current.limit]
 
         if ids:
@@ -169,23 +174,30 @@ class O2M(TinyInputWidget):
                 ids = []
             elif isinstance(ids[0], tuple):
                 [current_id[1] for current_id in ids]
-        
+
         id = (ids or None) and ids[0]
-        
+
         if self.name == self.source or self.name == params.source:
-            if params.sort_key and ids:
+            if (params.sort_key or current.domain) and ids:
                 domain = current.domain or []
                 domain.append(('id', 'in', ids))
                 limit = current.limit
                 if current.limit == -1:
                     limit = 0
-                ids = rpc.RPCProxy(self.model).search(domain, current.offset, limit, params.sort_key + ' '+params.sort_order+',id', current.context)
-                id = ids[0]
+
+                if params.sort_key:
+                    sort_key_order = params.sort_key + ' '+params.sort_order+',id'
+                else:
+                    sort_key_order = False
+
+                ids = rpc.RPCProxy(self.model).search(domain, current.offset, limit, sort_key_order, current.context)
+                id = ids[0] if ids else None
+
         if current and params.source and isinstance(params.source, basestring) and self.name in params.source.split('/'):
             id = current.id
 
         id = id or None
-                
+
         current.model = self.model
         current.id = id
         current.ids = ids
