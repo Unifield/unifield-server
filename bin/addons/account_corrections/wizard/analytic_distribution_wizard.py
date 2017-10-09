@@ -432,21 +432,13 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'amount': amount,
             }
 
-            # UFTP-169: Use the correction line date in case we are correcting a line that is a correction of another line.
-            if ml.corrected_line_id:
-                vals.update({
-                    'date': ml.date,
-                    'source_date': orig_date,
-                    'document_date': orig_document_date,
-                })
-            else:
-                # get the actual AJI date (can differ from the ML orig_date if an AD correction has already been made)
-                aal_date = ana_obj.browse(cr, uid, to_override_ids[0], fields_to_fetch=['date'], context=context).date
-                # original dates are kept but we add them in vals to trigger the check on dates with the new AD
-                vals.update({
-                    'date': aal_date,
-                    'document_date': orig_document_date,
-                })
+            # get the actual AJI date (can differ from the ML orig_date if an AD correction has already been made)
+            aal_date = ana_obj.browse(cr, uid, to_override_ids[0], fields_to_fetch=['date'], context=context).date
+            # original dates are kept but we add them in vals to trigger the check on dates with the new AD
+            vals.update({
+                'date': aal_date,
+                'document_date': orig_document_date,
+            })
             self.pool.get('account.analytic.line').write(cr, uid, to_override_ids, vals)
             # update the distib line
             self.pool.get('funding.pool.distribution.line').write(cr, uid, [line.distribution_line_id.id], {

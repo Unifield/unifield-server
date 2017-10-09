@@ -24,6 +24,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 class account_analytic_journal(osv.osv):
     _name = 'account.analytic.journal'
@@ -52,10 +53,28 @@ class account_analytic_journal(osv.osv):
             ('situation','Situation'),
         ]
 
+    def _get_has_ajis(self, cr, uid, ids, field_name, arg, context=None):
+        """
+        Returns a dict with key = analytic_journal_id,
+        and value = True if at least one AJI is booked on the journal, or False otherwise.
+        """
+        res = {}
+        if not ids:
+            return res
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        aal_obj = self.pool.get('account.analytic.line')
+        for journal_id in ids:
+            res[journal_id] = aal_obj.search_exist(cr, uid, [('journal_id', '=', journal_id)], context=context) or False
+        return res
+
     _columns = {
         'type': fields.selection(get_journal_type, 'Type', size=32, required=True, help="Gives the type of the analytic journal. When it needs for a document \
 (eg: an invoice) to create analytic entries, OpenERP will look for a matching journal of the same type."),
         'code': fields.char('Journal Code', size=8, required=True),
+        'has_ajis': fields.function(_get_has_ajis, type='boolean', method=True, string='Has Analytic Journal Items', store=False),
     }
 
     def name_get(self, cr, user, ids, context=None):
@@ -68,6 +87,54 @@ class account_analytic_journal(osv.osv):
             txt = rs.get('code', '')
             res += [(rs.get('id'), txt)]
         return res
+
+    def copy(self, cr, uid, journal_id, default=None, context=None):
+        """
+        Analytic journal duplication: don't copy the link with analytic lines
+        """
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        default.update({
+            'line_ids': [],
+        })
+        return super(account_analytic_journal, self).copy(cr, uid, journal_id, default, context=context)
+
+    def _check_code_duplication(self, cr, uid, vals, current_id=None, context=None):
+        """
+        Raises a warning if the Analytic Journal Code is already in use in the current instance.
+        This check is not done during the synchronization process where we can receive journals from other instances.
+        """
+        if context is None:
+            context = {}
+        if vals.get('code') and not context.get('sync_update_execution'):
+            journal_domain = [('code', '=ilike', vals['code']), ('is_current_instance', '=', True)]
+            if current_id:
+                # exclude the current journal being modified
+                journal_domain.append(('id', '!=', current_id))
+            if self.search_exist(cr, uid, journal_domain, context=context):
+                raise osv.except_osv(_('Warning'),
+                                     _('An analytic journal with the code %s already exists in the current instance.') % vals['code'].upper())
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        self._check_code_duplication(cr, uid, vals, context=context)
+        return super(account_analytic_journal, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        for journal_id in self.browse(cr, uid, ids, fields_to_fetch=['is_current_instance'], context=context):
+            if not journal_id.is_current_instance and not context.get('sync_update_execution'):
+                raise osv.except_osv(_('Warning'), _("You can't edit an Analytic Journal that doesn't belong to the current instance."))
+            self._check_code_duplication(cr, uid, vals, current_id=journal_id.id, context=context)
+        return super(account_analytic_journal, self).write(cr, uid, ids, vals, context=context)
 
 account_analytic_journal()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

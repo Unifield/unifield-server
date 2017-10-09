@@ -267,6 +267,7 @@ SELECT res_id, touched
         write_skip_o2m = {
             'supplier.catalogue': [],
             'account.bank.statement': ['line_ids'],
+            'res.currency': ['rate_ids'],
         }
 
         _previous_calls = _previous_calls or []
