@@ -289,7 +289,16 @@ MochiKit.Base.update(ListView.prototype, {
         var selected_filter_domain = filter[selected_filter_index].getAttribute("domain");
         var terp_domains = openobject.dom.get(this.name + '/_terp_domain');
 
-        // TODO / FIXME : properly add the domain instead of hard reset/replace
+        // TODO : in the future, if needed, properly add the domain to the
+        // existing domain list to be able to support multiple filters ?
+        var new_domains = "["+selected_filter_domain+"]";
+
+        // If we don't need to update anything, return immediately...
+        if (new_domains == terp_domains.value)
+        {
+            return;
+        }
+        
         terp_domains.value = "["+selected_filter_domain+"]";
 
         if(this.ids.length) {
