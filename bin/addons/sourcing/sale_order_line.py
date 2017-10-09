@@ -1462,7 +1462,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [sourcing_line.supplier.id], ['default'])['default'],
                 'customer_id': sourcing_line.order_id.partner_id.id,    
                 'location_id': self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0],
-                'cross_docking_ok': True,
+                'cross_docking_ok': False if (sourcing_line.procurement_request and sourcing_line.order_id.location_requestor_id.usage != 'customer') else True,
                 'pricelist_id': sourcing_line.supplier.property_product_pricelist_purchase.id,
                 'fiscal_position': sourcing_line.supplier.property_account_position and sourcing_line.supplier.property_account_position.id or False,
                 'warehouse_id': sourcing_line.order_id.warehouse_id.id,
