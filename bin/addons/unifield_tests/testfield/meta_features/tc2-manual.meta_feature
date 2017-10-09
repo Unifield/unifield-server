@@ -360,9 +360,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
 	
 	I click on "Cancel only" and close the window
 	
-	I should see in the main table the following data:
-		| PRODUCT CODE | STATE     |
-        | ADAPDCDRB--  | Cancelled |
 	
     
 	I click on "New" and open the window
@@ -388,7 +385,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
 	   | LINE  |  PRODUCT CODE  | PRODUCT DESCRIPTION                          | QUANTITY | STATE       |                       
        |   1   | ADAPCOLABAG    | (laptop computer) CARRYING BAG               |  20.00   | Validated   |
 	   |   2   | ADAPMOUSOUS    | MOUSE, optical, USB port                     |  15.00   | Validated   |
-       |   3   | ADAPDCDRB--    | DISK, CD-R (recordable), data, cakebox of 25 |  20.00   | Cancelled   |
 	   |   4   | ADAPKBDAUSB    | KEYBOARD, AZERTY, external, USB              |  25.00   | Validated-n |
 	
 	   
@@ -402,7 +398,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE      | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Sourced-v |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Sourced-v |	
-		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Cancelled |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Draft     |
 	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB                  | Sourced-n |  
 
@@ -442,7 +437,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Confirmed |
         | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Confirmed |	
-		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
 	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  
 	
 	
@@ -471,7 +465,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Confirmed |
         | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Confirmed |	
-		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
         | ADAPMEMK1--  | MEMORY KEY, USB                              | Draft     |
 	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  
 	
@@ -489,8 +482,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Confirmed |
         | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Confirmed |	
-		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
-        | ADAPMEMK1--  | MEMORY KEY, USB                              | Cancelled |
 	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  	
 
 	I should see "Confirmed" in "State"	   
@@ -516,8 +507,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
         | PRODUCT                                                     |STATE      |
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG                | Confirmed |
         | [ADAPMOUSOUS] MOUSE, optical, USB port                      | Confirmed |
-		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25  | Cancelled |
-        | [ADAPMEMK1--] MEMORY KEY, USB                               | Cancelled |
 	   	| [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB               | Confirmed |
 				
     I should see "Confirmed" in "Order state"
@@ -535,8 +524,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
        | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Confirmed |
        | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Confirmed |	
-	   | ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
-       | ADAPMEMK1--  | MEMORY KEY, USB                              | Cancelled |
 	   | ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  	
 	
     I should see "Confirmed" in "Order State"	
@@ -604,7 +591,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
        | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Closed    |
        | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Closed    |	
-	   | ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
 	   | ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  	
 	
     I should see "Confirmed-p" in "Order State"	
@@ -715,8 +701,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
        | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Closed    |
        | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Closed    |	
-	   | ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
-       | ADAPMEMK1--  | MEMORY KEY, USB                              | Cancelled |
 	   | ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  	
 	
     I should see "Confirmed-p" in "Order State"	
@@ -757,7 +741,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
        | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Closed    |
        | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Closed    |	
-	   | ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
 	   | ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Closed    |  	
 	
     I should see "Closed" in "Order State"	
@@ -814,8 +797,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Closed    |
         | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Closed    |	
-		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
-        | ADAPMEMK1--  | MEMORY KEY, USB                              | Cancelled |
 	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Closed    |  
 	
 	I should see "Closed" in "State"
@@ -864,8 +845,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
        | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Closed    |
        | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Closed    |	
-	   | ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
-       | ADAPMEMK1--  | MEMORY KEY, USB                              | Cancelled |
 	   | ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Closed    |  	
 	
     I should see "Closed" in "Order State"		
@@ -904,8 +883,6 @@ Scenario: SSL Mission flow with PO line addition and deletion
         | PRODUCT                                                    |STATE      | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Closed    |
         | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Closed    |	
-		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
-        | [ADAPMEMK1--] MEMORY KEY, USB                              | Cancelled |
 	   	| [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | Closed    | 	
 
     I should see "Closed" in "Order state"	
