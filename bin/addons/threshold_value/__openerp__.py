@@ -24,12 +24,12 @@
     "name": "Threshold value",
     "version": "1.0",
     "depends": [
-                "base",
-                "sale",
-                "stock",
-                "consumption_calculation",
-                "reason_types_moves",
-                "procurement",
+        "base",
+        "sale",
+        "stock",
+        "consumption_calculation",
+        "reason_types_moves",
+        "procurement",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
@@ -48,13 +48,9 @@
     ],
     'demo_xml': [
     ],
-    "test": [
-        "test/data.yml",
-        "test/threshold.yml",
-    ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -44,10 +44,6 @@
         "supplier_catalogue_report.xml",
         "security/ir.model.access.csv",
     ],
-    'test': [
-        "test/data.yml",
-        "test/catalogue.yml",
-    ],
     'installable': True,
     'active': False,
 }

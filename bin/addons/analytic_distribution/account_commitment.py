@@ -81,15 +81,14 @@ class account_commitment(osv.osv):
                                  }),
         'analytic_distribution_id': fields.many2one('analytic.distribution', string="Analytic distribution"),
         'type': fields.selection([('manual', 'Manual'), ('external', 'Automatic - External supplier'), ('esc', 'Manual - ESC supplier')], string="Type", readonly=True),
-        'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'notes': fields.text(string="Comment"),
+        'purchase_id': fields.many2one('purchase.order', string="Source document", readonly=True),
     }
 
     _defaults = {
         'state': lambda *a: 'draft',
         'date': lambda *a: strftime('%Y-%m-%d'),
         'type': lambda *a: 'manual',
-        'from_yml_test': lambda *a: False,
         'journal_id': lambda s, cr, uid, c: s.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'engagement'),
                                                                                                     ('instance_id', '=', s.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id)], limit=1, context=c)[0]
     }
@@ -252,13 +251,13 @@ class account_commitment(osv.osv):
         # Open it!
         return {
             'name': _('Global analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def button_reset_distribution(self, cr, uid, ids, context=None):
@@ -345,9 +344,6 @@ class account_commitment(osv.osv):
         # Browse commitments
         for c in self.browse(cr, uid, ids, context=context):
             for cl in c.line_ids:
-                # Continue if we come from yaml tests
-                if c.from_yml_test or cl.from_yml_test:
-                    continue
                 # Verify that analytic distribution is present
                 if cl.analytic_distribution_state != 'valid':
                     raise osv.except_osv(_('Error'), _('Analytic distribution is not valid for account "%s %s".') %
@@ -427,10 +423,7 @@ class account_commitment_line(osv.osv):
         res = {}
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
-            if line.from_yml_test:
-                res[line.id] = 'valid'
-            else:
-                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.commit_id.analytic_distribution_id.id, line.account_id.id)
+            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line.analytic_distribution_id.id, line.commit_id.analytic_distribution_id.id, line.account_id.id)
         return res
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
@@ -460,16 +453,16 @@ class account_commitment_line(osv.osv):
                                                        string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
                                                                   string='Header Distrib.?'),
-        'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'analytic_lines': fields.one2many('account.analytic.line', 'commitment_line_id', string="Analytic Lines"),
         'first': fields.boolean(string="Is not created?", help="Useful for onchange method for views. Should be False after line creation.",
                                 readonly=True),
+        'purchase_order_line_ids': fields.many2many('purchase.order.line', 'purchase_line_commitment_rel', 'commitment_id', 'purchase_id',
+                                                    string="Purchase Order Lines", readonly=True),
     }
 
     _defaults = {
         'initial_amount': lambda *a: 0.0,
         'amount': lambda *a: 0.0,
-        'from_yml_test': lambda *a: False,
         'first': lambda *a: True,
     }
 
@@ -641,13 +634,13 @@ class account_commitment_line(osv.osv):
         # Open it!
         return {
             'name': _('Analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
 account_commitment_line()

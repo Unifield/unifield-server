@@ -79,7 +79,7 @@ class stock_move(osv.osv):
             # Fetch all necessary elements
             qty = move.product_uos_qty or move.product_qty or 0.0
             picking = move.picking_id or False
-            if not picking:
+            if not picking or not move.purchase_line_id or picking.type !='in':
                 # If no picking then no PO have generated this stock move
                 continue
             # fetch invoice type in order to retrieve price unit
@@ -89,8 +89,6 @@ class stock_move(osv.osv):
                 # If no price_unit, so no impact on commitments because no price unit have been taken for commitment calculation
                 continue
             # update all commitment voucher lines
-            if not move.purchase_line_id:
-                continue
             for cl in move.purchase_line_id.commitment_line_ids:
                 new_amount = cl.amount - (qty * price_unit)
                 if new_amount < 0.0:

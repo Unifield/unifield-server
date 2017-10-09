@@ -1065,7 +1065,7 @@ class Entity(osv.osv):
 
         # Get the whole list of messages to execute
         # Warning: order matters
-        message_ids = messages.search(cr, uid, [('run','=',False)], order='id asc', context=context)
+        message_ids = messages.search(cr, uid, [('run','=',False)], order='rule_sequence, id', context=context)
         messages_count = len(message_ids)
         if messages_count == 0: return 0
 

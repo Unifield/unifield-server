@@ -50,14 +50,10 @@
     'demo_xml': [
     ],
     'test': [
-        'test/data.yml',
-        'test/rac_report.yml',
-        'test/amc_review.yml',
-        'test/expiration.yml',
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

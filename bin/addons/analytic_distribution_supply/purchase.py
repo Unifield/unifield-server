@@ -26,10 +26,7 @@ from osv import fields
 from tools.translate import _
 
 from time import strftime
-from account_override.period import get_period_from_date
-from account_override.period import get_date_in_period
 
-from collections import defaultdict
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
@@ -146,97 +143,6 @@ class purchase_order(osv.osv):
         # Default method
         return super(purchase_order, self).copy_data(cr, uid, p_id, default=default, context=context)
 
-    def action_create_commitment(self, cr, uid, ids, ctype=False, context=None):
-        """
-        Create commitment from given PO, but only for external and esc partner_types
-        """
-        # Some verifications
-        if not ctype or ctype not in ['external', 'esc']:
-            return False
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Prepare some values
-        commit_obj = self.pool.get('account.commitment')
-        instance_id = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.id
-        args = [
-            ('type', '=', 'engagement'),
-            ('instance_id', '=', instance_id)
-        ]
-        eng_ids = self.pool.get('account.analytic.journal').search(cr, uid, args, limit=1, context=context)
-        for po in self.browse(cr, uid, ids, context=context):
-            # fetch analytic distribution, period from delivery date, currency, etc.
-            vals = {
-                'journal_id': eng_ids and eng_ids[0] or False,
-                'currency_id': po.currency_id and po.currency_id.id or False,
-                'partner_id': po.partner_id and po.partner_id.id or False,
-                'purchase_id': po.id or False,
-            }
-            if po.partner_id and po.partner_id.partner_type == 'external':
-                vals.update({'type': 'external'})
-            else:
-                vals.update({'type': 'manual'})
-            # prepare some values
-            today = strftime('%Y-%m-%d')
-            period_ids = get_period_from_date(self, cr, uid, po.delivery_confirmed_date or today, context=context)
-            period_id = period_ids and period_ids[0] or False
-            if not period_id:
-                raise osv.except_osv(_('Error'), _('No period found for given date: %s.') % (po.delivery_confirmed_date or today))
-            date = get_date_in_period(self, cr, uid, po.delivery_confirmed_date or today, period_id, context=context)
-            po_lines = defaultdict(list)
-            # update period and date
-            vals.update({
-                'date': date,
-                'period_id': period_id,
-            })
-            # Create commitment
-            commit_id = commit_obj.create(cr, uid, vals, context=context)
-            # Add analytic distribution from purchase
-            if po.analytic_distribution_id:
-                new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, po.analytic_distribution_id.id, {}, context=context)
-                # Update this distribution not to have a link with purchase but with new commitment
-                if new_distrib_id:
-                    self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id],
-                                                                 {'purchase_id': False, 'commitment_id': commit_id}, context=context)
-                    # Create funding pool lines if needed
-                    self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
-                    # Update commitment with new analytic distribution
-                    self.pool.get('account.commitment').write(cr, uid, [commit_id], {'analytic_distribution_id': new_distrib_id}, context=context)
-            # Browse purchase order lines and group by them by account_id
-            for pol in po.order_line:
-                # Search product account_id
-                a = pol.account_4_distribution and pol.account_4_distribution.id or False
-                if not a:
-                    raise osv.except_osv(_('Error'), _('There is no expense account defined for this line: %s (id:%d)') % (pol.name or '', pol.id))
-                # Write
-                po_lines[a].append(pol)
-            # Commitment lines process
-            created_commitment_lines = []
-            for account_id in po_lines:
-                total_amount = 0.0
-                for line in po_lines[account_id]:
-                    total_amount += line.price_subtotal
-                # Create commitment lines
-                line_id = self.pool.get('account.commitment.line').create(cr, uid, {
-                    'commit_id': commit_id,
-                    'amount': total_amount < 0.00001 and 0.00001 or total_amount,
-                    'initial_amount': total_amount < 0.00001 and 0.00001 or total_amount,
-                    'account_id': account_id,
-                    'purchase_order_line_ids': [(6,0,[x.id for x in po_lines[account_id]])]
-                }, context=context)
-                created_commitment_lines.append(line_id)
-            # Create analytic distribution on this commitment line
-            self.pool.get('account.commitment.line').create_distribution_from_order_line(cr, uid, created_commitment_lines, context=context)
-            # Display a message to inform that a commitment was created
-            commit_data = self.pool.get('account.commitment').read(cr, uid, commit_id, ['name'], context=context)
-            commit_name = commit_data and commit_data.get('name') or ''
-            message = _("Commitment Voucher %s has been created.") % commit_name
-            view_ids = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'account_commitment_form')
-            view_id = view_ids and view_ids[1] or False
-            self.pool.get('account.commitment').log(cr, uid, commit_id, message, context={'view_id': view_id})
-        return True
-
     def _finish_commitment(self, cr, uid, ids, context=None):
         """
         Change commitment(s) to Done state from given Purchase Order.
@@ -255,18 +161,6 @@ class purchase_order(osv.osv):
                         self.pool.get('account.commitment').action_commitment_done(cr, uid, [x.id for x in po.commitment_ids], context=context)
         return True
 
-    def wkf_action_cancel_po(self, cr, uid, ids, context=None):
-        """
-        Delete commitment from purchase before 'cancel' state.
-        """
-        # Some verifications
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        # Change commitments state if exists
-        self._finish_commitment(cr, uid, ids, context=context)
-        return super(purchase_order, self).wkf_action_cancel_po(cr, uid, ids, context=context)
 
     def action_done(self, cr, uid, ids, context=None):
         """

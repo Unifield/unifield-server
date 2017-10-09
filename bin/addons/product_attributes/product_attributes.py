@@ -23,9 +23,7 @@ from osv import fields, osv
 import re
 from tools.translate import _
 from lxml import etree
-import logging
 import tools
-from os import path
 from datetime import datetime
 
 class product_section_code(osv.osv):
@@ -303,16 +301,6 @@ product_template()
 
 class product_attributes(osv.osv):
     _inherit = "product.product"
-
-    def init(self, cr):
-        if hasattr(super(product_attributes, self), 'init'):
-            super(product_attributes, self).init(cr)
-        mod_obj = self.pool.get('ir.module.module')
-        mode = mod_obj.search(cr, 1, [('name', '=', 'product_attributes'), ('state', '=', 'to install')]) and 'init' or 'update'
-        logging.getLogger('init').info('HOOK: module product_attributes: loading product_attributes_data.xml')
-        pathname = path.join('product_attributes', 'product_attributes_data.xml')
-        file = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'product_attributes', file, {}, mode=mode, noupdate=True)
 
     def execute_migration(self, cr, moved_column, new_column):
         super(product_attributes, self).execute_migration(cr, moved_column, new_column)
@@ -1297,7 +1285,7 @@ class product_attributes(osv.osv):
         smrl_obj = self.pool.get('stock.mission.report.line')
         prod_status_obj = self.pool.get('product.status')
         int_stat_obj = self.pool.get('product.international.status')
-        
+
         if context is None:
             context = {}
 

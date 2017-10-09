@@ -149,6 +149,7 @@
             <rng:optional><rng:attribute name="hide_delete_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_edit_button"/></rng:optional>
             <rng:optional><rng:attribute name="show_add_button"/></rng:optional>
+            <rng:optional><rng:attribute name="filter_selector"/></rng:optional>
             <rng:zeroOrMore>
                 <rng:choice>
                     <rng:ref name="field"/>
@@ -368,6 +369,7 @@
             <rng:optional><rng:attribute name="rowspan"/></rng:optional>
             <rng:optional><rng:attribute name="string"/></rng:optional>
             <rng:optional><rng:attribute name="col"/></rng:optional>
+			<rng:optional><rng:attribute name="attrs"/></rng:optional>
             <rng:optional><rng:attribute name="select"/></rng:optional>
             <rng:optional><rng:attribute name="orientation"/></rng:optional>
             <rng:zeroOrMore>

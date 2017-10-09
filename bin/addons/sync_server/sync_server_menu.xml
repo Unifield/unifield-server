@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <menuitem id="sale_override.menu_localisation"
+        <menuitem id="sale.menu_localisation"
             parent="base.menu_administration"
             groups="base.group_extended"/>
         <menuitem id="base.menu_administration"

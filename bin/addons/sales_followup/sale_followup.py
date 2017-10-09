@@ -22,43 +22,42 @@
 from osv import osv, fields
 from tools.translate import _
 import datetime
-import time
 
 class sale_order_followup_test(osv.osv_memory):
     _name = 'sale.order.followup.test'
-    
+
     _columns = {'name': fields.char(size=64, string='Name')}
-    
+
     def create_test(self, cr, uid, ids, context=None):
         self.pool.get('product.category').create(cr, uid, {'name': 'test category'}, context=context)
         return True
-    
+
 sale_order_followup_test()
 
 class sale_order_followup(osv.osv_memory):
     _name = 'sale.order.followup'
     _description = 'Sales Order Followup'
-    
+
     def get_selection(self, cr, uid, o, field, context=None):
         """
         """
         return self.pool.get('ir.model.fields').get_browse_selection(cr, uid, o, field, context)
 
-    
+
     def _get_order_state(self, cr, uid, ids, field_name, args, context=None):
         if not context:
             context = {}
-            
+
         res = {}
-            
+
         for follow in self.browse(cr, uid, ids, context=context):
             res[follow.id] = None
-            
+
             if follow.order_id:
                 res[follow.id] = self.get_selection(cr, uid, follow.order_id, 'state_hidden_sale_order', context)
-            
+
         return res
-    
+
     _columns = {
         'order_id': fields.many2one('sale.order', string='Internal reference', readonly=True),
         'cust_ref': fields.related('order_id', 'client_order_ref', string='Customer reference', readonly=True, type='char'),
@@ -69,11 +68,11 @@ class sale_order_followup(osv.osv_memory):
         'line_ids': fields.one2many('sale.order.line.followup', 'followup_id', string='Lines', readonly=True),
         'choose_type': fields.selection([('documents', 'Documents view'), ('progress', 'Progress view')], string='Type of view'),
     }
-    
+
     _defaults = {
         'choose_type': lambda *a: 'progress',
     }
-    
+
     def go_to_view(self, cr, uid, ids, context=None):
         '''
         Launches the correct view according to the user's choice
@@ -90,7 +89,7 @@ class sale_order_followup(osv.osv_memory):
                 view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_split_progress_view')[1]
             else:
                 view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_progress_view')[1]
-            
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'sale.order.followup',
                 'res_id': followup.id,
@@ -98,7 +97,7 @@ class sale_order_followup(osv.osv_memory):
                 'view_type': 'form',
                 'view_mode': 'form',
                 'target': 'dummy'}
-        
+
 #    def switch_documents(self, cr, uid, ids, context=None):
 #        '''
 #        Switch to documents view
@@ -106,15 +105,15 @@ class sale_order_followup(osv.osv_memory):
 #        self.write(cr, uid, ids, {'choose_type': 'documents'})
 #        
 #        return self.go_to_view(cr, uid, ids, context=context)
-    
+
     def switch_progress(self, cr, uid, ids, context=None):
         '''
         Switch to progress view
         '''
         self.write(cr, uid, ids, {'choose_type': 'progress'})
-        
+
         return self.go_to_view(cr, uid, ids, context=context)
-    
+
     def update_followup(self, cr, uid, ids, context=None):
         '''
         Updates data in followup view
@@ -122,12 +121,12 @@ class sale_order_followup(osv.osv_memory):
         if context is None:
             context = {}
         new_context = context.copy()
-        
+
         # Get information of the old followup before deletion
         for followup in self.browse(cr, uid, ids, context=new_context):
             new_context['active_ids'] = [followup.order_id.id]
             new_context['view_type'] = followup.choose_type
-        
+
         # Get the id of the new followup object
         result = self.start_order_followup(cr, uid, ids, context=new_context).get('res_id')
         if not result:
@@ -135,13 +134,13 @@ class sale_order_followup(osv.osv_memory):
         else:        
             # Remove the old followup object and all his lines (on delete cascade)
             self.unlink(cr, uid, ids, context=new_context)
-            
+
         # Returns the same view as before
         #if new_context.get('view_type') == 'documents':
         #    return self.switch_documents(cr, uid, [result], context=new_context)
         #else:
         return self.switch_progress(cr, uid, [result], context=new_context)
-    
+
     def start_order_followup(self, cr, uid, ids, context=None):
         '''
         Creates and display a followup object
@@ -149,23 +148,23 @@ class sale_order_followup(osv.osv_memory):
         order_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
         line_obj = self.pool.get('sale.order.line.followup')
-        
+
         if context is None:
             context = {}
 
         # openERP BUG ?
         ids = context.get('active_ids',[])
-        
+
         if not ids:
             raise osv.except_osv(_('Error'), _('No order found !'))
         if len(ids) != 1:
             raise osv.except_osv(_('Error'), _('You should select one order to follow !'))
-        
+
         followup_id = False
         split_lines = False
         for o in order_obj.browse(cr, uid, ids, context=context):
             followup_id = self.create(cr, uid, {'order_id': o.id}, context=context)
-            
+
             for line in o.order_line:
                 split_line_ids = sol_obj.search(cr, uid, [('original_line_id', '=', line.id)], context=context)
                 first_line = True
@@ -183,20 +182,20 @@ class sale_order_followup(osv.osv_memory):
                     displayed_out_ids = self.get_outgoing_ids(cr, uid, l.id, non_zero=True, context=context)
                     tender_ids = self.get_tender_ids(cr, uid, l.id, context=context)
 #                    quotation_ids = self.get_quotation_ids(cr, uid, line.id, context=context)
-                
+
                     line_obj.create(cr, uid, {'followup_id': followup_id,
                                               'line_id': line.id,
                                               'original_order_id': split_lines and l.order_id and l.order_id.id or False,
                                               'first_line': first_line,
                                               'tender_ids': [(6,0,tender_ids)],
-#                                             'quotation_ids': [(6,0,quotation_ids)],
+                                              #                                             'quotation_ids': [(6,0,quotation_ids)],
                                               'purchase_ids': [(6,0,purchase_ids)],
                                               'purchase_line_ids': [(6,0,purchase_line_ids)],
                                               'incoming_ids': [(6,0,incoming_ids)],
                                               'outgoing_ids': [(6,0,outgoing_ids)],
                                               'displayed_out_ids': [(6,0,displayed_out_ids)]}, context=context)
                     first_line = False
-                   
+
         if split_lines:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sales_followup', 'sale_order_followup_split_progress_view')[1]
         else:
@@ -209,28 +208,25 @@ class sale_order_followup(osv.osv_memory):
                 'nodestroy': True,
                 'view_type': 'form',
                 'view_mode': 'form',}
-        
+
     def get_purchase_ids(self, cr, uid, line_id, context=None):
         '''
         Returns a list of purchase orders related to the sale order line
         '''
-        line_obj = self.pool.get('sale.order.line')
-        
+        if context is None:
+            context = {}
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
-            
-        purchase_ids = []
-        
-        for line in line_obj.browse(cr, uid, line_id, context=context):
-            if line.type == 'make_to_order' and line.procurement_id:
-                if line.procurement_id.purchase_id and not line.procurement_id.purchase_id.rfq_ok:
-                    purchase_ids.append(line.procurement_id.purchase_id.id)
-                elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
-                    for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if not rfq.rfq_ok:
-                            purchase_ids.append(rfq.id)
 
-        return purchase_ids
+        po_ids = set()
+        for sol in self.pool.get('sale.order.line').browse(cr, uid, line_id, context=context):
+            linked_pol = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)])
+            if sol.type == 'make_to_order' and linked_pol:
+                linked_pol = self.pool.get('purchase.order.line').browse(cr, uid, linked_pol, context=context)[0]
+                if not linked_pol.order_id.rfq_ok:
+                    po_ids.add(linked_pol.order_id.id)
+
+        return list(po_ids)
 
     def get_purchase_line_ids(self, cr, uid, line_id, purchase_ids, context=None):
         '''
@@ -250,43 +246,39 @@ class sale_order_followup(osv.osv_memory):
             po_line_ids = po_line_obj.search(cr, uid, [('order_id', 'in', purchase_ids), ('product_id', '=', line.product_id.id)], context=context)
 
         return po_line_ids
-    
+
     def get_quotation_ids(self, cr, uid, line_id, context=None):
         '''
         Returns a list of request for quotation related to the sale order line
         '''
-        line_obj = self.pool.get('sale.order.line')
-        
+        if context is None:
+            context = {}
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
-            
-        quotation_ids = []
-        
-        for line in line_obj.browse(cr, uid, line_id, context=context):
-            if line.type == 'make_to_order' and line.procurement_id:
-                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.rfq_ok:
-                    quotation_ids.append(line.procurement_id.purchase_id.id)
-                elif line.procurement_id.tender_id and line.procurement_id.tender_id.rfq_ids:
-                    for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if rfq.rfq_ok:
-                            quotation_ids.append(rfq.id)
-                
-        
-        return quotation_ids
-        
+
+        rfq_ids = set()
+        for sol in self.pool.get('sale.order.line').browse(cr, uid, line_id, context=context):
+            linked_pol = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', sol.id)])
+            if sol.type == 'make_to_order' and linked_pol:
+                linked_pol = self.pool.get('purchase.order.line').browse(cr, uid, linked_pol, context=context)[0]
+                if linked_pol.order_id.rfq_ok:
+                    rfq_ids.add(linked_pol.order_id.id)
+
+        return rfq_ids
+
     def get_incoming_ids(self, cr, uid, line_id, purchase_ids, context=None):
         '''
         Returns a list of incoming shipments related to the sale order line
         '''
         line_obj = self.pool.get('sale.order.line')
         purchase_obj = self.pool.get('purchase.order')
-                
+
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
-            
+
         if isinstance(purchase_ids, (int, long)):
             purchase_ids= [purchase_ids]
-            
+
         incoming_ids = []
 
         for line in line_obj.browse(cr, uid, line_id, context=context):
@@ -295,18 +287,18 @@ class sale_order_followup(osv.osv_memory):
                     if po_line.product_id.id == line.product_id.id:
                         for move in po_line.move_ids:
                             incoming_ids.append(move.id)
-        
+
         return incoming_ids
-        
+
     def get_outgoing_ids(self, cr, uid, line_id, non_zero=False, context=None):
         '''
         Returns a list of outgoing deliveries related to the sale order line
         '''
         line_obj = self.pool.get('sale.order.line')
-                
+
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
-            
+
         outgoing_ids = []
 
         # Get all stock.picking associated to the sale order line
@@ -318,24 +310,24 @@ class sale_order_followup(osv.osv_memory):
 #                    outgoing_ids.append(move.picking_id.id)
 
         return outgoing_ids
-    
+
     def get_tender_ids(self, cr, uid, line_id, context=None):
         '''
         Returns a list of call for tender related to the sale order line
         '''
         line_obj = self.pool.get('sale.order.line')
-                
+
         if isinstance(line_id, (int, long)):
             line_id = [line_id]
-            
+
         tender_ids = []
 
         for line in line_obj.browse(cr, uid, line_id, context=context):
             for tender in line.tender_line_ids:
                 tender_ids.append(tender.id)
-        
+
         return tender_ids
-        
+
     def export_get_file_name(self, cr, uid, ids, prefix='FO_Follow_Up', context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -346,10 +338,10 @@ class sale_order_followup(osv.osv_memory):
             return False
         dt_now = datetime.datetime.now()
         po_name = "%s_%s_%d_%02d_%02d" % (prefix,
-            foup.order_id.name.replace('/', '_'),
-            dt_now.year, dt_now.month, dt_now.day)
+                                          foup.order_id.name.replace('/', '_'),
+                                          dt_now.year, dt_now.month, dt_now.day)
         return po_name
-        
+
     def export_xls(self, cr, uid, ids, context=None):
         """
         Print the report (Excel)
@@ -367,7 +359,7 @@ class sale_order_followup(osv.osv_memory):
             'context': context,
             'nodestroy': True,
         }
-                
+
     def export_pdf(self, cr, uid, ids, context=None):
         """
         Print the report (PDF)
@@ -385,14 +377,14 @@ class sale_order_followup(osv.osv_memory):
             'context': context,
             'nodestroy': True,
         }
-    
+
 sale_order_followup()
 
 
 class sale_order_line_followup(osv.osv_memory):
     _name = 'sale.order.line.followup'
     _description = 'Sales Order Lines Followup'
-    
+
     def _get_status(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Get all status about the line
@@ -400,10 +392,10 @@ class sale_order_line_followup(osv.osv_memory):
         res = {}
         if context is None:
             context = {}
-        
+
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'sourced_ok': _('No'),
-#                            'quotation_status': 'No quotation',
+                            #                            'quotation_status': 'No quotation',
                             'tender_status': _('N/A'),
                             'purchase_status': _('N/A'),
                             'incoming_status': _('N/A'),
@@ -415,7 +407,7 @@ class sale_order_line_followup(osv.osv_memory):
             # Set the available qty in stock
             # You may not have product with an Internal Request
             if line.line_id.product_id:
-                 res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
+                res[line.id]['available_qty'] = self.pool.get('product.product').browse(cr, uid, line.line_id.product_id.id, context=context).qty_available
 
             # Define if the line is sourced or not according to the state on the SO line
             if line.line_id.state == 'draft':
@@ -426,7 +418,7 @@ class sale_order_line_followup(osv.osv_memory):
                 res[line.id]['sourced_ok'] = _('Cancelled')
             if line.line_id.state == 'exception':
                 res[line.id]['sourced_ok'] = _('Exception')
-            
+
             ####################################################
             # Get information about the state of call for tender
             ####################################################
@@ -570,7 +562,7 @@ class sale_order_line_followup(osv.osv_memory):
                                 'dispatch': {'moves': [], 'state': False},
                                 'distrib': {'moves': [], 'state': False},
                                 'customer': {'moves': [], 'state': False},}
-                    
+
                     # Sort outgoing moves by type (picking, packing, dispatch, distrib, sending)
                     for out in line.outgoing_ids:
                         if not out.backmove_id:
@@ -591,20 +583,20 @@ class sale_order_line_followup(osv.osv_memory):
                                 out_step['dispatch']['moves'].append(out)
                             elif out.location_id.id == out.picking_id.warehouse_id.lot_distribution_id.id:
                                 out_step['distrib']['moves'].append(out)
-                                
+
                     nb_out = len(out_step['picking']['moves'])
-                    
+
                     nb_return_pack = 0
                     nb_return_pack2 = 0
                     for pack in out_step['packing']['moves']:
                         if pack.state == 'done' and pack.product_qty == 0.00:
                             nb_return_pack += 1
-                        
+
                     nb_return_dist = 0    
                     for cust in out_step['customer']['moves']:
                         if cust.state == 'done' and cust.product_qty == 0.00:
                             nb_return_dist += 1
-                    
+
                     # Set the state for the step 'customer'
                     ret_iter = 0
                     for cust in out_step['customer']['moves']:
@@ -615,7 +607,7 @@ class sale_order_line_followup(osv.osv_memory):
                             out_step['customer']['state'] = cust.state
                         if out_step['customer']['state'] != cust.state:
                             out_step['customer']['state'] = 'partial'
-                            
+
                     # Set the state for the step 'distrib'
                     ret_iter = 0
                     for dist in out_step['distrib']['moves']:
@@ -628,7 +620,7 @@ class sale_order_line_followup(osv.osv_memory):
                             out_step['distrib']['state'] = dist.state
                         if out_step['distrib']['state'] != dist.state:
                             out_step['distrib']['state'] = 'partial'
-                            
+
                     # Set the state for the step 'dispatch'    
                     for disp in out_step['dispatch']['moves']:
                         if disp.location_id.id == disp.picking_id.warehouse_id.lot_dispatch_id.id:
@@ -638,7 +630,7 @@ class sale_order_line_followup(osv.osv_memory):
                             out_step['dispatch']['state'] = disp.state
                         if out_step['dispatch']['state'] != disp.state:
                             out_step['dispatch']['state'] = 'partial'
-                    
+
                     # Set the state for the step 'packing'
                     ret_iter = 0
                     for pack in out_step['packing']['moves']:
@@ -651,7 +643,7 @@ class sale_order_line_followup(osv.osv_memory):
                             out_step['packing']['state'] = pack.state
                         if out_step['packing']['state'] != pack.state:
                             out_step['packing']['state'] = 'partial'
-                            
+
                     # Set the state for the step 'picking'
                     ret_iter = 0  
                     ret_iter2 = 0
@@ -671,7 +663,7 @@ class sale_order_line_followup(osv.osv_memory):
                             out_step['picking']['state'] = pick.state
                         if out_step['picking']['state'] != pick.state:
                             out_step['picking']['state'] = 'partial'          
-                                        
+
                     # Increase the nb of out if there are products in general picking ticket
                     total_line = 0.00
                     for general in out_step['general']['moves']:
@@ -704,18 +696,18 @@ class sale_order_line_followup(osv.osv_memory):
                         elif out_step['customer']['state'] and out_step['customer']['state'] == 'assigned':
                             res[line.id]['outgoing_status'] = out_status.get('shipped', _('Error on state !'))
                             res[line.id]['product_available'] = out_status.get('done', _('Error on state !'))
-                        
+
                         # If all products are not in distribution
                         if out_step['distrib']['state'] and out_step['distrib']['state'] == 'partial':
                             res[line.id]['outgoing_status'] = out_status.get('partial', _('Error on state !'))
                         elif out_step['distrib']['state'] and out_step['distrib']['state'] == 'assigned':
                             res[line.id]['outgoing_status'] = out_status.get('packed', _('Error on state !'))
                             res[line.id]['product_available'] = out_status.get('done', _('Error on state !'))
-                            
+
                         # If all products are not in dispatch zone
                         if out_step['dispatch']['state'] == 'partial':
                             res[line.id]['outgoing_status'] = out_status.get('partial', _('Error on state !'))
-                        
+
                         # If all products are not picked
                         if out_step['picking']['state'] == 'partial' or out_step['packing']['state'] == 'partial':
                             res[line.id]['outgoing_status'] = out_status.get('partial', 'Error on state !')
@@ -729,7 +721,7 @@ class sale_order_line_followup(osv.osv_memory):
 
                         if out_step['picking']['state'] == 'done':
                             res[line.id]['product_available'] = out_status.get('done', _('Error on state !'))
-                        
+
                     # Set the number of the outgoing deliveries
                     res[line.id]['outgoing_nb'] = '%s' %nb_out
 
@@ -738,7 +730,7 @@ class sale_order_line_followup(osv.osv_memory):
             res[line.id]['product_available'] = '%s (%s)' % (res[line.id]['product_available'], res[line.id]['available_qty'])
 
         return res
-    
+
     _columns = {
         'followup_id': fields.many2one('sale.order.followup', string='Sale Order Followup', required=True, on_delete='cascade'),
         'line_id': fields.many2one('sale.order.line', string='Order line', required=True, readonly=True),
@@ -752,51 +744,51 @@ class sale_order_line_followup(osv.osv_memory):
         'qty_ordered': fields.related('line_id', 'product_uom_qty', string='Ordered qty', readonly=True),
         'uom_id': fields.related('line_id', 'product_uom', type='many2one', relation='product.uom', string='UoM', readonly=True),
         'sourced_ok': fields.function(_get_status, method=True, string='Sourced', type='char', 
-                                   readonly=True, multi='status'),
+                                      readonly=True, multi='status'),
         'tender_ids': fields.many2many('tender.line', 'call_tender_follow_rel',
                                        'follow_line_id', 'tender_id', string='Tender'),
         'tender_status': fields.function(_get_status, method=True, string='Tender', type='char',
                                          readonly=True, multi='status'),
-#        'quotation_ids': fields.many2many('purchase.order', 'quotation_follow_rel', 'follow_line_id',
-#                                          'quotation_id', string='Requests for Quotation', readonly=True),
-#        'quotation_status': fields.function(_get_status, method=True, string='Request for Quotation',
-#                                            type='char', readonly=True, multi='status'),
+        #        'quotation_ids': fields.many2many('purchase.order', 'quotation_follow_rel', 'follow_line_id',
+        #                                          'quotation_id', string='Requests for Quotation', readonly=True),
+        #        'quotation_status': fields.function(_get_status, method=True, string='Request for Quotation',
+        #                                            type='char', readonly=True, multi='status'),
         'purchase_ids': fields.many2many('purchase.order', 'purchase_follow_rel', 'follow_line_id', 
                                          'purchase_id', string='Purchase Orders', readonly=True),
         'purchase_line_ids': fields.many2many('purchase.order.line', 'purchase_line_follow_rel', 'follow_line_id',
                                               'purchase_line_id', string='Purchase Orders', readonly=True),
         'purchase_status': fields.function(_get_status, method=True, string='Purchase Order',
-                                            type='char', readonly=True, multi='status'),
+                                           type='char', readonly=True, multi='status'),
         'incoming_ids': fields.many2many('stock.move', 'incoming_follow_rel', 'follow_line_id', 
                                          'incoming_id', string='Incoming Shipment', readonly=True),
         'incoming_status': fields.function(_get_status, method=True, string='Incoming Shipment',
-                                            type='char', readonly=True, multi='status'),
+                                           type='char', readonly=True, multi='status'),
         'product_available': fields.function(_get_status, method=True, string='Product available',
                                              type='char', readonly=True, multi='status'),
         'available_qty': fields.function(_get_status, method=True, string='Product available',
-                                            type='float', readonly=True, multi='status'),
+                                         type='float', readonly=True, multi='status'),
         'outgoing_ids': fields.many2many('stock.move', 'outgoing_follow_rel', 'outgoing_id', 
                                          'follow_line_id', string='Outgoing Deliveries', readonly=True),
         'displayed_out_ids': fields.many2many('stock.move', 'displayed_out_follow_rel', 'diplayed_out_id', 
-                                         'follow_line_id', string='Outgoing Deliveries', readonly=True),
+                                              'follow_line_id', string='Outgoing Deliveries', readonly=True),
         'outgoing_status': fields.function(_get_status, method=True, string='Outgoing delivery',
-                                            type='char', readonly=True, multi='status'),
+                                           type='char', readonly=True, multi='status'),
         'outgoing_nb': fields.function(_get_status, method=True, string='Outgoing delivery',
-                                            type='char', readonly=True, multi='status'),
+                                       type='char', readonly=True, multi='status'),
     }
-    
+
 sale_order_line_followup()
 
 
 class sale_order_followup_from_menu(osv.osv_memory):
     _name = 'sale.order.followup.from.menu'
     _description = 'Sale order followup menu entry'
-    
+
     _columns = {
         'order_id': fields.many2one('sale.order', string='Internal reference', required=True, domain=[('procurement_request', '=', False)]),
         'cust_order_id': fields.many2one('sale.order', string='Customer reference', required=True, domain=[('procurement_request', '=', False)]),
     }
-    
+
     def go_to_followup(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -805,9 +797,9 @@ class sale_order_followup_from_menu(osv.osv_memory):
         new_ids = []
         for menu in self.browse(cr, uid, ids, context=context):
             new_ids.append(menu.order_id and menu.order_id.id or menu.cust_order_id.id)
-            
+
         new_context['active_ids'] = new_ids
-        
+
         return self.pool.get('sale.order.followup').start_order_followup(cr, uid, ids, context=new_context)
 
     def change_order_id(self, cr, uid, ids, order_id, cust_order_id, type='order_id'):
@@ -820,14 +812,14 @@ class sale_order_followup_from_menu(osv.osv_memory):
 
         return {'value': res}
 
-            
+
 sale_order_followup_from_menu()
 
 
 class tender_line(osv.osv):
     _name = 'tender.line'
     _inherit = 'tender.line'
-    
+
     def go_to_tender_info(self, cr, uid, ids, context=None):
         '''
         Return the form of the object
@@ -840,14 +832,14 @@ class tender_line(osv.osv):
                 'view_mode': 'form',
                 'view_id': [view_id],
                 'res_id': tender_id,}
-    
+
 tender_line()
 
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
-    
+
     def go_to_po_info(self, cr, uid, ids, context=None):
         '''
         Return the form of the object
@@ -860,14 +852,14 @@ class purchase_order(osv.osv):
                 'view_mode': 'form',
                 'view_id': [view_id],
                 'res_id': po_id,}
-    
+
 purchase_order()
 
 
 class request_for_quotation(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
-    
+
     def go_to_rfq_info(self, cr, uid, ids, context=None):
         '''
         Return the form of the object
@@ -930,11 +922,11 @@ class stock_move(osv.osv):
                 return obj_data.get_object_reference(cr, uid, module, view)[1], pick.id
             except ValueError:
                 pass
-        
+
         module, view = view_list.get(pick.type,('stock', 'view_picking_form'))
 
         return self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view)[1], pick.id
-    
+
     def go_to_incoming_info(self, cr, uid, ids, context=None):
         '''
         Return the form of the object
@@ -946,7 +938,7 @@ class stock_move(osv.osv):
                 'view_mode': 'form',
                 'view_id': [view_id[0]],
                 'res_id': view_id[1],}
-        
+
     def go_to_outgoing_info(self, cr, uid, ids, context=None):
         '''
         Return the form of the object
@@ -958,7 +950,7 @@ class stock_move(osv.osv):
                 'view_mode': 'form',
                 'view_id': [view_id[0]],
                 'res_id': view_id[1],}
-    
+
 stock_move()
 
 
@@ -967,23 +959,23 @@ class purchase_order_line(osv.osv):
     _inherit = 'purchase.order.line'
 
     STATE_SELECTION = [
-                       ('draft', 'Draft'),
-                       ('wait', 'Wait'),
-                       ('confirmed', 'Validated'),
-                       ('approved', 'Confirmed'),
-                       ('confirmed_wait', 'Confirmed (waiting)'),
-                       ('except_picking', 'Receipt Exception'),
-                       ('except_invoice', 'Invoice Exception'),
-                       ('done', 'Closed'),
-                       ('cancel', 'Cancelled'),
-                       ('rfq_sent', 'Sent'),
-                       ('rfq_updated', 'Updated'),
+        ('draft', 'Draft'),
+        ('wait', 'Wait'),
+        ('confirmed', 'Validated'),
+        ('approved', 'Confirmed'),
+        ('confirmed_wait', 'Confirmed (waiting)'),
+        ('except_picking', 'Receipt Exception'),
+        ('except_invoice', 'Invoice Exception'),
+        ('done', 'Closed'),
+        ('cancel', 'Cancelled'),
+        ('rfq_sent', 'Sent'),
+        ('rfq_updated', 'Updated'),
     ]
 
     ORDER_TYPE = [('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
-                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
-                                        ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
-                                        ('direct', 'Direct Purchase Order')]
+                  ('donation_st', 'Standard donation'), ('loan', 'Loan'), 
+                  ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
+                  ('direct', 'Direct Purchase Order')]
 
     _columns = {
         'order_type': fields.related('order_id', 'order_type', type='selection', selection=ORDER_TYPE, readonly=True),

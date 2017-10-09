@@ -154,14 +154,8 @@ class msf_doc_import_accounting(osv.osv_memory):
         if context is None:
             context = {}
         # Prepare some values
-        from_yml = False
-        if context.get('from_yml', False):
-            from_yml = context.get('from_yml')
         # Do changes because of YAML tests
-        if from_yml:
-            cr = dbname
-        else:
-            cr = pooler.get_db(dbname).cursor()
+        cr = pooler.get_db(dbname).cursor()
         try:
             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
@@ -552,14 +546,12 @@ class msf_doc_import_accounting(osv.osv_memory):
             self.write(cr, uid, ids, {'message': message, 'state': wiz_state, 'progression': 100.0})
 
             # Close cursor
-            if not from_yml:
-                cr.commit()
-                cr.close(True)
+            cr.commit()
+            cr.close(True)
         except osv.except_osv as osv_error:
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occurred. %s: %s") % (osv_error.name, osv_error.value,), 'state': 'done', 'progression': 100.0})
-            if not from_yml:
-                cr.close(True)
+            cr.close(True)
         except Exception as e:
             cr.rollback()
             if current_line_num is not None:
@@ -567,8 +559,7 @@ class msf_doc_import_accounting(osv.osv_memory):
             else:
                 message = _("An error occurred: %s") % (e.args and e.args[0] or '',)
             self.write(cr, uid, ids, {'message': message, 'state': 'done', 'progression': 100.0})
-            if not from_yml:
-                cr.close(True)
+            cr.close(True)
         return True
 
     def button_validate(self, cr, uid, ids, context=None):
@@ -578,14 +569,10 @@ class msf_doc_import_accounting(osv.osv_memory):
         # Some checks
         if not context:
             context = {}
-        if context.get('from_yml', False):
-            res = self.write(cr, uid, ids, {'state': 'inprogress'}, context=context)
-            self._import(cr, uid, ids, context=context)
-        else:
-            # Launch a thread if we come from web
-            thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
-            thread.start()
-            res = self.write(cr, uid, ids, {'state': 'inprogress'}, context=context)
+        # Launch a thread if we come from web
+        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        thread.start()
+        res = self.write(cr, uid, ids, {'state': 'inprogress'}, context=context)
         return res
 
     def button_update(self, cr, uid, ids, context=None):

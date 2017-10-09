@@ -11,16 +11,6 @@
             <field name="code">action = obj.action_partial_move(context=context)</field>
         </record>
         
-        <record id="ir_open_partial_move_wizard" model="ir.values">
-            <field eval="'client_action_multi'" name="key2"/>
-            <field eval="'stock.move'" name="model"/>
-            <field name="name">Deliver/Receive Products</field>
-            <field eval="'ir.actions.server,%d'%action_partial_move_server" name="value"/>
-            <field eval="True" name="object"/>
-        </record>
-
-        
-            
         <record id="stock_move_memory_tree_in" model="ir.ui.view">
             <field name="name">stock.move.memory.tree</field>
             <field name="model">stock.move.memory.in</field>

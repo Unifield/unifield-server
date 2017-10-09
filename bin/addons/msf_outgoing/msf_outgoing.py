@@ -1663,6 +1663,10 @@ class shipment(osv.osv):
                 # UF-1617: set the flag to this packing object to indicate that the SHIP has been done, for synchronisation purpose
                 cr.execute('update stock_picking set already_shipped=\'t\' where id=%s' % packing.id)
 
+                # closing FO lines:
+                for stock_move in packing.move_lines:
+                    if stock_move.sale_line_id:
+                        wf_service.trg_validate(uid, 'sale.order.line', stock_move.sale_line_id.id, 'done', cr)
 
             # Create automatically the invoice
             self.shipment_create_invoice(cr, uid, shipment.id, context=context)
@@ -1711,7 +1715,7 @@ class shipment_additionalitems(osv.osv):
                 'quantity': fields.float(digits=(16, 2), string='Quantity', required=True),
                 'uom': fields.many2one('product.uom', string='UOM', required=True),
                 'comment': fields.char(string='Comment', size=1024),
-                'volume': fields.float(digits=(16, 2), string='Volume[dm³]'),
+                'volume': fields.float(digits=(16, 2), string=u'Volume[dm³]'),
                 'weight': fields.float(digits=(16, 2), string='Weight[kg]', required=True),
                 }
 
@@ -1765,18 +1769,6 @@ class ppl_customize_label(osv.osv):
     label preferences
     '''
     _name = 'ppl.customize.label'
-
-    def init(self, cr):
-        """
-        Load msf_outgoing_data.xml before self
-        """
-        if hasattr(super(ppl_customize_label, self), 'init'):
-            super(ppl_customize_label, self).init(cr)
-
-        logging.getLogger('init').info('HOOK: module msf_outgoing: loading data/msf_outgoing_data.xml')
-        pathname = path.join('msf_outgoing', 'data/msf_outgoing_data.xml')
-        file_to_open = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'msf_outgoing', file_to_open, {}, mode='init', noupdate=False)
 
     _columns = {'name': fields.char(string='Name', size=1024,),
                 'notes': fields.text(string='Notes'),
@@ -3412,6 +3404,8 @@ class stock_picking(osv.osv):
                     # Update the original move
                     move_obj.write(cr, uid, [move.id], values, context=context)
                     processed_moves.append(move.id)
+                    if move.sale_line_id:
+                        wf_service.trg_validate(uid, 'sale.order.line', move.sale_line_id.id, 'done', cr)
 
             if not len(move_data):
                 pick_type = 'Internal picking'
@@ -4967,11 +4961,11 @@ class stock_move(osv.osv):
             Confirm or check the procurement order associated to the stock move
         '''
         pol_obj = self.pool.get('purchase.order.line')
-        proc_obj = self.pool.get('procurement.order')
         pick_obj = self.pool.get('stock.picking')
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
         solc_obj = self.pool.get('sale.order.line.cancel')
+        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -5021,8 +5015,10 @@ class stock_move(osv.osv):
 
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
-                        sol_obj.add_resource_line(cr, uid, sol.id, False, diff_qty, context=context)
-                    sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, context=context)
+                        sol_obj.add_resource_line(cr, uid, sol.id, sol.order_id.id, diff_qty, context=context)
+                    sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, resource=move.has_to_be_resourced,context=context)
+                    signal = 'cancel_r' if move.has_to_be_resourced else 'cancel'
+                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
 
                     # Cancel the remaining OUT line
                     if diff_qty < sol.product_uom_qty:
@@ -5041,37 +5037,15 @@ class stock_move(osv.osv):
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
-                        sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
+                        sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, move.sale_line_id.order_id.id, diff_qty, context=context)
                     if move.id not in context.get('not_resource_move', []):
-                        sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, context=context)
-                if move.sale_line_id.procurement_id:
-                    # Search OUT moves that have the same source and there are done
-                    other_out_move_ids = self.search(cr, uid, [
-                        ('sale_line_id', '=', move.sale_line_id.id),
-                        ('state', 'in', ['assigned', 'confirmed', 'done']),
-                        ('id', '!=', move.id),
-                    ], context=context)
-                    if other_out_move_ids:
-                        proc_obj.write(cr, uid,
-                                       [move.sale_line_id.procurement_id.id],
-                                       {'move_id': other_out_move_ids[0]},
-                                       context=context)
+                        sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=move.has_to_be_resourced, context=context)
 
         self.action_done(cr, uid, move_to_done, context=context)
 
         # Search only non unlink move
         ids = self.search(cr, uid, [('id', 'in', ids)])
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
-
-        wf_service = netsvc.LocalService("workflow")
-
-        proc_obj = self.pool.get('procurement.order')
-        proc_ids = proc_obj.search(cr, uid, [('move_id', 'in', ids)], context=context)
-        for proc in proc_obj.read(cr, uid, proc_ids, ['state'], context=context):
-            if proc['state'] == 'draft':
-                wf_service.trg_validate(uid, 'procurement.order', proc['id'], 'button_confirm', cr)
-            else:
-                wf_service.trg_validate(uid, 'procurement.order', proc['id'], 'button_check', cr)
 
         for ptc in pick_obj.browse(cr, uid, list(pick_to_check), context=context):
             if ptc.subtype == 'picking' and ptc.state == 'draft' and not pick_obj.has_picking_ticket_in_progress(cr, uid, [ptc.id], context=context)[ptc.id] and all(m.state == 'cancel' or m.product_qty == 0.00 for m in ptc.move_lines):

@@ -2,16 +2,16 @@
 <openerp>
     <data noupdate="1">
         <!--
-    Requests Links
-    -->
+        Requests Links
+        -->
         <record id="req_link_sale_order" model="res.request.link">
             <field name="name">Sales Order</field>
             <field name="object">sale.order</field>
         </record>
 
         <!--
-    Resource: sale.shop
-    -->
+        Resource: sale.shop
+        -->
         <record id="shop" model="sale.shop">
             <field model="res.company" name="name" search="[]" use="name"/>
             <field model="stock.warehouse" name="warehouse_id" search="[]"/>
@@ -21,6 +21,48 @@
         </record>
 
         <function eval="('default',False,'shop_id', [('sale.order', False)], shop, True, False, False, False, True)" id="sale_default_set" model="ir.values" name="set"/>
+    </data>
 
+    <data noupdate="0">
+        <record id="sol_state_cancel" model="sale.order.line.state">
+            <field name="name">cancel</field>
+            <field name="sequence">1000</field>
+        </record>
+        <record id="sol_state_cancel_r" model="sale.order.line.state">
+            <field name="name">cancel_r</field>
+            <field name="sequence">1001</field>
+        </record>
+        <record id="sol_state_draft" model="sale.order.line.state">
+            <field name="name">draft</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="sol_state_validated" model="sale.order.line.state">
+            <field name="name">validated</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="sol_state_sourced" model="sale.order.line.state">
+            <field name="name">sourced</field>
+            <field name="sequence">30</field>
+        </record>
+        <record id="sol_state_sourced_sy" model="sale.order.line.state">
+            <field name="name">sourced_sy</field>
+            <field name="sequence">40</field>
+        </record>
+        <record id="sol_state_sourced_v" model="sale.order.line.state">
+            <field name="name">sourced_v</field>
+            <field name="sequence">50</field>
+        </record>
+        <record id="sol_state_sourced_n" model="sale.order.line.state">
+            <field name="name">sourced_n</field>
+            <field name="sequence">60</field>
+        </record>
+        <record id="sol_state_confirmed" model="sale.order.line.state">
+            <field name="name">confirmed</field>
+            <field name="sequence">70</field>
+        </record>
+        <record id="sol_state_done" model="sale.order.line.state">
+            <field name="name">done</field>
+            <field name="sequence">80</field>
+        </record>
     </data>
 </openerp>

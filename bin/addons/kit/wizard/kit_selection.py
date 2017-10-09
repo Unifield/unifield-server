@@ -23,7 +23,6 @@ from osv import fields, osv
 from tools.translate import _
 import decimal_precision as dp
 
-import netsvc
 
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
@@ -33,7 +32,7 @@ class kit_selection(osv.osv_memory):
     kit selection
     '''
     _name = "kit.selection"
-    
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -43,11 +42,11 @@ class kit_selection(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # objects
         sol_obj = self.pool.get('sale.order.line')
         pol_obj = self.pool.get('purchase.order.line')
-        
+
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
@@ -68,7 +67,7 @@ class kit_selection(osv.osv_memory):
             # write the value
             result[obj.id].update({'corresponding_so_id_kit_selection': so_id})
         return result
-    
+
     _columns = {'product_id': fields.many2one('product.product', string='Kit Product', readonly=True),
                 'kit_id': fields.many2one('composition.kit', string='Theoretical Kit'),
                 'order_line_id_kit_selection': fields.many2one('purchase.order.line', string='Purchase Order Line', readonly=True, required=True),
@@ -83,12 +82,12 @@ class kit_selection(osv.osv_memory):
                 'corresponding_so_line_id_kit_selection': fields.function(_vals_get, method=True, type='many2one', relation='sale.order.line', string='Corresponding Fo Line', multi='get_vals_kit_selection', store=False, readonly=True),
                 'corresponding_so_id_kit_selection': fields.function(_vals_get, method=True, type='many2one', relation='sale.order', string='Corresponding Fo', multi='get_vals_kit_selection', store=False, readonly=True),
                 }
-    
+
     _defaults = {'product_id': lambda s, cr, uid, c: c.get('product_id', False),
                  'order_line_id_kit_selection': lambda s, cr, uid, c: c.get('active_ids') and c.get('active_ids')[0] or False,
                  'impact_so_kit_selection': True,
                  }
-    
+
     def import_items(self, cr, uid, ids, context=None):
         '''
         import lines into product_ids_kit_selection
@@ -97,7 +96,7 @@ class kit_selection(osv.osv_memory):
         line_obj = self.pool.get('kit.selection.line')
         # purchase order line id
         pol_ids = context['active_ids']
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.kit_id:
                 raise osv.except_osv(_('Warning !'), _('A theoretical version should be selected.'))
@@ -112,19 +111,17 @@ class kit_selection(osv.osv_memory):
                           }
                 line_obj.create(cr, uid, values, context=dict(context, pol_ids=context['active_ids']))
         return self.pool.get('wizard').open_wizard(cr, uid, pol_ids, w_type='update', context=context)
-    
+
     def validate_lines(self, cr, uid, ids, context=None):
         '''
         validate the lines
-        
+
         - qty > 0.0 (must_be_greater_than_0)
         - unit price > 0.0
-        
+
         return True or False
         '''
         # objects
-        prod_obj = self.pool.get('product.product')
-        lot_obj = self.pool.get('stock.production.lot')
         # errors
         errors = {'must_be_greater_than_0': False,
                   'price_must_be_greater_than_0': False,
@@ -155,9 +152,7 @@ class kit_selection(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # objects
-        wf_service = netsvc.LocalService("workflow")
         pol_obj = self.pool.get('purchase.order.line')
-        so_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
         # id of corresponding purchase order line
         pol_ids = context['active_ids']
@@ -225,18 +220,7 @@ class kit_selection(osv.osv_memory):
                                        })
                         # copy existing sol
                         last_line_id = sol_obj.copy(cr, uid, last_line_id, values, context=ctx_keep_info)
-                        # call the new procurement creation method
-                        so_obj.action_ship_proc_create(cr, uid, [obj.corresponding_so_id_kit_selection.id], context=context)
-                        # run the procurement, the make_po function detects the link to original po
-                        # and force merge the line to this po (even if it is not draft anymore)
-                        new_data_so = sol_obj.read(cr, uid, [last_line_id], ['procurement_id'], context=context)
-                        new_proc_id = new_data_so[0]['procurement_id'][0]
-                        wf_service.trg_validate(uid, 'procurement.order', new_proc_id, 'button_check', cr)
-                        # if original po line is confirmed, we action_confirm new line
-                        if obj.order_line_id_kit_selection.state == 'confirmed':
-                            # the correct line number according to new line number policy is set in po_line_values_hook of order_line_number/order_line_number.py/procurement_order
-                            new_po_ids = pol_obj.search(cr, uid, [('procurement_id', '=', new_proc_id)], context=context)
-                            pol_obj.action_confirm(cr, uid, new_po_ids, context=context)
+                        # /* code deletion for partial confirmation US-3185 */
                     else:
                         # first item to be treated, we update the existing purchase order line
                         # sale order line will be updated when the Po is confirmed
@@ -254,7 +238,7 @@ class kit_selection(osv.osv_memory):
                     if not pol_obj.allow_resequencing(cr, uid, [obj.order_line_id_kit_selection.id], context=context):
                         # set default value for line_number as the same as original line
                         values.update({'line_number': obj.order_line_id_kit_selection.line_number})
-                    
+
                     if last_line_id:
                         # the existing purchase order line has already been updated, we create a new one
                         # copy the original purchase order line
@@ -266,9 +250,9 @@ class kit_selection(osv.osv_memory):
                         # first item to be treated, we update the existing line
                         last_line_id = obj.order_line_id_kit_selection.id
                         pol_obj.write(cr, uid, [last_line_id], values, context=context)
-                
+
         return {'type': 'ir.actions.act_window_close'}
-    
+
 kit_selection()
 
 
@@ -277,17 +261,15 @@ class kit_selection_line(osv.osv_memory):
     substitute items
     '''
     _name = 'kit.selection.line'
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         default price unit from pol on_change function
         '''
         # objects
-        pol_obj = self.pool.get('purchase.order.line')
         # id of corresponding purchase order line
         pol_id = context.get('active_ids', False) and context['active_ids'][0]
         if pol_id and ('price_unit_kit_selection_line' not in vals or vals.get('price_unit_kit_selection_line') == 0.0):
-            pol = pol_obj.browse(cr, uid, pol_id, context=context)
             # selected product_id
             product_id = vals.get('product_id_kit_selection_line', False)
             # selected qty
@@ -303,11 +285,11 @@ class kit_selection_line(osv.osv_memory):
             # update price_unit value
             vals.update({'price_unit_kit_selection_line': data['value']['price_unit']})
         return super(kit_selection_line, self).create(cr, uid, vals, context=context)
-    
+
     def _call_pol_on_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, type, context=None):
         '''
         core function from purchase order line
-        
+
         def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
             name=False, price_unit=False, notes=False):
@@ -316,7 +298,7 @@ class kit_selection_line(osv.osv_memory):
         assert context, 'No context defined, problem on method call'
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # objects
         pol_obj = self.pool.get('purchase.order.line')
         prod_obj = self.pool.get('product.product')
@@ -352,11 +334,11 @@ class kit_selection_line(osv.osv_memory):
                                           fiscal_position=fiscal_position_id, date_planned=date_planned, name=name,
                                           price_unit=price_unit, notes=notes, state=state, old_price_unit=False)
         return data
-    
+
     def on_product_id_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, context=None):
         '''
         core function from purchase order line
-        
+
         def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
             name=False, price_unit=False, notes=False):
@@ -385,11 +367,11 @@ class kit_selection_line(osv.osv_memory):
 
         # return result
         return result
-    
+
     def on_uom_id_change(self, cr, uid, ids, product_id, qty, uom_id, price_unit, context=None):
         '''
         core function from purchase order line
-        
+
         def product_uom_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
             name=False, price_unit=False, notes=False):
@@ -398,7 +380,7 @@ class kit_selection_line(osv.osv_memory):
         assert context, 'No context defined, problem on method call'
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # result
         result = {'value': {'qty_kit_selection_line': 0.0,
                             'price_unit_kit_selection_line': 0.0}}
@@ -409,7 +391,7 @@ class kit_selection_line(osv.osv_memory):
                                 'qty_kit_selection_line': 'product_qty' in data['value'] and data['value']['product_qty'] or 0.0})
         # return result
         return result
-    
+
     _columns = {'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
                 'order_line_id_kit_selection_line': fields.many2one('purchase.order.line', string="Purchase Order Line", readonly=True, required=True),
                 'wizard_id_kit_selection_line': fields.many2one('kit.selection', string='Kit Selection wizard'),
@@ -419,10 +401,10 @@ class kit_selection_line(osv.osv_memory):
                 'uom_id_kit_selection_line': fields.many2one('product.uom', string='UoM', required=True),
                 'price_unit_kit_selection_line': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price')),
                 }
-    
+
     _defaults = {'integrity_status': 'empty',
                  }
-    
+
 kit_selection_line()
 
 

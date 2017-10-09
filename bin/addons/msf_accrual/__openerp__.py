@@ -36,12 +36,11 @@
         'wizard/wizard_accrual_reversal_view.xml'
     ],
     'test': [
-        #'test/accrual_test.yml'
     ],
     'demo_xml': [
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

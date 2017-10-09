@@ -45,8 +45,7 @@
         "wizard/stock_partial_move_view.xml",
         "wizard/change_dest_location_view.xml",
         "wizard/stock_card_view.xml",
-        ],
-    'test': ['test/chained_nomen_loc.yml'],
+    ],
     'installable': True,
     'active': False,
 }

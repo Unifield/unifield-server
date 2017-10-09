@@ -4,7 +4,6 @@
         <record model="purchase.order" id="purchase_order_po00008_4">
             <field name="transport_mode">road</field>
             <field name="transport_type" eval="False" />
-            <field name="from_yml_test" eval="0"/>
             <field name="date_order" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-8*86400))" />
             <field name="transport_cost">60.0</field>
             <field name="order_type">regular</field>
@@ -23,7 +22,6 @@
 
         <!--model: purchase.order, id: 3-->
         <record model="purchase.order" id="purchase_order_po00006_3">
-            <field name="from_yml_test" eval="0"/>
             <field name="date_order"  eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-10*86400))" />
             <field name="order_type">regular</field>
             <field name="priority">normal</field>
@@ -39,7 +37,6 @@
 
         <!--model: purchase.order, id: 2-->
         <record model="purchase.order" id="purchase_order_po00004_2">
-            <field name="from_yml_test" eval="0"/>
             <field name="date_order" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-5*86400))" />
             <field name="order_type">regular</field>
             <field name="priority">normal</field>
@@ -55,7 +52,6 @@
 
         <!--model: purchase.order, id: 1-->
         <record model="purchase.order" id="purchase_order_po00002_1">
-            <field name="from_yml_test" eval="0"/>
             <field name="date_order" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()-10*86400))" />
             <field name="order_type">regular</field>
             <field name="priority">normal</field>
@@ -233,7 +229,6 @@
             <field name="procurement_request" eval="0"/>
             <field name="picking_policy">direct</field>
             <field name="ready_to_ship_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+12*86400))" />
-            <field name="from_yml_test" eval="0"/>
             <field name="priority">normal</field>
             <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+15*86400))" />
             <field name="partner_shipping_id" model="res.partner.address" search="['&amp;', '&amp;', ('type', '=', 'default'), ('partner_id.name', '=', 'Project P1'), ('partner_id.ref', '=', 'P1')]"/>
@@ -250,7 +245,6 @@
             <field name="procurement_request" eval="1"/>
             <field name="picking_policy">direct</field>
             <field name="ready_to_ship_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
-            <field name="from_yml_test" eval="0"/>
             <field name="priority">normal</field>
             <field name="delivery_requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
             <field name="requested_date" eval="time.strftime('%Y-%m-%d',time.localtime(time.time()+10*86400))" />
@@ -552,7 +546,6 @@
         <!--model: stock.picking, id: 2-->
         <record model="stock.picking" id="stock_picking_in_00002_2">
             <field name="state">done</field>
-            <field name="from_yml_test" eval="0"/>
             <field name="type">in</field>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
         </record>
@@ -621,7 +614,6 @@
         <record model="stock.picking" id="stock_picking_in_00001_1">
             <field name="origin">Initialization</field>
             <field name="state">done</field>
-            <field name="from_yml_test" eval="0"/>
             <field name="type">in</field>
             <field name="reason_type_id" ref="reason_types_moves.reason_type_external_supply"/>
         </record>

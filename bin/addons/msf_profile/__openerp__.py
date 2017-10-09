@@ -40,7 +40,7 @@
         "account_period_closing_level",
         # As register_accounting has account_override and purchase_override dependancies, no need to add them after that
         #"purchase_override",
-        "sale_override",
+        "sale",
         "stock_override",
         "msf_order_date",
         "purchase_compare_rfq",
@@ -116,7 +116,6 @@
     "update_xml": [
         "security/ir.model.access.csv",
         "report.xml",
-        "purchase_double_validation_workflow.xml",
         "usability.xml",
         "user_access_configurator_view.xml",
         "unifield_version_view.xml",
@@ -137,15 +136,6 @@
     ],
     # add this to function to apply patch13 AND REMOVE export_import_lang FROM depends ('ir.model.data', 'patch13_install_export_import_lang')],
     "test": [
-        'test/unique_fields_views.yml',
-        'test/inherited_views.yml',
-        'test/user_rights.yml',
-        # the tests below are for the module msf_doc_import (written here because they need the translation)
-        #        'test/data.yml',
-        #        'test/fr_import_ir.yml',
-        #        'test/fr_import_po.yml',
-        #        'test/fr_import_so.yml',
-        #        'test/fr_import_tender.yml',
     ],
     "installable": True,
     "active": False,

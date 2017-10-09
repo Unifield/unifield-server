@@ -1907,12 +1907,9 @@ class stock_move(osv.osv):
 
     def _auto_init(self, cursor, context=None):
         res = super(stock_move, self)._auto_init(cursor, context=context)
-        cursor.execute('SELECT indexname \
-                FROM pg_indexes \
-                WHERE indexname = \'stock_move_location_id_location_dest_id_product_id_state\'')
+        cursor.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'stock_move_location_id_location_dest_id_product_id_state\'')
         if not cursor.fetchone():
-            cursor.execute('CREATE INDEX stock_move_location_id_location_dest_id_product_id_state \
-                    ON stock_move (location_id, location_dest_id, product_id, state)')
+            cursor.execute('CREATE INDEX stock_move_location_id_location_dest_id_product_id_state ON stock_move (location_id, location_dest_id, product_id, state)')
         return res
 
     def onchange_lot_id(self, cr, uid, ids, prodlot_id=False, product_qty=False,
@@ -2341,9 +2338,11 @@ class stock_move(osv.osv):
             return True
         if context is None:
             context = {}
-        pickings = {}
+        wf_service = netsvc.LocalService("workflow")
         picking_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
+
+        pickings = {}
         for move in self.browse(cr, uid, ids, context=context):
             if move.state in ('confirmed', 'waiting', 'assigned', 'draft'):
                 if move.picking_id:
@@ -2353,21 +2352,23 @@ class stock_move(osv.osv):
                 context.update(c)
                 self.write(cr, uid, [move.move_dest_id.id], state)
                 if context.get('call_unlink',False) and move.move_dest_id.picking_id:
-                    wf_service = netsvc.LocalService("workflow")
                     wf_service.trg_write(uid, 'stock.picking', move.move_dest_id.picking_id.id, cr)
+            # cancel linked internal move if has, to keep the virtual stock consistent:
+            internal_move = self.search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
+            if internal_move:
+                self.action_cancel(cr, uid, internal_move, context=context)
+
         self.write(cr, uid, ids, {'state': 'cancel', 'move_dest_id': False})
+
         if not context.get('call_unlink',False):
             picking_to_write = []
             for pick in picking_obj.read(cr, uid, pickings.keys(), ['move_lines']):
                 # if all movement are in cancel state:
-                if not move_obj.search_exist(cr, uid,
-                                             [('id', 'in', pick['move_lines']),
-                                              ('state', '!=', 'cancel'),]):
+                if not move_obj.search_exist(cr, uid, [('id', 'in', pick['move_lines']), ('state', '!=', 'cancel'),]):
                     picking_to_write.append(pick['id'])
             if picking_to_write:
                 picking_obj.write(cr, uid, picking_to_write, {'state': 'cancel'})
 
-        wf_service = netsvc.LocalService("workflow")
         for id in ids:
             wf_service.trg_trigger(uid, 'stock.move', id, cr)
         return True
@@ -3067,7 +3068,6 @@ class stock_inventory(osv.osv):
                     move_ids.append(self._inventory_line_hook(cr, uid, None, value))
                 elif not change:
                     inv_line_obj.write(cr, uid, [line['id']], {'dont_move': True}, context=context)
-            # Changed the text of the following line to "is confirmed" instead of "is done" due to the state value
             message = _('Inventory') + " '" + inv['name'] + "' "+ _("is validated.")
             self.log(cr, uid, inv['id'], message)
             self.write(cr, uid, [inv['id']], {'state': 'confirm', 'move_ids': [(6, 0, move_ids)]})

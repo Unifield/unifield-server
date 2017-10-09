@@ -37,12 +37,11 @@
         'remove_categ.xml',
     ],
     "demo_xml": [
-                 'product_nomenclature_data.xml',
-                 'product_nomenclature_demo.xml',
-        ],
+        'product_nomenclature_data.xml',
+        'product_nomenclature_demo.xml',
+    ],
     'test': [
-             'test/product_nomenclature.yml',
-             ],
+    ],
     'installable': True,
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -21,7 +21,6 @@
 
 from osv import fields, osv
 from tools.translate import _
-import decimal_precision as dp
 
 import netsvc
 
@@ -55,11 +54,10 @@ class enter_reason(osv.osv_memory):
         for obj in self.browse(cr, uid, ids, context=context):
             if not obj.change_reason:
                 raise osv.except_osv(_('Error !'), _('You must specify a reason.'))
-        
+
         # change reason
         data = self.read(cr, uid, ids, ['change_reason'], context=context)[0]
         change_reason = data['change_reason']
-        values = {'change_reason': change_reason}
         # update the object
         for obj in picking_obj.browse(cr, uid, picking_ids, context=context):
             # purchase order line to re-source
@@ -80,8 +78,10 @@ class enter_reason(osv.osv_memory):
                 context['pol_qty'] = pol_qty
                 context['from_in_cancel'] = True
                 pol_obj.write(cr, uid, pol_ids, {'has_to_be_resourced': True}, context=context)
-                pol_obj.cancel_sol(cr, uid, pol_ids, context=context)
-            
+                for pol in self.pool.get('purchase.order.line').browse(cr, uid, pol_ids, context=context):
+                    if pol.linked_sol_id:
+                        wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
+
             # cancel the IN
             wf_service.trg_validate(uid, 'stock.picking', obj.id, 'button_cancel', cr)
 
@@ -95,5 +95,5 @@ class enter_reason(osv.osv_memory):
             ))
 
         return {'type': 'ir.actions.act_window_close'}
-    
+
 enter_reason()

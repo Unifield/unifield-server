@@ -19,7 +19,7 @@
 ##############################################################################
 
 from osv import osv, fields
-from tools.translate import _
+from tools.translate import _; assert _
 
 class stock_warehouse(osv.osv):
     '''
@@ -28,7 +28,7 @@ class stock_warehouse(osv.osv):
     _inherit = 'stock.warehouse'
     _columns = {'lot_quarantine_id': fields.many2one('stock.location', 'Location Quarantine', domain=[('usage','<>','view'), ('quarantine_location', '=', True),]),
                 }
-    
+
 stock_warehouse()
 
 
@@ -40,7 +40,7 @@ class stock_location(osv.osv):
     - location category (selection)
     '''
     _inherit = 'stock.location'
-    
+
     def remove_flag(self, flag, list):
         '''
         if we do not remove the flag, we fall into an infinite loop
@@ -53,45 +53,45 @@ class stock_location(osv.osv):
             i+=1
         for i in to_del:
             list.pop(i)
-        
+
         return True
-    
+
     def search_check_quarantine(self, cr, uid, obj, name, args, context=None):
         '''
         modify the query to take the type of stock move into account
-        
+
         if type is 'out', quarantine_location must be False
         '''
         move_obj = self.pool.get('stock.move')
         move_id = context.get('move_id', False)
-        
+
         # remove flag avoid infinite loop
         self.remove_flag('check_quarantine', args)
-            
+
         if not move_id:
             return args
-        
+
         # check the move
         move = move_obj.browse(cr, uid, move_id, context=context)
 
         if move.type == 'out':
             # out -> not from quarantine
             args.append(('quarantine_location', '=', False))
-            
+
         return args
-    
+
     def _get_false(self, cr, uid, ids, field_name, arg, context=None):
         '''
         return false for each id
         '''
         if isinstance(ids,(long, int)):
-           ids = [ids]
-        
+            ids = [ids]
+
         result = {}
         for id in ids:
-          result[id] = False
+            result[id] = False
         return result
-    
+
     def _check_parent(self, cr, uid, ids, context=None):
         """ 
         Quarantine Location can only have Quarantine Location or Views as parent location.
@@ -101,7 +101,7 @@ class stock_location(osv.osv):
                 if obj.location_id.usage not in ('view',) and not obj.location_id.quarantine_location:
                     return False
         return True
-    
+
     def _check_chained(self, cr, uid, ids, context=None):
         """ Checks if location is quarantine and chained loc
         @return: True or False
@@ -115,7 +115,7 @@ class stock_location(osv.osv):
                         return False
         return True
 
-    
+
     _columns = {'quarantine_location': fields.boolean(string='Quarantine Location'),
                 'destruction_location': fields.boolean(string='Destruction Location'),
                 'location_category': fields.selection([('stock', 'Stock'),
@@ -127,9 +127,9 @@ class stock_location(osv.osv):
                 #'check_quarantine': fields.function(_get_false, fnct_search=search_check_quarantine, string='Check Quarantine', type="boolean", readonly=True, method=True),
                 }
     _defaults = { 
-       'location_category': 'stock',
+        'location_category': 'stock',
     }
-    
+
     _constraints = [(_check_parent,
                      'Quarantine Location can only have Quarantine Location or Views as parent location.',
                      ['location_id'],),
@@ -141,38 +141,17 @@ class stock_location(osv.osv):
 stock_location()
 
 
-class purchase_order(osv.osv):
-    '''
-    override purchase order
-    - add hook _hook_action_picking_create_modify_out_source_loc_check
-    '''
-    _inherit = 'purchase.order'
-    
-    def _hook_action_picking_create_modify_out_source_loc_check(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_picking_create method from purchase>purchase.py>purchase_order class
-        
-        - allow to choose whether or not the source location of the corresponding outgoing stock move should
-        match the destination location of incoming stock move
-        '''
-        # we do not want the corresponding out stock move to be updated
-        return False
-    
-purchase_order()
-
-
 class stock_move(osv.osv):
     '''
     add _hook_action_done_update_out_move_check
     '''
     _inherit = 'stock.move'
-    
+
     def _hook_action_done_update_out_move_check(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         choose if the corresponding out stock move must be updated
         '''
-        result = super(stock_move, self)._hook_action_done_update_out_move_check(cr, uid, ids, context=context, *args, **kwargs)
+        super(stock_move, self)._hook_action_done_update_out_move_check(cr, uid, ids, context=context, *args, **kwargs)
         # we never update the corresponding out stock move
         return False
 

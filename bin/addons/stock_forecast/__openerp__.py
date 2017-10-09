@@ -32,9 +32,6 @@
     "description": """
     Add stock level forecast wizard
     """,
-    'test': [
-             'test/stock_forecast.yml',
-             ],
     'update_xml': [
         'security/ir.model.access.csv',
         'wizard/stock_forecast_view.xml',

@@ -36,15 +36,13 @@
         'account_view.xml',
         'account_move_line_view.xml',
         'account_bank_statement_view.xml',
-        'order_line_view.xml',
     ],
     'test': [
-        'test/res_currency_functional.yml',
     ],
     'demo_xml': [],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

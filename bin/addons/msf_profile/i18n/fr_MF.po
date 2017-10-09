@@ -5237,20 +5237,6 @@ msgstr "Montant converti de la ligne de registre à un taux standard (basé sur 
 msgid "America/Santiago"
 msgstr "America/Santiago"
 
-#. modules: register_accounting, stock_override, purchase_override, account_override, sale_override, analytic_distribution
-#: field:account.invoice,from_yml_test:0
-#: field:account.invoice.line,from_yml_test:0
-#: field:account.commitment,from_yml_test:0
-#: field:account.commitment.line,from_yml_test:0
-#: field:purchase.order,from_yml_test:0
-#: field:wizard.account.invoice,from_yml_test:0
-#: field:wizard.account.invoice.line,from_yml_test:0
-#: field:sale.order,from_yml_test:0
-#: field:procurement.order,from_yml_test:0
-#: field:stock.picking,from_yml_test:0
-msgid "Only used to pass addons unit test"
-msgstr "Seulement utilisé pour passer les addons unit test"
-
 #. module: account
 #: code:addons/account/report/account_balance_sheet.py:320
 #: code:addons/account/report/account_general_ledger.py:434
@@ -21938,20 +21924,6 @@ msgstr "Valeur de disponibilité"
 #: field:account.tax.template,account_collected_id:0
 msgid "Invoice Tax Account"
 msgstr "Facture - Compte de Taxe"
-
-#. modules: register_accounting, stock_override, purchase_override, account_override, sale_override, analytic_distribution
-#: help:account.invoice,from_yml_test:0
-#: help:account.invoice.line,from_yml_test:0
-#: help:account.commitment,from_yml_test:0
-#: help:account.commitment.line,from_yml_test:0
-#: help:purchase.order,from_yml_test:0
-#: help:wizard.account.invoice,from_yml_test:0
-#: help:wizard.account.invoice.line,from_yml_test:0
-#: help:sale.order,from_yml_test:0
-#: help:procurement.order,from_yml_test:0
-#: help:stock.picking,from_yml_test:0
-msgid "Never set this field to true !"
-msgstr "Ne jamais régler ce champ sur vrai !"
 
 #. module: product_nomenclature
 #: model:ir.module.module,shortdesc:product_nomenclature.module_meta_information
@@ -49322,11 +49294,6 @@ msgstr "Vous ne pouvez pas supprimer ce créateur  produit parce qu il est utili
 #: selection:stock.move.memory.out,integrity_status_func_stock_memory_move:0
 msgid "The sequence overlaps previous one"
 msgstr "La séquence chevauche la précédente"
-
-#. module: register_accounting
-#: field:account.direct.invoice.wizard.line,from_yml_test:0
-msgid "Only used to pass addons unit test"
-msgstr "Only used to pass addons unit test"
 
 #. modules: msf_budget, msf_instance
 #: field:msf.budget,instance_type:0
@@ -77435,11 +77402,6 @@ msgstr "Lithuanian / Lietuvių kalba"
 msgid "Source Type"
 msgstr "Source - Type"
 
-#. module: register_accounting
-#: help:account.direct.invoice.wizard.line,from_yml_test:0
-msgid "Never set this field to true !"
-msgstr "Never set this field to true !"
-
 #. module: update_client
 #: view:sync_client.upgrade:0
 msgid "Download"
@@ -98454,7 +98416,7 @@ msgstr "Ligne %s: Des restrictions empêchent le compte %s d'être utilisé pour
 "- 'Catégorie Bilan/Cte de Résultat' ne doit pas être vide."
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:168
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:184
 #, python-format
 msgid "\n"
 "- 'Account Type' should be in ('expense', 'income', 'receivables')."

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from lxml import etree
-from mx import DateTime
 from tools.translate import _
 from tools.misc import file_open
 from osv import osv
@@ -15,10 +13,7 @@ from mako import exceptions
 from mako.runtime import Context
 
 from mako import filters
-from tools.misc import file_open
-import pooler
 import addons
-import time
 import zipfile
 import tempfile
 import codecs
@@ -34,7 +29,7 @@ xml_escapes = {
     "\n": '&#10;'
 }
 def xml_escape_br(string):
-        return re.sub(r"([&<\"'>\n])", lambda m: xml_escapes[m.group()], string)
+    return re.sub(r"([&<\"'>\n])", lambda m: xml_escapes[m.group()], string)
 filters.xml_escape_br = xml_escape_br
 filters.DEFAULT_ESCAPES['xn'] = 'filters.xml_escape_br'
 
@@ -111,7 +106,7 @@ class SpreadsheetReport(WebKitParser):
             mako_ctx = Context(fileout, _=self.translate_call, **self.parser_instance.localcontext)
             body_mako_tpl.render_context(mako_ctx)
             fileout.close()
-        except Exception, e:
+        except Exception:
             msg = exceptions.text_error_template().render()
             netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)
             raise osv.except_osv(_('Webkit render'), msg)
@@ -147,8 +142,6 @@ class SpreadsheetReport(WebKitParser):
         a = super(SpreadsheetReport, self).create(cr, uid, ids, data, context)
         # This permit to test XLS report generation with tools.tests_reports without given some warning
         # Cf. tools/tests_reports.py:89
-        if context and context.get('from_yml', False) and context.get('from_yml') is True:
-            return (a[0], 'foobar')
         return a
 
 class SpreadsheetCreator(object):

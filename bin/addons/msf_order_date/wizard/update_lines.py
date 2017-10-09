@@ -132,7 +132,8 @@ class update_lines(osv.osv_memory):
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             requested_date = obj.delivery_requested_date
             for line in obj.order_line:
-                line.write({'date_planned': requested_date,})
+                if line.state in ('draft', 'validated', 'validated_n'):
+                    line.write({'date_planned': requested_date})
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -148,7 +149,8 @@ class update_lines(osv.osv_memory):
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             confirmed_date = obj.delivery_confirmed_date
             for line in obj.order_line:
-                line.write({'confirmed_delivery_date': confirmed_date,})
+                if line.state in ('draft', 'validated', 'validated_n'):
+                    line.write({'confirmed_delivery_date': confirmed_date})
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -164,7 +166,8 @@ class update_lines(osv.osv_memory):
         for obj in obj_obj.browse(cr, uid, obj_ids, context=context):
             stock_take_date = obj.stock_take_date
             for line in obj.order_line:
-                line.write({'stock_take_date': stock_take_date, })
+                if line.state in ('draft', 'validated', 'validated_n'):
+                    line.write({'stock_take_date': stock_take_date})
 
         return {'type': 'ir.actions.act_window_close'}
 

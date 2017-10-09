@@ -39,11 +39,10 @@
         'wizard/wizard_report_currency_table_view.xml',
     ],
     'test': [
-        'test/currency_pricelist.yml',
     ],
     'demo_xml': [],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

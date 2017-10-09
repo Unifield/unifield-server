@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="purchase_line_manually_confirmed_form_view" model="ir.ui.view">
+            <field name="name">Manually confirm PO line</field>
+            <field name="model">purchase.order.line.manually.confirmed.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Confirm Purchase Order line">
+                    <group colspan="4" col="1">
+                        <html>
+                            <h3 style="text-align: center; margin: 13px"><translate>You're about to confirm a PO line that is synchronized and should be consequently confirmed by the supplier (automatically at his equivalent FO line confirmation). Are you sure you want to force the confirmation at your level (you won't get the supplier's update)?</translate></h3>
+                        </html>
+                    </group>
+                    <newline />
+                    <separator string="Actions" />
+                    <button name="confirm_pol" string="Confirm line" type="object" icon="terp-camera_test" colspan="2" />
+                    <button name="close_wizard" string="Close the wizard" type="object" icon="gtk-close" colspan="2" />
+                </form>
+            </field>
+        </record>  
+    </data>
+</openerp>  
+        

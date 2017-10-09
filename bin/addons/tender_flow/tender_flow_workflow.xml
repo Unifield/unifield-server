@@ -125,12 +125,13 @@
             <field name="condition">not tender_line_id or tender_line_id.line_state == 'cancel'</field>
         </record>
         
+<!--
         <record id="procurement.trans_confirm_mto_purchase" model="workflow.transition">
             <field name="act_from" ref="procurement.act_confirm_mto"/>
             <field name="act_to" ref="purchase.act_buy"/>
             <field name="condition">((is_rfq and is_rfq_done) or not is_rfq) and ((is_tender and is_tender_done) or (not is_tender)) and check_buy()</field>
         </record>
-
+-->
         <record id="procurement.trans_confirm_mto_rfq" model="workflow.transition">
             <field name="act_from" ref="procurement.act_confirm_mto" />
             <field name="act_to" ref="procurement.act_rfq" />
@@ -168,58 +169,6 @@
             <field name="condition">rfq_line_id.state != 'cancel'</field>
         </record>
 
-        <!-- PURCHASE ORDER WORKFLOW -->
-        <record id="purchase.act_rfq_sent" model="workflow.activity">
-            <field name="wkf_id" ref="purchase.purchase_order"/>
-            <field name="name">rfq_sent</field>
-            <field name="action">write({'state':'rfq_sent'})</field>
-            <field name="kind">function</field>
-        </record>
-        
-        <record id="purchase.act_rfq_updated" model="workflow.activity">
-            <field name="wkf_id" ref="purchase.purchase_order"/>
-            <field name="name">rfq_updated</field>
-            <field name="action">write({'state':'rfq_updated'})</field>
-            <field name="kind">function</field>
-        </record>
-        
-        <record id="purchase.act_rfq_done" model="workflow.activity">
-            <field name="wkf_id" ref="purchase.purchase_order"/>
-            <field name="name">rfq_done</field>
-            <field name="action">wkf_act_rfq_done()</field>
-            <field name="kind">function</field>
-            <field name="flow_stop">True</field>
-        </record>
-        
-        <record id="purchase.trans_draft_sent" model="workflow.transition">
-            <field name="act_from" ref="purchase.act_draft"/>
-            <field name="act_to" ref="purchase.act_rfq_sent"/>
-            <field name="signal">rfq_sent</field>
-        </record>
-        
-        <record id="purchase.trans_sent_updated" model="workflow.transition">
-            <field name="act_from" ref="purchase.act_rfq_sent" />
-            <field name="act_to" ref="purchase.act_rfq_updated" />
-            <field name="signal">rfq_updated</field>
-        </record>
-        
-		<record id="purchase.trans_sent_cancel" model="workflow.transition">
-            <field name="act_from" ref="purchase.act_rfq_sent"/>
-            <field name="act_to" ref="purchase.act_cancel"/>
-            <field name="signal">purchase_cancel</field>
-        </record>
-        
-        <record id="purchase.trans_updated_done" model="workflow.transition">
-            <field name="act_from" ref="purchase.act_rfq_updated"/>
-            <field name="act_to" ref="purchase.act_rfq_done"/>
-            <field name="signal">rfq_done</field>
-        </record>
-        
-        <record id="purchase.trans_updated_cancel" model="workflow.transition">
-            <field name="act_from" ref="purchase.act_rfq_updated" />
-            <field name="act_to" ref="purchase.act_cancel" />
-            <field name="signal">purchase_cancel</field>
-        </record>
 
     </data>
 </openerp>

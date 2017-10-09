@@ -416,6 +416,7 @@
 
     <record id="stock.warehouse0" model="stock.warehouse">
         <field name="name">MSF</field>
+        <field model="res.company" name="name" search="[]" use="name"/>
         <field name="lot_input_id" ref="msf_cross_docking.stock_location_input"/>
         <field name="lot_stock_id" ref="stock.stock_location_stock"/>
         <field name="lot_output_id" ref="stock.stock_location_output"/>

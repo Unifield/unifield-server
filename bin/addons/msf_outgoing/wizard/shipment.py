@@ -40,10 +40,10 @@ class shipment_wizard(osv.osv_memory):
         'product_moves_shipment_returnpacks' : fields.one2many('stock.move.memory.shipment.returnpacks', 'wizard_id', 'Pack Families'),
         'product_moves_shipment_returnpacksfromshipment' : fields.one2many('stock.move.memory.shipment.returnpacksfromshipment', 'wizard_id', 'Pack Families'),
         'product_moves_shipment_additionalitems' : fields.one2many('stock.move.memory.shipment.additionalitems', 'wizard_id', 'Additional Items'),
-     }
+    }
 #     todo
 #    generic select all deselcted all based on fields_get
-    
+
     def select_all(self, cr, uid, ids, context=None):
         '''
         select all buttons, write max number of packs in each pack family line
@@ -56,21 +56,21 @@ class shipment_wizard(osv.osv_memory):
             for line in wiz.product_moves_shipment_returnpacksfromshipment:
                 line.write({'return_from': line.from_pack,
                             'return_to': line.to_pack,}, context=context)
-        
+
         return {
-                'name': 'Create Shipment',
-                'view_mode': 'form',
-                'view_id': False,
-                'view_type': 'form',
-                'res_model': 'shipment.wizard',
-                'res_id': ids[0],
-                'type': 'ir.actions.act_window',
-                'nodestroy': True,
-                'target': 'new',
-                'domain': '[]',
-                'context': context,
-                }
-        
+            'name': 'Create Shipment',
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': 'shipment.wizard',
+            'res_id': ids[0],
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': context,
+        }
+
     def deselect_all(self, cr, uid, ids, context=None):
         '''
         select all buttons, write max number of packs in each pack family line
@@ -83,21 +83,21 @@ class shipment_wizard(osv.osv_memory):
             for line in wiz.product_moves_shipment_returnpacksfromshipment:
                 line.write({'return_from': 0,
                             'return_to': 0,}, context=context)
-        
+
         return {
-                'name': 'Create Shipment',
-                'view_mode': 'form',
-                'view_id': False,
-                'view_type': 'form',
-                'res_model': 'shipment.wizard',
-                'res_id': ids[0],
-                'type': 'ir.actions.act_window',
-                'nodestroy': True,
-                'target': 'new',
-                'domain': '[]',
-                'context': context,
-                }
-    
+            'name': 'Create Shipment',
+            'view_mode': 'form',
+            'view_id': False,
+            'view_type': 'form',
+            'res_model': 'shipment.wizard',
+            'res_id': ids[0],
+            'type': 'ir.actions.act_window',
+            'nodestroy': True,
+            'target': 'new',
+            'domain': '[]',
+            'context': context,
+        }
+
     def default_get(self, cr, uid, fields, context=None):
         """ To get default values for the object.
          @param self: The object pointer.
@@ -106,23 +106,23 @@ class shipment_wizard(osv.osv_memory):
          @param fields: List of fields for which we want default values
          @param context: A standard dictionary
          @return: A dictionary which of fields with values.
-         
+
          data is generated for the corresponding picking (shipment.packing_ids)
          by the generate_data_from_picking_for_pack_family method in stock.picking
         """
         if context is None:
             context = {}
-        
+
         # we need the step info
         assert 'step' in context, 'Step not defined in context'
         step = context['step']
-            
+
         pick_obj = self.pool.get('stock.picking')
         shipment_obj = self.pool.get('shipment')
-        
+
         # call to super
         res = super(shipment_wizard, self).default_get(cr, uid, fields, context=context)
-        
+
         # shipment calling the wizard
         shipment_ids = context.get('active_ids', [])
         if not shipment_ids:
@@ -145,35 +145,35 @@ class shipment_wizard(osv.osv_memory):
 
         if 'product_moves_shipment_create' in fields and step in ('create'):
             res.update({'product_moves_shipment_create': result})
-            
+
         if 'product_moves_shipment_returnpacks' in fields and step in ('returnpacks'):
             res.update({'product_moves_shipment_returnpacks': result})
-            
+
         if 'product_moves_shipment_returnpacksfromshipment' in fields and step in ('returnpacksfromshipment'):
             res.update({'product_moves_shipment_returnpacksfromshipment': result})
-            
+
         if 'date' in fields:
             res.update({'date': time.strftime('%Y-%m-%d %H:%M:%S')})
-            
+
         if 'transport_type' in fields:
             res.update({'transport_type': 'by_road'})
-            
+
         if 'address_id' in fields:
             res.update({'address_id': address_id})
-            
+
         return res
-    
+
     def __create_pack_families_memory(self, data, context=None):
         '''
         generates the memory objects data
-        
+
         - wizard_id seems to be filled automatically
         '''
         assert context, 'No context defined'
-        
+
         # list for the current pick object
         result = []
-        
+
         for picking_id in data:
             for from_pack in data[picking_id]:
                 for to_pack in data[picking_id][from_pack]:
@@ -187,10 +187,10 @@ class shipment_wizard(osv.osv_memory):
                     pack_family_memory.update(selected_number=num_of_pack)
                     # create the memory pack_family
                     result.append(pack_family_memory)
-        
+
         # return the list of dictionaries
         return result
-    
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         generates the xml view
@@ -202,7 +202,7 @@ class shipment_wizard(osv.osv_memory):
         # working objects
         assert 'step' in context, 'No step defined in context'
         step = context['step']
-        
+
         _moves_arch_lst = """<form string="%s">
 
                         <button name="select_all" string="%s"
@@ -218,22 +218,22 @@ class shipment_wizard(osv.osv_memory):
 
         # add field related to picking type only
         _moves_fields.update({
-                            'product_moves_shipment_' + step: {'relation': 'stock.move.memory.shipment.' + step, 'type' : 'one2many', 'string' : 'Product Moves'}, 
-                            })
+            'product_moves_shipment_' + step: {'relation': 'stock.move.memory.shipment.' + step, 'type' : 'one2many', 'string' : 'Product Moves'}, 
+        })
 
         # specify the button according to the screen
         if step == 'create':
             button = ('do_create_shipment', _('Create Shipment'))
-            
+
         elif step == 'returnpacks':
             button = ('do_return_packs', _('Return Packs'))
-            
+
         elif step == 'returnpacksfromshipment':
             button = ('do_return_packs_from_shipment', _('Return Packs from Shipment'))
-            
+
         else:
             button = ('undefined', 'Undefined: %s'%step)
-                
+
         _moves_arch_lst += """
                 <separator string="" colspan="4" />
                 <label string="" colspan="2"/>
@@ -248,28 +248,28 @@ class shipment_wizard(osv.osv_memory):
             </group>"""%button
         if step == 'create':
             _moves_fields.update({
-                                'product_moves_shipment_additionalitems': {'relation': 'stock.move.memory.shipment.additionalitems', 'type' : 'one2many', 'string' : 'Additional Items'}, 
-                                })
+                'product_moves_shipment_additionalitems': {'relation': 'stock.move.memory.shipment.additionalitems', 'type' : 'one2many', 'string' : 'Additional Items'}, 
+            })
             _moves_arch_lst += """
             <field name="product_moves_shipment_additionalitems" colspan="4" nolabel="1" mode="tree,form" string="Additional Items"></field>
             """
         _moves_arch_lst += """</form>"""
-        
+
         result['arch'] = _moves_arch_lst
         result['fields'] = _moves_fields
         return result
-    
+
     def generate_data_from_partial(self, cr, uid, ids, conditions=None, context=None):
         '''
         data is located in product_moves_shipment_create
-        
+
         we generate the data structure from the shipment wizard
-        
+
         QUESTION: why partial data is stored in a list, we have one partial for each to/from pack couple at this level?
-        
+
         structure :
         {shipment_id: {draft_packing_id: {from_pack: {to_pack: {[partial,]}]}}}}
-        
+
         fields:
         {'selected_weight': {'function': '_vals_get', 'digits': (16, 2), 'fnct_inv': False, 'string': 'Selected Weight [kg]', 'fnct_inv_arg': False, 'readonly': 1, 'fnct_search': False, 'func_obj': False, 'type': 'float', 'store': False, 'func_method': True},
         'weight': {'digits': (16, 2), 'selectable': True, 'type': 'float', 'string': 'Weight p.p [kg]'},
@@ -292,18 +292,16 @@ class shipment_wizard(osv.osv_memory):
         assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
         assert 'step' in context, 'No step defined in context'
         step = context['step']
-        
+
         # condition for data to be added
         if conditions is None:
             conditions = []
-        
+
         shipment_obj = self.pool.get('stock.picking')
         memory_move_obj = self.pool.get('stock.move.memory.shipment.%s'%step)
-        # partial data from wizard
-        partial = self.browse(cr, uid, ids[0], context=context)
         # returned datas
         partial_datas_shipment = {}
-        
+
         # picking ids
         shipment_ids = context['active_ids']
         for ship in shipment_obj.browse(cr, uid, shipment_ids, context=context):
@@ -342,18 +340,18 @@ class shipment_wizard(osv.osv_memory):
                         .setdefault(memory_move.draft_packing_id.id, {}) \
                         .setdefault(memory_move.from_pack, {}) \
                         .setdefault(memory_move.to_pack, []).append(values)
-                
+
         return partial_datas_shipment
-    
+
     def integrity_check_packs(self, cr, uid, ids, data, model_name, context=None):
         '''
         integrity check on create shipment data
         - #1 no negative values (<0)
         - #2 at least one positive one (>0)
         - #3 no more than available quantity #packs
-        
+
         {12: {176: {1: {1: [{'selected_weight': 0.0, 'weight': 0.0, 'pack_type': False, 'ppl_id': 175, 'draft_packing_id': 176, 'wizard_id': 1, 'height': 0.0, 'from_pack': 1, 'length': 0.0, 'to_pack': 1, 'integrity_status': 'empty', 'num_of_packs': '1', 'selected_number': 1, 'width': 0.0, 'sale_order_id': False}]}}}}
-        
+
         return True/False
         '''
         memory_move_obj = self.pool.get(model_name)
@@ -381,12 +379,12 @@ class shipment_wizard(osv.osv_memory):
                                 memory_move_obj.write(cr, uid, [partial['memory_move_id']], {'integrity_status': 'return_qty_too_much',}, context=context)
                             else:
                                 sum_qty += partial['selected_number']
-                            
+
             # if error, return False
             if not sum_qty or negative_value or too_much:
                 return False
         return True
-    
+
     def set_integrity_status(self, cr, uid, ids, field_name, status='empty', context=None):
         '''
         for all moves set the status to ok (default value) or other if specified
@@ -394,7 +392,7 @@ class shipment_wizard(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             for memory_move in getattr(wiz, field_name):
                 memory_move.write({'integrity_status': status,}, context=context)
-    
+
     def create_additionalitems(self, cr, uid, ids, context=None):
         shipment_ids = context['active_ids']
         additional_items_dict = {'additional_items_ids': []}
@@ -411,7 +409,7 @@ class shipment_wizard(osv.osv_memory):
                 additional_items_dict['additional_items_ids'].append((0, 0, additionalitem))
         context.update(additional_items_dict)
         return context
-    
+
     def do_create_shipment(self, cr, uid, ids, context=None):
         '''
         gather data from wizard pass it to the do_create_shipment method of shipment class
@@ -419,11 +417,11 @@ class shipment_wizard(osv.osv_memory):
         # integrity check
         assert context, 'no context, method call is wrong'
         assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
-        
+
         context.update(self.create_additionalitems(cr, uid, ids, context))
-        
+
 #        context.update(self.update_additionalitems(cr, uid, ids, context))
-        
+
         ship_obj = self.pool.get('shipment')
         # name of the wizard field for moves (one2many)
         field_name = 'product_moves_shipment_create'
@@ -431,7 +429,7 @@ class shipment_wizard(osv.osv_memory):
         shipment_ids = context['active_ids']
         # generate data structure - selected_number must be non zero to be taken into account
         partial_datas_shipment = self.generate_data_from_partial(cr, uid, ids, conditions=['selected_number'], context=context)
-        
+
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly
@@ -447,7 +445,7 @@ class shipment_wizard(osv.osv_memory):
                 return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, w_type='update', context=context)
         # call stock_picking method which returns action call
         return ship_obj.do_create_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas_shipment=partial_datas_shipment))
-    
+
     def do_return_packs(self, cr, uid, ids, context=None):
         '''
         gather data from wizard pass it to the do_return_packs method of shipment class
@@ -455,7 +453,7 @@ class shipment_wizard(osv.osv_memory):
         # integrity check
         assert context, 'no context, method call is wrong'
         assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
-        
+
         ship_obj = self.pool.get('shipment')
         # name of the wizard field for moves (one2many)
         field_name = 'product_moves_shipment_returnpacks'
@@ -463,7 +461,7 @@ class shipment_wizard(osv.osv_memory):
         shipment_ids = context['active_ids']
         # generate data structure - selected_number must be non zero to be taken into account
         partial_datas = self.generate_data_from_partial(cr, uid, ids, conditions=['selected_number'], context=context)
-        
+
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly
@@ -473,16 +471,16 @@ class shipment_wizard(osv.osv_memory):
             return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, w_type='update', context=context)
         # call stock_picking method which returns action call
         return ship_obj.do_return_packs(cr, uid, shipment_ids, context=dict(context, partial_datas=partial_datas))
-    
+
     def integrity_check_return_packs_from_shipment(self, cr, uid, ids, data, context=None):
         '''
         integrity check on shipment data
         (sfrom = selected from, sto = selected to)
-        
+
         - rule #1: sfrom <= sto // integrity of selected sequence
         - rule #2: (sfrom >= from) and (sto <= to) // in the initial range
         - rule #3: sfrom[i] > sto[i-1] for i>0 // no overlapping, unique sequence
-        
+
         {26: 
             {240: {1: {1: [{'selected_weight': 33.0, 'memory_move_id': 39, 'return_from': 1, 'weight': 33.0, 'pack_type': False, 'ppl_id': 224, 'draft_packing_id': 240, 'wizard_id': 5, 'height': 0.0, 'from_pack': 1, 'length': 0.0, 'to_pack': 1, 'integrity_status': 'empty', 'num_of_packs': 1, 'selected_number': 1, 'return_to': 1, 'width': 0.0, 'sale_order_id': 61}, {'selected_weight': 33.0, 'memory_move_id': 50, 'return_from': 1, 'weight': 33.0, 'pack_type': False, 'ppl_id': 224, 'draft_packing_id': 240, 'wizard_id': 5, 'height': 0.0, 'from_pack': 1, 'length': 0.0, 'to_pack': 1, 'integrity_status': 'empty', 'num_of_packs': 1, 'selected_number': 1, 'return_to': 1, 'width': 0.0, 'sale_order_id': 61}]},
                    2: {30: [{'selected_weight': 638.0, 'memory_move_id': 40, 'return_from': 2, 'weight': 22.0, 'pack_type': False, 'ppl_id': 224, 'draft_packing_id': 240, 'wizard_id': 5, 'height': 0.0, 'from_pack': 2, 'length': 0.0, 'to_pack': 30, 'integrity_status': 'empty', 'num_of_packs': 29, 'selected_number': 29, 'return_to': 30, 'width': 0.0, 'sale_order_id': 61}, {'selected_weight': 638.0, 'memory_move_id': 51, 'return_from': 2, 'weight': 22.0, 'pack_type': False, 'ppl_id': 224, 'draft_packing_id': 240, 'wizard_id': 5, 'height': 0.0, 'from_pack': 2, 'length': 0.0, 'to_pack': 30, 'integrity_status': 'empty', 'num_of_packs': 29, 'selected_number': 29, 'return_to': 30, 'width': 0.0, 'sale_order_id': 61}, {'selected_weight': 638.0, 'memory_move_id': 52, 'return_from': 2, 'weight': 22.0, 'pack_type': False, 'ppl_id': 224, 'draft_packing_id': 240, 'wizard_id': 5, 'height': 0.0, 'from_pack': 2, 'length': 0.0, 'to_pack': 30, 'integrity_status': 'empty', 'num_of_packs': 29, 'selected_number': 29, 'return_to': 30, 'width': 0.0, 'sale_order_id': 61}]},
@@ -535,13 +533,13 @@ class shipment_wizard(osv.osv_memory):
                         if not (seq[0] > seqb[1]):
                             overlap = True
                             memory_move_obj.write(cr, uid, [seq[2]], {'integrity_status': 'overlap',}, context=context)
-            
+
             # if error, return False
             if not number_of_sequences or to_samller_than_from or overlap or out_of_range:
                 return False
-        
+
         return True
-    
+
     def do_return_packs_from_shipment(self, cr, uid, ids, context=None):
         '''
         gather data from wizard pass it to the do_return_packs method of shipment class
@@ -549,7 +547,7 @@ class shipment_wizard(osv.osv_memory):
         # integrity check
         assert context, 'no context, method call is wrong'
         assert 'active_ids' in context, 'No shipment ids in context. Action call is wrong'
-        
+
         ship_obj = self.pool.get('shipment')
         # name of the wizard field for moves (one2many)
         field_name = 'product_moves_shipment_returnpacksfromshipment'
@@ -561,7 +559,7 @@ class shipment_wizard(osv.osv_memory):
         # to be modified along with delete lines policy implementation
         # as a (temporary?) fix, all conditions must be true at the same time to be skipped (0,0) is skipped, (0,3) isn't
         partial_datas = self.generate_data_from_partial(cr, uid, ids, conditions=['return_from', 'return_to'], context=context)
-        
+
         # reset the integrity status of all lines
         self.set_integrity_status(cr, uid, ids, field_name=field_name, context=context)
         # integrity check on wizard data - sequence -> no prodlot check as the screen is readonly
@@ -571,7 +569,7 @@ class shipment_wizard(osv.osv_memory):
             return self.pool.get('wizard').open_wizard(cr, uid, shipment_ids, w_type='update', context=context)
         # call stock_picking method which returns action call
         return ship_obj.do_return_packs_from_shipment(cr, uid, shipment_ids, context=dict(context, partial_datas=partial_datas))
-    
+
 
 shipment_wizard()
 
@@ -579,35 +577,35 @@ shipment_wizard()
 class memory_additionalitems(osv.osv_memory):
     '''
     view corresponding to additionalitems
-    
+
     integrity constraint 
     '''
     _name = "memory.additionalitems"
     _description="Additional Items"
-    
+
     _columns = {'name': fields.char(string='Additional Item', size=1024, required=True),
                 'quantity': fields.float(digits=(16,2), string='Quantity', required=True),
                 'uom': fields.many2one('product.uom', string='UOM', required=True),
                 'comment': fields.char(string='Comment', size=1024),
-                'volume': fields.float(digits=(16,2), string='Volume[dm³]'),
+                'volume': fields.float(digits=(16,2), string=u'Volume[dm³]'),
                 'weight': fields.float(digits=(16,2), string='Weight[kg]', required=True),
                 'picking_id': fields.many2one('stock.picking', 'PPL', readonly=True),
                 'additional_item_id': fields.many2one('shipment.additionalitems', 'Additional item id', readonly=True),
                 }
-    
+
 memory_additionalitems()
 
 
 class stock_move_memory_shipment_additionalitems(osv.osv_memory):
     '''
     view corresponding to additionalitems
-    
+
     integrity constraint 
     '''
     _inherit = "memory.additionalitems"
     _name  = 'stock.move.memory.shipment.additionalitems'
     _description="Additional Items"
     _columns = {
-                'wizard_id' : fields.many2one('shipment.wizard', string="Wizard"),
-                }
+        'wizard_id' : fields.many2one('shipment.wizard', string="Wizard"),
+    }
 stock_move_memory_shipment_additionalitems()

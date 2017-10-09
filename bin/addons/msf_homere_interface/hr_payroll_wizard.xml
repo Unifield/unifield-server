@@ -270,8 +270,6 @@
             <field name="target">new</field>
         </record>
 
-        <!-- Delete "Employee Hierarchy" action -->
-        <delete model="ir.actions.act_window" search="[('name', 'ilike', '%Employee Hierarchy%')]"/>
 
     <!--
         Menus

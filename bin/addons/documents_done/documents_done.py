@@ -91,7 +91,7 @@ class documents_done_wizard(osv.osv):
                     res[doc.id] = state[1]
 
         return res
-    
+
     def _search_state(self, cr, uid, obj, name, args, context=None):
         '''
         Returns all documents according to state
@@ -112,7 +112,7 @@ class documents_done_wizard(osv.osv):
         line_ids = []
         for line in order.order_line:
             line_ids.append(line.id)
-        
+
         if order._name == 'sale.order' and order.procurement_request:
             return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']), (field, 'in', line_ids)], context=context)
         return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']), (field, 'in', line_ids), ('type', '!=', 'internal')], context=context)
@@ -130,29 +130,15 @@ class documents_done_wizard(osv.osv):
         tender_ids = []
         invoice_ids = []
         for line in order.order_line:
-            # Check procurement orders
-            if line.procurement_id:
-                if line.procurement_id.state not in ('cancel', 'done'):
-                    proc_ids.append(line.procurement_id.id)
-                # Check PO
-                if line.procurement_id.purchase_id and line.procurement_id.purchase_id.state not in ('cancel', 'done'):
-                    po_ids.append(line.procurement_id.purchase_id.id)
-                # Check tenders
-                if line.procurement_id.tender_id and line.procurement_id.tender_id.state not in ('cancel', 'done'):
-                    tender_ids.append(line.procurement_id.tender_id.id)
-                    # Check Rfheck RfQ
-                    for rfq in line.procurement_id.tender_id.rfq_ids:
-                        if rfq.state not in ('cancel', 'done'):
-                            po_ids.append(rfq.id)
+            pol_id = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', line.id)], context=context)
+            po_line = self.pool.get('purchase.order.line').browse(cr, uid, pol_id[0], context=context) if pol_id else False
+            # Check PO
+            if po_line and not po_line.state.startswith(('cancel', 'done')):
+                po_ids.append(po_line.order_id.id)
 
         # Check loan counterpart
         if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
             po_ids.append(order.loan_id.id)
-
-        # Invoices
-        #for invoice in order.invoice_ids:
-        #    if invoice.state not in ('cancel', 'paid'):
-        #        invoice_ids.append(invoice.id)
 
         if context.get('count', False):
             return move_ids or proc_ids or po_ids or tender_ids or invoice_ids or False
@@ -171,11 +157,6 @@ class documents_done_wizard(osv.osv):
         invoice_ids = []
         if order.loan_id and order.loan_id.state not in ('cancel', 'done'):
             so_ids.append(order.loan_id.id)
-
-        # Invoices
-        #for invoice in order.invoice_ids:
-        #    if invoice.state not in ('cancel', 'paid'):
-        #        invoice_ids.append(invoice.id)
 
         if context.get('count', False):
             return move_ids or so_ids or invoice_ids or False
@@ -216,7 +197,7 @@ class documents_done_wizard(osv.osv):
                 res[doc.id] = False
 
         return res
-    
+
     _columns = {
         'name': fields.char(size=256, string='Name', readonly=True),
         'res_id': fields.integer(string='Res. Id'),
@@ -232,7 +213,7 @@ class documents_done_wizard(osv.osv):
                                          method=True, store=False, readonly=True, string='State'),
         'requestor': fields.many2one('res.users', string='Creator', readonly=True),
     }
-    
+
     def _get_model_name(self, model):
         '''
         Returns the readable model name
@@ -240,7 +221,7 @@ class documents_done_wizard(osv.osv):
         for model_name in REAL_MODEL_LIST:
             if model_name[0] == model:
                 return model_name[1]
-            
+
         return 'Undefined'
 
     def _add_stock_move_pb(self, cr, uid, problem_id, moves, context=None):
@@ -374,7 +355,7 @@ class documents_done_wizard(osv.osv):
                 'context': context,
                 'res_id': pb_id,
                 'target': 'popup'}
-                        
+
 
     def cancel_line(self, cr, uid, ids, all_doc=True, context=None):
         '''
@@ -383,7 +364,7 @@ class documents_done_wizard(osv.osv):
         pb_obj = self.pool.get('documents.done.problem')
         if not context:
             context = {}
-        
+
         for doc in self.browse(cr, uid, ids, context=context):
             if self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state not in ('cancel', 'done'):
                 self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, all_doc=all_doc, context=context)
@@ -396,12 +377,12 @@ class documents_done_wizard(osv.osv):
                         self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.')%(self._get_model_name(doc.real_model), doc.name), context=context)
                     pb_ids = pb_obj.search(cr, uid, [('wizard_id', '=', doc.id)], context=context)
                     pb_obj.done_all_documents(cr, uid, pb_ids, all_doc=all_doc, context=context)
-                
+
         if not context.get('direct_cancel', False):
             return {'type': 'ir.actions.act_window_close'}
         else:
             return True
-    
+
     def init(self, cr):
         '''
         Create the view
@@ -503,7 +484,7 @@ class documents_done_wizard(osv.osv):
                     WHERE
                         state NOT IN ('draft', 'done', 'cancel'))) AS dnd
         );""")
-    
+
 documents_done_wizard()
 
 class documents_done_problem(osv.osv_memory):

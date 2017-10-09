@@ -36,12 +36,11 @@
         'wizard/wizard_financing_currency_export_view.xml'
     ],
     'test': [
-        'test/financing_contract.yml'
     ],
     'demo_xml': [
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

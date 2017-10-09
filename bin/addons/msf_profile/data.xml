@@ -45,6 +45,7 @@
 
     <record id="sale.shop" model="sale.shop">
         <field name="name">MSF</field>
+        <field name="warehouse_id" ref="stock.warehouse0" />
     </record>
     <record id="uom_category_percentage" model="product.uom.categ">
         <field name="name">Percentage</field>

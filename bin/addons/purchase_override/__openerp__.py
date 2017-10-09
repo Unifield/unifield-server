@@ -40,7 +40,6 @@
     ],
     "update_xml": [
         "purchase_view.xml",
-        "purchase_workflow.xml",
         "purchase_report.xml",
         "wizard/split_order_line_view.xml",
         "wizard/order_change_currency_view.xml",
@@ -52,9 +51,6 @@
     "demo_xml": [
     ],
     "test": [
-        "test/data.yml",
-        "test/purchase_test.yml",
-        "test/split_line.yml",
     ],
     "installable": True,
     "active": False,

@@ -27,7 +27,7 @@ import decimal_precision as dp
 
 import tools
 
-from purchase_override import ORDER_CATEGORY, PURCHASE_ORDER_STATE_SELECTION
+from purchase import ORDER_CATEGORY, PURCHASE_ORDER_STATE_SELECTION
 
 
 class purchase_order_line_allocation_report(osv.osv):
@@ -42,19 +42,19 @@ class purchase_order_line_allocation_report(osv.osv):
             (['product_name', 'Product Name'], 20),
         ],
     }
-    
+
     def _get_product_account(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        
+
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = False
             if line.product_id:
                 res[line.id] = line.product_id.product_tmpl_id.property_account_expense.id
                 if not res[line.id]:
                     res[line.id] = line.product_id.categ_id.property_account_expense_categ.id
-                
+
         return res
-    
+
     _columns = {
         'order_id': fields.many2one('purchase.order', string='PO', domain=[('rfq_ok', '=', False)]),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'), 
@@ -98,9 +98,9 @@ class purchase_order_line_allocation_report(osv.osv):
         'state': fields.selection(PURCHASE_ORDER_STATE_SELECTION, string='State'),
         'supplier': fields.many2one('res.partner', string='Supplier'),
         'creation_date': fields.date(string='Creation date'),
-        
+
     }
-    
+
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'purchase_order_line_allocation_report')
         cr.execute("""
@@ -180,7 +180,7 @@ class purchase_order_line_allocation_report(osv.osv):
                   LEFT JOIN
                     sale_order_line sol
                     ON
-                    sol.procurement_id = pol.procurement_id
+                    sol.id = pol.linked_sol_id
                   LEFT JOIN
                     sale_order so
                     ON
@@ -239,7 +239,7 @@ class purchase_order_line_allocation_report(osv.osv):
                   LEFT JOIN
                     sale_order_line sol
                     ON
-                    sol.procurement_id = pol.procurement_id
+                    sol.id = pol.linked_sol_id
                   LEFT JOIN
                     sale_order so
                     ON
@@ -248,24 +248,24 @@ class purchase_order_line_allocation_report(osv.osv):
                     pol.analytic_distribution_id IS NULL
 		    AND po.rfq_ok = 'f')) AS al
             );""")
-    
+
 purchase_order_line_allocation_report()
 
 
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
-    
+
     def copy(self, cr, uid, ids, default=None, context=None):
         if default is None:
             default = {}
         default.update({'allocation_report_lines': []})
         return super(purchase_order, self).copy(cr, uid, ids, default, context=context)
-    
+
     _columns = {
         'allocation_report_lines': fields.one2many('purchase.order.line.allocation.report', 'order_id', string='Allocation lines'),
     }
-    
+
     def open_allocation_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -275,16 +275,16 @@ class purchase_order(osv.osv):
         for order in self.browse(cr, uid, ids, context=context):
             if order.rfq_ok:
                 raise osv.except_osv(_('Error'), _('The document %s is a Request for Quotation, you cannot have an allocation report on RfQ !') % order.name)
-        
+
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase_allocation_report', 'purchase_order_allocation_line_report_from_po')
-        
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'purchase.order',
                 'res_id': context.get('active_id'),
                 'view_id': view_id and [view_id[1]] or False,
                 'view_type': 'form',
                 'view_mode': 'form'}
-    
+
 purchase_order()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

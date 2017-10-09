@@ -375,6 +375,132 @@ class so_po_common(osv.osv_memory):
 
         return False
 
+    def get_line_data(self, cr, uid, source, order_line, context=None):
+        '''
+        Order line can be both a PO line or a FO line
+        This method manage to create PO line from SO line or SO line from PO line
+        '''
+        if context is None:
+            context = {}
+        res = {}
+        src_values = order_line.to_dict()
+        split_cancel_line = {}
+        msg_err_not_found = "" # prod received by sync but not in our DB
+
+        if src_values.get('product_uom'):
+            res['product_uom'] = self.get_uom_id(cr, uid, order_line.product_uom, context=context)
+
+        if src_values.get('have_analytic_distribution_from_header'):
+            res['have_analytic_distribution_from_header'] = order_line.have_analytic_distribution_from_header
+
+        if src_values.get('line_number'):
+            res['line_number'] = order_line.line_number
+
+        if src_values.get('notes'):
+            res['notes'] = order_line.notes
+
+        if src_values.get('comment'):
+            res['comment'] = order_line.comment
+
+        # UTP-972: send also the flat is line is a split line
+        if src_values.get('is_line_split'):
+            res['is_line_split'] = order_line.is_line_split
+
+        if src_values.get('product_uom_qty'): # come from the SO
+            res['product_qty'] = order_line.product_uom_qty
+            res['product_uom_qty'] = order_line.product_uom_qty
+
+        if src_values.get('product_qty'): # come from the PO
+            res['product_uom_qty'] = order_line.product_qty
+            res['product_qty'] = order_line.product_qty
+
+        if src_values.get('date_planned'):
+            res['date_planned'] = order_line.date_planned
+
+        if src_values.get('confirmed_delivery_date'):
+            res['confirmed_delivery_date'] = order_line.confirmed_delivery_date
+
+        if src_values.get('nomenclature_description'):
+            res['nomenclature_description'] = order_line.nomenclature_description
+
+        if src_values.get('price_unit'):
+            res['price_unit'] = order_line.price_unit
+        else:
+            res['price_unit'] = 0 # This case is for the line that has price unit False (actually 0 but OpenERP converted to False)
+
+        if 'stock_take_date' in src_values:
+            res['stock_take_date'] = src_values['stock_take_date']
+
+        #US-172: Added the cost_price to IR, for FO line it's not required.
+        if src_values.get('cost_price'):
+            res['cost_price'] = order_line.cost_price
+
+        if src_values.get('product_id'):
+            rec_id = self.get_product_id(cr, uid, order_line.product_id, context=context)
+            if rec_id:
+                res['product_id'] = rec_id
+                res['name'] = order_line.product_id.name
+
+                product_obj = self.pool.get('product.product')
+                product = product_obj.browse(cr, uid, [rec_id], context=context)[0]
+                procure_method = product.procure_method
+                res['type'] = procure_method
+            else:
+                res['name'] = order_line.comment
+        else:
+            res['name'] = order_line.comment
+
+        if src_values.get('nomen_manda_0'):
+            rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_0.id), context=context)
+            if rec_id:
+                res['nomen_manda_0'] = rec_id
+
+        if not res.get('nomen_manda_0') and not res.get('product_id'):
+            if not msg_err_not_found:
+                msg_err_not_found += "Order could not be created as product not recognised, not existing in current database?\n"
+            msg_err_not_found += "Product '%s' (line %s) with code %s not recognised.\n" % (order_line.name, order_line.line_number, order_line.default_code)
+
+        if src_values.get('nomen_manda_1'):
+            rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_1.id), context=context)
+            if rec_id:
+                res['nomen_manda_1'] = rec_id
+
+        if src_values.get('nomen_manda_2'):
+            rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_2.id), context=context)
+            if rec_id:
+                res['nomen_manda_2'] = rec_id
+
+        if src_values.get('nomen_manda_3'):
+            rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(order_line.nomen_manda_3.id), context=context)
+            if rec_id:
+                res['nomen_manda_3'] = rec_id
+
+        if src_values.get('sync_sourced_origin'):
+            res['origin'] = src_values.get('sync_sourced_origin')
+            so_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', res['origin']), ('state', 'in', ('sourced', 'progress', 'manual')), ('procurement_request', 'in', ('t', 'f'))], context=context)
+            if so_ids:
+                res['link_so_id'] = so_ids[0]
+
+        if src_values.get('cancel_split_ok'):
+            if src_values.get('line_number'):
+                split_cancel_line.setdefault(src_values.get('line_number'), [])
+                split_cancel_line[src_values.get('line_number')].append(src_values.get('cancel_split_ok'))
+
+        if src_values.get('id'): # Only used for Remote Warehouse when creating a new order line, this xmlid will be used and not the local one 
+            res['rw_xmlid'] = order_line.id.replace('sd.','')
+
+        # UTP-952: set empty AD for lines if the partner is intermission or section
+        partner_type = self.get_partner_type(cr, uid, source, context)
+        if partner_type not in ['section', 'intermission'] and src_values.get('analytic_distribution_id'):
+            res['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, src_values, context)
+
+        if src_values.get('source_sync_line_id'):
+            res['original_purchase_line_id'] = src_values['source_sync_line_id']
+
+        return res
+
+
+
     def get_lines(self, cr, uid, source, line_values, po_id, so_id, for_update, so_called, context):
         line_result = []
         update_lines = []
@@ -459,11 +585,6 @@ class so_po_common(osv.osv_memory):
                     values['name'] = line.comment
             else:
                 values['name'] = line.comment
-
-            if line_dict.get('procurement_id'): # replicating procurement for RW instance
-                rec_id = self.pool.get('procurement.order').find_sd_ref(cr, uid, xmlid_to_sdref(line.procurement_id.id), context=context)
-                if rec_id:
-                    values['procurement_id'] = rec_id
 
             if line_dict.get('nomen_manda_0'):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_0.id), context=context)
@@ -595,7 +716,7 @@ class so_po_common(osv.osv_memory):
                 for existing_line in existing_line_ids:
                     if existing_line not in update_lines:
                         if po_id:
-                            self.pool.get('purchase.order.line').fake_unlink(cr, uid, [existing_line], context=context)
+                            self.pool.get('purchase.order.line').unlink(cr, uid, [existing_line], context=context)
                             #UFTP-242: Log if there is lines deleted for this PO
                             context.update({'deleted_line_po_id': po_id})
                         elif so_id:

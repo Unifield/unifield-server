@@ -72,9 +72,6 @@ Thanks to the double entry management, the inventory controlling is powerful and
         "report/report_stock_view.xml",
         "board_warehouse_view.xml"
     ],
-    'test': ['test/stock_test.yml',
-             'test/stock_report.yml',
-             ],
     'installable': True,
     'active': False,
     'certificate': '0055421559965',

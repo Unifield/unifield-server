@@ -70,23 +70,6 @@ class message(osv.osv):
             if not destination:
                 sync_log(self, 'destination %s does not exist' % data['dest'])
                 continue
-
-            #SP-135/UF-1617: Message unique key is from identifier PLUS destination: sending the same batch number and asset to different destinations
-            ids = self.search(cr, uid, [('identifier', '=', data['id']),
-                ('destination', '=', data['dest'])], order='NO_ORDER', context=context)
-            if ids:
-                sync_log(self, 'Message %s already in the server database' % data['id'])
-                #SP-135/UF-1617: Overwrite the message and set the sent to False
-                self.write(cr, uid, ids, {
-                    'identifier': data['id'],
-                    'remote_call': data['call'],
-                    'arguments': data['args'],
-                    'destination': destination,
-                    'sent': False, # SP-135: Set the sent flag to become "not sent"
-                    'source': entity.id,
-                }, context=context)
-
-                continue
             self.create(cr, uid, {
                 'identifier': data['id'],
                 'remote_call': data['call'],
@@ -133,7 +116,7 @@ class message(osv.osv):
 
         # UTP-1179: Instead of recalculating the ids to send, retrieve it from the entity list
         # ORIGINAL STATEMENT: ids = self.search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], limit=size, context=context)
-        
+
         # The list of msg_ids_tmp needs to be calculated with the given size to make sure that it will retrieve the right number of ids
         # and remove what are retrieved at this around
         # Also the msg_ids_tmp is a text type --> need to convert to list
@@ -175,7 +158,7 @@ class message(osv.osv):
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm messages...'))
 
         ids = self.search(cr, uid, [('identifier', 'in', message_uuids),
-            ('destination', '=', entity.id)], order='NO_ORDER', context=context)
+                                    ('destination', '=', entity.id)], order='NO_ORDER', context=context)
         if ids:
             self.write(cr, uid, ids, {'sent' : True}, context=context)
         self._logger.info("::::::::[%s] %s messages confirmed" % (entity.name, len(ids)))
@@ -201,7 +184,7 @@ class message(osv.osv):
         if ids:
             self.write(cr, uid, ids, {'sent' : False}, context=context)
             self._logger.debug("These ids will be recovered: %s" %
-                    str(sorted(ids)))
+                               str(sorted(ids)))
         else:
             self._logger.debug("No ids to recover! domain=%s" % domain)
         return True

@@ -219,7 +219,6 @@ class account_invoice(osv.osv):
         return res
 
     _columns = {
-        'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
                                        help="This field contains the information related to the numbering of the lines of this order."),
         'date_invoice': fields.date('Posting Date', states={'paid':[('readonly',True)], 'open':[('readonly',True)],
@@ -256,7 +255,6 @@ class account_invoice(osv.osv):
 
     _defaults = {
         'journal_id': _get_journal,
-        'from_yml_test': lambda *a: False,
         'date_invoice': lambda *a: strftime('%Y-%m-%d'),
         'is_debit_note': lambda obj, cr, uid, c: c.get('is_debit_note', False),
         'is_inkind_donation': lambda obj, cr, uid, c: c.get('is_inkind_donation', False),
@@ -557,7 +555,6 @@ class account_invoice(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         """
-        Filled in 'from_yml_test' to True if we come from tests
         """
         if not context:
             context = {}
@@ -1377,7 +1374,6 @@ class account_invoice_line(osv.osv):
         return res
 
     _columns = {
-        'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'line_number': fields.integer(string='Line Number'),
         'price_unit': fields.float('Unit Price', required=True, digits_compute= dp.get_precision('Account Computation')),
         'import_invoice_id': fields.many2one('account.invoice', string="From an import invoice", readonly=True),
@@ -1392,7 +1388,6 @@ class account_invoice_line(osv.osv):
 
     _defaults = {
         'price_unit': lambda *a: 0.00,
-        'from_yml_test': lambda *a: False,
         'is_corrected': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
