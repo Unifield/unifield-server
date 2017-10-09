@@ -1523,11 +1523,12 @@ function validateForm(){
         // Ignore some items
         // (e.g. paging filters like the 'Show/hide cancel' selector for 
         // order lines)
-        if (e.currentTarget.classList.contains("ignore_changes_when_leaving_page"))
+        var eClassList = e.currentTarget.classList;
+        if (eClassList.contains("ignore_changes_when_leaving_page")
+        ||  eClassList.contains("readonlyfield"))
         {
             return;
         }
-
         if (!automatic) {
             jQuery('#view_form').data('is_form_changed', true);
         }
