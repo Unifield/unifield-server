@@ -124,7 +124,11 @@ class purchase_order_line_sync(osv.osv):
             pol_updated = pol_id[0]
             kind = 'update'
             pol_to_update = [pol_updated]
-            self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
+            confirmed_sequence = self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], 'confirmed', context=context)
+            po_line = self.browse(cr, uid, pol_updated, fields_to_fetch=['state'], context=context)
+            if self.pool.get('purchase.order.line.state').get_sequence(cr, uid, [], po_line.state, context=context) < confirmed_sequence:
+                # if the state is less than confirmed we update the PO line
+                self.pool.get('purchase.order.line').write(cr, uid, pol_to_update, pol_values, context=context)
 
         # update PO line state:
         if sol_dict['state'] in ('sourced', 'sourced_v'):

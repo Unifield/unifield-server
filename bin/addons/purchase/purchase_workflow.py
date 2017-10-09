@@ -245,6 +245,44 @@ class purchase_order_line(osv.osv):
         return pick_id
 
 
+    def button_confirmed(self, cr, uid, ids, context=None):
+        '''
+        Method called when trying to confirm a PO line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
+
+        open_wizard = False
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.order_id.partner_id.partner_type in ('internal', 'section', 'intermission'):
+                open_wizard = True
+                break
+
+        if open_wizard:
+            context.update({'pol_ids_to_confirm': ids})
+            wiz_id = self.pool.get('purchase.order.line.manually.confirmed.wizard').create(cr, uid, {'pol_to_confirm': ids[0]}, context=context)
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'purchase', 'purchase_line_manually_confirmed_form_view')[1]
+
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'purchase.order.line.manually.confirmed.wizard',
+                'res_id': wiz_id,
+                'view_type': 'form',
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'target': 'new',
+                'context': context
+            }
+
+        for pol_id in ids:
+            wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'confirmed', cr)
+
+        return True
+
+
     def action_validated_n(self, cr, uid, ids, context=None):
         '''
         wkf method to validate the PO line
@@ -302,7 +340,6 @@ class purchase_order_line(osv.osv):
                 line_update['original_uom'] = pol.product_uom.id
 
             self.write(cr, uid, pol.id, line_update, context=context)
-
 
         if po_to_check:
             self.pool.get('purchase.order').check_if_stock_take_date_with_esc_partner(cr, uid, po_to_check.keys(), context=context)
@@ -561,10 +598,8 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        wf_service = netsvc.LocalService("workflow")
         for po in self.browse(cr, uid, ids, context=context):
-            for pol_id in [pol.id for pol in po.order_line]:
-                wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'confirmed', cr)
+            return self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id for pol in po.order_line], context=context)
 
         return True
 

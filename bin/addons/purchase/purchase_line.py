@@ -505,6 +505,7 @@ class purchase_order_line(osv.osv):
 
         return True
 
+
     def _hook_product_id_change(self, cr, uid, *args, **kwargs):
         '''
         Override the computation of product qty to order
