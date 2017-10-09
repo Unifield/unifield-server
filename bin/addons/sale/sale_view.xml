@@ -408,15 +408,13 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Search Sales Order">
-                    <filter icon="terp-document-new" string="Draft" domain="[('state','=','draft')]" help="Field Order that haven't yet been confirmed" />
-                    <filter icon="terp-camera_test" string="Validated" domain="[('state','=','validated')]" help="Field Order validated"/>
-                    <filter icon="gtk-paste-v" name="sourced" string="Sourced" domain="[('state','=','sourced')]" separator="1" />
-                    <filter icon="terp-check" string="Confirmed" domain="[('state','in',('manual','progress'))]"/>
-                    <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state_hidden_sale_order','=','done')]"/>
+                    <filter icon="terp-document-new" string="Draft" domain="[('state','in',['draft','draft_p'])]" help="Field Order that haven't yet been confirmed" />
+                    <filter icon="terp-camera_test" string="Validated" domain="[('state','in',['validated','validated_p'])]" help="Field Order validated"/>
+                    <filter icon="gtk-paste-v" name="sourced" string="Sourced" domain="[('state','in',['sourced','sourced_p'])]" separator="1" />
+                    <filter icon="terp-check" string="Confirmed" domain="[('state','in',('confirmed','confirmed_p'))]"/>
+                    <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]"/>
                     <separator orientation="vertical"/>
                     <filter icon="terp-dolar_ok!" string="To Invoice" domain="[('state','=','manual')]" help="Sales Order ready to be invoiced"/>
-                    <separator orientation="vertical" />
-                    <filter icon="gtk-missing-image" name="inactive" string="Show Split" domain="[('state','=','done'), ('split_type_sale_order', '=', 'original_sale_order')]" context="{'active_test': False}" separator="1" />
 
                     <separator orientation="vertical"/>
                     <field name="name" select="1"/>
