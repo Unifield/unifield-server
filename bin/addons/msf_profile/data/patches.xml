@@ -205,5 +205,9 @@
         <record id="us_1562_rename_special_periods" model="patch.scripts">
             <field name="method">us_1562_rename_special_periods</field>
         </record>
+
+        <record id="us_3345_remove_space_in_employee_name" model="patch.scripts">
+            <field name="method">us_3345_remove_space_in_employee_name</field>
+        </record>
     </data>
 </openerp>
