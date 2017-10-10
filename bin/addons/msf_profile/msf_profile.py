@@ -49,6 +49,13 @@ class patch_scripts(osv.osv):
     }
 
     # UF7.0 patches
+    def post_sll(self, cr, uid, *a, **b):
+        cr.drop_index_if_exists('ir_ui_view', 'ir_ui_view_model_type_priority')
+        cr.drop_constraint_if_exists('ir_ui_view', 'ir_ui_view_unique_view')
+        cr.execute('CREATE UNIQUE INDEX ir_ui_view_model_type_priority ON ir_ui_view (priority, type, model) WHERE inherit_id IS NULL')
+        cr.execute("delete from ir_ui_view where name='aaa' and model='aaa' and priority=5")
+        return True
+
     def us_3306(self, cr, uid, *a, **b):
         '''setup currency rate constraint
         '''

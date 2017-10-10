@@ -2,6 +2,10 @@
 <openerp>
     <data>
         <!-- UF7.0 -->
+        <record id="post_sll" model="patch.scripts">
+            <field name="method">post_sll</field>
+        </record>
+
         <record id="us_3306" model="patch.scripts">
             <field name="method">us_3306</field>
         </record>

@@ -295,6 +295,18 @@ class Cursor(object):
         self.execute("SELECT relname FROM pg_class WHERE relkind in ('r', 'v') AND relname=%s", (table,))
         return self.rowcount
 
+    @check
+    def drop_constraint_if_exists(self, table, constraint):
+        self.execute("SELECT conname FROM pg_constraint WHERE conname = %s", (constraint, ))
+        if self.fetchone():
+            self.execute('ALTER table '+table+' DROP CONSTRAINT "%s"' % (constraint,))
+
+    @check
+    def drop_index_if_exists(self, table, indexname):
+        self.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, table))
+        if self.fetchone():
+            self.execute('DROP INDEX "%s"' % (indexname,))
+
 class PsycoConnection(psycopg2.extensions.connection):
     pass
 
