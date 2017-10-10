@@ -1,8 +1,7 @@
 from __future__ import with_statement
 import os
 import logging
-import urllib2
-import httplib
+import socket
 import threading
 from base64 import b64decode
 from StringIO import StringIO
@@ -26,18 +25,16 @@ class upgrade(osv.osv_memory):
         if context is None:
             context = {}
         res = True
-        con = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context)
-        address = os.environ.get('UF_TEST_URL', con.host)
-        # if nothing is defined on connection manager, fallback on google.com
-        address = address and address or 'http://www.google.com'
-        if not address.startswith('http'):  # urllib2 need the protocol in the url
-            address = 'http://%s' % address
-        self._logger.info("Pinging %s ..." % address)
         try:
-            urllib2.urlopen(address, timeout=2)
-        except (IOError, httplib.HTTPException):
+            con = self.pool.get("sync.client.sync_server_connection")._get_connection_manager(cr, uid, context=context)
+            address = os.environ.get('UF_TEST_URL', con.host)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._logger.info("Check the connection is open: %s port %s ..." % (address, con.port))
+            result = sock.connect_ex((address, con.port))
+            res = result == 0
+            self._logger.info("%s:%s %s reachable." % (address, con.port, res and 'is' or 'is not'))
+        except:
             res = False
-        self._logger.info("%s %s reachable." % (address, res and 'is' or 'is not'))
         return res
 
     def restart(self, cr, uid, ids, context=None):
