@@ -91,7 +91,8 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
             exit_status = self.terpprocess.wait()
             if exit_status == EXIT_UPDATE_REQUIRE_RESTART:
                 servicemanager.LogInfoMsg("OpenERP has been updated, restarting...")
-                sys.exit(-1)
+                win32serviceutil.RestartService('openerp-web-6.0')
+                break
             if exit_status == 0:
                 break  # normal exit
             sys.exit(exit_status)
