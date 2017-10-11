@@ -135,11 +135,11 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
                     # their abuse.
                     netsvc.Logger().notifyChannel("web-services", netsvc.LOG_DEBUG,
                                                   "Netrpc: %d threads" % len(self.threads))
-            self.socket.close()
         except Exception, e:
-            logging.getLogger('web-services').warning("Netrpc: closing because of exception %s" % str(e))
-            self.socket.close()
+            logging.getLogger('web-services').warning("Netrpc: closing because of exception %s" % str(e), exc_info=True)
             return False
+        finally:
+            self.socket.close()
 
     def stop(self):
         self.running = False
