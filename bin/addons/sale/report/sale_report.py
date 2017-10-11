@@ -40,7 +40,7 @@ class sale_report(osv.osv):
         for report in self.browse(cr, uid, ids):
             sale = report.order_id
             if sale.partner_id:
-               partner = partner_obj.browse(cr, uid, [sale.partner_id.id])[0]
+                partner = partner_obj.browse(cr, uid, [sale.partner_id.id])[0]
             if sale.state != 'draft' and (sale.order_type != 'regular' or (partner and partner.partner_type == 'internal')):
                 res[report.id] = True
             else:
@@ -60,8 +60,8 @@ class sale_report(osv.osv):
         'shipped_qty_1': fields.integer('Shipped Qty', readonly=True),
         'year': fields.char('Year', size=4, readonly=True),
         'month': fields.selection([('01', 'January'), ('02', 'February'), ('03', 'March'), ('04', 'April'),
-            ('05', 'May'), ('06', 'June'), ('07', 'July'), ('08', 'August'), ('09', 'September'),
-            ('10', 'October'), ('11', 'November'), ('12', 'December')], 'Month', readonly=True),
+                                   ('05', 'May'), ('06', 'June'), ('07', 'July'), ('08', 'August'), ('09', 'September'),
+                                   ('10', 'October'), ('11', 'November'), ('12', 'December')], 'Month', readonly=True),
         'day': fields.char('Day', size=128, readonly=True),
         'product_id': fields.many2one('product.product', 'Product', readonly=True),
         'product_code': fields.char(size=256, string='Product code', readonly=True),
@@ -77,16 +77,16 @@ class sale_report(osv.osv):
         'categ_id': fields.many2one('product.category','Category of Product', readonly=True),
         'nbr': fields.integer('# of Lines', readonly=True),
         'state': fields.selection(selection=SALE_ORDER_STATE_SELECTION,
-            string='Order State', readonly=True),
+                                  string='Order State', readonly=True),
         'pricelist_id': fields.many2one('product.pricelist', 'Currency', readonly=True),
         'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account', readonly=True),
         'name': fields.char('Order Reference', size=64, required=True,
-            readonly=True, states={'draft': [('readonly', False)]}, select=True),
+                            readonly=True, states={'draft': [('readonly', False)]}, select=True),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
-             type='boolean', help="It indicates that an invoice has been paid."),
+                                    type='boolean', help="It indicates that an invoice has been paid."),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),], 
-                                        string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+                                       string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'order_id': fields.many2one('sale.order', string='Order'),

@@ -2341,7 +2341,7 @@ class stock_move(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         picking_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
-        
+
         pickings = {}
         for move in self.browse(cr, uid, ids, context=context):
             if move.state in ('confirmed', 'waiting', 'assigned', 'draft'):
@@ -2359,7 +2359,7 @@ class stock_move(osv.osv):
                 self.action_cancel(cr, uid, internal_move, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel', 'move_dest_id': False})
-        
+
         if not context.get('call_unlink',False):
             picking_to_write = []
             for pick in picking_obj.read(cr, uid, pickings.keys(), ['move_lines']):

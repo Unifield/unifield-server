@@ -116,7 +116,7 @@ class message(osv.osv):
 
         # UTP-1179: Instead of recalculating the ids to send, retrieve it from the entity list
         # ORIGINAL STATEMENT: ids = self.search(cr, uid, [('destination', '=', entity.id), ('sent', '=', False)], limit=size, context=context)
-        
+
         # The list of msg_ids_tmp needs to be calculated with the given size to make sure that it will retrieve the right number of ids
         # and remove what are retrieved at this around
         # Also the msg_ids_tmp is a text type --> need to convert to list
@@ -158,7 +158,7 @@ class message(osv.osv):
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Confirm messages...'))
 
         ids = self.search(cr, uid, [('identifier', 'in', message_uuids),
-            ('destination', '=', entity.id)], order='NO_ORDER', context=context)
+                                    ('destination', '=', entity.id)], order='NO_ORDER', context=context)
         if ids:
             self.write(cr, uid, ids, {'sent' : True}, context=context)
         self._logger.info("::::::::[%s] %s messages confirmed" % (entity.name, len(ids)))
@@ -184,7 +184,7 @@ class message(osv.osv):
         if ids:
             self.write(cr, uid, ids, {'sent' : False}, context=context)
             self._logger.debug("These ids will be recovered: %s" %
-                    str(sorted(ids)))
+                               str(sorted(ids)))
         else:
             self._logger.debug("No ids to recover! domain=%s" % domain)
         return True

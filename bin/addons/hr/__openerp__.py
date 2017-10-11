@@ -45,11 +45,11 @@
         'hr_data.xml',
         'board_hr_view.xml',
         'board_hr_manager_view.xml',
-        ],
+    ],
     'demo_xml': [
         'hr_demo.xml',
         'hr_department_demo.xml',
-        ],
+    ],
     'test': [],
     'installable': True,
     'active': False,

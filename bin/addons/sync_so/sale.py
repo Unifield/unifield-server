@@ -127,14 +127,14 @@ class sale_order_sync(osv.osv):
 
     _columns = {
         'received': fields.boolean('Received by Client', readonly=True),
-                'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
-                'sync_date': fields.function(
-                    _get_sync_date,
-                    method=True,
-                    string='Sync Date',
-                    type='datetime',
-                    store=False,
-                    readonly=True,
+        'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
+        'sync_date': fields.function(
+            _get_sync_date,
+            method=True,
+            string='Sync Date',
+            type='datetime',
+            store=False,
+            readonly=True,
         ),
     }
 

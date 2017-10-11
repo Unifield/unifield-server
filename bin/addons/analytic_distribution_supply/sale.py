@@ -73,14 +73,14 @@ class sale_order(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Global analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Global analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def button_reset_distribution(self, cr, uid, ids, context=None):
@@ -300,10 +300,10 @@ class sale_order_line(osv.osv):
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
-            string='Header Distrib.?'),
+                                                                  string='Header Distrib.?'),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
-            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
         'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
     }
@@ -333,7 +333,7 @@ class sale_order_line(osv.osv):
         account_id = sol.account_4_distribution and sol.account_4_distribution.id or False
         if not account_id:
             raise osv.except_osv(_('Error !'), _('There is no income account defined for this product: "%s" (id:%d)') % \
-                (sol.product_id.name, sol.product_id.id,))
+                                 (sol.product_id.name, sol.product_id.id,))
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
@@ -357,14 +357,14 @@ class sale_order_line(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def copy_data(self, cr, uid, l_id, default=None, context=None):

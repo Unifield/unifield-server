@@ -46,14 +46,12 @@ class res_partner(osv.osv):
         if not args:
             return []
         newargs = []
-        partner_obj = self.pool.get('res.partner')
         for arg in args:
             if arg[0] == 'check_partner_so':
                 if arg[1] != '=' \
-                or arg[2]['order_type'] not in ['regular', 'donation_exp', 'donation_st', 'loan', 'in_kind', 'purchase_list', 'direct']\
-                or not isinstance(arg[2]['partner_id'], (int, long)):
+                        or arg[2]['order_type'] not in ['regular', 'donation_exp', 'donation_st', 'loan', 'in_kind', 'purchase_list', 'direct']\
+                        or not isinstance(arg[2]['partner_id'], (int, long)):
                     raise osv.except_osv(_('Error'), _('Filter check_partner_so different than (arg[0], =, %s) not implemented.') % arg[2])
-                partner_id = arg[2]['partner_id']
                 order_type = arg[2]['order_type']
                 p_list = []
                 if order_type in ['regular']:

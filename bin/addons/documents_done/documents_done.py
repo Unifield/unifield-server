@@ -91,7 +91,7 @@ class documents_done_wizard(osv.osv):
                     res[doc.id] = state[1]
 
         return res
-    
+
     def _search_state(self, cr, uid, obj, name, args, context=None):
         '''
         Returns all documents according to state
@@ -112,7 +112,7 @@ class documents_done_wizard(osv.osv):
         line_ids = []
         for line in order.order_line:
             line_ids.append(line.id)
-        
+
         if order._name == 'sale.order' and order.procurement_request:
             return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']), (field, 'in', line_ids)], context=context)
         return self.pool.get('stock.move').search(cr, uid, [('state', 'not in', ['cancel', 'done']), (field, 'in', line_ids), ('type', '!=', 'internal')], context=context)
@@ -197,7 +197,7 @@ class documents_done_wizard(osv.osv):
                 res[doc.id] = False
 
         return res
-    
+
     _columns = {
         'name': fields.char(size=256, string='Name', readonly=True),
         'res_id': fields.integer(string='Res. Id'),
@@ -213,7 +213,7 @@ class documents_done_wizard(osv.osv):
                                          method=True, store=False, readonly=True, string='State'),
         'requestor': fields.many2one('res.users', string='Creator', readonly=True),
     }
-    
+
     def _get_model_name(self, model):
         '''
         Returns the readable model name
@@ -221,7 +221,7 @@ class documents_done_wizard(osv.osv):
         for model_name in REAL_MODEL_LIST:
             if model_name[0] == model:
                 return model_name[1]
-            
+
         return 'Undefined'
 
     def _add_stock_move_pb(self, cr, uid, problem_id, moves, context=None):
@@ -355,7 +355,7 @@ class documents_done_wizard(osv.osv):
                 'context': context,
                 'res_id': pb_id,
                 'target': 'popup'}
-                        
+
 
     def cancel_line(self, cr, uid, ids, all_doc=True, context=None):
         '''
@@ -364,7 +364,7 @@ class documents_done_wizard(osv.osv):
         pb_obj = self.pool.get('documents.done.problem')
         if not context:
             context = {}
-        
+
         for doc in self.browse(cr, uid, ids, context=context):
             if self.pool.get(doc.real_model).browse(cr, uid, doc.res_id, context=context).state not in ('cancel', 'done'):
                 self.pool.get(doc.real_model).set_manually_done(cr, uid, doc.res_id, all_doc=all_doc, context=context)
@@ -377,12 +377,12 @@ class documents_done_wizard(osv.osv):
                         self.pool.get(doc.real_model).log(cr, uid, doc.res_id, _('The %s \'%s\' has been closed.')%(self._get_model_name(doc.real_model), doc.name), context=context)
                     pb_ids = pb_obj.search(cr, uid, [('wizard_id', '=', doc.id)], context=context)
                     pb_obj.done_all_documents(cr, uid, pb_ids, all_doc=all_doc, context=context)
-                
+
         if not context.get('direct_cancel', False):
             return {'type': 'ir.actions.act_window_close'}
         else:
             return True
-    
+
     def init(self, cr):
         '''
         Create the view
@@ -484,7 +484,7 @@ class documents_done_wizard(osv.osv):
                     WHERE
                         state NOT IN ('draft', 'done', 'cancel'))) AS dnd
         );""")
-    
+
 documents_done_wizard()
 
 class documents_done_problem(osv.osv_memory):

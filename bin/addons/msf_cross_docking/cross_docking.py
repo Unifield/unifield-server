@@ -174,7 +174,7 @@ class purchase_order(osv.osv):
                           WHERE (t.nomen_manda_0 != %s) AND po.id in %s LIMIT 1''',
                        (nomen_id, tuple(ids)))
             res = cr.fetchall()
-        
+
         if ids and category in ['service', 'transport']:
             # Avoid selection of non-service producs on Service PO
             category = category == 'service' and 'service_recep' or 'transport'
@@ -195,7 +195,7 @@ class purchase_order(osv.osv):
                 'title': _('Warning'),
                 'message': _('This order category is not consistent with product(s) on this PO'),
             })
-                
+
         return {'value': value, 'warning': message}
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -447,11 +447,11 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
         assert values is not None, 'missing values'
         if context is None:
             context = {}
-        
+
         # UF-1617: If the case comes from the sync_message, then just return the values, not the wizard stuff
         if context.get('sync_message_execution', False):
             return values
-        
+
         if isinstance(ids, (int, long)):
             ids = [ids]
         # take ids of the wizard from the context.
@@ -631,7 +631,7 @@ class stock_move(osv.osv):
         ret = True
         if todo:
             ret = self.write(cr, uid, todo, {'location_id': cross_docking_location, 'move_cross_docking_ok': True}, context=context)
-            
+
             # we cancel availability
             new_todo = self.cancel_assign(cr, uid, todo, context=context)
             if new_todo:
@@ -691,7 +691,7 @@ class stock_move(osv.osv):
                 todo = new_todo
             # we rechech availability
             self.action_assign(cr, uid, todo)
-            
+
             #FEFO
             self.fefo_update(cr, uid, todo, context)
 #            stock_picking_id = self.read(cr, uid, todo, ['picking_id'], context=context)[0]['picking_id'][0]

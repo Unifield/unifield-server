@@ -598,7 +598,6 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        wf_service = netsvc.LocalService("workflow")
         for po in self.browse(cr, uid, ids, context=context):
             return self.pool.get('purchase.order.line').button_confirmed(cr, uid, [pol.id for pol in po.order_line], context=context)
 

@@ -33,13 +33,13 @@
     'website': 'unifield.org',
     'depends': ['purchase'],
     'init_xml' : [ ],
-     "update_xml": [
+    "update_xml": [
         "purchase_followup_view.xml",
         "report/purchase_follow_up_report.xml"
     ],
     'demo_xml' : [ ],
     'test': [
-             ],
+    ],
     'installable': True,
 }
 

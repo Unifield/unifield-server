@@ -42,7 +42,7 @@
     Add sourcing specification
     """,
     'test': [
-        ],
+    ],
     'update_xml': [
         'sourcing_view.xml',
         'related_sourcing_view.xml',

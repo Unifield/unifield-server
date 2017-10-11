@@ -20,7 +20,7 @@
 #
 ##############################################################################
 
-import os, sys, imp, getpass
+import os, sys, imp
 from os.path import join as opj
 import itertools
 import zipimport
@@ -333,7 +333,7 @@ def get_modules_with_version():
         try:
             info = load_information_from_description_file(module)
             res[module] = "%s.%s" % (release.major_version, info['version'])
-        except Exception, e:
+        except Exception:
             continue
     return res
 
@@ -419,7 +419,7 @@ def init_module_objects(cr, module_name, obj_list):
                 for obj, missing in fk.iteritems():
                     missing_fk.setdefault(obj, [])
                     missing_fk[obj] += missing
-        except Exception, e:
+        except Exception:
             raise
         if result:
             todo += result
@@ -689,7 +689,7 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
         if not tools.config.options['test_disable']:
             try:
                 _load_data(cr, module_name, id_map, mode, 'test')
-            except Exception, e:
+            except Exception:
                 logging.getLogger('test').exception('Tests failed to execute in module %s', module_name)
             finally:
                 if tools.config.options['test_commit']:

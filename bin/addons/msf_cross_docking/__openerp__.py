@@ -43,5 +43,5 @@ you run the scheduler will have the option cross docking pre selected.
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }

@@ -45,7 +45,7 @@ class purchase_order_line_manually_confirmed_wizard(osv.osv_memory):
         if pol_ids_to_confirm:
             for pol_id in pol_ids_to_confirm:
                 wf_service.trg_validate(uid, 'purchase.order.line', pol_id, 'confirmed', cr)
-            
+
         # confirm line:
         for wiz in self.browse(cr, uid, ids, context=context):
             wf_service.trg_validate(uid, 'purchase.order.line', wiz.pol_to_confirm.id, 'confirmed', cr)

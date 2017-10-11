@@ -267,7 +267,6 @@ class multiple_sourcing_wizard(osv.osv_memory):
         """
         # Objects
         line_obj = self.pool.get('sale.order.line')
-        po_auto_cfg_obj = self.pool.get('po.automation.config')
 
         if context is None:
             context = {}

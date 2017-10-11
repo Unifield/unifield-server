@@ -2047,6 +2047,10 @@ class sale_order_line(osv.osv):
         '''
         if not default:
             default = {}
+
+        if context is None:
+            context = {}
+
         # if the po link is not in default, we set both to False (both values are closely related)
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
             default.update({
@@ -2067,6 +2071,9 @@ class sale_order_line(osv.osv):
             'invoice_lines': [],
             'set_as_sourced_n': False,
         })
+
+        #if not context.get('keepDateAndDistrib') and 'source_sync_line_id' not in default:
+        #    default['source_sync_line_id'] = False
 
         for x in ['modification_comment', 'original_qty', 'original_price', 'original_uom']:
             if x not in default:

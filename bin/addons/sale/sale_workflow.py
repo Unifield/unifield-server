@@ -352,7 +352,7 @@ class sale_order_line(osv.osv):
                 to_write['original_qty'] = sol.product_uom_qty
                 to_write['original_price'] = sol.price_unit
                 to_write['original_uom'] = sol.product_uom.id
-                
+
                 self.check_product_or_nomenclature(cr, uid, ids, context=context)                    
 
             if to_write:

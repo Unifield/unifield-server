@@ -230,15 +230,15 @@ class ir_translation(osv.osv):
         # truncate value if required
         if ',' in other_vals['name'] and other_vals.get('type') == 'model' \
                 and vals.get('value'):
-                model_name = other_vals['name'].split(",")[0]
-                field = other_vals['name'].split(",")[1]
-                if field:
-                    model_obj = self.pool.get(model_name)
-                    if hasattr(model_obj, 'fields_get'):
-                        field_obj = model_obj.fields_get(cursor, user, context=context)
-                        if 'size' in field_obj.get(field, {}):
-                            size = field_obj[field]['size']
-                            vals['value'] = tools.ustr(vals['value'])[:size]
+            model_name = other_vals['name'].split(",")[0]
+            field = other_vals['name'].split(",")[1]
+            if field:
+                model_obj = self.pool.get(model_name)
+                if hasattr(model_obj, 'fields_get'):
+                    field_obj = model_obj.fields_get(cursor, user, context=context)
+                    if 'size' in field_obj.get(field, {}):
+                        size = field_obj[field]['size']
+                        vals['value'] = tools.ustr(vals['value'])[:size]
 
     def create(self, cursor, user, vals, clear=True, context=None):
         if context is None:

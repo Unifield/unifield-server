@@ -29,7 +29,7 @@ xml_escapes = {
     "\n": '&#10;'
 }
 def xml_escape_br(string):
-        return re.sub(r"([&<\"'>\n])", lambda m: xml_escapes[m.group()], string)
+    return re.sub(r"([&<\"'>\n])", lambda m: xml_escapes[m.group()], string)
 filters.xml_escape_br = xml_escape_br
 filters.DEFAULT_ESCAPES['xn'] = 'filters.xml_escape_br'
 

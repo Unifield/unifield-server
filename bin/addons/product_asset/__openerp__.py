@@ -48,7 +48,7 @@
         "asset_type_data.xml",
     ],
     'test': [
-             ],
+    ],
     'update_xml': [
         'product_asset_view.xml',
         'security/ir.model.access.csv',

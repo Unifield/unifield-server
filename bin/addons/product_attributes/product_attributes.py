@@ -1285,7 +1285,7 @@ class product_attributes(osv.osv):
         smrl_obj = self.pool.get('stock.mission.report.line')
         prod_status_obj = self.pool.get('product.status')
         int_stat_obj = self.pool.get('product.international.status')
-        
+
         if context is None:
             context = {}
 
