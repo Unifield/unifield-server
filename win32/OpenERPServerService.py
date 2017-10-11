@@ -91,7 +91,9 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
             exit_status = self.terpprocess.wait()
             if exit_status == EXIT_UPDATE_REQUIRE_RESTART:
                 servicemanager.LogInfoMsg("OpenERP has been updated, restarting...")
-                sys.exit(0)  # after that, the Windows Service Manager would execute the Recovery operation for the process, which is to restart it
+                self.SvcStop()
+                self.StartTERP()
+                continue
             if exit_status == 0:
                 break  # normal exit
             sys.exit(exit_status)
