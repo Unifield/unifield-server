@@ -1636,6 +1636,8 @@ class res_partner(osv.osv):
         # regarding supplier/customer
         if context is None:
             context = {}
+        if args is None:
+            args = []
 
         alternate_domain = False
         invoice_type = context.get('type', False)
