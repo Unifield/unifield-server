@@ -318,7 +318,11 @@ class message_to_send(osv.osv):
             if message.res_object:
                 res_model, res_id = message.res_object.split(',')
                 res_id = int(res_id)
-                domain = [('order_id.state', 'in', ['draft', 'draft_p']), ('order_id.partner_type', 'not in', ['external', 'esc'])]
+                domain = [
+                    ('order_id.state', 'in', ['draft', 'draft_p']),
+                    ('order_id.partner_type', 'not in', ['external', 'esc']),
+                    ('order_id.client_order_ref', '=', False),
+                ]
                 if res_id in self.pool.get(res_model).search(cr, uid, domain, context=context):
                     self.write(cr, uid, [message.id], {'waiting': True}, context=context)
                     continue
