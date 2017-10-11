@@ -591,6 +591,7 @@ class message_rule(osv.osv):
         'destination_name': fields.char('Field to extract destination', size=256, required = True),
         'status': fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True ),
         'active': fields.boolean('Active'),
+        'wait_until': fields.text('Wait until', required=False, help='Wait for a specified domain to send the message'),
     }
 
     _defaults = {
@@ -631,6 +632,7 @@ class message_rule(osv.osv):
         'destination_name': 'destination_name',
         'active': 'active',
         'type_name' : 'type',
+        'wait_until': 'wait_until',
     }
 
     def _serialize_rule(self, cr, uid, ids, context=None):

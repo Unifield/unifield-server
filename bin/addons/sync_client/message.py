@@ -63,6 +63,7 @@ class local_message_rule(osv.osv):
         'destination_name': fields.char('Fields to extract destination', size=256, required=True),
         'active' : fields.boolean('Active', select=True),
         'type' : fields.char('Group Type', size=256),
+        'wait_until': fields.text('Wait until', required=False, help='Wait for a specified domain to send the message'),
     }
 
     _logger = logging.getLogger('sync.client')
@@ -318,14 +319,12 @@ class message_to_send(osv.osv):
             if message.res_object:
                 res_model, res_id = message.res_object.split(',')
                 res_id = int(res_id)
-                domain = [
-                    ('order_id.state', 'in', ['draft', 'draft_p']),
-                    ('order_id.partner_type', 'not in', ['external', 'esc']),
-                    ('order_id.client_order_ref', '=', False),
-                ]
-                if res_id in self.pool.get(res_model).search(cr, uid, domain, context=context):
-                    self.write(cr, uid, [message.id], {'waiting': True}, context=context)
-                    continue
+                rule = self.pool.get('sync.client.message_rule').get_rule_by_remote_call(cr, uid, 'purchase.order.line.sol_update_original_pol', context=context)
+                if rule: 
+                    domain = eval(rule.wait_until)
+                    if res_id not in self.pool.get(res_model).search(cr, uid, domain, context=context):
+                        self.write(cr, uid, [message.id], {'waiting': True}, context=context)
+                        continue
 
             if message.waiting:
                 self.write(cr, uid, [message.id], {'waiting': False}, context=context)
