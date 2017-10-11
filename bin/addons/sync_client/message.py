@@ -143,11 +143,11 @@ class local_message_rule(osv.osv):
                 return
             data = {
                 'identifier' : xml_id,
-                    'remote_call': rule.remote_call,
-                    'arguments': arguments,
-                    'destination_name': partner_name,
-                    'sent' : False,
-                    'generate_message' : True,
+                'remote_call': rule.remote_call,
+                'arguments': arguments,
+                'destination_name': partner_name,
+                'sent' : False,
+                'res_object': '%s,%s' % (model_name, res_id),
             }
             msg_to_send_obj.create(cr, uid, data, context=context)
             logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name)) 
@@ -214,6 +214,7 @@ class message_to_send(osv.osv):
         'arguments':fields.text('Arguments of the method', required = True, readonly=True),
         'destination_name':fields.char('Destination Name', size=256, required = True, readonly=True),
         'sent_date' : fields.datetime('Sent Date', readonly=True),
+        'res_object': fields.char('Res object', size=256, readonly=True),
     }
     
     _defaults = {
@@ -314,6 +315,13 @@ class message_to_send(osv.osv):
                                    self.search(cr, uid, [('sent', '=', False)],
                                                limit=max_size, order='id asc', context=context),
                                    context=context):
+            if message.res_object:
+                res_model, res_id = message.res_object.split(',')
+                res_id = int(res_id)
+                domain = [('order_id.state', 'in', ['draft', 'draft_p']), ('order_id.partner_type', 'not in', ['external', 'esc'])]
+                if res_id in self.pool.get(res_model).search(cr, uid, domain, context=context):
+                    continue
+
             packet.append({
                 'id' : message.identifier,
                 'call' : message.remote_call,
