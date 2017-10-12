@@ -102,11 +102,12 @@
       <field name="model">sync.client.message_to_send</field>
       <field name="type">tree</field>
       <field name="arch" type="xml">
-        <tree colors="red:sent == False" hide_new_button="1" >
+        <tree colors="red:sent==False; blue:waiting==True" hide_new_button="1" >
           <field name="identifier"/>
           <field name="destination_name"/>
           <field name="remote_call"/>
           <field name="sent"/>
+          <field name="waiting"/>
           <field name="sent_date"/>
         </tree>
       </field>

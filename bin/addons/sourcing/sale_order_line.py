@@ -1657,6 +1657,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 if sourcing_line.procurement_request and sourcing_line.order_id.location_requestor_id.usage == 'internal':
                     wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'done', cr)
 
+                # sourcing line: set delivery confirmed date to today:
+                self.write(cr, uid, [sourcing_line.id], {'confirmed_delivery_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)               
+
             elif sourcing_line.type == 'make_to_order':
                 if sourcing_line.po_cft in ('po', 'dpo'):
                     po_to_use = self.get_existing_po(cr, uid, sourcing_line.id, context=context)
