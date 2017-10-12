@@ -1,8 +1,4 @@
 
-import copy
-import datetime
-import re
-
 from openobject import pooler
 
 from openerp.utils import rpc
@@ -122,7 +118,8 @@ class ListView(TinyView):
                                     m2m=screen.m2m, o2m=screen.o2m,
                                     default_data=screen.default_value,
                                     force_readonly=screen.force_readonly,
-                                    approximation=screen.approximation)
+                                    approximation=screen.approximation,
+                                    filter_selector=screen.filter_selector)
 
         screen.ids = widget.ids
         screen.limit = widget.limit
@@ -138,7 +135,7 @@ def get_view_widget(kind, screen):
 
     try:
         view = Views[kind]()
-    except KeyError, e:
+    except KeyError:
         raise Exception("view '%s' not supported." % kind)
 
     return view(screen)
