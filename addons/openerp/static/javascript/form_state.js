@@ -444,7 +444,6 @@ function eval_stackNew(stack, i, fuzzy) {
 }
 
 function form_setReadonly(container, fieldName, readonly) {
-
     var $field = typeof(fieldName) == "string" ? jQuery(idSelector(fieldName)) : jQuery(fieldName);
 
     if (!$field.length) {
@@ -501,7 +500,7 @@ function form_setReadonly(container, fieldName, readonly) {
     }
 
     if (!kind && (jQuery(idSelector(field_id+'_btn_')).length || jQuery(idSelector('_o2m_'+field_id)).length)) { // one2many
-        new One2Many(field_id).setReadonly(readonly);
+        //new One2Many(field_id).setReadonly(readonly);
         return;
     }
 

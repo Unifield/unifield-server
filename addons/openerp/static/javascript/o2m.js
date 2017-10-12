@@ -184,8 +184,6 @@ One2Many.prototype = {
     },
 
     setReadonly: function(readonly) {
-        // Set onchange lock to avoid some infinite onchange loop... 
-        $(MochiKit.DOM.getElement(this.name)).attr('__lock_onchange', true);
 
         var btn=MochiKit.DOM.getElement(this.name+'_btn_');
         var grid=MochiKit.DOM.getElement(this.name+'_grid');
@@ -207,8 +205,6 @@ One2Many.prototype = {
             edit.value = 1;
         }
 
-        // Disable onchange lock
-        $(MochiKit.DOM.getElement(this.name)).attr('__lock_onchange', false);
     },
 
     save: function (id) {
