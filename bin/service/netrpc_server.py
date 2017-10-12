@@ -126,7 +126,7 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
                 if not fd_sets[0]:
                     continue
                 try:
-                    client_socket, address = self.socket.accept()
+                    clientsocket, address = self.socket.accept()
                 except socket.error:
                     close_socket = False
                     break
