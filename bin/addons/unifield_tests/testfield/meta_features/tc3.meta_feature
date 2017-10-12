@@ -341,10 +341,11 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
       | ADAPCOLALOK  |	
 	I click on "Cancel & Resource" and close the window
 
-	
+	I set "Show all" on lines filter	
 	I should see in the main table the following data:
 	   | LINE  |  PRODUCT CODE | PRODUCT DESCRIPTION                              | STATE       |                       
        |   1   | ADAPCOLABAG   | (laptop computer) CARRYING BAG                   | Validated   |
+	   |   2   | ADAPCOLALOK   |(laptop computer) LOCK, with key, Kensington slot | Cancelled-r |
 	   
 	   
  	I open tab menu "ORDERS"   
@@ -352,10 +353,12 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
 	I click "Edit" on line:
         | ORDER REFERENCE  |
         | {{FO_REFERENCE}} |	
-	   
+
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE        | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Sourced-v   |
+        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Cancelled-r |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Draft       |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Draft       |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-v |	
@@ -388,10 +391,12 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
 	I click on "Confirm lines"
 
     I open tab "Purchase Order"
-	
+
+	I set "Show all" on lines filter	
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE        | 
         | ADAPCOLABAG  | (laptop computer) CARRYING BAG                   | Confirmed   |
+	    | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Cancelled-r | 
 	
 	
 	I open tab menu "WAREHOUSE"
@@ -492,9 +497,11 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
 		
     I click on "Validate Lines"
 
+	I set "Show all" on lines filter	
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE        | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Closed      |	
+        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Cancelled-r |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Validated   |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Validated   |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-v |	
@@ -613,10 +620,12 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
 	I click "Edit" on line:
         | ORDER REFERENCE    |
         | *{{IR_REFERENCE}}* |
-		
- 		I should see in the main table the following data:
+
+	I set "Show all" on lines filter		
+ 	I should see in the main table the following data:
         | PRODUCT                                                         | STATE        | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Confirmed    |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Cancelled-r  |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Confirmed    |
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Confirmed    |		
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Resourced-pv |
@@ -632,14 +641,15 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
         | REFERENCE          |
         | {{PO_REFERENCE_1}} |	    		
 
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:	
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE        | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Confirmed   |
+        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Cancelled-r |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Confirmed   |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Confirmed   |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-v |	
 
- 	
     I should see "Validated-p" in "Order State"	
 
 
@@ -697,10 +707,12 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
 	I click "Edit" on line:
         | ORDER REFERENCE    |
         | *{{IR_REFERENCE}}* |
-		
+
+	I set "Show all" on lines filter		
  		I should see in the main table the following data:
         | PRODUCT                                                         | STATE        | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Confirmed    |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Cancelled-r  |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Confirmed    |
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Confirmed    |		
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Resourced-pv |
@@ -738,9 +750,11 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
         | REFERENCE          |
         | {{PO_REFERENCE_1}} |	    		
 
+	I set "Show all" on lines filter
 	I should see in the main table the following data:	
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE        | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Closed      |
+        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Cancelled-r |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Closed      |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Closed      |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-v |	
@@ -824,6 +838,7 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
 	I should see in the main table the following data:	
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE         | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Closed       |
+#        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Cancelled-r  |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Closed       |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Closed       |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Resourced-sy |	
@@ -839,6 +854,7 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
  		I should see in the main table the following data:
         | PRODUCT                                                         | STATE        | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Closed       |
+#        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Cancelled-r  |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Closed       |
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Closed       |		
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Resourced-sy |
@@ -1092,10 +1108,12 @@ Scenario: SSL Mission flow Cancel and  Resource PO line
 	I click "Edit" on line:
         | ORDER REFERENCE    |
         | *{{IR_REFERENCE}}* |
-		
+
+	I set "Show all" on lines filter		
     I should see in the main table the following data:
         | PRODUCT                                                         | STATE       | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Closed      |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Cancelled-r |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Closed      |
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Closed      |		
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Closed      |

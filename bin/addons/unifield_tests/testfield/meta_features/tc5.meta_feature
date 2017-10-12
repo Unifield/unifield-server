@@ -197,8 +197,10 @@ Scenario: SSL Instance flow udpates on PO
 
 	I open tab "Delivery"
 	I fill "Delivery Confirmed Date" with "28/May/2017"
-        I click on "Apply to all lines" and open the window
-        I click on "Yes" and close the window
+
+    I click on "Apply to all lines" and open the window
+	I click on "Yes" and close the window	
+	
 	
 	I click on "Confirm lines"
 
@@ -272,6 +274,7 @@ Scenario: SSL Instance flow udpates on PO
     I should see in the main table the following data:
         | PRODUCT                                                    | STATE       | QUANTITY  |
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Available   |   10.000  |
+        | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Cancelled-r |   50.000  |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25 | Available   |   30.000  |
         | [ADAPMEMK1--] MEMORY KEY, USB                              | Available   |   40.000  |
 
@@ -284,6 +287,7 @@ Scenario: SSL Instance flow udpates on PO
 	I should see in the main table the following data:
         | PRODUCT                                                    | STATE         | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Not Available |
+        | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Cancelled     |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25 | Not Available |
         | [ADAPMEMK1--] MEMORY KEY, USB                              | Not Available |
 
@@ -298,10 +302,11 @@ Scenario: SSL Instance flow udpates on PO
         | REFERENCE          |
         | {{PO_REFERENCE_1}} |	
 
-	
+	I set "Show all" on lines filter	
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE        | QUANTITY | SUBTOTAL |
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Confirmed   |   10.00  |   10.00  |
+        | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Cancelled-r |   50.00  |  250.00  |
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Confirmed   |   30.00  |   90.00  |
         | ADAPMEMK1--  | MEMORY KEY, USB                              | Confirmed   |   40.00  |  160.00  |
 
@@ -312,9 +317,11 @@ Scenario: SSL Instance flow udpates on PO
         | ORDER REFERENCE    |
         | *{{IR_REFERENCE}}* |
 
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:
         | PRODUCT                                                    | STATE       | ORIGINAL FO/IR LINE | QUANTITY (UOM) | UNIT PRICE |
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Confirmed   |                     |     10.00      |    1.00    |
+        | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Cancelled-r |                     |     50.00      |    5.00    |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25 | Confirmed   |                     |     30.00      |    3.00    |
         | [ADAPMEMK1--] MEMORY KEY, USB                              | Confirmed   |                     |     40.00      |    4.00    |
         | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Resourced-v |          2          |     50.00      |    5.00    |
@@ -339,6 +346,7 @@ Scenario: SSL Instance flow udpates on PO
     I should see in the main table the following data:
         | PRODUCT                                                    | STATE       | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Closed      |
+        | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Cancelled-r |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25 | Closed      |
         | [ADAPMEMK1--] MEMORY KEY, USB                              | Closed      |
 
@@ -351,10 +359,12 @@ Scenario: SSL Instance flow udpates on PO
     I click "Edit" on line:
         | REFERENCE          |
         | {{PO_REFERENCE_1}} |	
-	
+
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE        | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Closed      |
+        | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Cancelled-r |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Closed      |
         | ADAPMEMK1--  | MEMORY KEY, USB                              | Closed      |
 
@@ -387,6 +397,7 @@ Scenario: SSL Instance flow udpates on PO
 	I should see in the main table the following data:
         | PRODUCT                                                    | STATE     | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Available |
+        | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Cancelled |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25 | Available |
         | [ADAPMEMK1--] MEMORY KEY, USB                              | Available |
 		
@@ -401,6 +412,7 @@ Scenario: SSL Instance flow udpates on PO
 	I should see in the main table the following data:
         | PRODUCT                                                    | STATE     | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Closed    |
+        | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Cancelled |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25 | Closed    |
         | [ADAPMEMK1--] MEMORY KEY, USB                              | Closed    |
 		
@@ -654,9 +666,11 @@ Scenario: SSL Instance flow udpates on PO
         | ORDER REFERENCE    |
         | *{{IR_REFERENCE}}* |
 
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:
         | PRODUCT                                                    | STATE       | QUANTITY (UOM) | UNIT PRICE |
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Closed      |      10.00     |    1.00    |
+        | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Cancelled-r |      50.00     |    5.00    |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25 | Closed      |      30.00     |    3.00    |
         | [ADAPMEMK1--] MEMORY KEY, USB                              | Closed      |      40.00     |    4.00    |
         | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Closed      |      20.00     |   10.00    |	
