@@ -1554,15 +1554,15 @@ class purchase_order(osv.osv):
                 return False
         return True
 
-    _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
-                'rfq_delivery_address': fields.many2one('res.partner.address', string='Delivery address'),
-                'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True),
-                'from_procurement': fields.boolean(string='RfQ created by a procurement order'),
-                'rfq_ok': fields.boolean(string='Is RfQ ?'),
-                'valid_till': fields.date(string='Valid Till'),
+    _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True, internal="purchase_order"),
+                'rfq_delivery_address': fields.many2one('res.partner.address', string='Delivery address', internal="purchase_order"),
+                'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True, internal=True),
+                'from_procurement': fields.boolean(string='RfQ created by a procurement order', internal=True),
+                'rfq_ok': fields.boolean(string='Is RfQ ?', internal=True),
+                'valid_till': fields.date(string='Valid Till', internal="purchase_order"),
                 # add readonly when state is Done
-                'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True),
-                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated'), ('done', 'Closed'), ('cancel', 'Cancel')], 'Order state', required=True, readonly=True),
+                'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True, internal="purchase_order"),
+                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated'), ('done', 'Closed'), ('cancel', 'Cancel')], 'Order state', required=True, readonly=True, internal="purchase_order"),
                 }
 
     _defaults = {
