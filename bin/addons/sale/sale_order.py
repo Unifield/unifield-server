@@ -1280,14 +1280,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
     def order_line_change(self, cr, uid, ids, order_line):
 
-        assert (len(ids) == 1)
-
         values = {'no_line': True}
 
         if order_line:
             values = {'no_line': False}
 
-        # Also update the 'state' of the purchase order
+        # If no ids given (probably imply order_line is [] ?), return immediately
+        if not ids:
+            return {'value': values }
+
+        # If we have ids, also update the 'state' of the purchase order
+        assert (len(ids) == 1)
         states = self.read(cr, uid, ids, ['state', 'state_hidden_sale_order'])
         values["state"] = states[0]["state"]
         values["state_hidden_sale_order"] = states[0]["state_hidden_sale_order"]
