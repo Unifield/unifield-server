@@ -118,13 +118,18 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
         self.is_gzip = is_gzip
 
     def run(self):
+        close_socket = True
         try:
             self.running = True
             while self.running:
                 fd_sets = select.select([self.socket], [], [], self._busywait_timeout)
                 if not fd_sets[0]:
                     continue
-                (clientsocket, address) = self.socket.accept()
+                try:
+                    client_socket, address = self.socket.accept()
+                except socket.error:
+                    close_socket = False
+                    break
                 ct = TinySocketClientThread(clientsocket, self.threads, self.is_gzip)
                 clientsocket = None
                 self.threads.append(ct)
@@ -139,7 +144,8 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
             logging.getLogger('web-services').warning("Netrpc: closing because of exception %s" % str(e), exc_info=True)
             return False
         finally:
-            self.socket.close()
+            if close_socket:
+                self.socket.close()
 
     def stop(self):
         self.running = False
