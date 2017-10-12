@@ -320,7 +320,7 @@ class message_to_send(osv.osv):
             if message.res_object:
                 res_model, res_id = message.res_object.split(',')
                 res_id = int(res_id)
-                rule = self.pool.get('sync.client.message_rule').get_rule_by_remote_call(cr, uid, 'purchase.order.line.sol_update_original_pol', context=context)
+                rule = self.pool.get('sync.client.message_rule').get_rule_by_remote_call(cr, uid, message.remote_call, context=context)
                 if rule: 
                     domain = eval(rule.wait_until)
                     if res_id not in self.pool.get(res_model).search(cr, uid, domain, context=context):
