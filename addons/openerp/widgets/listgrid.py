@@ -105,6 +105,7 @@ class List(TinyWidget):
         self.concurrency_info = None
         self.selector = None
         self.force_readonly = kw.get('force_readonly', False)
+        self.filter_selector = kw.get('filter_selector', None)
 
         terp_params = getattr(cherrypy.request, 'terp_params', {})
         if terp_params:
@@ -307,10 +308,6 @@ class List(TinyWidget):
         if self.pageable and len(self.data) > self.limit and self.limit != -1:
             self.data = self.data[self.offset:]
             self.data = self.data[:min(self.limit, len(self.data))]
-
-        self.filter_selector = attrs.get('filter_selector', None)
-        if self.filter_selector:
-            self.filter_selector = eval(self.filter_selector)
 
 
     def do_sum(self, data, field):

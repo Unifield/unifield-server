@@ -146,11 +146,26 @@ class O2M(TinyInputWidget):
         current.offset = current.offset or 0
         current.limit = current.limit or 50
 
+
+        self.filter_selector = attrs.get('filter_selector', None)
+        if self.filter_selector:
+            self.filter_selector = eval(self.filter_selector)
+
+            # If we have a filter selector, and no domain yet, use the first
+            # filter as default
+            if current.domain == None:
+                # Expect filter_selector to be a non-empty list
+                # of (name, domain)
+                assert len(self.filter_selector) > 0
+                assert len(self.filter_selector[0]) == 2
+                default_domain = self.filter_selector[0][1]
+                current.domain = [default_domain]
+
+
         if not current.domain:
             current.count = len(ids or [])
         else:
-            domain = current.domain
-            domain.append(('id', 'in', ids))
+            domain = current.domain + [('id', 'in', ids)]
             current.count = rpc.RPCProxy(self.model).search_count(domain, current.context)
 
         if not current.force_limit:
@@ -177,10 +192,10 @@ class O2M(TinyInputWidget):
 
         id = (ids or None) and ids[0]
 
-        if self.name == self.source or self.name == params.source:
+        if self.name == self.source or self.name == params.source or current.domain:
             if (params.sort_key or current.domain) and ids:
-                domain = current.domain or []
-                domain.append(('id', 'in', ids))
+                domain = (current.domain or []) + [('id', 'in', ids)]
+
                 limit = current.limit
                 if current.limit == -1:
                     limit = 0
@@ -244,8 +259,9 @@ class O2M(TinyInputWidget):
         self.screen = Screen(current, prefix=self.name, views_preloaded=view,
                              editable=self.editable, readonly=self.readonly,
                              selectable=0, nolinks=self.link, _o2m=1,
-                             force_readonly=self.force_readonly)
-        
+                             force_readonly=self.force_readonly,
+                             filter_selector=self.filter_selector)
+
         self.id = id
         self.ids = ids
 
