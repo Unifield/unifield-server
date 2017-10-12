@@ -620,7 +620,9 @@ class purchase_order(osv.osv):
                                  store = {
                                      'purchase.order.line': (_get_order, ['state'], 10), 
                                  },
-                                 select=True, help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception."
+                                 select=True,
+                                 help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.",
+                                 internal="request_for_quotation"
                                  ),
 
         'validator' : fields.many2one('res.users', 'Validated by', readonly=True),
