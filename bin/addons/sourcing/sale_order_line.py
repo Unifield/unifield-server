@@ -922,7 +922,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self._check_browse_param(line, method='_check_loan_conditions')
 
         l_type = line.type == 'make_to_order'
-        o_state = line.state not in ('draft', 'confirmed') or False
+        o_state = line.state not in ('draft', 'confirmed', 'done')
         ctx_cond = not context.get('fromOrderLine')
         o_type = line.order_id and line.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] or False
 
@@ -1435,6 +1435,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 ('state', 'in', ['draft']),
                 ('delivery_requested_date', '=', self.compute_delivery_requested_date(cr, uid, sourcing_line.id, context=context)),
                 ('order_type', '=', 'loan'),
+                ('is_a_counterpart', '=', True),
             ]
             res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
 
@@ -1526,6 +1527,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'delivery_requested_date': self.compute_delivery_requested_date(cr, uid, sourcing_line.id, context=context),
                 'related_sourcing_id': sourcing_line.related_sourcing_id.id or False,
                 'unique_fo_id': sourcing_line.order_id.id if (sourcing_line.supplier and sourcing_line.supplier.po_by_project == 'isolated') else False,
+                'is_a_counterpart': True,
+                'loan_duration': sourcing_line.order_id.loan_duration,
             }
 
         return self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
@@ -1627,7 +1630,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             if sourcing_line.type == 'make_to_stock':
-                if sourcing_line.loan_type:
+                if sourcing_line.order_id.order_type == 'loan' and not sourcing_line.order_id.is_a_counterpart:
                     # In case of loan, create the PO for later goods return:
                     po_loan = self.get_existing_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
                     if not po_loan:
@@ -1651,14 +1654,14 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
 
+                # sourcing line: set delivery confirmed date to today:
+                self.write(cr, uid, [sourcing_line.id], {'confirmed_delivery_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)               
+
                 # update SO line with good state:
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'confirmed', cr) # confirmation create pick/out or INT
                 if sourcing_line.procurement_request and sourcing_line.order_id.location_requestor_id.usage == 'internal':
                     wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'done', cr)
-
-                # sourcing line: set delivery confirmed date to today:
-                self.write(cr, uid, [sourcing_line.id], {'confirmed_delivery_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)               
 
             elif sourcing_line.type == 'make_to_order':
                 if sourcing_line.po_cft in ('po', 'dpo'):
