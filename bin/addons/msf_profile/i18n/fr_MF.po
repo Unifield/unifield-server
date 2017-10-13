@@ -19651,12 +19651,6 @@ msgid "You cannot made moves from/to Cross-docking\n"
 msgstr "Vous ne pouvez pas effecter de mouvements de/vers des zones de Transbordement\n"
 "lorsque la configuration des stocks alloués est configurée sur 'Non alloués'."
 
-#. module: register_accounting
-#: code:addons/register_accounting/account_bank_statement.py:247
-#, python-format
-msgid "The associated period is closed"
-msgstr "The associated period is closed"
-
 #. module: base
 #: model:ir.ui.menu,name:base.menu_crm_config_lead
 msgid "Leads & Opportunities"
@@ -49019,11 +49013,6 @@ msgstr "CUi stocks"
 msgid "MSF Custom Settings"
 msgstr "MSF Custom Settings"
 
-#. module: register_accounting
-#: view:wizard.open.empty.cashbox:0
-msgid "Open Empty Cashbox Confirmation"
-msgstr "Confirmation d'ouverture de caisse vide"
-
 #. module: kit
 #: code:addons/kit/kit.py:780
 #, python-format
@@ -66341,11 +66330,6 @@ msgstr "Tables de Devises"
 msgid "America/Caracas"
 msgstr "America/Caracas"
 
-#. module: register_accounting
-#: model:ir.actions.act_window,name:register_accounting.act_wizard_open_empty_cashbox
-msgid "Open Empty CashBox"
-msgstr "Ouvrir Caisse vide"
-
 #. module: msf_budget
 #: code:addons/msf_budget/report/report_budget_criteria.py:90
 #, python-format
@@ -69315,11 +69299,6 @@ msgstr "Vous ne pouvez pas avoir deux lignes pour le produit %s avec un coût mo
 #: selection:ir.actions.server,state:0
 msgid "Multi Actions"
 msgstr "Actions multiples"
-
-#. module: register_accounting
-#: view:wizard.open.empty.cashbox:0
-msgid "Open Empty Cashbox Confirmation - Wizard"
-msgstr "Confirmation d'ouverture de caisse vide - Assistant"
 
 #. module: stock
 #: view:stock.move:0
@@ -87633,11 +87612,6 @@ msgstr "Australia/Brisbane"
 #, python-format
 msgid "Qty Multiple"
 msgstr "Qty Multiple"
-
-#. module: register_accounting
-#: field:wizard.open.empty.cashbox,be_sure:0
-msgid "You left the cashbox opening balance empty, do you want to open it anyway?"
-msgstr "Vous avez laissé le solde d'ouverture de caisse vide, confirmerz-vous l'ouverture de caisse? "
 
 #. module: account_period_closing_level
 #: field:account.account,include_in_yearly_move:0

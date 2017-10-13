@@ -731,7 +731,7 @@ The starting balance will be proposed automatically and the closing balance is t
         wiz_reg_opening_obj = self.pool.get('wizard.register.opening.confirmation')
         if ids:
             reg = self.browse(cr, uid, ids[0], fields_to_fetch=['prev_reg_id', 'journal_id'], context=context)
-            if reg and not reg.prev_reg_id:
+            if not reg.prev_reg_id:
                 wiz_id = wiz_reg_opening_obj.create(cr, uid, {'register_id': ids[0]}, context=context)
                 return {'name': _('Open Register Confirmation'),
                         'type': 'ir.actions.act_window',
