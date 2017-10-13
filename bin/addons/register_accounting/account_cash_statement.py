@@ -161,7 +161,7 @@ class account_cash_statement(osv.osv):
         return super(account_cash_statement, self).write(cr, uid, ids, vals,
                                                          context=context)
 
-    def do_button_open_cash(self, cr, uid, ids, context=None):
+    def do_button_open_cash(self, cr, uid, ids, opening_balance=None, context=None):
         """
         when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
         """
@@ -191,7 +191,11 @@ class account_cash_statement(osv.osv):
         # Give a Cash Register Name with the following composition :
         #+ Cash Journal Name
         if st.journal_id and st.journal_id.name:
-            return self.write(cr, uid, ids, {'state' : 'open', 'name': st.journal_id.name})
+            cash_reg_vals = {'state': 'open', 'name': st.journal_id.name}
+            # update Opening Balance
+            if opening_balance:
+                cash_reg_vals.update({'balance_start': opening_balance})
+            return self.write(cr, uid, ids, cash_reg_vals, context=context)
         else:
             return False
 

@@ -104,24 +104,5 @@ class wizard_closing_cashbox(osv.osv_memory):
 
 wizard_closing_cashbox()
 
-class cashbox_empty_opening(osv.osv_memory):
-
-    _name = 'wizard.open.empty.cashbox'
-    _columns = {
-        'be_sure': fields.boolean(string="You left the cashbox opening balance empty, do you want to open it anyway?", required=False ),
-    }
-
-    def button_open_empty_cashbox(self, cr, uid, ids, context=None):
-        # retrieve context active id (verification)
-        if context is None:
-            context = {}
-        ids = context.get('active_ids', False)
-
-        st_obj = self.pool.get('account.bank.statement')
-        res_id = st_obj.do_button_open_cash(cr, uid, ids, context)
-
-        return { 'type' : 'ir.actions.act_window_close', 'active_id' : res_id }
-
-cashbox_empty_opening()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
