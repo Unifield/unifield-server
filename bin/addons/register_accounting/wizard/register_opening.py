@@ -44,7 +44,7 @@ class wizard_register_opening_confirmation(osv.osv_memory):
             res[wiz.id] = 0.0
             if wiz.register_id:
                 reg_id = wiz.register_id.id
-                reg_type = wiz.register_id.journal_id.type
+                reg_type = wiz.register_type
                 if reg_type == 'bank':
                     res[wiz.id] = wiz.register_id.balance_start or 0.0
                 elif reg_type == 'cash':
