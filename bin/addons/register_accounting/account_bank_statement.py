@@ -699,9 +699,29 @@ The starting balance will be proposed automatically and the closing balance is t
                 aml_list.append(aml.id)
         return aml_list
 
+    def open_register(self, cr, uid, reg_id, cash_opening_balance=None, context=None):
+        """
+        Opens the register and updates the related XML_ID
+        """
+        if context is None:
+            context = {}
+        reg = self.browse(cr, uid, reg_id, fields_to_fetch=['period_id', 'journal_id'], context=context)
+        if reg.period_id.state in ['field-closed', 'mission-closed', 'done']:
+            raise osv.except_osv(_('Error'),
+                                 _('The associated period is closed.'))
+        if reg.journal_id.type == 'cash':
+            self.do_button_open_cash(cr, uid, [reg_id], opening_balance=cash_opening_balance, context=context)
+        else:
+            self.write(cr, uid, [reg_id], {'state': 'open', 'name': reg.journal_id.name})
+        # The update of xml_id must be done when opening the register
+        # --> set the value of xml_id based on the period as period is no more editable
+        self.update_xml_id_register(cr, uid, reg_id, context)
+        return True
+
     def button_open_register(self, cr, uid, ids, context=None):
         """
-        Opens the "Register Opening Confirmation" wizard
+        Opens the "Register Opening Confirmation" wizard if it is the first register of the journal,
+        else opens the register directly.
         """
         if context is None:
             context = {}
@@ -710,16 +730,25 @@ The starting balance will be proposed automatically and the closing balance is t
         res = False
         wiz_reg_opening_obj = self.pool.get('wizard.register.opening.confirmation')
         if ids:
-            wiz_id = wiz_reg_opening_obj.create(cr, uid, {'register_id': ids[0]}, context=context)
-            return {'name': _('Open Register Confirmation'),
-                    'type': 'ir.actions.act_window',
-                    'res_model': 'wizard.register.opening.confirmation',
-                    'target': 'new',
-                    'view_mode': 'form',
-                    'view_type': 'form',
-                    'res_id': [wiz_id],
-                    'context': context,
-                    }
+            reg = self.browse(cr, uid, ids[0], fields_to_fetch=['prev_reg_id', 'journal_id'], context=context)
+            if reg and not reg.prev_reg_id:
+                wiz_id = wiz_reg_opening_obj.create(cr, uid, {'register_id': ids[0]}, context=context)
+                return {'name': _('Open Register Confirmation'),
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'wizard.register.opening.confirmation',
+                        'target': 'new',
+                        'view_mode': 'form',
+                        'view_type': 'form',
+                        'res_id': [wiz_id],
+                        'context': context,
+                        }
+            else:
+                computed_balance = 0.0
+                if reg.journal_id.type == 'cash':
+                    context['from_open'] = True
+                    computed_balance = self._get_starting_balance(cr, uid, [ids[0]], context=context)[ids[0]].get('balance_start', 0.0)
+                    del context['from_open']
+                return self.open_register(cr, uid, ids[0], cash_opening_balance=computed_balance, context=context)
         return res
 
 account_bank_statement()

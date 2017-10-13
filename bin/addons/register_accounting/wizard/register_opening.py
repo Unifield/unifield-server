@@ -34,7 +34,7 @@ class wizard_register_opening_confirmation(osv.osv_memory):
         Returns a dict with key = id of the wizard, and value = amount of the opening balance of the related register
         The Opening Balance is:
         - equal to the value of "balance_start" for Bank Registers
-        - based on the Cashbox lines or on the previous register balance for Cash Registers
+        - based on the Cashbox lines for Cash Registers
         - always equal to 0.00 for Cheque Registers
         """
         res = {}
@@ -49,9 +49,7 @@ class wizard_register_opening_confirmation(osv.osv_memory):
                 if reg_type == 'bank':
                     res[wiz.id] = wiz.register_id.balance_start or 0.0
                 elif reg_type == 'cash':
-                    context['from_open'] = True
                     computed_balance = reg_obj._get_starting_balance(cr, uid, [reg_id], context=context)
-                    del context['from_open']
                     res[wiz.id] = computed_balance[reg_id].get('balance_start', 0.0)
         return res
 
@@ -75,25 +73,6 @@ class wizard_register_opening_confirmation(osv.osv_memory):
                                          relation='account.period', readonly=True),
     }
 
-    def open_register(self, cr, uid, reg_id, cash_opening_balance=None, context=None):
-        """
-        Opens the register and updates the related XML_ID
-        """
-        if context is None:
-            context = {}
-        reg_obj = self.pool.get('account.bank.statement')
-        reg = reg_obj.browse(cr, uid, reg_id, fields_to_fetch=['period_id', 'journal_id'], context=context)
-        if reg.period_id.state in ['field-closed', 'mission-closed', 'done']:
-            raise osv.except_osv(_('Error'),
-                                 _('The associated period is closed.'))
-        if reg.journal_id.type == 'cash':
-            reg_obj.do_button_open_cash(cr, uid, [reg_id], opening_balance=cash_opening_balance, context=context)
-        else:
-            reg_obj.write(cr, uid, [reg_id], {'state': 'open', 'name': reg.journal_id.name})
-        # The update of xml_id must be done when opening the register
-        # --> set the value of xml_id based on the period as period is no more editable
-        reg_obj.update_xml_id_register(cr, uid, reg_id, context)
-
     def button_confirm_register_opening(self, cr, uid, ids, context=None):
         """
         Triggers the opening of the register if all the confirmation tick boxes have been ticked
@@ -114,7 +93,7 @@ class wizard_register_opening_confirmation(osv.osv_memory):
             cash_opening_balance = 0.0
             if reg_type == 'cash':
                 cash_opening_balance = wiz.opening_balance
-            self.open_register(cr, uid, reg_id, cash_opening_balance=cash_opening_balance, context=context)
+            reg_obj.open_register(cr, uid, reg_id, cash_opening_balance=cash_opening_balance, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 
