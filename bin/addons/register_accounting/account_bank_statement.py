@@ -716,7 +716,33 @@ The starting balance will be proposed automatically and the closing balance is t
                 aml_list.append(aml.id)
         return aml_list
 
+    def button_open_register(self, cr, uid, ids, context=None):
+        """
+        Opens the "Register Opening Confirmation" wizard
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = False
+        wiz_reg_opening_obj = self.pool.get('wizard.register.opening.confirmation')
+        if ids:
+            wiz_id = wiz_reg_opening_obj.create(cr, uid, {'register_id': ids[0]}, context=context)
+            return {'name': _('Open Register Confirmation'),
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'wizard.register.opening.confirmation',
+                    'target': 'new',
+                    'view_mode': 'form',
+                    'view_type': 'form',
+                    'res_id': [wiz_id],
+                    'context': {'active_id': ids[0],
+                                'active_ids': ids
+                                }
+                    }
+        return res
+
 account_bank_statement()
+
 
 class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
