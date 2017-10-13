@@ -22,6 +22,7 @@
 
 from osv import osv
 from osv import fields
+from tools.translate import _
 
 
 class wizard_register_opening_confirmation(osv.osv_memory):
@@ -73,6 +74,32 @@ class wizard_register_opening_confirmation(osv.osv_memory):
         'opening_period': fields.related('register_id', 'period_id', string='Opening Period', type='many2one',
                                          relation='account.period', readonly=True),
     }
+
+    def button_confirm_register_opening(self, cr, uid, ids, context=None):
+        """
+        Opens the register if all the confirmation tick boxes have been ticked
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        reg_obj = self.pool.get('account.bank.statement')
+        wiz = self.browse(cr, uid, ids[0], context=context)
+        reg_id = wiz.register_id.id
+        reg_type = wiz.register_type
+        balance_ok = wiz.confirm_opening_balance or reg_type == 'cheque'
+        period_ok = wiz.confirm_opening_period
+        if not balance_ok or not period_ok:
+            raise osv.except_osv(_('Warning'), _('You must tick the boxes before clicking on Yes.'))
+        else:
+            if reg_type == 'cash':
+                reg_obj.write(cr, uid, [reg_id], {'balance_start': wiz.opening_balance}, context=context)
+                reg_obj.do_button_open_cash(cr, uid, [reg_id], context)
+            elif reg_type == 'bank':
+                reg_obj.button_open_bank(cr, uid, [reg_id], context=context)
+            elif reg_type == 'cheque':
+                reg_obj.button_open_cheque(cr, uid, [reg_id], context=context)
+        return {'type': 'ir.actions.act_window_close'}
 
 
 wizard_register_opening_confirmation()

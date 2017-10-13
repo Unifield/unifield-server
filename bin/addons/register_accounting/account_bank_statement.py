@@ -735,9 +735,7 @@ The starting balance will be proposed automatically and the closing balance is t
                     'view_mode': 'form',
                     'view_type': 'form',
                     'res_id': [wiz_id],
-                    'context': {'active_id': ids[0],
-                                'active_ids': ids
-                                }
+                    'context': context,
                     }
         return res
 
