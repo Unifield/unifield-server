@@ -250,23 +250,6 @@ class account_bank_statement(osv.osv):
         raise osv.except_osv(_('Warning'), _('Delete a Register is totally forbidden!'))
         return True
 
-    def button_open_bank(self, cr, uid, ids, context=None):
-        """
-        when pressing 'Open Bank' button
-        """
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        registers = self.browse(cr, uid, ids, context=context)
-        for register in registers:
-            if register['period_id']['state'] in ['field-closed',
-                                                  'mission-closed', 'done']:
-                raise osv.except_osv(_('Error'),
-                                     _('The associated period is closed'))
-            else:
-                return self.write(cr, uid, [register.id], {'state': 'open', 'name': register.journal_id.name})
-
     def check_status_condition(self, cr, uid, state, journal_type='bank'):
         """
         Check Status of Register

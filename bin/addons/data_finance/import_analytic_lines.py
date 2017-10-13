@@ -186,7 +186,7 @@ class import_analytic_lines(osv.osv_memory):
                 if reg_data['state'] == 'draft':
                     if not reg_data['prev_reg_id']:
                         reg_obj.write(cr, uid, reg_data['id'], {'balance_start': 44.56})
-                    reg_obj.button_open_bank(cr, uid, reg_data['id'])
+                    reg_obj.open_register(cr, uid, reg_data['id'])
 
             if row[2] not in cc:
                 acc_id = analytic_obj.search(cr, uid, [('category', '=', 'OC'), ('code', '=like', row[2])])
