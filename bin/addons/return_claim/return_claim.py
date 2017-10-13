@@ -43,24 +43,36 @@ CLAIM_TYPE_RELATION = {'in': 'supplier',
                        'out': 'customer'}
 # claim state
 CLAIM_STATE = [('draft', 'Draft'),
-               ('in_progress', 'In Progress'),
+               ('draft_in_progress', 'Draft in progress'),
+               ('in_progress', 'Validated in progress'),
+               ('confirmed', 'Confirmed'),
                ('done', 'Closed')]
 # claim rules - define which new event is available after the key designated event
 # missing event as key does not accept any event after him
-CLAIM_RULES = {'supplier': {'quarantine': ['accept', 'scrap', 'return']}}
+CLAIM_RULES = {'supplier': {'quarantine': ['accept', 'scrap', 'return', 'surplus']}}
 # does the claim type allows event creation
-CLAIM_TYPE_RULES = {'supplier': ['accept', 'quarantine', 'scrap', 'return'],
-                    'customer': ['return'],
+CLAIM_TYPE_RULES = {'supplier': ['accept', 'quarantine', 'scrap', 'return', 'surplus'],
+                    'customer': ['return', 'surplus'],
                     'transport': False,
                     }
 # event type
 CLAIM_EVENT_TYPE = [('accept', 'Accept'),
                     ('quarantine', 'Move to Quarantine'),
                     ('scrap', 'Scrap'),
-                    ('return', 'Return')]
+                    ('return', 'Return'),
+                    ('surplus', 'Return (surplus)')]
+# IN event type
+IN_CLAIM_EVENT_TYPE = [('accept', 'Accept'),
+                       ('quarantine', 'Move to Quarantine'),
+                       ('scrap', 'Scrap'),
+                       ('return', 'Return'),
+                       ('surplus', 'Return (surplus)'),
+                       ('request_missing', 'Request missing products/quantities')]
 # event state
 CLAIM_EVENT_STATE = [('draft', 'Draft'),
-                     ('in_progress', 'In Progress'),
+                     ('draft_in_progress', 'Draft in progress'),
+                     ('in_progress', 'Validated in progress'),
+                     ('confirmed', 'Confirmed'),
                      ('done', 'Done')]
 # event type destination - for return event, the destination depends on
 EVENT_TYPE_DESTINATION = {'accept': 'stock.stock_location_stock',  # move to stock
@@ -498,6 +510,12 @@ class return_claim(osv.osv):
             string='State',
             readonly=True,
         ),
+        'request_missing': fields.boolean(
+            string='Request missing products/quantities'
+        ),
+        'goods_expected': fields.boolean(
+            string='Goods replacement/balance expected to be received'
+        ),
         # Many2one
         'sequence_id_return_claim': fields.many2one(
             'ir.sequence',
@@ -656,6 +674,12 @@ class return_claim(osv.osv):
         '''
         return CLAIM_EVENT_TYPE
 
+    def get_in_claim_event_type(self):
+        '''
+        return claim_event_type
+        '''
+        return IN_CLAIM_EVENT_TYPE
+
     _order = 'name desc'
 
 return_claim()
@@ -707,7 +731,7 @@ class claim_event(osv.osv):
         if not event_type or not origin:
             return False
         # treat each event type
-        if event_type == 'return':
+        if event_type in ('return', 'surplus'):
             if claim_type == 'supplier':
                 # property_stock_supplier from partner
                 data = partner_obj.read(cr, uid, partner_id, ['property_stock_supplier'], context=context)
@@ -898,6 +922,81 @@ class claim_event(osv.osv):
             # confirm and check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
+
+        return True
+
+    def _do_process_surplus(self, cr, uid, obj, context=None):
+        '''
+        process logic for return surplus event
+
+        - depends on the type of claim - supplier or customer
+        - destination of picking moves becomes original Supplier/Customer [property_stock_supplier or property_stock_customer from res.partner]
+        - name of picking becomes IN/0001 -> IN/0001-surplus type 'out' for supplier
+        - name of picking becomes OUT/0001 -> OUT/0001-surplus type 'in' for customer
+        - (is not set to done - defined in _picking_done_cond)
+        - if replacement is needed, we create a new picking
+        '''
+        context = context.copy()
+        context.update({'from_claim': True})
+
+        # objects
+        move_obj = self.pool.get('stock.move')
+        pick_obj = self.pool.get('stock.picking')
+        picking_tools = self.pool.get('picking.tools')
+        # event picking object
+        event_picking = obj.event_picking_id_claim_event
+        event_picking_id = event_picking.id
+        # origin picking in/out
+        origin_picking = obj.return_claim_id_claim_event.picking_id_return_claim
+        # claim
+        claim = obj.return_claim_id_claim_event
+        # claim type
+        claim_type = claim.type_return_claim
+        # don't generate financial documents if the claim is linked to an internal or intermission partner
+        inv_status = claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
+        # get the picking values and move values according to claim type
+        picking_values = {'name': origin_picking.name + '-surplus',
+                          'partner_id': claim.partner_id_return_claim.id,
+                          'partner_id2': claim.partner_id_return_claim.id,
+                          'purchase_id': origin_picking.purchase_id.id,
+                          'sale_id': origin_picking.sale_id.id,
+                          'reason_type_id': context['common']['rt_goods_return'],
+                          'invoice_state': inv_status,
+                          'claim': True,
+                          }
+        move_values = {'reason_type_id': context['common']['rt_goods_return']}
+        if claim_type == 'supplier':
+            picking_values.update({'type': 'out'})
+            # moves go back to supplier, source location comes from input (if dynamic) or from claim product values
+            move_values.update({'location_dest_id': claim.partner_id_return_claim.property_stock_supplier.id})
+        elif claim_type == 'customer':
+            picking_values.update({'type': 'in'})
+            # receive return from customer, and go into input
+            move_values.update({'location_id': claim.partner_id_return_claim.property_stock_customer.id,
+                                'location_dest_id': context['common']['input_id']})
+        # moves go back to supplier, source location comes from input (if dynamic) or from claim product values
+        move_values.update({'location_dest_id': claim.partner_id_return_claim.property_stock_supplier.id})
+        # update the picking
+        pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
+        # update the picking again
+        pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
+        # check for surplus and add them to the new pick
+        for move in event_picking.move_lines:
+            this_move_values = move_values
+            if move.purchase_line_id and move.purchase_line_id.product_qty < move.product_qty:
+                this_move_values.update({'product_qty': move.product_qty - move.purchase_line_id.product_qty})
+            elif move.sale_line_id and move.sale_line_id.product_uom_qty < move.product_qty:
+                this_move_values.update({'product_qty': move.product_qty - move.sale_line_id.product_uom_qty})
+            elif not move.purchase_line_id and not move.sale_line_id:
+                # just add the whole missing line
+                continue
+            else:
+                this_move_values.update({'state': 'cancel'})
+            move_obj.write(cr, uid, move.id, this_move_values, context=context)
+            this_move_values.clear()
+        picking_tools.confirm(cr, uid, event_picking_id, context=context)
+        # check assign for event picking
+        picking_tools.check_assign(cr, uid, event_picking.id, context=context)
 
         return True
 
@@ -1595,7 +1694,7 @@ class stock_picking(osv.osv):
         # if a claim is needed:
         # if return claim: we do not close the processed picking, it is now an out picking which need to be processed
         if 'register_a_claim_partial_picking' in partial_datas and partial_datas['register_a_claim_partial_picking']:
-            if partial_datas['claim_type_partial_picking'] == 'return':
+            if partial_datas['claim_type_partial_picking'] in ('return', 'surplus'):
                 return False
 
         return True
