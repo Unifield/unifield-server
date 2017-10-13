@@ -77,7 +77,7 @@ class wizard_register_opening_confirmation(osv.osv_memory):
 
     def button_confirm_register_opening(self, cr, uid, ids, context=None):
         """
-        Opens the register if all the confirmation tick boxes have been ticked
+        Opens the register if all the confirmation tick boxes have been ticked and the related Period isn't closed.
         """
         if context is None:
             context = {}
@@ -91,14 +91,18 @@ class wizard_register_opening_confirmation(osv.osv_memory):
         period_ok = wiz.confirm_opening_period
         if not balance_ok or not period_ok:
             raise osv.except_osv(_('Warning'), _('You must tick the boxes before clicking on Yes.'))
+        elif wiz.opening_period.state in ['field-closed', 'mission-closed', 'done']:
+            raise osv.except_osv(_('Error'),
+                                 _('The associated period is closed.'))
         else:
             if reg_type == 'cash':
                 reg_obj.write(cr, uid, [reg_id], {'balance_start': wiz.opening_balance}, context=context)
                 reg_obj.do_button_open_cash(cr, uid, [reg_id], context)
-            elif reg_type == 'bank':
-                reg_obj.button_open_bank(cr, uid, [reg_id], context=context)
-            elif reg_type == 'cheque':
-                reg_obj.button_open_cheque(cr, uid, [reg_id], context=context)
+            else:
+                reg_obj.write(cr, uid, [reg_id], {'state': 'open', 'name': wiz.register_id.journal_id.name})
+            # The update of xml_id must be done when opening the register
+            # --> set the value of xml_id based on the period as period is no more editable
+            reg_obj.update_xml_id_register(cr, uid, reg_id, context)
         return {'type': 'ir.actions.act_window_close'}
 
 
