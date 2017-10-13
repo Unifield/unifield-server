@@ -344,10 +344,6 @@ class sale_order_line(osv.osv):
                 if sol.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] and sol.type != 'make_to_stock':
                     to_write['type'] = 'make_to_stock'
 
-                if not sol.product_id:
-                    # PO nomen (PROJ) => FO (nomen COO)
-                    raise osv.except_osv(_('Error'), _('Please choose a product before validating the line'))
-
             elif sol.procurement_request:  # in case of IR
                 to_write['original_qty'] = sol.product_uom_qty
                 to_write['original_price'] = sol.price_unit
