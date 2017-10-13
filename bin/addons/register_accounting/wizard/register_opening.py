@@ -54,12 +54,24 @@ class wizard_register_opening_confirmation(osv.osv_memory):
                     res[wiz.id] = computed_balance[reg_id].get('balance_start', 0.0)
         return res
 
+    def _get_journal_type(self, cr, uid, context=None):
+        """
+        Returns a list of tuples containing the different Journal Types
+        """
+        return self.pool.get('account.journal').get_journal_type(cr, uid, context=context)
+
     _columns = {
         'confirm_opening_balance': fields.boolean(string='Do you want to open the register with the following opening balance?',
                                                   required=False),
         'register_id': fields.many2one('account.bank.statement', 'Register', required=True, readonly=True),
+        'register_type': fields.related('register_id', 'journal_id', 'type', string='Register Type', type='selection',
+                                        selection=_get_journal_type, readonly=True),
         'opening_balance': fields.function(_get_opening_balance, method=True, type='float', readonly=True,
                                            string='Opening Balance'),
+        'confirm_opening_period': fields.boolean(string='Do you want to open the register on the following period?',
+                                                 required=False),
+        'opening_period': fields.related('register_id', 'period_id', string='Opening Period', type='many2one',
+                                         relation='account.period', readonly=True),
     }
 
 
