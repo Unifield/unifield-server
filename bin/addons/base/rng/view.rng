@@ -482,6 +482,7 @@
             <rng:optional><rng:attribute name="get_selection"/></rng:optional>
             <rng:optional><rng:attribute name="accept"/></rng:optional>
             <rng:optional><rng:attribute name="filter_selector"/></rng:optional>
+            <rng:optional><rng:attribute name="o2m_selectable"/></rng:optional>
             <rng:zeroOrMore>
                 <rng:choice>
                     <rng:ref name="diagram"/>
@@ -577,6 +578,7 @@
             <rng:optional><rng:attribute name="confirm"/></rng:optional>
             <rng:optional><rng:attribute name="help"/></rng:optional>
             <rng:optional><rng:attribute name="default_focus"/></rng:optional>
+            <rng:optional><rng:attribute name="header"/></rng:optional>
             <rng:zeroOrMore>
                 <rng:choice>
                     <rng:ref name="form" />
