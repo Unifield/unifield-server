@@ -323,9 +323,26 @@ product_product()
 class purchase_order_cancel_wizard(osv.osv_memory):
     _name = 'purchase.order.cancel.wizard'
 
+    def _get_has_linked_line(self, cr, uid, ids, field_name, args, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for wiz in self.browse(cr, uid, ids, context=context):
+            po = self.pool.get('purchase.order').browse(cr, uid, wiz.order_id.id, context=context)
+            res[wiz.id] = False
+            for pol in po.order_line:
+                if pol.linked_sol_id:
+                    res[wiz.id] = True
+
+        return res
+
+
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Order to delete'),
-        'po_origin': fields.related('order_id', 'origin', type='text', string='PO origin', store=False),
+        'has_linked_line': fields.function(_get_has_linked_line, method=True, type='boolean', string='has linked line'),
         'unlink_po': fields.boolean(string='Unlink PO'),
         'last_lines': fields.boolean(string='Remove last lines of the FO'),
     }

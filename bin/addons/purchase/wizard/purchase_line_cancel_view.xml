@@ -10,6 +10,11 @@
                     <field name="linked_sol_id" invisible="1"/>
                     <group colspan="4" col="1">
                         <html>
+                            <h3 style="text-align: center; margin: 13px"><translate>Please confirm cancelation of selected line.</translate></h3>
+                        </html>
+                    </group>
+                    <group colspan="4" col="1" attrs="{'invisible': [('linked_sol_id', '=', False)]}">
+                        <html>
                             <h3 style="text-align: center; margin: 13px"><translate>If you click on 'Cancel &amp; Resource' button, all linked FO/IR lines will be re-sourced.</translate></h3>
                         </html>
                     </group>
