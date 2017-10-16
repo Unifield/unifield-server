@@ -578,6 +578,22 @@ function onChange(caller){
 
     var $caller = jQuery(openobject.dom.get(caller));
     var $form = $caller.closest('form');
+
+    // From http://bazaar.launchpad.net/~openerp-dev/openobject-client-web/6.0-opw-4079-cpa/revision/4726
+    // Running onChange on a one2many with a lines being currently edited
+    // triggers some issue. To fix that, simply save/remove the line before
+    // continuing 
+    if (($('tr.editors').length) && (!$caller.closest('tr.editors').length)) 
+    {
+        var edit_line_id = $('tr.editors').attr('record');
+        if(edit_line_id != "-1"){
+            o2m_id = $('tr.editors').closest('.gridview').attr('id');
+            new One2Many(o2m_id).save(edit_line_id);
+        }
+        $('tr.editors').remove();
+    }
+
+
     var callback = $caller.attr('callback');
     var change_default = $caller.attr('change_default');
 
