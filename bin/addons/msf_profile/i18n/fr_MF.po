@@ -16158,7 +16158,7 @@ msgstr "%s update%s"
 #: selection:product.product,single_use:0
 #: selection:product.product,sterilized:0
 #: view:wizard.confirm.bank:0
-#: view:wizard.open.empty.cashbox:0
+#: view:wizard.register.opening.confirmation:0
 #: code:addons/sales_followup/sale_followup.py:405
 #: code:addons/sales_followup/sale_followup.py:422
 #: selection:allocation.stock.setup,unallocated_ok:0
@@ -24171,8 +24171,8 @@ msgstr "Europe/Bucharest"
 #: selection:product.product,single_use:0
 #: selection:product.product,sterilized:0
 #: view:wizard.confirm.bank:0
-#: view:wizard.open.empty.cashbox:0
 #: view:stock.inventory.merge:0
+#: view:wizard.register.opening.confirmation:0
 #: selection:allocation.stock.setup,unallocated_ok:0
 #, python-format
 msgid "Yes"
@@ -54047,11 +54047,6 @@ msgstr "Total Enreg. Crédit"
 msgid "Project Destination:"
 msgstr "Projet Destinataire:"
 
-#. module: register_accounting
-#: model:ir.model,name:register_accounting.model_wizard_open_empty_cashbox
-msgid "wizard.open.empty.cashbox"
-msgstr "wizard.open.empty.cashbox"
-
 #. module: base
 #: selection:res.config.users,view:0
 #: selection:res.config.view,view:0
@@ -59817,7 +59812,7 @@ msgstr "Save new settings and close the wizard"
 
 #. modules: account, register_accounting
 #: view:account.bank.statement:0
-#: view:account.bank.statement:0
+#: field:wizard.register.opening.confirmation,opening_balance:0
 msgid "Opening Balance"
 msgstr "Solde d'ouverture"
 
@@ -94911,6 +94906,7 @@ msgstr "Sous-flux du Bon de Picking"
 #: model:ir.ui.menu,name:sync_client.reg_wiz_menu
 #: view:sync.client.register_entity:0
 #: selection:sync.client.register_entity,state:0
+#: field:wizard.register.opening.confirmation,register_id:0
 msgid "Register"
 msgstr "Registre"
 
@@ -99603,3 +99599,52 @@ msgstr "Vous ne pouvez pas modifier un Journal Analytique qui n'appartient pas �
 #, python-format
 msgid "You can't delete this FX rate as the period \"%s\" isn't in Draft state."
 msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'est pas en statut Brouillon."
+
+#. module: register_accounting
+#: field:wizard.register.opening.confirmation,confirm_opening_balance:0
+msgid "Do you want to open the register with the following opening balance?"
+msgstr "Voulez-vous ouvrir le registre avec le solde d'ouverture suivant ?"
+
+#. module: register_accounting
+#: field:wizard.register.opening.confirmation,register_type:0
+msgid "Register Type"
+msgstr "Type de Registre"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:736
+#: view:wizard.register.opening.confirmation:0
+#, python-format
+msgid "Open Register Confirmation"
+msgstr "Confirmation d'Ouverture du Registre"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:711
+#, python-format
+msgid "The associated period is closed."
+msgstr "La période associée est fermée."
+
+#. module: register_accounting
+#: field:wizard.register.opening.confirmation,opening_period:0
+msgid "Opening Period"
+msgstr "Période d'Ouverture"
+
+#. module: register_accounting
+#: field:wizard.register.opening.confirmation,confirm_opening_period:0
+msgid "Do you want to open the register on the following period?"
+msgstr "Voulez-vous ouvrir le registre sur la période suivante ?"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/register_opening.py:91
+#, python-format
+msgid "You must tick the boxes before clicking on Yes."
+msgstr "Vous devez cocher les cases avant de cliquer sur Oui."
+
+#. module: register_accounting
+#: view:wizard.register.opening.confirmation:0
+msgid "Register Opening Balance"
+msgstr "Solde d'Ouverture du Registre"
+
+#. module: register_accounting
+#: view:wizard.register.opening.confirmation:0
+msgid "Register Opening Period"
+msgstr "Période d'Ouverture du Registre"
