@@ -377,7 +377,7 @@
                         <field name="rfq_state" attrs="{'invisible': [('rfq_ok', '=', False)]}" readonly="1"/>
                         <field name="from_procurement" invisible="1"/>
                         <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test" attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}"/>
-                        <button name="purchase_cancel" type="object" attrs="{'invisible': ['|', ('rfq_state', 'not in', ['draft', 'validated', 'sent']), '&amp;',('partner_type', 'not in', ('external', 'esc')), ('state', '=', 'validated')]}" string="Cancel" icon="gtk-cancel"/>
+                        <button name="purchase_cancel" type="object" attrs="{'invisible': [('state', 'in', ['done', 'cancel'])]}" string="Cancel" icon="gtk-cancel"/>
                         <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}"/>
                         <!-- UTP-469 − Remove the cancel button
                              <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['confirmed','except_picking','except_invoice','wait'])]}"/> -->
