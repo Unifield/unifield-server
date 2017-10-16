@@ -566,7 +566,7 @@ class tender(osv.osv):
                     continue
 
                 # search or create PO to use:
-                po_to_use = self.pool.get('sale.order.line').get_existing_po(cr, uid, [tender_line.id], context=context)
+                po_to_use = self.pool.get('tender.line').get_existing_po(cr, uid, [tender_line.id], context=context)
                 if not po_to_use:
                     po_to_use = self.pool.get('tender.line').create_po_from_tender_line(cr, uid, [tender_line.id], context=context)
                     # log new PO:
@@ -1118,7 +1118,7 @@ class tender_line(osv.osv):
 
     def get_existing_po(self, cr, uid, ids, context=None):
         """
-        SOURCING PROCESS: Do we have to create new PO/DPO or use an existing one ?
+        SOURCING PROCESS: Do we have to create new PO or use an existing one ?
         If an existing one can be used, then returns his ID, otherwise returns False
         @return ID (int) of document to use or False
         """
@@ -1134,7 +1134,7 @@ class tender_line(osv.osv):
             domain = [
                 ('partner_id', '=', rfq_line.partner_id.id),
                 ('state', 'in', ['draft']),
-                ('delivery_requested_date', '=', rfq_line.delivery_requested_date),
+                ('delivery_requested_date', '=', rfq_line.date_planned),
                 ('rfq_ok', '=', False),
                 ('order_type', '=', 'regular'),
             ]

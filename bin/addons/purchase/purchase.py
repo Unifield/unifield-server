@@ -718,7 +718,7 @@ class purchase_order(osv.osv):
         if not context:
             context = {}
         for po in self.browse(cr, uid, ids, context=context):
-            if po.partner_id.partner_type == 'internal' and po.po_from_fo:
+            if po.partner_id.partner_type == 'internal' and po.po_from_fo and not po.is_a_counterpart:
                 return False
         return True
 

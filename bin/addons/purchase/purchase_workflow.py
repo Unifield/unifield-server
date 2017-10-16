@@ -425,6 +425,10 @@ class purchase_order_line(osv.osv):
             if not pol.confirmed_delivery_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
 
+            if not pol.product_id and pol.linked_sol_id and not pol.linked_sol_id.order_id.procurement_request:
+                # PO nomen (PROJ) => FO (nomen COO)
+                raise osv.except_osv(_('Error'), _('Line %s: Please choose a product before confirming the line') % pol.line_number)
+
             if pol.order_type != 'direct':
                 # create incoming shipment (IN):
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
