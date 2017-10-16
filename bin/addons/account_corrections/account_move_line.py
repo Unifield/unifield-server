@@ -1059,9 +1059,13 @@ class reverse_manual_correction_wizard(osv.osv_memory):
         ji_id = context.get('active_id', False)
         if ji_id:
             # set the JI as non-corrected
+            is_cor_line = False
+            if aml_obj.read(cr, uid, ji_id, ['corrected_line_id'], context=context)['corrected_line_id']:
+                # if a COR line was corrected manually: the History Wizard must still appear if manual corr. is removed
+                is_cor_line = True
             reverse_corr_vals = {'is_manually_corrected': False,
                                  'corrected': False,  # is_corrigible will be seen as "True"
-                                 'have_an_historic': False,
+                                 'have_an_historic': is_cor_line,
                                  'corrected_upstream': False}
             # add a tag in context to allow the write on a system JI (ex: to cancel a manual corr. done on a SI line)
             context.update({'from_manual_corr_reversal': True})
