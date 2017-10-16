@@ -324,16 +324,10 @@ class purchase_order_cancel_wizard(osv.osv_memory):
     _name = 'purchase.order.cancel.wizard'
 
     _columns = {
-        'order_id': fields.many2one(
-            'purchase.order',
-            string='Order to delete',
-        ),
-        'unlink_po': fields.boolean(
-            string='Unlink PO',
-        ),
-        'last_lines': fields.boolean(
-            string='Remove last lines of the FO',
-        ),
+        'order_id': fields.many2one('purchase.order', string='Order to delete'),
+        'po_origin': fields.related('order_id', 'origin', type='text', string='PO origin', store=False),
+        'unlink_po': fields.boolean(string='Unlink PO'),
+        'last_lines': fields.boolean(string='Remove last lines of the FO'),
     }
 
     def _get_last_lines(self, cr, uid, order_id, context=None):
