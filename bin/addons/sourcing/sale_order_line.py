@@ -1146,6 +1146,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             })
 
         if 'state' in vals and vals['state'] == 'cancel':
+            context.update({'noraise': True})
             self.write(cr, uid, ids, {'cf_estimated_delivery_date': False}, context=context)
 
         if 'type' in vals:
