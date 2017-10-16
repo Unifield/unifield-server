@@ -23,6 +23,7 @@ import cherrypy
 from openerp.utils import TinyDict, expr_eval, rpc, node_attributes
 from openerp.widgets import TinyInputWidget, register_widget
 from openerp.widgets.screen import Screen
+from openerp.validators import one2many
 import xml.dom.minidom
 
 
@@ -256,9 +257,14 @@ class O2M(TinyInputWidget):
         if self.view_type == 'tree' and pparams:
             self.editable = bool(pparams.id)
 
+        selectable = int(attrs.get("o2m_selectable", 0))
+
+        if selectable:
+            self.validator = one2many
+
         self.screen = Screen(current, prefix=self.name, views_preloaded=view,
                              editable=self.editable, readonly=self.readonly,
-                             selectable=0, nolinks=self.link, _o2m=1,
+                             selectable=selectable, nolinks=self.link, _o2m=1,
                              force_readonly=self.force_readonly,
                              filter_selector=self.filter_selector)
 

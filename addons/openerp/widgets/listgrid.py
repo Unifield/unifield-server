@@ -749,6 +749,14 @@ class Button(TinyInputWidget):
 
         self.width = attrs.get('width', 16)
 
+        self.header = attrs.get('header', False)
+
+
+    def params_header(self):
+
+        return dict(header=True,       \
+                    visible=self.header);
+
     def params_from(self, data):
 
         id = data.get('id')
@@ -762,7 +770,9 @@ class Button(TinyInputWidget):
                 state = ustr(state)
             visible = state in self.states
 
-        return dict(id=id, visible=visible)
+        return dict(header=False,  \
+                    id=id,         \
+                    visible=visible)
 
     def update_params(self, params):
         super(Button, self).update_params(params)

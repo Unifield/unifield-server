@@ -256,7 +256,13 @@
                                 % endif
                                 % for (field, field_attrs) in headers:
                                     % if field == 'button':
-                                        <th class="grid-cell"><div style="width: 0;"></div></th>
+                                        % if selector:
+                                            <th class="grid-cell">
+                                                ${buttons[field_attrs-1].display(parent_grid=name, **buttons[field_attrs-1].params_header())}
+                                            </th>
+                                        % else:
+                                            <th class="grid-cell"><div style="width: 0;"></div></th>
+                                        % endif
                                     % elif (field_attrs.get('function') and not field_attrs.get('store') and not field_attrs.get('allow_sort')) or field_attrs.get('not_sortable'):
                                         <th id="grid-data-column/${(name != '_terp_list' or None) and (name + '/')}${field}" class="grid-cell ${field_attrs.get('type', 'char')}" kind="${field_attrs.get('type', 'char')}">${field_attrs['string']}</th>
                                     % else:
