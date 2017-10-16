@@ -3046,6 +3046,12 @@ class stock_picking(osv.osv):
 
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
+            # in case of return claim
+            if '-return' in obj.name:
+                new_name += '-return'
+            elif '-surplus' in obj.name:
+                new_name += '-surplus'
+
             if context.get('rw_backorder_name', False):
                 new_name = context.get('rw_backorder_name')
                 del context['rw_backorder_name']
@@ -3257,6 +3263,11 @@ class stock_picking(osv.osv):
 
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
+            # in case of return claim
+            if '-return' in out.name:
+                new_name += '-return'
+            elif '-surplus' in out.name:
+                new_name += '-surplus'
 
             # change subtype and name
             default_vals = {'name': new_name,
@@ -3467,10 +3478,13 @@ class stock_picking(osv.osv):
 
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, new_picking_id, context=context)
-                # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
-                wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
+                # keep draft state for return and surplus to be able to convert to out
+                pick_name = self.pool.get('stock.picking').browse(cr, uid, new_picking_id, context=context).name
+                if 'return' not in pick_name and 'surplus' not in pick_name:
+                    # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
+                    wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
                 # Then we finish the good picking
-                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'return'):
+                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type not in ('return', 'surplus')):
                     self.action_move(cr, uid, [new_picking_id])
                     wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_done', cr)
                     # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
@@ -3489,7 +3503,7 @@ class stock_picking(osv.osv):
                 ))
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, picking.id, context=context)
-                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'return'):
+                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type not in ('return', 'surplus')):
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
                     update_vals = {'state':'done', 'date_done':time.strftime('%Y-%m-%d %H:%M:%S')}

@@ -831,8 +831,7 @@ class claim_event(osv.osv):
 
         - depends on the type of claim - supplier or customer
         - destination of picking moves becomes original Supplier/Customer [property_stock_supplier or property_stock_customer from res.partner]
-        - name of picking becomes IN/0001 -> IN/0001-return type 'out' for supplier
-        - name of picking becomes OUT/0001 -> OUT/0001-return type 'in' for customer
+        - name of picking becomes IN/0001 -> PICK/0001-return
         - (is not set to done - defined in _picking_done_cond)
         - if replacement is needed, we create a new picking
         '''
@@ -854,32 +853,28 @@ class claim_event(osv.osv):
         claim_type = claim.type_return_claim
         # don't generate financial documents if the claim is linked to an internal or intermission partner
         inv_status = claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
-        # new name, previous name + -return
-        new_name = origin_picking.name + '-return'
+        # new name + -return
+        new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket') + '-return'
         # get the picking values and move values according to claim type
         picking_values = {'name': new_name,
+                          'state': 'draft',
                           'partner_id': claim.partner_id_return_claim.id,  # both partner needs to be filled??
                           'partner_id2': claim.partner_id_return_claim.id,
                           'purchase_id': origin_picking.purchase_id.id,
                           'sale_id': origin_picking.sale_id.id,
                           'reason_type_id': context['common']['rt_goods_return'],
                           'invoice_state': inv_status,
+                          'location_dest_id': claim.partner_id_return_claim.property_stock_supplier.id,
+                          'converted_to_standard': False,
+                          'type': 'out',
+                          'subtype': 'picking',
+                          'sequence_id': pick_obj.create_sequence(cr, uid, {'name': new_name, 'code': new_name,
+                                                                            'prefix': '', 'padding': 2}, context=context),
                           'claim': True,
                           }
-        move_values = {'reason_type_id': context['common']['rt_goods_return']}
-        if claim_type == 'supplier':
-            picking_values.update({'type': 'out'})
-            # moves go back to supplier, source location comes from input (if dynamic) or from claim product values
-            move_values.update({'location_dest_id': claim.partner_id_return_claim.property_stock_supplier.id})
-        elif claim_type == 'customer':
-            picking_values.update({'type': 'in'})
-            # receive return from customer, and go into input
-            move_values.update({'location_id': claim.partner_id_return_claim.property_stock_customer.id,
-                                'location_dest_id': context['common']['input_id']})
+        move_values = {'state': 'assigned', 'type': 'out', 'reason_type_id': context['common']['rt_goods_return']}
         # update the picking
         pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
-        # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
-        picking_tools.confirm(cr, uid, event_picking_id, context=context)
         # update the picking again - strange bug on runbot, the type was internal again...
         pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
         # update the destination location for each move
@@ -931,10 +926,67 @@ class claim_event(osv.osv):
 
         - depends on the type of claim - supplier or customer
         - destination of picking moves becomes original Supplier/Customer [property_stock_supplier or property_stock_customer from res.partner]
+        - name of picking becomes IN/0001 -> PICK/0001-surplus
+        - (is not set to done - defined in _picking_done_cond)
+        '''
+        context = context.copy()
+        context.update({'from_claim': True})
+
+        # objects
+        move_obj = self.pool.get('stock.move')
+        pick_obj = self.pool.get('stock.picking')
+        picking_tools = self.pool.get('picking.tools')
+        # event picking object
+        event_picking = obj.event_picking_id_claim_event
+        event_picking_id = event_picking.id
+        # origin picking in/out
+        origin_picking = obj.return_claim_id_claim_event.picking_id_return_claim
+        # claim
+        claim = obj.return_claim_id_claim_event
+        # don't generate financial documents if the claim is linked to an internal or intermission partner
+        inv_status = claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
+        # new name + -surplus
+        new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket') + '-surplus'
+        # get the picking values and move values according to claim type
+        picking_values = {'name': new_name,
+                          'state': 'draft',
+                          'partner_id': claim.partner_id_return_claim.id,  # both partner needs to be filled??
+                          'partner_id2': claim.partner_id_return_claim.id,
+                          'purchase_id': origin_picking.purchase_id.id,
+                          'sale_id': origin_picking.sale_id.id,
+                          'reason_type_id': context['common']['rt_goods_return'],
+                          'invoice_state': inv_status,
+                          'location_dest_id': claim.partner_id_return_claim.property_stock_supplier.id,
+                          'converted_to_standard': False,
+                          'type': 'out',
+                          'subtype': 'picking',
+                          'sequence_id': pick_obj.create_sequence(cr, uid, {'name': new_name, 'code': new_name,
+                                                                            'prefix': '', 'padding': 2}, context=context),
+                          'claim': True,
+                          }
+        move_values = {'state': 'assigned', 'type': 'out', 'reason_type_id': context['common']['rt_goods_return']}
+        # update the picking
+        pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
+        # update the picking again - strange bug on runbot, the type was internal again...
+        pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
+        # update the destination location for each move
+        move_ids = [move.id for move in event_picking.move_lines]
+        # get the move values according to claim type
+        move_obj.write(cr, uid, move_ids, move_values, context=context)
+        # check assign for event picking
+        picking_tools.check_assign(cr, uid, event_picking.id, context=context)
+
+        return True
+
+    def _do_process_missing(self, cr, uid, obj, context=None):
+        '''
+        process logic for return surplus event
+
+        - depends on the type of claim - supplier or customer
+        - destination of picking moves becomes original Supplier/Customer [property_stock_supplier or property_stock_customer from res.partner]
         - name of picking becomes IN/0001 -> IN/0001-surplus type 'out' for supplier
         - name of picking becomes OUT/0001 -> OUT/0001-surplus type 'in' for customer
         - (is not set to done - defined in _picking_done_cond)
-        - if replacement is needed, we create a new picking
         '''
         context = context.copy()
         context.update({'from_claim': True})
@@ -954,14 +1006,18 @@ class claim_event(osv.osv):
         claim_type = claim.type_return_claim
         # don't generate financial documents if the claim is linked to an internal or intermission partner
         inv_status = claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
+        # new name + -missing
+        new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket') + '-missing'
         # get the picking values and move values according to claim type
-        picking_values = {'name': origin_picking.name + '-surplus',
-                          'partner_id': claim.partner_id_return_claim.id,
+        picking_values = {'name': new_name,
+                          'partner_id': claim.partner_id_return_claim.id,  # both partner needs to be filled??
                           'partner_id2': claim.partner_id_return_claim.id,
                           'purchase_id': origin_picking.purchase_id.id,
                           'sale_id': origin_picking.sale_id.id,
                           'reason_type_id': context['common']['rt_goods_return'],
                           'invoice_state': inv_status,
+                          'converted_to_standard': False,
+                          'subtype': 'picking',
                           'claim': True,
                           }
         move_values = {'reason_type_id': context['common']['rt_goods_return']}
@@ -974,27 +1030,16 @@ class claim_event(osv.osv):
             # receive return from customer, and go into input
             move_values.update({'location_id': claim.partner_id_return_claim.property_stock_customer.id,
                                 'location_dest_id': context['common']['input_id']})
-        # moves go back to supplier, source location comes from input (if dynamic) or from claim product values
-        move_values.update({'location_dest_id': claim.partner_id_return_claim.property_stock_supplier.id})
         # update the picking
         pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
-        # update the picking again
-        pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
-        # check for surplus and add them to the new pick
-        for move in event_picking.move_lines:
-            this_move_values = move_values
-            if move.purchase_line_id and move.purchase_line_id.product_qty < move.product_qty:
-                this_move_values.update({'product_qty': move.product_qty - move.purchase_line_id.product_qty})
-            elif move.sale_line_id and move.sale_line_id.product_uom_qty < move.product_qty:
-                this_move_values.update({'product_qty': move.product_qty - move.sale_line_id.product_uom_qty})
-            elif not move.purchase_line_id and not move.sale_line_id:
-                # just add the whole missing line
-                continue
-            else:
-                this_move_values.update({'state': 'cancel'})
-            move_obj.write(cr, uid, move.id, this_move_values, context=context)
-            this_move_values.clear()
+        # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
         picking_tools.confirm(cr, uid, event_picking_id, context=context)
+        # update the picking again - strange bug on runbot, the type was internal again...
+        pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
+        # update the destination location for each move
+        move_ids = [move.id for move in event_picking.move_lines]
+        # get the move values according to claim type
+        move_obj.write(cr, uid, move_ids, move_values, context=context)
         # check assign for event picking
         picking_tools.check_assign(cr, uid, event_picking.id, context=context)
 
