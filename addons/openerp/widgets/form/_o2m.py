@@ -247,8 +247,8 @@ class O2M(TinyInputWidget):
             current.group_by_ctx = group_by_ctx
             current.domain = [('id', 'in', ids)]
 
-        if current.view_type == 'tree' and self.readonly:
-            self.editable = False
+        #if current.view_type == 'tree' and self.readonly:
+        #    self.editable = False
 
         if 'default_name' in current.context:
             del current.context['default_name']
