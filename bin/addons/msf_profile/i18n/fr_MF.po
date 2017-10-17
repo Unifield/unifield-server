@@ -99633,7 +99633,7 @@ msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'
 #. module: msf_instance
 #: field:account.period,child_mission_hq_closed:0
 msgid "Child Mission or HQ Closed"
-msgstr "Fermé en mission ou en HQ dans les instances enfants"
+msgstr "Fermé en mission ou en HQ dans l'instance enfant"
 
 #. module: msf_instance
 #: help:account.period,child_mission_hq_closed:0
