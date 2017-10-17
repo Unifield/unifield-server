@@ -439,6 +439,10 @@ class purchase_order(osv.osv):
                     if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in pol_states]):
                         res[po.id] = 'confirmed_p'
 
+            # add audit line in track change if state has changed:
+            if po.state != res[po.id]:
+                self.add_audit_line(cr, uid, po.id, po.state, res[po.id], context=context)
+
         return res
 
     def _is_fixed_type(self, cr, uid, ids, field_name, args, context=None):
@@ -2329,6 +2333,89 @@ class purchase_order(osv.osv):
                     self.pool.get('account.commitment').write(cr, uid, [commit_id], {'analytic_distribution_id': new_distrib_id}, context=context)
 
         return commit_id
+
+
+    def add_audit_line(self, cr, uid, order_id, old_state, new_state, context=None):
+        """
+        If state is modified, add an audittrail.log.line
+        @param cr: Cursor to the database
+        @param uid: ID of the user that change the state
+        @param order_id: ID of the sale.order on which the state is modified
+        @param new_state: The value of the new state
+        @param context: Context of the call
+        @return: True
+        """
+        audit_line_obj = self.pool.get('audittrail.log.line')
+        audit_seq_obj = self.pool.get('audittrail.log.sequence')
+        fld_obj = self.pool.get('ir.model.fields')
+        model_obj = self.pool.get('ir.model')
+        rule_obj = self.pool.get('audittrail.rule')
+        log = 1
+
+        if context is None:
+            context = {}
+
+        domain = [
+            ('model', '=', 'purchase.order'),
+            ('res_id', '=', order_id),
+        ]
+
+        object_id = model_obj.search(cr, uid, [('model', '=', 'purchase.order')], context=context)[0]
+        # If the field 'state_hidden_sale_order' is not in the fields to trace, don't trace it.
+        fld_ids = fld_obj.search(cr, uid, [
+            ('model', '=', 'purchase.order'),
+            ('name', '=', 'state'),
+        ], context=context)
+        rule_domain = [('object_id', '=', object_id)]
+        if not old_state:
+            rule_domain.append(('log_create', '=', True))
+        else:
+            rule_domain.append(('log_write', '=', True))
+        rule_ids = rule_obj.search(cr, uid, rule_domain, context=context)
+        if fld_ids and rule_ids:
+            for fld in rule_obj.browse(cr, uid, rule_ids[0], context=context).field_ids:
+                if fld.id == fld_ids[0]:
+                    break
+            else:
+                return
+
+        log_sequence = audit_seq_obj.search(cr, uid, domain)
+        if log_sequence:
+            log_seq = audit_seq_obj.browse(cr, uid, log_sequence[0]).sequence
+            log = log_seq.get_id(code_or_id='id')
+
+        # Get readable value
+        new_state_txt = False
+        old_state_txt = False
+        for st in PURCHASE_ORDER_STATE_SELECTION:
+            if new_state_txt and old_state_txt:
+                break
+            if new_state == st[0]:
+                new_state_txt = st[1]
+            if old_state == st[0]:
+                old_state_txt = st[1]
+
+        vals = {
+            'user_id': uid,
+            'method': 'write',
+            'name': _('State'),
+            'object_id': object_id,
+            'res_id': order_id,
+            'fct_object_id': False,
+            'fct_res_id': False,
+            'sub_obj_name': '',
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'field_description': _('Order state'),
+            'trans_field_description': _('Order state'),
+            'new_value': new_state,
+            'new_value_text': new_state_txt or new_state,
+            'new_value_fct': False,
+            'old_value': old_state,
+            'old_value_text': old_state_txt or old_state,
+            'old_value_fct': '',
+            'log': log,
+        }
+        audit_line_obj.create(cr, uid, vals, context=context)
 
 purchase_order()
 
