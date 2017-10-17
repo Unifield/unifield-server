@@ -277,7 +277,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
     def add_audit_line(self, cr, uid, order_id, old_state, new_state, context=None):
         """
-        If state_hidden_sale_order is modified, add an audittrail.log.line
+        If state is modified, add an audittrail.log.line
         @param cr: Cursor to the database
         @param uid: ID of the user that change the state
         @param order_id: ID of the sale.order on which the state is modified
@@ -304,7 +304,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # If the field 'state_hidden_sale_order' is not in the fields to trace, don't trace it.
         fld_ids = fld_obj.search(cr, uid, [
             ('model', '=', 'sale.order'),
-            ('name', '=', 'state_hidden_sale_order'),
+            ('name', '=', 'state'),
         ], context=context)
         rule_domain = [('object_id', '=', object_id)]
         if not old_state:
@@ -400,7 +400,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         line_ids = line_obj.search(cr, uid, [
             ('order_id', 'in', ids),
-            ('order_id.state', 'not in', ['draft', 'cancel']),
+            ('state', 'not in', ['draft', 'cancel', 'cancel_r']),
             ('order_id.import_in_progress', '=', False),
             ('product_uom_qty', '<=', 0.00),
         ], limit=1, order='NO_ORDER', context=context)
@@ -479,6 +479,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in sol_states]):
                         res[so.id] = 'confirmed_p'
 
+            # add audit line in track change if state has changed:
+            if so.state != res[so.id]:
+                self.add_audit_line(cr, uid, so.id, so.state, res[so.id], context=context)
 
         return res
 
