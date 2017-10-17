@@ -10,9 +10,14 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Export to HQ system">
-                <field name="instance_id" domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]"/>
+                <field name="instance_id"
+                       domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids', '=', True)]"
+                       on_change="onchange_instance_id()"/>
                 <field name="fiscalyear_id"/>
-                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '&lt;&gt;', 'created'), ('number', '&lt;', 16)]"/>
+                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id),
+                                                 ('state', '&lt;&gt;', 'created'),
+                                                 ('number', '&lt;', 16),
+                                                 ('child_mission_hq_closed', '=', [instance_id, fiscalyear_id])]"/>
                 <newline/>
                 <button icon="terp-camera_test" string="Export" name="button_create_report" type="object" default_focus="1"/>
             </form>
