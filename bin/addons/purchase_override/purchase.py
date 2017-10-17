@@ -422,7 +422,9 @@ class purchase_order_cancel_wizard(osv.osv_memory):
 
         # cancel all lines:
         for pol in po.order_line:
-            signal = 'cancel_r' if resource else 'cancel'
+            signal = 'cancel' 
+            if resource and pol.linked_sol_id:
+                signal = 'cancel_r'
             wf_service.trg_validate(uid, 'purchase.order.line', pol.id, signal, cr)
 
         return {'type': 'ir.actions.act_window_close'}
