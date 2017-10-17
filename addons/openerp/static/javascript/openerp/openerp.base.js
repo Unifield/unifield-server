@@ -179,6 +179,7 @@ function doLoadingSuccess(app, url) {
         form_hookStateChange();
         form_hookAttrChange();
         $("[onload]").trigger('onload');
+        $("#state").trigger('change');
     };
 }
 

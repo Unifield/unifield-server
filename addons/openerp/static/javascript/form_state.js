@@ -500,6 +500,10 @@ function form_setReadonly(container, fieldName, readonly) {
     }
 
     if (!kind && (jQuery(idSelector(field_id+'_btn_')).length || jQuery(idSelector('_o2m_'+field_id)).length)) { // one2many
+        if (isNaN(readonly))
+        {
+            readonly = parseInt(jQuery(idSelector('_o2m_'+field_id)).attr("fld_readonly"));
+        }
         //new One2Many(field_id).setReadonly(readonly);
         return;
     }

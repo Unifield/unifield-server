@@ -181,7 +181,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
         if isinstance(self.states, dict) and state in self.states:
             attrs = dict(self.states[state])
 
-            self.readonly = attrs.get('readonly', self.readonly)
+            #self.readonly = attrs.get('readonly', self.readonly)
             self.required = attrs.get('required', self.required)
             self.default = attrs.get('value', self.default)
 

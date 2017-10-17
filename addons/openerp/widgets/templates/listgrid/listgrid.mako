@@ -214,6 +214,15 @@
 	                                        % endif
                                         % endif
                                     </td>
+                                % elif o2m:
+                                    <td class="pager-cell-button">
+                                    % if not hide_new_button:
+                                    <button title="${_('Create new record.')}" id="${name}_btn_"
+                                        onclick="listgridValidation('${name}', '${o2m or 0}', -1); return false;" type="button" class="oe_form_button_create">
+                                            ${_('New')}
+                                    </button>
+                                    % endif
+                                    </td>
                                 % endif
                                 % if filter_selector:
                                 <td class="pager-cell" style="width: 90%">
