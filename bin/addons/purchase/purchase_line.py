@@ -997,6 +997,11 @@ class purchase_order_line(osv.osv):
         if not default:
             default = {}
 
+        # do not copy canceled purchase.order.line:
+        pol = self.browse(cr, uid, p_id, fields_to_fetch=['state'], context=context)
+        if pol.state in ['cancel', 'cancel_r']:
+            return False
+
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': []})
 
         for field in ['origin', 'move_dest_id', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol']:
