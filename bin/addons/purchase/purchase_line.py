@@ -1008,7 +1008,7 @@ class purchase_order_line(osv.osv):
             if field not in default:
                 default[field]= False
 
-        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False})
+        default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False})
 
         if not context.get('keepDateAndDistrib'):
             if 'confirmed_delivery_date' not in default:

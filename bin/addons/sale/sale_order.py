@@ -2046,6 +2046,28 @@ class sale_order_line(osv.osv):
             wf_service.trg_write(uid, 'sale.order', line.order_id.id, cr)
         return res
 
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        copy from sale order line
+        '''
+        if not context:
+            context = {}
+
+        if not default:
+            default = {}
+
+        default.update({
+            'sync_order_line_db_id': False,
+            'manually_corrected': False,
+            'created_by_po': False,
+            'created_by_po_line': False,
+            'created_by_rfq': False,
+            'created_by_rfq_line': False,
+        })
+
+        return super(sale_order_line, self).copy(cr, uid, id, default, context)
+
+
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
         reset link to purchase order from update of on order purchase order
@@ -2667,27 +2689,6 @@ class sale_order_line(osv.osv):
         else:
             default_data.update({'type': 'make_to_order'})
         return default_data
-
-    def copy(self, cr, uid, id, default=None, context=None):
-        '''
-        copy from sale order line
-        '''
-        if not context:
-            context = {}
-
-        if not default:
-            default = {}
-
-        default.update({
-            'sync_order_line_db_id': False,
-            'manually_corrected': False,
-            'created_by_po': False,
-            'created_by_po_line': False,
-            'created_by_rfq': False,
-            'created_by_rfq_line': False,
-        })
-
-        return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
     def check_empty_line(self, cr, uid, ids, vals, context=None):
         '''
