@@ -2056,6 +2056,11 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
 
+        # do not copy canceled sale.order.line:
+        sol = self.browse(cr, uid, id, fields_to_fetch=['state'], context=context)
+        if sol.state in ['cancel', 'cancel_r']:
+            return False
+
         # if the po link is not in default, we set both to False (both values are closely related)
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
             default.update({
