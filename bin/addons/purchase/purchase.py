@@ -1897,60 +1897,133 @@ class purchase_order(osv.osv):
 
         return self.pool.get('stock.picking').create(cr, uid, values, context=context)
 
-    def create_picking_line(self, cr, uid, picking_id, order_line, context=None):
+
+    def create_new_incoming_line(self, cr, uid, incoming_id, pol, context=None):
+        '''
+        create new stock move for incoming shipment
+        '''
         if context is None:
             context = {}
-
-        order_line = self.ensure_object(cr, uid, 'purchase.order.line', order_line)
-        if not order_line:
-            return False
-
-        picking_id = self.ensure_object(cr, uid, 'stock.picking', picking_id)
-        order = order_line.order_id
-        dest = order.location_id.id
-
         move_obj = self.pool.get('stock.move')
         data_obj = self.pool.get('ir.model.data')
 
-        # service with reception are directed to Service Location
-        if order_line.product_id.type == 'service_recep' and not order.cross_docking_ok:
+        pol = self.ensure_object(cr, uid, 'purchase.order.line', pol)
+        incoming = self.ensure_object(cr, uid, 'stock.picking', incoming_id)
+        if not pol:
+            return False
+
+        dest = pol.order_id.location_id.id
+        if pol.product_id.type == 'service_recep' and not pol.order_id.cross_docking_ok:
+            # service with reception are directed to Service Location
             dest = self.pool.get('stock.location').get_service_location(cr, uid)
         else:
-            sol = order_line.linked_sol_id
+            sol = pol.linked_sol_id
             if sol:
                 if not (sol.order_id and sol.order_id.procurement_request):
                     pass
-                elif order_line.product_id.type == 'service_recep':
+                elif pol.product_id.type == 'service_recep':
                     dest = self.pool.get('stock.location').get_service_location(cr, uid)
-                elif order_line.product_id.type == 'consu':
+                elif pol.product_id.type == 'consu':
                     dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
                 elif sol.order_id.location_requestor_id.usage != 'customer':
                     dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
 
         values = {
-            'name': ''.join((order.name, ': ', (order_line.name or ''))),
-            'product_id': order_line.product_id.id,
-            'product_qty': order_line.product_qty,
-            'product_uos_qty': order_line.product_qty,
-            'product_uom': order_line.product_uom.id,
-            'product_uos': order_line.product_uom.id,
-            'location_id': order.partner_id.property_stock_supplier.id,
+            'name': ''.join((pol.order_id.name, ': ', (pol.name or ''))),
+            'product_id': pol.product_id.id,
+            'product_qty': pol.product_qty,
+            'product_uos_qty': pol.product_qty,
+            'product_uom': pol.product_uom.id,
+            'product_uos': pol.product_uom.id,
+            'location_id': pol.order_id.partner_id.property_stock_supplier.id,
             'location_dest_id': dest,
-            'picking_id': picking_id.id,
-            'move_dest_id': order_line.move_dest_id.id,
+            'picking_id': incoming.id,
+            'move_dest_id': pol.move_dest_id.id,
             'state': 'draft',
-            'purchase_line_id': order_line.id,
-            'company_id': order.company_id.id,
-            'price_currency_id': order.pricelist_id.currency_id.id,
-            'price_unit': order_line.price_unit,
-            'date': order_line.confirmed_delivery_date,
-            'date_expected': order_line.confirmed_delivery_date or order_line.date_planned,
-            'line_number': order_line.line_number,
-            'comment': order_line.comment,
+            'purchase_line_id': pol.id,
+            'company_id': pol.order_id.company_id.id,
+            'price_currency_id': pol.order_id.pricelist_id.currency_id.id,
+            'price_unit': pol.price_unit,
+            'date': pol.confirmed_delivery_date,
+            'date_expected': pol.confirmed_delivery_date or pol.date_planned,
+            'line_number': pol.line_number,
+            'comment': pol.comment,
         }
 
-        if picking_id.reason_type_id:
-            values.update({'reason_type_id': picking_id.reason_type_id.id})
+        if incoming.reason_type_id:
+            values.update({'reason_type_id': incoming.reason_type_id.id})
+
+        ctx = context.copy()
+        ctx['bypass_store_function'] = [
+            ('stock.picking', ['dpo_incoming', 'dpo_out', 'overall_qty', 'line_state'])
+        ]
+
+        return move_obj.create(cr, uid, values, context=ctx)
+
+
+    def create_new_int_line(self, cr, uid, internal_id, pol, incoming_move_id=False, context=None):
+        '''
+        create new stock.move for INT
+        '''
+        if context is None:
+            context = {}
+        move_obj = self.pool.get('stock.move')
+        data_obj = self.pool.get('ir.model.data')
+
+        pol = self.ensure_object(cr, uid, 'purchase.order.line', pol)
+        internal = self.ensure_object(cr, uid, 'stock.picking', internal_id)
+        if not pol:
+            return False
+
+        # compute source location:
+        input_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        input_loc = self.pool.get('stock.location').browse(cr, uid, input_id, context=context)
+
+        # compute destination location:
+        dest = pol.order_id.location_id.id
+        if pol.product_id.type == 'service_recep' and not pol.order_id.cross_docking_ok:
+            # service with reception are directed to Service Location
+            dest = self.pool.get('stock.location').get_service_location(cr, uid)
+        elif self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=pol.product_id, context=context):
+            # if input location has a chained location then use it
+            dest = self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=pol.product_id, context=context)[0].id
+        else:
+            sol = pol.linked_sol_id
+            if sol:
+                if not (sol.order_id and sol.order_id.procurement_request):
+                    pass
+                elif pol.product_id.type == 'service_recep':
+                    dest = self.pool.get('stock.location').get_service_location(cr, uid)
+                elif pol.product_id.type == 'consu':
+                    dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+                elif sol.order_id.location_requestor_id.usage != 'customer':
+                    dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+
+        values = {
+            'name': ''.join((pol.order_id.name, ': ', (pol.name or ''))),
+            'product_id': pol.product_id.id,
+            'product_qty': pol.product_qty,
+            'product_uos_qty': pol.product_qty,
+            'product_uom': pol.product_uom.id,
+            'product_uos': pol.product_uom.id,
+            'location_id': input_id,
+            'location_dest_id': dest,
+            'picking_id': internal.id,
+            'move_dest_id': pol.move_dest_id.id,
+            'state': 'draft',
+            'purchase_line_id': pol.id,
+            'company_id': pol.order_id.company_id.id,
+            'price_currency_id': pol.order_id.pricelist_id.currency_id.id,
+            'price_unit': pol.price_unit,
+            'date': pol.confirmed_delivery_date,
+            'date_expected': pol.confirmed_delivery_date or pol.date_planned,
+            'line_number': pol.line_number,
+            'comment': pol.comment,
+            'linked_incoming_move': incoming_move_id,
+        }
+
+        if internal.reason_type_id:
+            values.update({'reason_type_id': internal.reason_type_id.id})
 
         ctx = context.copy()
         ctx['bypass_store_function'] = [
