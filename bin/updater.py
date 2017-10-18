@@ -114,13 +114,29 @@ def find(path):
 
 def rmtree(files, path=None, verbose=False):
     """Python free rmtree"""
+    #  OpenERPServerService.exe can't be deleted if Windows Service MAnager uses it
+    backup_trash = 'backup-trash'
     if path is None and isinstance(files, basestring):
         path, files = files, find(files)
     for f in reversed(files):
         target = os.path.join(path, f) if path is not None else f
         if os.path.isfile(target) or os.path.islink(target):
             warn("unlink", target)
-            os.unlink( target )
+            try:
+                os.unlink(target)
+            except:
+                warn('Except on target %s, %s' % (target, target.endswith('OpenERPServerService.exe')))
+                if target.endswith('OpenERPServerService.exe'):
+                    if not os.path.isdir(backup_trash):
+                        os.makedirs(backup_trash)
+                    index = 0
+                    newname = os.path.join(backup_trash, '%s-%s' % (os.path.basename(target), index))
+                    while os.path.isfile(newname):
+                        index += 1
+                        newname = os.path.join(backup_trash, '%s-%s' % (os.path.basename(target), index))
+                    os.rename(target, newname)
+                else:
+                    raise
         elif os.path.isdir(target):
             warn("rmdir", target)
             os.rmdir( target )
