@@ -2102,13 +2102,12 @@ class sale_order_line(osv.osv):
             'invoiced': False,
             'invoice_lines': [],
             'set_as_sourced_n': False,
-            'resourced_original_line': False,
         })
 
         #if not context.get('keepDateAndDistrib') and 'source_sync_line_id' not in default:
         #    default['source_sync_line_id'] = False
 
-        for x in ['modification_comment', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol']:
+        for x in ['modification_comment', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line']:
             if x not in default:
                 default[x] = False
 
