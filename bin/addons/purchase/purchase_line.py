@@ -288,6 +288,116 @@ class purchase_order_line(osv.osv):
 
         return False
 
+    def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for line in self.read(cr, uid, ids, ['analytic_distribution_id']):
+            if line['analytic_distribution_id']:
+                res[line['id']] = False
+            else:
+                res[line['id']] = True
+        return res
+
+    def _get_distribution_state(self, cr, uid, ids, name, args, context=None):
+        """
+        Get state of distribution:
+         - if compatible with the purchase line, then "valid"
+         - if no distribution, take a tour of purchase distribution, if compatible, then "valid"
+         - if no distribution on purchase line and purchase, then "none"
+         - all other case are "invalid"
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        ana_dist_obj = self.pool.get('analytic.distribution')
+        order_dict = {}
+        order_obj = self.pool.get('purchase.order')
+        for line in self.read(cr, uid, ids,
+                              ['order_id', 'analytic_distribution_id', 'account_4_distribution'], context=context):
+            order_id = line['order_id'] and line['order_id'][0] or False
+            order = None
+            if order_id:
+                if order_id in order_dict:
+                    order = order_dict[order_id]
+                else:
+                    order = order_obj.read(cr, uid, order_id, ['analytic_distribution_id'], context=context)
+                    order_dict[order_id] = order
+            if order and not order['analytic_distribution_id'] and not line['analytic_distribution_id']:
+                res[line['id']] = 'none'
+            else:
+                po_distrib_id = order_id and order['analytic_distribution_id'] and order['analytic_distribution_id'][0] or False
+                distrib_id = line['analytic_distribution_id'] and line['analytic_distribution_id'][0] or False
+                account_id = line['account_4_distribution'] and line['account_4_distribution'][0] or False
+                if not account_id:
+                    res[line['id']] = 'invalid'
+                    continue
+                res[line['id']] = ana_dist_obj._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
+        return res
+
+    def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        get_sel = self.pool.get('ir.model.fields').get_selection
+        for pol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
+            d_state = get_sel(cr, uid, self._name, 'analytic_distribution_state', pol['analytic_distribution_state'], context)
+            res[pol['id']] = "%s%s"%(d_state, pol['have_analytic_distribution_from_header'] and _(" (from header)") or "")
+        return res
+
+    def _get_distribution_account(self, cr, uid, ids, name, arg, context=None):
+        """
+        Get account for given lines regarding:
+        - product expense account if product_id
+        - product category expense account if product_id but no product expense account
+        - product category expense account if no product_id (come from family's product category link)
+        """
+        # Some verifications
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        res = {}
+        product_tmpl_dict = {}
+        categ_dict = {}
+        for line in self.browse(cr, uid, ids):
+            # Prepare some values
+            res[line.id] = False
+            a = False
+            # Check if PO is inkind
+            is_inkind = False
+            if line.order_id and line.order_id.order_type == 'in_kind':
+                is_inkind = True
+            # To my mind there is 4 cases for a PO line (because of 2 criteria that affect account: "PO is inkind or not" and "line have a product or a nomenclature"):
+            # - PO is an inkind donation AND PO line have a product: take donation expense account on product OR on product category, else raise an error
+            # - PO is NOT inkind and PO line have a product: take product expense account OR category expense account
+            # - PO is inkind but not PO Line product => this should not happens ! Should be raise an error but return False (if not we could'nt write a PO line)
+            # - other case: take expense account on family that's attached to nomenclature
+            if line.product_id and is_inkind:
+                a = line.product_id.donation_expense_account and line.product_id.donation_expense_account.id or False
+                if not a:
+                    a = line.product_id.categ_id.donation_expense_account and line.product_id.categ_id.donation_expense_account.id or False
+            elif line.product_id:
+                if line.product_id.product_tmpl_id in product_tmpl_dict:
+                    a = product_tmpl_dict[line.product_id.product_tmpl_id]
+                else:
+                    a = line.product_id.product_tmpl_id.property_account_expense.id or False
+                    product_tmpl_dict[line.product_id.product_tmpl_id] = a
+                if not a:
+                    if line.product_id.categ_id in categ_dict:
+                        a = categ_dict[line.product_id.categ_id]
+                    else:
+                        a = line.product_id.categ_id.property_account_expense_categ.id or False
+                        categ_dict[line.product_id.categ_id] = a
+            else:
+                a = line.nomen_manda_2 and line.nomen_manda_2.category_id and line.nomen_manda_2.category_id.property_account_expense_categ and line.nomen_manda_2.category_id.property_account_expense_categ.id or False
+            res[line.id] = a
+        return res
+
+
     _columns = {
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
@@ -385,7 +495,19 @@ class purchase_order_line(osv.osv):
         'original_currency_id': fields.many2one('res.currency', 'Original Currency'),
         'modification_comment': fields.char('Modification Comment', size=1024),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
+
+        # finance
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
+        'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
+        'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id',
+                                                string="Commitment Voucher Lines", readonly=True),
+        'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
+                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
+        'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
     }
+
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
         'set_as_validated_n': lambda *a: False,
@@ -404,6 +526,7 @@ class purchase_order_line(osv.osv):
         'po_partner_type_stored': lambda obj, cr, uid, c: c and c.get('partner_type', False),
         'date_planned': _get_planned_date,
         'confirmed_delivery_date': False,
+        'have_analytic_distribution_from_header': lambda *a: True,
     }
 
     def _get_destination_ok(self, cr, uid, lines, context):
@@ -997,7 +1120,7 @@ class purchase_order_line(osv.osv):
         if not default:
             default = {}
 
-        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': []})
+        default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': []})
 
         for field in ['origin', 'move_dest_id', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment']:
             if field not in default:
@@ -1010,6 +1133,12 @@ class purchase_order_line(osv.osv):
                 default['confirmed_delivery_date'] = False
             if 'date_planned' not in default:
                 default['date_planned'] = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
+            if 'analytic_distribution_id' not in default:
+                default['analytic_distribution_id'] = False
+
+        if default.get('analytic_distribution_id'):
+            default['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, default['analytic_distribution_id'], {}, context=context)
+
 
         return super(purchase_order_line, self).copy_data(cr, uid, p_id, default=default, context=context)
 
@@ -1551,6 +1680,68 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
         return {'value': {'date_planned': requested_date, }}
+
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Launch analytic distribution wizard on a purchase order line.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # Prepare some values
+        purchase_line = self.browse(cr, uid, ids[0], context=context)
+        amount = purchase_line.price_subtotal or 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = purchase_line.order_id.currency_id and purchase_line.order_id.currency_id.id or company_currency
+        # Get analytic_distribution_id
+        distrib_id = purchase_line.analytic_distribution_id and purchase_line.analytic_distribution_id.id
+        # Get default account
+        account_id = purchase_line.account_4_distribution and purchase_line.account_4_distribution.id or False
+        # Check if PO is inkind
+        is_inkind = False
+        if purchase_line.order_id and purchase_line.order_id.order_type == 'in_kind':
+            is_inkind = True
+        if is_inkind and not account_id:
+            raise osv.except_osv(_('Error'), _('No donation account found for this line: %s. (product: %s)') % (purchase_line.name, purchase_line.product_id and purchase_line.product_id.name or ''))
+        elif not account_id:
+            raise osv.except_osv(_('Error !'),
+                                 _('There is no expense account defined for this product: "%s" (id:%d)') % (purchase_line.product_id.name, purchase_line.product_id.id))
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'purchase_line_id': purchase_line.id,
+            'currency_id': currency or False,
+            'state': 'cc',
+            'account_id': account_id or False,
+            'posting_date': time.strftime('%Y-%m-%d'),
+            'document_date': time.strftime('%Y-%m-%d'),
+            'partner_type': context.get('partner_type'),
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
+        }
 
 
 purchase_order_line()
