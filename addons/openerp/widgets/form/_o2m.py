@@ -256,8 +256,13 @@ class O2M(TinyInputWidget):
         if self.view_type == 'tree' and pparams:
             self.editable = bool(pparams.id)
 
+        if hasattr(self, "readonly_from_state"):
+            readonly_for_screen = self.readonly_from_state
+        else:
+            readonly_for_screen = self.readonly
+
         self.screen = Screen(current, prefix=self.name, views_preloaded=view,
-                             editable=self.editable, readonly=self.readonly,
+                             editable=self.editable, readonly=readonly_for_screen,
                              selectable=0, nolinks=self.link, _o2m=1,
                              force_readonly=self.force_readonly,
                              filter_selector=self.filter_selector)
