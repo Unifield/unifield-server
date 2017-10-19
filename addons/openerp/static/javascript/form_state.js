@@ -504,14 +504,14 @@ function form_setReadonly(container, fieldName, readonly) {
         {
             readonly = parseInt(jQuery(idSelector('_o2m_'+field_id)).attr("fld_readonly"));
         }
+
         // Convert input to boolean...
         // (careful : sometimes readonly already is a boolean ... )
         if (readonly == 1) { readonly = true;  }
         if (readonly == 0) { readonly = false; }
 
         // Get current readonly status
-        var current_editable = parseInt(MochiKit.DOM.getElement(field_id + '/_terp_editable').value);
-        var current_readonly = current_editable == 1 ? false : true;
+        var current_readonly = jQuery('table.one2many[id$="'+field_id+'"]')[0].classList.contains("m2o_readonly");
         
         // Update only if different
         if (current_readonly != readonly)
