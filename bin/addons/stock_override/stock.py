@@ -2123,7 +2123,10 @@ class stock_move(osv.osv):
                 prodlot_to_write_list.append(line.id)
             # UF-2426: If the cancel is called from sync, do not change the source location!
             if not context.get('sync_message_execution', False) and line.location_id.location_id and line.location_id.location_id.usage != 'view':
-                self.write(cr, uid, ids, {'location_id': line.location_id.location_id.id})
+                loc_id = line.location_id.location_id.id
+                if line and line.sale_line_id and line.sale_line_id.type == 'make_to_stock' and line.sale_line_id.location_id:
+                    loc_id = line.sale_line_id.location_id.id
+                self.write(cr, uid, ids, {'location_id': loc_id})
         self.write(cr, uid, prodlot_to_write_list, {'prodlot_id': False, 'expired_date': False})
         return True
 
@@ -2162,7 +2165,6 @@ class stock_move(osv.osv):
                 if isinstance(move_data[f], tuple):
                     d = move_data[f][0]
                 search_domain.append((f, '=', d))
-
             move_ids = self.search(cr, uid, search_domain, context=context)
             if move_ids:
                 move = self.read(cr, uid, move_ids[0], ['product_qty', 'product_uos_qty'], context=context)
