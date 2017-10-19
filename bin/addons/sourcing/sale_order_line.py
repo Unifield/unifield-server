@@ -1704,6 +1704,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         })
                     self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
                     self.pool.get('purchase.order').write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
+                    self.pool.get('purchase.order').update_source_document(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
 
                 elif sourcing_line.po_cft == 'rfq':
                     rfq_to_use = self.get_existing_rfq(cr, uid, sourcing_line.id, context=context)
@@ -1736,6 +1737,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'original_uom': sourcing_line.original_uom.id,
                         })
                     self.pool.get('purchase.order.line').create(cr, uid, rfq_line_values, context=context)
+                    self.pool.get('purchase.order').update_source_document(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
 
                 elif sourcing_line.po_cft == 'cft':
                     tender_to_use = self.get_existing_tender(cr, uid, sourcing_line.id, context=context)
