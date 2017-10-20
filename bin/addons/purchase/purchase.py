@@ -1638,6 +1638,8 @@ class purchase_order(osv.osv):
                 else:
                     res['warning'] = {'title': _('Warning'), 'message': msg}
         res = common_onchange_partner_id(self, cr, uid, ids, part=part.id, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        # reset confirmed date
+        res.setdefault('value', {}).update({'delivery_confirmed_date': False})
 
         return res
 
