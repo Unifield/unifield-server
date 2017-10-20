@@ -134,6 +134,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
         'kind',
         'hide_default_menu',
         'filters' # filter buttons within an input widget, part of the same implicit "group"
+        'readonly_before_state'
     ]
 
     select = False
@@ -167,6 +168,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
 
         self.translatable = attrs.get('translate', False)
 
+        self.readonly_before_state = self.readonly
         self.set_state(attrs.get('state', 'draft'))
 
         self.callback = attrs.get('on_change', None)
@@ -179,34 +181,9 @@ class TinyInputWidget(TinyWidget, InputWidget):
 
     def set_state(self, state):
         if isinstance(self.states, dict) and state in self.states:
-
-            # 19/10/17, hacking the readonly state :
-            #
-            # we now want the global Form state to be dynamical directly
-            # in the browser without having to reload the full form.
-            #
-            # To achieve this, for root-level widgets (i.e. dependent of
-            # the global Form state), we do not change the self.readonly state.
-            # It will be automatically updated after loading the content in
-            # the browser. self.readonly should be kept equal to "should this
-            # widget be readonly by default?".
-            #
-            # However, we do keep track the "readonly according to current
-            # document state" for some cases... E.g. in the context of
-            # O2M when creating or editing an element, we do need to know this
-            # readonly state to properly propagate it to some wizards (?)(c.f.
-            # the window from 'New' order_line button)
-
-            is_root_level_widget = '/' not in self._name
-
             attrs = dict(self.states[state])
 
-            if is_root_level_widget:
-                self.readonly_from_state = attrs.get('readonly', self.readonly)
-            else:
-                self.readonly = attrs.get('readonly', self.readonly)
-
-            # Update the 'required' and 'default' attribute in all cases.
+            self.readonly = attrs.get('readonly', self.readonly)
             self.required = attrs.get('required', self.required)
             self.default = attrs.get('value', self.default)
 

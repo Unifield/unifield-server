@@ -81,7 +81,7 @@ class O2M(TinyInputWidget):
     template = "/openerp/widgets/form/templates/one2many.mako"
     params = ['id', 'parent_id', 'new_attrs', 'pager_info', 'switch_to',
               'default_get_ctx', 'source', 'view_type', 'default_value',
-              'edition']
+              'edition', 'readonly_before_state']
     member_widgets = ['screen']
 
     form = None
@@ -247,8 +247,8 @@ class O2M(TinyInputWidget):
             current.group_by_ctx = group_by_ctx
             current.domain = [('id', 'in', ids)]
 
-        #if current.view_type == 'tree' and self.readonly:
-        #    self.editable = False
+        if current.view_type == 'tree' and self.readonly:
+            self.editable = False
 
         if 'default_name' in current.context:
             del current.context['default_name']
@@ -256,13 +256,8 @@ class O2M(TinyInputWidget):
         if self.view_type == 'tree' and pparams:
             self.editable = bool(pparams.id)
 
-        if hasattr(self, "readonly_from_state"):
-            readonly_for_screen = self.readonly_from_state
-        else:
-            readonly_for_screen = self.readonly
-
         self.screen = Screen(current, prefix=self.name, views_preloaded=view,
-                             editable=self.editable, readonly=readonly_for_screen,
+                             editable=self.editable, readonly=self.readonly,
                              selectable=0, nolinks=self.link, _o2m=1,
                              force_readonly=self.force_readonly,
                              filter_selector=self.filter_selector)
