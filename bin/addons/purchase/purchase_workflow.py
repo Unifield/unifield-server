@@ -344,6 +344,7 @@ class purchase_order_line(osv.osv):
         if po_to_check:
             self.pool.get('purchase.order').check_if_stock_take_date_with_esc_partner(cr, uid, po_to_check.keys(), context=context)
 
+
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True
@@ -420,6 +421,8 @@ class purchase_order_line(osv.osv):
         self.update_fo_lines(cr, uid, ids, context=context)
 
         po_to_check = {}
+        pol_to_invoice = {}
+
         for pol in self.browse(cr, uid, ids):
             po_to_check[pol.order_id.id] = True
             if not pol.confirmed_delivery_date:
@@ -495,11 +498,16 @@ class purchase_order_line(osv.osv):
             if pol.order_id.order_type == 'direct':
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
 
+            if pol.order_id.invoice_method == 'order':
+                pol_to_invoice[pol.id] = True
+
         if po_to_check:
             self.pool.get('purchase.order').check_if_stock_take_date_with_esc_partner(cr, uid, po_to_check.keys(), context=context)
 
         # create or update the linked commitment voucher:
         self.create_or_update_commitment_voucher(cr, uid, ids, context=context)
+        if pol_to_invoice:
+            self.generate_invoice(cr, uid, pol_to_invoice.keys(), context=context)
 
         return True
 

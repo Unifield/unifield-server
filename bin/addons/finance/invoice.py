@@ -37,6 +37,7 @@ class account_invoice(osv.osv):
         'picking_id': fields.many2one('stock.picking', string="Picking"),
         'purchase_ids': fields.many2many('purchase.order', 'purchase_invoice_rel', 'invoice_id', 'purchase_id', 'Purchase Order',
                                          help="Purchase Order from which invoice have been generated"),
+        'main_purchase_id': fields.many2one('purchase.order', 'Purchase Order (invoiced "From Order") that generates this SI', select=1),
     }
 
     def wizard_import_si_line(self, cr, uid, ids, context=None):
@@ -57,11 +58,11 @@ class account_invoice(osv.osv):
         filename_template = _('%s_template.xls') % _(view_name).replace(' ', '_')
         export_id = self.pool.get('wizard.import.invoice.line').create(cr, uid,
                                                                        {
-                                                                       'file': imported_file,
-                                                                       'filename_template': filename_template,
-                                                                       'invoice_id': ids[0],
-                                                                       'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns]),),
-                                                                       'state': 'draft',
+                                                                           'file': imported_file,
+                                                                           'filename_template': filename_template,
+                                                                           'invoice_id': ids[0],
+                                                                           'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns]),),
+                                                                           'state': 'draft',
                                                                        },
                                                                        context)
         return {'type': 'ir.actions.act_window',
