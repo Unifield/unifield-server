@@ -344,6 +344,7 @@ class so_po_common(osv.osv_memory):
 
     def get_product_id(self, cr, uid, data, default_code=False, context=None):
         # us-1586: use msfid to search product in intersection flow, else use sdref
+        # US-3282: intermission / intersection: last try on default_code
         prod_obj = self.pool.get('product.product')
         msfid = False
         pid = False
