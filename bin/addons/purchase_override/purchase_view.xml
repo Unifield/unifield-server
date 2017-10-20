@@ -116,15 +116,21 @@
             <field name="arch" type="xml">
                 <form string="Cancel Purchase Order">
                     <field name="last_lines" invisible="1" />
+                    <field name="has_linked_line" invisible="1" />
                     <group colspan="4" col="1">
                         <html>
-                            <h4 style="text-align: center; margin: 10px"><translate>If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines sourced by this Purchase Order will be re-sourced.</translate></h4>
+                            <h3 style="text-align: center; margin: 13px"><translate>Please confirm that you want to cancel all lines of this PO</translate></h3>
+                        </html>
+                    </group>
+                    <group colspan="4" col="1" attrs="{'invisible': [('has_linked_line', '=', False)]}">
+                        <html>
+                            <h3 style="text-align: center; margin: 13px"><translate>If you click on 'Cancel &amp; Resource' button, all linked FO/IR lines will be re-sourced.</translate></h3>
                         </html>
                     </group>
                     <newline />
                     <separator string="Actions" />
                     <button name="cancel_po" string="Cancel only" type="object" icon="gtk-cancel" colspan="2" />
-                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" />
+                    <button name="cancel_and_resource" string="Cancel &amp; Resource" type="object" icon="gtk-cancel" colspan="2" attrs="{'invisible': [('has_linked_line', '=', False)]}"/>
                 </form>
             </field>
         </record>

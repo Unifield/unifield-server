@@ -277,7 +277,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
     def add_audit_line(self, cr, uid, order_id, old_state, new_state, context=None):
         """
-        If state_hidden_sale_order is modified, add an audittrail.log.line
+        If state is modified, add an audittrail.log.line
         @param cr: Cursor to the database
         @param uid: ID of the user that change the state
         @param order_id: ID of the sale.order on which the state is modified
@@ -304,7 +304,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # If the field 'state_hidden_sale_order' is not in the fields to trace, don't trace it.
         fld_ids = fld_obj.search(cr, uid, [
             ('model', '=', 'sale.order'),
-            ('name', '=', 'state_hidden_sale_order'),
+            ('name', '=', 'state'),
         ], context=context)
         rule_domain = [('object_id', '=', object_id)]
         if not old_state:
@@ -345,8 +345,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'fct_res_id': False,
             'sub_obj_name': '',
             'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
-            'field_description': _('State'),
-            'trans_field_description': _('State'),
+            'field_description': _('Order state'),
+            'trans_field_description': _('Order state'),
             'new_value': new_state,
             'new_value_text': new_state_txt or new_state,
             'new_value_fct': False,
@@ -400,7 +400,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         line_ids = line_obj.search(cr, uid, [
             ('order_id', 'in', ids),
-            ('order_id.state', 'not in', ['draft', 'cancel']),
+            ('state', 'not in', ['draft', 'cancel', 'cancel_r']),
             ('order_id.import_in_progress', '=', False),
             ('product_uom_qty', '<=', 0.00),
         ], limit=1, order='NO_ORDER', context=context)
@@ -479,6 +479,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in sol_states]):
                         res[so.id] = 'confirmed_p'
 
+            # add audit line in track change if state has changed:
+            if so.state != res[so.id]:
+                self.add_audit_line(cr, uid, so.id, so.state, res[so.id], context=context)
 
         return res
 
@@ -2043,6 +2046,28 @@ class sale_order_line(osv.osv):
             wf_service.trg_write(uid, 'sale.order', line.order_id.id, cr)
         return res
 
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        copy from sale order line
+        '''
+        if not context:
+            context = {}
+
+        if not default:
+            default = {}
+
+        default.update({
+            'sync_order_line_db_id': False,
+            'manually_corrected': False,
+            'created_by_po': False,
+            'created_by_po_line': False,
+            'created_by_rfq': False,
+            'created_by_rfq_line': False,
+        })
+
+        return super(sale_order_line, self).copy(cr, uid, id, default, context)
+
+
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
         reset link to purchase order from update of on order purchase order
@@ -2052,6 +2077,11 @@ class sale_order_line(osv.osv):
 
         if context is None:
             context = {}
+
+        # do not copy canceled sale.order.line:
+        sol = self.browse(cr, uid, id, fields_to_fetch=['state'], context=context)
+        if sol.state in ['cancel', 'cancel_r']:
+            return False
 
         # if the po link is not in default, we set both to False (both values are closely related)
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
@@ -2074,7 +2104,7 @@ class sale_order_line(osv.osv):
             'set_as_sourced_n': False,
         })
 
-        for x in ['modification_comment', 'original_qty', 'original_price', 'original_uom']:
+        for x in ['modification_comment', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line']:
             if x not in default:
                 default[x] = False
 
@@ -2655,27 +2685,6 @@ class sale_order_line(osv.osv):
         else:
             default_data.update({'type': 'make_to_order'})
         return default_data
-
-    def copy(self, cr, uid, id, default=None, context=None):
-        '''
-        copy from sale order line
-        '''
-        if not context:
-            context = {}
-
-        if not default:
-            default = {}
-
-        default.update({
-            'sync_order_line_db_id': False,
-            'manually_corrected': False,
-            'created_by_po': False,
-            'created_by_po_line': False,
-            'created_by_rfq': False,
-            'created_by_rfq_line': False,
-        })
-
-        return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
     def check_empty_line(self, cr, uid, ids, vals, context=None):
         '''

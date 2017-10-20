@@ -47,13 +47,6 @@ class purchase_order_line_sync(osv.osv):
         'sync_local_id': fields.function(_get_sync_local_id, type='char', method=True, string='ID', help='for internal use only'),
     }
 
-    def copy(self, cr, uid, id, default=None, context=None):
-        if not default:
-            default = {}
-        if 'sync_linked_sol' not in default:
-            default['sync_linked_sol'] = False
-        return super(purchase_order_line_sync, self).copy(cr, uid, id, default, context=context)
-
     def sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
         '''
         Update original PO lines from remote SO lines

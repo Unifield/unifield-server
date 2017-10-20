@@ -441,7 +441,7 @@ class purchase_order_line(osv.osv):
                     in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context)
                     in_id = [in_id]
                     created = True
-                incoming_move_id = self.pool.get('purchase.order').create_picking_line(cr, uid, in_id[0], pol, context)
+                incoming_move_id = self.pool.get('purchase.order').create_new_incoming_line(cr, uid, in_id[0], pol, context)
                 if created:
                     wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_confirm', cr)
                 else:
@@ -460,15 +460,7 @@ class purchase_order_line(osv.osv):
                         internal_pick = [internal_pick]
                         created = True
                     # create and update stock.move:
-                    int_move_id = self.pool.get('purchase.order').create_picking_line(cr, uid, internal_pick[0], pol, context)
-                    move = self.pool.get('stock.move').browse(cr, uid, int_move_id, context=context)
-                    input_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-                    input_loc = self.pool.get('stock.location').browse(cr, uid, input_id, context=context)
-                    self.pool.get('stock.move').write(cr, uid, [int_move_id], {
-                        'location_id': input_id,
-                        'location_dest_id': self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=move.product_id, context=context)[0].id,    
-                        'linked_incoming_move': incoming_move_id,
-                    }, context=context)
+                    int_move_id = self.pool.get('purchase.order').create_new_int_line(cr, uid, internal_pick[0], pol, incoming_move_id, context)
                     if created:
                         self.pool.get('stock.picking').draft_force_assign(cr, uid, internal_pick, context=context)
                     else:
