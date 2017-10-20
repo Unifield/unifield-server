@@ -638,12 +638,14 @@ class stock_picking(osv.osv):
             ('auto', 'Waiting'),
             ('confirmed', 'Confirmed'),
             ('assigned', 'Available'),
+            ('assigned_claim', 'Available-Claim'),
             ('done', 'Done'),
             ('cancel', 'Cancelled'),
         ], 'State', readonly=True, select=True,
             help="* Draft: not confirmed yet and will not be scheduled until confirmed\n"\
                  "* Confirmed: still waiting for the availability of products\n"\
                  "* Available: products reserved, simply waiting for confirmation.\n"\
+                 "* Available-Claim: products reserved, but some are missing. Waiting for replacement and confirmation\n"\
                  "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"\
                  "* Done: has been processed, can't be modified or cancelled anymore\n"\
                  "* Cancelled: has been cancelled, can't be confirmed anymore"),

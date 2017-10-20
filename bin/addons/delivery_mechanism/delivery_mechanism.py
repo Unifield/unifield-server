@@ -951,10 +951,8 @@ class stock_picking(osv.osv):
         product_availability = {}
         picking_ids = []
 
-        for wizard in inc_proc_obj.read(cr, uid, wizard_ids, ['picking_id',
-                                                              'id'], context=context):
-
-            picking_id = wizard['picking_id'][0]
+        for wizard in inc_proc_obj.browse(cr, uid, wizard_ids, context=context):
+            picking_id = wizard.picking_id.id
             picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines',
                                                                   'type',
                                                                   'purchase_id',
@@ -982,7 +980,7 @@ class stock_picking(osv.osv):
                     'progress_line': _('In progress (%s/%s)') % (move_done, total_moves),
                 }, context=context)
                 # Get all processed lines that processed this stock move
-                proc_ids = move_proc_obj.search(cr, uid, [('wizard_id', '=', wizard['id']), ('move_id', '=', move.id)], context=context)
+                proc_ids = move_proc_obj.search(cr, uid, [('wizard_id', '=', wizard.id), ('move_id', '=', move.id)], context=context)
                 # The processed quantity
                 count = 0
                 need_split = False
@@ -1283,6 +1281,9 @@ class stock_picking(osv.osv):
                 for tc_data in track_changes_to_create:
                     tc_data['transaction_name'] = _('Reception %s') % backorder_name
 
+                # Claim specific code
+                self._claim_registration(cr, uid, wizard, backorder_id, context=context)
+
                 if sync_in:
                     # UF-1617: When it is from the sync., then just send the IN to shipped, then return the backorder_id
                     if context.get('for_dpo', False):
@@ -1292,12 +1293,14 @@ class stock_picking(osv.osv):
 
                     return backorder_id
 
-                wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
-                # Then we finish the good picking
-                self.write(cr, uid, [picking_id], {'backorder_id': backorder_id,'cd_from_bo': values.get('cd_from_bo', False),}, context=context)
-                self.action_move(cr, uid, [backorder_id])
-                wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
-                wf_service.trg_write(uid, 'stock.picking', picking_id, cr)
+                self.write(cr, uid, [picking_id], {'backorder_id': backorder_id, 'cd_from_bo': values.get('cd_from_bo', False)},
+                           context=context)
+                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type not in ('return', 'surplus')):
+                    wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
+                    # Then we finish the good picking
+                    self.action_move(cr, uid, [backorder_id])
+                    wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
+                    wf_service.trg_write(uid, 'stock.picking', picking_id, cr)
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'close_in': _('Done'),
                 }, context=context)
@@ -1360,7 +1363,7 @@ class stock_picking(osv.osv):
             }, context=context)
             if backorder_id:
                 return backorder_id
-            return wizard['picking_id'][0]
+            return wizard.picking_id.id
 
         if context.get('from_simu_screen'):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
@@ -1369,7 +1372,7 @@ class stock_picking(osv.osv):
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
-                'res_id': wizard['picking_id'][0],
+                'res_id': wizard.picking_id.id,
                 'view_id': [view_id, tree_view_id],
                 'search_view_id': src_view_id,
                 'view_mode': 'form, tree',

@@ -72,7 +72,7 @@ class add_event(osv.osv_memory):
                 'claim_picking_id': fields.many2one('stock.picking', string='Claim Origin', readonly=True),
                 'creation_date': fields.date(string='Creation Date', required=True),
                 'event_type': fields.selection(_get_types, string='Event Type', required=True),
-                'replacement_picking_expected_partial_picking': fields.boolean(string='Replacement expected?'),
+                'replacement_picking_expected_partial_picking': fields.boolean(string='Replacement expected ?'),
                 # functions
                 'dest_location_id': fields.function(_vals_get_claim, method=True, string='Associated Location', type='many2one', relation='stock.location', readonly=True, multi='get_vals_claim'),
                 }

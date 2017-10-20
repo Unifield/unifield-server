@@ -1948,7 +1948,7 @@ class stock_picking(osv.osv):
         obj = self.browse(cr, uid, copy_id, context=context)
         if not context.get('allow_copy', False):
             if obj.subtype == 'picking' and default.get('subtype', 'picking') == 'picking':
-                if not obj.backorder_id:
+                if not obj.backorder_id or (obj.claim and '-return' in obj.name):
                     # draft, new ref
                     default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket'),
                                    origin=False,
@@ -1959,7 +1959,7 @@ class stock_picking(osv.osv):
                     # if the corresponding draft picking ticket is done, we do not allow copy
                     if obj.backorder_id and obj.backorder_id.state == 'done':
                         raise osv.except_osv(_('Error !'), _('Corresponding Draft picking ticket is Closed. This picking ticket cannot be copied.'))
-                    if obj.backorder_id:
+                    if obj.backorder_id and not obj.backorder_id.claim:
                         raise osv.except_osv(_('Error !'), _('You cannot duplicate a Picking Ticket linked to a Draft Picking Ticket.'))
                     # picking ticket, use draft sequence, keep other fields
                     base = obj.name

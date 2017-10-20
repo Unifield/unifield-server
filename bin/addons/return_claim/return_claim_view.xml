@@ -184,7 +184,9 @@
                 <field name="arch" type="xml">
                     <search string="Search Claim">
                         <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
-                        <filter icon="terp-camera_test" name="completed" string="In Progress" domain="[('state','=', 'in_progress')]" separator="1" />
+                        <filter icon="terp-document-new" name="draft_in_progress" string="Draft in Progress" domain="[('state','=','draft_in_progress')]" separator="1" />
+                        <filter icon="terp-check" name="completed" string="Validated - In Progress" domain="[('state','=', 'in_progress')]" separator="1" />
+                        <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
                         <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                         <separator orientation="vertical" />
                         <filter icon="terp-personal" name="supplier" string="Supplier" domain="[('type_return_claim','=','supplier')]" separator="1" />
@@ -193,6 +195,11 @@
                         <separator orientation="vertical" />
                         <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
                         <separator orientation="vertical" />
+                        <field name="name" />
+                        <field name="type_return_claim" />
+                        <newline />
+                        <field name="partner_id_return_claim" select="1" />
+                        <field name="creation_date_return_claim" />
                         <field name="state" select="1" />
                         <newline />
                         <group expand="0" string="Group By..." colspan="4" col="10">

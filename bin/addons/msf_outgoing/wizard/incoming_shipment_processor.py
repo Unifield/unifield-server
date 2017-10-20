@@ -65,6 +65,29 @@ class stock_incoming_processor(osv.osv):
         ),
         'draft': fields.boolean('Draft'),
         'already_processed': fields.boolean('Already processed'),
+        'register_a_claim': fields.boolean(
+            string='Register a Claim to Supplier',
+        ),
+        'claim_partner_id': fields.many2one(
+            'res.partner',
+            string='Supplier',
+            required=False,
+        ),
+        'claim_in_has_partner_id': fields.boolean(
+            string='IN has Partner specified.',
+            readonly=True,
+        ),
+        'claim_type': fields.selection(
+            lambda s, cr, uid, context={}: s.pool.get('return.claim').get_in_claim_event_type(),
+            string='Claim Type',
+        ),
+        'claim_replacement_picking_expected': fields.boolean(
+            string='Replacement expected for Return Claim ?',
+            help="An Incoming Shipment will be automatically created corresponding to returned products.",
+        ),
+        'claim_description': fields.text(
+            string='Claim Description',
+        ),
     }
 
     _defaults = {
@@ -283,6 +306,38 @@ class stock_incoming_processor(osv.osv):
                                  'message': _('The Allocated stocks setup is set to Unallocated.' \
                                               'In this configuration, you cannot made moves from/to Cross-docking locations.')
                                  }
+
+        return result
+
+    def onchange_claim_type(self, cr, uid, ids, claim_type, context=None):
+        """
+        Put True to claim_replacement_picking_expected when claim_type is 'missing'.
+        """
+        if context is None:
+            context = {}
+
+        result = {'value': {'claim_replacement_picking_expected': 'f'}}
+
+        if claim_type == 'missing':
+            result['value'].update({
+                'claim_replacement_picking_expected': 't'
+            })
+
+        return result
+
+    def onchange_register_a_claim(self, cr, uid, ids, register_a_claim, onchange_dest_type, context=None):
+        """
+        Put True to direct_incoming when register_a_claim is checked.
+        """
+        if context is None:
+            context = {}
+
+        result = {'value': {'direct_incoming': str(onchange_dest_type)}}
+
+        if register_a_claim:
+            result['value'].update({
+                'direct_incoming': 't',
+            })
 
         return result
 

@@ -44,7 +44,7 @@ CLAIM_TYPE_RELATION = {'in': 'supplier',
 # claim state
 CLAIM_STATE = [('draft', 'Draft'),
                ('draft_in_progress', 'Draft in progress'),
-               ('in_progress', 'Validated in progress'),
+               ('in_progress', 'Validated - In progress'),
                ('confirmed', 'Confirmed'),
                ('done', 'Closed')]
 # claim rules - define which new event is available after the key designated event
@@ -67,12 +67,10 @@ IN_CLAIM_EVENT_TYPE = [('accept', 'Accept'),
                        ('scrap', 'Scrap'),
                        ('return', 'Return'),
                        ('surplus', 'Return (surplus)'),
-                       ('request_missing', 'Request missing products/quantities')]
+                       ('missing', 'Request missing products/quantities')]
 # event state
 CLAIM_EVENT_STATE = [('draft', 'Draft'),
-                     ('draft_in_progress', 'Draft in progress'),
-                     ('in_progress', 'Validated in progress'),
-                     ('confirmed', 'Confirmed'),
+                     ('in_progress', 'In progress'),
                      ('done', 'Done')]
 # event type destination - for return event, the destination depends on
 EVENT_TYPE_DESTINATION = {'accept': 'stock.stock_location_stock',  # move to stock
@@ -516,6 +514,10 @@ class return_claim(osv.osv):
         'goods_expected': fields.boolean(
             string='Goods replacement/balance expected to be received'
         ),
+        'processor_origin': fields.char(
+            string='IN or INT processor',
+            size=1024,
+        ),
         # Many2one
         'sequence_id_return_claim': fields.many2one(
             'ir.sequence',
@@ -616,9 +618,12 @@ class return_claim(osv.osv):
             # the selected origin must contain stock moves
             if not len(obj.picking_id_return_claim.move_lines) > 0:
                 raise osv.except_osv(_('Warning !'), _('Selected Origin must contain at least one stock move.'))
-            # the selected origin must be done
-            if obj.picking_id_return_claim.state != 'done':
-                raise osv.except_osv(_('Warning !'), _('Selected Origin must be in Done state.'))
+            # the selected origin must be done for INT
+            if obj.processor_origin == 'internal.picking.processor' and obj.picking_id_return_claim.state != 'done':
+                raise osv.except_osv(_('Warning !'), _('Selected Origin must be in Done state for Internal Moves.'))
+            # the selected origin or new IN created within split process must be draft/assigned for IN
+            if obj.processor_origin == 'stock.incoming.processor' and obj.picking_id_return_claim.state not in ('draft', 'assigned'):
+                raise osv.except_osv(_('Warning !'),  _('Selected Origin must be in Available state for Incoming Shipments.'))
             # origin type
             if obj.picking_id_return_claim.type not in ['in', 'out']:
                 raise osv.except_osv(_('Warning !'), _('Selected Origin must be either an Incoming Shipment or a Delivery Order or a Picking Ticket.'))
@@ -639,7 +644,8 @@ class return_claim(osv.osv):
                         event_name = fields_tools.get_selection_name(cr, uid, object='claim.event', field='type_claim_event', key=event.type_claim_event, context=context)
                         raise osv.except_osv(_('Warning !'), _('Event (%s) is not allowed for selected Claim Type.') % event_name)
             # if supplier, origin must be in
-            if obj.type_return_claim == 'supplier' and obj.picking_id_return_claim.type != 'in':
+            if obj.type_return_claim == 'supplier' and obj.picking_id_return_claim.type != 'in'\
+                    and '-return' not in obj.picking_id_return_claim.name:
                 raise osv.except_osv(_('Warning !'), _('Origin for supplier claim must be Incoming Shipment.'))
             # if customer, origin must be out
             if obj.type_return_claim == 'customer' and obj.picking_id_return_claim.type != 'out':
@@ -886,10 +892,7 @@ class claim_event(osv.osv):
         # do we need replacement?
         if obj.replacement_picking_expected_claim_event:
             # we update the replacement picking object and lines
-            # new name, previous name + -return
-            replacement_name = origin_picking.name + '-replacement'
-            replacement_values = {'name': replacement_name,
-                                  'partner_id': claim.partner_id_return_claim.id,  # both partner needs to be filled??
+            replacement_values = {'partner_id': claim.partner_id_return_claim.id,  # both partner needs to be filled??
                                   'partner_id2': claim.partner_id_return_claim.id,
                                   'reason_type_id': context['common']['rt_goods_replacement'],
                                   'purchase_id': origin_picking.purchase_id.id,
@@ -910,6 +913,9 @@ class claim_event(osv.osv):
                                                 'location_dest_id': claim.partner_id_return_claim.property_stock_customer.id})
             # we copy the event return picking
             replacement_id = pick_obj.copy(cr, uid, event_picking.id, replacement_values, context=dict(context, keepLineNumber=True))
+            # new name, previous name + -replacement
+            replacement_name = origin_picking.name + '-replacement'
+            pick_obj.write(cr, uid, replacement_id, ({'name': replacement_name}), context=context)
             # update the moves
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
             # get the move values according to claim type
@@ -980,12 +986,10 @@ class claim_event(osv.osv):
 
     def _do_process_missing(self, cr, uid, obj, context=None):
         '''
-        process logic for return surplus event
+        process logic for missing product/qty event
 
-        - depends on the type of claim - supplier or customer
-        - destination of picking moves becomes original Supplier/Customer [property_stock_supplier or property_stock_customer from res.partner]
-        - name of picking becomes IN/0001 -> IN/0001-surplus type 'out' for supplier
-        - name of picking becomes OUT/0001 -> OUT/0001-surplus type 'in' for customer
+        - name of new picking is IN/0001 -> IN/0001-missing type
+        - state becomes "Available-Claim" when created
         - (is not set to done - defined in _picking_done_cond)
         '''
         context = context.copy()
@@ -995,53 +999,26 @@ class claim_event(osv.osv):
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
         picking_tools = self.pool.get('picking.tools')
-        # event picking object
-        event_picking = obj.event_picking_id_claim_event
-        event_picking_id = event_picking.id
         # origin picking in/out
         origin_picking = obj.return_claim_id_claim_event.picking_id_return_claim
-        # claim
-        claim = obj.return_claim_id_claim_event
-        # claim type
-        claim_type = claim.type_return_claim
-        # don't generate financial documents if the claim is linked to an internal or intermission partner
-        inv_status = claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
-        # new name + -missing
-        new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket') + '-missing'
-        # get the picking values and move values according to claim type
-        picking_values = {'name': new_name,
-                          'partner_id': claim.partner_id_return_claim.id,  # both partner needs to be filled??
-                          'partner_id2': claim.partner_id_return_claim.id,
-                          'purchase_id': origin_picking.purchase_id.id,
-                          'sale_id': origin_picking.sale_id.id,
-                          'reason_type_id': context['common']['rt_goods_return'],
-                          'invoice_state': inv_status,
-                          'converted_to_standard': False,
-                          'subtype': 'picking',
-                          'claim': True,
-                          }
-        move_values = {'reason_type_id': context['common']['rt_goods_return']}
-        if claim_type == 'supplier':
-            picking_values.update({'type': 'out'})
-            # moves go back to supplier, source location comes from input (if dynamic) or from claim product values
-            move_values.update({'location_dest_id': claim.partner_id_return_claim.property_stock_supplier.id})
-        elif claim_type == 'customer':
-            picking_values.update({'type': 'in'})
-            # receive return from customer, and go into input
-            move_values.update({'location_id': claim.partner_id_return_claim.property_stock_customer.id,
-                                'location_dest_id': context['common']['input_id']})
+        # event picking object
+        event_picking = obj.event_picking_id_claim_event
+        # we copy the picking
+        in_values = origin_picking
+        in_values.update({
+            'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in') + '-missing',
+            'state': 'assigned_claim',
+        })
         # update the picking
-        pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
-        # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
-        picking_tools.confirm(cr, uid, event_picking_id, context=context)
+        pick_obj.write(cr, uid, [event_picking.id], in_values, context=context)
         # update the picking again - strange bug on runbot, the type was internal again...
-        pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
+        pick_obj.write(cr, uid, [event_picking.id], in_values, context=context)
         # update the destination location for each move
         move_ids = [move.id for move in event_picking.move_lines]
         # get the move values according to claim type
         move_obj.write(cr, uid, move_ids, move_values, context=context)
-        # check assign for event picking
-        picking_tools.check_assign(cr, uid, event_picking.id, context=context)
+        # check availability of replacement picking
+        picking_tools.check_assign(cr, uid, missing_pick_id, context=context)
 
         return True
 
@@ -1284,7 +1261,7 @@ class claim_event(osv.osv):
             readonly=True,
         ),
         'replacement_picking_expected_claim_event': fields.boolean(
-            string='Replacement expected for Return Claim?',
+            string='Replacement expected for Return Claim ?',
             help="An Incoming Shipment will be automatically created corresponding to returned products.",
         ),
         'description_claim_event': fields.char(
@@ -1774,14 +1751,11 @@ class stock_picking(osv.osv):
         for wizard in wizards:
             # Test if we need a claim
             if wizard.register_a_claim:
-                """
-                This is theretically only possible for internal picking, which are linked
-                to an incoming shipment
-                """
-                if picking.type != 'internal':
+                if picking.type not in ('in', 'internal'):
                     raise osv.except_osv(
                         _('Warning !'),
-                        _('Claim registration during picking process is only available for internal picking.'),
+                        _('Claim registration during picking process is only available for incoming shipment and \
+                        internal picking.'),
                     )
                 # We create a claim
                 in_move_id = False
@@ -1789,14 +1763,21 @@ class stock_picking(osv.osv):
                     # No lines, we cannot register a claim because the link to original picking is missing
                     raise osv.except_osv(
                         _('Warning !'),
-                        _('Processed an internal picking without moves, cannot find original Incoming shipment '\
-                          'for claim registration.'),
+                        _('Processed a picking without moves for claim registration.'),
                     )
 
-                for move in picking.move_lines:
-                    src_move_ids = move_obj.search(cr, uid, [
-                        ('move_dest_id', '=', move.id),
-                    ], context=context)
+                move_lines = picking.move_lines
+                for move in move_lines:
+                    if picking.type == 'internal':
+                        src_move_ids = move_obj.search(cr, uid, [('move_dest_id', '=', move.id)], context=context)
+                    elif picking.type == 'in':
+                        src_move_ids = move_obj.search(cr, uid, [('id', '=', move.id)], context=context)
+                    else:
+                        raise osv.except_osv(
+                            _('Warning !'),
+                            _('Claim registration during picking process is only available for incoming shipment and \
+                            internal picking.'),
+                        )
                     if not src_move_ids:
                         # We try to find the incoming shipment with by backorder line
                         back_ids = self.search(cr, uid, [
@@ -1825,14 +1806,14 @@ class stock_picking(osv.osv):
                                     in_move_id = b_src_move_ids[0]
                     else:
                         in_move_id = src_move_ids[0]
+
                 # Get corresponding stock move browse
                 in_move = move_obj.browse(cr, uid, in_move_id, context=context)
                 # Check that corresponding picking is incoming shipment
                 if in_move.picking_id.type != 'in':
                     raise osv.except_osv(
                         _('Warning !'),
-                        _('Corresponding picking object is not an Incoming Shipment. Registration of claim cannot be processed.'),
-                    )
+                        _('Corresponding picking object is not an Incoming Shipment. Registration of claim cannot be processed.'),)
                 # PO reference
                 po_reference = in_move.picking_id.origin
                 po_id = in_move.picking_id.purchase_id.id
@@ -1841,6 +1822,7 @@ class stock_picking(osv.osv):
                 partner_id = wizard.claim_partner_id
                 # Picking ID
                 picking_id = in_move.picking_id.id
+
                 # We get the stock move of incoming shipment, we get the origin of picking
                 claim_values = {
                     'po_so_return_claim': po_reference,
@@ -1851,6 +1833,7 @@ class stock_picking(osv.osv):
                     'follow_up_return_claim': False,
                     'partner_id_return_claim': partner_id.id,
                     'picking_id_return_claim': picking_id,
+                    'processor_origin': wizard._table_name,
                     'product_line_ids_return_claim': [(0, 0, {
                         'qty_claim_product_line': x.product_qty,
                         'price_unit_claim_product_line': x.price_unit,
@@ -1862,7 +1845,7 @@ class stock_picking(osv.osv):
                         'asset_id_claim_product_line': x.asset_id.id,
                         'composition_list_id_claim_product_line': x.composition_list_id.id,
                         'src_location_id_claim_product_line': x.location_id.id,
-                        'stock_move_id_claim_product_line': x.id}) for x in picking.move_lines]
+                        'stock_move_id_claim_product_line': x.id}) for x in move_lines]
                 }
 
                 new_claim_id = claim_obj.create(cr, uid, claim_values, context=context)
