@@ -63,9 +63,15 @@ var One2Many = function(name, inline) {
         'callback': $this.attr('callback'),
         'change_default': $this.attr('change_default')
     });
-    $list.bind('before-redisplay.o2m', function () {
-        onChange(name);
-    });
+
+    // If no "before-redisplay" binding already exist for this list,
+    // add one
+    if (!("events" in $list.data()) || !("before-redisplay" in $list.data().events))
+    {
+        $list.bind('before-redisplay.o2m', function () {
+            onChange(name);
+        });
+    }
 };
 
 One2Many.prototype = {

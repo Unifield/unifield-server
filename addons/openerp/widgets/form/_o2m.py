@@ -82,7 +82,7 @@ class O2M(TinyInputWidget):
     template = "/openerp/widgets/form/templates/one2many.mako"
     params = ['id', 'parent_id', 'new_attrs', 'pager_info', 'switch_to',
               'default_get_ctx', 'source', 'view_type', 'default_value',
-              'edition']
+              'edition', 'readonly_before_state']
     member_widgets = ['screen']
 
     form = None

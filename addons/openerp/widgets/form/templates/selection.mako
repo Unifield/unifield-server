@@ -6,7 +6,8 @@
         type2 = "${type2}"
         operator="${operator}"
         class="${css_class}"
-        search_context="${search_context}" ${py.attrs(attrs)}>
+        search_context="${search_context}"
+        ${py.attrs(attrs, fld_readonly=1 if readonly_before_state else 0)}>
         ## add empty option only if no empty option exist
         ## and no default value is set
         % if all(label for _, label in options) and not required:

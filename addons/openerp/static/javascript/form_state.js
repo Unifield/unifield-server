@@ -500,7 +500,24 @@ function form_setReadonly(container, fieldName, readonly) {
     }
 
     if (!kind && (jQuery(idSelector(field_id+'_btn_')).length || jQuery(idSelector('_o2m_'+field_id)).length)) { // one2many
-        //new One2Many(field_id).setReadonly(readonly);
+        if (isNaN(readonly))
+        {
+            readonly = parseInt(jQuery(idSelector('_o2m_'+field_id)).attr("fld_readonly"));
+        }
+
+        // Convert input to boolean...
+        // (careful : sometimes readonly already is a boolean ... )
+        if (readonly == 1) { readonly = true;  }
+        if (readonly == 0) { readonly = false; }
+
+        // Get current readonly status
+        var current_readonly = jQuery('table.one2many[id$="'+field_id+'"]')[0].classList.contains("m2o_readonly");
+        
+        // Update only if different
+        if (current_readonly != readonly)
+        {
+            new One2Many(field_id).setReadonly(readonly);
+        }
         return;
     }
 

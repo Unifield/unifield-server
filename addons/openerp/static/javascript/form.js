@@ -570,12 +570,58 @@ function getFormParams(name){
     return frm;
 }
 
+
+
+//
+// The onChange / onChangePop is triggered by some elements when their content
+// changes. It will trigger the python function defined in the "callback"
+// attribute (e.g. callback="order_line_change") on the server's side
+// (e.g. the function order_line_change in sale/sale_order.py)
+//
+// N.B. : in the HTML, the "callback" attribute actually corresponds to the
+// "on_change" attribute in the XML view.
+//
+// Since many onChange events can be triggered at the same time and/or during 
+// an AJAX request, onChange will add item to a set of element to be updated.
+// Then onChangePop will be called regularly until there's no ongoing AJAX
+// request.
+//
+// The choice of the data structure for onChangeQueue (i.e. Set()) was motivated
+// to :
+// - guarantee uniqueness of elements in the queue (e.g. avoid updating the same
+// object hundreds of time in a row !)
+// - at the time of writing this, there does not seem to be any constrain on
+// the queue being ordered/unordered
+//
+
+var onChangeQueue = new Set();
+
 function onChange(caller){
-    if (openobject.http.AJAX_COUNT > 0) {
-        callLater(1, onChange, caller);
+
+    // Do not register multiple pending onChange call for the same object...
+    if (onChangeQueue.has(caller))
+    {
         return;
     }
 
+    // Register a pending call
+    onChangeQueue.add(caller);
+
+    // Apply the call when possible
+    onChangePop(caller);
+
+}
+
+function onChangePop(caller){
+
+    if (openobject.http.AJAX_COUNT > 0) {
+        // Delay the call
+        callLater(1, onChangePop, caller);
+        return;
+    }
+    
+    onChangeQueue.delete(caller);
+    
     var $caller = jQuery(openobject.dom.get(caller));
     var $form = $caller.closest('form');
 

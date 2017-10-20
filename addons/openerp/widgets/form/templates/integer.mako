@@ -6,7 +6,7 @@
         id ='${name}' 
         value="${value}" 
         class="${css_class}"
-        ${py.attrs(attrs)}/>
+        ${py.attrs(attrs, fld_readonly=1 if readonly_before_state else 0)}/>
 % endif
 
 % if editable and error:
