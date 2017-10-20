@@ -57,8 +57,8 @@ PURCHASE_ORDER_STATE_SELECTION = [
     ('cancel', 'Cancelled'),
 ]
 
-import purchase
-import purchase_line
+import purchase_order
+import purchase_order_line
 import purchase_workflow
 import partner
 import stock
