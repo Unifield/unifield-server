@@ -37,6 +37,8 @@ class report_rates_table(WebKitParser):
         return super(report_rates_table, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
     
     def _get_lines(self, cr, uid, data, context=None):
+        if context is None:
+            context = {}
         pool = pooler.get_pool(cr.dbname)
         period_start_dates = []
         header =  ['Ccy Code','Ccy Name']
@@ -58,8 +60,14 @@ class report_rates_table(WebKitParser):
                                                                       ORDER BY name ASC",
                                                                               str(data['form']['currency_table_id']))
         else:
-            cr.execute("SELECT id, name, currency_name FROM res_currency WHERE currency_table_id IS NULL \
-                                                                      ORDER BY name ASC")
+            if context.get('active_ids'):
+                cr.execute("SELECT id, name, currency_name "
+                           "FROM res_currency "
+                           "WHERE currency_table_id IS NULL "
+                           "AND id in %s "
+                           "ORDER BY name ASC;", (tuple(context['active_ids']),))
+            else:
+                cr.execute("SELECT id, name, currency_name FROM res_currency WHERE currency_table_id IS NULL ORDER BY name ASC;")
             
         data['form']['report_lines'] = []
         if cr.rowcount:
