@@ -60,7 +60,7 @@ class report_rates_table(WebKitParser):
                                                                       ORDER BY name ASC",
                                                                               str(data['form']['currency_table_id']))
         else:
-            if context.get('active_ids'):
+            if context.get('active_ids'):  # display only the selected currencies
                 cr.execute("SELECT id, name, currency_name "
                            "FROM res_currency "
                            "WHERE currency_table_id IS NULL "
