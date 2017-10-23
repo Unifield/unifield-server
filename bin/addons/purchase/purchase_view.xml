@@ -239,8 +239,8 @@
                                     <field name="soq_updated" invisible="1" readonly="1"/>
                                     <field name="order_state_purchase_order_line" invisible="True"/>
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated', 'validated_n'))]}"/>
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'validated_n'])]}" header="True"/>
-                                    <button string="Confirm" icon="terp-check" name="button_confirmed" type="object" attrs="{'invisible': [('fake_state', 'not in', ['validated'])]}" header="True"/>
+                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
+                                    <button string="Confirm" icon="terp-check" name="button_confirmed" type="object" attrs="{'invisible': [('fake_state', 'not in', ['validated', 'validated_n'])]}" header="True"/>
                                     <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', ('fake_state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}"/>
                                     <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'validated', 'validated_n'])]}"/>
                                 </tree>
