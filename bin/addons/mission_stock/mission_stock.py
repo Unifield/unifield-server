@@ -1127,14 +1127,16 @@ class stock_mission_report_line_location(osv.osv):
     def init(self, cr):
         #super(stock_mission_report_line_location, self).init(cr)
 
-        cr.execute('''CREATE OR REPLACE FUNCTION  update_ir_model_data(id integer) RETURNS void AS $$
+        # psql function to trigger sync updates on stock.mission.report.line.location
+        cr.execute('''CREATE OR REPLACE FUNCTION update_ir_model_data(id integer) RETURNS void AS $$
         BEGIN
             UPDATE ir_model_data set last_modification=NOW(), touched='[''quantity'']' where res_id = $1 AND module='sd' AND model='stock.mission.report.line.location';
         END;
         $$ LANGUAGE plpgsql;
         ''')
 
-        cr.execute("""CREATE OR REPLACE FUNCTION  create_ir_model_data(id integer) RETURNS void AS $$
+        # psql function to create stock.mission.report.line.location entry in ir_model_data
+        cr.execute("""CREATE OR REPLACE FUNCTION create_ir_model_data(id integer) RETURNS void AS $$
         DECLARE
             instance_id varchar;
             query varchar;
@@ -1145,6 +1147,18 @@ class stock_mission_report_line_location(osv.osv):
         $$ LANGUAGE plpgsql;
         """)
 
+        # psql function to convert uom
+        cr.execute('''CREATE OR REPLACE FUNCTION stock_qty(qty numeric, from_uom integer) RETURNS numeric AS $$
+        DECLARE
+            uom_factor numeric;
+        BEGIN
+            SELECT factor INTO uom_factor FROM product_uom WHERE id = $2;
+            RETURN $1 * uom_factor;
+        END;
+        $$ LANGUAGE plpgsql;
+        ''')
+
+        # psql function to update stock level
         cr.execute('''CREATE OR REPLACE FUNCTION update_stock_level()
   RETURNS trigger AS $stock_move$
   DECLARE
@@ -1152,30 +1166,32 @@ class stock_mission_report_line_location(osv.osv):
     t_id integer;
   BEGIN
 
-  changes_on_done := TG_OP = 'UPDATE' AND OLD.state = 'done' AND NEW.state = 'done' AND (OLD.product_qty != NEW.product_qty OR OLD.product_id!=NEW.product_id OR OLD.location_id != NEW.location_id OR OLD.location_dest_id != NEW.location_dest_id);
+  changes_on_done := TG_OP = 'UPDATE' AND OLD.state = 'done' AND NEW.state = 'done' AND
+      (OLD.product_qty != NEW.product_qty OR OLD.product_id!=NEW.product_id OR OLD.location_id != NEW.location_id OR OLD.location_dest_id != NEW.location_dest_id or OLD.product_uom != NEW.product_uom);
+
+  -- stock.move deleted or state changed from done to something else: decrease stock
   IF TG_OP = 'DELETE' OR ( TG_OP = 'UPDATE' AND OLD.state='done' AND NEW.state != 'done') OR changes_on_done THEN
-     -- stock.move deleted or state changed from done to something else: decrease stock
      IF OLD.state = 'done' THEN
-          UPDATE stock_mission_report_line_location SET quantity = quantity-OLD.product_qty, last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_dest_id RETURNING id INTO t_id;
+          UPDATE stock_mission_report_line_location SET quantity = quantity-stock_qty(OLD.product_qty, OLD.product_uom), last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_dest_id RETURNING id INTO t_id;
           PERFORM update_ir_model_data(t_id);
-          UPDATE stock_mission_report_line_location SET quantity = quantity+OLD.product_qty, last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_id RETURNING id INTO t_id;
+          UPDATE stock_mission_report_line_location SET quantity = quantity+stock_qty(OLD.product_qty, OLD.product_uom), last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_id RETURNING id INTO t_id;
           PERFORM update_ir_model_data(t_id);
      END IF;
   END IF;
 
+  -- new done stock move or state changed to done
   IF TG_OP in ('UPDATE', 'INSERT') AND NEW.state = 'done' AND (TG_OP = 'INSERT' OR COALESCE(OLD.state, 'draft') != 'done' OR changes_on_done) THEN
-        -- new done stock move or state change to done
-        UPDATE stock_mission_report_line_location SET quantity = quantity+NEW.product_qty, last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_dest_id RETURNING id INTO t_id;
+        UPDATE stock_mission_report_line_location SET quantity = quantity+stock_qty(NEW.product_qty, NEW.product_uom), last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_dest_id RETURNING id INTO t_id;
         IF NOT FOUND THEN
-            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date) VALUES (NEW.location_dest_id, NEW.product_id, NEW.product_qty, NOW()) RETURNING id INTO t_id;
+            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date) VALUES (NEW.location_dest_id, NEW.product_id, stock_qty(NEW.product_qty, NEW.product_uom), NOW()) RETURNING id INTO t_id;
             PERFORM create_ir_model_data(t_id);
         ELSE
             PERFORM update_ir_model_data(t_id);
         END IF;
 
-        UPDATE stock_mission_report_line_location SET quantity = quantity-NEW.product_qty, last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_id RETURNING id INTO t_id;
+        UPDATE stock_mission_report_line_location SET quantity = quantity-stock_qty(NEW.product_qty, NEW.product_uom), last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_id RETURNING id INTO t_id;
         IF NOT FOUND THEN
-            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date) VALUES (NEW.location_id, NEW.product_id, -NEW.product_qty, NOW()) RETURNING id INTO t_id;
+            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date) VALUES (NEW.location_id, NEW.product_id, -stock_qty(NEW.product_qty, NEW.product_uom), NOW()) RETURNING id INTO t_id;
             PERFORM create_ir_model_data(t_id);
         ELSE
             PERFORM update_ir_model_data(t_id);
@@ -1187,6 +1203,7 @@ class stock_mission_report_line_location(osv.osv):
   $stock_move$
   LANGUAGE plpgsql;
 ''')
+
         cr.execute("SELECT tgname FROM pg_trigger WHERE  tgname = 'update_stock_move'")
         if not cr.fetchone():
             cr.execute("CREATE TRIGGER update_stock_move AFTER INSERT OR UPDATE OR DELETE ON stock_move FOR EACH ROW EXECUTE PROCEDURE update_stock_level()")
