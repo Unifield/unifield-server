@@ -408,10 +408,10 @@ class stock_picking(osv.osv):
     _columns = {
         'order_category': fields.function(_vals_get23, method=True, type='selection', selection=ORDER_CATEGORY, string='Order Category', multi='vals_get23', readonly=True,
                                           store={
-                                          'stock.picking': (lambda obj, cr, uid, ids, context: ids, ['purchase_id', 'sale_id'], 10),
-                                          'purchase.order': (_get_purchase_ids, ['categ', ], 10),
-                                          'sale.order': (_get_sale_ids, ['categ', ], 10),
-                                          'real.average.consumption': (_get_rac_ids, ['categ'], 10),
+                                              'stock.picking': (lambda obj, cr, uid, ids, context: ids, ['purchase_id', 'sale_id'], 10),
+                                              'purchase.order': (_get_purchase_ids, ['categ', ], 10),
+                                              'sale.order': (_get_sale_ids, ['categ', ], 10),
+                                              'real.average.consumption': (_get_rac_ids, ['categ'], 10),
                                           },
                                           ),
     }

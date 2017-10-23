@@ -685,6 +685,10 @@ class purchase_order(osv.osv):
         # from partner_id object
         'internal_type': fields.selection(string='Type', selection=ZONE_SELECTION, readonly=True,),
 
+        'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select=1),
+        'commitment_ids': fields.one2many('account.commitment', 'purchase_id', string="Commitment Vouchers", readonly=True),
+
+
     }
     _defaults = {
         'po_confirmed': lambda *a: False,
@@ -1035,11 +1039,12 @@ class purchase_order(osv.osv):
             default = {}
         if context is None:
             context = {}
-        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve']
+        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve', 'analytic_distribution_id']
         to_del = []
         for ftr in fields_to_reset:
             if ftr not in default:
                 to_del.append(ftr)
+        default['commitment_ids'] = False
         res = super(purchase_order, self).copy_data(cr, uid, id, default=default, context=context)
         for ftd in to_del:
             if ftd in res:
@@ -1141,16 +1146,17 @@ class purchase_order(osv.osv):
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
 
-    def inv_line_create(self, cr, uid, a, ol):
+    def inv_line_create(self, cr, uid, account_id, order_line):
         return (0, False, {
-            'name': ol.name,
-            'account_id': a,
-            'price_unit': ol.price_unit or 0.0,
-            'quantity': ol.product_qty,
-            'product_id': ol.product_id.id or False,
-            'uos_id': ol.product_uom.id or False,
-            'invoice_line_tax_id': [(6, 0, [x.id for x in ol.taxes_id])],
-            'account_analytic_id': ol.account_analytic_id.id or False,
+            'name':order_line.name,
+            'account_id': account_id,
+            'price_unit': order_line.price_unit or 0.0,
+            'quantity': order_line.product_qty,
+            'product_id': order_line.product_id.id or False,
+            'uos_id': order_line.product_uom.id or False,
+            'invoice_line_tax_id': [(6, 0, [x.id for x in order_line.taxes_id])],
+            'account_analytic_id': order_line.account_analytic_id.id or False,
+            'order_line_id': order_line.id,
         })
 
     def action_invoice_create(self, cr, uid, ids, *args):
@@ -1207,10 +1213,76 @@ class purchase_order(osv.osv):
 
             inv_id = self.pool.get('account.invoice').create(cr, uid, inv, {'type':'in_invoice', 'journal_type': 'purchase'})
             self.pool.get('account.invoice').button_compute(cr, uid, [inv_id], {'type':'in_invoice'}, set_total=True)
+            self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [inv_id])
             self.pool.get('purchase.order.line').write(cr, uid, todo, {'invoiced':True})
             self.write(cr, uid, [o.id], {'invoice_ids': [(4, inv_id)]})
             res = inv_id
         return res
+
+    def button_analytic_distribution(self, cr, uid, ids, context=None):
+        """
+        Launch analytic distribution wizard on a purchase order
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        purchase = self.browse(cr, uid, ids[0], context=context)
+        amount = purchase.amount_total or 0.0
+        # Search elements for currency
+        company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        currency = purchase.currency_id and purchase.currency_id.id or company_currency
+        # Get analytic_distribution_id
+        distrib_id = purchase.analytic_distribution_id and purchase.analytic_distribution_id.id
+        # Prepare values for wizard
+        vals = {
+            'total_amount': amount,
+            'purchase_id': purchase.id,
+            'currency_id': currency or False,
+            'state': 'cc',
+            'posting_date': time.strftime('%Y-%m-%d'),
+            'document_date': time.strftime('%Y-%m-%d'),
+            'partner_type': purchase.partner_type,
+        }
+        if distrib_id:
+            vals.update({'distribution_id': distrib_id,})
+        # Create the wizard
+        wiz_obj = self.pool.get('analytic.distribution.wizard')
+        wiz_id = wiz_obj.create(cr, uid, vals, context=context)
+        # Update some context values
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+        # Open it!
+        return {
+            'name': _('Global analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
+        }
+
+    def button_reset_distribution(self, cr, uid, ids, context=None):
+        """
+        Reset analytic distribution on all purchase order lines.
+        To do this, just delete the analytic_distribution id link on each purchase order line.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Prepare some values
+        purchase_obj = self.pool.get(self._name + '.line')
+        # Search purchase order lines
+        to_reset = purchase_obj.search(cr, uid, [('order_id', 'in', ids)])
+        purchase_obj.write(cr, uid, to_reset, {'analytic_distribution_id': False})
+        return True
 
     def button_dummy(self, cr, uid, ids, context=None):
         return True
@@ -2409,6 +2481,47 @@ class purchase_order(osv.osv):
 
         return commit_id
 
+    def _finish_commitment(self, cr, uid, ids, context=None):
+        """
+        Change commitment(s) to Done state from given Purchase Order.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Browse PO
+        for po in self.browse(cr, uid, ids, context=context):
+            # Change commitment state if exists
+            if po.commitment_ids:
+                for com in po.commitment_ids:
+                    if com.type != 'manual':
+                        self.pool.get('account.commitment').action_commitment_done(cr, uid, [x.id for x in po.commitment_ids], context=context)
+        return True
+
+    def action_done(self, cr, uid, ids, context=None):
+        """
+        Delete commitment from purchase before 'done' state.
+        """
+        # Some verifications
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # Change commitments state
+        # Sidestep UF-1183
+        # If ONE invoice is in draft state, raise an error!
+        to_process = []
+        for po in self.browse(cr, uid, ids):
+            have_draft_invoice = False
+            for inv in po.invoice_ids:
+                if inv.state == 'draft':
+                    have_draft_invoice = True
+                    break
+            if not have_draft_invoice or not po.invoice_ids:
+                to_process.append(po.id)
+        self._finish_commitment(cr, uid, to_process, context=context)
+        return super(purchase_order, self).action_done(cr, uid, ids, context=context)
 
     def add_audit_line(self, cr, uid, order_id, old_state, new_state, context=None):
         """

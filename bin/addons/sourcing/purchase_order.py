@@ -111,7 +111,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order.'
                 self.write(cr, uid, [po.id], {'origin': '%s:%s' % (po.origin, source_doc_name)}, context=context)
 
         return True
-            
+
 
     _constraints = [
         (

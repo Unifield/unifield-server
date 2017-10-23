@@ -2902,6 +2902,21 @@ class orm(orm_template):
                                     self._table, col_name, ref, field_def.ondelete)
                 cr.commit()
 
+    def _create_m2m_table(self, cr, f):
+        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
+        if not cr.dictfetchall():
+            if not self.pool.get(f._obj):
+                raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
+            ref = self.pool.get(f._obj)._table
+            cr.execute('CREATE TABLE "%s" ("%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, "%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, UNIQUE("%s","%s")) WITH OIDS' % (f._rel, f._id1, self._table, f._id2, ref, f._id1, f._id2))
+            cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id1, f._rel, f._id1))
+            cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id2, f._rel, f._id2))
+            cr.execute("COMMENT ON TABLE \"%s\" IS 'RELATION BETWEEN %s AND %s'" % (f._rel, self._table, ref))
+            cr.commit()
+            self.__schema.debug("Create table '%s': relation between '%s' and '%s'",
+                                f._rel, self._table, ref)
+
+
     def _auto_init(self, cr, context=None):
         if context is None:
             context = {}
@@ -2911,6 +2926,7 @@ class orm(orm_template):
         self._field_create(cr, context=context)
         to_migrate = []
         missing_fk = {}
+        missing_m2m = {}
         if getattr(self, '_auto', True):
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             if not cr.rowcount:
@@ -3009,19 +3025,12 @@ class orm(orm_template):
                             self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE SET NULL",
                                                 self._obj, f._fields_id, f._table)
                 elif isinstance(f, fields.many2many):
-                    cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
-                    if not cr.dictfetchall():
-                        if not self.pool.get(f._obj):
-                            raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
-                        ref = self.pool.get(f._obj)._table
-#                        ref = f._obj.replace('.', '_')
-                        cr.execute('CREATE TABLE "%s" ("%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, "%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, UNIQUE("%s","%s")) WITH OIDS' % (f._rel, f._id1, self._table, f._id2, ref, f._id1, f._id2))
-                        cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id1, f._rel, f._id1))
-                        cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id2, f._rel, f._id2))
-                        cr.execute("COMMENT ON TABLE \"%s\" IS 'RELATION BETWEEN %s AND %s'" % (f._rel, self._table, ref))
-                        cr.commit()
-                        self.__schema.debug("Create table '%s': relation between '%s' and '%s'",
-                                            f._rel, self._table, ref)
+                    if not self.pool.get(f._obj):
+                        missing_m2m.setdefault(f._obj, [])
+                        missing_m2m[f._obj].append((self, f))
+                    else:
+                        self._create_m2m_table(cr, f)
+
                 else:
                     res = col_data.get(k, [])
                     res = res and [res] or []
@@ -3290,7 +3299,7 @@ class orm(orm_template):
         if store_compute:
             self._parent_store_compute(cr)
             cr.commit()
-        return todo_end, missing_fk
+        return todo_end, missing_fk, missing_m2m
 
     def __init__(self, cr):
         super(orm, self).__init__(cr)

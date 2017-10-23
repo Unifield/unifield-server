@@ -296,6 +296,14 @@ class Cursor(object):
         return self.rowcount
 
     @check
+    def column_exists(self, table, column):
+        self.execute("""SELECT c.relname
+            FROM pg_class c, pg_attribute a
+            WHERE c.relname=%s AND a.attname=%s AND c.oid=a.attrelid
+        """, (table, column))
+        return self.rowcount
+
+    @check
     def drop_constraint_if_exists(self, table, constraint):
         self.execute("SELECT conname FROM pg_constraint WHERE conname = %s", (constraint, ))
         if self.fetchone():
