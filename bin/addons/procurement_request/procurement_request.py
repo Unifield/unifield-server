@@ -694,14 +694,43 @@ class procurement_request_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             changed = False
-            if line.modification_comment or (line.original_qty and line.original_price and line.original_uom):
-                if line.modification_comment or line.product_uom_qty != line.original_qty \
-                        or line.price_unit != line.original_price or line.product_uom != line.original_uom:
-                    changed = True
+            if line.modification_comment or (line.original_qty and line.product_uom_qty != line.original_qty):
+                changed = True
 
             res[line.id] = changed
 
         return res
+
+    def button_view_changed(self, cr, uid, ids, context=None):
+        """
+        Launch wizard to display line information
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wiz_obj = self.pool.get('procurement.request.line.wizard')
+        cols = ['product_id', 'original_product', 'product_uom_qty', 'original_qty', 'price_unit',
+                'original_price', 'product_uom', 'original_uom', 'modification_comment']
+        sol = self.read(cr, uid, ids[0], cols, context=context)
+        wiz_id = wiz_obj.create(cr, uid, sol, context=context)
+
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+
+        return {
+            'name': _('Original Data Internal Request Line'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'procurement.request.line.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
+        }
 
     _columns = {
         'cost_price': fields.float(string='Cost price', digits_compute=dp.get_precision('Sale Price Computation')),
@@ -715,6 +744,7 @@ class procurement_request_line(osv.osv):
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
         'product_ok': fields.boolean('Product selected'),
         'comment_ok': fields.boolean('Comment written'),
+        'original_product': fields.many2one('product.product', 'Original Product'),
         'original_qty': fields.float('Original Qty'),
         'original_price': fields.float('Original Price'),
         'original_uom': fields.many2one('product.uom', 'Original UOM'),

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record model="ir.ui.view" id="procurement_request_line_wizard_form">
+            <field name="name">procurement.request.line.wizard.form"</field>
+            <field name="model">procurement.request.line.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type='xml'>
+                <form string="Original Data Internal Request Line">
+                    <field name="product_id" colspan="2"/>
+                    <field name="original_product" colspan="2"/>
+                    <field name="product_uom_qty" colspan="2"/>
+                    <field name="original_qty" colspan="2"/>
+                    <field name="price_unit" colspan="2"/>
+                    <field name="original_price" colspan="2"/>
+                    <field name="product_uom" colspan="2"/>
+                    <field name="original_uom" colspan="2"/>
+                    <field name="modification_comment" colspan="4"/>
+                    <newline/>
+                    <button icon="gtk-cancel" special="cancel" string="Close Wizard" colspan="4"/>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>
