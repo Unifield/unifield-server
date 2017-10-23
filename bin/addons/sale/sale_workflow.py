@@ -282,10 +282,12 @@ class sale_order_line(osv.osv):
                 seq_name = picking_data['seq_name']
                 del(picking_data['seq_name'])
 
+                pick_created = False
                 if not pick_to_use:
                     picking_data['name'] = self.pool.get('ir.sequence').get(cr, uid, seq_name)
                     picking_data['dpo_pick'] = True
                     pick_to_use = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
+                    pick_created = True
                     pick_name = picking_data['name']
                     self.infolog(cr, uid, "The Picking Ticket id:%s (%s) has been created from %s id:%s (%s)." % (
                         pick_to_use,
@@ -294,16 +296,25 @@ class sale_order_line(osv.osv):
                         sol.order_id.id,
                         sol.order_id.name,
                     ))
+
                 if pick_to_use and isinstance(pick_to_use, list):
                     pick_to_use = pick_to_use[0]
                 # Get move data and create the move
                 move_data = self.pool.get('sale.order')._get_move_data(cr, uid, sol.order_id, sol, pick_to_use, context=context)
-                # move_data['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
-                # move_data['location_dest_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
                 move_data['dpo_line_id'] = linked_dpo_line[0]
                 move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
                 self.pool.get('stock.move').action_done(cr, uid, [move_id], context=context)
+                stock_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+                self.pool.get('stock.move').write(cr, uid, [move_id], {'location_id': stock_loc, 'location_dest_id': stock_loc}, context=context)
+                # set PICK to done
                 self.pool.get('stock.picking').action_done(cr, uid, [pick_to_use], context=context)
+
+                if not pick_created:
+                    # if PICk are not new, then we have to force re-sync to ensure available shipped IN at project side:
+                    return_info = {}
+                    self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'stock.picking', pick_to_use, return_info, 
+                        'stock.picking.partial_shippped_dpo_updates_in_po', self._logger, check_identifier=False, context=context)
+
             elif not ir_non_stockable:
                 # create or update PICK/OUT:
                 picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
