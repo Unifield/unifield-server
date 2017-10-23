@@ -10,6 +10,7 @@
                 <form string="FX rates by currency table">
                     <field name="start_period_id" widget="selection"/>
                     <field name="end_period_id" widget="selection"/>
+                    <field name="export_all" invisible="context.get('active_model')=='res.currency.table'"/>
                     <separator colspan="4"/>
                     <group colspan="4" col="6">
                         <button special="cancel" string="No" icon="gtk-cancel"/>

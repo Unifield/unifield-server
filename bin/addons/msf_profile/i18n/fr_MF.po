@@ -99629,3 +99629,8 @@ msgstr "Vous ne pouvez pas modifier un Journal Analytique qui n'appartient pas √
 #, python-format
 msgid "You can't delete this FX rate as the period \"%s\" isn't in Draft state."
 msgstr "Vous ne pouvez pas supprimer ce taux de change car la p√©riode \"%s\" n'est pas en statut Brouillon."
+
+#. module: res_currency_tables
+#: field:wizard.report.rates.table,export_all:0
+msgid "Export all currencies"
+msgstr "Exporter toutes les devises"
