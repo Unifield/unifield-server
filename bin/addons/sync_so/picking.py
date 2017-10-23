@@ -102,7 +102,7 @@ class stock_picking(osv.osv):
 
         default_code = False
         if data.get('product_id', {}).get('default_code'):
-            partner_type = self.get_partner_type(cr, uid, source, context)
+            partner_type = self.pool.get('so.po.common').get_partner_type(cr, uid, source, context)
             if partner_type in ['section', 'intermission']:
                 default_code = data['product_id']['default_code']
 
@@ -844,8 +844,8 @@ class stock_picking(osv.osv):
             return message
 
         default_code = False
-        if asset_dict.get('default_code') and self.get_partner_type(cr, uid, source, context) in ['section', 'intermission']:
-            default_code = asset_dict['default_code']
+        if asset_dict.get('product_id', {}).get('default_code') and self.pool.get('so.po.common').get_partner_type(cr, uid, source, context) in ['section', 'intermission']:
+            default_code = asset_dict['product_id']['default_code']
 
         if asset_dict.get('product_id'):
             rec_id = self.pool.get('so.po.common').get_product_id(cr, uid, out_info.product_id, default_code, context=context)
