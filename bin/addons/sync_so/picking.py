@@ -101,10 +101,10 @@ class stock_picking(osv.osv):
         product_name = data['product_id']['name']
 
         default_code = False
-        if data.get('default_code'):
+        if data.get('product_id', {}).get('default_code'):
             partner_type = self.get_partner_type(cr, uid, source, context)
             if partner_type in ['section', 'intermission']:
-                default_code = data['default_code']
+                default_code = data['product_id']['default_code']
 
         product_id = self.pool.get('so.po.common').get_product_id(cr, uid, data['product_id'], default_code, context=context)
         if not product_id:
@@ -1071,6 +1071,13 @@ class stock_picking(osv.osv):
             invoice_result = super(stock_picking, self).action_invoice_create(cr, uid, ids,
                                                                               journal_id=journal_id, group=group, type=type, context=context)
         return invoice_result
+
+    def create_batch_number(self, *a, **b):
+        """
+        deprecated
+        """
+        return True
+
 stock_picking()
 
 class shipment(osv.osv):
