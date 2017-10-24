@@ -394,12 +394,6 @@ class stock_picking(osv.osv):
                                 message = "Line number " + str(ln) + " is not found in the original IN or PO"
                                 self._logger.info(message)
                                 raise Exception(message)
-                            else:
-                                message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
-                                    in_name, po_name,
-                                )
-                                self._logger.info(message)
-                                raise Exception(message)
 
                     move_id = False # REF-99: declare the variable before using it, otherwise if it go to else, then line 268 "if not move_id" -> problem!
                     if move_ids and len(move_ids) == 1:  # if there is only one move, take it for process
