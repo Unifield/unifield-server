@@ -68514,7 +68514,7 @@ msgstr "Calcul la création du Bon de Commande"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 msgid "Bank account number:"
-msgstr "Bank account number:"
+msgstr "Numéro de Compte Bancaire :"
 
 #. module: base
 #: help:res.partner.address,active:0

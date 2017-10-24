@@ -96,7 +96,7 @@
       <para style="text"><b>Bank account number:</b></para>
       <blockTable colWidths="180mm" rowHeights="10mm" style="table_comments">
         <tr>
-          <td></td>
+          <td>[[ o.bank_account_number or '' ]]</td>
         </tr>
       </blockTable>
 
