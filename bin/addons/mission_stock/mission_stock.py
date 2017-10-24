@@ -37,6 +37,7 @@ import base64
 from xlwt import Workbook, easyxf, Borders, add_palette_colour
 import tempfile
 import shutil
+from mx.DateTime import DateFrom, RelativeDateTime
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
@@ -1079,6 +1080,51 @@ class stock_mission_report(osv.osv):
             del request_result
             del product_values
         return True
+
+    def background_amc_update(self, cr, uid, *a, **b):
+        KEY = 'background_amc_update'
+        config = self.pool.get('ir.config_parameter')
+        move_obj = self.pool.get('stock.move')
+        mission_line_obj = self.pool.get('stock.mission.report.line')
+
+        previous = config.get_param(cr, uid, KEY)
+        if not previous:
+            previous = time.strftime('%Y-%m-%d')
+
+
+        from_date = (DateFrom(previous) + RelativeDateTime(months=-3, day=1)).strftime('%Y-%m-%d')
+        to_date = (DateFrom(previous) + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d')
+
+        self.logger.info("___ MSR AMC: Start update products previous update %s" % (previous,))
+
+        domain = self.pool.get('product.product')._get_domain_compute_amc(cr, uid)
+        domain.append(('date', '<=', to_date))
+        domain.append(('date', '>=', from_date))
+        p_ids = []
+
+        # get all products with move in the past 3 months since the last AMC update date
+        for move in  move_obj.read_group(cr, uid, domain, ['product_id'], ['product_id']):
+            if move['product_id']:
+                p_ids.append(move['product_id'][0])
+
+        if not p_ids:
+            self.logger.info("___ MSR AMC: no product to update")
+            return True
+
+        mission_lines_ids = mission_line_obj.search(cr, uid, [('mission_report_id.full_view', '=', False), ('mission_report_id.local_report', '=', True), ('product_id', 'in', p_ids)])
+        mission_dict = {}
+        for mission_line in mission_line_obj.read(cr, uid, mission_lines_ids, ['product_id']):
+            mission_dict[mission_line['product_id'][0]] = mission_line['id']
+
+        self.logger.info("___ MSR AMC: update %d products" % (len(mission_dict.keys()), ))
+
+        for product in self.pool.get('product.product').read(cr, uid, mission_dict.keys(), ['product_amc']):
+            mission_line_obj.write(cr, uid, mission_dict[product['id']], {'product_amc': product['product_amc']})
+
+        config.set_param(cr, uid, KEY, time.strftime('%Y-%m-%d'))
+        self.logger.info("___ MSR AMC: Stop")
+        return True
+
 
 stock_mission_report()
 
