@@ -99629,3 +99629,9 @@ msgstr "Vous ne pouvez pas modifier un Journal Analytique qui n'appartient pas �
 #, python-format
 msgid "You can't delete this FX rate as the period \"%s\" isn't in Draft state."
 msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'est pas en statut Brouillon."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:147
+#, python-format
+msgid "The period \"%s\" is not Open."
+msgstr "La période \"%s\" n'est pas Ouverte."
