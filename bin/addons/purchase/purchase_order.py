@@ -2020,7 +2020,6 @@ class purchase_order(osv.osv):
             'price_unit': pol.price_unit,
             'date': pol.confirmed_delivery_date,
             'date_expected': pol.confirmed_delivery_date or pol.date_planned,
-            'line_number': pol.line_number,
             'comment': pol.comment,
         }
 
