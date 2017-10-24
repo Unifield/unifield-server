@@ -89,7 +89,7 @@ class patch_scripts(osv.osv):
     def set_stock_level(self, cr, uid, *a, **b):
         done = {}
         cr.execute("delete from stock_mission_report_line_location where location_id is not null");
-        cr.execute("select distinct product_id, location_id, location_dest_id from stock_move where state='done'")
+        cr.execute("select distinct m.product_id, m.location_id, m.location_dest_id, t.uom_id from stock_move m, product_template t, product_product p where m.product_id = p.id and t.id = p.product_tmpl_id and m.state='done'")
         prod_obj = self.pool.get('product.product')
         for x in cr.fetchall():
             for loc in (x[1], x[2]):
@@ -97,9 +97,9 @@ class patch_scripts(osv.osv):
                 if key in done:
                     continue
                 av = prod_obj.get_product_available(cr, uid, [x[0]], context={'states': ('done',), 'what': ('in', 'out'), 'location': loc})
-                cr.execute("""insert into stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date)
-                    values (%s, %s, %s, NOW()) RETURNING id
-                """, (loc, x[0], av[x[0]]))
+                cr.execute("""insert into stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date, uom_id)
+                    values (%s, %s, %s, NOW(), %s) RETURNING id
+                """, (loc, x[0], av[x[0]], x[3]))
                 created_id = cr.fetchone()[0]
                 cr.execute("select create_ir_model_data(%s)", (created_id, ))
                 done[key] = True

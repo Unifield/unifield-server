@@ -345,6 +345,8 @@ class stock_mission_report(osv.osv):
         local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         instance_obj = self.pool.get('msf.instance')
         instance_ids = instance_obj.search(cr, uid, [])
+        uom_obj = self.pool.get('product.uom')
+
         instance_dict = {}
         for x in instance_obj.read(cr, uid, instance_ids, ['name']):
             instance_dict[x['id']] = x['name']
@@ -489,9 +491,10 @@ class stock_mission_report(osv.osv):
         cr.execute(GET_EXPORT_REQUEST, ('en_MF', tuple(r_ids)))
 
         cr1 = pooler.get_db(cr.dbname).cursor()
-        cr1.execute('''select p.default_code as default_code, location.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity from
+        cr1.execute('''select p.default_code as default_code, location.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity, l.uom_id as sml_uom, t.uom_id as product_uom from
             stock_mission_report_line_location l
             inner join product_product p on p.id = l.product_id
+            inner join product_template t on t.id = p.product_tmpl_id
             left join stock_location location on location.id = l.location_id
             where
                 (location.usage = 'internal' or location.id is null)
@@ -511,7 +514,12 @@ class stock_mission_report(osv.osv):
                 while last_stock_level_line and last_stock_level_line['default_code'] == p_code:
                     instance_id = last_stock_level_line['remote_instance_id'] or local_instance.id
                     location_name = last_stock_level_line['remote_location_name'] or last_stock_level_line['local_location_name']
-                    stock_level_data.setdefault(instance_id, {}).update({location_name: last_stock_level_line['quantity']})
+                    qty = last_stock_level_line['quantity']
+                    if last_stock_level_line['sml_uom'] != last_stock_level_line['product_uom']:
+                        qty = uom_obj._compute_qty(cr, uid, last_stock_level_line['sml_uom'], last_stock_level_line['quantity'], last_stock_level_line['product_uom'])
+                    if abs(qty) < 0.0001:
+                        qty = 0
+                    stock_level_data.setdefault(instance_id, {}).update({location_name: qty})
                     last_stock_level_line = cr1.dictfetchone()
                 to_write = []
                 for name, key in fixed_data:
@@ -1194,12 +1202,30 @@ class stock_mission_report_line_location(osv.osv):
         """)
 
         # psql function to convert uom
-        cr.execute('''CREATE OR REPLACE FUNCTION stock_qty(qty numeric, from_uom integer) RETURNS numeric AS $$
+        cr.execute('''CREATE OR REPLACE FUNCTION stock_qty(qty numeric, from_uom integer, to_uom integer) RETURNS numeric AS $$
         DECLARE
-            uom_factor numeric;
+            from_uom_factor numeric;
+            to_uom_factor numeric;
         BEGIN
-            SELECT factor INTO uom_factor FROM product_uom WHERE id = $2;
-            RETURN $1 * uom_factor;
+            IF $2 = $3 THEN
+               RETURN $1;
+            END IF;
+
+            SELECT factor INTO from_uom_factor FROM product_uom WHERE id = $2;
+            SELECT factor INTO to_uom_factor FROM product_uom WHERE id = $3;
+            RETURN  $1 * to_uom_factor / from_uom_factor;
+        END;
+        $$ LANGUAGE plpgsql;
+        ''')
+
+        # psql function get default uom
+        cr.execute('''CREATE OR REPLACE FUNCTION get_ref_uom(product integer) RETURNS integer AS $$
+        DECLARE
+           uom_id integer;
+        BEGIN
+           SELECT t.uom_id INTO uom_id FROM product_product p, product_template t
+              WHERE p.product_tmpl_id = t.id AND p.id = $1;
+            RETURN uom_id;
         END;
         $$ LANGUAGE plpgsql;
         ''')
@@ -1218,26 +1244,26 @@ class stock_mission_report_line_location(osv.osv):
   -- stock.move deleted or state changed from done to something else: decrease stock
   IF TG_OP = 'DELETE' OR ( TG_OP = 'UPDATE' AND OLD.state='done' AND NEW.state != 'done') OR changes_on_done THEN
      IF OLD.state = 'done' THEN
-          UPDATE stock_mission_report_line_location SET quantity = quantity-stock_qty(OLD.product_qty, OLD.product_uom), last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_dest_id RETURNING id INTO t_id;
+          UPDATE stock_mission_report_line_location SET quantity = quantity-stock_qty(OLD.product_qty, OLD.product_uom, uom_id), last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_dest_id RETURNING id INTO t_id;
           PERFORM update_ir_model_data(t_id);
-          UPDATE stock_mission_report_line_location SET quantity = quantity+stock_qty(OLD.product_qty, OLD.product_uom), last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_id RETURNING id INTO t_id;
+          UPDATE stock_mission_report_line_location SET quantity = quantity+stock_qty(OLD.product_qty, OLD.product_uom, uom_id), last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_id RETURNING id INTO t_id;
           PERFORM update_ir_model_data(t_id);
      END IF;
   END IF;
 
   -- new done stock move or state changed to done
   IF TG_OP in ('UPDATE', 'INSERT') AND NEW.state = 'done' AND (TG_OP = 'INSERT' OR COALESCE(OLD.state, 'draft') != 'done' OR changes_on_done) THEN
-        UPDATE stock_mission_report_line_location SET quantity = quantity+stock_qty(NEW.product_qty, NEW.product_uom), last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_dest_id RETURNING id INTO t_id;
+        UPDATE stock_mission_report_line_location SET quantity = quantity+stock_qty(NEW.product_qty, NEW.product_uom, uom_id), last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_dest_id RETURNING id INTO t_id;
         IF NOT FOUND THEN
-            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date) VALUES (NEW.location_dest_id, NEW.product_id, stock_qty(NEW.product_qty, NEW.product_uom), NOW()) RETURNING id INTO t_id;
+            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date, uom_id) VALUES (NEW.location_dest_id, NEW.product_id, stock_qty(NEW.product_qty, NEW.product_uom, get_ref_uom(NEW.product_id)), NOW(), get_ref_uom(NEW.product_id)) RETURNING id INTO t_id;
             PERFORM create_ir_model_data(t_id);
         ELSE
             PERFORM update_ir_model_data(t_id);
         END IF;
 
-        UPDATE stock_mission_report_line_location SET quantity = quantity-stock_qty(NEW.product_qty, NEW.product_uom), last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_id RETURNING id INTO t_id;
+        UPDATE stock_mission_report_line_location SET quantity = quantity-stock_qty(NEW.product_qty, NEW.product_uom, uom_id), last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_id RETURNING id INTO t_id;
         IF NOT FOUND THEN
-            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date) VALUES (NEW.location_id, NEW.product_id, -stock_qty(NEW.product_qty, NEW.product_uom), NOW()) RETURNING id INTO t_id;
+            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date, uom_id) VALUES (NEW.location_id, NEW.product_id, -stock_qty(NEW.product_qty, NEW.product_uom, get_ref_uom(NEW.product_id)), NOW(), get_ref_uom(NEW.product_id)) RETURNING id INTO t_id;
             PERFORM create_ir_model_data(t_id);
         ELSE
             PERFORM update_ir_model_data(t_id);
@@ -1287,6 +1313,7 @@ class stock_mission_report_line_location(osv.osv):
         'location_id': fields.many2one('stock.location', 'Location', select=1),
         'product_id': fields.many2one('product.product', 'Product', select=1, required=1),
         'quantity': fields.float('Quantity', required=True, digits=(16,4)),
+        'uom_id': fields.many2one('product.uom', 'UoM', required=True),
         'last_mod_date': fields.datetime('Last modification date'),
 
         'instance_id': fields.function(_get_instance_loc, string='Instance', type='many2one', relation='msf.instance', multi='instance_loc', method=1, fnct_inv=_set_instance_loc),
