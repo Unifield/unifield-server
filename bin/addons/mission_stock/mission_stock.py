@@ -459,7 +459,7 @@ class stock_mission_report(osv.osv):
 
         begin = len(fixed_data)
         for inst_id in all_instances:
-            max_size = begin + len(repeated_data) + len(instance_loc[inst_id]) - 1
+            max_size = begin + len(repeated_data) + len(instance_loc.get(inst_id, [])) - 1
             sheet.write_merge(2, 2, begin, max_size, instance_dict[inst_id], style=header_styles[i])
             begin = max_size + 1
             i = 1 - i
@@ -468,7 +468,7 @@ class stock_mission_report(osv.osv):
         for inst_id in all_instances:
             for x in repeated_data:
                 header_row.append((header_styles[i], _(x[0])))
-            for x in instance_loc[inst_id]:
+            for x in instance_loc.get(inst_id, []):
                 header_row.append((header_styles[i], x))
             i = 1 - i
 
@@ -530,7 +530,7 @@ class stock_mission_report(osv.osv):
                         if not num or num == '.000':
                             num = None
                         to_write.append(num)
-                    for x in instance_loc[inst_id]:
+                    for x in instance_loc.get(inst_id, []):
                         to_write.append(stock_level_data.get(inst_id, {}).get(x) or None)
 
                 self.xls_write_row(sheet, to_write, row_count, row_style)
