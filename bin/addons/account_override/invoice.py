@@ -915,9 +915,9 @@ class account_invoice(osv.osv):
         j_type = journal.type
         if inv_type is None:
             inv_type = self.get_account_invoice_type(cr, uid, inv_id, context=context)
-        if inv_type in ('si', 'di', 'sr') and j_type != 'purchase' or inv_type in ('ivi', 'ivo') and j_type != 'intermission' or \
-            inv_type in ('stv', 'dn') and j_type != 'sale' or inv_type == 'cr' and j_type != 'sale_refund' or \
-                inv_type == 'donation' and j_type not in ('inkind', 'extra'):
+        if inv_type in ('si', 'di') and j_type != 'purchase' or inv_type == 'sr' and j_type != 'purchase_refund' or \
+            inv_type in ('ivi', 'ivo') and j_type != 'intermission' or inv_type in ('stv', 'dn') and j_type != 'sale' or \
+                inv_type == 'cr' and j_type != 'sale_refund' or inv_type == 'donation' and j_type not in ('inkind', 'extra'):
             raise osv.except_osv(_('Error'), _("The journal %s is not allowed for this document.") % journal.name)
 
     def _check_partner(self, cr, uid, inv_id, inv_type=None, context=None):
@@ -960,7 +960,7 @@ class account_invoice(osv.osv):
             account_domain.append(('restricted_area', '=', 'intermission_header'))
         account_domain.append(('id', '=', account.id))  # the account used in the account_invoice
         if not account_obj.search_exist(cr, uid, account_domain, context=context):
-            raise osv.except_osv(_('Error'), _("The account %s is not allowed for this document.") % account.name)
+            raise osv.except_osv(_('Error'), _("The account %s - %s is not allowed for this document.") % (account.code, account.name))
 
     def _check_line_accounts(self, cr, uid, inv_id, inv_type=None, context=None):
         """
@@ -986,7 +986,7 @@ class account_invoice(osv.osv):
         for line in inv_line_obj.browse(cr, uid, lines, fields_to_fetch=['account_id'], context=context):
             acc = line.account_id
             if not account_obj.search_exist(cr, uid, account_domain + [('id', '=', acc.id)], context=context):
-                raise osv.except_osv(_('Error'), _("The account %s used at line level is not allowed.") % acc.name)
+                raise osv.except_osv(_('Error'), _("The account %s - %s used at line level is not allowed.") % (acc.code, acc.name))
 
     def check_domain_restrictions(self, cr, uid, ids, context=None):
         """
