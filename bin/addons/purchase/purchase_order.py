@@ -2021,6 +2021,7 @@ class purchase_order(osv.osv):
             'date': pol.confirmed_delivery_date,
             'date_expected': pol.confirmed_delivery_date or pol.date_planned,
             'comment': pol.comment,
+            'line_number': pol.line_number,
         }
 
         if incoming.reason_type_id:
