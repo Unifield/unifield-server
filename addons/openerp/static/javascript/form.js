@@ -97,6 +97,27 @@ function openRecord(id, src, target, readonly){
 
     var prefix = src && src != '_terp_list' ? src + '/' : '';
 
+    // Here we do a sanity check that there aren't multiple element with
+    // the same id 'prefix/_terp_model'
+    // If this is the case, we introduce some delay (call back the same
+    // function later)
+    //
+    // This can happen in some asynchronous edge-case where the DOM is not 
+    // fully loaded yet and in particular there's a remaining element with 
+    // _terp_model =  ir.ui.menu
+    // which might trigger the opening of a completely unrealted view
+    //
+    // You might reproduce the issue by monitoring the value of
+    //    openobject.dom.get(prefix + '_terp_model').value
+    // when loading for instance the list of Commitment Vouchers
+    //
+    // See https://jira.unifield.org/browse/US-3589
+    //
+    if ($("[id="+prefix+"_terp_model]").length > 1) {
+        callLater(0.1, openRecord, id, src, target, readonly);
+        return;
+    }
+
     var args = {
         'model': openobject.dom.get(prefix + '_terp_model').value,
         'id': id || 'False',
