@@ -243,10 +243,10 @@ class account_account(osv.osv):
         if args == [('restricted_area', '=', 'invoice_lines')]:
             # LINES of Stock Transfer Vouchers:
             # restrict to Expense/Income/Receivable accounts
-            if context_stv:
+            if context_stv or context.get('check_line_stv'):
                 arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
         elif args == [('restricted_area', '=', 'intermission_header')]:
-            if context_ivo:
+            if context_ivo or context.get('check_header_ivo'):
                 # HEADER of Intermission Voucher OUT:
                 # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash
                 # + prevent from using donation accounts
@@ -254,7 +254,7 @@ class account_account(osv.osv):
                        '|', '|', ('is_intermission_counterpart', '=', True),
                        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
                        '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash'])]
-            elif context_ivi:
+            elif context_ivi or context.get('check_header_ivi'):
                 # HEADER of Intermission Voucher IN:
                 # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables
                 # + prevent from using donation accounts
