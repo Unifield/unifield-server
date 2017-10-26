@@ -948,8 +948,11 @@ class account_invoice(osv.osv):
         account_domain = []
         if inv_type in ('si', 'di', 'sr'):
             account_domain.append(('restricted_area', '=', 'in_invoice'))
-        elif inv_type in ('stv', 'cr', 'dn'):
+        elif inv_type in ('stv', 'cr'):
             account_domain.append(('restricted_area', '=', 'out_invoice'))
+        elif inv_type == 'dn':
+            account_domain.append(('restricted_area', '=', 'out_invoice'))
+            account_domain.append(('is_intersection_counterpart', '=', False))
         elif inv_type == 'donation':
             account_domain.append(('restricted_area', '=', 'donation_header'))
         elif inv_type == 'ivi':
