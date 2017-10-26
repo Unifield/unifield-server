@@ -36,8 +36,7 @@
                                    attrs="{'required': [('type', 'not in', ('situation', 'stock'))],
                                            'readonly': [('has_entries', '=', True)]}"/>
                             <field name="bank_account_number"
-                                   attrs="{'invisible': [('type', '!=', 'bank')],
-                                           'readonly': [('has_entries', '=', True)]}"/>
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
                             <field name="bank_journal_id"
                                    attrs="{'invisible': [('type', '!=', 'cheque')],
                                            'required': [('type', '=', 'cheque')],
