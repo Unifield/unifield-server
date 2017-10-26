@@ -99659,3 +99659,9 @@ msgstr "Le journal %s n'est pas autorisé pour ce document."
 #, python-format
 msgid "The partner %s is not allowed for this document."
 msgstr "Le partenaire %s n'est pas autorisé pour ce document."
+
+#. module: base
+#: code:addons/base/ir/ir_model.py:778
+#, python-format
+msgid "Creating Debit Note lines by file import is not allowed."
+msgstr "La création de lignes d'une Note de Débit via l'import d'un fichier n'est pas autorisée."

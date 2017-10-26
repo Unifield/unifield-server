@@ -968,6 +968,7 @@ class account_invoice(osv.osv):
     def _check_line_accounts(self, cr, uid, inv_id, inv_type=None, context=None):
         """
         Raises an error if the type of the account.invoice and the accounts used at line level are not compatible
+        No check is done for Debit Notes where the creation of lines is only possible by importing existing finance docs
         """
         if context is None:
             context = {}
@@ -977,7 +978,7 @@ class account_invoice(osv.osv):
         if inv_type is None:
             inv_type = self.get_account_invoice_type(cr, uid, inv_id, context=context)
         account_domain = []
-        if inv_type in ('si', 'di', 'sr', 'cr', 'dn'):
+        if inv_type in ('si', 'di', 'sr', 'cr'):
             account_domain.append(('restricted_area', '=', 'invoice_lines'))
         elif inv_type == 'stv':
             context.update(({'check_line_stv': True, }))
