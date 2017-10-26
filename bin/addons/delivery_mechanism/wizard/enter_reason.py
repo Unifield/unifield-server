@@ -29,7 +29,7 @@ class enter_reason(osv.osv_memory):
     wizard called to split a memory stock move from create picking wizard
     '''
     _name = "enter.reason"
-    
+
     _columns = {
         'picking_id': fields.many2one('stock.picking', string='Incoming Shipment', readonly=True),
         'change_reason': fields.char(string='Change Reason', size=1024),
@@ -64,9 +64,6 @@ class enter_reason(osv.osv_memory):
         change_reason = data['change_reason']
         # update the object
         for obj in picking_obj.browse(cr, uid, picking_ids, context=context):
-            # purchase order line to re-source
-            pol_ids = []
-            pol_qty = {}
             # set the reason
             obj.write({'change_reason': change_reason}, context=context)
 

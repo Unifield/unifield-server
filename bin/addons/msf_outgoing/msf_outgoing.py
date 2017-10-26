@@ -5018,6 +5018,7 @@ class stock_move(osv.osv):
                         wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
 
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
+                    sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, resource=resource,context=context)
                     # Cancel the remaining OUT line
                     if diff_qty < sol.product_uom_qty:
                         data_back = self.create_data_back(move)
