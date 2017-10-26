@@ -168,6 +168,9 @@
                                         % elif o2m:
                                            % if not hide_new_button:
                                             <button title="${_('Create new record.')}" id="${name}_btn_"
+                                                % if button_attrs:
+                                                attrs="${button_attrs}"
+                                                % endif
                                                 onclick="listgridValidation('${name}', '${o2m or 0}', -1); return false;" type="button" class="oe_form_button_create">
                                                     ${_('New')}
                                             </button>
