@@ -1017,8 +1017,7 @@ class account_invoice(osv.osv):
             return False
         if not self.action_reconcile_imported_invoice(cr, uid, ids, context):
             return False
-        if not self.check_domain_restrictions(cr, uid, ids, context):
-            return False
+        self.check_domain_restrictions(cr, uid, ids, context)  # raises an error if one unauthorized element is used
         return True
 
     def line_get_convert(self, cr, uid, x, part, date, context=None):
