@@ -930,7 +930,10 @@ class account_invoice(osv.osv):
         p_type = partner.partner_type
         if inv_type is None:
             inv_type = self.get_account_invoice_type(cr, uid, inv_id, context=context)
-        if inv_type in ('ivi', 'ivo') and p_type != 'intermission' or \
+        # if a supplier/customer is expected for the doc: check that the partner used has the right flag
+        supplier_ko = inv_type in ('si', 'di', 'sr', 'ivi', 'donation') and not partner.supplier
+        customer_ko = inv_type in ('ivo', 'stv', 'dn', 'cr') and not partner.customer
+        if supplier_ko or customer_ko or inv_type in ('ivi', 'ivo') and p_type != 'intermission' or \
             inv_type == 'stv' and p_type not in ('section', 'external') or \
                 inv_type == 'donation' and p_type not in ('esc', 'external', 'section'):
             raise osv.except_osv(_('Error'), _("The partner %s is not allowed for this document.") % partner.name)
