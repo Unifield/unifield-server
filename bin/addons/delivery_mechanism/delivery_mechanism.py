@@ -1281,9 +1281,6 @@ class stock_picking(osv.osv):
                 for tc_data in track_changes_to_create:
                     tc_data['transaction_name'] = _('Reception %s') % backorder_name
 
-                # Claim specific code
-                self._claim_registration(cr, uid, wizard, backorder_id, context=context)
-
                 if sync_in:
                     # UF-1617: When it is from the sync., then just send the IN to shipped, then return the backorder_id
                     if context.get('for_dpo', False):
@@ -1295,7 +1292,14 @@ class stock_picking(osv.osv):
 
                 self.write(cr, uid, [picking_id], {'backorder_id': backorder_id, 'cd_from_bo': values.get('cd_from_bo', False)},
                            context=context)
-                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type not in ('return', 'surplus')):
+
+                # Claim specific code
+                current_backorder = picking_obj.read(cr, uid, backorder_id, ['backorder_id'], context=context)
+                if wizard.register_a_claim and not current_backorder['backorder_id']:  # add backorder to split IN
+                    picking_obj.write(cr, uid, backorder_id, ({'backorder_id': picking_dict['id']}), context=context)
+                self._claim_registration(cr, uid, wizard, backorder_id, context=context)
+
+                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'missing'):
                     wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                     # Then we finish the good picking
                     self.action_move(cr, uid, [backorder_id])
@@ -1313,6 +1317,10 @@ class stock_picking(osv.osv):
                     'create_bo': _('N/A'),
                     'close_in': _('In progress'),
                 }, context=context)
+
+                # Claim specific code
+                self._claim_registration(cr, uid, wizard, picking_id, context=context)
+
                 if sync_in:  # If it's from sync, then we just send the pick to become Available Shippde, not completely close!
                     if context.get('for_dpo', False):
                         self.write(cr, uid, [picking_id], {'in_dpo': True}, context=context)
@@ -1320,11 +1328,11 @@ class stock_picking(osv.osv):
                         self.write(cr, uid, [picking_id], {'state': 'shipped'}, context=context)
                     return picking_id
                 else:
-                    self.action_move(cr, uid, [picking_id], context=context)
-                    wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_done', cr)
+                    if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'missing'):
+                        self.action_move(cr, uid, [picking_id], context=context)
+                        wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_done', cr)
                     if picking_dict['purchase_id']:
-                        so_ids =  self.pool.get('purchase.order').get_so_ids_from_po_ids(cr,
-                                                                                         uid, picking_dict['purchase_id'][0], context=context)
+                        so_ids = self.pool.get('purchase.order').get_so_ids_from_po_ids(cr, uid, picking_dict['purchase_id'][0], context=context)
                         for so_id in so_ids:
                             wf_service.trg_write(uid, 'sale.order', so_id, cr)
                     if usb_entity == self.REMOTE_WAREHOUSE:

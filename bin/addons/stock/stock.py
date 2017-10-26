@@ -638,14 +638,12 @@ class stock_picking(osv.osv):
             ('auto', 'Waiting'),
             ('confirmed', 'Confirmed'),
             ('assigned', 'Available'),
-            ('assigned_claim', 'Available-Claim'),
             ('done', 'Done'),
             ('cancel', 'Cancelled'),
         ], 'State', readonly=True, select=True,
             help="* Draft: not confirmed yet and will not be scheduled until confirmed\n"\
                  "* Confirmed: still waiting for the availability of products\n"\
                  "* Available: products reserved, simply waiting for confirmation.\n"\
-                 "* Available-Claim: products reserved, but some are missing. Waiting for replacement and confirmation\n"\
                  "* Waiting: waiting for another move to proceed before it becomes automatically available (e.g. in Make-To-Order flows)\n"\
                  "* Done: has been processed, can't be modified or cancelled anymore\n"\
                  "* Cancelled: has been cancelled, can't be confirmed anymore"),
@@ -2151,10 +2149,10 @@ class stock_move(osv.osv):
                 # Need to check name of old picking because it always considers picking as "OUT" when created from Sale Order
                 old_ptype = location_obj.picking_type_get(cr, uid, picking.move_lines[0].location_id, picking.move_lines[0].location_dest_id)
                 picking_vals = {}
-                if old_ptype != picking.type:
+                if old_ptype != picking.type:  # and 'return' not in picking.name and 'surplus' not in picking.name:
                     picking_vals['name'] = seq_obj.get(cr, uid, 'stock.picking.' + old_ptype)
                 if ptype == 'internal':
-                    picking_vals['associate_pick_name'] = new_pick_name # save the INT name into this original IN
+                    picking_vals['associate_pick_name'] = new_pick_name  # save the INT name into this original IN
                 if picking_vals:
                     picking_obj.write(cr, uid, [picking.id], picking_vals, context=context)
             else:

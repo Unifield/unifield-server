@@ -1948,7 +1948,7 @@ class stock_picking(osv.osv):
         obj = self.browse(cr, uid, copy_id, context=context)
         if not context.get('allow_copy', False):
             if obj.subtype == 'picking' and default.get('subtype', 'picking') == 'picking':
-                if not obj.backorder_id or (obj.claim and '-return' in obj.name):
+                if not obj.backorder_id or obj.claim:
                     # draft, new ref
                     default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket'),
                                    origin=False,
@@ -3158,7 +3158,8 @@ class stock_picking(osv.osv):
                         move_obj.update_linked_documents(cr, uid, move.id, new_move_id, context=context)
 
                     # Set the stock move to done with 0.00 qty
-                    if move.id in keep_move and keep_move[move.id]:
+                    if (move.id in keep_move and keep_move[move.id])\
+                            or ('return' in move.picking_id.name or 'surplus' in move.picking_id.name):
                         m_st = move.state
                     else:
                         m_st = 'done'

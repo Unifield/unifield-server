@@ -51,7 +51,7 @@ CLAIM_STATE = [('draft', 'Draft'),
 # missing event as key does not accept any event after him
 CLAIM_RULES = {'supplier': {'quarantine': ['accept', 'scrap', 'return', 'surplus']}}
 # does the claim type allows event creation
-CLAIM_TYPE_RULES = {'supplier': ['accept', 'quarantine', 'scrap', 'return', 'surplus'],
+CLAIM_TYPE_RULES = {'supplier': ['accept', 'quarantine', 'scrap', 'return', 'surplus', 'missing'],
                     'customer': ['return', 'surplus'],
                     'transport': False,
                     }
@@ -622,8 +622,8 @@ class return_claim(osv.osv):
             if obj.processor_origin == 'internal.picking.processor' and obj.picking_id_return_claim.state != 'done':
                 raise osv.except_osv(_('Warning !'), _('Selected Origin must be in Done state for Internal Moves.'))
             # the selected origin or new IN created within split process must be draft/assigned for IN
-            if obj.processor_origin == 'stock.incoming.processor' and obj.picking_id_return_claim.state not in ('draft', 'assigned'):
-                raise osv.except_osv(_('Warning !'),  _('Selected Origin must be in Available state for Incoming Shipments.'))
+            if obj.processor_origin == 'stock.incoming.processor' and obj.picking_id_return_claim.state == 'cancel':
+                raise osv.except_osv(_('Warning !'),  _('Selected Origin must not be in Cancelled state for Incoming Shipments.'))
             # origin type
             if obj.picking_id_return_claim.type not in ['in', 'out']:
                 raise osv.except_osv(_('Warning !'), _('Selected Origin must be either an Incoming Shipment or a Delivery Order or a Picking Ticket.'))
@@ -645,7 +645,7 @@ class return_claim(osv.osv):
                         raise osv.except_osv(_('Warning !'), _('Event (%s) is not allowed for selected Claim Type.') % event_name)
             # if supplier, origin must be in
             if obj.type_return_claim == 'supplier' and obj.picking_id_return_claim.type != 'in'\
-                    and '-return' not in obj.picking_id_return_claim.name:
+                    and ('return' not in obj.picking_id_return_claim.name and 'surplus' not in obj.picking_id_return_claim.name):
                 raise osv.except_osv(_('Warning !'), _('Origin for supplier claim must be Incoming Shipment.'))
             # if customer, origin must be out
             if obj.type_return_claim == 'customer' and obj.picking_id_return_claim.type != 'out':
@@ -863,7 +863,7 @@ class claim_event(osv.osv):
         new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket') + '-return'
         # get the picking values and move values according to claim type
         picking_values = {'name': new_name,
-                          'state': 'draft',
+                          'state': 'assigned',
                           'partner_id': claim.partner_id_return_claim.id,  # both partner needs to be filled??
                           'partner_id2': claim.partner_id_return_claim.id,
                           'purchase_id': origin_picking.purchase_id.id,
@@ -955,7 +955,7 @@ class claim_event(osv.osv):
         new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket') + '-surplus'
         # get the picking values and move values according to claim type
         picking_values = {'name': new_name,
-                          'state': 'draft',
+                          'state': 'assigned',
                           'partner_id': claim.partner_id_return_claim.id,  # both partner needs to be filled??
                           'partner_id2': claim.partner_id_return_claim.id,
                           'purchase_id': origin_picking.purchase_id.id,
@@ -999,16 +999,16 @@ class claim_event(osv.osv):
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
         picking_tools = self.pool.get('picking.tools')
-        # origin picking in/out
-        origin_picking = obj.return_claim_id_claim_event.picking_id_return_claim
         # event picking object
         event_picking = obj.event_picking_id_claim_event
         # we copy the picking
-        in_values = origin_picking
-        in_values.update({
-            'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in') + '-missing',
-            'state': 'assigned_claim',
-        })
+        in_values = {
+            'name': event_picking.name + '-missing',
+            'state': 'assigned',
+            'reason_type_id': context['common']['rt_goods_replacement'],
+            'claim': True,
+        }
+        move_values = {'state': 'assigned', 'reason_type_id': context['common']['rt_goods_replacement']}
         # update the picking
         pick_obj.write(cr, uid, [event_picking.id], in_values, context=context)
         # update the picking again - strange bug on runbot, the type was internal again...
@@ -1018,7 +1018,7 @@ class claim_event(osv.osv):
         # get the move values according to claim type
         move_obj.write(cr, uid, move_ids, move_values, context=context)
         # check availability of replacement picking
-        picking_tools.check_assign(cr, uid, missing_pick_id, context=context)
+        picking_tools.check_assign(cr, uid, event_picking.id, context=context)
 
         return True
 
@@ -1255,7 +1255,7 @@ class claim_event(osv.osv):
             readonly=True,
         ),  # default value
         'type_claim_event': fields.selection(
-            selection=CLAIM_EVENT_TYPE,
+            selection=IN_CLAIM_EVENT_TYPE,
             string='Type',
             required=True,
             readonly=True,
@@ -1714,7 +1714,7 @@ class stock_picking(osv.osv):
         partial_datas = kwargs['partial_datas']
         assert partial_datas is not None, 'missing partial_datas'
         # if a claim is needed:
-        # if return claim: we do not close the processed picking, it is now an out picking which need to be processed
+        # if return claim: we do not close the processed picking, it is now a pick which need to be processed
         if 'register_a_claim_partial_picking' in partial_datas and partial_datas['register_a_claim_partial_picking']:
             if partial_datas['claim_type_partial_picking'] in ('return', 'surplus'):
                 return False
