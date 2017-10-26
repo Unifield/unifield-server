@@ -66,21 +66,7 @@ class enter_reason(osv.osv_memory):
             # set the reason
             obj.write({'change_reason': change_reason}, context=context)
 
-            for move in obj.move_lines:
-                if move.state != 'cancel':
-                    pol_ids.append(move.purchase_line_id.id)
-                    pol_qty.setdefault(move.purchase_line_id.id, 0.00)
-                    pol_qty[move.purchase_line_id.id] += move.product_qty
-
-            # if full cancel (no resource), we updated corresponding out and correct po state
-            picking_obj.cancel_and_update_out(cr, uid, [obj.id], context=context)
-            if cancel_type != 'update_out':
-                context['pol_qty'] = pol_qty
-                context['from_in_cancel'] = True
-                pol_obj.write(cr, uid, pol_ids, {'has_to_be_resourced': True}, context=context)
-                for pol in self.pool.get('purchase.order.line').browse(cr, uid, pol_ids, context=context):
-                    if pol.linked_sol_id:
-                        wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
+            self.pool.get('stock.move').action_cancel(cr, uid, [move.id for move in obj.move_lines], context=context)
 
             # cancel the IN
             wf_service.trg_validate(uid, 'stock.picking', obj.id, 'button_cancel', cr)
