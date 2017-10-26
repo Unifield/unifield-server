@@ -132,17 +132,39 @@ function form_onStateChange(container, widget, states, evt) {
     }
 }
 
+
+//
+// This function browse every element/widget which has an "attrs" attribute.
+//
+// 'attrs' typically contains something like { 'readonly' : [('state', 'not in', ['draft', 'validated'])]}
+// and is generally defined in the XML view.
+//
+// For each of these elements, it finds the related fields ('state' in the
+// example) and create an "onAttrChange" binding, such that when these fields 
+// change and trigger an "onAttrChange" event, the new value is correctly 
+// propagated back to the element/widget according to what "attrs" describes
+// (e.g. readonly turned on/off).
+//
+// Then, an initial 'onAttrChange' event is called for each related field found.
+//
+// Warning : this function won't erase previous binding, so *calling it multiple
+// time on the same page will duplicated bindings!*
+//
 function form_hookAttrChange() {
+
+    // Select every HTML element with an "attrs" attribute
     var $items = jQuery('[attrs]');
-    var fields = {};
+    var fields_with_onAttrChange = {};
 
+    // For each of them...
     $items.each(function(){
-        var $this = jQuery(this);
-        var attrs = $this.attr('attrs') || '{}';
-        var widget = $this.attr('widget') || '';
         var container = this;
+        var $this = jQuery(this);
+        // Get the 'attrs' attribute
+        var attrs = $this.attr('attrs') || '{}';
+        // Get the widget
+        var widget = $this.attr('widget') || '';
         var prefix = widget.slice(0, widget.lastIndexOf('/')+1) || '';
-
         // Convert Python statement into it's equivalent in JavaScript.
         attrs = attrs.replace(/\(/g, '[');
         attrs = attrs.replace(/\)/g, ']');
@@ -150,6 +172,7 @@ function form_hookAttrChange() {
         attrs = attrs.replace(/False/g, '0');
         attrs = attrs.replace(/\buid\b/g, window.USER_ID);
 
+        // Convert attrs to a javascript object
         try {
             attrs = eval('(' + attrs + ')');
         } catch(e){
@@ -157,34 +180,57 @@ function form_hookAttrChange() {
         }
         var cache_values = {};
 
+        // For each property in attrs... (e.g. readonly, invisible, ..)
         for (var attr in attrs) {
-            var expr_fields = {}; // check if field appears more then once in the expr
+            var exprs = attrs[attr];
+            // (check if field appears more then once in the expr)
+            var already_connected_fields = {}; 
 
-            if (attrs[attr] == ''){
-                return form_onAttrChange(container, widget, attr, attrs[attr], $this, cache_values);
+            // If there's no expression associated (e.g. readonly: {} (?))
+            // Don't create any 'onAttrChange' binding (there's no field to
+            // bind to), just apply it
+            if (exprs == ''){
+                return form_onAttrChange(container, widget, attr, exprs, $this, cache_values);
             }
 
-            forEach(attrs[attr], function(n){
+            // Otherwise, exprs is a list of expressions like :
+            //   'state', 'not in', ['draft', 'validated']
+            //   'shipped', '=', 1 
+            forEach(exprs, function(expr){
 
-                if (typeof(n) == "number") { // {'invisible': [1]}
-                    return form_onAttrChange(container, widget, attr, n, $this, cache_values);
+                // If the relation is just a number, e.g. {'invisible': [1]}
+                // Don't create any 'onAttrChange' binding (there's no field
+                // to bind to), just apply it
+                if (typeof(expr) == "number") {
+                    return form_onAttrChange(container, widget, attr, expr, $this, cache_values);
                 }
 
-                var name = prefix + n[0];
-                var field = openobject.dom.get(name);
-                if (field && !expr_fields[field.id]) {
-                    fields[field.id] = 1;
-                    expr_fields[field.id] = 1;
+                // Otherwise, get the name of the related field and the 
+                // corresponding object in the DOM
+                var name = prefix + expr[0];
+                var related_field = openobject.dom.get(name);
+                // If we did really found the related field and we
+                // did not already connected this item to this field
+                if (related_field && !already_connected_fields[related_field.id]) {
+                    // Keep track of this field
+                    fields_with_onAttrChange[related_field.id] = 1;
+                    already_connected_fields[related_field.id] = 1;
+
                     // events disconnected during hook_onStateChange,
                     // don't redisconnect or may break onStateChange
-                    var $field = jQuery(field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this, {}));
-                    $field.change(partial(form_onAttrChange, container, widget, attr, attrs[attr], $this, {}));
+                    // 
+                    // Create a binding between this field and the current item/widget : 
+                    // field.trigger('onAttrChange') will then trigger form_onAttrChange(..., widget, ...)
+                    //
+                    var $related_field = jQuery(related_field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, exprs, $this, {}));
+                    $related_field.change(partial(form_onAttrChange, container, widget, attr, exprs, $this, {}));
                 }
             });
         }
     });
 
-    for(var field in fields) {
+    // For each field for which we defined a binding, trigger onAttrChange
+    for(var field in fields_with_onAttrChange) {
         jQuery(idSelector(field)).trigger('onAttrChange');
     }
 }
