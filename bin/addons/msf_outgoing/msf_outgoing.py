@@ -5014,11 +5014,12 @@ class stock_move(osv.osv):
                         continue
 
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
-                    if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
-                        sol_obj.add_resource_line(cr, uid, sol.id, sol.order_id.id, diff_qty, context=context)
-                    sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, resource=move.has_to_be_resourced,context=context)
-                    signal = 'cancel_r' if move.has_to_be_resourced else 'cancel'
-                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
+                    resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced
+                    if move.purchase_line_id.product_qty - move.product_qty != 0:
+                        self.pool.get('purchase.order.line').cancel_partial_qty(cr, uid, [move.purchase_line_id.id], cancel_qty=move.product_qty, resource=resource, context=context)
+                    else:
+                        signal = 'cancel_r' if (move.has_to_be_resourced or move.picking_id.has_to_be_resourced) else 'cancel'
+                        wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
 
                     # Cancel the remaining OUT line
                     if diff_qty < sol.product_uom_qty:
