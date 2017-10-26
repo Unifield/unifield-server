@@ -29,11 +29,15 @@ class enter_reason(osv.osv_memory):
     wizard called to split a memory stock move from create picking wizard
     '''
     _name = "enter.reason"
-    _columns = {'picking_id': fields.many2one('stock.picking', string='Incoming Shipment', readonly=True),
-                'change_reason': fields.char(string='Change Reason', size=1024),
-                }
-    _defaults = {'picking_id': lambda obj, cr, uid, c: c and c.get('picking_id', False),
-                 }
+    
+    _columns = {
+        'picking_id': fields.many2one('stock.picking', string='Incoming Shipment', readonly=True),
+        'change_reason': fields.char(string='Change Reason', size=1024),
+    }
+
+    _defaults = {
+        'picking_id': lambda obj, cr, uid, c: c and c.get('picking_id', False),
+    }
 
     def do_cancel(self, cr, uid, ids, context=None):
         # quick integrity check

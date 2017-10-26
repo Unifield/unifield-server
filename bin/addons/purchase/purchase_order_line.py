@@ -1302,7 +1302,8 @@ class purchase_order_line(osv.osv):
 
     def cancel_partial_qty(self, cr, uid, ids, cancel_qty, resource=False, context=None):
         '''
-        allow to cancel a PO line partially
+        allow to cancel a PO line partially: split the line then cancel the new splitted line
+        and update linked FO/IR lines if has
         '''
         if isinstance(ids, (int,long)):
             ids = [ids]
