@@ -173,11 +173,16 @@ function python_to_javascript(string) {
 // time on the same page will duplicated bindings!*
 //
 //
-function form_hookAttrChange() {
-
-    // Select every HTML element with an "attrs" attribute
-    var $items = jQuery('[attrs]');
+function form_hookAttrChange($items) {
+    
+    // We'll keep track of each fields for which we added an onAttrChange
+    // binding
     var fields_with_onAttrChange = new Set();
+
+    // By default, select every HTML element with an "attrs" attribute
+    if(typeof options === "undefined") {
+        $items = jQuery('[attrs]');
+    }
 
     // For each of them...
     $items.each(function(){
