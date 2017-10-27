@@ -99655,3 +99655,33 @@ msgstr "A des écritures non comptabilisées"
 #: view:account.subscription:0
 msgid "Delete Unposted Entries"
 msgstr "Supprimer les Écritures Non Comptabilisées"
+
+#. module: base
+#: code:addons/base/res/partner/partner.py:316
+#, python-format
+msgid "Invalid Value"
+msgstr "Valeur incorrecte"
+
+#. module: base
+#: code:tools/validators.py:81
+#, python-format
+msgid "Please enter an email address"
+msgstr "Veuillez saisir une adresse email"
+
+#. module: base
+#: code:tools/validators.py:81
+#, python-format
+msgid "An email address must contain a single @"
+msgstr "Une adresse email doit contenir le caractère @"
+
+#. module: base
+#: code:tools/validators.py:81
+#, python-format
+msgid "The username portion of the email address is invalid (the portion before the @: %(username)s)"
+msgstr "La partie utilisateur de l'adresse email est invalide (partie avant le @: %(username)s)"
+
+#. module: base
+#: code:tools/validators.py:81
+#, python-format
+msgid "The domain portion of the email address is invalid (the portion after the @: %(domain)s)"
+msgstr "La partie domaine de l'adresse email est invalide (partie après le @: %(domain)s)"
