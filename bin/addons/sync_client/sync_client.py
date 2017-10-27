@@ -1647,12 +1647,14 @@ class Connection(osv.osv):
 
     def change_protocol(self, cr, uid, ids, host, proto, context=None):
         xmlrpc = 8069
-        xmlrpcs = 8071
+        xmlrpcs = 443
         netrpc = 8070
         if host in ('127.0.0.1', 'localhost'):
             xmlrpc = tools.config.get('xmlrpc_port')
-            xmlrpcs = tools.config.get('xmlrpcs_port')
             netrpc = tools.config.get('netrpc_port')
+            # For xmlrpcs, we keep the default value (443) because this does
+            # not make much sense anyway to have SSL over localhost (won't have
+            # a valid certificate)
         ports = {
             'xmlrpc': xmlrpc,
             'gzipxmlrpc': xmlrpc,
