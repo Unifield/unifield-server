@@ -99635,3 +99635,9 @@ msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'
 #, python-format
 msgid "Line %s. The account \"%s - %s\" cannot be used because it is set as \"Can not be corrected on HQ entries\"."
 msgstr "Ligne %s. Le compte \"%s - %s\" ne peut pas être utilisé car il est défini comme \"Impossible à corriger dans les entrées HQ\"."
+
+#. module: msf_homere_interface
+#: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:147
+#, python-format
+msgid "The period \"%s\" is not Open."
+msgstr "La période \"%s\" n'est pas Ouverte."

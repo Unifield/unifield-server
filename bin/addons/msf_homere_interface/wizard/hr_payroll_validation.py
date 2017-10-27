@@ -123,6 +123,7 @@ class hr_payroll_validation(osv.osv_memory):
                 'state': 'inprogress',
             }, context=context)
             acc_obj = self.pool.get('account.account')
+            period_obj = self.pool.get('account.period')
             # Retrieve some values
             line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft')])
             if not line_ids:
@@ -140,6 +141,10 @@ class hr_payroll_validation(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Unknown period!'))
             if not field:
                 raise osv.except_osv(_('Error'), _('No field found!'))
+            # Check that the period is Open
+            period = period_obj.browse(cr, uid, period_id, fields_to_fetch=['name', 'state'], context=context)
+            if period.state != 'draft':
+                raise osv.except_osv(_('Error'), _('The period "%s" is not Open.') % period.name)
             # Search if this period have already been validated
             period_validated_ids = self.pool.get('hr.payroll.import.period').search(cr, uid, [('period_id', '=', period_id),
                                                                                               ('field', '=', field)])
@@ -198,7 +203,7 @@ class hr_payroll_validation(osv.osv_memory):
             move_vals = {
                 'journal_id': journal_id,
                 'period_id': period_id,
-                'date': self.pool.get('account.period').get_date_in_period(cr, uid, move_date, period_id) or False,
+                'date': period_obj.get_date_in_period(cr, uid, move_date, period_id) or False,
                 'ref': 'Salaries' + ' ' + field,
             }
             move_id = self.pool.get('account.move').create(cr, uid, move_vals, context=context)
@@ -298,7 +303,6 @@ class hr_payroll_validation(osv.osv_memory):
             self.pool.get('hr.payroll.msf').write(cr, uid, line_ids, {'state': 'valid'})
             # Update Payroll import period table
             self.pool.get('hr.payroll.import.period').create(cr, uid, {'period_id': period_id, 'field': field, })
-            period = self.pool.get('account.period').browse(cr, uid, period_id, fields_to_fetch=['name'], context=context)
             if period and field:
                 msg_success = _('Payroll entries validation is successful for this period: %s and for that field: %s') % (period.name, field,)
                 self._update_message(cr, uid, ids, msg_success, context, use_new_cursor)
