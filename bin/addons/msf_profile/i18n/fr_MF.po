@@ -16162,7 +16162,7 @@ msgstr "%s update%s"
 #: selection:product.product,single_use:0
 #: selection:product.product,sterilized:0
 #: view:wizard.confirm.bank:0
-#: view:wizard.open.empty.cashbox:0
+#: view:wizard.register.opening.confirmation:0
 #: code:addons/sales_followup/sale_followup.py:405
 #: code:addons/sales_followup/sale_followup.py:422
 #: selection:allocation.stock.setup,unallocated_ok:0
@@ -19654,12 +19654,6 @@ msgid "You cannot made moves from/to Cross-docking\n"
 "locations when the Allocated stocks configuration is set to 'Unallocated'."
 msgstr "Vous ne pouvez pas effecter de mouvements de/vers des zones de Transbordement\n"
 "lorsque la configuration des stocks alloués est configurée sur 'Non alloués'."
-
-#. module: register_accounting
-#: code:addons/register_accounting/account_bank_statement.py:247
-#, python-format
-msgid "The associated period is closed"
-msgstr "The associated period is closed"
 
 #. module: base
 #: model:ir.ui.menu,name:base.menu_crm_config_lead
@@ -24181,8 +24175,8 @@ msgstr "Europe/Bucharest"
 #: selection:product.product,single_use:0
 #: selection:product.product,sterilized:0
 #: view:wizard.confirm.bank:0
-#: view:wizard.open.empty.cashbox:0
 #: view:stock.inventory.merge:0
+#: view:wizard.register.opening.confirmation:0
 #: selection:allocation.stock.setup,unallocated_ok:0
 #, python-format
 msgid "Yes"
@@ -49023,11 +49017,6 @@ msgstr "CUi stocks"
 msgid "MSF Custom Settings"
 msgstr "MSF Custom Settings"
 
-#. module: register_accounting
-#: view:wizard.open.empty.cashbox:0
-msgid "Open Empty Cashbox Confirmation"
-msgstr "Confirmation d'ouverture de caisse vide"
-
 #. module: kit
 #: code:addons/kit/kit.py:780
 #, python-format
@@ -54061,11 +54050,6 @@ msgstr "Total Enreg. Crédit"
 #: report:labels:0
 msgid "Project Destination:"
 msgstr "Projet Destinataire:"
-
-#. module: register_accounting
-#: model:ir.model,name:register_accounting.model_wizard_open_empty_cashbox
-msgid "wizard.open.empty.cashbox"
-msgstr "wizard.open.empty.cashbox"
 
 #. module: base
 #: selection:res.config.users,view:0
@@ -59832,7 +59816,7 @@ msgstr "Save new settings and close the wizard"
 
 #. modules: account, register_accounting
 #: view:account.bank.statement:0
-#: view:account.bank.statement:0
+#: field:wizard.register.opening.confirmation,opening_balance:0
 msgid "Opening Balance"
 msgstr "Solde d'ouverture"
 
@@ -66346,11 +66330,6 @@ msgstr "Tables de Devises"
 msgid "America/Caracas"
 msgstr "America/Caracas"
 
-#. module: register_accounting
-#: model:ir.actions.act_window,name:register_accounting.act_wizard_open_empty_cashbox
-msgid "Open Empty CashBox"
-msgstr "Ouvrir Caisse vide"
-
 #. module: msf_budget
 #: code:addons/msf_budget/report/report_budget_criteria.py:90
 #, python-format
@@ -69320,11 +69299,6 @@ msgstr "Vous ne pouvez pas avoir deux lignes pour le produit %s avec un coût mo
 #: selection:ir.actions.server,state:0
 msgid "Multi Actions"
 msgstr "Actions multiples"
-
-#. module: register_accounting
-#: view:wizard.open.empty.cashbox:0
-msgid "Open Empty Cashbox Confirmation - Wizard"
-msgstr "Confirmation d'ouverture de caisse vide - Assistant"
 
 #. module: stock
 #: view:stock.move:0
@@ -87639,11 +87613,6 @@ msgstr "Australia/Brisbane"
 msgid "Qty Multiple"
 msgstr "Qty Multiple"
 
-#. module: register_accounting
-#: field:wizard.open.empty.cashbox,be_sure:0
-msgid "You left the cashbox opening balance empty, do you want to open it anyway?"
-msgstr "Vous avez laissé le solde d'ouverture de caisse vide, confirmerz-vous l'ouverture de caisse? "
-
 #. module: account_period_closing_level
 #: field:account.account,include_in_yearly_move:0
 msgid "Include in Yearly move to 0"
@@ -94942,6 +94911,7 @@ msgstr "Sous-flux du Bon de Picking"
 #: model:ir.ui.menu,name:sync_client.reg_wiz_menu
 #: view:sync.client.register_entity:0
 #: selection:sync.client.register_entity,state:0
+#: field:wizard.register.opening.confirmation,register_id:0
 msgid "Register"
 msgstr "Registre"
 
@@ -99691,3 +99661,52 @@ msgstr "La partie domaine de l'adresse email est invalide (partie après le @: %
 #: report:addons/register_accounting/report/fully_report_xls.mako:1006
 msgid "Manual Journal Entry"
 msgstr "Écriture Comptable Manuelle"
+
+#. module: register_accounting
+#: field:wizard.register.opening.confirmation,confirm_opening_balance:0
+msgid "Do you want to open the register with the following opening balance?"
+msgstr "Voulez-vous ouvrir le registre avec le solde d'ouverture suivant ?"
+
+#. module: register_accounting
+#: field:wizard.register.opening.confirmation,register_type:0
+msgid "Register Type"
+msgstr "Type de Registre"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:736
+#: view:wizard.register.opening.confirmation:0
+#, python-format
+msgid "Open Register Confirmation"
+msgstr "Confirmation d'Ouverture du Registre"
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:711
+#, python-format
+msgid "The associated period is closed."
+msgstr "La période associée est fermée."
+
+#. module: register_accounting
+#: field:wizard.register.opening.confirmation,opening_period:0
+msgid "Opening Period"
+msgstr "Période d'Ouverture"
+
+#. module: register_accounting
+#: field:wizard.register.opening.confirmation,confirm_opening_period:0
+msgid "Do you want to open the register on the following period?"
+msgstr "Voulez-vous ouvrir le registre sur la période suivante ?"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/register_opening.py:91
+#, python-format
+msgid "You must tick the boxes before clicking on Yes."
+msgstr "Vous devez cocher les cases avant de cliquer sur Oui."
+
+#. module: register_accounting
+#: view:wizard.register.opening.confirmation:0
+msgid "Register Opening Balance"
+msgstr "Solde d'Ouverture du Registre"
+
+#. module: register_accounting
+#: view:wizard.register.opening.confirmation:0
+msgid "Register Opening Period"
+msgstr "Période d'Ouverture du Registre"

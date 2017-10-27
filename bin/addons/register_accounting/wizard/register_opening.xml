@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+        <record model="ir.ui.view" id="wizard_register_opening_confirmation_form">
+            <field name='name'>wizard.register.opening.confirmation.form</field>
+            <field name='model'>wizard.register.opening.confirmation</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Open Register Confirmation">
+                    <group colspan="4" attrs="{'invisible': [('register_type', '=', 'cheque')]}">
+                        <separator string="Register Opening Balance"/>
+                        <field name="register_type" invisible="1"/>
+                        <field name="confirm_opening_balance"/>
+                        <field name="opening_balance"/>
+                    </group>
+                    <group colspan="4">
+                        <separator string="Register Opening Period"/>
+                        <field name="confirm_opening_period"/>
+                        <field name="opening_period"/>
+                    </group>
+                    <group colspan="4">
+                        <button string="No" special="cancel" icon="gtk-cancel" colspan="2" />
+                        <button name="button_confirm_register_opening" string="Yes" type="object" icon="gtk-apply" colspan="2" />
+                    </group>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>
