@@ -1062,10 +1062,6 @@ class account_move(osv.osv):
                         context[el] = vals.get(el)
                         ml_vals.update({el: vals.get(el)})
 
-                # UFTP-262: For manual_name (description on account.move), update "name" on account.move.line
-                if 'manual_name' in vals:
-                    ml_vals.update({'name': vals.get('manual_name', '')})
-
                 # Update document date AND date at the same time
                 if ml_vals:
                     ml_id_list  = [ml.id for ml in m.line_id]

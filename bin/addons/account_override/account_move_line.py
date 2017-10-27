@@ -522,8 +522,8 @@ class account_move_line(osv.osv):
             if m and m.date:
                 vals.update({'date': m.date})
                 context.update({'date': m.date})
-            # UFTP-262: Add description from the move_id
-            if m and m.manual_name:
+            # UFTP-262: Add description from the move_id (US-2027) if there is not descr. on the line
+            if m and m.manual_name and not vals.get('name'):
                 vals.update({'name': m.manual_name})
         # US-220: vals.ref must have 64 digits max
         if vals.get('ref'):
@@ -559,6 +559,12 @@ class account_move_line(osv.osv):
                         raise osv.except_osv(_('Warning'), _('Only manually reconciled entries can be unreconciled.'))
                 elif ml.move_id and ml.move_id.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You cannot change Journal Items that comes from the system!'))
+                # By default the name of a manual JI is the JE description
+                if ml.status_move == 'manu':
+                    no_ji_name = not vals.get('name') and not ml.name
+                    new_ji_name_empty = 'name' in vals and not vals['name']
+                    if no_ji_name or new_ji_name_empty:
+                        vals.update({'name': ml.move_id.manual_name})
             # Check date validity with period
             self._check_date_validity(cr, uid, ids, vals)
             if 'move_id' in vals:
