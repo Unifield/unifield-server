@@ -101,7 +101,8 @@
                                     <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" string="Journal Items">
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="status_move" invisible="1"/>
-                                        <field name="name" attrs="{'readonly': [('status_move', '=', 'sys')], 'required': [('status_move', '=', 'sys')]}"/>
+                                        <field name="name" attrs="{'readonly': ['|', ('status_move', '=', 'sys'), ('imported', '=', True)],
+                                                                   'required': ['|', ('status_move', '=', 'sys'), ('imported', '=', True)]}"/>
                                         <field name="reference"/>
                                         <field name="partner_type_mandatory" invisible="1"/>
                                         <field name="account_id" domain="[('restricted_area', '=', 'account_move_lines')]"/>
