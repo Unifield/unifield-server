@@ -71,6 +71,7 @@
     <input type="hidden" id="_terp_model" name="_terp_model" value="${model}"/>
     <input type="hidden" id="_terp_ids" name="_terp_ids" value="[]"/>
     <input type="hidden" id="_terp_fields2" name="_terp_fields2" value="[]"/>
+    <input type="hidden" id="_terp_context" name="_terp_context" value="${ctx}"/>
 
     <table class="view" cellspacing="5" border="0" width="100%">
         <tr>
