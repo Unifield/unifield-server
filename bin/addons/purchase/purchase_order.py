@@ -1835,22 +1835,6 @@ class purchase_order(osv.osv):
             return pol_obj.check_analytic_distribution(cr, uid, po_line_ids, context=context, create_missing=create_missing)
         return True
 
-    def check_if_stock_take_date_with_esc_partner(self, cr, uid, ids, context=None):
-        """
-        Check if the PO and all lines have a date of stock take with an ESC Partner
-        """
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.partner_type == 'esc':
-                if not po.stock_take_date and self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', '=', po.id), ('stock_take_date', '=', False)], context=context):
-                    raise osv.except_osv(_('Warning !'), _(
-                        'The Date of Stock Take is required for a Purchase Order if the Partner is an ESC.'))
-                if self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', '=', po.id), ('stock_take_date', '=', False)], context=context):
-                    raise osv.except_osv(_('Warning !'), _('The Date of Stock Take is required for all Purchase Order lines if the Partner is an ESC.'))
-        return True
-
     def get_so_ids_from_po_ids(self, cr, uid, ids, context=None):
         '''
         receive the list of purchase order ids
