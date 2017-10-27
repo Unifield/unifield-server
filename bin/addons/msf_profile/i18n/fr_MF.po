@@ -99759,3 +99759,13 @@ msgstr "L'écriture %s a déjà été corrigée."
 #, python-format
 msgid "One AJI related to the entry %s has already been corrected."
 msgstr "Une entrée analytique liée à l'écriture %s a déjà été corrigée."
+
+#. module: msf_instance
+#: field:account.period,child_mission_hq_closed:0
+msgid "Child Mission or HQ Closed"
+msgstr "Fermé en mission ou en HQ dans l'instance enfant"
+
+#. module: msf_instance
+#: help:account.period,child_mission_hq_closed:0
+msgid "In HQ, checks the periods being mission or HQ-closed in the selected coordo"
+msgstr "En HQ, vérifie les périodes fermées en mission ou en HQ dans la coordo sélectionnée"
