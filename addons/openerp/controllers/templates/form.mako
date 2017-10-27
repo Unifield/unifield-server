@@ -95,10 +95,10 @@
                     % endif
 
                     % if obj_process:
-	                    <a class="help" href="${py.url('/view_diagram/process', res_model=form.screen.model, title=form.screen.string, res_id=form.screen.id)}"
-	                       title="${_('Corporate Intelligence...')}">
-	                        <small>Help</small>
-	                    </a>
+                        <a class="help" href="${py.url('/view_diagram/process', res_model=form.screen.model, title=form.screen.string, res_id=form.screen.id)}"
+                           title="${_('Corporate Intelligence...')}">
+                            <small>Help</small>
+                        </a>
                     % endif
                     % if form.screen.view_type == 'form' and form.logs.logs:
                       <a id="show_server_logs" class="logs" href="javascript: void(0)"
@@ -166,6 +166,7 @@
                     % if buttons.pager:
                         ${pager.display()}
                     % endif
+
                 </div>
                 % endif
                 <div${ " class='non-editable'" if not form.screen.editable and form.screen.view_type == 'form' else "" | n }>${form.display()}</div>
@@ -209,6 +210,10 @@
                 $hide.click();
                 return false;
             })
+
+            % if tg_errors:
+            error_display(_("The form contains errors."));
+            % endif
         })
     </script>
 </%def>
