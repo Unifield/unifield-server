@@ -774,6 +774,12 @@ class ir_model_data(osv.osv):
                         },context=context)
         else:
             if mode=='init' or (mode=='update' and xml_id):
+                # Exception for DN: block import of lines
+                if model == 'account.invoice':
+                    is_debit_note = context.get('is_debit_note') and context.get('type') == 'out_invoice' \
+                        and not context.get('is_inkind_donation')
+                    if is_debit_note and values.get('invoice_line'):
+                        raise osv.except_osv(_('Error'), _('Creating Debit Note lines by file import is not allowed.'))
                 res_id = model_obj.create(cr, uid, values, context=context)
                 # US-180: Only create ir model data if res_id is valid
                 if xml_id and res_id:

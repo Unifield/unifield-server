@@ -99774,3 +99774,39 @@ msgstr "En HQ, vérifie les périodes fermées en mission ou en HQ dans la coord
 #: field:wizard.report.rates.table,export_all:0
 msgid "Export all currencies"
 msgstr "Exporter toutes les devises"
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:905
+#, python-format
+msgid "The type of the document %s is unknown."
+msgstr "Le type du document %s est inconnu."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:963
+#, python-format
+msgid "The account %s - %s is not allowed for this document."
+msgstr "Le compte %s - %s n'est pas autorisé pour ce document."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:989
+#, python-format
+msgid "The account %s - %s used at line level is not allowed."
+msgstr "Le compte %s - %s utilisé au niveau d'une ligne n'est pas autorisé."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:921
+#, python-format
+msgid "The journal %s is not allowed for this document."
+msgstr "Le journal %s n'est pas autorisé pour ce document."
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:936
+#, python-format
+msgid "The partner %s is not allowed for this document."
+msgstr "Le partenaire %s n'est pas autorisé pour ce document."
+
+#. module: base
+#: code:addons/base/ir/ir_model.py:778
+#, python-format
+msgid "Creating Debit Note lines by file import is not allowed."
+msgstr "La création de lignes d'une Note de Débit via l'import d'un fichier n'est pas autorisée."
