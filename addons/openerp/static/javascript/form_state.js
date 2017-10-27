@@ -222,16 +222,18 @@ function form_addAttrChangeBindings(elem) {
     // For each property in attrs... (e.g. readonly, invisible, ..)
     for (var attr in attrs) {
         var exprs = attrs[attr];
-        // (check if field appears more then once in the expr for this specific
-        // property)
-        var already_connected_fields = new Set(); 
 
         // If there's no expression associated (e.g. readonly: {} (?))
         // Don't create any 'onAttrChange' binding (there's no field to
         // bind to), just apply it
         if (exprs == ''){
-            return form_onAttrChange(elem, widgetName, attr, exprs, $elem, cache_values);
+            form_onAttrChange(elem, widgetName, attr, exprs, $elem, cache_values);
+            continue;
         }
+
+        // (check if field appears more then once in the expr for this specific
+        // property)
+        var already_connected_fields = new Set(); 
 
         // Otherwise, exprs is a list of expressions like :
         //   'state', 'not in', ['draft', 'validated']
