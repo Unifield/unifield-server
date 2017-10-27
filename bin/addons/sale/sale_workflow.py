@@ -294,8 +294,9 @@ class sale_order_line(osv.osv):
 
         sol = self.browse(cr, uid, ids[0], context=context)
 
-        # build domain:
         picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
+
+        # build domain:
         domain = [
             ('type', '=', picking_data['type']),
             ('subtype', '=', picking_data['subtype']),
@@ -383,6 +384,12 @@ class sale_order_line(osv.osv):
                 # set PICK to done
                 self.pool.get('stock.picking').action_done(cr, uid, [pick_to_use], context=context)
             else:
+                picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
+
+                if sol.order_id.procurement_request and picking_data['type'] == 'internal' and sol.type != 'make_to_stock':
+                    # in case of IR not sourced from stock, don't create INT
+                    continue
+
                 # create or update PICK/OUT/INT:
                 pick_to_use = self.get_existing_pick(cr, uid, sol.id, context=context)
                 
@@ -391,7 +398,6 @@ class sale_order_line(osv.osv):
                 move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
                 self.pool.get('stock.move').action_confirm(cr, uid, [move_id], context=context)
 
-                picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
                 # confirm the OUT if in draft state:
                 pick_state = self.pool.get('stock.picking').read(cr, uid, pick_to_use, ['state'] ,context=context)['state']
                 if picking_data['type'] == 'out' and picking_data['subtype'] == 'standard' and pick_state == 'draft':
