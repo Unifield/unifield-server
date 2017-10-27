@@ -94482,7 +94482,7 @@ msgstr "Montants Réels"
 msgid "Search Uninvoiced Lines"
 msgstr "Rechercher Lignes non-facturées"
 
-#. modules: res_currency_functional, financing_contract, msf_tools, account_voucher, account_hq_entries, account_override, product_attributes, base_report_designer, register_accounting, procurement_cycle, msf_accrual, finance, sync_client, purchase_followup, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, purchase, purchase_compare_rfq, board, stock_override, msf_doc_import, analytic_distribution, threshold_value, account_payment, msf_homere_interface, msf_instance, account_reconciliation, consumption_calculation, purchase_override, specific_rules, kit, sale_override, base, account_period_closing_level, msf_currency_revaluation, msf_supply_doc_export, product_list, procurement_report, msf_budget, account_corrections, account, msf_outgoing, stock_move_tracking, procurement_auto, documents_done, sale, msf_config_locations, sales_followup, vertical_integration, procurement, sourcing, msf_custom_settings, msf_audittrail, tender_flow, stock, msf_profile
+#. modules: res_currency_functional, financing_contract, msf_tools, account_voucher, account_hq_entries, account_override, product_attributes, base_report_designer, register_accounting, procurement_cycle, msf_accrual, finance, sync_client, purchase_followup, account_mcdb, res_currency_tables, supplier_catalogue, procurement_request, purchase, purchase_compare_rfq, board, stock_override, msf_doc_import, analytic_distribution, threshold_value, account_payment, msf_homere_interface, msf_instance, account_reconciliation, consumption_calculation, purchase_override, specific_rules, kit, sale_override, base, account_period_closing_level, msf_currency_revaluation, msf_supply_doc_export, product_list, procurement_report, msf_budget, account_corrections, account, msf_outgoing, stock_move_tracking, procurement_auto, documents_done, sale, msf_config_locations, sales_followup, vertical_integration, procurement, sourcing, msf_custom_settings, msf_audittrail, tender_flow, stock, msf_profile, account_corrections
 #: view:account.addtmpl.wizard:0
 #: view:account.aged.trial.balance:0
 #: view:account.analytic.Journal.report:0
@@ -94705,6 +94705,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:stock.picking.processor:0
 #: view:wizard.import.invoice.line:0
 #: view:wizard.report.paid.invoice:0
+#: view:reverse.manual.correction.wizard:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -99710,3 +99711,51 @@ msgstr "Solde d'Ouverture du Registre"
 #: view:wizard.register.opening.confirmation:0
 msgid "Register Opening Period"
 msgstr "Période d'Ouverture du Registre"
+
+#. module: account_corrections
+#: view:wizard.journal.items.corrections:0
+msgid "Set as Corrected Manually"
+msgstr "Marquer comme Corrigé Manuellement"
+
+#. module: account_corrections
+#: field:wizard.journal.items.corrections,from_ji:0
+msgid "Opened from the JI view?"
+msgstr "Ouvert depuis la vue Lignes d'Ecritures Comptables ?"
+
+#. module: account_corrections
+#: field:account.move.line,is_manually_corrected:0
+msgid "Is Manually Corrected"
+msgstr "Est Corrigé Manuellement"
+
+#. module: account_corrections
+#: code:addons/account_corrections/account_move_line.py:341
+#, python-format
+msgid "History Move Line"
+msgstr "Historique - Ecriture"
+
+#. module: account_corrections
+#: view:reverse.manual.correction.wizard:0
+msgid "This line has been manually corrected. Do you want to reverse the correction?"
+msgstr "Cette ligne a été corrigée manuellement. Voulez-vous annuler la correction ?"
+
+#. module: account_corrections
+#: view:reverse.manual.correction.wizard:0
+msgid "Reverse the correction"
+msgstr "Annuler la correction"
+
+#. module: account_corrections
+#: model:ir.model,name:account_corrections.model_reverse_manual_correction_wizard
+msgid "Manual Correction Reversal Wizard"
+msgstr "Assistant d'Annulation de Correction Manuelle"
+
+#. module: account_corrections
+#: code:addons/account_corrections/account_move_line.py:997
+#, python-format
+msgid "The entry %s has already been corrected."
+msgstr "L'écriture %s a déjà été corrigée."
+
+#. module: account_corrections
+#: code:addons/account_corrections/account_move_line.py:1001
+#, python-format
+msgid "One AJI related to the entry %s has already been corrected."
+msgstr "Une entrée analytique liée à l'écriture %s a déjà été corrigée."
