@@ -319,6 +319,8 @@ class hr_payroll_employee_import(osv.osv_memory):
             uniq_id = 'empty'
         if codeterrain and id_staff and code_staff:
             # Employee name
+            nom = nom and nom.strip() or ''
+            prenom = prenom and prenom.strip() or ''
             employee_name = (nom and prenom and ustr(nom) + ', ' + ustr(prenom)) or (nom and ustr(nom)) or (prenom and ustr(prenom)) or False
 
             # Do some check
