@@ -1,6 +1,12 @@
 % if editable:
-    <input type="text" id="${name}" name="${name}" autocomplete="OFF" size="3"
-    class="${css_class}" ${py.attrs(attrs, kind=kind, value=value)}/>
+    <input type="text" 
+           id="${name}" 
+           name="${name}" 
+           autocomplete="OFF" 
+           size="3"
+           class="${css_class}" 
+           ${py.attrs(attrs, kind=kind, value=value, 
+                      fld_readonly=1 if readonly_before_state else 0 )}/>
     % if error:
         <span class="fielderror">${error}</span>
     % endif
