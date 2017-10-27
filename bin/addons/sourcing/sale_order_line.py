@@ -1695,6 +1695,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'nomen_manda_2': sourcing_line.nomen_manda_2.id or False,
                         'nomen_manda_3': sourcing_line.nomen_manda_3.id or False,
                         'date_planned': sourcing_line.date_planned,
+                        'stock_take_date': sourcing_line.stock_take_date or False,
                     }
                     if not sourcing_line.product_id:
                         pol_values['name'] = sourcing_line.comment
