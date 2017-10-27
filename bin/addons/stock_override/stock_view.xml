@@ -736,7 +736,7 @@
                                     string="Cancel &amp; Resource"
                                     type="object"
                                     icon="gtk-cancel"
-                                    context="{'from_button': True}" 
+                                    context="{'from_button': True, 'do_resource': True}" 
                                     confirm="Warning, you are going to Cancel and Resource!"
                                     />
 

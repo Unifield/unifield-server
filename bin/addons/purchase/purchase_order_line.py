@@ -1300,6 +1300,43 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def cancel_partial_qty(self, cr, uid, ids, cancel_qty, resource=False, context=None):
+        '''
+        allow to cancel a PO line partially: split the line then cancel the new splitted line
+        and update linked FO/IR lines if has
+        '''
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        wf_service = netsvc.LocalService("workflow")
+
+        if cancel_qty <= 0:
+            return False
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            # split the PO line:
+            split_obj = self.pool.get('split.purchase.order.line.wizard')
+            split_id = split_obj.create(cr, uid, {
+                'purchase_line_id': pol.id,
+                'original_qty': pol.product_qty,
+                'old_line_qty': pol.product_qty - cancel_qty,
+                'new_line_qty': cancel_qty,
+            }, context=context)
+            context.update({'return_new_line_id': True})
+            new_po_line = split_obj.split_line(cr, uid, [split_id], context=context)
+            context.pop('return_new_line_id')
+
+            # udpate linked FO lines if has:
+            self.write(cr, uid, [new_po_line], {'origin': pol.origin}, context=context) # otherwise not able to link with FO
+            self.update_fo_lines(cr, uid, [pol.id, new_po_line], context=context)
+
+            # cancel the new split PO line:
+            signal = 'cancel_r' if resource else 'cancel'
+            wf_service.trg_validate(uid, 'purchase.order.line', new_po_line, signal, cr)
+
+        return True
+
     def _get_stages_price(self, cr, uid, product_id, uom_id, order, context=None):
         '''
         Returns True if the product/supplier couple has more than 1 line

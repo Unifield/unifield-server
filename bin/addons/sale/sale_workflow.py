@@ -396,7 +396,7 @@ class sale_order_line(osv.osv):
             to_write = {}
             if not sol.stock_take_date and sol.order_id.stock_take_date:
                 to_write['stock_take_date'] = sol.order_id.stock_take_date
-            if not sol.procurement_request: # in case of FO
+            if not sol.order_id.procurement_request: # in case of FO
                 # check unit price:
                 if not sol.price_unit or sol.price_unit <= 0:
                     raise osv.except_osv(
@@ -410,7 +410,7 @@ class sale_order_line(osv.osv):
                 if sol.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] and sol.type != 'make_to_stock':
                     to_write['type'] = 'make_to_stock'
 
-            elif sol.procurement_request:  # in case of IR
+            elif sol.order_id.procurement_request:  # in case of IR
                 to_write['original_qty'] = sol.product_uom_qty
                 to_write['original_price'] = sol.price_unit
                 to_write['original_uom'] = sol.product_uom.id
