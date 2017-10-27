@@ -321,7 +321,7 @@ class message_to_send(osv.osv):
                 res_model, res_id = message.res_object.split(',')
                 res_id = int(res_id)
                 rule = self.pool.get('sync.client.message_rule').get_rule_by_remote_call(cr, uid, message.remote_call, context=context)
-                if rule: 
+                if rule and rule.wait_while: 
                     domain = eval(rule.wait_while)
                     if res_id in self.pool.get(res_model).search(cr, uid, domain, context=context):
                         self.write(cr, uid, [message.id], {'waiting': True}, context=context)
