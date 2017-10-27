@@ -190,11 +190,19 @@ function form_hookAttrChange() {
 }
 
 function list_hookAttrChange(list_name) {
-    jQuery('table[id='+list_name+'_grid] [attrs]').each(function () {
-        var $this = jQuery(this);
+
+    // check if an editor exists
+    var editor_exists = $(".editors").length;
+   
+    // Loop on list elements which have an 'attrs' attribute 
+    var listgrids = jQuery('table[id='+list_name+'_grid] [attrs]');
+    for (var i = 0 ; i < listgrids.length ; i++)
+    {
+        var elem = listgrids[i];
+        var $this = jQuery(elem);
         var attrs = $this.attr('attrs') || '{}';
         var widget = $this.attr('widget') || '';
-        var container = this;
+        var container = elem;
         var prefix = widget.slice(0, widget.lastIndexOf('/')+1) || '';
 
         // Convert Python statement into it's equivalent in JavaScript.
@@ -207,11 +215,9 @@ function list_hookAttrChange(list_name) {
         try {
             attrs = eval('(' + attrs + ')');
         } catch(e){
-            return;
+            continue;
         }
 
-        // check if an editor exists
-        var editor_exists = $(".editors").length;
         var cache_values = {};
 
         var row_is_editable = editor_exists && $this.parents('tr.grid-row').is('.editors');
@@ -225,6 +231,7 @@ function list_hookAttrChange(list_name) {
                 return form_onAttrChange(container, widget, attr, attrs[attr], $this, cache_values);
             }
             forEach(attrs[attr], function(n) {
+
                 if (typeof(n) == "number") { // {'invisible': [1]}
                     return form_onAttrChange(container, widget, attr, n, $this, cache_values);
                 }
@@ -237,7 +244,7 @@ function list_hookAttrChange(list_name) {
                 return form_onAttrChange(container, widget, attr, attrs[attr], $this, cache_values);
             });
         }
-    });
+    };
 }
 
 function form_onAttrChange(container, widgetName, attr, expr, elem, cache_values) {
