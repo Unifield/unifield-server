@@ -99641,3 +99641,13 @@ msgstr "Ligne %s. Le compte \"%s - %s\" ne peut pas être utilisé car il est d�
 #, python-format
 msgid "The period \"%s\" is not Open."
 msgstr "La période \"%s\" n'est pas Ouverte."
+
+#. module: account
+#: field:account.subscription,has_unposted_entries:0
+msgid "Has unposted entries"
+msgstr "A des écritures non comptabilisées"
+
+#. module: account
+#: view:account.subscription:0
+msgid "Delete Unposted Entries"
+msgstr "Supprimer les Écritures Non Comptabilisées"
