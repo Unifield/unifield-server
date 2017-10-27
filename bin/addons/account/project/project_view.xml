@@ -221,6 +221,7 @@
                             <field name="document_date" select="1"/>
                             <field name="date"/>
                             <field name="period_id"/>
+                            <field name="fiscalyear_id"/>
                         </group>
                         <newline/>
                         <group>

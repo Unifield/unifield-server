@@ -19,7 +19,7 @@
             <field name="arch" type="xml">
                 <form string="Selector - G/L" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" >
                     &general;
-                    <group col="4" colspan="4">
+                    <group col="5" colspan="4">
                         <group col="2" colspan="2">
                             <group col="4" colspan="2">
                                 <separator string="G/L journals" colspan="3"/>
@@ -59,6 +59,9 @@
                                 </field>
                             </group>
                         </group>
+                        <group col="2" colspan="1">
+                            <field name="fiscalyear_id"/>
+                        </group>
                     </group>
                     <group colspan="2" col="2">
                         <html>
@@ -93,7 +96,7 @@
             <field name="arch" type="xml">
                 <form string="Selector - Analytic" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     &general;
-                    <group col="4" colspan="4">
+                    <group col="5" colspan="4">
                         <group col="2" colspan="2">
                             <group col="4" colspan="2">
                                 <separator string="Analytic journals" colspan="3"/>
@@ -133,6 +136,11 @@
                                 </field>
                             </group>
                         </group>
+                        <group col="2" colspan="1">
+                            <field name="fiscalyear_id"/>
+                        </group>
+                    </group>
+                    <group col="4" colspan="4">
                         <group col="2" colspan="2">
                             <group col="4" colspan="2">
                                 <separator string="Accounts" colspan="3"/>
@@ -153,6 +161,7 @@
                                 </field>
                             </group>
                         </group>
+                        <group col="2" colspan="2"></group>
                     </group>
                     <group colspan="2" col="2">
                         <html>

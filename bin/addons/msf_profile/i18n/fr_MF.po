@@ -3320,7 +3320,7 @@ msgstr "Créer"
 msgid "Saint Lucia"
 msgstr "Saint Lucia"
 
-#. modules: msf_budget, account, account_period_closing_level, sync_so
+#. modules: msf_budget, account, account_period_closing_level, sync_so, account_mcdb, analytic_distribution
 #: report:account.account.balance:0
 #: report:account.central.journal:0
 #: view:account.entries.report:0
@@ -3341,6 +3341,10 @@ msgstr "Saint Lucia"
 #: field:msf.budget,fiscalyear_id:0
 #: model:ir.model,name:sync_so.model_account_fiscalyear
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:281
+#: field:account.move,fiscalyear_id:0
+#: field:account.move.line,fiscalyear_id:0
+#: field:account.mcdb,fiscalyear_id:0
+#: field:account.analytic.line,fiscalyear_id:0
 msgid "Fiscal Year"
 msgstr "Exercice Comptable"
 
