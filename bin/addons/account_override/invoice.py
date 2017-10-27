@@ -96,7 +96,7 @@ class account_invoice(osv.osv):
         if user.company_id.instance_id:
             args.append(('is_current_instance','=',True))
         journal_obj = self.pool.get('account.journal')
-        res = journal_obj.search(cr, uid, args, limit=1)
+        res = journal_obj.search(cr, uid, args, order='id', limit=1, context=context)
         return res and res[0] or False
 
     def _get_fake(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -132,7 +132,7 @@ class account_invoice(osv.osv):
             context = {}
         journal_obj = self.pool.get('account.journal')
         int_journal_domain = [('type', '=', 'intermission'), ('is_current_instance', '=', True)]
-        int_journal_id = journal_obj.search(cr, uid, int_journal_domain, order='NO_ORDER', limit=1, context=context)
+        int_journal_id = journal_obj.search(cr, uid, int_journal_domain, order='id', limit=1, context=context)
         return int_journal_id and int_journal_id[0] or False
 
     def _get_fake_m2o_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -281,7 +281,7 @@ class account_invoice(osv.osv):
             }
             journal_ids = self.pool.get('account.journal').search(cr, uid, [
                 ('company_id','=',company_id), ('type', '=', ass.get(ctype, 'purchase')), ('is_current_instance', '=', True)
-            ])
+            ], order='id')
             if not journal_ids:
                 raise osv.except_osv(_('Configuration Error !'), _('Can\'t find any account journal of %s type for this company.\n\nYou can create one in the menu: \nConfiguration\Financial Accounting\Accounts\Journals.') % (ass.get(type, 'purchase'), ))
             res['value']['journal_id'] = journal_ids[0]
