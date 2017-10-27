@@ -77990,8 +77990,8 @@ msgstr "Direct Payment"
 
 #. module: base
 #: help:ir.actions.act_window,auto_refresh:0
-msgid "Add an auto-refresh on the view"
-msgstr "Ajouter un rafraichissement automatique sur la vue"
+msgid "Auto refresh the view after X seconds"
+msgstr "Rafraichir automatiquement la vue après X secondes"
 
 #. module: supplier_catalogue
 #: model:ir.actions.server,name:supplier_catalogue.action_server_export_catalogue_lines
