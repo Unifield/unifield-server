@@ -182,6 +182,59 @@ class msf_budget(osv.osv):
         self._check_parent(cr, uid, vals, context=context)
         return res
 
+    def _get_children(self, cr, uid, cost_center_id, cc_children_list, context=None):
+        """
+        Updates cc_children_list with the children of the cost center whose id is in parameter
+        Also adds the children's children, and so forth...
+        """
+        if context is None:
+            context = {}
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        cc_children_ids = analytic_acc_obj.search(cr, uid, [('parent_id', '=', cost_center_id)], order='NO_ORDER', context=context)
+        for cc_child_id in cc_children_ids:
+            if cc_child_id not in cc_children_list:  # avoid process repetition and recursion issues
+                cc_children_list.append(cc_child_id)
+                if analytic_acc_obj.search_exist(cr, uid, [('parent_id', '=', cc_child_id)], context=context):
+                    self._get_children(cr, uid, cc_child_id, cc_children_list, context)
+
+    def _check_all_done(self, cr, uid, budget, cost_center_id, cc_children_list, context=None):
+        """
+        Returns True if all the children budgets have the state "done", False otherwise.
+        """
+        if context is None:
+            context = {}
+        self._get_children(cr, uid, cost_center_id, cc_children_list, context)  # update cc_children_list
+        children_budget_ids = self.search(cr, uid, [('cost_center_id', 'in', cc_children_list),
+                                                    ('decision_moment_id', '=', budget.decision_moment_id.id),
+                                                    ('fiscalyear_id', '=', budget.fiscalyear_id.id),
+                                                    ('id', '!=', budget.id)], order='NO_ORDER', context=context)
+        children_budgets = self.read(cr, uid, children_budget_ids, ['state'], context=context)
+        all_done = True
+        for budget in children_budgets:
+            if budget['state'] != 'done':
+                all_done = False
+                break
+        return all_done
+
+    def _set_to_done(self, cr, uid, budget, cost_center, cc_children_list, cc_parent_list, context=None):
+        """
+        Sets the state "done" to the parent of the Cost Center in parameter if all its children have the state "done".
+        If so, does the same for the parent's parent, and so forth.
+        """
+        if context is None:
+            context = {}
+        cc_parent = cost_center.parent_id
+        if cc_parent and self._check_all_done(cr, uid, budget, cc_parent.id, cc_children_list, context):
+            cc_parent_list.append(cc_parent.id)
+            budget_parent_ids = self.search(cr, uid,
+                                            [('cost_center_id', '=', cc_parent.id),
+                                             ('decision_moment_id', '=', budget.decision_moment_id.id),
+                                             ('fiscalyear_id', '=', budget.fiscalyear_id.id),
+                                             ('state', '!=', 'done')], order='NO_ORDER', context=context)
+            self.write(cr, uid, budget_parent_ids, {'state': 'done'}, context=context)
+            if cc_parent.parent_id and cc_parent.parent_id.id not in cc_parent_list:  # avoid recursion issues
+                self._set_to_done(cr, uid, budget, cc_parent, cc_children_list, cc_parent_list, context)
+
     def write(self, cr, uid, ids, vals, context=None):
         """
         Goal is to update parent budget regarding these criteria:
@@ -201,26 +254,10 @@ class msf_budget(osv.osv):
 
         budget = self.browse(cr, uid, ids, context=context)[0]
         if budget.type == 'normal' and vals.get('state') == 'done':  # do not process for view accounts
-            ala_obj = self.pool.get('account.analytic.account')
-            # get parent cc
-            cc_parent_ids = ala_obj._get_parent_of(cr, uid, budget.cost_center_id.id, context=context)
-            # exclude the cc of the current budget line
-            parent_cc_ids = [x for x in cc_parent_ids if x != budget.cost_center_id.id]
-            # find all ccs which have the same parent
-            all_cc_ids = ala_obj.search(cr, uid, [('parent_id','in',parent_cc_ids)], context=context)
-            # remove parent ccs from the list
-            peer_cc_ids = [x for x in all_cc_ids if x not in parent_cc_ids]
-            # find peer budget lines based on cc
-            peer_budget_ids = self.search(cr, uid, [('cost_center_id','in',peer_cc_ids),('decision_moment_id','=',budget.decision_moment_id.id),('fiscalyear_id','=',budget.fiscalyear_id.id),'!',('id','=',budget.id)],context=context)
-            peer_budgets = self.browse(cr, uid, peer_budget_ids, context=context)
-
-            all_done = True
-            for peer in peer_budgets:
-                if peer.state != 'done':
-                    all_done = False
-            if all_done == True:
-                parent_ids = self.search(cr, uid, [('cost_center_id', 'in', parent_cc_ids),('decision_moment_id','=',budget.decision_moment_id.id),('fiscalyear_id','=',budget.fiscalyear_id.id),'!',('state','=','done')],context=context)
-                self.write(cr, uid, parent_ids, {'state': 'done'},context=context)
+            # set the parent budgets to 'done' IF all their children budgets are 'done'
+            cc_children_list = []
+            cc_parent_list = []
+            self._set_to_done(cr, uid, budget, budget.cost_center_id, cc_children_list, cc_parent_list, context)
         return res
 
     def update(self, cr, uid, ids, context=None):
@@ -366,8 +403,8 @@ class msf_budget(osv.osv):
                             AND cost_center_id = %s \
                             AND state != 'draft' \
                             ORDER BY decision_moment_order DESC, version DESC LIMIT 1",
-                            (fiscalyear_id,
-                             prop_instance.top_cost_center_id.id))
+                           (fiscalyear_id,
+                            prop_instance.top_cost_center_id.id))
                 if cr.rowcount:
                     # A budget was found
                     budget_id = cr.fetchall()[0][0]
@@ -378,17 +415,17 @@ class msf_budget(osv.osv):
 
         if budget_id:
             parent_line_id = self.pool.get('msf.budget.summary').create(cr,
-                uid, {'budget_id': budget_id}, context=context)
+                                                                        uid, {'budget_id': budget_id}, context=context)
             if parent_line_id:
                 context.update({'display_fp': True})
                 return {
-                       'type': 'ir.actions.act_window',
-                       'res_model': 'msf.budget.summary',
-                       'view_type': 'tree',
-                       'view_mode': 'tree',
-                       'target': 'current',
-                       'domain': [('id', '=', parent_line_id)],
-                       'context': context
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'msf.budget.summary',
+                    'view_type': 'tree',
+                    'view_mode': 'tree',
+                    'target': 'current',
+                    'domain': [('id', '=', parent_line_id)],
+                    'context': context
                 }
         return {}
 
