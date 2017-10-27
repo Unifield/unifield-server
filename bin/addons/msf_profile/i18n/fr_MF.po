@@ -72674,10 +72674,11 @@ msgstr "Approvisionnement- Méthode"
 
 #. modules: account_override, register_accounting
 #: field:account.move,imported:0
+#: field:account.move.line,imported:0
 #: view:account.invoice:0
 #: selection:account.invoice,imported_state:0
 msgid "Imported"
-msgstr "Imported"
+msgstr "Importé"
 
 #. module: kit
 #: code:addons/kit/wizard/kit_mass_import.py:126

@@ -337,6 +337,7 @@ class account_move_line(osv.osv):
         'sequence_move': fields.related('move_id', 'name', type='char',
                                         readonly=True, size=128, store=False, write_relate=False,
                                         string="Sequence"),
+        'imported': fields.related('move_id', 'imported', string='Imported', type='boolean', required=False, readonly=True),
     }
 
     _defaults = {
