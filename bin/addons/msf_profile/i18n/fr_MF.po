@@ -31514,7 +31514,7 @@ msgstr "Montant final en devise fonctionnelle "
 #: report:addons/register_accounting/report/fully_report_xls.mako:908
 #: report:addons/register_accounting/report/fully_report_xls.mako:968
 msgid "Corrected"
-msgstr "Corrected"
+msgstr "Corrigé"
 
 #. module: account
 #: selection:report.account.receivable,type:0
@@ -49827,7 +49827,7 @@ msgstr "Aucun fichier à importer. Veuillez sélectionner un fichier ou téléch
 #: report:addons/register_accounting/report/fully_report_xls.mako:1022
 #: report:addons/register_accounting/report/fully_report_xls.mako:1025
 msgid "FALSE"
-msgstr "FALSE"
+msgstr "FAUX"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -64058,8 +64058,9 @@ msgstr "Mise à jour du module"
 msgid "wizard.import.mapping"
 msgstr "wizard.import.mapping"
 
-#. module: register_accounting
+#. modules: register_accounting, analytic_override
 #: code:addons/register_accounting/account_move_line.py:52
+#: code:addons/analytic_override/analytic_line.py:77
 #, python-format
 msgid "Filter not implemented."
 msgstr "Filtre pas mis en oeuvre"
@@ -83203,8 +83204,8 @@ msgstr "Informations sur le partenaire"
 
 #. module: analytic_override
 #: help:account.analytic.line,free_account:0
-msgid "Is that line comes from a Free 1 or Free 2 account?"
-msgstr "Is that line comes from a Free 1 or Free 2 account?"
+msgid "Does that line come from a Free 1 or Free 2 account?"
+msgstr "Cette ligne provient-elle d'un compte de type \"free 1\" ou \"free 2\" ?"
 
 #. module: base
 #: view:ir.actions.act_window:0
@@ -85529,7 +85530,7 @@ msgstr "operations.count"
 #: report:addons/register_accounting/report/fully_report_xls.mako:908
 #: report:addons/register_accounting/report/fully_report_xls.mako:968
 msgid "Reversal"
-msgstr "Reversal"
+msgstr "Contre-passation"
 
 #. modules: sale_override, tender_flow
 #: model:ir.model,name:sale_override.model_expected_sale_order_line
@@ -86408,7 +86409,7 @@ msgstr "Asie/Karachi"
 #. module: analytic_override
 #: field:account.analytic.line,free_account:0
 msgid "Free account?"
-msgstr "Free account?"
+msgstr "Compte de type \"free\" ?"
 
 #. module: base
 #: selection:ir.model.fields,state:0
@@ -99685,3 +99686,8 @@ msgstr "La partie utilisateur de l'adresse email est invalide (partie avant le @
 #, python-format
 msgid "The domain portion of the email address is invalid (the portion after the @: %(domain)s)"
 msgstr "La partie domaine de l'adresse email est invalide (partie après le @: %(domain)s)"
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:1006
+msgid "Manual Journal Entry"
+msgstr "Écriture Comptable Manuelle"

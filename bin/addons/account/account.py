@@ -30,6 +30,7 @@ from osv import fields, osv
 import decimal_precision as dp
 from tools.translate import _
 
+
 def check_cycle(self, cr, uid, ids, context=None):
     """ climbs the ``self._table.parent_id`` chains for 100 levels or
     until it can't find any more parent(s)
@@ -1380,6 +1381,30 @@ class account_move(osv.osv):
         })
         return super(account_move, self).copy(cr, uid, id, default, context)
 
+    def _track_liquidity_entries(self, cr, uid, move, context=None):
+        """
+        Create an "account.bank.statement.line.deleted"
+        to keep track of the deleted manual entries that were booked on Liquidity Journals
+        """
+        if context is None:
+            context = {}
+        reg_obj = self.pool.get('account.bank.statement')
+        deleted_regline_obj = self.pool.get('account.bank.statement.line.deleted')
+        period_obj = self.pool.get('account.period')
+        is_liquidity = move.journal_id.type in ['bank', 'cheque', 'cash']
+        if is_liquidity and move.status == 'manu' and not context.get('sync_update_execution', False):
+            period_ids = period_obj.get_period_from_date(cr, uid, move.date, context=context)  # exclude special periods by default
+            if period_ids:
+                reg_domain = [('journal_id', '=', move.journal_id.id), ('period_id', '=', period_ids[0])]
+                reg_ids = reg_obj.search(cr, uid, reg_domain, context=context, order='NO_ORDER', limit=1)
+                if reg_ids:
+                    vals = {
+                        'statement_id': reg_ids[0],
+                        'sequence': move.name,
+                        'instance_id': move.instance_id and move.instance_id.id or False,
+                    }
+                    deleted_regline_obj.create(cr, uid, vals, context=context)
+
     def unlink(self, cr, uid, ids, context=None, check=True):
         if context is None:
             context = {}
@@ -1395,6 +1420,7 @@ class account_move(osv.osv):
             context['period_id'] = move.period_id.id
             obj_move_line._update_check(cr, uid, line_ids, context)
             obj_move_line.unlink(cr, uid, line_ids, context=context, check=check) #ITWG-84: Pass also the check flag to the call
+            self._track_liquidity_entries(cr, uid, move, context=context)
             toremove.append(move.id)
         result = super(account_move, self).unlink(cr, uid, toremove, context)
         return result
