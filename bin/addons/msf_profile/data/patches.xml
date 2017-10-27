@@ -10,7 +10,12 @@
             <field name="method">us_3306</field>
         </record>
 
+        <record id="us_2676_patch" model="patch.scripts">
+            <field name="method">us_2676</field>
+        </record>
+
         <!-- OLD -->
+
         <record id="us_3048_patch" model="patch.scripts">
             <field name="method">us_3048_patch</field>
         </record>
