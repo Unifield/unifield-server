@@ -132,7 +132,16 @@ class account_move_line_compute_currency(osv.osv):
             ## Browse all lines to fetch some values
             partner_id = employee_id = transfer_journal_id = False
             oldiest_date = False
+            highest_debit_amount = highest_credit_amount = 0.0
+            highest_debit_line = highest_credit_line = None
             for rline in self.browse(cr, uid, lines):
+                # note: fctal debit and fctal credit are always positive
+                if rline.debit > highest_debit_amount:
+                    highest_debit_amount = rline.debit
+                    highest_debit_line = rline
+                elif rline.credit > highest_credit_amount:
+                    highest_credit_amount = rline.credit
+                    highest_credit_line = rline
                 account_id = (rline.account_id and rline.account_id.id) or False
                 partner_id = (rline.partner_id and rline.partner_id.id) or False
                 employee_id = (rline.employee_id and rline.employee_id.id) or False
@@ -241,12 +250,16 @@ class account_move_line_compute_currency(osv.osv):
                 'name': 'Realised loss/gain',
                 'is_addendum_line': True,
                 'currency_id': currency_id,
-                #'functional_currency_id': functional_currency_id,
             }
-            # UTP-494: use functional currency as currency for addendum line
+            # US-2594 if different currencies are used:
+            # if the FXA is for debit the currency is taken from the highest debit entry (and likewise for credit)
             if different_currency:
-                functional_currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-                vals.update({'currency_id': functional_currency_id})
+                new_currency_id = False
+                if partner_db:
+                    new_currency_id = highest_debit_line and highest_debit_line.currency_id and highest_debit_line.currency_id.id
+                elif partner_cr:
+                    new_currency_id = highest_credit_line and highest_credit_line.currency_id and highest_credit_line.currency_id.id
+                new_currency_id and vals.update({'currency_id': new_currency_id})
             # Create partner line
             vals.update({'account_id': account_id, 'debit': partner_db or 0.0, 'credit': partner_cr or 0.0,})
             # UTP-1022: Allow account.move.line creation when we come from "create_addendum_line" because of currencies rate redefinition

@@ -12693,8 +12693,8 @@ msgstr "Draft Budgets"
 
 #. module: account_reconciliation
 #: view:account.move.line.reconcile:0
-msgid "You are about to reconcile entries in different currencies; you will trigger the creation of an automated adjustment in functional currency"
-msgstr "You are about to reconcile entries in different currencies; you will trigger the creation of an automated adjustment in functional currency"
+msgid "You are about to reconcile entries in different currencies; you will trigger the creation of an automated FX adjustment."
+msgstr "Vous êtes sur le point de lettrer ensemble des écritures de devises différentes ; vous allez déclencher la création d'une écriture automatique de différence de change."
 
 #. module: sourcing
 #: code:addons/sourcing/sale_order_line.py:1321
