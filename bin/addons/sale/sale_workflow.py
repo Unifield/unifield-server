@@ -261,13 +261,50 @@ class sale_order_line(osv.osv):
         for sol in self.browse(cr, uid, ids, context=context):
             if not sol.stock_take_date and sol.order_id.stock_take_date:
                 self.write(cr, uid, sol.id, {'stock_take_date': sol.order_id.stock_take_date}, context=context)
-            # we do not create PICK/OUT in case of DPO:
-            linked_to_dpo = self.pool.get('purchase.order.line').search_exist(cr, uid, [
+
+            linked_dpo_line = self.pool.get('purchase.order.line').search(cr, uid, [
                 ('linked_sol_id', '=', sol.id),
                 ('order_id.order_type', '=', 'direct'),
             ], context=context)
             ir_non_stockable = sol.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep')
-            if not linked_to_dpo and not ir_non_stockable:
+
+            if linked_dpo_line:
+                # create or update PICK/OUT:
+                picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
+                pick_to_use = self.pool.get('stock.picking').search(cr, uid, [
+                    ('type', '=', picking_data['type']),
+                    ('subtype', '=', picking_data['subtype']),
+                    ('sale_id', '=', picking_data['sale_id']),
+                    ('partner_id2', '=', sol.order_partner_id.id),
+                    ('state', '=', 'done'),
+                    ('dpo_out', '=', True),
+                ], context=context)
+                seq_name = picking_data['seq_name']
+                del(picking_data['seq_name'])
+
+                if not pick_to_use:
+                    picking_data['name'] = self.pool.get('ir.sequence').get(cr, uid, seq_name)
+                    picking_data['dpo_pick'] = True
+                    pick_to_use = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
+                    pick_name = picking_data['name']
+                    self.infolog(cr, uid, "The Picking Ticket id:%s (%s) has been created from %s id:%s (%s)." % (
+                        pick_to_use,
+                        pick_name,
+                        sol.order_id.procurement_request and _('Internal request') or _('Field order'),
+                        sol.order_id.id,
+                        sol.order_id.name,
+                    ))
+                if pick_to_use and isinstance(pick_to_use, list):
+                    pick_to_use = pick_to_use[0]
+                # Get move data and create the move
+                move_data = self.pool.get('sale.order')._get_move_data(cr, uid, sol.order_id, sol, pick_to_use, context=context)
+                # move_data['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+                # move_data['location_dest_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
+                move_data['dpo_line_id'] = linked_dpo_line[0]
+                move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
+                self.pool.get('stock.move').action_done(cr, uid, [move_id], context=context)
+                self.pool.get('stock.picking').action_done(cr, uid, [pick_to_use], context=context)
+            elif not ir_non_stockable:
                 # create or update PICK/OUT:
                 picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
                 pick_to_use = self.pool.get('stock.picking').search(cr, uid, [

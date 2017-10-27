@@ -259,7 +259,9 @@ class purchase_order_line(osv.osv):
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.order_id.partner_id.partner_type in ('internal', 'section', 'intermission'):
                 open_wizard = True
-                break
+            if pol.state == 'validated_n':
+                # if line is 'validated_n', pass through 'validated' state to ensure no checks has been missed
+                wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'validated', cr)
 
         if open_wizard:
             context.update({'pol_ids_to_confirm': ids})
