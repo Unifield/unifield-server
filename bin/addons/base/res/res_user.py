@@ -233,6 +233,7 @@ def _tz_get(self,cr,uid, context=None):
 
 class users(osv.osv):
     __admin_ids = {}
+    __sync_user_ids = {}
     _uid_cache = {}
     _name = "res.users"
     _order = 'name'
@@ -543,6 +544,13 @@ class users(osv.osv):
             mdid = ir_model_data_obj._get_id(cr, 1, 'base', 'user_root')
             self.__admin_ids[cr.dbname] = ir_model_data_obj.read(cr, 1, [mdid], ['res_id'])[0]['res_id']
         return self.__admin_ids[cr.dbname]
+
+    def _get_sync_user_id(self, cr):
+        if self.__sync_user_ids.get(cr.dbname) is None:
+            ir_model_data_obj = self.pool.get('ir.model.data')
+            mdid = ir_model_data_obj._get_id(cr, 1, 'base', 'user_sync')
+            self.__sync_user_ids[cr.dbname] = ir_model_data_obj.read(cr, 1, [mdid], ['res_id'])[0]['res_id']
+        return self.__sync_user_ids[cr.dbname]
 
     def _get_company(self,cr, uid, context=None, uid2=False):
         if not uid2:
