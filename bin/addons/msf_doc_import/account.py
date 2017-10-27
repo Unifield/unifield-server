@@ -339,7 +339,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                         else:
                             r_partner = tp_ids[0]
                     if line[cols['Employee']]:
-                        tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Employee']])])
+                        tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['Employee']])],
+                                                                     order='active desc, id', limit=1)
                         if not tp_ids:
                             tp_label = _('Employee')
                             tp_content = line[cols['Employee']]

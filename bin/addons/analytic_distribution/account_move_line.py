@@ -398,7 +398,7 @@ class account_move_line(osv.osv):
                         vals.update({'destination_id': l.account_id.default_destination_id.id})
                 if l.employee_id.funding_pool_id:
                     vals.update({'analytic_id': l.employee_id.funding_pool_id.id})
-                    if vals.get('cost_center_id') not in l.employee_id.funding_pool_id.cost_center_ids:
+                    if vals.get('cost_center_id') not in [cc.id for cc in l.employee_id.funding_pool_id.cost_center_ids]:
                         # Fetch default funding pool: MSF Private Fund
                         try:
                             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
