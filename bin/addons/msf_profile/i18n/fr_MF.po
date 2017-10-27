@@ -99629,3 +99629,9 @@ msgstr "Vous ne pouvez pas modifier un Journal Analytique qui n'appartient pas �
 #, python-format
 msgid "You can't delete this FX rate as the period \"%s\" isn't in Draft state."
 msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'est pas en statut Brouillon."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:383
+#, python-format
+msgid "Line %s. The account \"%s - %s\" cannot be used because it is set as \"Can not be corrected on HQ entries\"."
+msgstr "Ligne %s. Le compte \"%s - %s\" ne peut pas être utilisé car il est défini comme \"Impossible à corriger dans les entrées HQ\"."
