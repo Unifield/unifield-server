@@ -99769,3 +99769,8 @@ msgstr "Fermé en mission ou en HQ dans l'instance enfant"
 #: help:account.period,child_mission_hq_closed:0
 msgid "In HQ, checks the periods being mission or HQ-closed in the selected coordo"
 msgstr "En HQ, vérifie les périodes fermées en mission ou en HQ dans la coordo sélectionnée"
+
+#. module: res_currency_tables
+#: field:wizard.report.rates.table,export_all:0
+msgid "Export all currencies"
+msgstr "Exporter toutes les devises"
