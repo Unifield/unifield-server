@@ -22,17 +22,16 @@
 
 from osv import osv
 from osv import fields
-from tools.translate import _
 from lxml import etree
 
 
 class view_entity_id(osv.osv_memory):
     _name = "sync.client.view_entity_id"
-    
+
     _columns = {
         'name':fields.char('Entity Id', size=256, required=True),
     }
-    
+
     _defaults = {
         'name' : lambda self, *a : self.pool.get("sync.client.entity")._hardware_id,
     }
@@ -43,7 +42,7 @@ class view_entity_id(osv.osv_memory):
             hw_id = self.pool.get("sync.client.entity")._hardware_id or ''
 
             doc = etree.XML(res['arch'])
-            nodes = doc.xpath("//label[@string='name']")
+            nodes = doc.xpath("//label[@string]")
             if nodes:
                 nodes[0].set('string', hw_id)
             res['arch'] = etree.tostring(doc)
