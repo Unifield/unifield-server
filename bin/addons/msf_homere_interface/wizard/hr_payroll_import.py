@@ -392,7 +392,7 @@ class hr_payroll_import(osv.osv_memory):
                 raise osv.except_osv(_('Error'), msg)
 
     def _uf_side_rounding_line_create(self, cr, uid, ids,
-                                      header_vals=None, amount=0., context=None):
+                                      header_vals=None, amount=0., context=None, field=None):
         """
         US-201: no payroll rounding line, create a rounding payroll entry
         UF side (has importer users can not update the Homere archive)
@@ -459,6 +459,7 @@ class hr_payroll_import(osv.osv_memory):
             'currency_id': header_vals['currency_id'],
             'state': 'draft',
             'amount': amount,
+            'field': field or False,
 
             # AD
             'cost_center_id': cc_ids[0],
@@ -595,7 +596,7 @@ class hr_payroll_import(osv.osv_memory):
                             else:
                                 self._uf_side_rounding_line_create(cr, uid, ids,
                                                                    context=context, header_vals=header_vals,
-                                                                   amount=-1 * res_amount_rounded)
+                                                                   amount=-1 * res_amount_rounded, field=field)
                             #raise osv.except_osv(_('Error'), _('An error occurred on balance and no payroll rounding line found.'))
                         else:
                             # Fetch Payroll rounding amount line and update
