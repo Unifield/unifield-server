@@ -4,7 +4,6 @@ try:
     ROOT = cp.request.pool.get_controller("/openerp")
     SHORTCUTS = cp.request.pool.get_controller("/openerp/shortcuts")
     REQUESTS = cp.request.pool.get_controller("/openerp/requests")
-    UF_VERSION = cp.request.pool.get_controller("/openerp/unifield_version")
 
     shortcuts = SHORTCUTS.my()
     requests, total_request = REQUESTS.my()
@@ -30,9 +29,6 @@ css_style = ""
 add_style = cp.config('server.environment') in css_style_dict.keys()
 if add_style:
     css_style = css_style_dict.get(cp.config('server.environment'), "")
-
-from openobject import release
-version = release.version
 %>
 <td id="top"
     % if add_style:
@@ -153,6 +149,6 @@ version = release.version
             src:this.href
         }, null, {
             height: 350
-        });
+        }).focus();
     });
 </script>

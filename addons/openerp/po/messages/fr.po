@@ -1775,3 +1775,7 @@ msgstr "enregistrement(s) sélectionné(s)"
 #~ msgid "Click here to add new image."
 #~ msgstr "Cliquez ici pour ajouter une nouvelle image"
 
+#: controllers/templates/shortcut_tooltip.mako:6
+#, python-format
+msgid "You haven't recently used a keyboard shortcut. You can see what shortcuts are available on this screen by holding SHIFT + CTRL."
+msgstr "Vous n'avez pas utilisé de raccourci clavier récemment. Vous pouvez voir quels raccourcis sont disponibles sur cet écran en utilisant CTRL + SHIFT."

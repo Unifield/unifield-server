@@ -193,13 +193,14 @@ function openAction(action_url, target, terp_id, keep_open) {
     var $dialogs = jQuery('.action-dialog');
     switch(target) {
         case 'new':
-            jQuery.frame_dialog({
+            $frame = jQuery.frame_dialog({
                 src: action_url,
                 'class': 'action-dialog'
             }, null, {
                 width: '90%',
                 height: '95%'
             });
+            $frame.focus();
             if (terp_id && !$dialogs.length) {
                 if (jQuery('#_terp_id').val() == 'False') {
                     // we are opening an action on an unsaved record,

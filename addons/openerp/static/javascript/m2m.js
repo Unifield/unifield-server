@@ -190,7 +190,7 @@ Many2Many.prototype = {
         } else {
             url = '/openerp/search/new';
         }
-        return $.frame_dialog({
+        var $frame = $.frame_dialog({
                 src: openobject.http.getURL(url, options)
             }, {
                 'source-window': $this[0],
@@ -199,6 +199,8 @@ Many2Many.prototype = {
                 width: '90%',
                 height: '95%'
             });
+        $frame.focus();
+        return $frame;
     }
 
     /**

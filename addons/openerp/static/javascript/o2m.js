@@ -260,7 +260,13 @@ One2Many.prototype = {
         });
         $frame.load(function() {
             $frame_content = $frame.contents();
-            $frame_content.find("[autofocus='autofocus']").focus();
+            if ($frame_content.find("[autofocus='autofocus']").lenght) {
+                // if a field have an autofocus attribute, set the focus on it
+                $frame_content.find("[autofocus='autofocus']").focus();
+            }
+            else {
+                $frame.focus();  // set the focus on the whole frame
+            }
         });
         var $form = jQuery('<form>', {
             method: 'POST',
