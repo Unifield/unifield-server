@@ -174,6 +174,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
             'state': 'draft',
             'have_an_historic': False,
             'corrected': False,
+            'corrected_upstream': False,
             'reversal': False,
             'last_cor_was_only_analytic': False,
             'is_manually_corrected': False,
