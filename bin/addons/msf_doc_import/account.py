@@ -143,6 +143,15 @@ class msf_doc_import_accounting(osv.osv_memory):
                 num += 1
         return True
 
+    def _check_has_data(self, line):
+        """
+        Returns True if there is data on the line
+        """
+        for i in range(len(line)):
+            if line[i]:
+                return True
+        return False
+
     def _import(self, dbname, uid, ids, context=None):
         """
         Do treatment before validation:
@@ -248,6 +257,11 @@ class msf_doc_import_accounting(osv.osv_memory):
                     current_line_num = num + base_num
                     # Fetch all XML row values
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
+
+                    # ignore empty lines
+                    if not self._check_has_data(line):
+                        continue
+
                     # Check document date
                     if not line[cols['Document Date']]:
                         errors.append(_('Line %s. No document date specified!') % (current_line_num,))
