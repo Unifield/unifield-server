@@ -398,8 +398,11 @@ class Search(Form):
         ncustom_domain = openobject.i18n.format.convert_date_format_in_domain(ncustom_domain, res, context)
 
         # (US-1360) Get the original domain used, convert it from String to List, and store it in the context
-        original_domain = all_domains.get('original_domain') and expr_eval(all_domains.get('original_domain')) or []
-        ctx.update({'original_domain': original_domain})
+        if model != 'account.mcdb':
+            # US-2923 When searching for a Saved query in the Selectors don't store the original_domain, otherwise it
+            # would later be used on the account.analytic.lines/account.move.lines and lead to an inconsistent SQL request
+            original_domain = all_domains.get('original_domain') and expr_eval(all_domains.get('original_domain')) or []
+            ctx.update({'original_domain': original_domain})
 
         return dict(domain=ustr(domain), context=ustr(ctx), search_data=ustr(search_data), filter_domain=ustr(ncustom_domain))
 
