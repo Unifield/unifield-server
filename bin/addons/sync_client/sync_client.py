@@ -31,6 +31,9 @@ import sys
 import os
 import math
 import hashlib
+
+from random import random
+
 from psycopg2 import OperationalError
 from psycopg2.extensions import ISOLATION_LEVEL_REPEATABLE_READ, TransactionRollbackError
 
@@ -1241,6 +1244,51 @@ class Entity(osv.osv):
             return "Last Sync: %s at %s, Not run upd: %s, Not run msg: %s" \
                 % (_(monitor.status_dict[last_log[0]]), last_log[1], last_log[2], last_log[3])
         return "Connected"
+
+    def update_nb_shortcut_used(self, cr, uid, nb_shortcut_used, context=None):
+        '''
+        if the current have used some shorcut, update his counter and last date of use accordingly
+        '''
+        if context is None:
+            context = {}
+        if not nb_shortcut_used:
+            return
+        user_obj = self.pool.get('res.users')
+        current_date = datetime.now()
+        previous_nb_shortcut_used = user_obj.read(cr, uid, uid,
+                                                  ['nb_shortcut_used'],
+                                                  context=context)['nb_shortcut_used']
+        total_shortcut_used = previous_nb_shortcut_used + nb_shortcut_used
+        user_obj.write(cr, uid, uid, {'last_use_shortcut': current_date,
+                                      'nb_shortcut_used': total_shortcut_used,
+                                      }, context=context)
+
+    def display_shortcut_message(self, cr, uid, context=None):
+        '''
+        return True if the message should be displayed, False otherwize.
+        random is used not display all the time the message, but 1 out of 10.
+        '''
+        if context is None:
+            context = {}
+        user_obj = self.pool.get('res.users')
+        result = user_obj.read(cr, uid, uid,
+                               ['nb_shortcut_used',
+                                'last_use_shortcut'],
+                               context=context)
+        if result['nb_shortcut_used'] and result['nb_shortcut_used'] > 100:
+            # once the user have used the shortcut a lot of times, do not
+            # bother him with warning message
+            return False
+        if not result['last_use_shortcut']:
+            # user have never used the shortcut
+            return random() < 0.1
+        last_date = result['last_use_shortcut']
+        last_date = datetime.strptime(last_date[:19],'%Y-%m-%d %H:%M:%S')
+        current_date = datetime.now()
+        if current_date - last_date > timedelta(days=1):
+            # the user didn't use the shortcut since long time
+            return random() < 0.1
+        return False
 
     def interrupt_sync(self, cr, uid, context=None):
         if self.is_syncing():
