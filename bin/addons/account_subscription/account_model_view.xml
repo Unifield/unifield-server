@@ -152,8 +152,9 @@
             <field name="type">tree</field>
             <field name="priority" eval="14"/>
             <field name="arch" type="xml">
-                <tree string="Recurring Entries To Validate" min_rows="100" hide_new_button="1" hide_delete_button="1"
-                colors="red:analytic_distribution_state not in ('valid')">
+                <tree string="Recurring Entries To Validate" min_rows="100"
+                      hide_new_button="1" hide_delete_button="1" hide_edit_button="1"
+                      colors="red:analytic_distribution_state not in ('valid')">
                     <field name="instance_id"/>
                     <field name="is_corrigible" invisible="1"/>
                     <field name="have_an_historic" invisible="1"/>

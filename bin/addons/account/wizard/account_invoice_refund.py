@@ -238,6 +238,14 @@ class account_invoice_refund(osv.osv_memory):
                             if 'value' in data and data['value']:
                                 inv_obj.write(cr, uid, [inv_id], data['value'])
                         created_inv.append(inv_id)
+
+                    # Refund cancel/modify: set the invoice JI/AJIs as Corrected by the system so that they can't be
+                    # corrected manually. This must be done at the end of the refund process to handle the right AJI ids
+                    # get the list of move lines excluding invoice header
+                    ml_list = [ml.id for ml in movelines if not (ml.account_id.id == inv.account_id.id and
+                                                                 abs(abs(inv.amount_total) - abs(ml.amount_currency)) <= 10**-3)]
+                    account_m_line_obj.set_as_corrected(cr, uid, ml_list, manual=False, context=None)
+
             if inv.type in ('out_invoice', 'out_refund'):
                 xml_id = 'action_invoice_tree3'
             else:

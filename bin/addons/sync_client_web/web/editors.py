@@ -35,7 +35,7 @@ function UpdateDiv()
 {
     $.ajax({
         type: 'post',
-        data: {},
+        data: {'nb_shortcut_used': document.nb_shortcut_used || 0},
         dataType : 'json',
         timeout: 5000,
         url: '/sync_client_web/synchro_client/get_data',
@@ -45,6 +45,7 @@ function UpdateDiv()
         },
         complete: function() {
             setTimeout("UpdateDiv()", delay);
+            document.nb_shortcut_used = 0;
         }
     });
 }

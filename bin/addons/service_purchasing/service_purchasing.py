@@ -232,16 +232,16 @@ class stock_move(osv.osv):
                 left join stock_location src on m.location_id = src.id
                 left join stock_location dest on m.location_dest_id = dest.id
             where m.id in %s""", (tuple(ids),))
-            for c in cr.fetchall():
-                if c[0]:
+            for res in cr.fetchall():
+                if res[0]:
                     raise osv.except_osv(_('Error'), _('Service Products must have Service or Cross Docking Location as Destination Location.'))
-                if c[1]:
+                if res[1]:
                     raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
-                if c[2]:
+                if res[2]:
                     raise osv.except_osv(_('Error'), _('Service Products must have Service Location as Destination Location.'))
-                if c[3]:
+                if res[3]:
                     raise osv.except_osv(_('Error'), _('Service Products must have Cross Docking Location as Source Location.'))
-                if c[4]:
+                if res[4]:
                     raise osv.except_osv(_('Error'), _('Service Location cannot be used for non Service Products.'))
         return True
 
@@ -408,10 +408,10 @@ class stock_picking(osv.osv):
     _columns = {
         'order_category': fields.function(_vals_get23, method=True, type='selection', selection=ORDER_CATEGORY, string='Order Category', multi='vals_get23', readonly=True,
                                           store={
-                                          'stock.picking': (lambda obj, cr, uid, ids, context: ids, ['purchase_id', 'sale_id'], 10),
-                                          'purchase.order': (_get_purchase_ids, ['categ', ], 10),
-                                          'sale.order': (_get_sale_ids, ['categ', ], 10),
-                                          'real.average.consumption': (_get_rac_ids, ['categ'], 10),
+                                              'stock.picking': (lambda obj, cr, uid, ids, context: ids, ['purchase_id', 'sale_id'], 10),
+                                              'purchase.order': (_get_purchase_ids, ['categ', ], 10),
+                                              'sale.order': (_get_sale_ids, ['categ', ], 10),
+                                              'real.average.consumption': (_get_rac_ids, ['categ'], 10),
                                           },
                                           ),
     }

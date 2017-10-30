@@ -23,6 +23,23 @@ class purchase_order_line(osv.osv):
                     sol_values['line_number'] = split_po.linked_sol_id.line_number
         return sol_values
 
+
+    def check_if_stock_take_date_with_esc_partner(self, cr, uid, ids, context=None):
+        """
+        Check if the PO line have a date of stock take with an ESC Partner
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.order_id.partner_type == 'esc':
+                if not pol.stock_take_date:
+                    raise osv.except_osv(_('Warning !'), _('The Date of Stock Take is required for a Purchase Order if the Partner is an ESC.'))
+
+        return True
+
     def update_fo_lines(self, cr, uid, ids, context=None):
         '''
         update corresponding FO lines in the same instance
@@ -76,8 +93,6 @@ class purchase_order_line(osv.osv):
             line_stock_take = False
             if pol.stock_take_date:
                 line_stock_take = pol.stock_take_date
-
-
 
             sol_values = {
                 'product_id': pol.product_id and pol.product_id.id or False,
@@ -259,7 +274,9 @@ class purchase_order_line(osv.osv):
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.order_id.partner_id.partner_type in ('internal', 'section', 'intermission'):
                 open_wizard = True
-                break
+            if pol.state == 'validated_n':
+                # if line is 'validated_n', pass through 'validated' state to ensure no checks has been missed
+                wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'validated', cr)
 
         if open_wizard:
             context.update({'pol_ids_to_confirm': ids})
@@ -317,14 +334,13 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
-        # check analytic distribution before validating the line:
+        # checks before validating the line:
         self.check_analytic_distribution(cr, uid, ids, context=context)
+        self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
 
         # update FO lines:
         self.update_fo_lines(cr, uid, ids, context=context)
-        po_to_check = {}
         for pol in self.browse(cr, uid, ids, context=context):
-            po_to_check[pol.order_id.id] = True
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_v', cr)
             # update original qty, unit price, uom and currency on line level
@@ -340,9 +356,6 @@ class purchase_order_line(osv.osv):
                 line_update['original_uom'] = pol.product_uom.id
 
             self.write(cr, uid, pol.id, line_update, context=context)
-
-        if po_to_check:
-            self.pool.get('purchase.order').check_if_stock_take_date_with_esc_partner(cr, uid, po_to_check.keys(), context=context)
 
 
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
@@ -415,16 +428,17 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
+
+        # check before confirming the line:
         self.check_analytic_distribution(cr, uid, ids, context=context)
+        self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
 
         # update FO line with change on PO line
         self.update_fo_lines(cr, uid, ids, context=context)
 
-        po_to_check = {}
         pol_to_invoice = {}
 
         for pol in self.browse(cr, uid, ids):
-            po_to_check[pol.order_id.id] = True
             if not pol.confirmed_delivery_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
 
@@ -444,7 +458,7 @@ class purchase_order_line(osv.osv):
                     in_id = self.pool.get('purchase.order').create_picking(cr, uid, pol.order_id, context)
                     in_id = [in_id]
                     created = True
-                incoming_move_id = self.pool.get('purchase.order').create_picking_line(cr, uid, in_id[0], pol, context)
+                incoming_move_id = self.pool.get('purchase.order').create_new_incoming_line(cr, uid, in_id[0], pol, context)
                 if created:
                     wf_service.trg_validate(uid, 'stock.picking', in_id[0], 'button_confirm', cr)
                 else:
@@ -463,15 +477,7 @@ class purchase_order_line(osv.osv):
                         internal_pick = [internal_pick]
                         created = True
                     # create and update stock.move:
-                    int_move_id = self.pool.get('purchase.order').create_picking_line(cr, uid, internal_pick[0], pol, context)
-                    move = self.pool.get('stock.move').browse(cr, uid, int_move_id, context=context)
-                    input_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
-                    input_loc = self.pool.get('stock.location').browse(cr, uid, input_id, context=context)
-                    self.pool.get('stock.move').write(cr, uid, [int_move_id], {
-                        'location_id': input_id,
-                        'location_dest_id': self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=move.product_id, context=context)[0].id,    
-                        'linked_incoming_move': incoming_move_id,
-                    }, context=context)
+                    int_move_id = self.pool.get('purchase.order').create_new_int_line(cr, uid, internal_pick[0], pol, incoming_move_id, context)
                     if created:
                         self.pool.get('stock.picking').draft_force_assign(cr, uid, internal_pick, context=context)
                     else:
@@ -501,8 +507,6 @@ class purchase_order_line(osv.osv):
             if pol.order_id.invoice_method == 'order':
                 pol_to_invoice[pol.id] = True
 
-        if po_to_check:
-            self.pool.get('purchase.order').check_if_stock_take_date_with_esc_partner(cr, uid, po_to_check.keys(), context=context)
 
         # create or update the linked commitment voucher:
         self.create_or_update_commitment_voucher(cr, uid, ids, context=context)

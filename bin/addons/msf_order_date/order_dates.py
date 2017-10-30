@@ -416,8 +416,6 @@ def common_onchange_partner_id(self, cr, uid, ids, part=False, order_type=False,
     # call onchange_transport_type and update **VALUE** of res
     res_transport_type = self.onchange_transport_type(cr, uid, ids, part=part, transport_type=res['value']['transport_type'], requested_date=res['value']['delivery_requested_date'], context=context)
     res.setdefault('value', {}).update(res_transport_type.setdefault('value', {}))
-    # reset confirmed date
-    res.setdefault('value', {}).update({'delivery_confirmed_date': False, })
     # compute partner type
     partner_type = compute_partner_type(self, cr, uid, part=part, type=type, context=context)
     res.setdefault('value', {}).update({'partner_type': partner_type, })
@@ -657,6 +655,8 @@ class sale_order(osv.osv):
         res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part, order_type)
         # compute requested date and transport type
         res = common_onchange_partner_id(self, cr, uid, ids, part=part, order_type=order_type, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        # reset confirmed date
+        res.setdefault('value', {}).update({'delivery_confirmed_date': datetime.now().strftime('%Y-%m-%d')})
 
         if res.get('value', {}).get('pricelist_id') and part:
             if ids:
@@ -740,26 +740,11 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
         order_obj = self.pool.get('sale.order')
-        res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
+        res = datetime.now().strftime('%Y-%m-%d')
 
         if context.get('sale_id', False):
             so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
             res = so.delivery_requested_date
-
-        return res
-
-    def _get_confirmed_date(self, cr, uid, context=None):
-        '''
-            Returns confirmed date
-        '''
-        if context is None:
-            context = {}
-        order_obj = self.pool.get('sale.order')
-        res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
-
-        if context.get('sale_id', False):
-            so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
-            res = so.delivery_confirmed_date
 
         return res
 
@@ -799,7 +784,6 @@ class sale_order_line(osv.osv):
                 }
 
     _defaults = {'date_planned': _get_planned_date,
-                 'confirmed_delivery_date': _get_confirmed_date,
                  'so_state_stored': _get_default_state,
                  'type': lambda *a: 'make_to_order',
                  'product_uom': _get_uom_def,

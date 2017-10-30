@@ -690,7 +690,7 @@ class audittrail_rule(osv.osv):
 
             for res_id in res_ids:
                 parent_field_id = False
-                if parent_field:
+                if parent_field and new_values_computed[res_id][parent_field]:
                     parent_field_id = new_values_computed[res_id][parent_field][0]
 
                 inherit_field_id = False

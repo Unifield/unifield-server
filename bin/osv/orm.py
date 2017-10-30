@@ -2240,8 +2240,9 @@ class orm_memory(orm_template):
         self.check_id = 0
         cr.execute('delete from wkf_instance where res_type=%s', (self._name,))
 
-    def _check_access(self, uid, object_id, mode):
-        if uid != 1 and self.datas[object_id]['internal.create_uid'] != uid:
+    def _check_access(self, cr, uid, object_id, mode):
+        user_obj = self.pool.get('res.users')
+        if uid != 1 and uid != user_obj._get_sync_user_id(cr) and self.datas[object_id]['internal.create_uid'] != uid:
             raise except_orm(_('AccessError'), '%s access is only allowed on your own records for osv_memory objects except for the super-user' % mode.capitalize())
 
     def vaccum(self, cr, uid, force=False):
@@ -2293,7 +2294,7 @@ class orm_memory(orm_template):
                 for f in fields_to_read:
                     record = self.datas.get(id)
                     if record:
-                        self._check_access(user, id, 'read')
+                        self._check_access(cr, user, id, 'read')
                         r[f] = record.get(f, False)
                         if r[f] and isinstance(self._columns[f], fields.binary) and context.get('bin_size', False):
                             r[f] = len(r[f])
@@ -2347,7 +2348,7 @@ class orm_memory(orm_template):
             else:
                 upd_todo.append(field)
         for object_id in ids:
-            self._check_access(user, object_id, mode='write')
+            self._check_access(cr, user, object_id, mode='write')
             try:
                 self.datas[object_id].update(vals2)
             except KeyError:
@@ -2557,7 +2558,7 @@ class orm_memory(orm_template):
 
     def unlink(self, cr, uid, ids, context=None):
         for id in ids:
-            self._check_access(uid, id, 'unlink')
+            self._check_access(cr, uid, id, 'unlink')
             self.datas.pop(id, None)
         if len(ids):
             cr.execute('delete from wkf_instance where res_type=%s and res_id IN %s', (self._name, tuple(ids)))
@@ -2568,7 +2569,7 @@ class orm_memory(orm_template):
         credentials = self.pool.get('res.users').name_get(cr, user, [user])[0]
         create_date = time.strftime('%Y-%m-%d %H:%M:%S')
         for id in ids:
-            self._check_access(user, id, 'read')
+            self._check_access(cr, user, id, 'read')
             result.append({
                 'create_uid': credentials,
                 'create_date': create_date,

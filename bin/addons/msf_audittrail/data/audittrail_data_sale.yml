@@ -31,7 +31,7 @@
     if object_ids:
         # warning: the functional field to trace is 'state_hidden_sale_order' and not 'state'
         fields = ['client_order_ref', 'details', 'delivery_requested_date', 'delivery_confirmed_date', 'partner_id', 'note', 'transport_type',
-        'order_type', 'categ', 'priority', 'shipped', 'state_hidden_sale_order', 'pricelist_id', 'origin', 'ready_to_ship_date', 'shipment_date']
+        'order_type', 'categ', 'priority', 'shipped', 'state', 'pricelist_id', 'origin', 'ready_to_ship_date', 'shipment_date']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'sale.order'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
@@ -111,7 +111,7 @@
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
         fields = ['confirmed_delivery_date', 'date_planned', 'default_code',
-        'name', 'notes', 'price_unit', 'product_uom_qty', 'product_uom']
+        'name', 'notes', 'price_unit', 'product_uom_qty', 'product_uom', 'state']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'sale.order.line'), ('name', 'in', fields)], context=context)
         field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'sale.order.line'), ('name', '=', 'line_number')], context=context)
         field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'sale.order.line'), ('name', '=', 'order_id')], context=context)

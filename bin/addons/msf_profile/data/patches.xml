@@ -10,7 +10,16 @@
             <field name="method">us_3306</field>
         </record>
 
+        <record id="us_2676_patch" model="patch.scripts">
+            <field name="method">us_2676</field>
+        </record>
+
+        <record id="us_3345_remove_space_in_employee_name" model="patch.scripts">
+            <field name="method">us_3345_remove_space_in_employee_name</field>
+        </record>
+
         <!-- OLD -->
+
         <record id="us_3048_patch" model="patch.scripts">
             <field name="method">us_3048_patch</field>
         </record>
@@ -216,5 +225,6 @@
         <record id="us_1562_rename_special_periods" model="patch.scripts">
             <field name="method">us_1562_rename_special_periods</field>
         </record>
+
     </data>
 </openerp>

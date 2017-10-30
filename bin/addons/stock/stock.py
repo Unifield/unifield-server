@@ -920,16 +920,22 @@ class stock_picking(osv.osv):
         return ok
 
     def action_cancel(self, cr, uid, ids, context=None):
-        """ Changes picking state to cancel.
+        """ 
+        Changes picking state to cancel.
         @return: True
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
+
+        context['cancel_type'] = 'update_out'
         move_obj = self.pool.get('stock.move')
         for pick in self.read(cr, uid, ids, ['move_lines'], context=context):
             move_obj.action_cancel(cr, uid, pick['move_lines'], context)
         self.write(cr, uid, ids, {'state': 'cancel', 'invoice_state': 'none'})
         self.log_picking(cr, uid, ids, context=context)
+
         return True
 
     #

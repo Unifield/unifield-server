@@ -1146,6 +1146,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             })
 
         if 'state' in vals and vals['state'] == 'cancel':
+            context.update({'noraise': True})
             self.write(cr, uid, ids, {'cf_estimated_delivery_date': False}, context=context)
 
         if 'type' in vals:
@@ -1693,6 +1694,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'nomen_manda_1': sourcing_line.nomen_manda_1.id or False,
                         'nomen_manda_2': sourcing_line.nomen_manda_2.id or False,
                         'nomen_manda_3': sourcing_line.nomen_manda_3.id or False,
+                        'date_planned': sourcing_line.date_planned,
+                        'stock_take_date': sourcing_line.stock_take_date or False,
                     }
                     if not sourcing_line.product_id:
                         pol_values['name'] = sourcing_line.comment
@@ -1703,6 +1706,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         })
                     self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
                     self.pool.get('purchase.order').write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
+                    self.pool.get('purchase.order').update_source_document(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
 
                 elif sourcing_line.po_cft == 'rfq':
                     rfq_to_use = self.get_existing_rfq(cr, uid, sourcing_line.id, context=context)
@@ -1735,6 +1739,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'original_uom': sourcing_line.original_uom.id,
                         })
                     self.pool.get('purchase.order.line').create(cr, uid, rfq_line_values, context=context)
+                    self.pool.get('purchase.order').update_source_document(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
 
                 elif sourcing_line.po_cft == 'cft':
                     tender_to_use = self.get_existing_tender(cr, uid, sourcing_line.id, context=context)

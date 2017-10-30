@@ -439,6 +439,10 @@ class purchase_order(osv.osv):
                     if any([self.pool.get('purchase.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in pol_states]):
                         res[po.id] = 'confirmed_p'
 
+            # add audit line in track change if state has changed:
+            if po.state != res[po.id]:
+                self.add_audit_line(cr, uid, po.id, po.state, res[po.id], context=context)
+
         return res
 
     def _is_fixed_type(self, cr, uid, ids, field_name, args, context=None):
@@ -1697,6 +1701,8 @@ class purchase_order(osv.osv):
                 else:
                     res['warning'] = {'title': _('Warning'), 'message': msg}
         res = common_onchange_partner_id(self, cr, uid, ids, part=part.id, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        # reset confirmed date
+        res.setdefault('value', {}).update({'delivery_confirmed_date': False})
 
         return res
 
@@ -1820,22 +1826,6 @@ class purchase_order(osv.osv):
             return pol_obj.check_analytic_distribution(cr, uid, po_line_ids, context=context, create_missing=create_missing)
         return True
 
-    def check_if_stock_take_date_with_esc_partner(self, cr, uid, ids, context=None):
-        """
-        Check if the PO and all lines have a date of stock take with an ESC Partner
-        """
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.partner_type == 'esc':
-                if not po.stock_take_date and self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', '=', po.id), ('stock_take_date', '=', False)], context=context):
-                    raise osv.except_osv(_('Warning !'), _(
-                        'The Date of Stock Take is required for a Purchase Order if the Partner is an ESC.'))
-                if self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', '=', po.id), ('stock_take_date', '=', False)], context=context):
-                    raise osv.except_osv(_('Warning !'), _('The Date of Stock Take is required for all Purchase Order lines if the Partner is an ESC.'))
-        return True
-
     def get_so_ids_from_po_ids(self, cr, uid, ids, context=None):
         '''
         receive the list of purchase order ids
@@ -1956,60 +1946,133 @@ class purchase_order(osv.osv):
 
         return self.pool.get('stock.picking').create(cr, uid, values, context=context)
 
-    def create_picking_line(self, cr, uid, picking_id, order_line, context=None):
+
+    def create_new_incoming_line(self, cr, uid, incoming_id, pol, context=None):
+        '''
+        create new stock move for incoming shipment
+        '''
         if context is None:
             context = {}
-
-        order_line = self.ensure_object(cr, uid, 'purchase.order.line', order_line)
-        if not order_line:
-            return False
-
-        picking_id = self.ensure_object(cr, uid, 'stock.picking', picking_id)
-        order = order_line.order_id
-        dest = order.location_id.id
-
         move_obj = self.pool.get('stock.move')
         data_obj = self.pool.get('ir.model.data')
 
-        # service with reception are directed to Service Location
-        if order_line.product_id.type == 'service_recep' and not order.cross_docking_ok:
+        pol = self.ensure_object(cr, uid, 'purchase.order.line', pol)
+        incoming = self.ensure_object(cr, uid, 'stock.picking', incoming_id)
+        if not pol:
+            return False
+
+        dest = pol.order_id.location_id.id
+        if pol.product_id.type == 'service_recep' and not pol.order_id.cross_docking_ok:
+            # service with reception are directed to Service Location
             dest = self.pool.get('stock.location').get_service_location(cr, uid)
         else:
-            sol = order_line.linked_sol_id
+            sol = pol.linked_sol_id
             if sol:
                 if not (sol.order_id and sol.order_id.procurement_request):
                     pass
-                elif order_line.product_id.type == 'service_recep':
+                elif pol.product_id.type == 'service_recep':
                     dest = self.pool.get('stock.location').get_service_location(cr, uid)
-                elif order_line.product_id.type == 'consu':
+                elif pol.product_id.type == 'consu':
                     dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
                 elif sol.order_id.location_requestor_id.usage != 'customer':
                     dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
 
         values = {
-            'name': ''.join((order.name, ': ', (order_line.name or ''))),
-            'product_id': order_line.product_id.id,
-            'product_qty': order_line.product_qty,
-            'product_uos_qty': order_line.product_qty,
-            'product_uom': order_line.product_uom.id,
-            'product_uos': order_line.product_uom.id,
-            'location_id': order.partner_id.property_stock_supplier.id,
+            'name': ''.join((pol.order_id.name, ': ', (pol.name or ''))),
+            'product_id': pol.product_id.id,
+            'product_qty': pol.product_qty,
+            'product_uos_qty': pol.product_qty,
+            'product_uom': pol.product_uom.id,
+            'product_uos': pol.product_uom.id,
+            'location_id': pol.order_id.partner_id.property_stock_supplier.id,
             'location_dest_id': dest,
-            'picking_id': picking_id.id,
-            'move_dest_id': order_line.move_dest_id.id,
+            'picking_id': incoming.id,
+            'move_dest_id': pol.move_dest_id.id,
             'state': 'draft',
-            'purchase_line_id': order_line.id,
-            'company_id': order.company_id.id,
-            'price_currency_id': order.pricelist_id.currency_id.id,
-            'price_unit': order_line.price_unit,
-            'date': order_line.confirmed_delivery_date,
-            'date_expected': order_line.confirmed_delivery_date or order_line.date_planned,
-            'line_number': order_line.line_number,
-            'comment': order_line.comment,
+            'purchase_line_id': pol.id,
+            'company_id': pol.order_id.company_id.id,
+            'price_currency_id': pol.order_id.pricelist_id.currency_id.id,
+            'price_unit': pol.price_unit,
+            'date': pol.confirmed_delivery_date,
+            'date_expected': pol.confirmed_delivery_date or pol.date_planned,
+            'line_number': pol.line_number,
+            'comment': pol.comment,
         }
 
-        if picking_id.reason_type_id:
-            values.update({'reason_type_id': picking_id.reason_type_id.id})
+        if incoming.reason_type_id:
+            values.update({'reason_type_id': incoming.reason_type_id.id})
+
+        ctx = context.copy()
+        ctx['bypass_store_function'] = [
+            ('stock.picking', ['dpo_incoming', 'dpo_out', 'overall_qty', 'line_state'])
+        ]
+
+        return move_obj.create(cr, uid, values, context=ctx)
+
+
+    def create_new_int_line(self, cr, uid, internal_id, pol, incoming_move_id=False, context=None):
+        '''
+        create new stock.move for INT
+        '''
+        if context is None:
+            context = {}
+        move_obj = self.pool.get('stock.move')
+        data_obj = self.pool.get('ir.model.data')
+
+        pol = self.ensure_object(cr, uid, 'purchase.order.line', pol)
+        internal = self.ensure_object(cr, uid, 'stock.picking', internal_id)
+        if not pol:
+            return False
+
+        # compute source location:
+        input_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+        input_loc = self.pool.get('stock.location').browse(cr, uid, input_id, context=context)
+
+        # compute destination location:
+        dest = pol.order_id.location_id.id
+        if pol.product_id.type == 'service_recep' and not pol.order_id.cross_docking_ok:
+            # service with reception are directed to Service Location
+            dest = self.pool.get('stock.location').get_service_location(cr, uid)
+        elif self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=pol.product_id, context=context):
+            # if input location has a chained location then use it
+            dest = self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=pol.product_id, context=context)[0].id
+        else:
+            sol = pol.linked_sol_id
+            if sol:
+                if not (sol.order_id and sol.order_id.procurement_request):
+                    pass
+                elif pol.product_id.type == 'service_recep':
+                    dest = self.pool.get('stock.location').get_service_location(cr, uid)
+                elif pol.product_id.type == 'consu':
+                    dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+                elif sol.order_id.location_requestor_id.usage != 'customer':
+                    dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+
+        values = {
+            'name': ''.join((pol.order_id.name, ': ', (pol.name or ''))),
+            'product_id': pol.product_id.id,
+            'product_qty': pol.product_qty,
+            'product_uos_qty': pol.product_qty,
+            'product_uom': pol.product_uom.id,
+            'product_uos': pol.product_uom.id,
+            'location_id': input_id,
+            'location_dest_id': dest,
+            'picking_id': internal.id,
+            'move_dest_id': pol.move_dest_id.id,
+            'state': 'draft',
+            'purchase_line_id': pol.id,
+            'company_id': pol.order_id.company_id.id,
+            'price_currency_id': pol.order_id.pricelist_id.currency_id.id,
+            'price_unit': pol.price_unit,
+            'date': pol.confirmed_delivery_date,
+            'date_expected': pol.confirmed_delivery_date or pol.date_planned,
+            'line_number': pol.line_number,
+            'comment': pol.comment,
+            'linked_incoming_move': incoming_move_id,
+        }
+
+        if internal.reason_type_id:
+            values.update({'reason_type_id': internal.reason_type_id.id})
 
         ctx = context.copy()
         ctx['bypass_store_function'] = [
@@ -2435,6 +2498,87 @@ class purchase_order(osv.osv):
         self._finish_commitment(cr, uid, to_process, context=context)
         return super(purchase_order, self).action_done(cr, uid, ids, context=context)
 
+    def add_audit_line(self, cr, uid, order_id, old_state, new_state, context=None):
+        """
+        If state is modified, add an audittrail.log.line
+        @param cr: Cursor to the database
+        @param uid: ID of the user that change the state
+        @param order_id: ID of the sale.order on which the state is modified
+        @param new_state: The value of the new state
+        @param context: Context of the call
+        @return: True
+        """
+        audit_line_obj = self.pool.get('audittrail.log.line')
+        audit_seq_obj = self.pool.get('audittrail.log.sequence')
+        fld_obj = self.pool.get('ir.model.fields')
+        model_obj = self.pool.get('ir.model')
+        rule_obj = self.pool.get('audittrail.rule')
+        log = 1
+
+        if context is None:
+            context = {}
+
+        domain = [
+            ('model', '=', 'purchase.order'),
+            ('res_id', '=', order_id),
+        ]
+
+        object_id = model_obj.search(cr, uid, [('model', '=', 'purchase.order')], context=context)[0]
+        # If the field 'state_hidden_sale_order' is not in the fields to trace, don't trace it.
+        fld_ids = fld_obj.search(cr, uid, [
+            ('model', '=', 'purchase.order'),
+            ('name', '=', 'state'),
+        ], context=context)
+        rule_domain = [('object_id', '=', object_id)]
+        if not old_state:
+            rule_domain.append(('log_create', '=', True))
+        else:
+            rule_domain.append(('log_write', '=', True))
+        rule_ids = rule_obj.search(cr, uid, rule_domain, context=context)
+        if fld_ids and rule_ids:
+            for fld in rule_obj.browse(cr, uid, rule_ids[0], context=context).field_ids:
+                if fld.id == fld_ids[0]:
+                    break
+            else:
+                return
+
+        log_sequence = audit_seq_obj.search(cr, uid, domain)
+        if log_sequence:
+            log_seq = audit_seq_obj.browse(cr, uid, log_sequence[0]).sequence
+            log = log_seq.get_id(code_or_id='id')
+
+        # Get readable value
+        new_state_txt = False
+        old_state_txt = False
+        for st in PURCHASE_ORDER_STATE_SELECTION:
+            if new_state_txt and old_state_txt:
+                break
+            if new_state == st[0]:
+                new_state_txt = st[1]
+            if old_state == st[0]:
+                old_state_txt = st[1]
+
+        vals = {
+            'user_id': uid,
+            'method': 'write',
+            'name': _('State'),
+            'object_id': object_id,
+            'res_id': order_id,
+            'fct_object_id': False,
+            'fct_res_id': False,
+            'sub_obj_name': '',
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'field_description': _('Order state'),
+            'trans_field_description': _('Order state'),
+            'new_value': new_state,
+            'new_value_text': new_state_txt or new_state,
+            'new_value_fct': False,
+            'old_value': old_state,
+            'old_value_text': old_state_txt or old_state,
+            'old_value_fct': '',
+            'log': log,
+        }
+        audit_line_obj.create(cr, uid, vals, context=context)
 
 purchase_order()
 
