@@ -1346,6 +1346,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
 
+            if line.po_line_id.state in ('confirmed', 'done', 'cancel', 'cancel_r'):
+                write_vals['type_change'] = 'error'
+                errors.append(_('PO line #%s has been confirmed or cancelled and consequently is not editable') % line.in_line_number)
+
             # Comment
             write_vals['imp_comment'] = values[14] and values[14].strip()
 
@@ -1558,11 +1562,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             percent_completed = int(float(line_treated) / float(nb_lines) * 100)
             if line.po_line_id and line.type_change != 'ignore' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
                 continue
-
             if line.type_change in ('ignore', 'error'):
-                # Don't do anything
                 continue
-            elif line.type_change == 'del' and line.po_line_id:
+
+            if line.type_change == 'del' and line.po_line_id:
                 wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
             elif line.type_change == 'split' and line.parent_line_id:
                 # Call the split line wizard
