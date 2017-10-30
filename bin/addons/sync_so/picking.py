@@ -604,7 +604,8 @@ class stock_picking(osv.osv):
             in_id = so_po_common.get_in_id_from_po_id(cr, uid, po_id, context)
             if in_id:
                 # Cancel the IN object to have all lines cancelled, but the IN object remained as closed, so the update of state is done right after
-                wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
+                incoming = self.pool.get('stock.picking').browse(cr, uid, in_id, context=context)
+                self.pool.get('stock.move').action_cancel(cr, uid, [move.id for move in incoming.move_lines], context=context)
                 self.write(cr, uid, in_id, {'state': 'done'}, context) # UTP-872: reset state of the IN to become closed
 
                 name = self.browse(cr, uid, in_id, context).name

@@ -517,6 +517,9 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
+        # update FO line with change on PO line
+        self.update_fo_lines(cr, uid, ids, context=context)
+
         for pol in self.browse(cr, uid, ids, context=context):
             # no PICK/OUT needed in this cases; close SO line:
             internal_ir = pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal' or False # PO line from Internal IR

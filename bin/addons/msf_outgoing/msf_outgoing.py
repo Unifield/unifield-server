@@ -4512,10 +4512,19 @@ class stock_picking(osv.osv):
             context = {}
         move_obj = self.pool.get('stock.move')
         obj_data = self.pool.get('ir.model.data')
-
+        wf_service = netsvc.LocalService("workflow")
 
         # check the state of the picking
         for picking in self.browse(cr, uid, ids, context=context):
+            # update PO line if needed:
+            # e.g.: 300 qty => received 250, then cancel 50 => need to update PO line at cancelation
+            if picking.type == 'in' and picking.purchase_id:
+                for stock_move in picking.move_lines:
+                    if stock_move.purchase_line_id:
+                        if not move_obj.search_exist(cr, uid, [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'not in', ['cancel', 'cancel_r', 'done'])], context=context):
+                            # all in lines processed for this po line
+                            wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
+
             # if draft and shipment is in progress, we cannot cancel
             if picking.subtype == 'picking' and picking.state in ('draft',):
                 if self.has_picking_ticket_in_progress(cr, uid, [picking.id], context=context)[picking.id]:
