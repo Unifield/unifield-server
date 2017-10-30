@@ -99630,3 +99630,9 @@ msgstr "Vous ne pouvez pas modifier un Journal Analytique qui n'appartient pas √
 #, python-format
 msgid "You can't delete this FX rate as the period \"%s\" isn't in Draft state."
 msgstr "Vous ne pouvez pas supprimer ce taux de change car la p√©riode \"%s\" n'est pas en statut Brouillon."
+
+#. module: account
+#: code:addons/account/account.py:1555
+#, python-format
+msgid "The Description is missing for one of the lines."
+msgstr "Il manque la Description pour l'une des lignes."
