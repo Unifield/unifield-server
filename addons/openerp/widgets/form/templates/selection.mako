@@ -21,6 +21,8 @@
     <span class="fielderror">${error}</span>
     % endif
 % else:
-    <span kind="${kind}" id="${name}" value="${value}">${dict(options).get(value)}</span>
+    <span kind="${kind}" id="${name}" value="${value}"
+     ${py.attrs(fld_readonly=1 if readonly_before_state else 0)}>
+    ${dict(options).get(value)}</span>
 % endif
 

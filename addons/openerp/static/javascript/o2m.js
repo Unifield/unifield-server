@@ -198,12 +198,19 @@ One2Many.prototype = {
         if (readonly) {
             jQuery('table.one2many[id$="'+this.name+'"]').addClass('m2o_readonly');
             if(btn){btn.style.display='none';}
+            
             //MochiKit.Base.map(function (el) {el.style.visibility='hidden';},MochiKit.Selector.findChildElements(grid,['.selector']));
             edit.value= 0;
-            if (rows && rows.length) {
-                rows.each(function(index, row) {
-                    jQuery(row).unbind('click');});
-            }
+
+            // Not disabling clicks on line dynamically (in browser) to be
+            // consistent with previous behaviors. In many cases (e.g. FO, SI,
+            // ...) we want o2m to be readonly (no New button) but the lines
+            // to be clickable anyway to see a popup with detailed about the 
+            // line, so this doesnt make sense disabling the click.
+            //if (rows && rows.length) {
+            //  rows.each(function(index, row) {
+            //  jQuery(row).unbind('click');});
+            //}
         }
         else{
             if(btn){btn.style.display='';}

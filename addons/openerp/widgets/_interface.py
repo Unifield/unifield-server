@@ -133,7 +133,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
         'onchange',
         'kind',
         'hide_default_menu',
-        'filters' # filter buttons within an input widget, part of the same implicit "group"
+        'filters', # filter buttons within an input widget, part of the same implicit "group"
         'readonly_before_state'
     ]
 
