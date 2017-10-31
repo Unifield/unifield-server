@@ -43,7 +43,7 @@ class List(TinyWidget):
               'hiddens', 'edit_inline', 'field_total', 'field_real_total',
               'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m',
               'dashboard', 'impex', 'hide_new_button', 'hide_delete_button',
-              'hide_edit_button', 'notselectable', 'filter_selector' ]
+              'hide_edit_button', 'notselectable', 'filter_selector', 'button_attrs' ]
 
     member_widgets = ['pager', 'buttons', 'editors', 'concurrency_info']
 
@@ -128,6 +128,8 @@ class List(TinyWidget):
         root = dom.childNodes[0]
 
         attrs = node_attributes(root)
+
+        self.button_attrs = attrs.get('button_attrs', None)
 
         # Get the hide status of some buttons - by default buttons are shown
         self.hide_new_button = False

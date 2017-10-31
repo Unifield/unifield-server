@@ -1009,6 +1009,8 @@ MochiKit.Base.update(ListView.prototype, {
                     // Without that the tag '<div class="box-a list-a">' would be duplicated each time
                     $list.parent().parent().replaceWith(obj.view);
 
+                    form_hookAttrChange($(idSelector(self.name)).find("[attrs]"));
+
                     if (previous_not_editable) {
                         //console.log('Set readonly');
                         new One2Many(self.name).setReadonly(true);
