@@ -2278,6 +2278,15 @@ class stock_move(osv.osv):
             'previous_chained_pick_id': picking.id,
         }
 
+        if ptype == 'internal' and picking.type == 'in':
+            # looking for an already existing INT to use:
+            linked_int_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move[0][0].id)], context=context)
+            if linked_int_move:
+                internal_pick = self.pool.get('stock.move').browse(cr, uid, linked_int_move[0], context=context).picking_id.id
+                if internal_pick:
+                    self.pool.get('stock.picking').write(cr, uid, [internal_pick], pick_values, context=context)
+                    return internal_pick
+
         return picking_obj.create(cr, uid, pick_values, context=context)
     # @@@override end
 
