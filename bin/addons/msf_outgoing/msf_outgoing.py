@@ -5011,6 +5011,23 @@ class stock_move(osv.osv):
                 pick_obj._create_sync_message_for_field_order(cr, uid, move.picking_id, context=context)
 
             if pick_type == 'in' and move.purchase_line_id:
+                # cancel the linked PO line partially or fully:
+                resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced or context.get('do_resource', False)
+                if move.purchase_line_id.product_qty - move.product_qty != 0:
+                    self.pool.get('purchase.order.line').cancel_partial_qty(cr, uid, [move.purchase_line_id.id], cancel_qty=move.product_qty, resource=resource, context=context)
+                else:
+                    signal = 'cancel_r' if resource else 'cancel'
+                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
+
+                not_done_moves = self.pool.get('stock.move').search(cr, uid, [
+                    ('purchase_line_id', '=', move.purchase_line_id.id),
+                    ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                    ('picking_id.type', '=', 'in'),
+                ], context=context)
+                if (not not_done_moves) or all([x in ids for x in not_done_moves]):
+                    # all in lines processed or will be processed for this po line
+                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
+
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                     # If the line will be sourced in another way, do not cancel the OUT move
@@ -5018,16 +5035,9 @@ class stock_move(osv.osv):
                                        limit=1, order='NO_ORDER', context=context):
                         continue
 
-                    # cancel the linked PO line partially or fully:
-                    resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced or context.get('do_resource', False)
-                    if move.purchase_line_id.product_qty - move.product_qty != 0:
-                        self.pool.get('purchase.order.line').cancel_partial_qty(cr, uid, [move.purchase_line_id.id], cancel_qty=move.product_qty, resource=resource, context=context)
-                    else:
-                        signal = 'cancel_r' if resource else 'cancel'
-                        wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
-
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
-                    sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, resource=resource,context=context)
+                    if move.picking_id.partner_id2.partner_type not in ['internal','section','intermission']:
+                        sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, resource=resource,context=context)
                     # Cancel the remaining OUT line
                     if diff_qty < sol.product_uom_qty:
                         data_back = self.create_data_back(move)
@@ -5041,6 +5051,9 @@ class stock_move(osv.osv):
                         if out_move_id:
                             context.setdefault('not_resource_move', []).append(out_move_id)
                             self.action_cancel(cr, uid, [out_move_id], context=context)
+
+                self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
+
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
