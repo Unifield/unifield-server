@@ -179,8 +179,9 @@ class mission_stock_wizard(osv.osv_memory):
             # the qty column are not depending on with_valuation but only on
             # split_stock
             if wiz_id.split_stock == 'true':
-                domain =[ '&', '|', '|', '|', '|', '|', '|', '|', '|',
+                domain =[ '&',
                         ('mission_report_id', '=', wiz_id.report_id.id),
+                        '|', '|', '|', '|', '|', '|', '|',
                         ('internal_qty', '!=', 0),
                         ('wh_qty', '!=', 0),
                         ('cross_qty', '!=', 0),
@@ -188,18 +189,18 @@ class mission_stock_wizard(osv.osv_memory):
                         ('cu_qty', '!=', 0),
                         ('in_pipe_qty', '!=', 0),
                         ('stock_qty', '!=', 0),
-                        ('central_qty', '!=', 0),
-                        ('cross_qty', '!=', 0),]
+                        ('central_qty', '!=', 0)]
             else:
                 # in case of split_stock is false, some fields are not
                 # displayed, so do not take into account this quantity
-                domain =[ '&', '|', '|', '|', '|',
+                domain =[ '&',
                         ('mission_report_id', '=', wiz_id.report_id.id),
+                        '|', '|', '|', '|',
                         ('internal_qty', '!=', 0),
                         ('cross_qty', '!=', 0),
                         ('secondary_qty', '!=', 0),
                         ('cu_qty', '!=', 0),
-                        ('in_pipe_qty', '!=', 0),]
+                        ('in_pipe_qty', '!=', 0)]
         else:
             domain = [('mission_report_id', '=', wiz_id.report_id.id)]
 
