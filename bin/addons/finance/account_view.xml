@@ -87,6 +87,12 @@
                                     <field name="manual_currency_id" attrs="{'required': [('status', '=', 'manu')], 'readonly': ['|', '|', ('status', '=', 'sys'), ('block_manual_currency_id', '=', True), ('state', '=', 'posted')], 'invisible': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}"/>
                                     <field name="currency_id" readonly="True" attrs="{'invisible': [('status', '=', 'manu')]}"/>
                                 </group>
+                                <group colspan="2" col="2">
+                                    <button name="update_line_description" string="Update Lines"
+                                            type="object" icon="gtk-indent"
+                                            attrs="{'invisible': ['|', '|', ('state', '=', 'posted'), ('status', '=', 'sys'), ('imported', '=', True)]}"
+                                            help="Update Description for Lines"/>
+                                </group>
                           </group>
                         </group>
                         <group attrs="{'readonly': [('state', '=', 'posted')]}">

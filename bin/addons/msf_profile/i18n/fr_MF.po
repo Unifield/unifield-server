@@ -99636,3 +99636,13 @@ msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'
 #, python-format
 msgid "The Description is missing for one of the lines."
 msgstr "Il manque la Description pour l'une des lignes."
+
+#. module: finance
+#: view:account.move:0
+msgid "Update Description for Lines"
+msgstr "Mettre à jour la Description pour les Lignes"
+
+#. module: finance
+#: view:account.move:0
+msgid "Update Lines"
+msgstr "Mettre à jour les Lignes"
