@@ -288,7 +288,7 @@ report when the last update field will be filled. Thank you for your comprehensi
         datas['field_name'] = field_name
         datas['report_id'] = res['report_id']
         datas['file_format'] = file_format
-        datas['display_only_in_stock'] = res['display_only_in_stock']
+        datas['display_only_in_stock'] = (res['display_only_in_stock'] == 'true')
 
         return {
             'type': 'ir.actions.report.xml',

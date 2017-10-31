@@ -52,6 +52,9 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
         field_name = data.get('field_name', '')
         file_format = data.get('file_format', '')
         display_only_in_stock = data.get('display_only_in_stock', False)
+
+        assert isinstance(display_only_in_stock, bool)
+
         if display_only_in_stock:
             field_name += '_only_stock'
         file_name = mission_stock.STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, field_name + '.%s' % file_format)
