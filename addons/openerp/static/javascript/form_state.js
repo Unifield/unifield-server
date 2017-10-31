@@ -149,8 +149,8 @@ function python_to_javascript(string) {
     try {
         return eval('(' + string + ')');
     } catch(e){
-        console.warn("Parsing failure for : ")
-        console.warn('(' + string + ')');
+        window.console && console.warn("Parsing failure for : ");
+        window.console && console.warn('(' + string + ')');
         return "";
     }
 }
@@ -209,8 +209,8 @@ function form_addAttrChangeBindings(elem) {
     // Silently return the conversion fails...
     var attrs = $elem.attr('attrs') || '{}';
     attrs = python_to_javascript(attrs);
-    if (attrs == "") { 
-        console.warn("Failed to parse 'attrs' for " + elem.id); 
+    if (attrs == "") {
+        window.console && console.warn("Failed to parse 'attrs' for " + elem.id); 
         return related_fields; 
     }
 
