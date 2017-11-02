@@ -1252,7 +1252,7 @@ class Entity(osv.osv):
         if context is None:
             context = {}
         if not nb_shortcut_used:
-            return
+            return True
         user_obj = self.pool.get('res.users')
         current_date = datetime.now()
         previous_nb_shortcut_used = user_obj.read(cr, uid, uid,
@@ -1262,6 +1262,7 @@ class Entity(osv.osv):
         user_obj.write(cr, uid, uid, {'last_use_shortcut': current_date,
                                       'nb_shortcut_used': total_shortcut_used,
                                       }, context=context)
+        return True
 
     def display_shortcut_message(self, cr, uid, context=None):
         '''
