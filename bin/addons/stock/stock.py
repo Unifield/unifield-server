@@ -1065,8 +1065,11 @@ class stock_picking(osv.osv):
 
     def _hook_invoice_vals_before_invoice_creation(self, cr, uid, ids, invoice_vals, picking):
         """
-        Hook to permit to change invoice values before its creation
+        Update journal by an inkind journal if we come from an inkind donation PO.
+        Update partner account
+        BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
+
         return invoice_vals
 
     def action_invoice_create(self, cr, uid, ids, journal_id=False,
@@ -1090,6 +1093,7 @@ class stock_picking(osv.osv):
         inv_type = type
         all_pick_lines_invoiced = True
         for picking in self.browse(cr, uid, ids, context=context):
+            intermission = False
             if picking.invoice_state != '2binvoiced':
                 continue
             payment_term_id = False
@@ -1140,24 +1144,62 @@ class stock_picking(osv.osv):
                     'comment': comment,
                     'payment_term': payment_term_id,
                     'fiscal_position': partner.property_account_position.id,
-                    'date_invoice': context.get('date_inv',False),
+                    'date_invoice': context.get('date_inv', time.strftime('%Y-%m-%d',time.localtime())),
                     'company_id': picking.company_id.id,
-                    'user_id':uid
+                    'user_id':uid,
+                    'picking_id': picking.id,
                 }
+
+                if picking.sale_id:
+                    if not partner.property_account_position.id:
+                        invoice_vals['fiscal_position'] = picking.sale_id.fiscal_position.id
+                    invoice_vals['name'] = picking.sale_id.client_order_ref + " : " + picking.name
+
+
+                if picking.purchase_id and picking.purchase_id.order_type and picking.purchase_id.order_type == 'purchase_list':
+                    invoice_vals['purchase_list'] = True
+
                 cur_id = self.get_currency_id(cr, uid, picking)
                 if cur_id:
                     invoice_vals['currency_id'] = cur_id
                 if journal_id:
                     invoice_vals['journal_id'] = journal_id
-                # Add hook to changes values before creation
-                invoice_vals = self._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
+
+                # From US-2391 Donations before expiry and Standard donations linked to an intersection partner generate a Donation
+                donation_intersection = picking and picking.purchase_id and picking.purchase_id.order_type in ['donation_exp', 'donation_st'] \
+                    and picking.partner_id and picking.partner_id.partner_type == 'section'
+                if picking and picking.purchase_id and picking.purchase_id.order_type == "in_kind" or donation_intersection:
+                    journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind'), ('is_current_instance', '=', True)])
+                    if not journal_ids:
+                        raise osv.except_osv(_('Error'), _('No In-kind donation journal found!'))
+                    account_id = picking.partner_id and picking.partner_id.donation_payable_account and picking.partner_id.donation_payable_account.id or False
+                    if not account_id:
+                        raise osv.except_osv(_('Error'), _('No Donation Payable account for this partner: %s') % (picking.partner_id.name or '',))
+
+                    invoice_vals.update({'journal_id': journal_ids[0], 'account_id': account_id, 'is_inkind_donation': True})
+
+                if picking and picking.partner_id and picking.partner_id.partner_type == 'intermission':
+                    intermission_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission'),
+                                                                                     ('is_current_instance', '=', True)])
+                    intermission_default_account = picking.company_id.intermission_default_counterpart
+                    if not intermission_journal_ids:
+                        raise osv.except_osv(_('Error'), _('No Intermission journal found!'))
+                    if not intermission_default_account or not intermission_default_account.id:
+                        raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
+
+                    invoice_vals.update({'is_intermission': True, 'journal_id': intermission_journal_ids[0], 'account_id': intermission_default_account.id})
+                    intermission = True
+
+                if picking and picking.type == 'in' and picking.partner_id and (not picking.partner_id.property_account_payable or not picking.partner_id.property_account_receivable):
+                    raise osv.except_osv(_('Error'), _('Partner of this incoming shipment has no account set. Please set appropriate accounts (receivable and payable) in order to process this IN'))
+
+
                 # US-1669 Add the Supplier Reference (partner + FOC2) to the description in the following use cases:
                 # "IVI from Supply" and "SI with an intersection supplier"
                 in_invoice = inv_type == 'in_invoice'
                 di = 'is_direct_invoice' in invoice_vals and invoice_vals['is_direct_invoice']
                 inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
                 debit_note = 'is_debit_note' in invoice_vals and invoice_vals['is_debit_note']
-                intermission = 'is_intermission' in invoice_vals and invoice_vals['is_intermission']
                 is_si = in_invoice and not di and not inkind_donation and not debit_note and not intermission
                 is_ivi = in_invoice and not debit_note and not inkind_donation and intermission
                 po = picking and picking.purchase_id
@@ -1198,6 +1240,7 @@ class stock_picking(osv.osv):
                 invoices_group[partner.id] = invoice_id
             res[picking.id] = invoice_id
             all_pick_lines_invoiced = True
+
             for move_line in picking.move_lines:
                 if move_line.state == 'cancel':
                     continue
@@ -1260,6 +1303,51 @@ class stock_picking(osv.osv):
                 }, context=context)
                 self._invoice_line_hook(cr, uid, move_line, invoice_line_id)
 
+                if picking.sale_id:
+                    for sale_line in picking.sale_id.order_line:
+                        if sale_line.product_id.type == 'service' and sale_line.invoiced == False:
+                            if group:
+                                name = picking.name + '-' + sale_line.name
+                            else:
+                                name = sale_line.name
+                            if type in ('out_invoice', 'out_refund'):
+                                account_id = sale_line.product_id.product_tmpl_id.\
+                                        property_account_income.id
+                                if not account_id:
+                                    account_id = sale_line.product_id.categ_id.\
+                                            property_account_income_categ.id
+                            else:
+                                account_id = sale_line.product_id.product_tmpl_id.\
+                                        property_account_expense.id
+                                if not account_id:
+                                    account_id = sale_line.product_id.categ_id.\
+                                            property_account_expense_categ.id
+                            price_unit = sale_line.price_unit
+                            discount = sale_line.discount
+                            tax_ids = sale_line.tax_id
+                            tax_ids = map(lambda x: x.id, tax_ids)
+
+                            account_analytic_id = self._get_account_analytic_invoice(cr, uid, picking, sale_line)
+
+                            account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, picking.sale_id.partner_id.property_account_position, account_id)
+                            invoice_line_id = invoice_line_obj.create(cr, uid, {
+                                'name': name,
+                                'invoice_id': invoice_id,
+                                'uos_id': sale_line.product_uos.id or sale_line.product_uom.id,
+                                'product_id': sale_line.product_id.id,
+                                'account_id': account_id,
+                                'price_unit': price_unit,
+                                'discount': discount,
+                                'quantity': sale_line.product_uos_qty,
+                                'invoice_line_tax_id': [(6, 0, tax_ids)],
+                                'account_analytic_id': account_analytic_id,
+                                'notes':sale_line.notes
+                            }, context=context)
+                            self.pool.get('sale.order.line').write(cr, uid, [sale_line.id], {'invoiced': True,
+                                'invoice_lines': [(6, 0, [invoice_line_id])],
+                            })
+
+
             invoice_obj.button_compute(cr, uid, [invoice_id], context=context,
                                        set_total=(inv_type in ('in_invoice', 'in_refund')))
             if all_pick_lines_invoiced:
@@ -1267,6 +1355,14 @@ class stock_picking(osv.osv):
                     'invoice_state': 'invoiced',
                 }, context=context)
             self._invoice_hook(cr, uid, picking, invoice_id)
+
+            if intermission:
+                if not picking.company_id or not picking.company_id.currency_id:
+                    raise osv.except_osv(_('Warning'), _('No company currency found!'))
+
+                wiz_account_change = self.pool.get('account.change.currency').create(cr, uid, {'currency_id': picking.company_id.currency_id.id}, context=context)
+                self.pool.get('account.change.currency').change_currency(cr, uid, [wiz_account_change], context={'active_id': invoice_id})
+
         if all_pick_lines_invoiced:
             self.write(cr, uid, res.keys(), {
                 'invoice_state': 'invoiced',
