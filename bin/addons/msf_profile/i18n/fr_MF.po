@@ -72601,7 +72601,7 @@ msgstr "Assistant d'exécution du bon de picking"
 msgid "Transport mode"
 msgstr "Transport mode"
 
-#. modules: account_override, msf_profile, base, purchase, msf_outgoing
+#. modules: account_override, msf_profile, base, purchase, msf_outgoing, account
 #: view:account.invoice:0
 #: view:res.bank:0
 #: field:res.config.users,address_id:0
@@ -72615,6 +72615,7 @@ msgstr "Transport mode"
 #: field:shipment.wizard,address_id:0
 #: view:res.users:0
 #: field:purchase.order,partner_address_id:0
+#: field:account.journal,bank_address:0
 msgid "Address"
 msgstr "Adresse"
 
@@ -99631,3 +99632,13 @@ msgstr "Vous ne pouvez pas modifier un Journal Analytique qui n'appartient pas �
 #, python-format
 msgid "You can't delete this FX rate as the period \"%s\" isn't in Draft state."
 msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'est pas en statut Brouillon."
+
+#. module: account
+#: field:account.journal,bank_swift_code:0
+msgid "Swift Code"
+msgstr "Code Swift"
+
+#. module: account
+#: field:account.journal,bank_account_name:0
+msgid "Bank Account Name"
+msgstr "Nom du Compte Bancaire"
