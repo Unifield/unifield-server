@@ -950,6 +950,7 @@ class stock_picking(osv.osv):
 
         product_availability = {}
         picking_ids = []
+        move_to_cancel = []
 
         for wizard in inc_proc_obj.read(cr, uid, wizard_ids, ['picking_id',
                                                               'id'], context=context):
@@ -1181,7 +1182,7 @@ class stock_picking(osv.osv):
                     # cancel linked INTernal move (INT):
                     internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
                     if internal_move:
-                        move_obj.action_cancel(cr, uid, internal_move, context=context)
+                        move_to_cancel += internal_move
 
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'progress_line': _('Done (%s/%s)') % (move_done, total_moves),
@@ -1332,6 +1333,9 @@ class stock_picking(osv.osv):
                 self.infolog(cr, uid, "The Incoming Shipment id:%s (%s) has been processed." % (
                     picking_id, picking_dict['name'],
                 ))
+
+            if move_to_cancel:
+                move_obj.action_cancel(cr, uid, list(set(move_to_cancel)), context=context)
 
             if not sync_in:
                 move_obj.action_assign(cr, uid, processed_out_moves)
