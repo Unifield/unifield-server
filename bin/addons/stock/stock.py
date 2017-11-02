@@ -1180,7 +1180,7 @@ class stock_picking(osv.osv):
 
                 if picking and picking.partner_id and picking.partner_id.partner_type == 'intermission':
                     intermission_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission'),
-                                                                                     ('is_current_instance', '=', True)])
+                                                                                                 ('is_current_instance', '=', True)])
                     intermission_default_account = picking.company_id.intermission_default_counterpart
                     if not intermission_journal_ids:
                         raise osv.except_osv(_('Error'), _('No Intermission journal found!'))
@@ -1312,16 +1312,16 @@ class stock_picking(osv.osv):
                                 name = sale_line.name
                             if type in ('out_invoice', 'out_refund'):
                                 account_id = sale_line.product_id.product_tmpl_id.\
-                                        property_account_income.id
+                                    property_account_income.id
                                 if not account_id:
                                     account_id = sale_line.product_id.categ_id.\
-                                            property_account_income_categ.id
+                                        property_account_income_categ.id
                             else:
                                 account_id = sale_line.product_id.product_tmpl_id.\
-                                        property_account_expense.id
+                                    property_account_expense.id
                                 if not account_id:
                                     account_id = sale_line.product_id.categ_id.\
-                                            property_account_expense_categ.id
+                                        property_account_expense_categ.id
                             price_unit = sale_line.price_unit
                             discount = sale_line.discount
                             tax_ids = sale_line.tax_id
@@ -1344,8 +1344,8 @@ class stock_picking(osv.osv):
                                 'notes':sale_line.notes
                             }, context=context)
                             self.pool.get('sale.order.line').write(cr, uid, [sale_line.id], {'invoiced': True,
-                                'invoice_lines': [(6, 0, [invoice_line_id])],
-                            })
+                                                                                             'invoice_lines': [(6, 0, [invoice_line_id])],
+                                                                                             })
 
 
             invoice_obj.button_compute(cr, uid, [invoice_id], context=context,
