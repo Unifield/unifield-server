@@ -366,7 +366,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                         for x in pack_header_mandatory:
                             if not values[index][x]:
                                 error.append(_('Pack record node %s, no value for mandatory attribute %s')% (nb_pack,x))
- 
+
                     index += 1
                     values[index] = [x[3] for x in LINES_COLUMNS]
 
