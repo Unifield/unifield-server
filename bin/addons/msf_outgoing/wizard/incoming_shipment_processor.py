@@ -733,6 +733,7 @@ class stock_move_in_processor(osv.osv):
             multi='product_info',
             help="Ticked if the product is a Controlled Substance",
         ),
+        'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
     }
 
     """

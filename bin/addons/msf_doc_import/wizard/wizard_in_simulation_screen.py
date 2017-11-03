@@ -78,6 +78,8 @@ HEADER_COLUMNS = [(1, _('Freight'), 'optionnal'),
                   (7, _('Message ESC'), 'optionnal'),
                   ]
 
+pack_header = ['parcel_from', 'parcel_to', 'parcel_qty', 'total_weight',
+                        'total_volume', 'total_height', 'total_length', 'total_width', 'message_esc1', 'message_esc2']
 
 class wizard_import_in_simulation_screen(osv.osv):
     _name = 'wizard.import.in.simulation.screen'
@@ -155,12 +157,15 @@ class wizard_import_in_simulation_screen(osv.osv):
         'imp_transport_mode': fields.char(string='Transport mode', size=128, readonly=True),
         # Lines
         'line_ids': fields.one2many('wizard.import.in.line.simulation.screen', 'simu_id', string='Stock moves'),
+        'with_pack': fields.boolean('With Pack Info'),
 
     }
 
     _defaults = {
         'state': 'draft',
         'filetype': 'excel',
+        #TODO
+        'with_pack': True,
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -289,10 +294,13 @@ class wizard_import_in_simulation_screen(osv.osv):
 
             return self.go_to_simulation(cr, uid, ids, context=context)
 
-    def get_values_from_xml(self, cr, uid, file_to_import, context=None):
+    def get_values_from_xml(self, cr, uid, file_to_import, with_pack=False, context=None):
         '''
         Read the XML file and put data in values
         '''
+
+        # TODO
+        with_pack = True
         values = {}
         # Read the XML file
         xml_file = base64.decodestring(file_to_import)
@@ -302,7 +310,6 @@ class wizard_import_in_simulation_screen(osv.osv):
             return values
 
         records = []
-        rec_lines = []
         rec = False
 
         index = 0
@@ -313,42 +320,52 @@ class wizard_import_in_simulation_screen(osv.osv):
         if len(records) > 0:
             rec = records[0]
 
-        def get_field_index(node, index):
-            if not index:
-                index = 0
-            if node.getchildren():
-                for subnode in node:
-                    index = get_field_index(subnode, index)
-                return index
-            else:
+
+        line_header = ['line_number', 'external_ref', 'product_code',
+                        'product_name', 'product_qty',
+                        'product_uom', 'price_unit', 'price_currency_id',
+                        'prodlot_id', 'expired_date',
+                        'packing_list', 'message_esc1',
+                        'message_esc2'
+        ]
+
+        for node in rec.findall('field'):
+            if node.attrib['name'] != 'move_lines':
                 index += 1
+                if len(node):
+                    node = node[0]
                 values[index] = [node.attrib['name'], node.text or '']
-                return index
-
-        for field in rec:
-            if field.attrib['name'] != 'move_lines':
-                index = get_field_index(field, index)
             else:
-                index += 1
-                values[index] = ['line_number', 'external_ref', 'product_code',
-                                 'product_name', 'product_qty',
-                                 'uom_id', 'price_unit', 'currency_id',
-                                 'prodlot_id', 'expiry_date',
-                                 'packing_list', 'message_esc1',
-                                 'message_esc2']
-                for line in field:
-                    rec_lines.append(line)
+                if not with_pack:
+                    index += 1
+                    values[index] = line_header
 
-        for line in rec_lines:
-            index += 1
-            values[index] = []
-            for fl in line:
-                if not fl.getchildren():
-                    values[index].append(fl.text or '')
-                else:
-                    for sfl in fl:
-                        values[index].append(sfl.text or '')
+                for record in node.findall('record'):
+                    if with_pack:
+                        # record is a pack info
+                        index += 1
+                        values[index] = pack_header
+                        index += 1
+                        values[index] = [False for x in pack_header]
+                        for pack_data_node in record.findall('field'):
+                            values[index][pack_header.index(pack_data_node.attrib['name'])] = pack_data_node.text
+                        index += 1
+                        values[index] = line_header
+                        subrecords = record.findall('record')
+                    else:
+                        subrecords = [record]
 
+                    for subrecord in subrecords:
+                        index += 1
+                        values[index] = [False for x in line_header]
+                        for field_info in subrecord.findall('field'):
+                            if len(field_info) == 1:
+                                field_info[0].attrib['name'] = field_info.attrib['name']
+                                field_info = [field_info[0]]
+                            elif not len(field_info):
+                                field_info = [field_info]
+                            for f in field_info:
+                                values[index][line_header.index(f.attrib['name'])] = f.text or ''
         return values
 
     def get_values_from_excel(self, cr, uid, file_to_import, context=None):
@@ -380,16 +397,18 @@ the date has a wrong format: %s') % (index+1, str(e)))
         return values
 
     # Simulation routing
-    def simulate(self, dbname, uid, ids, context=None):
+    def simulate(self, dbname, uid, ids, with_pack=True, context=None):
         '''
         Import the file and fill data in the simulation screen
         '''
+        with_pack = True
         cr = pooler.get_db(dbname).cursor()
         # cr = dbname
         try:
             wl_obj = self.pool.get('wizard.import.in.line.simulation.screen')
             prod_obj = self.pool.get('product.product')
             uom_obj = self.pool.get('product.uom')
+            pack_info_obj = self.pool.get('wizard.import.in.pack.simulation.screen')
 
             # Declare global variables (need this explicit declaration to clear
             # them at the end of the process
@@ -469,7 +488,7 @@ the date has a wrong format: %s') % (index+1, str(e)))
                     if wiz.filetype == 'excel':
                         values = self.get_values_from_excel(cr, uid, wiz.file_to_import, context=context)
                     else:
-                        values = self.get_values_from_xml(cr, uid, wiz.file_to_import, context=context)
+                        values = self.get_values_from_xml(cr, uid, wiz.file_to_import, with_pack=with_pack, context=context)
                 except Exception as e:
                     file_parse_errors.append(str(e))
 
@@ -483,14 +502,15 @@ the date has a wrong format: %s') % (index+1, str(e)))
                 # Check number of columns on lines
 
                 if not file_parse_errors:
-                    if len(values.get(NB_OF_HEADER_LINES + 1, [])) != NB_LINES_COLUMNS:
+
+                    if False and len(values.get(NB_OF_HEADER_LINES + 1, [])) != NB_LINES_COLUMNS:
                         error_msg = _('Line 8 of the Excel file: This line is \
 mandatory and must have %s columns. The values on this line must be the name \
 of the field for IN lines.') % NB_LINES_COLUMNS
                         file_format_errors.append(error_msg)
 
                     for x in xrange(NB_OF_HEADER_LINES + 2, len(values) + 1):
-                        if len(values.get(x, [])) != NB_LINES_COLUMNS:
+                        if False and len(values.get(x, [])) != NB_LINES_COLUMNS:
                             lines_to_ignored.append(x)
                             error_msg = _('Line %s of the imported file: The line \
 information must be on %s columns. The line %s has %s columns') % (x, NB_LINES_COLUMNS, x, len(values.get(x, [])))
@@ -548,7 +568,24 @@ Nothing has been imported because of %s. See below:
                 new_in_lines = []
                 not_ok_file_lines = {}
                 # Loop on lines
-                for x in xrange(NB_OF_HEADER_LINES + 2, len(values) + 1):
+
+                x = NB_OF_HEADER_LINES + 1
+                if not with_pack:
+                    x += 1
+                pack_id = False
+                while x < len(values) + 1:
+                    if values[x][0] == 'parcel_from':
+                        x += 1
+                        pack_info = {}
+                        num = 0
+                        for key in pack_header:
+                            pack_info[key] = values[x][num]
+                            num += 1
+                        pack_id = pack_info_obj.create(cr, uid, pack_info)
+                        x += 2
+
+                    if pack_id:
+                        values[x].append(pack_id)
                     # Check mandatory fields
                     not_ok = False
                     file_line_error = []
@@ -629,8 +666,9 @@ Nothing has been imported because of %s. See below:
                             prodlot_cache.setdefault(product_id, {})
                             prodlot_cache[product_id].setdefault(tools.ustr(vals[8]), exp_value)
 
-                    file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref)
+                    file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref, pack_id)
 
+                    x += 1
                 '''
                 Get the best matching line:
                     1/ Within lines with same line number, same product, same UoM and same qty
@@ -724,7 +762,6 @@ Nothing has been imported because of %s. See below:
                 # create a new simu. screen line
                 for x in file_lines.keys():
                     new_in_lines.append(x)
-
                 # Split the simu. screen line or/and update the values according
                 # to linked file line.
                 for in_line, file_lines in file_in_lines.iteritems():
@@ -881,6 +918,24 @@ Nothing has been imported because of %s. See below:
                 'context': context}
 
 wizard_import_in_simulation_screen()
+
+class wizard_import_in_pack_simulation_screen(osv.osv):
+    _name = 'wizard.import.in.pack.simulation.screen'
+    _rec_name = 'parcel_from'
+
+    _columns = {
+        'parcel_from': fields.integer('Parcel From'),
+        'parcel_to': fields.integer('Parcel To'),
+        'parcel_qty': fields.integer('Parcel Qty'),
+        'total_weight': fields.float('Weight', digits=(16,2)),
+        'total_volume': fields.float('Volume', digits=(16,2)),
+        'total_height': fields.float('Height', digits=(16,2)),
+        'total_length': fields.float('Length', digits=(16,2)),
+        'total_width': fields.float('Width', digits=(16,2)),
+
+    }
+
+wizard_import_in_pack_simulation_screen()
 
 
 class wizard_import_in_line_simulation_screen(osv.osv):
@@ -1064,6 +1119,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             string=' ',
             readonly=True,
         ),
+        'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
     }
 
     _defaults = {
@@ -1090,7 +1146,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         errors = []
         warnings = []
 
-        if len(values) == 13:
+        if len(values) == 14:
             ext_ref = values.pop(1)
             values.append(ext_ref)
 
@@ -1343,6 +1399,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             write_vals['error_msg'] = error_msg
 
+            if values[12]:
+                write_vals['pack_info_id'] = values[12]
+
             self.write(cr, uid, [line.id], write_vals, context=context)
 
         return errors
@@ -1482,7 +1541,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'uom_id': line.imp_uom_id.id,
                     'ordered_quantity': move.product_qty,
                     'quantity': line.imp_product_qty,
-                    'wizard_id': partial_id}
+                    'wizard_id': partial_id,
+                    'pack_info_id': line.pack_info_id and line.pack_info_id.id or False
+            }
 
             mem_move_ids.append(move_obj.create(cr, uid, vals, context=context))
             if move:
