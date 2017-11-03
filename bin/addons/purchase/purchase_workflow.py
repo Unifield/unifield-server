@@ -223,9 +223,9 @@ class purchase_order_line(osv.osv):
         return new_sol_id
 
 
-    def create_int(self, cr, uid, ids, context=None):
+    def create_sys_int(self, cr, uid, ids, context=None):
         '''
-        create internal (INT) picking object
+        create system internal (SYS-INT) picking object
         '''
         if context is None:
             context = {}
@@ -239,7 +239,7 @@ class purchase_order_line(osv.osv):
 
         # create INT:
         pol = self.browse(cr, uid, ids, context=context)[0]
-        name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
+        name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.system.internal')
         pick_values = {
             'name': name,
             'origin': pol.order_id.origin and '%s:%s' % (pol.order_id.name, pol.order_id.origin) or pol.order_id.name,
@@ -470,7 +470,7 @@ class purchase_order_line(osv.osv):
                     ], context=context)
                     created = False
                     if not internal_pick:
-                        internal_pick = self.create_int(cr, uid, ids, context=context)
+                        internal_pick = self.create_sys_int(cr, uid, ids, context=context)
                         internal_pick = [internal_pick]
                         created = True
                     # create and update stock.move:
