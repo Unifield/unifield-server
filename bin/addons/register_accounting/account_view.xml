@@ -21,6 +21,7 @@
                             <newline/>
                             <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                             <field name="currency" readonly="1"/>
+                            <field name="bank_account_number"/>
                             <newline/>
                             <field name="prev_reg_id" invisible="1"/>
                             <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>

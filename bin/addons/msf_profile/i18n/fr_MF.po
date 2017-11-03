@@ -53473,8 +53473,10 @@ msgstr "Certificat ?"
 msgid "Open XLS file"
 msgstr "Ovrir le fichier XLS"
 
-#. module: hr
+#. modules: hr, account, register_accounting
 #: field:hr.employee,bank_account_id:0
+#: field:account.journal,bank_account_number:0
+#: field:account.bank.statement,bank_account_number:0
 msgid "Bank Account Number"
 msgstr "Numéro de Compte Bancaire"
 
@@ -68496,7 +68498,7 @@ msgstr "Calcul la création du Bon de Commande"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 msgid "Bank account number:"
-msgstr "Bank account number:"
+msgstr "Numéro de Compte Bancaire :"
 
 #. module: base
 #: help:res.partner.address,active:0
@@ -72578,7 +72580,7 @@ msgstr "Assistant d'exécution du bon de picking"
 msgid "Transport mode"
 msgstr "Transport mode"
 
-#. modules: account_override, msf_profile, base, purchase, msf_outgoing
+#. modules: account_override, msf_profile, base, purchase, msf_outgoing, account
 #: view:account.invoice:0
 #: view:res.bank:0
 #: field:res.config.users,address_id:0
@@ -72592,6 +72594,7 @@ msgstr "Transport mode"
 #: field:shipment.wizard,address_id:0
 #: view:res.users:0
 #: field:purchase.order,partner_address_id:0
+#: field:account.journal,bank_address:0
 msgid "Address"
 msgstr "Adresse"
 
@@ -99810,3 +99813,13 @@ msgstr "Le partenaire %s n'est pas autorisé pour ce document."
 #, python-format
 msgid "Creating Debit Note lines by file import is not allowed."
 msgstr "La création de lignes d'une Note de Débit via l'import d'un fichier n'est pas autorisée."
+
+#. module: account
+#: field:account.journal,bank_swift_code:0
+msgid "Swift Code"
+msgstr "Code Swift"
+
+#. module: account
+#: field:account.journal,bank_account_name:0
+msgid "Bank Account Name"
+msgstr "Nom du Compte Bancaire"

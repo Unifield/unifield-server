@@ -35,6 +35,14 @@
                             <field name="analytic_journal_id" domain="[('is_current_instance','=',True)]"
                                    attrs="{'required': [('type', 'not in', ('situation', 'stock'))],
                                            'readonly': [('has_entries', '=', True)]}"/>
+                            <field name="bank_account_name"
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                            <field name="bank_account_number"
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                            <field name="bank_swift_code"
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                            <field name="bank_address"
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
                             <field name="bank_journal_id"
                                    attrs="{'invisible': [('type', '!=', 'cheque')],
                                            'required': [('type', '=', 'cheque')],
