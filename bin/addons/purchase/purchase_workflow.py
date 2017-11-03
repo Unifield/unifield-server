@@ -242,7 +242,7 @@ class purchase_order_line(osv.osv):
         name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.internal')
         pick_values = {
             'name': name,
-            'origin': pol.order_id.name,
+            'origin': pol.order_id.origin and '%s:%s' % (pol.order_id.name, pol.order_id.origin) or pol.order_id.name,
             'type': 'internal',
             'state': 'draft',
             'sale_id': False,
