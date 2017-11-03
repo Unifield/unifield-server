@@ -54,19 +54,20 @@ SIMU_LINES = {}
 LN_BY_EXT_REF = {}
 
 
-LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
+LINES_COLUMNS = [(0, _('Line number*'), 'optionnal'),
                  (1, _('External Ref.'), 'optionnal'),
-                 (2, _('Product Code'), 'mandatory'),
+                 (2, _('Product Code*'), 'mandatory'),
                  (3, _('Product Description'), 'optionnal'),
-                 (4, _('Product Qty'), 'mandatory'),
+                 (4, _('Product Qty*'), 'mandatory'),
                  (5, _('Product UoM'), 'mandatory'),
                  (6, _('Price Unit'), 'mandatory'),
                  (7, _('Currency'), 'mandatory'),
                  (8, _('Batch'), 'optionnal'),
                  (9, _('Expiry Date'), 'optionnal'),
-                 (10, _('Packing List'), 'optionnal'),
-                 (11, _('ESC message 1'), 'optionnal'),
-                 (12, _('ESC message 2'), 'optionnal'),
+                 (10, _('Qty. p.p'), 'optionnal'),
+                 (11, _('Packing List'), 'optionnal'),
+                 (12, _('ESC message 1'), 'optionnal'),
+                 (13, _('ESC message 2'), 'optionnal'),
                  ]
 
 HEADER_COLUMNS = [(1, _('Freight'), 'optionnal'),
@@ -78,8 +79,33 @@ HEADER_COLUMNS = [(1, _('Freight'), 'optionnal'),
                   (7, _('Message ESC'), 'optionnal'),
                   ]
 
+PACK_HEADER_XLS = [
+    ('', ''),
+    (_('Qty of parcels*'), 'parcel_qty'),
+    (_('From parcel*'), 'parcel_from'),
+    (_('To parcel*'), 'parcel_to'),
+    (_('Weight*'), 'total_weight'),
+    (_('Volume'), 'total_volume'),
+    (_('Height'), 'total_height'),
+    (_('Length'), 'total_length'),
+    (_('Width'), 'total_width'),
+    (_('ESC Message 1'), 'message_esc1'),
+    (_('ESC Message 2'), 'message_esc2'),
+]
+
 pack_header = ['parcel_from', 'parcel_to', 'parcel_qty', 'total_weight',
                'total_volume', 'total_height', 'total_length', 'total_width', 'message_esc1', 'message_esc2']
+
+
+pack_header_mandatory = ['parcel_from', 'parcel_to', 'total_weight']
+
+line_header = ['line_number', 'external_ref', 'product_code',
+                    'product_name', 'product_qty',
+                    'product_uom', 'price_unit', 'price_currency_id',
+                    'prodlot_id', 'expired_date',
+                    'packing_list', 'message_esc1',
+                    'message_esc2'
+]
 
 class wizard_import_in_simulation_screen(osv.osv):
     _name = 'wizard.import.in.simulation.screen'
@@ -164,8 +190,7 @@ class wizard_import_in_simulation_screen(osv.osv):
     _defaults = {
         'state': 'draft',
         'filetype': 'excel',
-        #TODO
-        'with_pack': True,
+        'with_pack': False,
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -294,16 +319,16 @@ class wizard_import_in_simulation_screen(osv.osv):
 
             return self.go_to_simulation(cr, uid, ids, context=context)
 
-    def get_values_from_xml(self, cr, uid, file_to_import, with_pack=False, context=None):
+    def get_values_from_xml(self, cr, uid, file_to_import, with_pack, context=None):
         '''
         Read the XML file and put data in values
         '''
 
         # TODO
-        with_pack = True
         values = {}
         # Read the XML file
         xml_file = base64.decodestring(file_to_import)
+        error = []
 
         root = ET.fromstring(xml_file)
         if root.tag != 'data':
@@ -321,13 +346,6 @@ class wizard_import_in_simulation_screen(osv.osv):
             rec = records[0]
 
 
-        line_header = ['line_number', 'external_ref', 'product_code',
-                       'product_name', 'product_qty',
-                       'product_uom', 'price_unit', 'price_currency_id',
-                       'prodlot_id', 'expired_date',
-                       'packing_list', 'message_esc1',
-                       'message_esc2'
-                       ]
 
         for node in rec.findall('field'):
             if node.attrib['name'] != 'move_lines':
@@ -336,27 +354,32 @@ class wizard_import_in_simulation_screen(osv.osv):
                     node = node[0]
                 values[index] = [node.attrib['name'], node.text or '']
             else:
-                if not with_pack:
+                nb_pack = 0
+                nb_line = 0
+                for record in node.findall('record'):
+                    nb_pack = +1
+                    # record is a pack info
+                    index += 1
+                    values[index] = pack_header
+                    index += 1
+                    values[index] = [False for x in pack_header]
+                    for pack_data_node in record.findall('field'):
+                        if with_pack:
+                            try:
+                                values[index][pack_header.index(pack_data_node.attrib['name'])] = pack_data_node.text and pack_data_node.text.strip() or False
+                            except ValueError:
+                                error.append(_('Pack record node %s, wrong attribute %s') % (nb_pack, pack_data_node.attrib['name']))
+                    if with_pack:
+                        for x in pack_header_mandatory:
+                            if not values[index][pack_header.index(x)]:
+                                error.append(_('Pack record node %s, no value for mandatory attribute %s')% (nb_pack,x))
+ 
                     index += 1
                     values[index] = line_header
 
-                for record in node.findall('record'):
-                    if with_pack:
-                        # record is a pack info
+                    for subrecord in record.findall('record'):
                         index += 1
-                        values[index] = pack_header
-                        index += 1
-                        values[index] = [False for x in pack_header]
-                        for pack_data_node in record.findall('field'):
-                            values[index][pack_header.index(pack_data_node.attrib['name'])] = pack_data_node.text
-                        index += 1
-                        values[index] = line_header
-                        subrecords = record.findall('record')
-                    else:
-                        subrecords = [record]
-
-                    for subrecord in subrecords:
-                        index += 1
+                        nb_line += 1
                         values[index] = [False for x in line_header]
                         for field_info in subrecord.findall('field'):
                             if len(field_info) == 1:
@@ -366,9 +389,14 @@ class wizard_import_in_simulation_screen(osv.osv):
                                 field_info = [field_info]
                             for f in field_info:
                                 values[index][line_header.index(f.attrib['name'])] = f.text or ''
-        return values
 
-    def get_values_from_excel(self, cr, uid, file_to_import, context=None):
+                        for column in LINES_COLUMNS:
+                            if column[2] == 'mandatory' and not values[index][column[0]]:
+                                error.append(_('Pack record node %s, line %s, data %s is mandatory') % (nb_pack, nb_line, line_header[column[0]]))
+
+        return values, nb_line, error
+
+    def get_values_from_excel(self, cr, uid, file_to_import, with_pack, context=None):
         '''
         Read the Excel XML file and put data in values
         '''
@@ -380,11 +408,47 @@ class wizard_import_in_simulation_screen(osv.osv):
         # Read all lines
         rows = fileobj.getRows()
 
+        error = []
+        nb_pack = 0
+        nb_line = 0
+
+        process_pack_header = False
+        process_pack_line = False
+        process_move_line = False
+
         # Get values per line
         index = 0
         for row in rows:
             index += 1
             values.setdefault(index, [])
+            if len(row) > 2 and row[1] == PACK_HEADER_XLS[1][0]:
+                nb_pack += 1
+                for nb, x in PACK_HEADER_XLS.iteritems():
+                    if row.cells[nb] != x[0]:
+                        error.append(_('Line %s, column %s, expected %s, found %s') % (index, nb+1, x[0], row.cells[nb]))
+                process_pack_header = True
+                process_move_line = False
+
+            elif process_pack_header:
+                process_pack_header = False
+                process_pack_line = True
+                process_move_line = False
+                for nb, x in PACK_HEADER_XLS.iteritems():
+                    if x[1] in pack_header_mandatory and not row.cells[nb]:
+                        error.append(_('Line %s, column %s, value %s is mandatory') % (index, nb+1, x[0]))
+
+            elif process_pack_line:
+                process_pack_line = False
+                process_move_line = True
+                for nb, x in LINES_COLUMNS.iteritems():
+                    if x[1] != row.cells[nb]:
+                        error.append(_('Line %s, column %s, line header expected, found %s, expected: %s') % (index, nb+1, row.cells[nb], x[1]))
+            elif process_move_line:
+                nb_line += 1
+                for nb, x in LINES_COLUMNS.iteritems():
+                    if x[2] == 'mandatory' and not row.cells[nb]:
+                        error.append(_('Line %s, column %s, value %s is mandatory') % (index, nb+1, x[1]))
+
             for cell_nb in range(len(row)):
                 try:
                     cell_data = row.cells and row.cells[cell_nb] and \
@@ -394,14 +458,13 @@ class wizard_import_in_simulation_screen(osv.osv):
                     raise osv.except_osv(_('Error'), _('Line %s of the imported file, \
 the date has a wrong format: %s') % (index+1, str(e)))
 
-        return values
+        return values, nb_line, error
 
     # Simulation routing
-    def simulate(self, dbname, uid, ids, with_pack=True, context=None):
+    def simulate(self, dbname, uid, ids, context=None):
         '''
         Import the file and fill data in the simulation screen
         '''
-        with_pack = True
         cr = pooler.get_db(dbname).cursor()
         # cr = dbname
         try:
@@ -476,23 +539,23 @@ the date has a wrong format: %s') % (index+1, str(e)))
                         LN_BY_EXT_REF[wiz.id][l_ext_ref].append(l_num)
 
                 # Variables
-                lines_to_ignored = []  # Bad formatting lines
-                file_format_errors = []
                 values_header_errors = []
                 values_line_errors = []
+                file_format_errors = []
                 message = ''
                 header_values = {}
                 file_parse_errors = []
 
                 try:
                     if wiz.filetype == 'excel':
-                        values = self.get_values_from_excel(cr, uid, wiz.file_to_import, context=context)
+                        values, nb_file_lines, file_parse_errors = self.get_values_from_excel(cr, uid, wiz.file_to_import, with_pack=wiz.with_pack, context=context)
                     else:
-                        values = self.get_values_from_xml(cr, uid, wiz.file_to_import, with_pack=with_pack, context=context)
+                        values, nb_file_lines, file_parse_errors = self.get_values_from_xml(cr, uid, wiz.file_to_import, with_pack=wiz.with_pack, context=context)
                 except Exception as e:
                     file_parse_errors.append(str(e))
 
 
+                print values
                 '''
                 We check for each line if the number of columns is consistent
                 with the expected number of columns :
@@ -503,20 +566,6 @@ the date has a wrong format: %s') % (index+1, str(e)))
 
                 if not file_parse_errors:
 
-                    if False and len(values.get(NB_OF_HEADER_LINES + 1, [])) != NB_LINES_COLUMNS:
-                        error_msg = _('Line 8 of the Excel file: This line is \
-mandatory and must have %s columns. The values on this line must be the name \
-of the field for IN lines.') % NB_LINES_COLUMNS
-                        file_format_errors.append(error_msg)
-
-                    for x in xrange(NB_OF_HEADER_LINES + 2, len(values) + 1):
-                        if False and len(values.get(x, [])) != NB_LINES_COLUMNS:
-                            lines_to_ignored.append(x)
-                            error_msg = _('Line %s of the imported file: The line \
-information must be on %s columns. The line %s has %s columns') % (x, NB_LINES_COLUMNS, x, len(values.get(x, [])))
-                            file_format_errors.append(error_msg)
-
-                    nb_file_lines = len(values) - NB_OF_HEADER_LINES - 1
                     self.write(cr, uid, [wiz.id], {'nb_file_lines': nb_file_lines}, context=context)
 
                 if file_format_errors or file_parse_errors:
@@ -570,25 +619,48 @@ Nothing has been imported because of %s. See below:
                 # Loop on lines
 
                 x = NB_OF_HEADER_LINES + 1
-                if not with_pack:
-                    x += 1
+
                 pack_id = False
                 while x < len(values) + 1:
+                    not_ok = False
+                    file_line_error = []
+
                     if values[x][0] == 'parcel_from':
+                        if values[x] != pack_header:
+                            not_ok = True
+                            err1 = _('The line %s must contains pack headers ') % (x, )
+                            err = _('Line %s of the file: %s') % (x, err1)
+                            values_line_errors.append(err)
+                            file_line_error.append(err1)
+
                         x += 1
-                        pack_info = {}
-                        num = 0
-                        for key in pack_header:
-                            pack_info[key] = values[x][num]
-                            num += 1
-                        pack_id = pack_info_obj.create(cr, uid, pack_info)
-                        x += 2
+                        if wiz.with_pack:
+
+                            pack_info = {}
+                            num = 0
+                            for key in pack_header:
+                                if not values[x][num]:
+                                    not_ok = True
+                                    err1 = _('The column \'%s\' mustn\'t be empty') % (key, )
+                                    err = _('Line %s of the file: %s') % (x, err1)
+                                    values_line_errors.append(err)
+                                    file_line_error.append(err1)
+
+                                pack_info[key] = values[x][num]
+                                num += 1
+                            pack_id = pack_info_obj.create(cr, uid, pack_info)
+                        x += 1
+                        if values[x] != line_header:
+                            not_ok = True
+                            err1 = _('The line %s must contains pick headers ') % (x, )
+                            err = _('Line %s of the file: %s') % (x, err1)
+                            values_line_errors.append(err)
+                            file_line_error.append(err1)
+                        x += 1
 
                     if pack_id:
                         values[x].append(pack_id)
                     # Check mandatory fields
-                    not_ok = False
-                    file_line_error = []
                     line_number = values.get(x, [False])[0] and int(values.get(x, [False])[0]) or False
                     ext_ref = values.get(x, [False, False])[1]
                     ext_ref = ext_ref and tools.ustr(ext_ref) or False
