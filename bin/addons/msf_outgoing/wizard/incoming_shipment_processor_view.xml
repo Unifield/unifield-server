@@ -55,13 +55,14 @@
                                 <field name="register_a_claim" on_change="onchange_register_a_claim(register_a_claim, onchange_dest_type)"/>
                                 <field name="claim_in_has_partner_id" invisible="True"/>
                                 <field name="claim_partner_id"
-                                       attrs="{'readonly': ['|', ('register_a_claim', '=', False), ('claim_in_has_partner_id', '=', True)], 'required': [('register_a_claim', '=', True)]}"
+                                       attrs="{'required': [('register_a_claim', '=', True)]}"
+                                       readonly="1"
                                        context="{'search_default_supplier': True}"/>
                                 <field name="claim_type"
                                        attrs="{'readonly': [('register_a_claim', '=', False)]}"
                                        on_change="onchange_claim_type(claim_type)"/>
                                 <field name="claim_replacement_picking_expected"
-                                       attrs="{'invisible': [('claim_type', 'not in', ('return', 'missing'))], 'readonly': [('claim_type', '!=', 'return')]}"/>
+                                       attrs="{'invisible': [('claim_type', 'not in', ('accept', 'scrap', 'return', 'missing'))], 'readonly': [('claim_type', 'not in', ('accept', 'scrap', 'return'))]}"/>
                             </page>
                             <page string="Claim Description">
                                 <field name="claim_description" colspan="4" nolabel="True"/>

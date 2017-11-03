@@ -117,7 +117,7 @@ class add_event(osv.osv_memory):
             if not obj.event_type:
                 raise osv.except_osv(_('Warning !'), _('You need to specify an event type.'))
             # reset replacement if not return
-            if obj.event_type != 'return':
+            if obj.event_type not in ('accept', 'scrap', 'return'):
                 replacement = False
             else:
                 replacement = obj.replacement_picking_expected_partial_picking

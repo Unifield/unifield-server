@@ -82,7 +82,7 @@ class stock_incoming_processor(osv.osv):
             string='Claim Type',
         ),
         'claim_replacement_picking_expected': fields.boolean(
-            string='Replacement expected for Return Claim ?',
+            string='Replacement expected for Claim ?',
             help="An Incoming Shipment will be automatically created corresponding to returned products.",
         ),
         'claim_description': fields.text(
@@ -263,37 +263,6 @@ class stock_incoming_processor(osv.osv):
                 'context': context,
             }
 
-        # change view after claim
-        view_by_pick_type = {
-            'in': ('view_picking_in_form', _('Incoming Shipments')),
-            'internal': ('view_picking_form', _('Internal Moves')),
-            'out': ('view_picking_out_form', _('Delivery Orders')),
-            'picking': ('view_picking_ticket_form', _('Picking Tickets')),
-        }
-
-        for proc in self.browse(cr, uid, ids, context=context):
-            if proc.register_a_claim:
-                # id of treated picking (can change according to backorder or not)
-                pick = picking_obj.read(cr, uid, proc.picking_id.id, ['type', 'subtype'], context=context)
-                pick_type = pick['type']
-                if pick_type == 'out' and pick['subtype'] == 'picking':
-                    pick_type = pick['subtype']
-                    pick_view = view_by_pick_type.get(pick_type, [False])[0]
-                    view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', pick_view)
-                else:
-                    view_id = data_obj.get_object_reference(cr, uid, 'stock', view_by_pick_type.get(pick_type, [False])[0])
-                view_id = view_id and view_id[1] or False
-                return {'name': view_by_pick_type.get(pick_type, [None, _('Delivery Orders')])[1],
-                        'view_mode': 'form,tree',
-                        'view_id': [view_id],
-                        'view_type': 'form',
-                        'res_model': 'stock.picking',
-                        'res_id': picking_id,
-                        'type': 'ir.actions.act_window',
-                        'target': 'crash',
-                        'domain': '[]',
-                        'context': context}
-
         return {'type': 'ir.actions.act_window_close'}
 
     """
@@ -350,11 +319,11 @@ class stock_incoming_processor(osv.osv):
         if context is None:
             context = {}
 
-        result = {'value': {'claim_replacement_picking_expected': 'f'}}
+        result = {'value': {'claim_replacement_picking_expected': False}}
 
         if claim_type == 'missing':
             result['value'].update({
-                'claim_replacement_picking_expected': 't'
+                'claim_replacement_picking_expected': True
             })
 
         return result

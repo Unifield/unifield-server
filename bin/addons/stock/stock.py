@@ -2121,6 +2121,7 @@ class stock_move(osv.osv):
         Overrided in delivery_mechanism to create an OUT instead of or in plus of the INT at reception
         '''
         pickid = kwargs['picking']
+        move_obj = self.pool.get('stock.move')
         picking_obj = self.pool.get('stock.picking')
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, 'stock.picking', pickid, 'button_confirm', cr)
@@ -2149,7 +2150,7 @@ class stock_move(osv.osv):
                 # Need to check name of old picking because it always considers picking as "OUT" when created from Sale Order
                 old_ptype = location_obj.picking_type_get(cr, uid, picking.move_lines[0].location_id, picking.move_lines[0].location_dest_id)
                 picking_vals = {}
-                if old_ptype != picking.type:  # and 'return' not in picking.name and 'surplus' not in picking.name:
+                if old_ptype != picking.type:
                     picking_vals['name'] = seq_obj.get(cr, uid, 'stock.picking.' + old_ptype)
                 if ptype == 'internal':
                     picking_vals['associate_pick_name'] = new_pick_name  # save the INT name into this original IN
@@ -2166,7 +2167,7 @@ class stock_move(osv.osv):
                              'date_moved': time.strftime('%Y-%m-%d'),
                              'picking_id': pickid,
                              'state': 'waiting',
-                             'company_id': company_id or res_obj._company_default_get(cr, uid, 'stock.company', context=context)  ,
+                             'company_id': company_id or res_obj._company_default_get(cr, uid, 'stock.company', context=context),
                              'move_history_ids': [],
                              'date': (datetime.strptime(move.date, '%Y-%m-%d %H:%M:%S') + relativedelta(days=delay or 0)).strftime('%Y-%m-%d'),
                              'move_history_ids2': [],
@@ -2544,7 +2545,7 @@ class stock_move(osv.osv):
                 vals.update({'prodlot_id': prodlot_id})
             if vals:
                 self.write(cr, uid, [move.id], vals)
-            if move.state not in ('confirmed','done','assigned'):
+            if move.state not in ('confirmed', 'done', 'assigned'):
                 todo.append(move.id)
 
         if todo:
@@ -2562,8 +2563,8 @@ class stock_move(osv.osv):
             if pick['state'] != 'done' and pick['type'] == 'in':
                 pick_id_to_write.add(pick['id'])
         if pick_id_to_write:
-            self.pool.get('stock.picking').write(cr, uid,
-                                                 list(pick_id_to_write), {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+            self.pool.get('stock.picking').write(cr, uid, list(pick_id_to_write),
+                                                 {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
 
         moves = self.browse(cr, uid, move_ids, context=context)
         self.create_chained_picking(cr, uid, moves, context)

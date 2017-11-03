@@ -72,7 +72,7 @@ class internal_picking_processor(osv.osv):
             string='Claim Type',
         ),
         'claim_replacement_picking_expected': fields.boolean(
-            string='Replacement expected for Return Claim ?',
+            string='Replacement expected for Claim ?',
             help="An Incoming Shipment will be automatically created corresponding to returned products.",
         ),
         'claim_description': fields.text(
