@@ -2034,17 +2034,16 @@ class purchase_order(osv.osv):
             return False
 
         # compute source location:
-        input_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
-        input_loc = self.pool.get('stock.location').browse(cr, uid, input_id, context=context)
+        src_location = pol.order_id.location_id
 
         # compute destination location:
         dest = pol.order_id.location_id.id
         if pol.product_id.type == 'service_recep' and not pol.order_id.cross_docking_ok:
             # service with reception are directed to Service Location
             dest = self.pool.get('stock.location').get_service_location(cr, uid)
-        elif self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=pol.product_id, context=context):
+        elif self.pool.get('stock.location').chained_location_get(cr, uid, src_location, product=pol.product_id, context=context):
             # if input location has a chained location then use it
-            dest = self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=pol.product_id, context=context)[0].id
+            dest = self.pool.get('stock.location').chained_location_get(cr, uid, src_location, product=pol.product_id, context=context)[0].id
         else:
             sol = pol.linked_sol_id
             if sol:
@@ -2064,7 +2063,7 @@ class purchase_order(osv.osv):
             'product_uos_qty': pol.product_qty,
             'product_uom': pol.product_uom.id,
             'product_uos': pol.product_uom.id,
-            'location_id': input_id,
+            'location_id': src_location.id,
             'location_dest_id': dest,
             'picking_id': internal.id,
             'move_dest_id': pol.move_dest_id.id,
