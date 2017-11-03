@@ -79,7 +79,7 @@ HEADER_COLUMNS = [(1, _('Freight'), 'optionnal'),
                   ]
 
 pack_header = ['parcel_from', 'parcel_to', 'parcel_qty', 'total_weight',
-                        'total_volume', 'total_height', 'total_length', 'total_width', 'message_esc1', 'message_esc2']
+               'total_volume', 'total_height', 'total_length', 'total_width', 'message_esc1', 'message_esc2']
 
 class wizard_import_in_simulation_screen(osv.osv):
     _name = 'wizard.import.in.simulation.screen'
@@ -322,12 +322,12 @@ class wizard_import_in_simulation_screen(osv.osv):
 
 
         line_header = ['line_number', 'external_ref', 'product_code',
-                        'product_name', 'product_qty',
-                        'product_uom', 'price_unit', 'price_currency_id',
-                        'prodlot_id', 'expired_date',
-                        'packing_list', 'message_esc1',
-                        'message_esc2'
-        ]
+                       'product_name', 'product_qty',
+                       'product_uom', 'price_unit', 'price_currency_id',
+                       'prodlot_id', 'expired_date',
+                       'packing_list', 'message_esc1',
+                       'message_esc2'
+                       ]
 
         for node in rec.findall('field'):
             if node.attrib['name'] != 'move_lines':
@@ -1543,7 +1543,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     'quantity': line.imp_product_qty,
                     'wizard_id': partial_id,
                     'pack_info_id': line.pack_info_id and line.pack_info_id.id or False
-            }
+                    }
 
             mem_move_ids.append(move_obj.create(cr, uid, vals, context=context))
             if move:

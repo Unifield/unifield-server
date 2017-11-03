@@ -1364,9 +1364,9 @@ class stock_picking(osv.osv):
                 }, context=context)
 
                 move_to_process_ids = self.pool.get('stock.move').search(cr, uid,
-                    [('picking_id', '=', picking_id), ('state', 'not in', ['draft', 'done', 'cancel', 'confirmed']), ('product_qty', '!=', 0),
-                    ('pack_info_id', 'in', all_pack_info.keys())],
-                    context=context)
+                                                                         [('picking_id', '=', picking_id), ('state', 'not in', ['draft', 'done', 'cancel', 'confirmed']), ('product_qty', '!=', 0),
+                                                                          ('pack_info_id', 'in', all_pack_info.keys())],
+                                                                         context=context)
 
                 if move_to_process_ids:
                     proc_obj = self.pool.get('create.picking.processor')
@@ -1401,15 +1401,15 @@ class stock_picking(osv.osv):
                             if ppl_line.move_id.pack_info_id.id not in pack_created:
                                 num_pack = ppl_line.move_id.pack_info_id.parcel_to + 1 - ppl_line.move_id.pack_info_id.parcel_from
                                 pack_created[ppl_line.move_id.pack_info_id.id] = self.pool.get('ppl.family.processor').create(cr, uid, {
-                                            'wizard_id': ppl_wiz['res_id'],
-                                            'from_pack': ppl_line.move_id.pack_info_id.parcel_from,
-                                            'to_pack': ppl_line.move_id.pack_info_id.parcel_to,
-                                            'length': ppl_line.move_id.pack_info_id.total_length,
-                                            'width': ppl_line.move_id.pack_info_id.total_width,
-                                            'height': ppl_line.move_id.pack_info_id.total_height/num_pack,
-                                            'weight': ppl_line.move_id.pack_info_id.total_weight/num_pack,
+                                    'wizard_id': ppl_wiz['res_id'],
+                                    'from_pack': ppl_line.move_id.pack_info_id.parcel_from,
+                                    'to_pack': ppl_line.move_id.pack_info_id.parcel_to,
+                                    'length': ppl_line.move_id.pack_info_id.total_length,
+                                    'width': ppl_line.move_id.pack_info_id.total_width,
+                                    'height': ppl_line.move_id.pack_info_id.total_height/num_pack,
+                                    'weight': ppl_line.move_id.pack_info_id.total_weight/num_pack,
 
-                                    })
+                                })
                             ppl_line.write({'from_pack': ppl_line.move_id.pack_info_id.parcel_from, 'to_pack': ppl_line.move_id.pack_info_id.parcel_to, 'pack_id': pack_created[ppl_line.move_id.pack_info_id.id]})
 
                     self.do_ppl_step2(cr, uid, [ppl_wiz['res_id']])
