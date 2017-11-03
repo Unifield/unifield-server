@@ -244,6 +244,7 @@ class purchase_order_line(osv.osv):
             'name': name,
             'origin': pol.order_id.origin and '%s:%s' % (pol.order_id.name, pol.order_id.origin) or pol.order_id.name,
             'type': 'internal',
+            'subtype': 'sysint',
             'state': 'draft',
             'sale_id': False,
             'purchase_id': pol.order_id.id,

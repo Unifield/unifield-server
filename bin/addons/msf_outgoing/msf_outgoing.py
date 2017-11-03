@@ -2337,7 +2337,7 @@ class stock_picking(osv.osv):
         return res
 
     _columns = {'flow_type': fields.selection([('full', 'Full'), ('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False), ], }, string='Flow Type'),
-                'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing')], string='Subtype'),
+                'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing'), ('sysint', 'System Internal')], string='Subtype'),
                 'backorder_ids': fields.one2many('stock.picking', 'backorder_id', string='Backorder ids',),
                 'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
                 'previous_step_ids': fields.one2many('stock.picking', 'previous_step_id', string='Previous Step ids',),
