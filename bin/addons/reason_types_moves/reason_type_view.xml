@@ -238,9 +238,6 @@
             <field name="inherit_id" ref="stock.view_picking_internal_search" />
             <field name="arch" type="xml">
                 <data>
-                	<xpath expr="/search//filter[@name='confirmed']" position="after">
-                		<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Internal Moves already processed"/>
-                	</xpath>
                     <xpath expr="/search/group/field[@name='origin']" position="after">
                         <field name="reason_type_id" widget="selection" />
                     </xpath>
@@ -257,13 +254,6 @@
                     
                 </data>
             </field>
-        </record>
-        
-        <record id="stock.action_picking_tree6" model="ir.actions.act_window">
-        	<field name="context">{'contact_display': 'partner_address',
-        						   "search_default_available":1,
-        						   'subtype': 'internal',
-        						   'picking_type': 'internal_move'}</field>
         </record>
         
     </data>
