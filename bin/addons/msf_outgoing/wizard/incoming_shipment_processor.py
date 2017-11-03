@@ -65,6 +65,7 @@ class stock_incoming_processor(osv.osv):
         ),
         'draft': fields.boolean('Draft'),
         'already_processed': fields.boolean('Already processed'),
+        'linked_to_out': fields.boolean('Is this IN linked to an OUT ?'),
     }
 
     _defaults = {
@@ -91,6 +92,17 @@ class stock_incoming_processor(osv.osv):
             )
 
         picking = picking_obj.browse(cr, uid, vals.get('picking_id'), context=context)
+
+        cr.execute("""
+            select count(pol.sale_order_line_id) from
+            stock_move m, purchase_order_line pol
+            where m.purchase_line_id = pol.id and
+            m.picking_id = %s
+            """, (vals.get('picking_id'), ))
+        if cr.fetchone()[0]:
+            vals['linked_to_out'] = True
+        else:
+            vals['linked_to_out'] = False
 
         if not vals.get('dest_type', False):
             cd_move = move_obj.search(cr, uid, [
@@ -394,6 +406,11 @@ class stock_incoming_processor(osv.osv):
                 'target': 'same',
                 'res_id': simu_id,
                 'context': context}
+
+    def launch_simulation_pack(self, cr, uid, ids, context=None):
+        data = self.launch_simulation(cr, uid, ids, context)
+        self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, data['res_id'], {'with_pack': True})
+        return data
 
 stock_incoming_processor()
 
