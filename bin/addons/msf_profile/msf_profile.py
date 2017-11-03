@@ -86,6 +86,35 @@ class patch_scripts(osv.osv):
                        'unique(name, currency_id)'))
         return True
 
+    def us_2676(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'section':
+            cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''code'']' where model='account.analytic.journal' and res_id in
+                (select id from account_analytic_journal where code='ENGI')
+            ''')
+        return True
+
+    def us_3345_remove_space_in_employee_name(self, cr, uid, *a, **b):
+        """
+        Removes spaces at the beginning and end of employee name
+        """
+        sql_resource_table = """
+            UPDATE resource_resource SET name = TRIM(name) WHERE id IN (SELECT resource_id FROM hr_employee);
+            """
+        sql_employee_table = """
+            UPDATE hr_employee SET name_resource = TRIM(name_resource);
+            """
+        cr.execute(sql_resource_table)
+        cr.execute(sql_employee_table)
+
+
     # OLD patches
     def us_3048_patch(self, cr, uid, *a, **b):
         '''

@@ -928,7 +928,6 @@ class stock_picking(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
-        wf_service = netsvc.LocalService("workflow")
 
         context['cancel_type'] = 'update_out'
         move_obj = self.pool.get('stock.move')

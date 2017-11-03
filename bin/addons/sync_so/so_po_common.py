@@ -342,8 +342,9 @@ class so_po_common(osv.osv_memory):
 
         return header_result
 
-    def get_product_id(self, cr, uid, data, context):
+    def get_product_id(self, cr, uid, data, default_code=False, context=None):
         # us-1586: use msfid to search product in intersection flow, else use sdref
+        # US-3282: intermission / intersection: last try on default_code
         prod_obj = self.pool.get('product.product')
         msfid = False
         pid = False
@@ -371,7 +372,14 @@ class so_po_common(osv.osv_memory):
             pid = data['id']
 
         if pid:
-            return prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(pid), context=context)
+            prod_id = prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(pid), context=context)
+            if prod_id:
+                return prod_id
+
+        if default_code:
+            prod_ids = prod_obj.search(cr, uid, [('default_code', '=', default_code), ('active', 'in', ['t', 'f'])], limit=1, order='NO_ORDER', context=context)
+            if prod_ids:
+                return prod_ids[0]
 
         return False
 
@@ -386,6 +394,8 @@ class so_po_common(osv.osv_memory):
         src_values = order_line.to_dict()
         split_cancel_line = {}
         msg_err_not_found = "" # prod received by sync but not in our DB
+
+        partner_type = self.get_partner_type(cr, uid, source, context)
 
         if src_values.get('product_uom'):
             res['product_uom'] = self.get_uom_id(cr, uid, order_line.product_uom, context=context)
@@ -436,7 +446,10 @@ class so_po_common(osv.osv_memory):
             res['cost_price'] = order_line.cost_price
 
         if src_values.get('product_id'):
-            rec_id = self.get_product_id(cr, uid, order_line.product_id, context=context)
+            default_code = False
+            if src_values.get('default_code') and partner_type in ['section', 'intermission']:
+                default_code = src_values['default_code']
+            rec_id = self.get_product_id(cr, uid, order_line.product_id, default_code, context=context)
             if rec_id:
                 res['product_id'] = rec_id
                 res['name'] = order_line.product_id.name
@@ -490,7 +503,6 @@ class so_po_common(osv.osv_memory):
             res['rw_xmlid'] = order_line.id.replace('sd.','')
 
         # UTP-952: set empty AD for lines if the partner is intermission or section
-        partner_type = self.get_partner_type(cr, uid, source, context)
         if partner_type not in ['section', 'intermission'] and src_values.get('analytic_distribution_id'):
             res['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, src_values, context)
 
@@ -513,6 +525,8 @@ class so_po_common(osv.osv_memory):
         line_vals_dict = line_values.to_dict()
         if 'order_line' not in line_vals_dict:
             return []
+
+        partner_type = self.get_partner_type(cr, uid, source, context)
 
         for line in line_values.order_line:
             values = {}
@@ -567,7 +581,11 @@ class so_po_common(osv.osv_memory):
                 values['cost_price'] = line.cost_price
 
             if line_dict.get('product_id'):
-                rec_id = self.get_product_id(cr, uid, line.product_id, context=context)
+                default_code = False
+                if line_dict.get('default_code') and partner_type in ('intermission', 'section'):
+                    default_code = line_dict['default_code']
+
+                rec_id = self.get_product_id(cr, uid, line.product_id, default_code, context=context)
                 if rec_id:
                     values['product_id'] = rec_id
                     values['name'] = line.product_id.name
@@ -626,7 +644,6 @@ class so_po_common(osv.osv_memory):
                 values['rw_xmlid'] = line.id.replace('sd.','')
 
             # UTP-952: set empty AD for lines if the partner is intermission or section
-            partner_type = self.get_partner_type(cr, uid, source, context)
             if partner_type not in ['section', 'intermission'] and line_dict.get('analytic_distribution_id'):
                 values['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, line_dict, context)
 
@@ -738,59 +755,6 @@ class so_po_common(osv.osv_memory):
         line_id = line_obj.create(cr, uid, line, context=context)
         rw_xmlid = line.get('rw_xmlid', False)
         self.pool.get('ir.model.data').manual_create_sdref(cr, uid, line_obj, rw_xmlid, line_id, context=context)        
-
-    def get_stock_move_lines(self, cr, uid, line_values, context):
-        line_result = []
-
-        line_vals_dict = line_values.to_dict()
-        if 'move_lines' not in line_vals_dict:
-            return []
-
-        for line in line_values.move_lines:
-            values = {}
-            line_dict = line.to_dict()
-
-            if line_dict.get('product_uom'):
-                values['product_uom'] = self.get_uom_id(cr, uid, line.product_uom, context=context)
-
-            if line_dict.get('line_number'):
-                values['line_number'] = line.line_number
-
-            if line_dict.get('product_qty'): # come from the PO
-                values['product_qty'] = line.product_qty
-
-            if line_dict.get('expired_date'):
-                values['expired_date'] = line.expired_date
-
-            if line_dict.get('asset_id'):
-                values['asset_id'] = line.asset_id
-
-            if line_dict.get('date_expected'):
-                values['date_expected'] = line.date_expected
-
-            if line_dict.get('product_id'):
-                rec_id = self.get_product_id(cr, uid, line.product_id, context=context)
-                if rec_id:
-                    values['product_id'] = rec_id
-                    values['name'] = line.product_id.name
-
-            '''
-            TO DO: The update or create of Stock moves for the IN must be discussed carefully, because the stock move lines in an IN at Project
-            have no direct mapping with the OUT from Coordo, so the changes in OUT make it difficult to find the corresponding moves in IN at Project
-            in order to update or create new moves (in case of split), but also in case of back orders!
-            So the following block needs to be reviewed and checked for the case of update/create of the move lines.
-            '''
-#            line_ids = False
-#            if line_ids and line_ids[0]:
-#                if for_update: # add this value to the list of update, then remove
-#                    update_lines.append(line_ids[0])
-#
-#                line_result.append((1, line_ids[0], values))
-#            else:
-#                line_result.append((0, 0, values))
-
-        # for update case, then check all updated lines, the other lines that are not presented in the sync message must be deleted at this destination instance!
-        return line_result
 
     def get_uom_id(self, cr, uid, uom_name, context=None):
         if not context:

@@ -260,7 +260,6 @@ class sale_order_line(osv.osv):
 
         sol = self.browse(cr, uid, ids[0], context=context)
 
-        pick_to_use = False
         pick_to_use = self.pool.get('stock.picking').search(cr, uid, [
             ('type', '=', picking_data['type']),
             ('subtype', '=', picking_data['subtype']),
@@ -347,6 +346,7 @@ class sale_order_line(osv.osv):
                 ('linked_sol_id', '=', sol.id),
                 ('order_id.order_type', '=', 'direct'),
             ], context=context)
+
             if sol.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep'): # IR non stockable
                 continue
 

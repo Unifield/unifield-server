@@ -47,7 +47,6 @@ class enter_reason(osv.osv_memory):
         # objects
         picking_obj = self.pool.get('stock.picking')
         purchase_obj = self.pool.get('purchase.order')
-        pol_obj = self.pool.get('purchase.order.line')
         # workflow
         wf_service = netsvc.LocalService("workflow")
         # depending on the button clicked the behavior is different

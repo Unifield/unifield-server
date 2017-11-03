@@ -524,6 +524,10 @@ class ir_model_access(osv.osv):
             # TODO: exclude xml-rpc requests
             return True
 
+        if uid== self.pool.get('res.users')._get_sync_user_id(cr):
+            # User for sync have all accesses
+            return True
+
         assert mode in ['read','write','create','unlink'], 'Invalid access mode'
 
         if isinstance(model, browse_record):
@@ -770,6 +774,12 @@ class ir_model_data(osv.osv):
                         },context=context)
         else:
             if mode=='init' or (mode=='update' and xml_id):
+                # Exception for DN: block import of lines
+                if model == 'account.invoice':
+                    is_debit_note = context.get('is_debit_note') and context.get('type') == 'out_invoice' \
+                        and not context.get('is_inkind_donation')
+                    if is_debit_note and values.get('invoice_line'):
+                        raise osv.except_osv(_('Error'), _('Creating Debit Note lines by file import is not allowed.'))
                 res_id = model_obj.create(cr, uid, values, context=context)
                 # US-180: Only create ir model data if res_id is valid
                 if xml_id and res_id:

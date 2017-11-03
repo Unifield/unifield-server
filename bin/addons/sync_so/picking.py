@@ -89,7 +89,7 @@ class stock_picking(osv.osv):
     _inherit = "stock.picking"
     _logger = logging.getLogger('------sync.stock.picking')
 
-    def format_data(self, cr, uid, data, context=None):
+    def format_data(self, cr, uid, data, source, context=None):
         '''
         we format the data, gathering ids corresponding to objects
         '''
@@ -99,7 +99,14 @@ class stock_picking(osv.osv):
 
         # product
         product_name = data['product_id']['name']
-        product_id = self.pool.get('so.po.common').get_product_id(cr, uid, data['product_id'], context=context)
+
+        default_code = False
+        if data.get('product_id', {}).get('default_code'):
+            partner_type = self.pool.get('so.po.common').get_partner_type(cr, uid, source, context)
+            if partner_type in ['section', 'intermission']:
+                default_code = data['product_id']['default_code']
+
+        product_id = self.pool.get('so.po.common').get_product_id(cr, uid, data['product_id'], default_code, context=context)
         if not product_id:
             product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
             if not product_ids:
@@ -219,7 +226,7 @@ class stock_picking(osv.osv):
                     # aggregate according to line number
                     line_dic = result.setdefault(line.get('line_number'), {})
                     # set the data
-                    line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, context=context))
+                    line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, source, context=context))
                     # set the flag to know if the data has already been processed (partially or completely) in Out side
                     line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move']})
 
@@ -803,43 +810,6 @@ class stock_picking(osv.osv):
         return message
 
 
-    #US-838: This method is no more use, the message will do nothing.
-    def create_batch_number(self, cr, uid, source, out_info, context=None):
-        if not context:
-            context = {}
-        self._logger.info("+++ Create batch number that comes with the SHIP/OUT from %s - This message is deprecated." % source)
-
-        batch_obj = self.pool.get('stock.production.lot')
-
-        batch_dict = out_info.to_dict()
-        error_message = "Create Batch Number: Something go wrong with this message, invalid instance reference"
-
-        batch_dict['partner_name'] = source
-
-        existing_bn = batch_obj.search(cr, uid, [('xmlid_name', '=', batch_dict['xmlid_name']), ('partner_name', '=', source)], context=context)
-        if existing_bn:  # existed already, then don't need to create a new one
-            message = "Create Batch Number: the given BN exists already at local instance, no new BN will be created"
-            self._logger.info(message)
-            error_message = False
-            return message
-
-        error_message = "Create Batch Number: Invalid reference to the product or product does not exist"
-        if batch_dict.get('product_id'):
-            rec_id = self.pool.get('so.po.common').get_product_id(cr, uid, out_info.product_id, context=context)
-            if rec_id:
-                batch_dict['product_id'] = rec_id
-                error_message = False
-
-        # If error message exists --> cannot create the BN
-        if error_message:
-            self._logger.info(error_message)
-            raise Exception, error_message
-
-        batch_obj.create(cr, uid, batch_dict, context=context)
-        message = "The new BN " + batch_dict['name'] + ", " + source + " has been created"
-        self._logger.info(message)
-        return message
-
     # US-838: Retrieve batch object, if not found then create new
     def retrieve_batch_number(self, cr, uid, product_id, batch_dict, context=None):
         if not context:
@@ -882,8 +852,12 @@ class stock_picking(osv.osv):
             self._logger.info(message)
             return message
 
+        default_code = False
+        if asset_dict.get('product_id', {}).get('default_code') and self.pool.get('so.po.common').get_partner_type(cr, uid, source, context) in ['section', 'intermission']:
+            default_code = asset_dict['product_id']['default_code']
+
         if asset_dict.get('product_id'):
-            rec_id = self.pool.get('so.po.common').get_product_id(cr, uid, out_info.product_id, context=context)
+            rec_id = self.pool.get('so.po.common').get_product_id(cr, uid, out_info.product_id, default_code, context=context)
             if rec_id:
                 asset_dict['product_id'] = rec_id
             else:
@@ -1106,6 +1080,13 @@ class stock_picking(osv.osv):
             invoice_result = super(stock_picking, self).action_invoice_create(cr, uid, ids,
                                                                               journal_id=journal_id, group=group, type=type, context=context)
         return invoice_result
+
+    def create_batch_number(self, *a, **b):
+        """
+        deprecated
+        """
+        return True
+
 stock_picking()
 
 class shipment(osv.osv):
