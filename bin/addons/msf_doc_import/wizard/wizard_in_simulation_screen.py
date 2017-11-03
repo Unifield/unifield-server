@@ -909,6 +909,11 @@ Nothing has been imported because of %s. See below:
                                                                                 'note': simu_id.imp_notes}, context=context)
 
         context['from_simu_screen'] = True
+
+        if simu_id.with_pack:
+            self.pool.get('stock.incoming.processor').do_incoming_shipment(cr, uid, [partial_id], context)
+            return self.return_to_in(cr, uid, simu_id.id, context=context)
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.incoming.processor',
                 'res_id': partial_id,
