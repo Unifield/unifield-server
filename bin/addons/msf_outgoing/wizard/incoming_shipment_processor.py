@@ -410,6 +410,7 @@ class stock_incoming_processor(osv.osv):
     def launch_simulation_pack(self, cr, uid, ids, context=None):
         data = self.launch_simulation(cr, uid, ids, context)
         self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, data['res_id'], {'with_pack': True})
+        data['name'] = _('Incoming shipment simulation screen (pick & pack mode)')
         return data
 
 stock_incoming_processor()

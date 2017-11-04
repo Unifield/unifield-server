@@ -261,6 +261,9 @@ class wizard_import_in_simulation_screen(osv.osv):
 
         return self._import(cr, uid, ids, context=context)
 
+    def launch_import_pack(self, cr, uid, ids, context=None):
+        return self.launch_import(cr, uid, ids, context)
+
     def launch_simulate(self, cr, uid, ids, context=None):
         '''
         Launch the simulation routine in background

@@ -1421,7 +1421,7 @@ class stock_picking(osv.osv):
                         for error_line in self.pool.get('ppl.move.processor').browse(cr, uid, error_lines_ids, context=context):
                             error_data.append(_('From pack %s, to pack %s, error: %s') % (error_line.from_pack, error_line.to_pack, error_string.get(error_line.integrity_status)))
                         raise osv.except_osv(_('Error'), "\n".join(error_data))
-                    
+
                     self.do_ppl_step2(cr, uid, [ppl_wiz['res_id']])
 
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
