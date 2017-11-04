@@ -956,6 +956,7 @@ class stock_picking(osv.osv):
 
         product_availability = {}
         picking_ids = []
+        all_pack_info = {}
 
         for wizard in inc_proc_obj.read(cr, uid, wizard_ids, ['picking_id',
                                                               'id'], context=context):
@@ -976,7 +977,6 @@ class stock_picking(osv.osv):
             picking_move_lines = move_obj.browse(cr, uid, picking_dict['move_lines'],
                                                  context=context)
 
-            all_pack_info = {}
             total_moves = len(picking_move_lines)
             move_done = 0
             prog_id = self.update_processing_info(cr, uid, picking_id, False, {
@@ -1428,39 +1428,6 @@ class stock_picking(osv.osv):
                     'prepare_pick': _('Done'),
                 }, context=context)
 
-        # Create the first picking ticket if we are on a draft picking ticket
-        for picking_id in list(out_picks):
-            prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
-                'prepare_pick': _('In progress'),
-            }, context=context)
-            wiz = self.create_picking(cr, uid, [picking_id], context=context)
-            wiz_obj = self.pool.get(wiz['res_model'])
-            wiz_context = wiz.get('context', {})
-            moves_picking = wiz_obj.browse(cr, uid, wiz['res_id'], context=wiz_context).move_ids
-
-            if moves_picking:
-                # We copy all data in lines
-                wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz_context)
-
-                #UF-2531: Pass the name of PICKxxx-y when creating a Pick from crossdocking from an IN partial
-                if context.get('associate_pick_name', False) and context.get('sync_message_execution', False):
-                    wiz_context['associate_pick_name'] = context.get('associate_pick_name')
-                    del context['associate_pick_name']
-                # We process the creation of the picking
-                res_wiz = wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz_context)
-                if 'res_id' in res_wiz:
-                    new_pick_id = res_wiz['res_id']
-                    if new_pick_id:
-                        self.write(cr, uid, new_pick_id, {'incoming_id': backorder_id or picking_dict['id']}, context=context)
-                    if backorder_id and new_pick_id:
-                        new_pick_name = self.read(cr, uid, new_pick_id, ['name'], context=context)['name']
-                        self.write(cr, uid, backorder_id, {
-                            'associate_pick_name': new_pick_name,
-                        }, context=context)
-
-            prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
-                'prepare_pick': _('Done'),
-            }, context=context)
         for picking_id in picking_ids:
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'end_date': time.strftime('%Y-%m-%d %H:%M:%S')
