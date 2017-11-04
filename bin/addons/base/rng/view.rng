@@ -149,6 +149,7 @@
             <rng:optional><rng:attribute name="hide_delete_button"/></rng:optional>
             <rng:optional><rng:attribute name="hide_edit_button"/></rng:optional>
             <rng:optional><rng:attribute name="show_add_button"/></rng:optional>
+            <rng:optional><rng:attribute name="button_attrs"/></rng:optional>
             <rng:zeroOrMore>
                 <rng:choice>
                     <rng:ref name="field"/>
