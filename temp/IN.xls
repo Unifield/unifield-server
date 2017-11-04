@@ -208,6 +208,54 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
+   <Row>
+    <Cell ss:StyleID="s64"/>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">Qty of parcels*</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">From parcel*</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">To parcel*</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">Weight*</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">Volume</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">Height</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">Length</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">Width</Data></Cell>
+    <Cell ss:StyleID="s64"/>
+    <Cell ss:StyleID="s64"/>
+    <Cell ss:StyleID="s64"/>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">ESC Message 1</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">ESC Message 2</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">#</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">1</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">2</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">2</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">10</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">10</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">10</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">10</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number">10</Data></Cell>
+    <Cell ss:StyleID="s67"/>
+    <Cell ss:StyleID="s67"/>
+    <Cell ss:StyleID="s67"/>
+    <Cell ss:StyleID="s67"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String"></Data></Cell>
+   </Row>
+    <Row>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">Line number*</Data></Cell>    
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">Ext. Reference</Data></Cell>    
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">Product Code*</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">Product Description</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">Product Qty*</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">Product UoM</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">Price Unit</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">Currency</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">Batch</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">Expiry date</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">Qty. p.p.</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">Packing List</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">ESC Message 1</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">ESC Message 2</Data></Cell>
+    </Row>
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">2</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>

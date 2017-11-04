@@ -1,23 +1,4 @@
 # -*- coding: utf-8 -*-
-##############################################################################
-#
-#    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting.
-#
-#    This program is free software: you can redistribute it and/or modify
-#    it under the terms of the GNU Affero General Public License as
-#    published by the Free Software Foundation, either version 3 of the
-#    License, or (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU Affero General Public License for more details.
-#
-#    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-##############################################################################
 
 # Module imports
 import base64
@@ -35,6 +16,7 @@ import tools
 
 from msf_order_date import TRANSPORT_TYPE
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
+from msf_outgoing import PACK_INTEGRITY_STATUS_SELECTION
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import xml.etree.ElementTree as ET
 
@@ -42,7 +24,6 @@ import xml.etree.ElementTree as ET
 # Server imports
 # Addons imports
 NB_OF_HEADER_LINES = 7
-NB_LINES_COLUMNS = 13
 
 
 PRODUCT_CODE_ID = {}
@@ -54,51 +35,53 @@ SIMU_LINES = {}
 LN_BY_EXT_REF = {}
 
 
-LINES_COLUMNS = [(0, _('Line number*'), 'optionnal', 'line_number'),
-                 (1, _('External Ref.'), 'optionnal', 'external_ref',),
-                 (2, _('Product Code*'), 'mandatory', 'product_code'),
-                 (3, _('Product Description'), 'optionnal', 'product_name'),
-                 (4, _('Product Qty*'), 'mandatory', 'product_qty'),
-                 (5, _('Product UoM'), 'mandatory', 'product_uom'),
-                 (6, _('Price Unit'), 'mandatory', 'price_unit'),
-                 (7, _('Currency'), 'mandatory', 'price_currency_id'),
-                 (8, _('Batch'), 'optionnal', 'prodlot_id'),
-                 (9, _('Expiry Date'), 'optionnal', 'expired_date'),
-                 (10, _('Qty. p.p'), 'optionnal', 'qty_pp'),
-                 (11, _('Packing List'), 'optionnal', 'packing_list'),
-                 (12, _('ESC message 1'), 'optionnal', 'message_esc1'),
-                 (13, _('ESC message 2'), 'optionnal', 'message_esc2'),
-                 ]
-
-
-HEADER_COLUMNS = [(1, _('Freight'), 'optionnal'),
-                  (2, _('Picking Reference'), 'optionnal'),
-                  (3, _('Origin'), 'optionnal'),
-                  (4, _('Supplier'), 'optionnal'),
-                  (5, _('Transport mode'), 'optionnal'),
-                  (6, _('Notes'), 'optionnal'),
-                  (7, _('Message ESC'), 'optionnal'),
-                  ]
-
-PACK_HEADER_XLS = [
-    ('', ''),
-    (_('Qty of parcels*'), 'parcel_qty'),
-    (_('From parcel*'), 'parcel_from'),
-    (_('To parcel*'), 'parcel_to'),
-    (_('Weight*'), 'total_weight'),
-    (_('Volume'), 'total_volume'),
-    (_('Height'), 'total_height'),
-    (_('Length'), 'total_length'),
-    (_('Width'), 'total_width'),
-    (_('ESC Message 1'), 'message_esc1'),
-    (_('ESC Message 2'), 'message_esc2'),
+LINES_COLUMNS = [
+    (_('Line number*'), 'line_number', ''),
+    (_('Ext. Reference'), 'external_ref', ''),
+    (_('Product Code*'), 'product_code', 'mandatory'),
+    (_('Product Description'), 'product_name', ''),
+    (_('Product Qty*'), 'product_qty', 'mandatory'),
+    (_('Product UoM'), 'product_uom', 'mandatory'),
+    (_('Price Unit'), 'price_unit', 'mandatory'),
+    (_('Currency'), 'price_currency_id', 'mandatory'),
+    (_('Batch'), 'prodlot_id', ''),
+    (_('Expiry Date'), 'expired_date', ''),
+    (_('Qty. p.p.'), 'qty_pp', ''),
+    (_('Packing List'), 'packing_list', ''),
+    (_('ESC message 1'), 'message_esc1', ''),
+    (_('ESC message 2'), 'message_esc2', ''),
 ]
 
-pack_header = ['parcel_from', 'parcel_to', 'parcel_qty', 'total_weight',
-               'total_volume', 'total_height', 'total_length', 'total_width', 'message_esc1', 'message_esc2']
 
+HEADER_COLUMNS = [
+    (1, _('Freight'), 'optionnal'),
+    (2, _('Picking Reference'), 'optionnal'),
+    (1, _('Origin'), 'optionnal'),
+    (4, _('Supplier'), 'optionnal'),
+    (5, _('Transport mode'), 'optionnal'),
+    (6, _('Notes'), 'optionnal'),
+    (7, _('Message ESC'), 'optionnal'),
+]
 
-pack_header_mandatory = ['parcel_from', 'parcel_to', 'total_weight']
+PACK_HEADER = [
+    ('', '', ''),
+    (_('Qty of parcels*'), 'parcel_qty', ''),
+    (_('From parcel*'), 'parcel_from', 'mandatory'),
+    (_('To parcel*'), 'parcel_to', 'mandatory'),
+    (_('Weight*'), 'total_weight', 'mandatory'),
+    (_('Volume'), 'total_volume', ''),
+    (_('Height'), 'total_height', ''),
+    (_('Length'), 'total_length', ''),
+    (_('Width'), 'total_width', ''),
+    ('', '', ''),
+    ('', '', ''),
+    ('', '', ''),
+    (_('ESC Message 1'), 'message_esc1', ''),
+    (_('ESC Message 2'), 'message_esc2', ''),
+]
+
+pack_header = [x[1] for x in PACK_HEADER if x[0]]
+pack_header_mandatory = [x[1] for x in PACK_HEADER if x[2] == 'mandatory']
 
 
 class wizard_import_in_simulation_screen(osv.osv):
@@ -368,12 +351,12 @@ class wizard_import_in_simulation_screen(osv.osv):
                                 error.append(_('Pack record node %s, no value for mandatory attribute %s')% (nb_pack,x))
 
                     index += 1
-                    values[index] = [x[3] for x in LINES_COLUMNS]
+                    values[index] = [x[1] for x in LINES_COLUMNS]
 
                     for subrecord in record.findall('record'):
                         index += 1
                         nb_line += 1
-                        values[index] = dict((x[3], False) for x in LINES_COLUMNS)
+                        values[index] = dict((x[1], False) for x in LINES_COLUMNS)
                         for field_info in subrecord.findall('field'):
                             if len(field_info) == 1:
                                 field_info[0].attrib['name'] = field_info.attrib['name']
@@ -381,14 +364,14 @@ class wizard_import_in_simulation_screen(osv.osv):
                             elif not len(field_info):
                                 field_info = [field_info]
                             for f in field_info:
-                                if f.attrib['name'] not in [x[3] for x in LINES_COLUMNS]:
+                                if f.attrib['name'] not in [x[1] for x in LINES_COLUMNS]:
                                     error.append(_('Pack record node %s, line %s, attribute %s unknown') % (nb_pack, nb_line, f.attrib['name']))
 
                                 values[index][f.attrib['name']] = f.text or ''
 
                         for column in LINES_COLUMNS:
-                            if column[2] == 'mandatory' and not values[index].get(column[3]):
-                                error.append(_('Pack record node %s, line %s, data %s is mandatory') % (nb_pack, nb_line, column[3]))
+                            if column[2] == 'mandatory' and not values[index].get(column[1]):
+                                error.append(_('Pack record node %s, line %s, data %s is mandatory') % (nb_pack, nb_line, column[1]))
 
         return values, nb_line, error
 
@@ -411,48 +394,59 @@ class wizard_import_in_simulation_screen(osv.osv):
         process_pack_header = False
         process_pack_line = False
         process_move_line = False
-
+        is_line = False
         # Get values per line
         index = 0
         for row in rows:
             index += 1
             values.setdefault(index, [])
-            if len(row) > 2 and row[1] and row[1].data == PACK_HEADER_XLS[1][0]:
+            if len(row) > 2 and row[1] and row[1].data == PACK_HEADER[1][0]:
+                # this line is for pack header
                 nb_pack += 1
-                for nb, x in enumerate(PACK_HEADER_XLS):
-                    if row.cells[nb] != x[0]:
+                for nb, x in enumerate(PACK_HEADER):
+                    if x[0] and (not row.cells[nb].data or row.cells[nb].type != 'str' or row.cells[nb].data.lower() != x[0].lower()):
                         error.append(_('Line %s, column %s, expected %s, found %s') % (index, nb+1, x[0], row.cells[nb]))
+                    # replace user sting by key
+                    row.cells[nb].data = x[1]
                 process_pack_header = True
+                process_pack_line = False
                 process_move_line = False
-
+                is_line = False
             elif process_pack_header:
+                # previous line was pack header, so current line is pack data
                 process_pack_header = False
                 process_pack_line = True
                 process_move_line = False
-                for nb, x in enumerate(PACK_HEADER_XLS):
+                for nb, x in enumerate(PACK_HEADER):
                     if x[1] in pack_header_mandatory and not row.cells[nb]:
                         error.append(_('Line %s, column %s, value %s is mandatory') % (index, nb+1, x[0]))
 
             elif process_pack_line:
+                # previous line was pack data so current line must be move line header
                 process_pack_line = False
                 process_move_line = True
                 for nb, x in enumerate(LINES_COLUMNS):
-                    if x[1] != row.cells[nb]:
-                        error.append(_('Line %s, column %s, line header expected, found %s, expected: %s') % (index, nb+1, row.cells[nb], x[1]))
+                    if not row.cells[nb].data or row.cells[nb].type != 'str' or x[0].lower() != row.cells[nb].data.lower():
+                        error.append(_('Line %s, column %s, line header expected, found %s, expected: %s') % (index, nb+1, row.cells[nb], x[0]))
+                    row.cells[nb].data = x[1]
             elif process_move_line:
+                is_line = True
+                # this line is a move line data
                 nb_line += 1
                 for nb, x in enumerate(LINES_COLUMNS):
                     if x[2] == 'mandatory' and not row.cells[nb]:
-                        error.append(_('Line %s, column %s, value %s is mandatory') % (index, nb+1, x[1]))
+                        error.append(_('Line %s, column %s, value %s is mandatory') % (index, nb+1, x[0]))
 
-            if process_move_line:
+            if is_line or process_pack_line:
                 values[index] = {}
             for cell_nb in range(len(row)):
                 try:
                     cell_data = row.cells and row.cells[cell_nb] and \
                         row.cells[cell_nb].data
-                    if process_move_line:
-                        values[index][LINES_COLUMNS[cell_nb][3]] = cell_data
+                    if is_line:
+                        values[index][LINES_COLUMNS[cell_nb][1]] = cell_data
+                    elif process_pack_line:
+                        values[index][PACK_HEADER[cell_nb][1]] = cell_data
                     else:
                         values[index].append(cell_data)
                 except DateTime.mxDateTime.RangeError as e:
@@ -557,8 +551,6 @@ the date has a wrong format: %s') % (index+1, str(e)))
                     raise
                     file_parse_errors.append(str(e))
 
-
-                print values
                 '''
                 We check for each line if the number of columns is consistent
                 with the expected number of columns :
@@ -622,7 +614,7 @@ Nothing has been imported because of %s. See below:
                 # Loop on lines
 
                 x = NB_OF_HEADER_LINES + 1
-
+                pack_sequences = []
                 pack_id = False
                 while x < len(values) + 1:
                     not_ok = False
@@ -632,10 +624,11 @@ Nothing has been imported because of %s. See below:
                         x += 1
                         if wiz.with_pack:
 
-                            pack_info = {}
-                            for key in pack_header:
+                            pack_info = {'wizard_id': wiz.id}
+                            for key in pack_header: 
                                 pack_info[key] = values[x].get(key)
                             pack_id = pack_info_obj.create(cr, uid, pack_info)
+                            pack_sequences.append((pack_info.get('parcel_from'), pack_info.get('parcel_to'), pack_id))
                         x += 2
 
                     if pack_id:
@@ -647,9 +640,9 @@ Nothing has been imported because of %s. See below:
                     ext_ref = values.get(x, {}).get('external_ref', '')
                     ext_ref = ext_ref and tools.ustr(ext_ref) or False
                     for manda_field in LINES_COLUMNS:
-                        if manda_field[2] == 'mandatory' and not values.get(x, {}).get(manda_field[3]):
+                        if manda_field[2] == 'mandatory' and not values.get(x, {}).get(manda_field[1]):
                             not_ok = True
-                            err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[1], manda_field[0] == 0 and ' - Line not imported' or '')
+                            err1 = _('The column \'%s\' mustn\'t be empty%s') % (manda_field[0], manda_field[1] == 'line_number' and ' - Line not imported' or '')
                             err = _('Line %s of the file: %s') % (x, err1)
                             values_line_errors.append(err)
                             file_line_error.append(err1)
@@ -733,6 +726,16 @@ Nothing has been imported because of %s. See below:
                 If a matching line is found in one of these cases, keep the link between the
                 file line and the simulation screen line.
                 '''
+
+                if pack_sequences:
+                    self.pool.get('ppl.processor').check_sequences(cr, uid, pack_sequences, pack_info_obj)
+                    pack_errors_ids = pack_info_obj.search(cr, uid, [('id', 'in', [pack[2] for pack in pack_sequences]), ('integrity_status', '!=', 'empty')], context=context)
+                    if pack_errors_ids:
+                        pack_error_string = dict(PACK_INTEGRITY_STATUS_SELECTION)
+                        for pack_error in pack_info_obj.browse(cr, uid, pack_errors_ids, context=context):
+                            values_header_errors.append("Pack from parcel %s, to parcel %s, integrity error %s" % (pack_error.parcel_from, pack_error.parcel_to, pack_error_string.get(pack_error.integrity_status)))
+
+
                 to_del = []
                 for x, fl in file_lines.iteritems():
                     # Search lines with same product, same UoM and same qty
@@ -906,7 +909,7 @@ Nothing has been imported because of %s. See below:
                         message += '%s\n' % err
 
                 header_values['message'] = message
-                header_values['state'] = 'simu_done'
+                header_values['state'] = import_error_ok and 'error' or 'simu_done'
                 header_values['percent_completed'] = 100.0
                 header_values['import_error_ok'] = import_error_ok
                 self.write(cr, uid, [wiz.id], header_values, context=context)
@@ -919,16 +922,18 @@ Nothing has been imported because of %s. See below:
             cr.commit()
             cr.close(True)
 
-            # Clear the cache
-            PRODUCT_CODE_ID = {}
-            UOM_NAME_ID = {}
-            CURRENCY_NAME_ID = {}
-            SIMU_LINES = {}
         except Exception, e:
             logging.getLogger('in.simulation simulate').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e, 'state': 'error'}, context=context)
             cr.commit()
             cr.close(True)
+
+        finally:
+            # Clear the cache
+            PRODUCT_CODE_ID = {}
+            UOM_NAME_ID = {}
+            CURRENCY_NAME_ID = {}
+            SIMU_LINES = {}
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -965,7 +970,14 @@ Nothing has been imported because of %s. See below:
         context['from_simu_screen'] = True
 
         if simu_id.with_pack:
-            self.pool.get('stock.incoming.processor').do_incoming_shipment(cr, uid, [partial_id], context)
+            try:
+                self.pool.get('stock.incoming.processor').do_incoming_shipment(cr, uid, [partial_id], context)
+            finally:
+                pack_obj = self.pool.get('wizard.import.in.pack.simulation.screen')
+                # security: delete pack info used by this simu and set to stock.move
+                pack_ids = pack_obj.search(cr, uid, [('wizard_id', '=', simu_id.id)])
+                if pack_ids:
+                    pack_obj.unlink(cr, uid, pack_ids)
             return self.return_to_in(cr, uid, simu_id.id, context=context)
 
         return {'type': 'ir.actions.act_window',
@@ -983,6 +995,7 @@ class wizard_import_in_pack_simulation_screen(osv.osv):
     _rec_name = 'parcel_from'
 
     _columns = {
+        'wizard_id': fields.many2one('wizard.import.in.simulation.screen', 'Simu Wizard'),
         'parcel_from': fields.integer('Parcel From'),
         'parcel_to': fields.integer('Parcel To'),
         'parcel_qty': fields.integer('Parcel Qty'),
@@ -991,7 +1004,11 @@ class wizard_import_in_pack_simulation_screen(osv.osv):
         'total_height': fields.float('Height', digits=(16,2)),
         'total_length': fields.float('Length', digits=(16,2)),
         'total_width': fields.float('Width', digits=(16,2)),
+        'integrity_status': fields.selection(string='Integrity Status', selection=PACK_INTEGRITY_STATUS_SELECTION, readonly=True),
+    }
 
+    _defaults = {
+        'integrity_status': 'empty',
     }
 
 wizard_import_in_pack_simulation_screen()
@@ -1206,7 +1223,6 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         warnings = []
 
         ext_ref = values.get('external_ref')
-        print values
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
 

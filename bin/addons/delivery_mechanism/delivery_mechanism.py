@@ -1400,6 +1400,8 @@ class stock_picking(osv.osv):
                         if ppl_line.move_id.pack_info_id:
                             if ppl_line.move_id.pack_info_id.id not in pack_created:
                                 num_pack = ppl_line.move_id.pack_info_id.parcel_to + 1 - ppl_line.move_id.pack_info_id.parcel_from
+                                if not num_pack:
+                                    num_pack = 1
                                 pack_created[ppl_line.move_id.pack_info_id.id] = self.pool.get('ppl.family.processor').create(cr, uid, {
                                     'wizard_id': ppl_wiz['res_id'],
                                     'from_pack': ppl_line.move_id.pack_info_id.parcel_from,
@@ -1411,7 +1413,15 @@ class stock_picking(osv.osv):
 
                                 })
                             ppl_line.write({'from_pack': ppl_line.move_id.pack_info_id.parcel_from, 'to_pack': ppl_line.move_id.pack_info_id.parcel_to, 'pack_id': pack_created[ppl_line.move_id.pack_info_id.id]})
-
+                    self.pool.get('ppl.processor').do_check_ppl(cr, uid, ppl_wiz['res_id'], context=context)
+                    error_lines_ids = self.pool.get('ppl.move.processor').search(cr, uid, [('wizard_id', '=', ppl_wiz['res_id']), ('integrity_status', '!=', 'empty')], context=context)
+                    if error_lines_ids:
+                        error_data = []
+                        error_string = dict(self.pool.get('ppl.move.processor')._columns['integrity_status'].selection)
+                        for error_line in self.pool.get('ppl.move.processor').browse(cr, uid, error_lines_ids, context=context):
+                            error_data.append(_('From pack %s, to pack %s, error: %s') % (error_line.from_pack, error_line.to_pack, error_string.get(error_line.integrity_status)))
+                        raise osv.except_osv(_('Error'), "\n".join(error_data))
+                    
                     self.do_ppl_step2(cr, uid, [ppl_wiz['res_id']])
 
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
