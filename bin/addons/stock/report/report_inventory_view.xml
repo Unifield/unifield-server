@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="stock.inventory_counting_sheet_xls"
+            string="Counting sheet"
+            model="stock.inventory"
+            name="stock.inventory_counting_sheet_xls"
+            report_type="webkit"
+            menu="True"
+            />
+    </data>
+</openerp>

@@ -255,5 +255,4 @@ class stock_inventory_line(osv.osv):
 
 stock_inventory_line()
 
-
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
