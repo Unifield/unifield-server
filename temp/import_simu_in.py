@@ -15,12 +15,14 @@ uid = sock.login(dbname, user, pwd)
 sock = xmlrpclib.ServerProxy(url + 'object')
 proc_obj = 'stock.incoming.processor'
 wiz_obj = 'wizard.import.in.simulation.screen'
-pick_id = 1837
-#import_file = 'IN_388.xml'
-#type='xml'
+pick_id = 1798
+import_file = 'IN_388.xml'
+type='xml'
 #import_file='IN.xls'
-import_file='IN.390.xls'
-type='excel'
+
+#pick_id = 1837
+#import_file='IN.390.xls'
+#type='excel'
 
 
 #pick_id = 1798 #IN_388
