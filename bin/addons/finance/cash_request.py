@@ -101,7 +101,7 @@ class cash_request(osv.osv):
         'state': 'draft',
     }
 
-    _order = 'request_date'
+    _order = 'request_date desc'
 
     def create_sequence(self, cr, uid, vals, context=None):
         """

@@ -8,28 +8,44 @@
                 <field name="type">form</field>
                 <field name="arch" type="xml">
                     <form string="Cash Request">
-                        <field name="id" invisible="1"/>
-                        <field name="name"/>
-                        <field name="state"/>
-                        <field name="request_date"/>
-                        <field name="month_period_id"/>
-                        <field name="mission"/>
-                        <field name="prop_instance_id"/>
-                        <field name="consolidation_currency_id"/>
-                        <newline/>
-                        <field name="transfer_account_id"/>
-                        <field name="bank_journal_id"/>
-                        <field name="transfer_currency_ids">
-                            <tree string="Currencies">
-                                <field name="currency_id"/>
-                                <field name="percentage"/>
-                            </tree>
-                        </field>
                         <notebook colspan="4">
+                            <page string="Settings">
+                                <field name="id" invisible="1"/>
+                                <field name="name"/>
+                                <field name="state"/>
+                                <field name="request_date"/>
+                                <field name="month_period_id"/>
+                                <field name="mission"/>
+                                <field name="prop_instance_id"/>
+                                <field name="consolidation_currency_id"/>
+                                <newline/>
+                                <field name="transfer_account_id"/>
+                                <field name="bank_journal_id"/>
+                                <field name="transfer_currency_ids">
+                                    <tree string="Currencies">
+                                        <field name="currency_id"/>
+                                        <field name="percentage"/>
+                                    </tree>
+                                </field>
+                            </page>
                             <page string="Banking">
                             </page>
                         </notebook>
                     </form>
+                </field>
+            </record>
+
+            <!-- CASH REQUEST - TREE VIEW -->
+            <record id="view_cash_request_tree" model="ir.ui.view">
+                <field name="name">cash.request.tree</field>
+                <field name="model">cash.request</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree>
+                        <field name="name"/>
+                        <field name="request_date"/>
+                        <field name="month_period_id"/>
+                    </tree>
                 </field>
             </record>
 
