@@ -664,7 +664,7 @@ Nothing has been imported because of %s. See below:
                     if pack_id:
                         values[x]['pack_info_id'] = pack_id
                     # Check mandatory fields
-                    line_number = int(values.get(x, {}).get('line_number', 0))
+                    line_number = values.get(x, {}).get('line_number') and int(values.get(x, {}).get('line_number', 0)) or False
                     #TODO
                     #ext_ref = values.get(x, [False, False])[1]
                     ext_ref = values.get(x, {}).get('external_ref', '')
@@ -902,7 +902,7 @@ Nothing has been imported because of %s. See below:
                         SIMU_LINES[wiz.id]['line_ids'].pop(index_in_line)
                     vals = values.get(in_line, {})
                     new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new',
-                                                        'line_number': int(vals.get('line_number', 0)) or False,
+                                                        'line_number': vals.get('line_number') and int(vals.get('line_number', 0)) or False,
                                                         'simu_id': wiz.id}, context=context)
                     err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, prodlot_cache, context=context)
                     if in_line in not_ok_file_lines:
