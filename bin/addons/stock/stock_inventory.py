@@ -42,7 +42,7 @@ class stock_inventory(osv.osv):
         'date': fields.datetime('Creation Date',      readonly=True, required=True),
         'responsible': fields.char('Responsible',      size=128,     required=False),
         'date_done': fields.datetime('Date done'),
-        'inventory_product_selection': fields.one2many('stock.inventory.production.selection', 'inventory_id', 'Inventories', states={'closed': [('readonly', True)]}),
+        'inventory_product_selection': fields.many2many('product.product', 'inventory_product_selection_rel', 'product_id', 'inventory_id', string="Product selection"),
         'inventory_line_id': fields.one2many('stock.inventory.line', 'inventory_id', 'Inventories', states={'closed': [('readonly', True)]}),
         'location_id': fields.many2one('stock.location', 'Location', required=True),
         'move_ids': fields.many2many('stock.move', 'stock_inventory_move_rel', 'inventory_id', 'move_id', 'Created Moves'),
@@ -255,15 +255,5 @@ class stock_inventory_line(osv.osv):
 
 stock_inventory_line()
 
-
-class stock_inventory_product_selection(osv.osv):
-    _name = "stock.inventory.production.selection"
-    _description = "Products Selected for Inventory"
-    _columns = {
-        'inventory_id': fields.many2one('stock.inventory', 'Inventory', ondelete='cascade', select=True),
-        'product_id':   fields.many2one('product.product', 'Product',   required=True,      select=True),
-    }
-
-stock_inventory_product_selection()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

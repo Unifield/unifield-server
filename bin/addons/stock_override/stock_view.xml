@@ -1087,11 +1087,23 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Physical Inventory" hide_delete_button="1">
-                    <field name="ref" />
                     <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                    <field name="ref" />
                     <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                    <field name="responsible" />
+                    <field name="location_id" />
+                    <field name="date_done" />
                     <notebook colspan="4">
-                    <page string="General Information">
+                    <page string="Product Selection">
+                        <field colspan="4" name="inventory_product_selection" nolabel="1">
+                            <tree string="Products">
+                                <field name="default_code"/>
+                                <field name="name"/>
+                                <field name="uom_id" />
+                            </tree>
+                        </field>
+                    </page>
+                    <page string="Count">
                         <field colspan="4" name="inventory_line_id" nolabel="1" widget="one2many_list"  attrs="{'readonly': [('state', '!=', 'draft')]}">
                             <tree string="Products" editable="bottom" colors="red: has_problem == True">
                                 <field colspan="4" domain="[('usage','=','internal')]" name="location_id" required="True"
