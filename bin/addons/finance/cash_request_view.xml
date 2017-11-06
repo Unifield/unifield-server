@@ -43,6 +43,13 @@
                                 </group>
                             </page>
                             <page string="Banking">
+                                <separator colspan="4" string="Banking references"/>
+                                <field name="journal_name"/>
+                                <field name="journal_code"/>
+                                <field name="account_name"/>
+                                <field name="account_number"/>
+                                <field name="swift_code"/>
+                                <field name="bank_address"/>
                             </page>
                         </notebook>
                     </form>
