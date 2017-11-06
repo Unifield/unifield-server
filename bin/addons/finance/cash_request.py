@@ -103,6 +103,27 @@ class cash_request(osv.osv):
 
     _order = 'request_date'
 
+    def create_sequence(self, cr, uid, vals, context=None):
+        """
+        Create new entry sequence for every Cash Request
+        """
+        seq_pool = self.pool.get('ir.sequence')
+        seq_typ_pool = self.pool.get('ir.sequence.type')
+        name = 'Cash Request'
+        code = 'cash.request'
+        types = {
+            'name': name,
+            'code': code
+        }
+        seq_typ_pool.create(cr, uid, types)
+        seq = {
+            'name': name,
+            'code': code,
+            'prefix': '',
+            'padding': 4,
+        }
+        return seq_pool.create(cr, uid, seq)
+
     def create(self, cr, uid, vals, context=None):
         """
         Builds the Cash Request name (Mission code_Cash_request-X)
@@ -110,6 +131,7 @@ class cash_request(osv.osv):
         if context is None:
             context = {}
         mission = self._get_mission(cr, uid, context)
+        self.create_sequence(cr, uid, vals, context=context)
         seq = self.pool.get('ir.sequence').get(cr, uid, 'cash.request')
         name = mission and seq and "%s_Cash_request - %s" % (mission, seq) or ""
         vals.update({'name': name})
@@ -127,19 +149,7 @@ class transfer_currency(osv.osv):
     _columns = {
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'percentage': fields.float(digits=(16, 2), string='%'),
-        'cash_request_id': fields.many2one('cash.request', 'Cash Request', required=True, invisible=True),
-    }
-
-    def _get_cash_request_id(self, cr, uid, context=None):
-        """
-        Returns the id of the current cash request
-        """
-        if context is None:
-            context = {}
-        return context.get('cash_request_id', False)
-
-    _defaults = {
-        'cash_request_id': _get_cash_request_id,
+        'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
     }
 
 

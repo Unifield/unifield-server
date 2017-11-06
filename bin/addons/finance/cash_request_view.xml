@@ -19,7 +19,7 @@
                         <newline/>
                         <field name="transfer_account_id"/>
                         <field name="bank_journal_id"/>
-                        <field name="transfer_currency_ids" context="{'cash_request_id': id}">
+                        <field name="transfer_currency_ids">
                             <tree string="Currencies">
                                 <field name="currency_id"/>
                                 <field name="percentage"/>
