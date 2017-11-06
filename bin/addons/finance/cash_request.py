@@ -42,6 +42,8 @@ class cash_request(osv.osv):
         'state': fields.selection(
             [('draft', 'Draft'), ('validated', 'Validated'), ('done', 'Done')], 'State',
             required=True, readonly=True),
+        'instance_ids': fields.many2many('msf.instance', 'cash_request_instance_rel', 'cash_request_id', 'instance_id',
+                                         string='Mission Settings', readonly=True),
     }
 
     def _get_company(self, cr, uid, context=None):
@@ -93,6 +95,19 @@ class cash_request(osv.osv):
         company = self._get_company(cr, uid, context=context)
         return company.currency_id.id
 
+    def _get_instance_ids(self, cr, uid, context=None):
+        """
+        Returns the list of ids of the instances within the mission
+        """
+        if context is None:
+            context = {}
+        instance_ids = []
+        instance_obj = self.pool.get('msf.instance')
+        mission = self._get_mission(cr, uid, context=context)
+        instance_ids.extend(instance_obj.search(cr, uid, [('mission', '=', mission), ('level', '!=', 'section')],
+                                                order='level, code', context=context))
+        return instance_ids
+
     _defaults = {
         'request_date': lambda *a: datetime.today(),
         'prop_instance_id': _get_prop_instance_id,
@@ -126,15 +141,19 @@ class cash_request(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         """
-        Builds the Cash Request name (Mission code_Cash_request-X)
+        Creates the Cash Request and automatically fills in the values for the following fields:
+        name, instance_ids
         """
         if context is None:
             context = {}
+        # build the Cash Request name (Mission code_Cash_request-X)
         mission = self._get_mission(cr, uid, context)
         self.create_sequence(cr, uid, vals, context=context)
         seq = self.pool.get('ir.sequence').get(cr, uid, 'cash.request')
         name = mission and seq and "%s_Cash_request - %s" % (mission, seq) or ""
         vals.update({'name': name})
+        # fill in the list of Prop. Instances
+        vals.update({'instance_ids': [(6, 0, self._get_instance_ids(cr, uid, context=context))]})
         return super(cash_request, self).create(cr, uid, vals, context=context)
 
 

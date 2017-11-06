@@ -17,8 +17,6 @@
                                 <field name="month_period_id"/>
                                 <field name="mission"/>
                                 <field name="prop_instance_id"/>
-                                <field name="consolidation_currency_id"/>
-                                <newline/>
                                 <field name="transfer_account_id"/>
                                 <field name="bank_journal_id"/>
                                 <field name="transfer_currency_ids">
@@ -27,6 +25,17 @@
                                         <field name="percentage"/>
                                     </tree>
                                 </field>
+                                <field name="consolidation_currency_id"/>
+                                <newline/>
+                                <group colspan="3" col="2">
+                                    <field name="instance_ids">
+                                        <tree string="Instances">
+                                            <field name="code"/>
+                                            <field name="name"/>
+                                            <field name="level"/>
+                                        </tree>
+                                    </field>
+                                </group>
                             </page>
                             <page string="Banking">
                             </page>
