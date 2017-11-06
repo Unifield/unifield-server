@@ -259,6 +259,7 @@ stock_inventory_line()
 class stock_inventory_product_selection(osv.osv):
     _name = "stock.inventory.production.selection"
     _description = "Products Selected for Inventory"
+
     _columns = {
         'inventory_id': fields.many2one('stock.inventory', 'Inventory', ondelete='cascade', select=True),
         'product_id':   fields.many2one('product.product', 'Product',   required=True,      select=True),
