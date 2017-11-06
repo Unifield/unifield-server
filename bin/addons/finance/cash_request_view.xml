@@ -8,6 +8,7 @@
                 <field name="type">form</field>
                 <field name="arch" type="xml">
                     <form string="Cash Request">
+                        <field name="id" invisible="1"/>
                         <field name="name"/>
                         <field name="state"/>
                         <field name="request_date"/>
@@ -18,6 +19,12 @@
                         <newline/>
                         <field name="transfer_account_id"/>
                         <field name="bank_journal_id"/>
+                        <field name="transfer_currency_ids" context="{'cash_request_id': id}">
+                            <tree string="Currencies">
+                                <field name="currency_id"/>
+                                <field name="percentage"/>
+                            </tree>
+                        </field>
                         <notebook colspan="4">
                             <page string="Banking">
                             </page>

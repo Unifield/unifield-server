@@ -37,6 +37,7 @@ class cash_request(osv.osv):
         'request_date': fields.date('Request Date', required=True),
         'consolidation_currency_id': fields.many2one('res.currency', 'Consolidation Currency', required=True, readonly=True),
         'transfer_account_id': fields.many2one('account.account', 'Transfer Account Code', domain=[('type', '=', 'other'), ('user_type_code', '=', 'cash')]),
+        'transfer_currency_ids': fields.one2many('transfer.currency', 'cash_request_id', 'Currency of Transfers', required=True),
         'bank_journal_id': fields.many2one('account.journal', 'Bank', required=True, domain=[('type', '=', 'bank')]),
         'state': fields.selection(
             [('draft', 'Draft'), ('validated', 'Validated'), ('done', 'Done')], 'State',
@@ -116,4 +117,31 @@ class cash_request(osv.osv):
 
 
 cash_request()
+
+
+class transfer_currency(osv.osv):
+    _name = 'transfer.currency'
+    _rec_name = 'currency_id'
+    _description = 'Currency of Transfers for a Cash Request'
+
+    _columns = {
+        'currency_id': fields.many2one('res.currency', 'Currency', required=True),
+        'percentage': fields.float(digits=(16, 2), string='%'),
+        'cash_request_id': fields.many2one('cash.request', 'Cash Request', required=True, invisible=True),
+    }
+
+    def _get_cash_request_id(self, cr, uid, context=None):
+        """
+        Returns the id of the current cash request
+        """
+        if context is None:
+            context = {}
+        return context.get('cash_request_id', False)
+
+    _defaults = {
+        'cash_request_id': _get_cash_request_id,
+    }
+
+
+transfer_currency()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
