@@ -8,11 +8,10 @@
                 <field name="type">form</field>
                 <field name="arch" type="xml">
                     <form string="Cash Request">
-                        <group colspan="4" col="6">
-                            <field name="name"/>
-                            <field name="request_date"/>
-                            <field name="month_period_id"/>
-                        </group>
+                        <field name="name"/>
+                        <field name="state"/>
+                        <field name="request_date"/>
+                        <field name="month_period_id"/>
                         <field name="mission"/>
                         <field name="prop_instance_id"/>
                         <field name="consolidation_currency_id"/>

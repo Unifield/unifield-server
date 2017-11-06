@@ -35,15 +35,83 @@ class cash_request(osv.osv):
         'month_period_id': fields.many2one('account.period', 'Month', required=True),
         'request_date': fields.date('Request Date', required=True),
         'consolidation_currency_id': fields.many2one('res.currency', 'Consolidation Currency', required=True, readonly=True),
-        'transfer_account_id': fields.many2one('account.account', 'Transfer Account Code'),
-        'bank_journal_id': fields.many2one('account.journal', 'Bank', required=True),
+        'transfer_account_id': fields.many2one('account.account', 'Transfer Account Code', domain=[('type', '=', 'other'), ('user_type_code', '=', 'cash')]),
+        'bank_journal_id': fields.many2one('account.journal', 'Bank', required=True, domain=[('type', '=', 'bank')]),
+        'state': fields.selection(
+            [('draft', 'Draft'), ('validated', 'Validated'), ('done', 'Done')], 'State',
+            required=True, readonly=True),
     }
+
+    def _get_company(self, cr, uid, context=None):
+        """
+        Returns the company as a browse record
+        """
+        if context is None:
+            context = {}
+        user_obj = self.pool.get('res.users')
+        company = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
+        return company
+
+    def _get_prop_instance(self, cr, uid, context=None):
+        """
+        Returns the current instance as a browse_record if in coordo
+        (= level where the Cash Request should always be created), else False
+        """
+        if context is None:
+            context = {}
+        company = self._get_company(cr, uid, context=context)
+        if company.instance_id and company.instance_id.level == 'coordo':
+            return company.instance_id
+        return False
+
+    def _get_prop_instance_id(self, cr, uid, context=None):
+        """
+        Returns the current instance_id if in coordo
+        """
+        if context is None:
+            context = {}
+        instance = self._get_prop_instance(cr, uid, context=context)
+        return instance and instance.id or False
+
+    def _get_mission(self, cr, uid, context=None):
+        """
+        Returns the value of Coordo Prop. instance Mission field
+        """
+        if context is None:
+            context = {}
+        instance = self._get_prop_instance(cr, uid, context=context)
+        return instance and instance.mission or ''
+
+    def _get_consolidation_currency_id(self, cr, uid, context=None):
+        """
+        Returns the id of the functional currency
+        """
+        if context is None:
+            context = {}
+        company = self._get_company(cr, uid, context=context)
+        return company.currency_id.id
 
     _defaults = {
         'request_date': lambda *a: datetime.today(),
+        'prop_instance_id': _get_prop_instance_id,
+        'mission': _get_mission,
+        'consolidation_currency_id': _get_consolidation_currency_id,
+        'state': 'draft',
     }
 
     _order = 'request_date'
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Builds the Cash Request name (Mission code_Cash_request-X)
+        """
+        if context is None:
+            context = {}
+        mission = self._get_mission(cr, uid, context)
+        seq = self.pool.get('ir.sequence').get(cr, uid, 'cash.request')
+        name = mission and seq and "%s_Cash_request - %s" % (mission, seq) or ""
+        vals.update({'name': name})
+        return super(cash_request, self).create(cr, uid, vals, context=context)
 
 
 cash_request()
