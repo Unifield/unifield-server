@@ -65,7 +65,7 @@ class stock_incoming_processor(osv.osv):
         ),
         'draft': fields.boolean('Draft'),
         'already_processed': fields.boolean('Already processed'),
-        'linked_to_out': fields.boolean('Is this IN linked to an OUT ?'),
+        'linked_to_out': fields.boolean('Is this IN linked to a single Pick (same FO) ?'),
     }
 
     _defaults = {
@@ -94,12 +94,15 @@ class stock_incoming_processor(osv.osv):
         picking = picking_obj.browse(cr, uid, vals.get('picking_id'), context=context)
 
         cr.execute("""
-            select count(pol.sale_order_line_id) from
-            stock_move m, purchase_order_line pol
-            where m.purchase_line_id = pol.id and
-            m.picking_id = %s
+            select so.id from
+            stock_move m
+            left join purchase_order_line pol on m.purchase_line_id = pol.id
+            left join sale_order_line sol on sol.id = pol.sale_order_line_id
+            left join sale_order so on so.id = sol.order_id
+            where m.picking_id = %s and so.procurement_request = 'f'
+            group by so.id
             """, (vals.get('picking_id'), ))
-        if cr.fetchone()[0]:
+        if cr.rowcount == 1:
             vals['linked_to_out'] = True
         else:
             vals['linked_to_out'] = False
