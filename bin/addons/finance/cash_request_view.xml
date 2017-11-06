@@ -36,6 +36,11 @@
                                         </tree>
                                     </field>
                                 </group>
+                                <group colspan="4" col="6">
+                                    <field name="transfer_to_come"/>
+                                    <field name="security_envelope"/>
+                                    <field name="buffer"/>
+                                </group>
                             </page>
                             <page string="Banking">
                             </page>

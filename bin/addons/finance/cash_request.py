@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 from datetime import datetime
 import time
+import decimal_precision as dp
 
 
 class cash_request(osv.osv):
@@ -44,6 +45,11 @@ class cash_request(osv.osv):
             required=True, readonly=True),
         'instance_ids': fields.many2many('msf.instance', 'cash_request_instance_rel', 'cash_request_id', 'instance_id',
                                          string='Mission Settings', readonly=True),
+        'transfer_to_come': fields.float('Total Transfer to come', digits_compute=dp.get_precision('Account'),
+                                         help='In case a transfer is on its way and not yet received. In functional currency.'),
+        'security_envelope': fields.float('Security Envelopes', digits_compute=dp.get_precision('Account'),
+                                          help='Amount to encode in functional currency'),
+        'buffer': fields.float(digits=(16, 2), string='Buffer (%)'),
     }
 
     def _get_company(self, cr, uid, context=None):
@@ -105,7 +111,7 @@ class cash_request(osv.osv):
         instance_obj = self.pool.get('msf.instance')
         mission = self._get_mission(cr, uid, context=context)
         instance_ids.extend(instance_obj.search(cr, uid, [('mission', '=', mission), ('level', '!=', 'section')],
-                                                order='level, code', context=context))
+                                                order='level, code', context=context))  # coordo first
         return instance_ids
 
     _defaults = {
