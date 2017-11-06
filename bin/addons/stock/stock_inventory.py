@@ -37,11 +37,11 @@ class stock_inventory(osv.osv):
     _name = "stock.inventory"
     _description = "Inventory"
     _columns = {
-        'ref':  fields.char('Reference', size=64,     readonly=True, required=True),
-        'name': fields.char('Name',      size=64,     readonly=True, required=True, states={'draft': [('readonly', False)]}),
-        'date': fields.datetime('Creation Date',      readonly=True, required=True),
+        'ref':  fields.char('Reference', size=64,     readonly=True, required=True ),
+        'name': fields.char('Name',      size=64,     readonly=True, required=True ),
+        'date': fields.datetime('Creation Date',      readonly=True, required=True ),
         'responsible': fields.char('Responsible',      size=128,     required=False),
-        'date_done': fields.datetime('Date done'),
+        'date_done': fields.datetime('Date done',     readonly=True                ),
         'inventory_product_selection': fields.many2many('product.product', 'inventory_product_selection_rel', 'product_id', 'inventory_id', string="Product selection"),
         'inventory_line_id': fields.one2many('stock.inventory.line', 'inventory_id', 'Inventories', states={'closed': [('readonly', True)]}),
         'location_id': fields.many2one('stock.location', 'Location', required=True),
@@ -49,7 +49,7 @@ class stock_inventory(osv.osv):
         'state': fields.selection(PHYSICAL_INVENTORIES_STATES, 'State', readonly=True, select=True),
         'company_id': fields.many2one('res.company', 'Company',         readonly=True, select=True, required=True, states={'draft':[('readonly',False)]}),
         'enable_batchnumbers': fields.boolean('Enable Batch Numbers'),
-        'enable_expirydate': fields.boolean('Enable Expiry Dates'),
+        'enable_expirydate'  : fields.boolean('Enable Expiry Dates'),
     }
     _defaults = {
         'ref': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'stock.inventory'),
