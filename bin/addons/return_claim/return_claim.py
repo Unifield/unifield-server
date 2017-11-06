@@ -985,7 +985,8 @@ class claim_event(osv.osv):
                           }
         move_values = {'type': 'out',
                        'reason_type_id': context['common']['rt_goods_return'],
-                       'location_dest_id': claim.partner_id_return_claim.property_stock_supplier.id,  # TODO
+                       'location_id': context['common']['stock_id'],
+                       'location_dest_id': claim.partner_id_return_claim.property_stock_customer.id,
                        }
         # update the picking
         pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
@@ -1084,7 +1085,8 @@ class claim_event(osv.osv):
                           }
         move_values = {'type': 'out',
                        'reason_type_id': context['common']['rt_goods_return'],
-                       'location_dest_id': claim.partner_id_return_claim.property_stock_supplier.id,
+                       'location_id': context['common']['stock_id'],
+                       'location_dest_id': claim.partner_id_return_claim.property_stock_customer.id,
                        }
         # update the picking
         pick_obj.write(cr, uid, [event_picking.id], picking_values, context=context)
