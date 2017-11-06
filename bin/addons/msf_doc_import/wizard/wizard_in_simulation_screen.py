@@ -945,6 +945,42 @@ Nothing has been imported because of %s. See below:
 
         return {'type': 'ir.actions.act_window_close'}
 
+    def _import_with_thread(self, cr, uid, partial_id, simu_id, context=None):
+        inc_proc_obj = self.pool.get('stock.incoming.processor')
+        in_proc_obj = self.pool.get('stock.move.in.processor')
+        picking_obj = self.pool.get('stock.picking')
+        # Create new cursor
+        import pooler
+        new_cr = pooler.get_db(cr.dbname).cursor()
+
+        try:
+            for wiz in inc_proc_obj.browse(new_cr, uid, partial_id, context=context):
+                for line in wiz.move_ids:
+                    if line.exp_check and not line.lot_check and not line.prodlot_id and line.expiry_date and line.type_check == 'in':
+                        prodlot_id = self.pool.get('stock.production.lot')._get_prodlot_from_expiry_date(new_cr, uid, line.expiry_date, line.product_id.id, context=context)
+                        in_proc_obj.write(new_cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
+
+            picking_obj.do_incoming_shipment(new_cr, uid, partial_id, context=context)
+            new_cr.commit()
+        except Exception, e:
+            new_cr.rollback()
+            logging.getLogger('stock.picking').warn('Exception do_incoming_shipment', exc_info=True)
+            for wiz in inc_proc_obj.read(new_cr, uid, partial_id, ['picking_id'], context=context):
+                picking_obj.update_processing_info(new_cr, uid, wiz['picking_id'][0], False, {
+                    'error_msg': '%s\n\nPlease reset the incoming shipment '\
+                    'processing and fix the source of the error'\
+                    'before re-try the processing.' % str(e),
+                }, context=context)
+        finally:
+            # Close the cursor
+            pack_obj = self.pool.get('wizard.import.in.pack.simulation.screen')
+            # security: delete pack info used by this simu and set to stock.move
+            pack_ids = pack_obj.search(new_cr, uid, [('wizard_id', '=', simu_id)])
+            if pack_ids:
+                pack_obj.unlink(new_cr, uid, pack_ids)
+            new_cr.close(True)
+        return True
+
 
     def _import(self, cr, uid, ids, context=None):
         '''
@@ -978,14 +1014,25 @@ Nothing has been imported because of %s. See below:
         context['from_simu_screen'] = True
 
         if simu_id.with_pack:
-            try:
-                self.pool.get('stock.incoming.processor').do_incoming_shipment(cr, uid, [partial_id], context)
-            finally:
-                pack_obj = self.pool.get('wizard.import.in.pack.simulation.screen')
-                # security: delete pack info used by this simu and set to stock.move
-                pack_ids = pack_obj.search(cr, uid, [('wizard_id', '=', simu_id.id)])
-                if pack_ids:
-                    pack_obj.unlink(cr, uid, pack_ids)
+            cr.commit()
+            new_thread = threading.Thread(target=self._import_with_thread, args=(cr, uid, [partial_id], simu_id.id, context))
+            new_thread.start()
+            new_thread.join(20)
+            if new_thread.isAlive():
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'delivery_mechanism', 'stock_picking_processing_info_form_view')[1]
+                prog_id = self.pool.get('stock.picking').update_processing_info(cr, uid, simu_id.picking_id.id, prog_id=False, values={}, context=context)
+
+                return {
+                    'type': 'ir.actions.act_window',
+                    'res_model': 'stock.picking.processing.info',
+                    'view_type': 'form',
+                    'view_mode': 'form',
+                    'res_id': prog_id,
+                    'view_id': [view_id],
+                    'context': context,
+                    'target': 'new',
+                }
+
             return self.return_to_in(cr, uid, simu_id.id, context=context)
 
         return {'type': 'ir.actions.act_window',
