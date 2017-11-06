@@ -64,20 +64,20 @@ HEADER_COLUMNS = [
 ]
 
 PACK_HEADER = [
-    ('', '', ''),
-    (_('Qty of parcels*'), 'parcel_qty', ''),
-    (_('From parcel*'), 'parcel_from', 'mandatory'),
-    (_('To parcel*'), 'parcel_to', 'mandatory'),
-    (_('Weight*'), 'total_weight', 'mandatory'),
-    (_('Volume'), 'total_volume', ''),
-    (_('Height'), 'total_height', ''),
-    (_('Length'), 'total_length', ''),
-    (_('Width'), 'total_width', ''),
-    ('', '', ''),
-    ('', '', ''),
-    ('', '', ''),
-    (_('ESC Message 1'), 'message_esc1', ''),
-    (_('ESC Message 2'), 'message_esc2', ''),
+    ('', '', '', ''),
+    (_('Qty of parcels*'), 'parcel_qty', '', ''),
+    (_('From parcel*'), 'parcel_from', 'mandatory', 'int'),
+    (_('To parcel*'), 'parcel_to', 'mandatory', 'int'),
+    (_('Weight*'), 'total_weight', 'mandatory', 'float'),
+    (_('Volume'), 'total_volume', '', 'float'),
+    (_('Height'), 'total_height', '', 'float'),
+    (_('Length'), 'total_length', '', 'float',),
+    (_('Width'), 'total_width', '', 'float'),
+    ('', '', '', ''),
+    ('', '', '', ''),
+    ('', '', '', ''),
+    (_('ESC Message 1'), 'message_esc1', '', ''),
+    (_('ESC Message 2'), 'message_esc2', '', ''),
 ]
 
 pack_header = [x[1] for x in PACK_HEADER if x[0]]
@@ -230,7 +230,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                  'target': 'same'}
 
         if self.read(cr, uid, ids[0], ['with_pack'])['with_pack']:
-            data['name'] = _('Incoming shipment simulation screen (pick & pack mode)')
+            data['name'] = _('Incoming shipment simulation screen (pick and pack mode)')
 
         return data
 
@@ -354,9 +354,19 @@ class wizard_import_in_simulation_screen(osv.osv):
                                 error.append(_('Pack record node %s, wrong attribute %s') % (nb_pack, pack_data_node.attrib['name']))
                             values[index][pack_data_node.attrib['name']]= pack_data_node.text and pack_data_node.text.strip() or False
                     if with_pack:
-                        for x in pack_header_mandatory:
-                            if not values[index][x]:
-                                error.append(_('Pack record node %s, no value for mandatory attribute %s')% (nb_pack,x))
+                        for x in PACK_HEADER:
+                            if x[2] == 'mandatory' and not values[index][x[1]]:
+                                error.append(_('Pack record node %s, no value for mandatory attribute %s')% (nb_pack,x[1]))
+                            elif x[3] == 'int' and values[index][x[1]]:
+                                try:
+                                    int(values[index][x[1]])
+                                except:
+                                    error.append(_('Pack record node %s, field %s, integer expected, found %s') % (nb_pack, x[1], values[index][x[1]]))
+                            elif x[3] == 'float' and values[index][x[1]]:
+                                try:
+                                    float(values[index][x[1]])
+                                except:
+                                    error.append(_('Pack record node %s, field %s, float expected, found %s') % (nb_pack, x[1], values[index][x[1]]))
 
                     index += 1
                     values[index] = [x[1] for x in LINES_COLUMNS]
@@ -428,6 +438,18 @@ class wizard_import_in_simulation_screen(osv.osv):
                 for nb, x in enumerate(PACK_HEADER):
                     if x[1] in pack_header_mandatory and not row.cells[nb]:
                         error.append(_('Line %s, column %s, value %s is mandatory') % (index, nb+1, x[0]))
+                    if row.cells[nb].data and x[3] == 'int':
+                        try:
+                            if row.cells[nb].type == 'float':
+                                raise
+                            int(row.cells[nb].data)
+                        except:
+                            error.append(_('Line %s, column %s, integer expected, found %s') % (index, nb+1, row.cells[nb].data))
+                    elif row.cells[nb].data and x[3] == 'float':
+                        try:
+                            float(row.cells[nb].data)
+                        except:
+                            error.append(_('Line %s, column %s, float expected, found %s') % (index, nb+1, row.cells[nb].data))
 
             elif process_pack_line:
                 # previous line was pack data so current line must be move line header
@@ -633,10 +655,10 @@ Nothing has been imported because of %s. See below:
                         if wiz.with_pack:
 
                             pack_info = {'wizard_id': wiz.id}
-                            for key in pack_header: 
+                            for key in pack_header:
                                 pack_info[key] = values[x].get(key)
                             pack_id = pack_info_obj.create(cr, uid, pack_info)
-                            pack_sequences.append((pack_info.get('parcel_from'), pack_info.get('parcel_to'), pack_id))
+                            pack_sequences.append((int(pack_info.get('parcel_from')), int(pack_info.get('parcel_to')), pack_id))
                         x += 2
 
                     if pack_id:

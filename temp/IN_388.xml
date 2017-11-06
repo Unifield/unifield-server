@@ -47,12 +47,12 @@
 			<record>
 				<field name="parcel_from">2</field>
 				<field name="parcel_to">4</field>
-				<field name="parcel_qty">1</field>
-				<field name="total_weight">200</field>
+				<field name="parcel_qty"></field>
+				<field name="total_weight">200.3</field>
 				<field name="total_volume">10000</field>
 				<field name="total_height">20</field>
 				<field name="total_length">25</field>
-				<field name="total_width">20</field>
+				<field name="total_width"></field>
 				<field name="message_esc1">From pack 2353</field>
 				<field name="message_esc2">To pack 2353</field>				
             <record>

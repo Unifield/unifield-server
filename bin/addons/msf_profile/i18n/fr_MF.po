@@ -99887,7 +99887,7 @@ msgstr "Importer IN, traiter IN & Pick et Colissage"
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:413
 #, python-format
-msgid "Incoming shipment simulation screen (pick & pack mode)"
+msgid "Incoming shipment simulation screen (pick and pack mode)"
 msgstr "Import IN, écran de simulation (Mode: Pick et colissage)"
 
 #. module: msf_doc_import

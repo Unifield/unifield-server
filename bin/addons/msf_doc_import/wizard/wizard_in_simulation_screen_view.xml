@@ -36,7 +36,7 @@
 						<button name="launch_import" string="Import" icon="gtk-execute" type="object" attrs="{'invisible': ['|', ('state', '!=', 'simu_done'), ('with_pack', '=', True)]}"/>
 						<button name="launch_import_pack" string="Import, pick &amp; pack" icon="gtk-execute" type="object" attrs="{'invisible': ['|', ('state', '!=', 'simu_done'), ('with_pack', '!=', True)]}"/>
                         <button name="go_to_simulation" string="Update" icon="gtk-execute" type="object" states="simu_progress,import_progress" />
-                        <button name="print_simulation_report" string="Print report" icon="gtk-print" type="object" states="simu_done,import_progress,done" />
+                        <button name="print_simulation_report" string="Print report" icon="gtk-print" type="object" states="simu_done,done,error" />
                     </group>
 
                     <notebook colspan="4">
