@@ -897,13 +897,19 @@ You cannot choose this supplier because some destination locations are not avail
                 self.update_processing_info(cr, uid, sp.id, False, {
                     'close_in': _('Invoice creation in progress'),
                 }, context=context)
-                # If the IN is linked to a PO and has a backorder not closed, change the subflow
-                # of the PO to the backorder
+
+                # close PO line if needed:
                 if sp.type == 'in' and sp.purchase_id:
                     for stock_move in sp.move_lines:
                         if stock_move.purchase_line_id:
-                            if not move_obj.search_exist(cr, uid, [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'not in', ['cancel', 'cancel_r', 'done'])], context=context):
-                                # all in lines processed for this po line
+                            # get done qty for this PO line:
+                            domain = [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'in', ['done', 'cancel', 'cancel_r'])]
+                            done_moves = move_obj.search(cr, uid, domain, context=context)
+                            done_qty = 0
+                            for done_move in move_obj.browse(cr, uid, done_moves, context=context):
+                                done_qty += done_move.product_qty
+                            # if stock moves sum is equal to PO line qty, then PO line is done:
+                            if done_qty >= stock_move.purchase_line_id.product_qty:
                                 wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
 
                     po_id = sp.purchase_id.id
