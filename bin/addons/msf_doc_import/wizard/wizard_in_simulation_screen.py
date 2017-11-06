@@ -577,8 +577,6 @@ the date has a wrong format: %s') % (index+1, str(e)))
                     else:
                         values, nb_file_lines, file_parse_errors = self.get_values_from_xml(cr, uid, wiz.file_to_import, with_pack=wiz.with_pack, context=context)
                 except Exception as e:
-                    #TODO
-                    raise
                     file_parse_errors.append(str(e))
 
                 '''
