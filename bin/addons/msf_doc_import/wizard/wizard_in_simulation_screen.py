@@ -222,12 +222,17 @@ class wizard_import_in_simulation_screen(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        return {'type': 'ir.actions.act_window',
-                'res_model': self._name,
-                'res_id': ids[0],
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'same'}
+        data =  {'type': 'ir.actions.act_window',
+                 'res_model': self._name,
+                 'res_id': ids[0],
+                 'view_type': 'form',
+                 'view_mode': 'form',
+                 'target': 'same'}
+
+        if self.read(cr, uid, ids[0], ['with_pack'])['with_pack']:
+            data['name'] = _('Incoming shipment simulation screen (pick & pack mode)')
+
+        return data
 
     def print_simulation_report(self, cr, uid, ids, context=None):
         '''
