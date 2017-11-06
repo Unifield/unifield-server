@@ -1399,17 +1399,14 @@ class stock_picking(osv.osv):
                     for ppl_line in self.pool.get('ppl.processor').browse(cr, uid, ppl_wiz['res_id'], context=context).move_ids:
                         if ppl_line.move_id.pack_info_id:
                             if ppl_line.move_id.pack_info_id.id not in pack_created:
-                                num_pack = ppl_line.move_id.pack_info_id.parcel_to + 1 - ppl_line.move_id.pack_info_id.parcel_from
-                                if not num_pack:
-                                    num_pack = 1
                                 pack_created[ppl_line.move_id.pack_info_id.id] = self.pool.get('ppl.family.processor').create(cr, uid, {
                                     'wizard_id': ppl_wiz['res_id'],
                                     'from_pack': ppl_line.move_id.pack_info_id.parcel_from,
                                     'to_pack': ppl_line.move_id.pack_info_id.parcel_to,
                                     'length': ppl_line.move_id.pack_info_id.total_length,
                                     'width': ppl_line.move_id.pack_info_id.total_width,
-                                    'height': ppl_line.move_id.pack_info_id.total_height/num_pack,
-                                    'weight': ppl_line.move_id.pack_info_id.total_weight/num_pack,
+                                    'height': ppl_line.move_id.pack_info_id.total_height,
+                                    'weight': ppl_line.move_id.pack_info_id.total_weight,
 
                                 })
                             ppl_line.write({'from_pack': ppl_line.move_id.pack_info_id.parcel_from, 'to_pack': ppl_line.move_id.pack_info_id.parcel_to, 'pack_id': pack_created[ppl_line.move_id.pack_info_id.id]})
