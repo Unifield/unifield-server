@@ -1089,17 +1089,23 @@
                 <form string="Physical Inventory" hide_delete_button="1">
                     <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="ref" />
-                    <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                    <field name="responsible" />
                     <field name="location_id" domain="[('usage','=','internal')]" />
+                    <field name="responsible" />
+                    <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="date_done" />
                     <notebook colspan="4">
                     <page string="Product Selection">
+                        <button name="action_select_products" states="draft" string="Select Products" type="object" icon="gtk-add"/>
                         <field colspan="4" name="inventory_product_selection" nolabel="1">
                             <tree string="Products">
-                                <field name="default_code"/>
-                                <field name="name"/>
-                                <field name="uom_id" />
+                                <field name="default_code" />
+                                <field name="name"         />
+                                <field name="uom_id"       />
+                                <field name="batch_management" string="BN mandatory" />
+                                <field name="perishable"       string="ED mandatory" />
+                                <field name="is_kc"            string="KC"           />
+                                <field name="is_dg"            string="DG"           />
+                                <field name="is_cs"            string="CS"           />
                             </tree>
                         </field>
                     </page>
