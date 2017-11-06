@@ -337,6 +337,7 @@ class sale_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
 
         for sol in self.browse(cr, uid, ids, context=context):
             if not sol.stock_take_date and sol.order_id.stock_take_date:
@@ -405,6 +406,8 @@ class sale_order_line(osv.osv):
                 # run check availability on PICK/OUT:
                 if picking_data['type'] == 'out' and picking_data['subtype'] in ['picking', 'standard']:
                     self.pool.get('stock.picking').action_assign(cr, uid, [pick_to_use], context=context)
+                if picking_data['type'] == 'internal' and sol.type == 'make_to_stock' and sol.order_id.procurement_request:
+                    wf_service.trg_validate(uid, 'stock.picking', pick_to_use, 'button_confirm', cr)                    
 
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
 
