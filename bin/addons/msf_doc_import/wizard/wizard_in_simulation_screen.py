@@ -20,7 +20,6 @@ from msf_outgoing import PACK_INTEGRITY_STATUS_SELECTION
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import xml.etree.ElementTree as ET
 
-
 # Server imports
 # Addons imports
 NB_OF_HEADER_LINES = 7
@@ -292,7 +291,10 @@ class wizard_import_in_simulation_screen(osv.osv):
                     raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
             else:
                 xml_file = base64.decodestring(wiz.file_to_import)
-                root = ET.fromstring(xml_file)
+                try:
+                    root = ET.fromstring(xml_file)
+                except ET.ParseError:
+                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
                 if root.tag != 'data':
                     raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
 
