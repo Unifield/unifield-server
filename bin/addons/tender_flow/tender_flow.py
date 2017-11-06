@@ -645,8 +645,9 @@ class tender(osv.osv):
         for tender in self.browse(cr, uid, ids, context=context):
             # trigger all related rfqs
             rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),], context=context)
-            for rfq_id in rfq_ids:
-                wf_service.trg_validate(uid, 'purchase.order', rfq_id, 'purchase_cancel', cr)
+            for rfq in self.pool.get('purchase.order').browse(cr,uid, rfq_ids, context=context):
+                for rfq_line in rfq.order_line:
+                    wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, 'cancel', cr)
 
             for line in tender.tender_line_ids:
                 t_line_obj.cancel_sourcing(cr, uid, [line.id], context=context)
@@ -2033,8 +2034,9 @@ class tender_cancel_wizard(osv.osv_memory):
 
         line_obj.fake_unlink(cr, uid, line_ids, context=context)
 
-        for rfq in rfq_ids:
-            wf_service.trg_validate(uid, 'purchase.order', rfq, 'purchase_cancel', cr)
+        for rfq in self.pool.get('purchase.order').browse(cr,uid, rfq_ids, context=context):
+            for rfq_line in rfq.order_line:
+                wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, 'cancel', cr)
 
         for tender in tender_ids:
             wf_service.trg_validate(uid, 'tender', tender, 'tender_cancel', cr)
