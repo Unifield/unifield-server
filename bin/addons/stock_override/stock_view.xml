@@ -1087,6 +1087,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Physical Inventory" hide_delete_button="1">
+                    <field name="ref" />
                     <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <notebook colspan="4">

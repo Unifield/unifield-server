@@ -96,6 +96,7 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Lot Inventory" colors="grey:state in ('cancel')">
+                    <field name="ref"/>
                     <field name="name"/>
                     <field name="date"/>
                     <field name="state"/>

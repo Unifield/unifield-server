@@ -20,6 +20,7 @@
 ##############################################################################
 
 from stock import *
+from stock_inventory import *
 import partner
 import product
 import report
