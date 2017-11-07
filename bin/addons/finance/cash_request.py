@@ -167,18 +167,18 @@ class cash_request(osv.osv):
             context = {}
         if ids:
             commitment_obj = self.pool.get('cash.request.commitment')
-            cash_req = self.browse(cr, uid, ids[0], context=context)
+            cash_req = self.browse(cr, uid, ids[0], fields_to_fetch=['instance_ids', 'month_period_id'], context=context)
             # delete previous commitments for this cash request
             old_commitment_ids = commitment_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)],
                                                        order='NO_ORDER', context=context)
             commitment_obj.unlink(cr, uid, old_commitment_ids, context=context)
             # create new cash req. commitments
             instances = cash_req.instance_ids
-            period_id = cash_req.month_period_id
-            if instances and period_id:
+            period = cash_req.month_period_id
+            if instances and period:
                 for inst in instances:
                     vals = {'instance_id': inst.id,
-                            'period_id': period_id.id,
+                            'period_id': period.id,
                             'cash_request_id': cash_req.id}
                     commitment_obj.create(cr, uid, vals, context=context)
         return True
@@ -220,6 +220,8 @@ class cash_request_commitment(osv.osv):
         = total of the Local Engagement entries (exclude International Eng.), per instance,
         with posting date in the month selected or before.
         """
+        if context is None:
+            context = {}
         result = {}
         if ids:
             aal_obj = self.pool.get('account.analytic.line')
