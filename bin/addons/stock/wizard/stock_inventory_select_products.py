@@ -22,41 +22,31 @@
 from osv import fields, osv
 from tools.translate import _
 
-class stock_inventory_select_product(osv.osv_memory):
-    _name = "stock.inventory.select.product"
+# This will be a tuple ((1,"1 months" ), (2, "2 months"), ...)
+MOVED_IN_LAST_X_MONTHS = tuple([ (i, "%s months" % str(i)) for i in range(1,13) ])
+
+class stock_inventory_select_products(osv.osv_memory):
+    _name = "stock.inventory.select.products"
     _description = "Select product to consider for inventory, using filters"
+    _rec_name = "first_filter"
     _columns = {
-        'base_filter': fields.selection((('in_stock', "Items currently in stock at that location"),
-                                         ('recent_moves', "Items with recent movement at that location")), "Base filter", select=True)
+
+        'first_filter': fields.selection((('in_stock', "Products currently in stock at location"),
+                                          ('moved_in_last_months', "Products with recent movement at location")),
+                                          "First filter", select=True),
+        'recent_moves_months': fields.selection(MOVED_IN_LAST_X_MONTHS, "Moved in the last", select=True),
+
+        'second_filter': fields.selection((('all',         "All"),
+                                           ('family',      "All from a family"),
+                                           ('productlist', "All from a product list"),
+                                           ('specialcare', "KC/CS/DG")),
+                                           "Second filter", select=True),
+        'kc': fields.boolean('Keep cool items'),
+        'cs': fields.boolean('Controlled substances'),
+        'dg': fields.boolean('Dangerous goods'),
+        'product_list': fields.many2one('product.list', 'Product List', select=True)
     }
 
-    def open_wizard(self, cr, uid, view_id, context=None):
-        '''
-        Open the wizard
-        '''
-        context = {} if context is None else context
-
-        wiz_id = self.create(cr, uid, {}, context=context)
-        context['wizard_id'] = wiz_id
-
-        return {'type': 'ir.actions.act_window',
-                'res_model': self._name,
-                'res_id': wiz_id,
-                'view_id': [view_id],
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'context': context}
-
-    def view_init(self, cr, uid, fields_list, context=None):
-        """
-        ???
-        """
-        context = {} if context is None else context
-        super(stock_inventory_select_product, self).view_init(cr, uid, fields_list, context=context)
-        return True
-
-
-stock_inventory_select_product()
+stock_inventory_select_products()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

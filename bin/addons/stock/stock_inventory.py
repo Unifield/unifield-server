@@ -68,9 +68,20 @@ class stock_inventory(osv.osv):
         '''
         context = context is None and {} or context
 
-        return self.pool.get('stock.inventory.select.product').\
-               open_wizard(cr, uid, ids[0], context=context)
+        data_obj = self.pool.get('ir.model.data')
+        view_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_inventory_select_products')[1]
 
+        wiz_id = self.pool.get('stock.inventory.select.products').create(cr, uid, {}, context=context)
+        context['wizard_id'] = wiz_id
+
+        return {'type': 'ir.actions.act_window',
+                'res_model': 'stock.inventory.select.products',
+                'res_id': wiz_id,
+                'view_id': [view_id],
+                'view_type': 'form',
+                'view_mode': 'form',
+                'target': 'new',
+                'context': context}
 
 
     def _inventory_line_hook(self, cr, uid, inventory_line, move_vals):

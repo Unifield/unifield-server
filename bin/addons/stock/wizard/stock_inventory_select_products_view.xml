@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-        <record id="stock_inventory_select_product" model="ir.ui.view">
+        <record id="stock_inventory_select_products" model="ir.ui.view">
             <field name="name">Select Products</field>
-            <field name="model">stock.inventory.select.product</field>
+            <field name="model">stock.inventory.select.products</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Select Products">
-                    <separator string="Chooooooose a base filter or whatever" colspan="4" />
-                    <field name="base_filter"/>
-                    <newline/>
-                    <separator string="" colspan="4" />
-                    <button special="cancel" string="_Cancel" icon='gtk-cancel'/>
-                    <button name="add" string="Add these" type="object" icon="gtk-ok"/>
+                    <group col="2">
+                        <field name="first_filter" colspan="2" />
+                        <field name="recent_moves_months" attrs="{'invisible':[('first_filter','!=','recent_moves')]}" colspan="2"/>
+                        <newline/>
+                        <field name="second_filter" colspan="2"/>
+                        <field name="product_list" colspan="2"/>
+                        <newline/>
+                        <separator string="" colspan="4" />
+                    </group>
                 </form>
             </field>
         </record>
