@@ -458,9 +458,10 @@ class sale_order_line(osv.osv):
 
         # generate sync message:
         return_info = {}
-        for sol_id in ids:
-            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
-                                                                                  'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
+        for sol in self.browse(cr, uid, ids, context=context):
+            if sol.product_uom_qty: # add multiple lines could add FO lines with 0 qty => SYNC => NOT RUN
+                self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol.id, return_info, 
+                                                                                      'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
 
