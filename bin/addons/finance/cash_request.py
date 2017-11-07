@@ -70,6 +70,7 @@ class cash_request(osv.osv):
                                      store=False, readonly=True),
         'bank_address': fields.related('bank_journal_id', 'bank_address', string='Address', type='char',
                                        store=False, readonly=True),
+        'commitment_ids': fields.one2many('cash.request.commitment', 'cash_request_id', 'Commitments', readonly=True),
     }
 
     def _get_company(self, cr, uid, context=None):
@@ -142,7 +143,7 @@ class cash_request(osv.osv):
         'state': 'draft',
     }
 
-    _order = 'request_date desc'
+    _order = 'name desc'
 
     def create(self, cr, uid, vals, context=None):
         """
@@ -158,14 +159,45 @@ class cash_request(osv.osv):
         vals.update({'instance_ids': [(6, 0, self._get_instance_ids(cr, uid, context=context))]})
         return super(cash_request, self).create(cr, uid, vals, context=context)
 
+    def _generate_commitments(self, cr, uid, ids, context=None):
+        """
+        Generates data for the Engagement Tab of the Cash Request
+        """
+        if context is None:
+            context = {}
+        if ids:
+            commitment_obj = self.pool.get('cash.request.commitment')
+            cash_req = self.browse(cr, uid, ids[0], context=context)
+            # delete previous commitments for this cash request
+            old_commitment_ids = commitment_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)],
+                                                       order='NO_ORDER', context=context)
+            commitment_obj.unlink(cr, uid, old_commitment_ids, context=context)
+            # create new cash req. commitments
+            instances = cash_req.instance_ids
+            period_id = cash_req.month_period_id
+            if instances and period_id:
+                for inst in instances:
+                    vals = {'instance_id': inst.id,
+                            'period_id': period_id.id,
+                            'cash_request_id': cash_req.id}
+                    commitment_obj.create(cr, uid, vals, context=context)
+        return True
+
+    def generate_cash_request(self, cr, uid, ids, context=None):
+        """
+        Computes all automatic fields of the Cash Request
+        """
+        self._generate_commitments(cr, uid, ids, context=context)
+        return True
+
 
 cash_request()
 
 
 class transfer_currency(osv.osv):
     _name = 'transfer.currency'
-    _rec_name = 'currency_id'
-    _description = 'Currency of Transfers for a Cash Request'
+    _rec_name = 'cash_request_id'
+    _description = 'Currency of Transfers for Cash Request'
 
     _columns = {
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
@@ -175,4 +207,46 @@ class transfer_currency(osv.osv):
 
 
 transfer_currency()
+
+
+class cash_request_commitment(osv.osv):
+    _name = 'cash.request.commitment'
+    _rec_name = 'cash_request_id'
+    _description = 'Commitment Line for Cash Request'
+
+    def _total_commitment_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Computes the commitment amount regarding the Prop. Instance and the period of the cash_request_commitment:
+        = total of the Local Engagement entries (exclude International Eng.), per instance,
+        with posting date in the month selected or before.
+        """
+        result = {}
+        if ids:
+            aal_obj = self.pool.get('account.analytic.line')
+            for commitment in self.browse(cr, uid, ids, fields_to_fetch=['instance_id', 'period_id'], context=context):
+                instance = commitment.instance_id or False
+                period = commitment.period_id or False
+                if instance and period:
+                    domain = [('journal_id.type', '=', 'engagement'),
+                              ('journal_id.code', '!=', 'ENGI'),
+                              ('instance_id', '=', instance.id),
+                              ('date', '<=', period.date_stop)]
+                    commitment_lines = aal_obj.search(cr, uid, domain, context=context, order='NO_ORDER')
+                    sum = 0.0
+                    for l in aal_obj.read(cr, uid, commitment_lines, ['amount'], context=context):
+                        sum += l['amount']
+                    result[commitment.id] = sum
+        return result
+
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True),
+        'instance_code': fields.related('instance_id', 'code', string='Instance code', type='char', store=False, readonly=True),
+        'period_id': fields.many2one('account.period', 'Period', required=True),
+        'cash_request_id': fields.many2one('cash.request', 'Cash Request', ondelete='cascade'),
+        'total_commitment': fields.function(_total_commitment_compute, method=True, string='Total', type='float',
+                                            digits_compute=dp.get_precision('Account'), store=True),
+    }
+
+
+cash_request_commitment()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
