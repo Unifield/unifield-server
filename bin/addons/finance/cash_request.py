@@ -32,11 +32,14 @@ class cash_request(osv.osv):
 
     _columns = {
         'name': fields.char(size=128, string='Name', readonly=True, required=True),
-        'prop_instance_id': fields.many2one('msf.instance', 'Proprietary instance', readonly=True, required=True),
+        'prop_instance_id': fields.many2one('msf.instance', 'Proprietary instance', readonly=True, required=True,
+                                            domain=[('level', '=', 'coordo')]),
         'mission': fields.related('prop_instance_id', 'mission', string='Mission', type='char', store=False,
                                   readonly=True, required=True),
         'month_period_id': fields.many2one('account.period', 'Month', required=True,
                                            domain=[('date_stop', '>=', time.strftime('%Y-%m-%d')), ('special', '=', False)]),
+        'fiscalyear_id': fields.related('month_period_id', 'fiscalyear_id', string='Fiscal Year', type='many2one',
+                                        relation='account.fiscalyear'),
         'request_date': fields.date('Request Date', required=True),
         'consolidation_currency_id': fields.many2one('res.currency', 'Consolidation Currency',
                                                      required=True, readonly=True),
