@@ -1187,9 +1187,8 @@ class purchase_order_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             new_vals = vals.copy()
             # check qty
-            if vals.get('product_qty', line.product_qty) <= 0.0 and \
-                    not line.order_id.rfq_ok and \
-                    'noraise' not in context and line.state != 'cancel':
+            if vals.get('product_qty', line.product_qty) <= 0.0 and not line.order_id.rfq_ok and 'noraise' not in context and \
+                line.state != 'cancel' and context.get('button') != 'cancel_only_pol' and vals.get('state') not in ['cancel', 'cancel_r']:
                 raise osv.except_osv(
                     _('Error'),
                     _('You can not have an order line with a negative or zero quantity')
