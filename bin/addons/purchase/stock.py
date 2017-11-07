@@ -105,12 +105,6 @@ class stock_picking(osv.osv):
             return move_line.purchase_line_id.account_analytic_id.id
         return super(stock_picking, self)._get_account_analytic_invoice(cursor, user, picking, move_line)
 
-    def _invoice_line_hook(self, cursor, user, move_line, invoice_line_id):
-        if move_line.purchase_line_id:
-            invoice_line_obj = self.pool.get('account.invoice.line')
-            invoice_line_obj.write(cursor, user, [invoice_line_id], {'note':  move_line.purchase_line_id.notes,})
-        return super(stock_picking, self)._invoice_line_hook(cursor, user, move_line, invoice_line_id)
-
     def _invoice_hook(self, cursor, user, picking, invoice_id):
         purchase_obj = self.pool.get('purchase.order')
         if picking.purchase_id:

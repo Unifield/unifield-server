@@ -28,11 +28,11 @@ class stock_picking(osv.osv):
     _name = 'stock.picking'
     _inherit = 'stock.picking'
 
-    def _invoice_line_hook(self, cr, uid, move_line, invoice_line_id):
+    def _invoice_line_hook(self, cr, uid, move_line, invoice_line_id, account_id):
         """
         BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
-        res = super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id)
+        res = super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id, account_id)
 
         # Modify the product UoM and the quantity of line according to move attributes
         values = {'uos_id': move_line.product_uom.id,
