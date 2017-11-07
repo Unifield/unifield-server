@@ -48,6 +48,7 @@ class stock_inventory(osv.osv):
         'move_ids': fields.many2many('stock.move', 'stock_inventory_move_rel', 'inventory_id', 'move_id', 'Created Moves'),
         'state': fields.selection(PHYSICAL_INVENTORIES_STATES, 'State', readonly=True, select=True),
         'company_id': fields.many2one('res.company', 'Company',         readonly=True, select=True, required=True, states={'draft':[('readonly',False)]}),
+        'full_inventory'     : fields.boolean('Full inventory'),
         'enable_batchnumbers': fields.boolean('Enable Batch Numbers'),
         'enable_expirydate'  : fields.boolean('Enable Expiry Dates'),
     }

@@ -1093,10 +1093,11 @@
                     <field name="responsible" />
                     <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                     <field name="date_done" />
+                    <field name="full_inventory" />
                     <notebook colspan="4">
                     <page string="Product Selection">
                         <button name="action_select_products" states="draft" string="Select Products" type="object" icon="gtk-add"/>
-                        <field colspan="4" name="inventory_product_selection" nolabel="1">
+                        <field colspan="4" name="inventory_product_selection" nolabel="1" attrs="{'readonly': ['|', ('full_inventory', '=', True), ('state', '!=', 'draft')]}">
                             <tree string="Products">
                                 <field name="default_code" />
                                 <field name="name"         />
