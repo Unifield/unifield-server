@@ -7,15 +7,48 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Select Products">
-                    <group col="2">
-                        <field name="first_filter" colspan="2" />
-                        <field name="recent_moves_months" attrs="{'invisible':[('first_filter','!=','recent_moves')]}" colspan="2"/>
-                        <newline/>
-                        <field name="second_filter" colspan="2"/>
-                        <field name="product_list" colspan="2"/>
-                        <newline/>
-                        <separator string="" colspan="4" />
+                    <field name="full_inventory" invisible="1"/>
+                    <group col="4" colspan="4" attrs="{'invisible':[('full_inventory', '=', False)]}">
+                        <separator string="Full inventory" />
+                        <group col="1" colspan="4">
+                        <html>
+                            <h3 style="text-align: center; margin: 13px"><translate>This is a full inventory. All products currently in stock and all products with movements in the last X months will be added.</translate></h3>
+                        </html>
+                        </group>
+                        <field name="recent_moves_months_fullinvo" colspan="1"/>
                     </group>
+                    <group col="4" colspan="4" attrs="{'invisible':[('full_inventory', '=', True)]}">
+                    <separator string="Partial inventory" />
+                        <group col="2" colspan="2">
+                            <field name="first_filter"/>
+                            <field name="recent_moves_months" attrs="{'invisible':[('first_filter','!=','recent_movements')]}" colspan="2"/>
+                        </group>
+                        <group col="2" colspan="2">
+                            <field name="second_filter"/>
+                            <field name="family"       attrs="{'invisible':[('second_filter','!=','family')]}"      />
+                            <field name="product_list" attrs="{'invisible':[('second_filter','!=','productlist')]}" />
+                            <field name="kc"           attrs="{'invisible':[('second_filter','!=','specialcare')]}" />
+                            <field name="cs"           attrs="{'invisible':[('second_filter','!=','specialcare')]}" />
+                            <field name="dg"           attrs="{'invisible':[('second_filter','!=','specialcare')]}" />
+                        </group>
+                    </group>
+                    <separator colspan="4" string="Preview" />
+                    <button name="refresh_products_from_filters" string="Refresh" icon="gtk-refresh" colspan="4" type="object" />
+                    <field colspan="4" name="products_preview" nolabel="1">
+                        <tree string="Products">
+                            <field name="default_code" />
+                            <field name="name"         />
+                            <field name="uom_id"       />
+                            <field name="batch_management" string="BN mandatory" />
+                            <field name="perishable"       string="ED mandatory" />
+                            <field name="is_kc"            string="KC"           />
+                            <field name="is_dg"            string="DG"           />
+                            <field name="is_cs"            string="CS"           />
+                        </tree>
+                    </field>
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                    <button name="import_products_from_filters" string="Add products" icon="terp-check" colspan="3" type="object" />
                 </form>
             </field>
         </record>

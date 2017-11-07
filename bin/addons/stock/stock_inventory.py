@@ -68,12 +68,23 @@ class stock_inventory(osv.osv):
         '''
         context = context is None and {} or context
 
+        # Prepare values to feed the wizard with
+        assert len(ids) == 1
+        inventory_id = ids[0]
+        full_inventory = self.read(cr, uid, ids, ['full_inventory'], context)[0]["full_inventory"]
+        vals = { "inventory_id": inventory_id,
+                 "full_inventory": full_inventory
+               }
+
+        # Create the wizard
+        wiz_id = self.pool.get('stock.inventory.select.products').create(cr, uid, vals, context=context)
+        context['wizard_id'] = wiz_id
+
+        # Get the view reference
         data_obj = self.pool.get('ir.model.data')
         view_id = data_obj.get_object_reference(cr, uid, 'stock', 'stock_inventory_select_products')[1]
 
-        wiz_id = self.pool.get('stock.inventory.select.products').create(cr, uid, {}, context=context)
-        context['wizard_id'] = wiz_id
-
+        # Return a description of the wizard view
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.inventory.select.products',
                 'res_id': wiz_id,
