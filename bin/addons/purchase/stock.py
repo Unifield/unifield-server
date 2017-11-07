@@ -25,8 +25,8 @@ class stock_move(osv.osv):
     _inherit = 'stock.move'
     _columns = {
         'purchase_line_id': fields.many2one('purchase.order.line',
-            'Purchase Order Line', ondelete='set null', select=True,
-            readonly=True),
+                                            'Purchase Order Line', ondelete='set null', select=True,
+                                            readonly=True),
     }
 
     def _get_reference_accounting_values_for_valuation(self, cr, uid, move, context=None):
@@ -52,7 +52,7 @@ class stock_picking(osv.osv):
     _inherit = 'stock.picking'
     _columns = {
         'purchase_id': fields.many2one('purchase.order', 'Purchase Order',
-            ondelete='set null', select=True),
+                                       ondelete='set null', select=True),
     }
     _defaults = {
         'purchase_id': False,
@@ -67,7 +67,7 @@ class stock_picking(osv.osv):
             partner_obj = self.pool.get('res.partner')
             partner = picking.purchase_id.partner_id or picking.address_id.partner_id
             data = partner_obj.address_get(cr, uid, [partner.id],
-                ['contact', 'invoice'])
+                                           ['contact', 'invoice'])
             res.update(data)
         return res
 
@@ -163,15 +163,15 @@ class stock_partial_move(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
         for m in move_obj.browse(cr, uid, context.get('active_ids', []), context=context):
             if m.picking_id.type == 'in' and m.product_id.cost_method == 'average' \
-                and m.purchase_line_id and m.picking_id.purchase_id:
+                    and m.purchase_line_id and m.picking_id.purchase_id:
                     # We use the original PO unit purchase price as the basis for the cost, expressed
                     # in the currency of the PO (i.e the PO's pricelist currency)
-                    list_index = 0
-                    for item in res['product_moves_in']:
-                        if item['move_id'] == m.id:
-                            res['product_moves_in'][list_index]['cost'] = m.purchase_line_id.price_unit
-                            res['product_moves_in'][list_index]['currency'] = m.picking_id.purchase_id.pricelist_id.currency_id.id
-                        list_index += 1
+                list_index = 0
+                for item in res['product_moves_in']:
+                    if item['move_id'] == m.id:
+                        res['product_moves_in'][list_index]['cost'] = m.purchase_line_id.price_unit
+                        res['product_moves_in'][list_index]['currency'] = m.picking_id.purchase_id.pricelist_id.currency_id.id
+                    list_index += 1
         return res
 stock_partial_move()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
