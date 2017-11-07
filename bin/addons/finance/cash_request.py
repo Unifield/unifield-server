@@ -24,6 +24,7 @@ from osv import fields
 from datetime import datetime
 import time
 import decimal_precision as dp
+from tools.translate import _
 
 
 class cash_request(osv.osv):
@@ -159,15 +160,15 @@ class cash_request(osv.osv):
         vals.update({'instance_ids': [(6, 0, self._get_instance_ids(cr, uid, context=context))]})
         return super(cash_request, self).create(cr, uid, vals, context=context)
 
-    def _generate_commitments(self, cr, uid, ids, context=None):
+    def _generate_commitments(self, cr, uid, cash_req_id, context=None):
         """
         Generates data for the Engagement Tab of the Cash Request
         """
         if context is None:
             context = {}
-        if ids:
+        if cash_req_id:
             commitment_obj = self.pool.get('cash.request.commitment')
-            cash_req = self.browse(cr, uid, ids[0], fields_to_fetch=['instance_ids', 'month_period_id'], context=context)
+            cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['instance_ids', 'month_period_id'], context=context)
             # delete previous commitments for this cash request
             old_commitment_ids = commitment_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)],
                                                        order='NO_ORDER', context=context)
@@ -186,8 +187,13 @@ class cash_request(osv.osv):
     def generate_cash_request(self, cr, uid, ids, context=None):
         """
         Computes all automatic fields of the Cash Request
+        if the date of the Cash Request is today's date (else raises an error)
         """
-        self._generate_commitments(cr, uid, ids, context=context)
+        for cash_request_id in ids:
+            cash_req = self.read(cr, uid, cash_request_id, ['request_date'], context=context)
+            if cash_req['request_date'] != datetime.today().strftime('%Y-%m-%d'):
+                raise osv.except_osv(_('Error'), _('The date of the Cash Request must be the date of the day.'))
+            self._generate_commitments(cr, uid, cash_request_id, context=context)
         return True
 
 
