@@ -577,6 +577,7 @@ class tender(osv.osv):
                 # attach new PO line:
                 pol_values = {
                     'order_id': po_to_use,
+                    'linked_sol_id': tender_line.sale_order_line_id.id or False,
                     'name': tender_line.product_id.partner_ref,
                     'product_qty': tender_line.qty,
                     'product_id': tender_line.product_id.id,
