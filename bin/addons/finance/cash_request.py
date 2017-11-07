@@ -160,6 +160,27 @@ class cash_request(osv.osv):
         vals.update({'instance_ids': [(6, 0, self._get_instance_ids(cr, uid, context=context))]})
         return super(cash_request, self).create(cr, uid, vals, context=context)
 
+    def _check_currencies(self, cr, uid, cash_req_id, context=None):
+        """
+        Raises an error if:
+        - no currency has been selected
+        - the total percentage of the currencies is different from 0 and from 100
+        - there are more than one currency and the percentage is 0
+        """
+        if context is None:
+            context = {}
+        cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['transfer_currency_ids'], context=context)
+        percentage = 0.0
+        nb_lines = len(cash_req.transfer_currency_ids)
+        if nb_lines == 0:
+            raise osv.except_osv(_('Error'), _('You must select at least one currency of transfers.'))
+        for curr in cash_req.transfer_currency_ids:
+            percentage += curr.percentage
+        if abs(percentage) > 10**-3 and abs(percentage - 100) > 10**-3:
+            raise osv.except_osv(_('Error'), _('The total percentage of the currencies of transfers is incorrect.'))
+        if nb_lines > 1 and abs(percentage) <= 10**-3:
+            raise osv.except_osv(_('Error'), _('Please indicate the percentage for each currency of transfers selected.'))
+
     def _generate_commitments(self, cr, uid, cash_req_id, context=None):
         """
         Generates data for the Engagement Tab of the Cash Request
@@ -189,11 +210,25 @@ class cash_request(osv.osv):
         Computes all automatic fields of the Cash Request
         if the date of the Cash Request is today's date (else raises an error)
         """
+        if context is None:
+            context = {}
         for cash_request_id in ids:
             cash_req = self.read(cr, uid, cash_request_id, ['request_date'], context=context)
             if cash_req['request_date'] != datetime.today().strftime('%Y-%m-%d'):
                 raise osv.except_osv(_('Error'), _('The date of the Cash Request must be the date of the day.'))
             self._generate_commitments(cr, uid, cash_request_id, context=context)
+        return True
+
+    def compute_total_to_transfer(self, cr, uid, ids, context=None):
+        """
+        If the currencies of transfers and their percentage are valid, computes the total to transfer (see formula below)
+        and does a split per currency:
+        Formula = (Total cash request - Transfer to come + security envelop) + %buffer
+        """
+        if context is None:
+            context = {}
+        for cash_request_id in ids:
+            self._check_currencies(cr, uid, cash_request_id, context=context)
         return True
 
 
