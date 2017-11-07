@@ -79,7 +79,7 @@
                     <search>
                         <group col="6" colspan="4">
                             <field name="prop_instance_id" string="Top Proprietary Instance"/>
-                            <field name="month_period_id"/>
+                            <field name="month_period_id" domain="[('special', '=', False)]"/> <!-- allow selecting any month -->
                             <field name="fiscalyear_id"/>
                         </group>
                     </search>
