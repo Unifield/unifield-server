@@ -28,10 +28,10 @@ import decimal_precision as dp
 PHYSICAL_INVENTORIES_STATES = (('draft', 'Draft'),
                                ('counting', 'Counting'),
                                ('counted', 'Counted'),
-                               ('validated','Validated'),
-                               ('confirm','Confirmed'),
+                               ('validated', 'Validated'),
+                               ('confirm', 'Confirmed'),
                                ('closed', 'Closed'),
-                               ('cancel','Cancelled'))
+                               ('cancel', 'Cancelled'))
 
 class stock_inventory(osv.osv):
     _name = "stock.inventory"

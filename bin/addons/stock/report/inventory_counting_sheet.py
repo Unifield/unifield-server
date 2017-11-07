@@ -4,11 +4,22 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 
 class inventory_counting_sheet_template(report_sxw.rml_parse):
+
     def __init__(self, cr, uid, name, context):
         super(inventory_counting_sheet_template, self).__init__(cr, uid, name, context=context)
+        self.counter = 0
         self.localcontext.update({
             'get_headers': self.get_headers,
+            'next_counter': self.get_next_counter,
+            'reset_counter': self.reset_counter,
         })
+
+    def get_next_counter(self):
+        self.counter += 1
+        return self.counter
+
+    def reset_counter(self):
+        self.counter = 0
 
     def get_headers(self, objects):
         #   return list of cols:
@@ -22,3 +33,11 @@ class inventory_counting_sheet_template(report_sxw.rml_parse):
         ]
 
 SpreadsheetReport('report.stock.inventory_counting_sheet_xls', 'stock.inventory', 'addons/stock/report/inventory_counting_sheet.xml', parser=inventory_counting_sheet_template)
+
+report_sxw.report_sxw(
+    'report.stock.inventory_counting_sheet_pdf',
+    'stock.inventory',
+    'addons/stock/report/inventory_counting_sheet.rml',
+    parser=inventory_counting_sheet_template,
+    header='internal'
+)
