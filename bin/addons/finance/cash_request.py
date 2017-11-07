@@ -141,27 +141,6 @@ class cash_request(osv.osv):
 
     _order = 'request_date desc'
 
-    def create_sequence(self, cr, uid, vals, context=None):
-        """
-        Create new entry sequence for every Cash Request
-        """
-        seq_pool = self.pool.get('ir.sequence')
-        seq_typ_pool = self.pool.get('ir.sequence.type')
-        name = 'Cash Request'
-        code = 'cash.request'
-        types = {
-            'name': name,
-            'code': code
-        }
-        seq_typ_pool.create(cr, uid, types)
-        seq = {
-            'name': name,
-            'code': code,
-            'prefix': '',
-            'padding': 4,
-        }
-        return seq_pool.create(cr, uid, seq)
-
     def create(self, cr, uid, vals, context=None):
         """
         Creates the Cash Request and automatically fills in the values for the following fields:
@@ -169,12 +148,9 @@ class cash_request(osv.osv):
         """
         if context is None:
             context = {}
-        # build the Cash Request name (Mission code_Cash_request-X)
-        mission = self._get_mission(cr, uid, context)
-        self.create_sequence(cr, uid, vals, context=context)
-        seq = self.pool.get('ir.sequence').get(cr, uid, 'cash.request')
-        name = mission and seq and "%s_Cash_request - %s" % (mission, seq) or ""
-        vals.update({'name': name})
+        # Cash Request name = sequence (looks like: Mission code_Cash_request-X)
+        sequence = self.pool.get('ir.sequence').get(cr, uid, 'cash.request')
+        vals.update({'name': sequence})
         # fill in the list of Prop. Instances
         vals.update({'instance_ids': [(6, 0, self._get_instance_ids(cr, uid, context=context))]})
         return super(cash_request, self).create(cr, uid, vals, context=context)

@@ -440,6 +440,10 @@ class ir_sequence(osv.osv):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         return company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.code or ''
 
+    def _get_instance_missioncode(self, cr, uid):
+        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        return company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.mission or ''
+
     def _get_hqcode(self, cr, uid):
         company = self.pool.get('res.users').browse(cr, uid, uid).company_id
         parent_id = company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.parent_id or False
@@ -487,6 +491,8 @@ class ir_sequence(osv.osv):
                 data['hqcode'] = self._get_hqcode(cr, uid)
             if '%(instance_code)s' in s:
                 data['instance_code'] = self._get_instance_code(cr, uid)
+            if '%(missioncode)s' in s:
+                data['missioncode'] = self._get_instance_missioncode(cr, uid)
 
         return (s or '') % data
 ir_sequence()
