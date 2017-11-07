@@ -3,11 +3,20 @@
     <data>
         <report
             id="stock.inventory_counting_sheet_xls"
-            string="Counting sheet"
+            string="Export xls counting sheet"
             model="stock.inventory"
             name="stock.inventory_counting_sheet_xls"
             report_type="webkit"
             menu="True"
             />
+        <report
+            id="stock.inventory_counting_sheet_pdf"
+            string="Export pdf counting sheet"
+            model="stock.inventory"
+            name="stock.inventory_counting_sheet_pdf"
+            rml="addons/stock/report/inventory_counting_sheet.rml"
+            header="False"
+            menu="True"
+        />
     </data>
 </openerp>

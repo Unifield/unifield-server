@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <!-- Workflow -->
+        <record id="wkf_inventory" model="workflow">
+            <field name="name">stock.inventory</field>
+            <field name="osv">stock.inventory</field>
+            <field name="on_create">True</field>
+        </record>
+        <!-- Activity -->
+        <record id="act_inv_draft" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_inventory"/>
+            <field name="flow_start">True</field>
+            <field name="name">Draft</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state': 'draft'})</field>
+        </record>
+        <record id="act_inv_counting" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_inventory"/>
+            <field name="name">Counting</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state': 'counting'})</field>
+        </record>
+        <record id="act_inv_counted" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_inventory"/>
+            <field name="name">Counted</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state': 'counted'})</field>
+        </record>
+        <record id="act_inv_validated" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_inventory"/>
+            <field name="name">Validated</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state': 'validated'})</field>
+        </record>
+        <record id="act_inv_confirm" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_inventory"/>
+            <field name="name">Confirm</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state': 'confirmed'})</field>
+        </record>
+        <record id="act_inv_closed" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_inventory"/>
+            <field name="name">Closed</field>
+             <field name="flow_stop">True</field>
+            <field name="kind">function</field>
+            <field name="action">write({'state': 'closed'})</field>
+        </record>
+        <record id="act_inv_cancelled" model="workflow.activity">
+            <field name="wkf_id" ref="wkf_inventory"/>
+            <field name="name">Cancelled</field>
+            <field name="kind">function</field>
+            <field name="flow_stop">True</field>
+            <field name="action">action_cancel_inventary()</field>
+        </record>
+        <!-- Transitions -->
+        <record id="trans_inv_draft_counting" model="workflow.transition">
+            <field name="act_from" ref="act_inv_draft"/>
+            <field name="act_to" ref="act_inv_counting"/>
+            <field name="signal">button_counting</field>
+            <field name="condition">True</field>
+        </record>
+        <record id="trans_inv_counting_draft" model="workflow.transition">
+            <field name="act_from" ref="act_inv_counting"/>
+            <field name="act_to" ref="act_inv_draft"/>
+            <field name="signal">button_draft</field>
+            <field name="condition">True</field>
+        </record>
+        <record id="trans_inv_counted_counting" model="workflow.transition">
+            <field name="act_from" ref="act_inv_counted"/>
+            <field name="act_to" ref="act_inv_counting"/>
+            <field name="signal">button_counting</field>
+            <field name="condition">True</field>
+        </record>
+        <record id="trans_inv_counting_counted" model="workflow.transition">
+            <field name="act_from" ref="act_inv_counting"/>
+            <field name="act_to" ref="act_inv_counted"/>
+            <field name="signal">button_counted</field>
+            <field name="condition">True</field>
+        </record>
+        <record id="trans_inv_counted_validated" model="workflow.transition">
+            <field name="act_from" ref="act_inv_counted"/>
+            <field name="act_to" ref="act_inv_validated"/>
+            <field name="signal">button_validate</field>
+            <field name="condition">True</field>
+        </record>
+        <record id="trans_inv_validated_counted" model="workflow.transition">
+            <field name="act_from" ref="act_inv_validated"/>
+            <field name="act_to" ref="act_inv_counted"/>
+            <field name="signal">button_counted</field>
+            <field name="condition">True</field>
+        </record>
+        <record id="trans_inv_validated_counting" model="workflow.transition">
+            <field name="act_from" ref="act_inv_validated"/>
+            <field name="act_to" ref="act_inv_counting"/>
+            <field name="signal">button_counting</field>
+            <field name="condition">True</field>
+        </record>
+        <record id="trans_inv_validated_draft" model="workflow.transition">
+            <field name="act_from" ref="act_inv_validated"/>
+            <field name="act_to" ref="act_inv_draft"/>
+            <field name="signal">button_draft</field>
+            <field name="condition">True</field>
+        </record>
+        <record id="trans_inv_validated_confirm" model="workflow.transition">
+            <field name="act_from" ref="act_inv_validated"/>
+            <field name="act_to" ref="act_inv_confirm"/>
+            <field name="signal">button_confirm</field>
+            <field name="condition">True</field>
+        </record>
+        <record id="trans_inv_confirm_closed" model="workflow.transition">
+            <field name="act_from" ref="act_inv_confirm"/>
+            <field name="act_to" ref="act_inv_closed"/>
+            <field name="signal">button_close</field>
+            <field name="condition">True</field>
+        </record>
+        <!-- Cancel -->
+        <record id="trans_inv_draft_cancelled" model="workflow.transition">
+            <field name="act_from" ref="act_inv_draft"/>
+            <field name="act_to" ref="act_inv_cancelled"/>
+            <field name="signal">button_cancel</field>
+            <field name="condition">True</field>
+        </record>
+        <record id="trans_inv_counting_cancelled" model="workflow.transition">
+            <field name="act_from" ref="act_inv_counting"/>
+            <field name="act_to" ref="act_inv_cancelled"/>
+            <field name="signal">button_cancel</field>
+            <field name="condition">True</field>
+        </record>
+        <record id="trans_inv_counted_cancelled" model="workflow.transition">
+            <field name="act_from" ref="act_inv_counted"/>
+            <field name="act_to" ref="act_inv_cancelled"/>
+            <field name="signal">button_cancel</field>
+            <field name="condition">True</field>
+        </record>
+        <record id="trans_inv_validated_cancelled" model="workflow.transition">
+            <field name="act_from" ref="act_inv_validated"/>
+            <field name="act_to" ref="act_inv_cancelled"/>
+            <field name="signal">button_cancel</field>
+            <field name="condition">True</field>
+        </record>
+    </data>
+</openerp>
