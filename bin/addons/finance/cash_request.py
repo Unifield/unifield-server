@@ -249,6 +249,8 @@ class cash_request_commitment(osv.osv):
                                             digits_compute=dp.get_precision('Account'), store=True),
     }
 
+    _order = 'instance_id'
+
 
 cash_request_commitment()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
