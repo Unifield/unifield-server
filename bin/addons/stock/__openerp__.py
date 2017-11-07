@@ -60,6 +60,7 @@ Thanks to the double entry management, the inventory controlling is powerful and
         "wizard/stock_inventory_line_split_view.xml",
         "wizard/stock_change_standard_price_view.xml",
         'wizard/stock_return_picking_view.xml',
+        'wizard/stock_inventory_select_products_view.xml',
         "stock_workflow.xml",
         "stock_incoterms.xml",
         "stock_view.xml",
