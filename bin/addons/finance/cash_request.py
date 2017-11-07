@@ -183,7 +183,7 @@ class cash_request(osv.osv):
 
     def _generate_commitments(self, cr, uid, cash_req_id, context=None):
         """
-        Generates data for the Engagement Tab of the Cash Request
+        Generates data for the Commitment Tab of the Cash Request
         """
         if context is None:
             context = {}

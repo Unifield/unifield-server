@@ -56,8 +56,8 @@
                                 <field name="swift_code"/>
                                 <field name="bank_address"/>
                             </page>
-                            <page string="Engagement">
-                                <separator colspan="4" string="Engagement"/>
+                            <page string="Commitment">
+                                <separator colspan="4" string="Commitment"/>
                                 <field name="commitment_ids" nolabel="1">
                                     <tree string="Engagement entries">
                                         <field name="instance_code"/>
