@@ -441,7 +441,7 @@ class ir_sequence(osv.osv):
         return company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.code or ''
 
     def _get_instance_missioncode(self, cr, uid):
-        company = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        company = self.pool.get('res.users').browse(cr, uid, uid, fields_to_fetch=['company_id']).company_id
         return company and hasattr(company, 'instance_id') and company.instance_id and company.instance_id.mission or ''
 
     def _get_hqcode(self, cr, uid):

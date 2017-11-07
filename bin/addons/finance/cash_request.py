@@ -148,7 +148,7 @@ class cash_request(osv.osv):
         """
         if context is None:
             context = {}
-        # Cash Request name = sequence (looks like: Mission code_Cash_request-X)
+        # Cash Request name = sequence (looks like: Mission code_Cash_request-XXXX)
         sequence = self.pool.get('ir.sequence').get(cr, uid, 'cash.request')
         vals.update({'name': sequence})
         # fill in the list of Prop. Instances
