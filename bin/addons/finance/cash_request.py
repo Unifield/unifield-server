@@ -329,7 +329,7 @@ class cash_request_commitment(osv.osv):
         'instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True),
         'instance_code': fields.related('instance_id', 'code', string='Instance code', type='char', store=False, readonly=True),
         'period_id': fields.many2one('account.period', 'Period', required=True),
-        'cash_request_id': fields.many2one('cash.request', 'Cash Request', ondelete='cascade'),
+        'cash_request_id': fields.many2one('cash.request', 'Cash Request', required=True, ondelete='cascade'),
         'total_commitment': fields.function(_total_commitment_compute, method=True, string='Total', type='float',
                                             digits_compute=dp.get_precision('Account'), store=True),
     }
@@ -348,7 +348,7 @@ class total_transfer_line(osv.osv):
     _columns = {
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'amount': fields.float('Amount', digits_compute=dp.get_precision('Account')),
-        'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
+        'cash_request_id': fields.many2one('cash.request', 'Cash Request', required=True, ondelete='cascade'),
     }
 
 
