@@ -182,7 +182,7 @@ class cash_request(osv.osv):
             if curr.percentage < 0:
                 raise osv.except_osv(_('Error'), _('The percentage of one of the currencies of transfers is negative.'))
             percentage += curr.percentage
-        if percentage > 10**-3 and percentage - 100 > 10**-3:
+        if percentage > 10**-3 and abs(percentage - 100) > 10**-3:
             raise osv.except_osv(_('Error'), _('The total percentage of the currencies of transfers is incorrect.'))
         if nb_lines > 1 and abs(percentage) <= 10**-3:
             raise osv.except_osv(_('Error'), _('Please indicate the percentage for each currency of transfers selected.'))
@@ -304,7 +304,7 @@ class cash_request_commitment(osv.osv):
                     commitment_lines = aal_obj.search(cr, uid, domain, context=context, order='NO_ORDER')
                     commitment_sum = 0.0
                     for l in aal_obj.read(cr, uid, commitment_lines, ['amount'], context=context):
-                        commitment_sum += l['amount']
+                        commitment_sum += abs(l['amount'])
                     result[commitment.id] = commitment_sum
         return result
 
