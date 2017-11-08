@@ -74,7 +74,8 @@ class cash_request(osv.osv):
         'bank_address': fields.related('bank_journal_id', 'bank_address', string='Address', type='char',
                                        store=False, readonly=True),
         'commitment_ids': fields.one2many('cash.request.commitment', 'cash_request_id', 'Commitments', readonly=True),
-        'total_to_transfer': fields.float('Total Cash Request to transfer', digits_compute=dp.get_precision('Account')),
+        'total_to_transfer': fields.float('Total Cash Request to transfer', digits_compute=dp.get_precision('Account'),
+                                          readonly=True),
         'total_to_transfer_line_ids': fields.one2many('total.transfer.line', 'cash_request_id',
                                                       'Lines of Total Cash Request to transfer', readonly=True),
         'recap_mission_ids': fields.one2many('recap.mission', 'cash_request_id', 'Lines of Recap Mission', readonly=True),
@@ -251,7 +252,6 @@ class cash_request(osv.osv):
                                       'commitment_amount': commitment_amount,
                                       'cash_request_id': cash_req.id}
                 recap_mission_obj.create(cr, uid, recap_mission_vals, context=context)
-        return True
 
     def generate_cash_request(self, cr, uid, ids, context=None):
         """
@@ -265,7 +265,6 @@ class cash_request(osv.osv):
             if cash_req['request_date'] != datetime.today().strftime('%Y-%m-%d'):
                 raise osv.except_osv(_('Error'), _('The date of the Cash Request must be the date of the day.'))
             self._generate_commitments(cr, uid, cash_request_id, context=context)
-            self._update_recap_mission(cr, uid, cash_request_id, context=context)
         return True
 
     def _get_total_cash_request(self, cr, uid, cash_req_id, context=None):
@@ -281,7 +280,7 @@ class cash_request(osv.osv):
                 total += rec.total
         return total
 
-    def compute_total_to_transfer(self, cr, uid, ids, context=None):
+    def compute_total_to_transfer(self, cr, uid, cash_req_id, context=None):
         """
         If all the checks are ok, computes the total to transfer (see formula below) and does a split per currency:
         Formula = (Total cash request - Transfer to come + security envelop) + %buffer
@@ -292,30 +291,38 @@ class cash_request(osv.osv):
         cur_obj = self.pool.get('res.currency')
         fields_list = ['buffer', 'transfer_to_come', 'security_envelope', 'request_date', 'consolidation_currency_id',
                        'transfer_currency_ids']
-        for cash_req in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
-            self._check_currencies(cr, uid, cash_req.id, context=context)
-            # compute the total
-            total = self._get_total_cash_request(cr, uid, cash_req.id, context=context) - cash_req.transfer_to_come + cash_req.security_envelope
-            total += (cash_req.buffer * total / 100)
-            cash_req_vals = {'total_to_transfer': total}
-            # split per currency
-            # delete previous split lines for this cash request
-            old_line_ids = transfer_line_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
-            transfer_line_obj.unlink(cr, uid, old_line_ids, context=context)
-            # create new lines
-            currencies = cash_req.transfer_currency_ids
-            for curr in currencies:
-                percentage = curr.percentage or 100  # if no percentage is given consider 100%
-                total_curr = total * percentage / 100  # total in fctal currency
-                # convert the amount in booking curr.
-                context.update({'date': cash_req.request_date})
-                total_curr_booking = cur_obj.compute(cr, uid, cash_req.consolidation_currency_id.id, curr.currency_id.id,
-                                                     total_curr or 0.0, round=True, context=context)
-                transfer_line_vals = {'currency_id': curr.currency_id.id,
-                                      'amount': total_curr_booking,
-                                      'cash_request_id': cash_req.id}
-                transfer_line_obj.create(cr, uid, transfer_line_vals, context=context)
-            self.write(cr, uid, cash_req.id, cash_req_vals, context=context)
+        cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=fields_list, context=context)
+        self._check_currencies(cr, uid, cash_req.id, context=context)
+        # compute the total
+        total = self._get_total_cash_request(cr, uid, cash_req.id, context=context) - cash_req.transfer_to_come + cash_req.security_envelope
+        total += (cash_req.buffer * total / 100)
+        cash_req_vals = {'total_to_transfer': total}
+        # split per currency
+        # delete previous split lines for this cash request
+        old_line_ids = transfer_line_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
+        transfer_line_obj.unlink(cr, uid, old_line_ids, context=context)
+        # create new lines
+        currencies = cash_req.transfer_currency_ids
+        for curr in currencies:
+            percentage = curr.percentage or 100  # if no percentage is given consider 100%
+            total_curr = total * percentage / 100  # total in fctal currency
+            # convert the amount in booking curr.
+            context.update({'date': cash_req.request_date})
+            total_curr_booking = cur_obj.compute(cr, uid, cash_req.consolidation_currency_id.id, curr.currency_id.id,
+                                                 total_curr or 0.0, round=True, context=context)
+            transfer_line_vals = {'currency_id': curr.currency_id.id,
+                                  'amount': total_curr_booking,
+                                  'cash_request_id': cash_req.id}
+            transfer_line_obj.create(cr, uid, transfer_line_vals, context=context)
+        self.write(cr, uid, cash_req.id, cash_req_vals, context=context)
+
+    def compute_recap_and_total(self, cr, uid, ids, context=None):
+        """
+        Triggers the computation of Recap Mission Lines + Total to transfer (with a split per currencies)
+        """
+        for cash_req_id in ids:
+            self._update_recap_mission(cr, uid, cash_req_id, context=None)
+            self.compute_total_to_transfer(cr, uid, cash_req_id, context=context)
         return True
 
 
