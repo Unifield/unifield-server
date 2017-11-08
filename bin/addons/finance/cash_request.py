@@ -263,8 +263,10 @@ class cash_request(osv.osv):
         if context is None:
             context = {}
         transfer_line_obj = self.pool.get('total.transfer.line')
-        for cash_req in self.browse(cr, uid, ids, fields_to_fetch=['buffer', 'transfer_to_come', 'security_envelope'],
-                                    context=context):
+        cur_obj = self.pool.get('res.currency')
+        fields_list = ['buffer', 'transfer_to_come', 'security_envelope', 'request_date', 'consolidation_currency_id',
+                       'transfer_currency_ids']
+        for cash_req in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
             self._check_currencies(cr, uid, cash_req.id, context=context)
             # compute the total
             total = self._get_total_cash_request(cr, uid, cash_req.id, context=context) - cash_req.transfer_to_come + cash_req.security_envelope
@@ -278,9 +280,13 @@ class cash_request(osv.osv):
             currencies = cash_req.transfer_currency_ids
             for curr in currencies:
                 percentage = curr.percentage or 100  # if no percentage is given consider 100%
-                total_curr = total * percentage / 100
+                total_curr = total * percentage / 100  # total in fctal currency
+                # convert the amount in booking curr.
+                context.update({'date': cash_req.request_date})
+                total_curr_booking = cur_obj.compute(cr, uid, cash_req.consolidation_currency_id.id, curr.currency_id.id,
+                                                     total_curr or 0.0, round=True, context=context)
                 transfer_line_vals = {'currency_id': curr.currency_id.id,
-                                      'amount': total_curr,
+                                      'amount': total_curr_booking,
                                       'cash_request_id': cash_req.id}
                 transfer_line_obj.create(cr, uid, transfer_line_vals, context=context)
             self.write(cr, uid, cash_req.id, cash_req_vals, context=context)
