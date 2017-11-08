@@ -44,11 +44,11 @@
                                     <field name="recap_mission_ids" nolabel="1">
                                         <tree string="Recap Mission">
                                             <field name="instance_code"/>
-                                            <field name="liquidity_amount"/>
-                                            <field name="payable_amount"/>
-                                            <field name="commitment_amount"/>
-                                            <field name="expense_amount"/>
-                                            <field name="total"/>
+                                            <field name="liquidity_amount" sum="Total Liquidity"/>
+                                            <field name="payable_amount" sum="Total Payable"/>
+                                            <field name="commitment_amount" sum="Total Commitment"/>
+                                            <field name="expense_amount" sum="Total Expenses"/>
+                                            <field name="total" sum="Grand Total"/>
                                         </tree>
                                     </field>
                                 </group>
