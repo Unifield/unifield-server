@@ -277,8 +277,8 @@ class cash_request(osv.osv):
         total = 0.0
         if cash_req_id:
             cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['recap_mission_ids'], context=context)
-            for cl in cash_req.recap_mission_ids:
-                total += cl.commitment_amount
+            for rec in cash_req.recap_mission_ids:
+                total += rec.total
         return total
 
     def compute_total_to_transfer(self, cr, uid, ids, context=None):
@@ -418,12 +418,32 @@ class recap_mission(osv.osv):
     _rec_name = 'cash_request_id'
     _description = 'Recap Mission Line for Cash Request'
 
+    def _total_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Computes the Total Cash requested
+        Formula = Cash available - Payable Invoices - Engagements - Foreseen expenses
+        """
+        if context is None:
+            context = {}
+        result = {}
+        if ids:
+            fields_list = ['liquidity_amount', 'payable_amount', 'commitment_amount', 'expense_amount']
+            for recap in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
+                total = recap.liquidity_amount - recap.payable_amount - recap.commitment_amount - recap.expense_amount
+                result[recap.id] = total
+        return result
+
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True),
         'instance_code': fields.related('instance_id', 'code', string='Instance code / Place of payment', type='char',
                                         store=False, readonly=True),
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', required=True, ondelete='cascade'),
         'commitment_amount': fields.float('Commitment', digits_compute=dp.get_precision('Account')),
+        'liquidity_amount': fields.float('Cash available in mission', digits_compute=dp.get_precision('Account')),
+        'payable_amount': fields.float('Payable Invoices', digits_compute=dp.get_precision('Account')),
+        'expense_amount': fields.float('Foreseen expenses', digits_compute=dp.get_precision('Account')),
+        'total': fields.function(_total_compute, method=True, string='Total Cash requested', type='float',
+                                 digits_compute=dp.get_precision('Account'), store=True),
     }
 
     _order = 'instance_id'
