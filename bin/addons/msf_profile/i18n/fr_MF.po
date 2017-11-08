@@ -99859,3 +99859,217 @@ msgstr "Code Swift"
 #: field:account.journal,bank_account_name:0
 msgid "Bank Account Name"
 msgstr "Nom du Compte Bancaire"
+
+#. modules: purchase, purchase_override, procurement_request
+#: field:sale.order.line,original_price:0
+#: field:purchase.order.line,original_price:0
+#: field:purchase.order.merged.line,original_price:0
+msgid "Original Price"
+msgstr "Prix d'Origine"
+
+#. modules: purchase, purchase_override, procurement_request
+#: field:sale.order.line,original_product:0
+#: field:purchase.order.line,original_product:0
+#: field:purchase.order.merged.line,original_product:0
+msgid "Original Product"
+msgstr "Produit d'Origine"
+
+#. modules: purchase, purchase_override, procurement_request
+#: field:sale.order.line,original_uom:0
+#: field:purchase.order.line,original_uom:0
+#: field:purchase.order.merged.line,original_uom:0
+msgid "Original UoM"
+msgstr "UdM d'Origine"
+
+#. modules: purchase, purchase_followup, purchase_override
+#: field:purchase.order.line,original_currency_id:0
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:244
+#: field:purchase.order.merged.line,original_currency_id:0
+msgid "Original Currency"
+msgstr "Devise d'Origine"
+
+#. modules: purchase, purchase_override, procurement_request
+#: field:sale.order.line,original_changed:0
+#: field:purchase.order.line,original_changed:0
+#: field:purchase.order.merged.line,original_changed:0
+msgid "Changed"
+msgstr "Changé"
+
+#. modules: sales_followup, purchase, purchase_followup, purchase_override, procurement_request
+#: field:sale.order.line,original_qty:0
+#: field:purchase.order.line,original_qty:0
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:239
+#: field:purchase.order.merged.line,original_qty:0
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:231
+msgid "Original Qty"
+msgstr "Qté d'Origine"
+
+#. module: sales_followup
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:236
+msgid "Original Subtotal"
+msgstr "Sous-Total d'Origine"
+
+#. module: purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:246
+msgid "Original Price in functional currency"
+msgstr "Prix d'Origine en devise fonctionnelle"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:240
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:232
+msgid "Original UoM"
+msgstr "UdM d'Origine"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:236
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:228
+msgid "Original Code"
+msgstr "Code d'Origine"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:243
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:234
+msgid "Original Unit Price"
+msgstr "Prix Unitaire d'Origine"
+
+#. module: purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:248
+msgid "Original Subtotal (functional currency)"
+msgstr "Sous-Total d'Origine (devise fonctionnelle)"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:241
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:233
+msgid "Unit Price"
+msgstr "Prix Unitaire"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:231
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:223
+msgid "Order ref"
+msgstr "Ref commande"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:192
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:184
+msgid "Address:"
+msgstr "Adresse:"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:181
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:173
+msgid "Name:"
+msgstr "Nom:"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:249
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:237
+msgid "Modification comment"
+msgstr "Commentaire de modification"
+
+#. module: sales_followup
+#: model:ir.actions.report.xml,name:sales_followup.report_ir_track_changes_xls
+msgid "Internal Request Track Changes Excel Export"
+msgstr "Export Excel du Suivi des Changements des Demandes Internes"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:176
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:168
+msgid "Instance information"
+msgstr "Informations sur l'instance"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:206
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:198
+msgid "Order Ref:"
+msgstr "Ref Commande:"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:213
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:205
+msgid "Date of the request:"
+msgstr "Date de la requête:"
+
+#. modules: sales_followup, purchase_followup
+#: code:addons/purchase_followup/wizard/po_track_changes_wizard.py:94
+#: code:addons/sales_followup/wizard/ir_track_changes_wizard.py:94
+#, python-format
+msgid "No data found with these parameters"
+msgstr "Aucune donnée n'a été trouvée avec ces paramètres"
+
+#. module: sales_followup
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:235
+msgid "Subtotal"
+msgstr "Sous-Total"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:195
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:187
+msgid "Date end:"
+msgstr "Date de fin:"
+
+#. modules: sales_followup
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:229
+#, python-format
+msgid "Qty"
+msgstr "Qté"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:178
+#: view:po.track.changes.wizard:0
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:170
+#: view:ir.track.changes.wizard:0
+msgid "Request parameters"
+msgstr "Paramètres de la requête"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:184
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:176
+msgid "Date start:"
+msgstr "Date de départ:"
+
+#. module: sales_followup
+#: model:ir.actions.act_window,name:sales_followup.action_ir_track_changes_wizard
+#: model:ir.ui.menu,name:sales_followup.menu_ir_track_changes
+msgid "IR Track Changes"
+msgstr "Suivi Changements Demandes Internes"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:232
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:224
+#, python-format
+msgid "Status"
+msgstr "État"
+
+#. module: purchase_followup
+#: model:ir.actions.act_window,name:purchase_followup.action_po_track_changes_wizard
+#: model:ir.ui.menu,name:purchase_followup.menu_po_track_changes
+msgid "PO Track Changes"
+msgstr "Suivi Changements Bons de Commande"
+
+#. module: purchase_followup
+#: model:ir.actions.report.xml,name:purchase_followup.report_po_track_changes_xls
+msgid "Purchase Order Track Changes Excel Export"
+msgstr "Export Excel du Suivi des Changements des Bons de Commande"
+
+#. module: purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:245
+msgid "Price in functional currency"
+msgstr "Prix dans la devise fonctionnelle"
+
+#. modules: purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:242
+msgid "Currency"
+msgstr "Devise"
+
+#. module: purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:247
+msgid "Subtotal (functional currency)"
+msgstr "Sous-Total (devise fonctionnelle)"
+
+#. modules: purchase, purchase_override, sale
+#: field:purchase.order.line,modification_comment:0
+#: field:purchase.order.merged.line,modification_comment:0
+#: field:sale.order.line,modification_comment:0
+msgid "Modification Comment"
+msgstr "Commentaire de Modification"

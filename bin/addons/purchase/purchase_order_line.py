@@ -259,15 +259,8 @@ class purchase_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             changed = False
-            if line.modification_comment\
-                    or (line.original_qty and line.original_price and line.original_uom and line.original_currency_id):
-                if line.modification_comment or line.product_qty != line.original_qty \
-                        or line.price_unit != line.original_price or line.product_uom != line.original_uom\
-                        or line.currency_id != line.original_currency_id:
-                    changed = True
-            elif line.original_qty and line.original_uom and not line.original_price:  # From IR
-                if line.original_qty != line.product_qty or line.original_uom.id != line.product_uom.id:
-                    changed = True
+            if line.modification_comment or (line.original_qty and line.product_qty != line.original_qty):
+                changed = True
 
             res[line.id] = changed
         return res
@@ -488,10 +481,10 @@ class purchase_order_line(osv.osv):
         # not replacing the po_state from sale_followup - should ?
         'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
         'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
-
+        'original_product': fields.many2one('product.product', 'Original Product'),
         'original_qty': fields.float('Original Qty'),
         'original_price': fields.float('Original Price'),
-        'original_uom': fields.many2one('product.uom', 'Original UOM'),
+        'original_uom': fields.many2one('product.uom', 'Original UoM'),
         'original_currency_id': fields.many2one('res.currency', 'Original Currency'),
         'modification_comment': fields.char('Modification Comment', size=1024),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
@@ -1058,6 +1051,8 @@ class purchase_order_line(osv.osv):
         if vals.get('linked_sol_id'):
             sol_comment = self.pool.get('sale.order.line').read(cr, uid, vals.get('linked_sol_id'), ['comment'], context=context)['comment']
             vals.update({'comment': sol_comment})
+            #if not product_id and not vals.get('name'):  # US-3530
+            #    vals.update({'name': 'None'})
 
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
@@ -1127,9 +1122,9 @@ class purchase_order_line(osv.osv):
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': []})
 
-        for field in ['origin', 'move_dest_id', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol']:
+        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol']:
             if field not in default:
-                default[field]= False
+                default[field] = False
 
         default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False})
 

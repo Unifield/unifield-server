@@ -349,6 +349,10 @@ class purchase_order_line(osv.osv):
                 'original_price': pol.price_unit,
                 'original_currency_id': pol.currency_id.id
             }
+
+            if not pol.original_product:
+                line_update['original_product'] = pol.product_id.id
+
             if not pol.original_qty:
                 line_update['original_qty'] = pol.product_qty
 

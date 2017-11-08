@@ -3,27 +3,6 @@
 	<data>
 
 
-        <record id="view_internal_request_form" model="ir.ui.view">
-            <field name="name">view.internal.request.form</field>
-            <field name="model">sale.order</field>
-            <field name="type">form</field>
-            <field name="priority" eval="500" />
-            <field name="inherit_id" ref="procurement_request.procurement_request_form_view" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form" position="inside">
-                        <field name="sourcing_trace_ok" invisible="1" />
-                    </xpath>
-
-                    <xpath expr="/form//notebook" position="inside">
-                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
-                            <field name="sourcing_trace" colspan="4" nolabel="1" />
-                        </page>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
 		<record id="sourcing_line_normal_form_view" model="ir.ui.view">
 			<field name="name">sale.order.line.sourcing.form</field>
 			<field name="model">sale.order.line</field>
