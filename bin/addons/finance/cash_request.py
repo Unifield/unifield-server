@@ -79,6 +79,19 @@ class cash_request(osv.osv):
                                                       'Lines of Total Cash Request to transfer', readonly=True),
     }
 
+    def _check_buffer(self, cr, uid, ids):
+        """
+        Checks that the buffer value isn't negative nor > 100
+        """
+        for cash_req in self.browse(cr, uid, ids, fields_to_fetch=['buffer']):
+            if cash_req.buffer < 0 or cash_req.buffer - 100 > 10**-3:
+                return False
+        return True
+
+    _constraints = [
+        (_check_buffer, _("The percentage in the Buffer field is incorrect."), ['buffer']),
+    ]
+
     def _get_company(self, cr, uid, context=None):
         """
         Returns the company as a browse record
@@ -180,13 +193,14 @@ class cash_request(osv.osv):
         nb_lines = len(cash_req.transfer_currency_ids)
         if nb_lines == 0:
             raise osv.except_osv(_('Error'), _('You must select at least one currency of transfers.'))
+        nb_lines_zero = 0  # count how many lines are equal (or inferior) to zero
         for curr in cash_req.transfer_currency_ids:
-            if curr.percentage < 0:
-                raise osv.except_osv(_('Error'), _('The percentage of one of the currencies of transfers is negative.'))
+            if curr.percentage <= 10**-3:
+                nb_lines_zero += 1
             percentage += curr.percentage
         if percentage > 10**-3 and abs(percentage - 100) > 10**-3:
             raise osv.except_osv(_('Error'), _('The total percentage of the currencies of transfers is incorrect.'))
-        if nb_lines > 1 and abs(percentage) <= 10**-3:
+        if nb_lines > 1 and nb_lines_zero:
             raise osv.except_osv(_('Error'), _('Please indicate the percentage for each currency of transfers selected.'))
 
     def _generate_commitments(self, cr, uid, cash_req_id, context=None):
@@ -252,9 +266,6 @@ class cash_request(osv.osv):
         for cash_req in self.browse(cr, uid, ids, fields_to_fetch=['buffer', 'transfer_to_come', 'security_envelope'],
                                     context=context):
             self._check_currencies(cr, uid, cash_req.id, context=context)
-            # buffer shouldn't be negative nor > 100
-            if cash_req.buffer < 0 or cash_req.buffer - 100 > 10**-3:
-                raise osv.except_osv(_('Error'), _('The percentage in the Buffer field is incorrect.'))
             # compute the total
             total = self._get_total_cash_request(cr, uid, cash_req.id, context=context) - cash_req.transfer_to_come + cash_req.security_envelope
             total += (cash_req.buffer * total / 100)
@@ -289,6 +300,19 @@ class transfer_currency(osv.osv):
         'percentage': fields.float(digits=(16, 2), string='%'),
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
     }
+
+    def _check_percentage(self, cr, uid, ids):
+        """
+        Checks that the percentage value isn't negative nor > 100
+        """
+        for cash_req in self.browse(cr, uid, ids, fields_to_fetch=['percentage']):
+            if cash_req.percentage < 0 or cash_req.percentage - 100 > 10**-3:
+                return False
+        return True
+
+    _constraints = [
+        (_check_percentage, _("The percentage of the currency is incorrect."), ['percentage']),
+    ]
 
 
 transfer_currency()
