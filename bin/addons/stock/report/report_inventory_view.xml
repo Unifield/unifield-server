@@ -18,5 +18,13 @@
             header="False"
             menu="True"
         />
+        <report
+            id="stock.inventory_report_xls"
+            string="Export xls inventory report"
+            model="stock.inventory"
+            name="stock.inventory_report_xls"
+            report_type="webkit"
+            menu="True"
+            />
     </data>
 </openerp>

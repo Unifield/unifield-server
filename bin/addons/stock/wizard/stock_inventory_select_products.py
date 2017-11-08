@@ -58,12 +58,18 @@ class stock_inventory_select_products(osv.osv_memory):
         'cs': fields.boolean('Controlled substances'),
         'dg': fields.boolean('Dangerous goods'),
         'product_list': fields.many2one('product.list', 'Product List', select=True),
-        'family':       fields.many2one('product.list', 'Family',       select=True),
+
+        # mandatory nomenclature levels
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', readonly=False, select=1),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group',     readonly=False, select=1),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family',    readonly=False, select=1),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root',      readonly=False, select=1),
 
         # Finally, we want to give the user some feedback about what's going
         # to be imported
         'products_preview': fields.many2many('product.product', 'products_preview_rel', 'product_id', 'stock_inventory_select_products_id',  string="Products preview", readonly=True),
     }
+
 
     def create(self, cr, user, vals, context=None):
 
@@ -75,6 +81,31 @@ class stock_inventory_select_products(osv.osv_memory):
         return super(stock_inventory_select_products, self).create(cr, user, vals, context=context)
 
 
+    #
+    # Nomenclature management
+    #
+    def onChangeSearchNomenclature(self, cr, uid, id, position, type,
+                                   nomen_manda_0,
+                                   nomen_manda_1,
+                                   nomen_manda_2,
+                                   nomen_manda_3,
+                                   num=True,
+                                   context=None):
+
+        return self.pool.get('product.nomenclature') \
+               .onChangeSearchNomenclature(cr, uid, id, position, type,
+                                           nomen_manda_0,
+                                           nomen_manda_1,
+                                           nomen_manda_2,
+                                           nomen_manda_3,
+                                           num=num,
+                                           context=context)
+
+
+    def get_nomen(self, cr, uid, id, field):
+        return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field)
+
+
     def refresh_products_from_filters(self, cr, uid, ids, context=None):
 
         pass
@@ -82,6 +113,9 @@ class stock_inventory_select_products(osv.osv_memory):
     def import_products_from_filters(self, cr, uid, ids, context=None):
 
         pass
+
+
+
 
 
 stock_inventory_select_products()

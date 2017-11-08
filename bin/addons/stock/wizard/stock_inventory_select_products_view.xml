@@ -22,15 +22,32 @@
                         <group col="2" colspan="2">
                             <field name="first_filter"        attrs="{'required':[('full_inventory', '=', False)]}" />
                             <field name="recent_moves_months" attrs="{'invisible':[('first_filter','!=','recent_movements')], 
-                                                                       'required':[('first_filter','=','recent_movements')]}" colspan="2"/>
+                                                                       'required':[('first_filter', '=','recent_movements')]}" colspan="2"/>
                         </group>
                         <group col="2" colspan="2">
                             <field name="second_filter" attrs="{'required':[('full_inventory', '=', False)]}"/>
-                            <field name="family"        attrs="{'invisible':[('second_filter','!=','family')],      'required':[('second_filter','=','family')],    }" />
                             <field name="product_list"  attrs="{'invisible':[('second_filter','!=','productlist')], 'required':[('second_filter','=','productlist')]}" />
                             <field name="kc"            attrs="{'invisible':[('second_filter','!=','specialcare')]}" />
                             <field name="cs"            attrs="{'invisible':[('second_filter','!=','specialcare')]}" />
                             <field name="dg"            attrs="{'invisible':[('second_filter','!=','specialcare')]}" />
+                            <group col="2" colspan="2"  attrs="{'invisible':[('second_filter','!=','family')]   }">
+                            <field name="nomen_manda_0" widget="selection" 
+                                   domain="[('level', '=', '0'), ('type', '=', 'mandatory')]" 
+                                   on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" 
+                                   attrs="{'required':[('second_filter','=','family')]}"/>
+                            <field name="nomen_manda_1" widget="selection" get_selection="get_nomen" 
+                                   domain="[('level', '=', '1'), ('type', '=', 'mandatory')]" 
+                                   on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" 
+                                   />
+                            <field name="nomen_manda_2" widget="selection" get_selection="get_nomen" 
+                                   domain="[('level', '=', '2'), ('type', '=', 'mandatory'), ('category_id', '!=', False)]" 
+                                   on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" 
+                                   />
+                            <field name="nomen_manda_3" widget="selection" get_selection="get_nomen"
+                                   domain="[('level', '=', '3'), ('type', '=', 'mandatory')]" 
+                                   on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)" 
+                                   />
+                            </group>
                         </group>
                     </group>
                     <separator colspan="4" string="Preview" />
