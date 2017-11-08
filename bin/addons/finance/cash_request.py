@@ -304,8 +304,8 @@ class cash_request_commitment(osv.osv):
                     commitment_lines = aal_obj.search(cr, uid, domain, context=context, order='NO_ORDER')
                     commitment_sum = 0.0
                     for l in aal_obj.read(cr, uid, commitment_lines, ['amount'], context=context):
-                        commitment_sum += abs(l['amount'])
-                    result[commitment.id] = commitment_sum
+                        commitment_sum += l['amount']
+                    result[commitment.id] = abs(commitment_sum)
         return result
 
     _columns = {
