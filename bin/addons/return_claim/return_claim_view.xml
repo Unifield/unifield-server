@@ -40,6 +40,7 @@
                             <field name="type_return_claim"
                                 attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
                             <field name="category_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="origin_claim" readonly="1" />
                         </group>
                         <group col="2" colspan="1">
                                 <field name="creation_date_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
@@ -57,7 +58,7 @@
                                     attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
                                 <field name="order_line_number_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                 <!--<field name="goods_expected"-->
-                                       <!--attrs="{'invisible': ['|', ('state', 'in', ['draft', 'draft_in_progress']), ]}" />-->
+                                       <!--attrs="{'invisible': ['|', ('state', 'in', ['draft', 'draft_progress']), ]}" />-->
                                 <field name="description_return_claim" colspan="4" />
                             </page>
                             <page string="Events">
@@ -184,7 +185,7 @@
                 <field name="arch" type="xml">
                     <search string="Search Claim">
                         <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
-                        <filter icon="terp-document-new" name="draft_in_progress" string="Draft in Progress" domain="[('state','=','draft_in_progress')]" separator="1" />
+                        <filter icon="terp-document-new" name="draft_progress" string="Draft in Progress" domain="[('state','=','draft_progress')]" separator="1" />
                         <filter icon="terp-check" name="completed" string="Validated - In Progress" domain="[('state','=', 'in_progress')]" separator="1" />
                         <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
                         <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />

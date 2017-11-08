@@ -22,7 +22,7 @@
 from osv import osv, fields
 
 import time
-import netsvc
+import logging
 
 from tools.translate import _
 import decimal_precision as dp
@@ -44,7 +44,7 @@ CLAIM_TYPE_RELATION = {'in': 'supplier',
                        'out': 'customer'}
 # claim state
 CLAIM_STATE = [('draft', 'Draft'),
-               ('draft_in_progress', 'Draft in progress'),
+               ('draft_progress', 'Draft in progress'),
                ('in_progress', 'Validated - In progress'),
                ('confirmed', 'Confirmed'),
                ('done', 'Closed')]
@@ -53,7 +53,7 @@ CLAIM_STATE = [('draft', 'Draft'),
 CLAIM_RULES = {'supplier': {'quarantine': ['accept', 'scrap', 'return', 'surplus']}}
 # does the claim type allows event creation
 CLAIM_TYPE_RULES = {'supplier': ['accept', 'quarantine', 'scrap', 'return', 'surplus', 'missing'],
-                    'customer': ['return', 'surplus'],
+                    'customer': ['accept', 'quarantine', 'scrap', 'return', 'surplus', 'missing'],
                     'transport': False,
                     }
 # event type
@@ -90,6 +90,7 @@ class return_claim(osv.osv):
     claim class
     '''
     _name = 'return.claim'
+    _description = 'Claim'
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -522,7 +523,11 @@ class return_claim(osv.osv):
         ),
         'processor_origin': fields.char(
             string='IN or INT processor',
-            size=1024,
+            size=512,
+        ),
+        'origin_claim': fields.char(
+            string='Reference of the original claim',
+            size=512,
         ),
         # Many2one
         'sequence_id_return_claim': fields.many2one(
@@ -636,8 +641,9 @@ class return_claim(osv.osv):
             # origin subtype
             if obj.picking_id_return_claim.subtype not in ['standard', 'picking']:
                 raise osv.except_osv(_('Warning !'), _('PPL or Packing should not be selected.'))
-            # not draft picking ticket, even if done
-            if obj.picking_id_return_claim.subtype == 'picking' and not obj.picking_id_return_claim.backorder_id:
+            # not draft picking ticket, even if done except if it comes from syncho
+            if obj.picking_id_return_claim.subtype == 'picking' and not obj.picking_id_return_claim.backorder_id\
+                    and not obj.origin_claim:
                 raise osv.except_osv(_('Warning !'), _('Draft Picking Tickets are not allowed as Origin, Picking Ticket must be selected.'))
             # if claim type does not allow events, no events should be present
             if not self.get_claim_type_rules().get(obj.type_return_claim) and (len(obj.event_ids_return_claim) > 0):
@@ -699,6 +705,118 @@ class return_claim(osv.osv):
         return IN_CLAIM_EVENT_TYPE
 
     _order = 'name desc'
+
+    # Synchro
+    _logger = logging.getLogger('------sync.return.claim')
+
+    def check_existing_claim(self, cr, uid, source, claim_dict):
+        if not source:
+            raise osv.except_osv(_('Error'), _('The partner is missing.'))
+
+        claim_ids = self.search(cr, uid, [('origin_claim', '=', claim_dict.get('origin_claim')), ('state', '!=', 'cancelled')])
+        if not claim_ids:
+            return False
+        return claim_ids[0]
+
+    def validated_claim_create_claim(self, cr, uid, source, claim_info, context=None):
+        '''
+        Synchronisation method for claims
+        '''
+        warehouse_obj = self.pool.get('stock.warehouse')
+        claim_obj = self.pool.get('return.claim')
+        event_obj = self.pool.get('claim.event')
+        sale_obj = self.pool.get('sale.order')
+        pick_obj = self.pool.get('stock.picking')
+        curr_obj = self.pool.get('res.currency')
+        product_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+
+        if context is None:
+            context = {}
+
+        claim_data = {}
+        event_data = claim_info.event_ids_return_claim[0]
+        product_line_data = claim_info.product_line_ids_return_claim
+
+        sale_id = sale_obj.search(cr, uid, [('client_order_ref', 'ilike', claim_info.po_id_return_claim.name)],
+                                      limit=1, order='id', context=context)[0]
+        subtype = 'picking' if 'SHIP' in claim_info.picking_id_return_claim.shipment_ref else 'standard'
+        # fetch the original picking, ticket or out
+        origin_pick_id = pick_obj.search(cr, uid, [('sale_id', '=', sale_id), ('type', '=', 'out'),
+                                                   ('subtype', '=', subtype), ('backorder_id', '=', False)],
+                                         limit=1, context=context)[0]
+
+        event_values = {
+           'type_claim_event': event_data.type_claim_event,
+           'replacement_picking_expected_claim_event': event_data.replacement_picking_expected_claim_event,
+           'description_claim_event': event_data.description_claim_event,
+           'from_picking_wizard_claim_event': event_data.from_picking_wizard_claim_event,
+           'creation_date_claim_event': event_data.creation_date_claim_event,
+           'event_picking_id_claim_event': origin_pick_id,
+        }
+
+        warehouse_ids = warehouse_obj.search(cr, uid, [], limit=1)
+        # Location defined by claim event type
+        if event_data.type_claim_event in ('return', 'surplus'):
+            location_id = warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
+        else:
+            location_id = warehouse_obj.read(cr, uid, warehouse_ids, ['lot_stock_id'])[0]['lot_stock_id'][0]
+
+        claim_data.update({
+            'origin_claim': source + "." + claim_info.name,
+            'partner_id_return_claim': self.pool.get('res.partner').search(cr, uid, [('name', '=', source)], context=context)[0],
+            'default_src_location_id_return_claim': location_id,
+            'category_return_claim': claim_info.category_return_claim,
+            'description_return_claim': claim_info.description_return_claim,
+            'follow_up_return_claim': claim_info.follow_up_return_claim,
+            'po_so_return_claim': claim_info.po_so_return_claim,
+            'request_missing': claim_info.request_missing,
+            'goods_expected': claim_info.goods_expected,
+            'processor_origin': claim_info.processor_origin,
+            'creation_date_return_claim': claim_info.creation_date_return_claim,
+            'picking_id_return_claim': origin_pick_id,
+            'product_line_ids_return_claim':
+                [(0, 0, {
+                    'qty_claim_product_line': x.qty_claim_product_line,
+                    'price_unit_claim_product_line': x.price_unit_claim_product_line,
+                    'price_currency_claim_product_line': curr_obj.search(cr, uid, [('name', '=', x.price_currency_claim_product_line.name)], context=context)[0],
+                    'product_id_claim_product_line': product_obj.search(cr, uid, [('name', '=', x.product_id_claim_product_line.name)], context=context)[0],
+                    'uom_id_claim_product_line': uom_obj.search(cr, uid, [('name', '=', x.uom_id_claim_product_line.name)], context=context)[0],
+                    'type_check': x.type_check,
+                    'expiry_date_claim_product_line': x.expiry_date_claim_product_line,
+                    'src_location_id_claim_product_line': location_id,
+                }) for x in product_line_data],
+        })
+
+        claim_id = self.check_existing_claim(cr, uid, source, claim_data)
+
+        if claim_id:
+            # only update if the claim is from synchro and in draft
+            if claim_obj.browse(cr, uid, claim_id, context=context).state == 'draft_progress':
+                # update linked claim event
+                event_id = event_obj.search(cr, uid, [('return_claim_id_claim_event', '=', claim_id)], limit=1, context=context)[0]
+                event_obj.update(cr, uid, event_id, event_values, context=context)
+                # update claim if already created
+                self.write(cr, uid, claim_id, claim_data, context)
+        else:
+            # create a new customer claim in the state Draft - In Progress
+            claim_data.update({
+                'state': 'draft_progress',
+                'type_return_claim': 'customer',
+            })
+            claim_id = claim_obj.create(cr, uid, claim_data, context=context)
+            # create the new event
+            event_values.update({
+                'return_claim_id_claim_event': claim_id,
+            })
+            event_obj.create(cr, uid, event_values, context=context)
+
+        name = self.browse(cr, uid, claim_id, context=context).name
+        message = "The claim " + name + " is created by sync and linked to the claim " + claim_info.name + " by Push Flow at " + source
+        self._logger.info(message)
+
+        return message
+
 
 return_claim()
 
