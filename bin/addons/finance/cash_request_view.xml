@@ -39,6 +39,15 @@
                                         </tree>
                                     </field>
                                 </group>
+                                <separator colspan="4" string="Recap"/>
+                                <group colspan="4" col="2">
+                                    <field name="recap_mission_ids" nolabel="1">
+                                        <tree string="Recap Mission">
+                                            <field name="instance_code"/>
+                                            <field name="commitment_amount"/>
+                                        </tree>
+                                    </field>
+                                </group>
                                 <group colspan="4" col="6">
                                     <field name="transfer_to_come"/>
                                     <field name="security_envelope"/>

@@ -77,6 +77,7 @@ class cash_request(osv.osv):
         'total_to_transfer': fields.float('Total Cash Request to transfer', digits_compute=dp.get_precision('Account')),
         'total_to_transfer_line_ids': fields.one2many('total.transfer.line', 'cash_request_id',
                                                       'Lines of Total Cash Request to transfer', readonly=True),
+        'recap_mission_ids': fields.one2many('recap.mission', 'cash_request_id', 'Lines of Recap Mission', readonly=True),
     }
 
     def _check_buffer(self, cr, uid, ids):
@@ -227,6 +228,31 @@ class cash_request(osv.osv):
                     commitment_obj.create(cr, uid, vals, context=context)
         return True
 
+    def _update_recap_mission(self, cr, uid, cash_req_id, context=None):
+        """
+        Updates the Recap Mission in the Main Tab of the Cash Request
+        """
+        if context is None:
+            context = {}
+        if cash_req_id:
+            recap_mission_obj = self.pool.get('recap.mission')
+            cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['instance_ids', 'commitment_ids'], context=context)
+            # delete previous recap mission lines for this cash request
+            old_lines = recap_mission_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
+            recap_mission_obj.unlink(cr, uid, old_lines, context=context)
+            # create new lines
+            instances = cash_req.instance_ids
+            for inst in instances:
+                # Commitment lines
+                commitment_amount = 0.0
+                for cl in cash_req.commitment_ids:
+                    commitment_amount += cl.instance_id.id == inst.id and cl.total_commitment or 0.0
+                recap_mission_vals = {'instance_id': inst.id,
+                                      'commitment_amount': commitment_amount,
+                                      'cash_request_id': cash_req.id}
+                recap_mission_obj.create(cr, uid, recap_mission_vals, context=context)
+        return True
+
     def generate_cash_request(self, cr, uid, ids, context=None):
         """
         Computes all automatic fields of the Cash Request
@@ -239,20 +265,20 @@ class cash_request(osv.osv):
             if cash_req['request_date'] != datetime.today().strftime('%Y-%m-%d'):
                 raise osv.except_osv(_('Error'), _('The date of the Cash Request must be the date of the day.'))
             self._generate_commitments(cr, uid, cash_request_id, context=context)
+            self._update_recap_mission(cr, uid, cash_request_id, context=context)
         return True
 
     def _get_total_cash_request(self, cr, uid, cash_req_id, context=None):
         """
-        Sums the amounts from all the tabs to get the total Cash Request
+        Sums all the amounts of the Cash Request
         """
         if context is None:
             context = {}
         total = 0.0
         if cash_req_id:
-            cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['commitment_ids'], context=context)
-            # Commitment lines
-            for cl in cash_req.commitment_ids:
-                total += cl.total_commitment
+            cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['recap_mission_ids'], context=context)
+            for cl in cash_req.recap_mission_ids:
+                total += cl.commitment_amount
         return total
 
     def compute_total_to_transfer(self, cr, uid, ids, context=None):
@@ -373,7 +399,7 @@ cash_request_commitment()
 class total_transfer_line(osv.osv):
     _name = 'total.transfer.line'
     _rec_name = 'cash_request_id'
-    _description = 'Lines of Total to transfer for Cash Request'
+    _description = 'Line of Total to transfer for Cash Request'
 
     _columns = {
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
@@ -381,6 +407,27 @@ class total_transfer_line(osv.osv):
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', required=True, ondelete='cascade'),
     }
 
+    _order = 'currency_id'
+
 
 total_transfer_line()
+
+
+class recap_mission(osv.osv):
+    _name = 'recap.mission'
+    _rec_name = 'cash_request_id'
+    _description = 'Recap Mission Line for Cash Request'
+
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True),
+        'instance_code': fields.related('instance_id', 'code', string='Instance code / Place of payment', type='char',
+                                        store=False, readonly=True),
+        'cash_request_id': fields.many2one('cash.request', 'Cash Request', required=True, ondelete='cascade'),
+        'commitment_amount': fields.float('Commitment', digits_compute=dp.get_precision('Account')),
+    }
+
+    _order = 'instance_id'
+
+
+recap_mission()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
