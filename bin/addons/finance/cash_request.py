@@ -421,7 +421,7 @@ class recap_mission(osv.osv):
     def _total_compute(self, cr, uid, ids, name, args, context=None):
         """
         Computes the Total Cash requested
-        Formula = Cash available - Payable Invoices - Engagements - Foreseen expenses
+        Formula = Cash available - Payable Invoices - Commitments - Foreseen expenses
         """
         if context is None:
             context = {}
@@ -430,7 +430,7 @@ class recap_mission(osv.osv):
             fields_list = ['liquidity_amount', 'payable_amount', 'commitment_amount', 'expense_amount']
             for recap in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
                 total = recap.liquidity_amount - recap.payable_amount - recap.commitment_amount - recap.expense_amount
-                result[recap.id] = total
+                result[recap.id] = -1 * total  # ex: 1000 in Bank - 1500 commitments = -500  ==> display 500 to transfer
         return result
 
     _columns = {
