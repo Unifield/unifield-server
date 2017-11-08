@@ -78349,8 +78349,8 @@ msgstr "La méthode à utiliser pour trouver les entrées cibles au lieu du doma
 #. module: update_client
 #: code:addons/update_client/wizard.py:222
 #, python-format
-msgid "But it seems you don't have an Internet access. Please provide the patches manually."
-msgstr "But it seems you don't have an Internet access. Please provide the patches manually."
+msgid "But it seems that the SYNC_SERVER is not reachable. Please check you internet connection or provide the patches manually."
+msgstr "Mais il semble que le SYNC_SERVER ne soit pas atteignable. Veuillez vérifier votre connexion internet ou fournir les patches manuellement."
 
 #. module: hr
 #: field:hr.employee,country_id:0
