@@ -99810,3 +99810,22 @@ msgstr "Le partenaire %s n'est pas autorisé pour ce document."
 #, python-format
 msgid "Creating Debit Note lines by file import is not allowed."
 msgstr "La création de lignes d'une Note de Débit via l'import d'un fichier n'est pas autorisée."
+
+#. module: sale_override
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:61
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:84
+#, python-format
+msgid "line %s"
+msgstr "ligne %s"
+
+#. module: sale_override
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:71
+#, python-format
+msgid ", %s"
+msgstr ", %s"
+
+#. module: sale_override
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:69
+#, python-format
+msgid " and %s"
+msgstr " et %s"
