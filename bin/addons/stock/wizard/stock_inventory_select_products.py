@@ -75,6 +75,13 @@ class stock_inventory_select_products(osv.osv_memory):
         return super(stock_inventory_select_products, self).create(cr, user, vals, context=context)
 
 
+    def refresh_products_from_filters(self, cr, uid, ids, context=None):
+
+        pass
+
+    def import_products_from_filters(self, cr, uid, ids, context=None):
+
+        pass
 
 
 stock_inventory_select_products()

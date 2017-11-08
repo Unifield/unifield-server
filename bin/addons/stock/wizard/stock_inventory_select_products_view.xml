@@ -15,21 +15,22 @@
                             <h3 style="text-align: center; margin: 13px"><translate>This is a full inventory. All products currently in stock and all products with movements in the last X months will be added.</translate></h3>
                         </html>
                         </group>
-                        <field name="recent_moves_months_fullinvo" colspan="1"/>
+                        <field name="recent_moves_months_fullinvo" colspan="1" attrs="{'required':[('full_inventory','=',True)]}"/>
                     </group>
                     <group col="4" colspan="4" attrs="{'invisible':[('full_inventory', '=', True)]}">
                     <separator string="Partial inventory" />
                         <group col="2" colspan="2">
-                            <field name="first_filter"/>
-                            <field name="recent_moves_months" attrs="{'invisible':[('first_filter','!=','recent_movements')]}" colspan="2"/>
+                            <field name="first_filter"        attrs="{'required':[('full_inventory', '=', False)]}" />
+                            <field name="recent_moves_months" attrs="{'invisible':[('first_filter','!=','recent_movements')], 
+                                                                       'required':[('first_filter','=','recent_movements')]}" colspan="2"/>
                         </group>
                         <group col="2" colspan="2">
-                            <field name="second_filter"/>
-                            <field name="family"       attrs="{'invisible':[('second_filter','!=','family')]}"      />
-                            <field name="product_list" attrs="{'invisible':[('second_filter','!=','productlist')]}" />
-                            <field name="kc"           attrs="{'invisible':[('second_filter','!=','specialcare')]}" />
-                            <field name="cs"           attrs="{'invisible':[('second_filter','!=','specialcare')]}" />
-                            <field name="dg"           attrs="{'invisible':[('second_filter','!=','specialcare')]}" />
+                            <field name="second_filter" attrs="{'required':[('full_inventory', '=', False)]}"/>
+                            <field name="family"        attrs="{'invisible':[('second_filter','!=','family')],      'required':[('second_filter','=','family')],    }" />
+                            <field name="product_list"  attrs="{'invisible':[('second_filter','!=','productlist')], 'required':[('second_filter','=','productlist')]}" />
+                            <field name="kc"            attrs="{'invisible':[('second_filter','!=','specialcare')]}" />
+                            <field name="cs"            attrs="{'invisible':[('second_filter','!=','specialcare')]}" />
+                            <field name="dg"            attrs="{'invisible':[('second_filter','!=','specialcare')]}" />
                         </group>
                     </group>
                     <separator colspan="4" string="Preview" />
