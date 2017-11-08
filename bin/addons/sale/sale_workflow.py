@@ -300,6 +300,7 @@ class sale_order_line(osv.osv):
             ir_non_stockable = sol.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep')
 
             if linked_dpo_line:
+                picking_obj = self.pool.get('stock.picking')
                 # create or update PICK/OUT:
                 picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
 
@@ -313,7 +314,7 @@ class sale_order_line(osv.osv):
                 if not pick_to_use:
                     picking_data['name'] = self.pool.get('ir.sequence').get(cr, uid, seq_name)
                     picking_data['dpo_pick'] = True
-                    pick_to_use = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
+                    pick_to_use = picking_obj.create(cr, uid, picking_data, context=context)
                     pick_name = picking_data['name']
                     self.infolog(cr, uid, "The Picking Ticket id:%s (%s) has been created from %s id:%s (%s)." % (
                         pick_to_use,
@@ -331,7 +332,16 @@ class sale_order_line(osv.osv):
                 stock_loc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
                 self.pool.get('stock.move').write(cr, uid, [move_id], {'location_id': stock_loc, 'location_dest_id': stock_loc}, context=context)
                 # set PICK to done
-                self.pool.get('stock.picking').action_done(cr, uid, [pick_to_use], context=context)
+                picking_obj.action_done(cr, uid, [pick_to_use], context=context)
+
+                # Create STV / IVO
+                # Change Currency ??
+                if sol.order_partner_id.partner_type in ('section', 'intermission'):
+                    picking = picking_obj.browse(cr, uid, pick_to_use, context=context)
+                    move = self.pool.get('stock.move').browse(cr ,uid, move_id, context=context)
+                    invoice_id, inv_type = picking_obj.action_invoice_create_header(cr, uid, picking, journal_id=False, invoices_group=False, type=False, use_draft=True, context=context)
+                    if invoice_id:
+                        picking_obj.action_invoice_create_line(cr, uid, picking, move, invoice_id, group=False, inv_type=inv_type, partner=sol.order_id.partner_id, context=context)
 
             elif not ir_non_stockable:
                 # create or update PICK/OUT:
@@ -415,7 +425,7 @@ class sale_order_line(osv.osv):
                 to_write['original_price'] = sol.price_unit
                 to_write['original_uom'] = sol.product_uom.id
 
-                self.check_product_or_nomenclature(cr, uid, ids, context=context)                    
+                self.check_product_or_nomenclature(cr, uid, ids, context=context)
 
             if to_write:
                 self.write(cr, uid, sol.id, to_write, context=context)

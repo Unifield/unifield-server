@@ -357,6 +357,7 @@ class purchase_order_line(osv.osv):
 
             self.write(cr, uid, pol.id, line_update, context=context)
 
+
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True
@@ -435,6 +436,8 @@ class purchase_order_line(osv.osv):
         # update FO line with change on PO line
         self.update_fo_lines(cr, uid, ids, context=context)
 
+        pol_to_invoice = {}
+
         for pol in self.browse(cr, uid, ids):
             if not pol.confirmed_delivery_date:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
@@ -501,8 +504,14 @@ class purchase_order_line(osv.osv):
             if pol.order_id.order_type == 'direct':
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, 'done', cr)
 
+            if pol.order_id.invoice_method == 'order':
+                pol_to_invoice[pol.id] = True
+
+
         # create or update the linked commitment voucher:
         self.create_or_update_commitment_voucher(cr, uid, ids, context=context)
+        if pol_to_invoice:
+            self.generate_invoice(cr, uid, pol_to_invoice.keys(), context=context)
 
         return True
 

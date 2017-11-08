@@ -1786,6 +1786,49 @@ class purchase_order_line(osv.osv):
         }
 
 
+    def generate_invoice(self, cr, uid, ids, context=None):
+        inv_ids = {}
+        inv_line = self.pool.get('account.invoice.line')
+        ana_obj = self.pool.get('analytic.distribution')
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.order_id.id not in inv_ids:
+                inv_ids[pol.order_id.id] = pol.order_id.action_invoice_get_or_create(context=context)
+
+
+            if pol.product_id:
+                account_id = pol.product_id.product_tmpl_id.property_account_expense.id
+                if not account_id:
+                    account_id = pol.product_id.categ_id.property_account_expense_categ.id
+                if not account_id:
+                    raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (numer:%d)') % (pol.product_id.default_code, pol.line_number))
+            else:
+                account_id = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
+
+            fpos = pol.order_id.fiscal_position or False
+            account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, account_id)
+
+            distrib_id = False
+            if pol.analytic_distribution_id:
+                distrib_id = ana_obj.copy(cr, uid, pol.analytic_distribution_id.id, {})
+                ana_obj.create_funding_pool_lines(cr, uid, [distrib_id])
+
+            inv_line.create(cr, uid, {
+                'name': pol.name,
+                'account_id': account_id,
+                'price_unit': pol.price_unit or 0.0,
+                'quantity': pol.product_qty,
+                'product_id': pol.product_id.id or False,
+                'uos_id': pol.product_uom.id or False,
+                'invoice_line_tax_id': [(6, 0, [x.id for x in pol.taxes_id])],
+                'account_analytic_id': pol.account_analytic_id.id or False,
+                'order_line_id': pol.id,
+                'invoice_id': inv_ids[pol.order_id.id],
+                'analytic_distribution_id': distrib_id,
+            }, context=context)
+
+        self.write(cr, uid, ids, {'invoiced': True}, context=context)
+        self.pool.get('account.invoice').button_compute(cr, uid, inv_ids.values(), {'type':'in_invoice'}, set_total=True)
 purchase_order_line()
 
 

@@ -1146,78 +1146,69 @@ class purchase_order(osv.osv):
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
 
-    def inv_line_create(self, cr, uid, account_id, order_line):
-        return (0, False, {
-            'name':order_line.name,
-            'account_id': account_id,
-            'price_unit': order_line.price_unit or 0.0,
-            'quantity': order_line.product_qty,
-            'product_id': order_line.product_id.id or False,
-            'uos_id': order_line.product_uom.id or False,
-            'invoice_line_tax_id': [(6, 0, [x.id for x in order_line.taxes_id])],
-            'account_analytic_id': order_line.account_analytic_id.id or False,
-            'order_line_id': order_line.id,
-        })
+    def action_invoice_get_or_create(self, cr, uid, ids, context=None):
+        inv_obj = self.pool.get('account.invoice')
+        ana_obj = self.pool.get('analytic.distribution')
 
-    def action_invoice_create(self, cr, uid, ids, *args):
-        res = False
+        single = True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            single = False
+
+        po_to_inv = {}
+        inv_ids = inv_obj.search(cr, uid, [('state', '=', 'draft'), ('main_purchase_id', 'in', ids)], context=context)
+        for inv in inv_obj.read(cr, uid, inv_ids, ['main_purchase_id'], context=context):
+            po_to_inv[inv['main_purchase_id'][0]] = inv['id']
 
         for o in self.browse(cr, uid, ids):
-            il = []
-            todo = []
-            for ol in o.order_line:
-                todo.append(ol.id)
-                if ol.product_id:
-                    a = ol.product_id.product_tmpl_id.property_account_expense.id
-                    if not a:
-                        a = ol.product_id.categ_id.property_account_expense_categ.id
-                    if not a:
-                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (ol.product_id.name, ol.product_id.id,))
+            if o.id not in po_to_inv:
+                inv_data = {
+                    'name': o.partner_ref or o.name,
+                    'reference': o.partner_ref or o.name,
+                    'account_id': o.partner_id.property_account_payable.id,
+                    'type': 'in_invoice',
+                    'partner_id': o.partner_id.id,
+                    'currency_id': o.pricelist_id.currency_id.id,
+                    'address_invoice_id': o.partner_address_id.id,
+                    'address_contact_id': o.partner_address_id.id,
+                    'origin': o.name,
+                    'fiscal_position': o.fiscal_position.id or o.partner_id.property_account_position.id,
+                    'payment_term': o.partner_id.property_payment_term and o.partner_id.property_payment_term.id or False,
+                    'company_id': o.company_id.id,
+                    'main_purchase_id': o.id,
+                    'purchase_ids': [(4, o.id)],
+                }
+
+                if o.analytic_distribution_id:
+                    distrib_id = ana_obj.copy(cr, uid, o.analytic_distribution_id.id, {})
+                    ana_obj.create_funding_pool_lines(cr, uid, [distrib_id])
+                    inv_data['analytic_distribution_id'] = distrib_id
+
+                if o.order_type == 'in_kind':
+                    inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind'), ('is_current_instance', '=', True)])
+                    if not inkind_journal_ids:
+                        raise osv.except_osv(_('Error'), _('No In-kind Donation journal found!'))
+                    inv_data['journal_id'] = inkind_journal_ids[0]
+                    inv_data['is_inkind_donation'] = True
                 else:
-                    a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
-                fpos = o.fiscal_position or False
-                a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
-                il.append(self.inv_line_create(cr, uid, a, ol))
+                    journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])
+                    if not journal_ids:
+                        raise osv.except_osv(_('Error !'),
+                                             _('There is no purchase journal defined for this company: "%s" (id:%d)') % (o.company_id.name, o.company_id.id))
+                    inv_data['journal_id'] = journal_ids[0]
+                    if o.order_type == 'purchase_list':
+                        inv_data['purchase_list'] = 1
 
-            a = o.partner_id.property_account_payable.id
 
-            # US-268: Pick the correct journal of the current instance, could have many same journal but for different instances
-            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])
-            if not journal_ids:
-                raise osv.except_osv(_('Error !'),
-                                     _('There is no purchase journal defined for this company: "%s" (id:%d)') % (o.company_id.name, o.company_id.id))
-            inv = {
-                'name': o.partner_ref or o.name,
-                'reference': o.partner_ref or o.name,
-                'account_id': a,
-                'type': 'in_invoice',
-                'partner_id': o.partner_id.id,
-                'currency_id': o.pricelist_id.currency_id.id,
-                'address_invoice_id': o.partner_address_id.id,
-                'address_contact_id': o.partner_address_id.id,
-                'journal_id': len(journal_ids) and journal_ids[0] or False,
-                'origin': o.name,
-                'invoice_line': il,
-                'fiscal_position': o.fiscal_position.id or o.partner_id.property_account_position.id,
-                'payment_term': o.partner_id.property_payment_term and o.partner_id.property_payment_term.id or False,
-                'company_id': o.company_id.id,
-            }
-            if o.order_type == 'purchase_list':
-                inv['purchase_list'] = 1
-            elif o.order_type == 'in_kind':
-                inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind'), ('is_current_instance', '=', True)])
-                if not inkind_journal_ids:
-                    raise osv.except_osv(_('Error'), _('No In-kind Donation journal found!'))
-                inv['journal_id'] = inkind_journal_ids[0]
-                inv['is_inkind_donation'] = True
+                po_to_inv[o.id] = self.pool.get('account.invoice').create(cr, uid, inv_data, {'type':'in_invoice', 'journal_type': 'purchase'})
+                inv_obj.fetch_analytic_distribution(cr, uid, [po_to_inv[o.id]])
+                self.infolog(cr, uid, 'Invoice on order (id:%d) created for PO %s' % (po_to_inv[o.id], o.name))
+            else:
+                self.infolog(cr, uid, 'Invoice on order (id:%d) already exists for PO %s' % (po_to_inv[o.id], o.name))
+            #self.pool.get('account.invoice').button_compute(cr, uid, [inv_id], {'type':'in_invoice'}, set_total=True)
+            #self.pool.get('purchase.order.line').write(cr, uid, todo, {'invoiced':True})
+        return single and po_to_inv.values()[0] or po_to_inv
 
-            inv_id = self.pool.get('account.invoice').create(cr, uid, inv, {'type':'in_invoice', 'journal_type': 'purchase'})
-            self.pool.get('account.invoice').button_compute(cr, uid, [inv_id], {'type':'in_invoice'}, set_total=True)
-            self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [inv_id])
-            self.pool.get('purchase.order.line').write(cr, uid, todo, {'invoiced':True})
-            self.write(cr, uid, [o.id], {'invoice_ids': [(4, inv_id)]})
-            res = inv_id
-        return res
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
