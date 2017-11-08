@@ -258,7 +258,7 @@ class stock_move(osv.osv):
         location_dest_id = super(stock_move, self)._get_location_for_internal_request(cr, uid, context=context, **kwargs)
         move = kwargs['move']
         linked_sol = move.purchase_line_id.linked_sol_id or False
-        if linked_sol and linked_sol.procurement_request and linked_sol.order_id.location_requestor_id.usage != 'customer':
+        if linked_sol and linked_sol.order_id.procurement_request and linked_sol.order_id.location_requestor_id.usage != 'customer':
             location_dest_id = linked_sol.order_id.location_requestor_id.id
 
         return location_dest_id
