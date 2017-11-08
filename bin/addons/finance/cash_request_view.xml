@@ -46,6 +46,8 @@
                                 </group>
                                 <button name="compute_total_to_transfer" type="object"
                                         string="Compute total to transfer" icon="gtk-refresh"/>
+                                <field name="total_to_transfer"/>
+                                <field name="consolidation_currency_name" nolabel="1"/>
                             </page>
                             <page string="Banking">
                                 <separator colspan="4" string="Banking references"/>
