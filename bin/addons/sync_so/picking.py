@@ -210,6 +210,7 @@ class stock_picking(osv.osv):
                   'quantity': data['product_qty'] or 0.0,
                   'note': data['note'],
                   'comment': data.get('comment'),
+                  'sale_line_id': data.get('sale_line_id', False) and data['sale_line_id'].get('id', False) or False,
                   }
         return result
 
@@ -391,6 +392,13 @@ class stock_picking(osv.osv):
                         #US-1294: Now search all moves of the given IN and line number
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
                         move_ids = move_obj.search(cr, uid, search_move, order='product_qty ASC', context=context)
+                        if not move_ids:
+                            # SLL edit, if move cannot be found, then use sync_linked_sol to find it:
+                            sol_id = data.get('sale_line_id', False) and int(data['sale_line_id'].split('/')[-1]) or False
+                            if sol_id:
+                                pol_id = self.pool.get('purchase.order.line').search(cr, uid, [('sync_linked_sol', 'ilike', '%%/%s' % sol_id)], context=context)
+                                if pol_id:
+                                    move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_id)], context=context)
                         if not move_ids:
                             #US-1294: absolutely no moves -> probably they are closed, just show the error message then ignore
                             closed_in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['done', 'cancel'], context)
