@@ -75,6 +75,8 @@ class cash_request(osv.osv):
                                        store=False, readonly=True),
         'commitment_ids': fields.one2many('cash.request.commitment', 'cash_request_id', 'Commitments', readonly=True),
         'total_to_transfer': fields.float('Total Cash Request to transfer', digits_compute=dp.get_precision('Account')),
+        'total_to_transfer_line_ids': fields.one2many('total.transfer.line', 'cash_request_id',
+                                                      'Lines of Total Cash Request to transfer', readonly=True),
     }
 
     def _get_company(self, cr, uid, context=None):
@@ -246,16 +248,31 @@ class cash_request(osv.osv):
         """
         if context is None:
             context = {}
+        transfer_line_obj = self.pool.get('total.transfer.line')
         for cash_req in self.browse(cr, uid, ids, fields_to_fetch=['buffer', 'transfer_to_come', 'security_envelope'],
                                     context=context):
             self._check_currencies(cr, uid, cash_req.id, context=context)
             # buffer shouldn't be negative nor > 100
             if cash_req.buffer < 0 or cash_req.buffer - 100 > 10**-3:
                 raise osv.except_osv(_('Error'), _('The percentage in the Buffer field is incorrect.'))
+            # compute the total
             total = self._get_total_cash_request(cr, uid, cash_req.id, context=context) - cash_req.transfer_to_come + cash_req.security_envelope
             total += (cash_req.buffer * total / 100)
-            vals = {'total_to_transfer': total}
-            self.write(cr, uid, cash_req.id, vals, context=context)
+            cash_req_vals = {'total_to_transfer': total}
+            # split per currency
+            # delete previous split lines for this cash request
+            old_line_ids = transfer_line_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
+            transfer_line_obj.unlink(cr, uid, old_line_ids, context=context)
+            # create new lines
+            currencies = cash_req.transfer_currency_ids
+            for curr in currencies:
+                percentage = curr.percentage or 100  # if no percentage is given consider 100%
+                total_curr = total * percentage / 100
+                transfer_line_vals = {'currency_id': curr.currency_id.id,
+                                      'amount': total_curr,
+                                      'cash_request_id': cash_req.id}
+                transfer_line_obj.create(cr, uid, transfer_line_vals, context=context)
+            self.write(cr, uid, cash_req.id, cash_req_vals, context=context)
         return True
 
 
@@ -321,4 +338,19 @@ class cash_request_commitment(osv.osv):
 
 
 cash_request_commitment()
+
+
+class total_transfer_line(osv.osv):
+    _name = 'total.transfer.line'
+    _rec_name = 'cash_request_id'
+    _description = 'Lines of Total to transfer for Cash Request'
+
+    _columns = {
+        'currency_id': fields.many2one('res.currency', 'Currency', required=True),
+        'amount': fields.float('Amount', digits_compute=dp.get_precision('Account')),
+        'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
+    }
+
+
+total_transfer_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

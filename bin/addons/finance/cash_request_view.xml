@@ -48,6 +48,14 @@
                                         string="Compute total to transfer" icon="gtk-refresh"/>
                                 <field name="total_to_transfer"/>
                                 <field name="consolidation_currency_name" nolabel="1"/>
+                                <group colspan="4" col="2">
+                                    <field name="total_to_transfer_line_ids" nolabel="1">
+                                        <tree string="Split per currencies">
+                                            <field name="currency_id"/>
+                                            <field name="amount"/>
+                                        </tree>
+                                    </field>
+                                </group>
                             </page>
                             <page string="Banking">
                                 <separator colspan="4" string="Banking references"/>
