@@ -72653,10 +72653,11 @@ msgstr "Approvisionnement- Méthode"
 
 #. modules: account_override, register_accounting
 #: field:account.move,imported:0
+#: field:account.move.line,imported:0
 #: view:account.invoice:0
 #: selection:account.invoice,imported_state:0
 msgid "Imported"
-msgstr "Imported"
+msgstr "Importé"
 
 #. module: kit
 #: code:addons/kit/wizard/kit_mass_import.py:126
@@ -99606,6 +99607,7 @@ msgstr "Vous ne pouvez pas modifier un Journal Analytique qui n'appartient pas �
 msgid "You can't delete this FX rate as the period \"%s\" isn't in Draft state."
 msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'est pas en statut Brouillon."
 
+<<<<<<< TREE
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:383
 #, python-format
@@ -99829,3 +99831,19 @@ msgstr ", %s"
 #, python-format
 msgid " and %s"
 msgstr " et %s"
+
+#. module: account
+#: code:addons/account/account.py:1555
+#, python-format
+msgid "The Description is missing for one of the lines."
+msgstr "Il manque la Description pour l'une des lignes."
+
+#. module: finance
+#: view:account.move:0
+msgid "Update Description for Lines"
+msgstr "Mettre à jour la Description pour les Lignes"
+
+#. module: finance
+#: view:account.move:0
+msgid "Update Lines"
+msgstr "Mettre à jour les Lignes"
