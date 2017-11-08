@@ -105,7 +105,7 @@
                             <page string="Products">
                                 <field name="default_src_location_id_return_claim" attrs="{'readonly': ['|', ('type_return_claim', 'not in', ['supplier', 'transport']), ('state', '!=', 'draft')]}" domain="[('usage', '!=', 'view')]" />
                                 <field name="product_line_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4"
-                                    attrs="{'readonly': [('state', '!=', 'draft')]}" context="{'claim_type': type_return_claim, 'default_src': default_src_location_id_return_claim, 'claim_partner': partner_id_return_claim}">
+                                    attrs="{'readonly': [('state', 'not in', ('draft', 'draft_progress))]}" context="{'claim_type': type_return_claim, 'default_src': default_src_location_id_return_claim, 'claim_partner': partner_id_return_claim}">
                                     <tree string="Products" editable="top" colors="red:integrity_status_claim_product_line != 'empty'">
                                         <field name="name" invisible="True" />
                                         <field name="product_id_claim_product_line" domain="[('picking_ids', '=', parent.picking_id_return_claim)]"
@@ -144,9 +144,9 @@
                                 </field>
                                 <group colspan="2" col="2" />
                                 <button name="check_product_lines_integrity" type="object" string="Check Integrity" icon="gtk-apply"
-                                    attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                    attrs="{'readonly': [('state', 'not in', ('draft', 'draft_progress))]}" />
                                 <button name="load_products" type="object" string="Load Products from IN/OUT" icon="gtk-add"
-                                    attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                    attrs="{'readonly': [('state', 'not in', ('draft', 'draft_progress))]}" />
                             </page>
                             <page string="Follow Up">
                                 <field name="follow_up_return_claim" nolabel="True" />
