@@ -90,9 +90,9 @@
                                 </field>
                             </page>
                             <page string="Planned Expense">
-                                <separator colspan="4" string="Planned expenses entries"/>
+                                <separator colspan="4" string="Planned expense for the coming period"/>
                                 <field name="planned_expense_ids" nolabel="1" context="{'mission': mission}">
-                                    <tree editable="bottom">
+                                    <tree editable="bottom" string="Planned expenses entries">
                                         <field name="prop_instance_id"/>
                                         <field name="consumer_instance_id"
                                                domain="[('level', 'in', ['coordo', 'project']), ('mission', '=', context.get('mission'))]"/>
