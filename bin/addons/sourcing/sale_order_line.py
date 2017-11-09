@@ -1739,7 +1739,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'original_uom': sourcing_line.original_uom.id,
                         })
                     self.pool.get('purchase.order.line').create(cr, uid, rfq_line_values, context=context)
-                    self.pool.get('purchase.order').update_source_document(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
+                    self.pool.get('purchase.order').update_source_document(cr, uid, rfq_to_use, sourcing_line.order_id.id, context=context)
 
                 elif sourcing_line.po_cft == 'cft':
                     tender_to_use = self.get_existing_tender(cr, uid, sourcing_line.id, context=context)
