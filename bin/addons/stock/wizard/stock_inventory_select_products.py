@@ -21,6 +21,8 @@
 
 from osv import fields, osv
 from tools.translate import _
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 
 # This will be a tuple ((1,"1 months" ), (2, "2 months"), ...)
 MOVED_IN_LAST_X_MONTHS = tuple([ (i, "%s months" % str(i)) for i in range(1,13) ])
@@ -106,27 +108,80 @@ class stock_inventory_select_products(osv.osv_memory):
 
     def get_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field)
+    #
+    # END Nomenclature management
+    #
 
 
+    #
+    # When clicking 'Refresh'
+    #
     def refresh_products_from_filters(self, cr, uid, wizard_ids, context=None):
         context = {} if context else context
         def read_single(model, id_, column):
             return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
 
         # Get this wizard...
         assert len(wizard_ids) == 1
         wizard_id = wizard_ids[0]
 
-        # Find the location of the inventory
         inventory_id = read_single(self._name, wizard_id, "inventory_id")
-        location_id = read_single('stock.inventory', inventory_id, "location_id")[0]
 
-        products_in_stock = self.get_products_in_stock_at_location(cr, uid, location_id, context=context)
-        self.update_product_preview(cr, uid, wizard_id, products_in_stock, context=context)
+        # Get the selected options
+        w = read_many(self._name, [wizard_id], ['inventory_id',
+                                                'full_inventory',
+                                                'recent_moves_months_fullinvo',
+                                                'first_filter',
+                                                'recent_moves_months',
+                                                'second_filter',
+                                                'kc',
+                                                'cs',
+                                                'dg',
+                                                'product_list',
+                                                'nomen_manda_0',
+                                                'nomen_manda_1',
+                                                'nomen_manda_2',
+                                                'nomen_manda_3'])[0]
+
+        # Find the location of the inventory
+        location_id = read_single('stock.inventory', w["inventory_id"], "location_id")[0]
+
+        # Full inventory case
+        if w["full_inventory"]:
+
+            # Get products in stock at that location, or recently moved
+            products_in_stock = self.get_products_in_stock_at_location(cr, uid, location_id, context=context)
+            products_recently_moved = self.get_products_with_recent_moves_at_location(cr, uid, location_id, w['recent_moves_months_fullinvo'], context=context)
+            products = products_in_stock.union(products_recently_moved)
+
+            # Show them in the preview
+            self.update_product_preview(cr, uid, wizard_id, products, context=context)
+
+        # Partial inventory case
+        else:
+
+            # Handle the first option
+            if w["first_filter"] == "in_stock":
+                products = self.get_products_in_stock_at_location(cr, uid, location_id, context=context)
+            elif w["first_filter"] == "recent_movements":
+                products = self.get_products_with_recent_moves_at_location(cr, uid, location_id, w['recent_moves_months'], context=context)
+            else:
+                # Does not happens
+                pass
+
+            # TODO - Handle the second option...
+
+            # Show them in the preview
+            self.update_product_preview(cr, uid, wizard_id, products, context=context)
 
 
     def update_product_preview(self, cr, uid, wizard_id, product_ids, context=None):
         context = {} if context else context
+
+        assert isinstance(wizard_id, int)
+        assert isinstance(product_ids, list) or isinstance(product_ids, set)
 
         # '6' is the code for 'replace all'
         vals = { "products_preview": [(6, 0, list(product_ids))] }
@@ -140,6 +195,8 @@ class stock_inventory_select_products(osv.osv_memory):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)
         def search(model, domain):
             return self.pool.get(model).search(cr, uid, domain, context=context)
+
+        assert isinstance(location_id, int)
 
 
         # Get all the moves for in/out of that location
@@ -162,9 +219,9 @@ class stock_inventory_select_products(osv.osv_memory):
 
     def get_products_in_stock_at_location(self, cr, uid, location_id, context=None):
 
-        moves_at_location = self.get_moves_at_location(cr, uid, location_id, context=None)
+        assert isinstance(location_id, int)
 
-        print moves_at_location
+        moves_at_location = self.get_moves_at_location(cr, uid, location_id, context=None)
 
         # Init stock at 0 for products
         stocks = {}
@@ -194,6 +251,26 @@ class stock_inventory_select_products(osv.osv_memory):
                                   if stock > 0 ])
 
         return products_in_stock
+
+    def get_products_with_recent_moves_at_location(self, cr, uid, location_id, recent_moves_months, context=None):
+
+        assert isinstance(location_id, int)
+        assert isinstance(recent_moves_months, int)
+
+        moves_at_location = self.get_moves_at_location(cr, uid, location_id, context=None)
+
+        several_months_ago = datetime.today() + relativedelta(months=-recent_moves_months)
+
+        # Keep only the product ids related to moves during the last few months
+        recently_moved_products = set()
+        for move in moves_at_location:
+            # Parse the move's date
+            move_date = datetime.strptime(move['date'], '%Y-%m-%d %H:%M:%S')
+            if move_date > several_months_ago:
+                product_id = move['product_id'][0]
+                recently_moved_products.add(product_id)
+
+        return recently_moved_products
 
 
     def import_products_from_filters(self, cr, uid, ids, context=None):
