@@ -162,7 +162,7 @@ class stock_inventory_select_products(osv.osv_memory):
         # Partial inventory case
         else:
 
-            # Handle the first option
+            # Handle the first filter
             if w["first_filter"] == "in_stock":
                 products = self.get_products_in_stock_at_location(cr, uid, location_id, context=context)
             elif w["first_filter"] == "recent_movements":
@@ -171,7 +171,26 @@ class stock_inventory_select_products(osv.osv_memory):
                 # Does not happens
                 pass
 
-            # TODO - Handle the second option...
+            # Handle the second filter
+            if w['second_filter'] == 'productlist':
+                product_list_id = read_single(self._name, wizard_id, "product_list")
+                products = self.filter_products_with_product_list(cr, uid, products, product_list_id, context=context)
+
+            elif w['second_filter'] == 'specialcare':
+                special_care_criterias = [ c for c in ['kc', 'cs', 'dg'] if w[c] ]
+                products = self.filter_products_with_special_care(cr, uid, products, special_care_criterias, context=context)
+
+            elif w['second_filter'] == 'family':
+                nomenclature = { name:w[name] for name in [ 'nomen_manda_0',
+                                                            'nomen_manda_1',
+                                                            'nomen_manda_2',
+                                                            'nomen_manda_3'
+                                                          ] if w[name] }
+                products = self.filter_products_with_nomenclature(cr, uid, products, nomenclature, context=context)
+
+            else:
+                # Nothing to do, keep all the products found with first filter
+                pass
 
             # Show them in the preview
             self.update_product_preview(cr, uid, wizard_id, products, context=context)
@@ -218,6 +237,7 @@ class stock_inventory_select_products(osv.osv_memory):
 
 
     def get_products_in_stock_at_location(self, cr, uid, location_id, context=None):
+        context = {} if context else context
 
         assert isinstance(location_id, int)
 
@@ -253,6 +273,7 @@ class stock_inventory_select_products(osv.osv_memory):
         return products_in_stock
 
     def get_products_with_recent_moves_at_location(self, cr, uid, location_id, recent_moves_months, context=None):
+        context = {} if context else context
 
         assert isinstance(location_id, int)
         assert isinstance(recent_moves_months, int)
@@ -271,6 +292,76 @@ class stock_inventory_select_products(osv.osv_memory):
                 recently_moved_products.add(product_id)
 
         return recently_moved_products
+
+
+    def filter_products_with_special_care(self, cr, uid, product_ids, special_care_criterias, context=None):
+        context = {} if context else context
+        def search(model, domain):
+            return self.pool.get(model).search(cr, uid, domain, context=context)
+
+        assert isinstance(special_care_criterias, list)
+        assert isinstance(product_ids, list) or isinstance(product_ids, set)
+
+        domain_filter = [ ('id', 'in', list(product_ids)) ]
+
+        # To convert wizard option to column name in product.product
+        special_care_column_name = { 'kc': 'is_kc',
+                                     'cs': 'is_cs',
+                                     'dg': 'is_dg' }
+
+        # Add special care criterias to the domain
+        for criteria in special_care_criterias:
+            column_name = special_care_column_name[criteria]
+            domain_filter = ['&'] + domain_filter + [(column_name, '=', True)]
+
+        # Perform the search/fitlering
+        products_filtered = search('product.product', domain_filter)
+
+        return products_filtered
+
+
+    def filter_products_with_nomenclature(self, cr, uid, product_ids, nomenclature, context=None):
+        context = {} if context else context
+        def search(model, domain):
+            return self.pool.get(model).search(cr, uid, domain, context=context)
+
+        assert isinstance(nomenclature, dict)
+        assert isinstance(product_ids, list) or isinstance(product_ids, set)
+
+        domain_filter = [ ('id', 'in', list(product_ids)) ]
+
+        # Add nomenclature to the domain
+        for name, value in nomenclature.items():
+            domain_filter = ['&'] + domain_filter + [(name, '=', value)]
+
+        # Perform the search/fitlering
+        products_filtered = search('product.product', domain_filter)
+
+        return products_filtered
+
+
+    def filter_products_with_product_list(self, cr, uid, product_ids, product_list_id, context=None):
+        context = {} if context else context
+        def search(model, domain):
+            return self.pool.get(model).search(cr, uid, domain, context=context)
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+
+        # Get all the product ids in the list
+        product_lines_in_list = search('product.list.line',
+                                       [('list_id', '=', product_list_id)])
+
+        product_ids_in_list = read_many('product.list.line',
+                                        product_lines_in_list,
+                                        ['name'])
+
+        product_ids_in_list = set([ l['name'][0] for l in product_ids_in_list ])
+
+        # Now use these products in list to filter the products in input
+        product_ids_in_list = product_ids_in_list.intersection(product_ids)
+
+        return product_ids_in_list
+
 
     #
     # When clicking 'Add product'
