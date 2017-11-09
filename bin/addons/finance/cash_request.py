@@ -79,6 +79,8 @@ class cash_request(osv.osv):
         'total_to_transfer_line_ids': fields.one2many('total.transfer.line', 'cash_request_id',
                                                       'Lines of Total Cash Request to transfer', readonly=True),
         'recap_mission_ids': fields.one2many('recap.mission', 'cash_request_id', 'Lines of Recap Mission', readonly=True),
+        'planned_expense_ids': fields.one2many('cash.request.expense', 'cash_request_id', 'Planned expenses entries',
+                                               required=True),
     }
 
     def _check_buffer(self, cr, uid, ids):
@@ -195,6 +197,7 @@ class cash_request(osv.osv):
             'total_to_transfer': 0.0,
             'state': 'draft',
             'commitment_ids': [],
+            'planned_expense_ids': [],
             'total_to_transfer_line_ids': [],
             'recap_mission_ids': [],
         })
@@ -360,6 +363,8 @@ class transfer_currency(osv.osv):
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
     }
 
+    _order = 'currency_id'
+
     def _check_percentage(self, cr, uid, ids):
         """
         Checks that the percentage value isn't negative nor > 100
@@ -409,8 +414,7 @@ class cash_request_commitment(osv.osv):
         return result
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True),
-        'instance_code': fields.related('instance_id', 'code', string='Instance code', type='char', store=False, readonly=True),
+        'instance_id': fields.many2one('msf.instance', 'Instance Code', required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True),
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', required=True, ondelete='cascade'),
         'total_commitment': fields.function(_total_commitment_compute, method=True, string='Total', type='float',
@@ -461,9 +465,7 @@ class recap_mission(osv.osv):
         return result
 
     _columns = {
-        'instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True),
-        'instance_code': fields.related('instance_id', 'code', string='Instance code / Place of payment', type='char',
-                                        store=False, readonly=True),
+        'instance_id': fields.many2one('msf.instance', 'Instance code / Place of payment', required=True),
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', required=True, ondelete='cascade'),
         'commitment_amount': fields.float('Commitment', digits_compute=dp.get_precision('Account')),
         'liquidity_amount': fields.float('Cash available in mission', digits_compute=dp.get_precision('Account')),
@@ -477,4 +479,40 @@ class recap_mission(osv.osv):
 
 
 recap_mission()
+
+
+class cash_request_expense(osv.osv):
+    _name = 'cash.request.expense'
+    _rec_name = 'cash_request_id'
+    _description = 'Planned Expenses for Cash Request'
+
+    _columns = {
+        'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
+        'prop_instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True, readonly=True,
+                                            domain=[('level', 'in', ['coordo', 'project'])]),
+        'consumer_instance_id': fields.many2one('msf.instance', 'Instance Consumer', required=True,
+                                                domain=[('level', 'in', ['coordo', 'project'])]),
+        'is_local_expense': fields.boolean(string='Local Expense'),
+        'account_id': fields.many2one('account.account', 'Account', required=True,
+                                      domain=[('user_type_code', 'in', ['expense', 'income']),
+                                               '|',  # exclude extra-accounting expense accounts
+                                               ('user_type_code', '!=', 'expense'),
+                                               ('user_type.report_type', '!=', 'none')]),
+        'description': fields.char(size=128, string='Description', required=True),
+        'is_budgeted': fields.boolean(string='Budgeted'),
+        'quantity': fields.float('Quantity', required=True),
+        'unit_price': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Account Computation')),
+        'currency_id': fields.many2one('res.currency', 'Currency', required=True),
+        'total_booking': fields.float('Total Booking Cur.', digits_compute=dp.get_precision('Account'), required=True),
+        'total_functional': fields.float('Total Functional Cur.', digits_compute=dp.get_precision('Account'), required=True),
+    }
+
+    _defaults = {
+        'prop_instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
+    }
+
+    _order = 'prop_instance_id'
+
+
+cash_request_expense()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

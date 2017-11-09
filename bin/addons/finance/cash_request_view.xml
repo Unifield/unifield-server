@@ -23,7 +23,7 @@
                                     <field name="transfer_account_id"/>
                                     <field name="bank_journal_id"/>
                                     <field name="transfer_currency_ids">
-                                        <tree string="Currencies">
+                                        <tree string="Currencies" editable="bottom">
                                             <field name="currency_id"/>
                                             <field name="percentage"/>
                                         </tree>
@@ -45,7 +45,7 @@
                                 <group colspan="4" col="2">
                                     <field name="recap_mission_ids" nolabel="1">
                                         <tree string="Recap Mission">
-                                            <field name="instance_code"/>
+                                            <field name="instance_id"/>
                                             <field name="liquidity_amount" sum="Total Liquidity"/>
                                             <field name="payable_amount" sum="Total Payable"/>
                                             <field name="commitment_amount" sum="Total Commitment"/>
@@ -83,9 +83,28 @@
                                 <separator colspan="4" string="Commitment"/>
                                 <field name="commitment_ids" nolabel="1">
                                     <tree string="Engagement entries">
-                                        <field name="instance_code"/>
+                                        <field name="instance_id"/>
                                         <field name="total_commitment"
                                                string="Total Engagement in Func. currency for the month to come"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Planned Expense">
+                                <separator colspan="4" string="Planned expenses entries"/>
+                                <field name="planned_expense_ids" nolabel="1" context="{'mission': mission}">
+                                    <tree editable="bottom">
+                                        <field name="prop_instance_id"/>
+                                        <field name="consumer_instance_id"
+                                               domain="[('level', 'in', ['coordo', 'project']), ('mission', '=', context.get('mission'))]"/>
+                                        <field name="is_local_expense"/>
+                                        <field name="account_id"/>
+                                        <field name="description"/>
+                                        <field name="is_budgeted"/>
+                                        <field name="quantity"/>
+                                        <field name="unit_price"/>
+                                        <field name="currency_id"/>
+                                        <field name="total_booking"/>
+                                        <field name="total_functional"/>
                                     </tree>
                                 </field>
                             </page>
