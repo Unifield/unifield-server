@@ -180,6 +180,26 @@ class cash_request(osv.osv):
         vals.update({'instance_ids': [(6, 0, self._get_instance_ids(cr, uid, context=context))]})
         return super(cash_request, self).create(cr, uid, vals, context=context)
 
+    def copy(self, cr, uid, cash_req_id, default=None, context=None):
+        """
+        Duplicates a cash request:
+        resets the computed items, changes the date to the one of the day and gets the updated list of instances
+        """
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        default.update({
+            'request_date': datetime.today(),
+            'instance_ids': self._get_instance_ids(cr, uid, context=context),
+            'total_to_transfer': 0.0,
+            'state': 'draft',
+            'commitment_ids': [],
+            'total_to_transfer_line_ids': [],
+            'recap_mission_ids': [],
+        })
+        return super(cash_request, self).copy(cr, uid, cash_req_id, default, context=context)
+
     def _check_currencies(self, cr, uid, cash_req_id, context=None):
         """
         Raises an error if:
@@ -280,7 +300,7 @@ class cash_request(osv.osv):
                 total += rec.total
         return total
 
-    def compute_total_to_transfer(self, cr, uid, cash_req_id, context=None):
+    def _compute_total_to_transfer(self, cr, uid, cash_req_id, context=None):
         """
         If all the checks are ok, computes the total to transfer (see formula below) and does a split per currency:
         Formula = (Total cash request - Transfer to come + security envelop) + %buffer
@@ -322,7 +342,7 @@ class cash_request(osv.osv):
         """
         for cash_req_id in ids:
             self._update_recap_mission(cr, uid, cash_req_id, context=None)
-            self.compute_total_to_transfer(cr, uid, cash_req_id, context=context)
+            self._compute_total_to_transfer(cr, uid, cash_req_id, context=context)
         return True
 
 
