@@ -73,7 +73,7 @@ class stock_inventory_select_products(osv.osv_memory):
 
     def create(self, cr, user, vals, context=None):
 
-        context = context is None and {} or context
+        context = {} if context else context
 
         assert 'inventory_id' in vals
         assert 'full_inventory' in vals
@@ -92,6 +92,8 @@ class stock_inventory_select_products(osv.osv_memory):
                                    num=True,
                                    context=None):
 
+        context = {} if context else context
+
         return self.pool.get('product.nomenclature') \
                .onChangeSearchNomenclature(cr, uid, id, position, type,
                                            nomen_manda_0,
@@ -106,16 +108,98 @@ class stock_inventory_select_products(osv.osv_memory):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field)
 
 
-    def refresh_products_from_filters(self, cr, uid, ids, context=None):
+    def refresh_products_from_filters(self, cr, uid, wizard_ids, context=None):
+        context = {} if context else context
+        def read_single(model, id_, column):
+            return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
 
-        pass
+        # Get this wizard...
+        assert len(wizard_ids) == 1
+        wizard_id = wizard_ids[0]
+
+        # Find the location of the inventory
+        inventory_id = read_single(self._name, wizard_id, "inventory_id")
+        location_id = read_single('stock.inventory', inventory_id, "location_id")[0]
+
+        products_in_stock = self.get_products_in_stock_at_location(cr, uid, location_id, context=context)
+        self.update_product_preview(cr, uid, wizard_id, products_in_stock, context=context)
+
+
+    def update_product_preview(self, cr, uid, wizard_id, product_ids, context=None):
+        context = {} if context else context
+
+        # '6' is the code for 'replace all'
+        vals = { "products_preview": [(6, 0, list(product_ids))] }
+
+        self.write(cr, uid, [wizard_id], vals, context=context)
+
+
+    def get_moves_at_location(self, cr, uid, location_id, context=None):
+        context = {} if context else context
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+        def search(model, domain):
+            return self.pool.get(model).search(cr, uid, domain, context=context)
+
+
+        # Get all the moves for in/out of that location
+        from_or_to_location = ['&', '|',
+                               ('location_id',      'in', [location_id]),
+                               ('location_dest_id', 'in', [location_id]),
+                               ('state',             '=', 'done'       )]
+
+        moves_at_location_ids = search("stock.move", from_or_to_location)
+        moves_at_location = read_many("stock.move",
+                                      moves_at_location_ids,
+                                      ["product_id",
+                                       "date",
+                                       "product_qty",
+                                       "location_id",
+                                       "location_dest_id"])
+
+        return moves_at_location
+
+
+    def get_products_in_stock_at_location(self, cr, uid, location_id, context=None):
+
+        moves_at_location = self.get_moves_at_location(cr, uid, location_id, context=None)
+
+        print moves_at_location
+
+        # Init stock at 0 for products
+        stocks = {}
+        for product_id in set([ m["product_id"][0] for m in moves_at_location]):
+            stocks[product_id] = 0.0
+
+        # Sum all lines
+        for move in moves_at_location:
+
+            product_id = move["product_id"][0]
+            product_qty = move["product_qty"]
+
+            move_out = (move["location_id"][0]      == location_id)
+            move_in  = (move["location_dest_id"][0] == location_id)
+
+            if move_in:
+                stocks[product_id] += product_qty
+            elif move_out:
+                stocks[product_id] -= product_qty
+            else:
+                # This shouldnt happen
+                pass
+
+        # Keep only products for which stock > 0
+        products_in_stock = set([ product_id
+                                  for product_id, stock in stocks.items()
+                                  if stock > 0 ])
+
+        return products_in_stock
+
 
     def import_products_from_filters(self, cr, uid, ids, context=None):
+        context = {} if context else context
 
         pass
-
-
-
 
 
 stock_inventory_select_products()
