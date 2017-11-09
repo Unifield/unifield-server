@@ -349,7 +349,7 @@
                         <button name="check_rfq_updated" type="object" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': [('rfq_state', '!=', 'sent')]}" />
                         <button name="generate_po_from_rfq" type="object" string="Generate Po" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', True)], 'readonly': [('amount_total', '=', 0.00)]}" />
                         <button name="rfq_closed" string="RfQ Closed" type="object" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', True)]}" />
-                        <button name="rfq_done" string="Continue sourcing" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', False)]}" />
+                        <button name="continue_sourcing" type="object" string="Continue sourcing" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', False)]}" />
                     </group>
                 </form>
             </field>

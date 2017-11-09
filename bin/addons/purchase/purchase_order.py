@@ -2401,9 +2401,6 @@ class purchase_order(osv.osv):
         data = self.read(cr, uid, new_po_id, ['name'], context=context)
         # log message describing the previous action
         self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.')%data['name'])
-        # close the current po
-        wf_service = netsvc.LocalService("workflow")
-        wf_service.trg_validate(uid, 'purchase.order', ids[0], 'rfq_done', cr)
 
         return new_po_id
 
@@ -2505,6 +2502,22 @@ class purchase_order(osv.osv):
                 to_process.append(po.id)
         self._finish_commitment(cr, uid, to_process, context=context)
         return super(purchase_order, self).action_done(cr, uid, ids, context=context)
+
+
+    def continue_sourcing(self, cr, uid, ids, context=None):
+        '''
+        On RfQ updated continue sourcing process (create PO)
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.generate_po_from_rfq(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'rfq_state': 'done'}, context=context)
+
+        return True
+
 
     def add_audit_line(self, cr, uid, order_id, old_state, new_state, context=None):
         """

@@ -430,7 +430,6 @@ class purchase_order_cancel_wizard(osv.osv_memory):
                     signal = 'cancel_r'
                 wf_service.trg_validate(uid, 'purchase.order.line', pol.id, signal, cr)
 
-
         return {'type': 'ir.actions.act_window_close'}
 
 
