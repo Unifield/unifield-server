@@ -1404,7 +1404,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             # common domain:
             domain = [
                 ('partner_id', '=', sourcing_line.supplier.id),
-                ('state', 'in', ['draft']),
+                ('rfq_state', 'in', ['draft']),
                 ('delivery_requested_date', '=', sourcing_line.date_planned),
                 ('rfq_ok', '=', True),
                 ('order_type', '=', 'regular'),
@@ -1611,6 +1611,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             'details': sol.order_id.details,
             'delivery_requested_date': sol.date_planned,
             # 'rfq_delivery_address': tender.delivery_address and tender.delivery_address.id or False,
+            'from_procurement': True,
         }
         context.update({'rfq_ok': True})
         new_rfq_id = self.pool.get('purchase.order').create(cr, uid, rfq_values, context=context)
