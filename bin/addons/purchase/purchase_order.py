@@ -1021,6 +1021,8 @@ class purchase_order(osv.osv):
             default['date_confirm'] = False
         if not default.get('related_sourcing_id', False):
             default['related_sourcing_id'] = False
+        if not 'rfq_state' in default:
+            default['rfq_state'] = 'draft'
 
         new_id = super(purchase_order, self).copy(cr, uid, p_id, default, context=context)
         if new_id:
