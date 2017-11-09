@@ -1715,7 +1715,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         rfq_to_use = self.create_rfq_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                         # log new RfQ:
                         rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, context=context)
-                        self.pool.get('purchase.order').log(cr, uid, rfq_to_use, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
                         self.pool.get('purchase.order').infolog(cr, uid, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
                     anal_dist = False
                     if not sourcing_line.procurement_request:
