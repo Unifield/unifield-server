@@ -98,6 +98,7 @@
                 <tree string="Lot Inventory" colors="grey:state in ('cancel')">
                     <field name="ref"/>
                     <field name="name"/>
+                    <field name="location_id"/>
                     <field name="date"/>
                     <field name="state"/>
                 </tree>
