@@ -116,7 +116,7 @@ class stock_inventory_select_products(osv.osv_memory):
     #
     # When clicking 'Refresh'
     #
-    def refresh_products_from_filters(self, cr, uid, wizard_ids, context=None):
+    def refresh_products(self, cr, uid, wizard_ids, context=None):
         context = {} if context else context
         def read_single(model, id_, column):
             return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
@@ -272,11 +272,38 @@ class stock_inventory_select_products(osv.osv_memory):
 
         return recently_moved_products
 
-
-    def import_products_from_filters(self, cr, uid, ids, context=None):
+    #
+    # When clicking 'Add product'
+    #
+    def add_products(self, cr, uid, wizard_ids, context=None):
         context = {} if context else context
 
-        pass
+        # Get this wizard...
+        assert len(wizard_ids) == 1
+        wizard_id = wizard_ids[0]
+
+        self.refresh_products(cr, uid, [wizard_id], context=context)
+        self.update_products_in_inventory(cr, uid, wizard_id, context=context)
+
+        return {'type': 'ir.actions.act_window_close'}
+
+
+    def update_products_in_inventory(self, cr, uid, wizard_id, context=None):
+        context = {} if context else context
+        def read_single(model, id_, column):
+            return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
+        def write(model, id_, vals):
+            return self.pool.get(model).write(cr, uid, [id_], vals, context=context)
+
+        assert isinstance(wizard_id, int)
+
+        inventory_id = read_single(self._name, wizard_id, "inventory_id")
+        product_ids = read_single(self._name, wizard_id, "products_preview")
+
+        # '4' is the code for 'add a single id'
+        vals = { 'inventory_product_selection': [(4, product_id)
+                                                 for product_id in product_ids] }
+        write('stock.inventory', inventory_id, vals)
 
 
 stock_inventory_select_products()
