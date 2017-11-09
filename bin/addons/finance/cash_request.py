@@ -486,6 +486,37 @@ class cash_request_expense(osv.osv):
     _rec_name = 'cash_request_id'
     _description = 'Planned Expenses for Cash Request'
 
+    def _total_booking_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Computes the booking amount (qty x unit price)
+        """
+        if context is None:
+            context = {}
+        result = {}
+        if ids:
+            for expense in self.browse(cr, uid, ids, fields_to_fetch=['quantity', 'unit_price'], context=context):
+                result[expense.id] = expense.quantity * expense.unit_price
+        return result
+
+    def _total_functional_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Computes the functional amount (booking / rate at the date of the Cash Request)
+        """
+        if context is None:
+            context = {}
+        result = {}
+        cur_obj = self.pool.get('res.currency')
+        if ids:
+            fields_list = ['cash_request_id', 'currency_id', 'total_booking']
+            for expense in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
+                cash_req = expense.cash_request_id
+                if cash_req:
+                    context.update({'date': cash_req.request_date})
+                    total_fctal = cur_obj.compute(cr, uid, expense.currency_id.id, cash_req.consolidation_currency_id.id,
+                                                  expense.total_booking or 0.0, round=True, context=context)
+                    result[expense.id] = total_fctal
+        return result
+
     _columns = {
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
         'prop_instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True, readonly=True,
@@ -503,8 +534,10 @@ class cash_request_expense(osv.osv):
         'quantity': fields.float('Quantity', required=True),
         'unit_price': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Account Computation')),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
-        'total_booking': fields.float('Total Booking Cur.', digits_compute=dp.get_precision('Account'), required=True),
-        'total_functional': fields.float('Total Functional Cur.', digits_compute=dp.get_precision('Account'), required=True),
+        'total_booking': fields.function(_total_booking_compute, method=True, string='Total Booking Cur.', type='float',
+                                         digits_compute=dp.get_precision('Account'), readonly=True),
+        'total_functional': fields.function(_total_functional_compute, method=True, string='Total Functional Cur.',
+                                            type='float', digits_compute=dp.get_precision('Account'), readonly=True),
     }
 
     _defaults = {
