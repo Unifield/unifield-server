@@ -28,7 +28,7 @@ from dateutil.relativedelta import relativedelta
 MOVED_IN_LAST_X_MONTHS = tuple([(i, "%s months" % str(i)) for i in range(1, 13)])
 
 
-class stock_inventory_select_products(osv.osv_memory):
+class physical_inventory_select_products(osv.osv_memory):
     _name = "physical.inventory.select.products"
     _description = "Select product to consider for inventory, using filters"
 
@@ -70,7 +70,7 @@ class stock_inventory_select_products(osv.osv_memory):
         # Finally, we want to give the user some feedback about what's going
         # to be imported
         'products_preview': fields.many2many('product.product', 'products_preview_rel', 'product_id',
-                                             'stock_inventory_select_products_id', string="Products preview",
+                                             'physical_inventory_select_products_id', string="Products preview",
                                              readonly=True),
     }
 
@@ -81,7 +81,7 @@ class stock_inventory_select_products(osv.osv_memory):
         assert 'inventory_id' in vals
         assert 'full_inventory' in vals
 
-        return super(stock_inventory_select_products, self).create(cr, user, vals, context=context)
+        return super(physical_inventory_select_products, self).create(cr, user, vals, context=context)
 
     #
     # Nomenclature management
@@ -200,6 +200,7 @@ class stock_inventory_select_products(osv.osv_memory):
 
             # Show them in the preview
             self.update_product_preview(cr, uid, wizard_id, products, context=context)
+
 
     def update_product_preview(self, cr, uid, wizard_id, product_ids, context=None):
         context = {} if context else context
@@ -401,6 +402,6 @@ class stock_inventory_select_products(osv.osv_memory):
         write('physical.inventory', inventory_id, vals)
 
 
-stock_inventory_select_products()
+physical_inventory_select_products()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
