@@ -187,7 +187,7 @@ class cash_request(osv.osv):
     def copy(self, cr, uid, cash_req_id, default=None, context=None):
         """
         Duplicates a cash request:
-        resets the computed items, changes the date to the one of the day and gets the updated list of instances
+        resets the computed items and changes the date to the one of the day
         """
         if context is None:
             context = {}
@@ -195,7 +195,8 @@ class cash_request(osv.osv):
             default = {}
         default.update({
             'request_date': datetime.today(),
-            'instance_ids': self._get_instance_ids(cr, uid, context=context),
+            'instance_ids': [],
+            'past_transfer_ids': [],
             'total_to_transfer': 0.0,
             'state': 'draft',
             'commitment_ids': [],
