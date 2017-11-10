@@ -81,6 +81,8 @@ class cash_request(osv.osv):
         'recap_mission_ids': fields.one2many('recap.mission', 'cash_request_id', 'Lines of Recap Mission', readonly=True),
         'planned_expense_ids': fields.one2many('cash.request.expense', 'cash_request_id', 'Planned expenses entries',
                                                required=True),
+        'recap_expense_ids': fields.one2many('cash.request.recap.expense', 'cash_request_id', 'Recap Planned expenses',
+                                             required=True, readonly=True),
         'past_transfer_ids': fields.many2many('account.move.line', 'cash_request_account_move_line_rel',
                                               'cash_request_id', 'account_move_line_id',
                                               string='Past Transfers', readonly=True),
@@ -200,6 +202,7 @@ class cash_request(osv.osv):
             'total_to_transfer': 0.0,
             'state': 'draft',
             'commitment_ids': [],
+            'recap_expense_ids': [],
             'planned_expense_ids': [],
             'total_to_transfer_line_ids': [],
             'recap_mission_ids': [],
@@ -237,44 +240,42 @@ class cash_request(osv.osv):
         """
         if context is None:
             context = {}
-        if cash_req_id:
-            commitment_obj = self.pool.get('cash.request.commitment')
-            cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['instance_ids', 'month_period_id'], context=context)
-            # delete previous commitments for this cash request
-            old_commitment_ids = commitment_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)],
-                                                       order='NO_ORDER', context=context)
-            commitment_obj.unlink(cr, uid, old_commitment_ids, context=context)
-            # create new cash req. commitments
-            instances = cash_req.instance_ids
-            period = cash_req.month_period_id
-            if instances and period:
-                for inst in instances:
-                    vals = {'instance_id': inst.id,
-                            'period_id': period.id,
-                            'cash_request_id': cash_req.id}
-                    commitment_obj.create(cr, uid, vals, context=context)
+        commitment_obj = self.pool.get('cash.request.commitment')
+        cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['instance_ids', 'month_period_id'], context=context)
+        # delete previous commitments for this cash request
+        old_commitment_ids = commitment_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)],
+                                                   order='NO_ORDER', context=context)
+        commitment_obj.unlink(cr, uid, old_commitment_ids, context=context)
+        # create new cash req. commitments
+        instances = cash_req.instance_ids
+        period = cash_req.month_period_id
+        if instances and period:
+            for inst in instances:
+                vals = {'instance_id': inst.id,
+                        'period_id': period.id,
+                        'cash_request_id': cash_req.id}
+                commitment_obj.create(cr, uid, vals, context=context)
         return True
 
     def _generate_past_transfers(self, cr, uid, cash_req_id, context=None):
         """
-        Generates data for the Transfers Follow up Tab of the Cash Request:
+        Generates data for the Transfers Follow-up Tab of the Cash Request:
         JI with the accounting code selected in the main tab and within the same Fiscal Year as the Cash Request date
         """
         if context is None:
             context = {}
-        if cash_req_id:
-            aml_obj = self.pool.get('account.move.line')
-            period_obj = self.pool.get('account.period')
-            cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['transfer_account_id', 'request_date'], context=context)
-            period_ids = period_obj.get_period_from_date(cr, uid, cash_req.request_date, context=context)
-            period = period_ids and period_obj.browse(cr, uid, period_ids[0], fields_to_fetch=['fiscalyear_id'], context=context)
-            fy = period and period.fiscalyear_id
-            if cash_req.transfer_account_id and fy:
-                aml_ids = aml_obj.search(cr, uid, [('account_id', '=', cash_req.transfer_account_id.id),
-                                                   ('date', '>=', fy.date_start), ('date', '<=', fy.date_stop)],
-                                         order='date desc', context=context)
-                vals = {'past_transfer_ids': [(6, 0, aml_ids)]}
-                self.write(cr, uid, cash_req_id, vals, context=context)
+        aml_obj = self.pool.get('account.move.line')
+        period_obj = self.pool.get('account.period')
+        cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['transfer_account_id', 'request_date'], context=context)
+        period_ids = period_obj.get_period_from_date(cr, uid, cash_req.request_date, context=context)
+        period = period_ids and period_obj.browse(cr, uid, period_ids[0], fields_to_fetch=['fiscalyear_id'], context=context)
+        fy = period and period.fiscalyear_id
+        if cash_req.transfer_account_id and fy:
+            aml_ids = aml_obj.search(cr, uid, [('account_id', '=', cash_req.transfer_account_id.id),
+                                               ('date', '>=', fy.date_start), ('date', '<=', fy.date_stop)],
+                                     order='date desc', context=context)
+            vals = {'past_transfer_ids': [(6, 0, aml_ids)]}
+            self.write(cr, uid, cash_req_id, vals, context=context)
         return True
 
     def _update_recap_mission(self, cr, uid, cash_req_id, context=None):
@@ -283,23 +284,40 @@ class cash_request(osv.osv):
         """
         if context is None:
             context = {}
-        if cash_req_id:
-            recap_mission_obj = self.pool.get('recap.mission')
-            cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['instance_ids', 'commitment_ids'], context=context)
-            # delete previous recap mission lines for this cash request
-            old_lines = recap_mission_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
-            recap_mission_obj.unlink(cr, uid, old_lines, context=context)
-            # create new lines
-            instances = cash_req.instance_ids
-            for inst in instances:
-                # Commitment lines
-                commitment_amount = 0.0
-                for cl in cash_req.commitment_ids:
-                    commitment_amount += cl.instance_id.id == inst.id and cl.total_commitment or 0.0
-                recap_mission_vals = {'instance_id': inst.id,
-                                      'commitment_amount': commitment_amount,
-                                      'cash_request_id': cash_req.id}
-                recap_mission_obj.create(cr, uid, recap_mission_vals, context=context)
+        recap_mission_obj = self.pool.get('recap.mission')
+        cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['instance_ids', 'commitment_ids'], context=context)
+        # delete previous recap mission lines for this cash request
+        old_lines = recap_mission_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
+        recap_mission_obj.unlink(cr, uid, old_lines, context=context)
+        # create new lines
+        instances = cash_req.instance_ids
+        for inst in instances:
+            # Commitment lines
+            commitment_amount = 0.0
+            for cl in cash_req.commitment_ids:
+                commitment_amount += cl.instance_id.id == inst.id and cl.total_commitment or 0.0
+            recap_mission_vals = {'instance_id': inst.id,
+                                  'commitment_amount': commitment_amount,
+                                  'cash_request_id': cash_req.id}
+            recap_mission_obj.create(cr, uid, recap_mission_vals, context=context)
+
+    def _update_recap_expense(self, cr, uid, cash_req_id, context=None):
+        """
+        Updates the Recap Planned expenses in the Planned expenses Tab of the Cash Request
+        """
+        if context is None:
+            context = {}
+        recap_expense_obj = self.pool.get('cash.request.recap.expense')
+        cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['instance_ids'], context=context)
+        # delete previous recap expense lines for this cash request
+        old_lines = recap_expense_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
+        recap_expense_obj.unlink(cr, uid, old_lines, context=context)
+        # create new lines
+        instances = cash_req.instance_ids
+        for inst in instances:
+            recap_expense_vals = {'instance_id': inst.id,
+                                  'cash_request_id': cash_req.id}
+            recap_expense_obj.create(cr, uid, recap_expense_vals, context=context)
 
     def generate_cash_request(self, cr, uid, ids, context=None):
         """
@@ -323,10 +341,9 @@ class cash_request(osv.osv):
         if context is None:
             context = {}
         total = 0.0
-        if cash_req_id:
-            cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['recap_mission_ids'], context=context)
-            for rec in cash_req.recap_mission_ids:
-                total += rec.total
+        cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['recap_mission_ids'], context=context)
+        for rec in cash_req.recap_mission_ids:
+            total += rec.total
         return total
 
     def _compute_total_to_transfer(self, cr, uid, cash_req_id, context=None):
@@ -367,10 +384,12 @@ class cash_request(osv.osv):
 
     def compute_recap_and_total(self, cr, uid, ids, context=None):
         """
-        Triggers the computation of Recap Mission Lines + Total to transfer (with a split per currencies)
+        Triggers the computation of:
+        Recap Mission Lines + Recap Planned expenses + Total to transfer (with a split per currencies)
         """
         for cash_req_id in ids:
             self._update_recap_mission(cr, uid, cash_req_id, context=None)
+            self._update_recap_expense(cr, uid, cash_req_id, context=None)
             self._compute_total_to_transfer(cr, uid, cash_req_id, context=context)
         return True
 
@@ -427,21 +446,20 @@ class cash_request_commitment(osv.osv):
         if context is None:
             context = {}
         result = {}
-        if ids:
-            aal_obj = self.pool.get('account.analytic.line')
-            for commitment in self.browse(cr, uid, ids, fields_to_fetch=['instance_id', 'period_id'], context=context):
-                instance = commitment.instance_id or False
-                period = commitment.period_id or False
-                if instance and period:
-                    domain = [('journal_id.type', '=', 'engagement'),
-                              ('journal_id.code', '!=', 'ENGI'),
-                              ('instance_id', '=', instance.id),
-                              ('date', '<=', period.date_stop)]
-                    commitment_lines = aal_obj.search(cr, uid, domain, context=context, order='NO_ORDER')
-                    commitment_sum = 0.0
-                    for l in aal_obj.read(cr, uid, commitment_lines, ['amount'], context=context):
-                        commitment_sum += l['amount']
-                    result[commitment.id] = abs(commitment_sum)
+        aal_obj = self.pool.get('account.analytic.line')
+        for commitment in self.browse(cr, uid, ids, fields_to_fetch=['instance_id', 'period_id'], context=context):
+            instance = commitment.instance_id or False
+            period = commitment.period_id or False
+            if instance and period:
+                domain = [('journal_id.type', '=', 'engagement'),
+                          ('journal_id.code', '!=', 'ENGI'),
+                          ('instance_id', '=', instance.id),
+                          ('date', '<=', period.date_stop)]
+                commitment_lines = aal_obj.search(cr, uid, domain, context=context, order='NO_ORDER')
+                commitment_sum = 0.0
+                for l in aal_obj.read(cr, uid, commitment_lines, ['amount'], context=context):
+                    commitment_sum += l['amount']
+                result[commitment.id] = abs(commitment_sum)
         return result
 
     _columns = {
@@ -488,11 +506,10 @@ class recap_mission(osv.osv):
         if context is None:
             context = {}
         result = {}
-        if ids:
-            fields_list = ['liquidity_amount', 'payable_amount', 'commitment_amount', 'expense_amount']
-            for recap in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
-                total = recap.liquidity_amount - recap.payable_amount - recap.commitment_amount - recap.expense_amount
-                result[recap.id] = -1 * total  # ex: 1000 in Bank - 1500 commitments = -500  ==> display 500 to transfer
+        fields_list = ['liquidity_amount', 'payable_amount', 'commitment_amount', 'expense_amount']
+        for recap in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
+            total = recap.liquidity_amount - recap.payable_amount - recap.commitment_amount - recap.expense_amount
+            result[recap.id] = -1 * total  # ex: 1000 in Bank - 1500 commitments = -500  ==> display 500 to transfer
         return result
 
     _columns = {
@@ -524,9 +541,8 @@ class cash_request_expense(osv.osv):
         if context is None:
             context = {}
         result = {}
-        if ids:
-            for expense in self.browse(cr, uid, ids, fields_to_fetch=['quantity', 'unit_price'], context=context):
-                result[expense.id] = expense.quantity * expense.unit_price
+        for expense in self.browse(cr, uid, ids, fields_to_fetch=['quantity', 'unit_price'], context=context):
+            result[expense.id] = expense.quantity * expense.unit_price
         return result
 
     def _total_functional_compute(self, cr, uid, ids, name, args, context=None):
@@ -537,15 +553,14 @@ class cash_request_expense(osv.osv):
             context = {}
         result = {}
         cur_obj = self.pool.get('res.currency')
-        if ids:
-            fields_list = ['cash_request_id', 'currency_id', 'total_booking']
-            for expense in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
-                cash_req = expense.cash_request_id
-                if cash_req:
-                    context.update({'date': cash_req.request_date})
-                    total_fctal = cur_obj.compute(cr, uid, expense.currency_id.id, cash_req.consolidation_currency_id.id,
-                                                  expense.total_booking or 0.0, round=True, context=context)
-                    result[expense.id] = total_fctal
+        fields_list = ['cash_request_id', 'currency_id', 'total_booking']
+        for expense in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
+            cash_req = expense.cash_request_id
+            if cash_req:
+                context.update({'date': cash_req.request_date})
+                total_fctal = cur_obj.compute(cr, uid, expense.currency_id.id, cash_req.consolidation_currency_id.id,
+                                              expense.total_booking or 0.0, round=True, context=context)
+                result[expense.id] = total_fctal
         return result
 
     _columns = {
@@ -579,4 +594,39 @@ class cash_request_expense(osv.osv):
 
 
 cash_request_expense()
+
+
+class cash_request_recap_expense(osv.osv):
+    _name = 'cash.request.recap.expense'
+    _rec_name = 'cash_request_id'
+    _description = 'Recap Planned Expenses for Cash Request'
+
+    def _expense_total_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Sums the "Planned expenses entries" of the Cash Request grouped by instance consumer
+        """
+        if context is None:
+            context = {}
+        result = {}
+        for expense in self.browse(cr, uid, ids, fields_to_fetch=['cash_request_id', 'instance_id'], context=context):
+            total = 0.0
+            cash_req = expense.cash_request_id
+            planned_expenses = cash_req and cash_req.planned_expense_ids
+            for planned_exp in planned_expenses:
+                total += expense.instance_id.id == planned_exp.consumer_instance_id.id and planned_exp.total_functional or 0.0
+            result[expense.id] = total
+        return result
+
+    _columns = {
+        'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
+        'instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True, readonly=True,
+                                       domain=[('level', 'in', ['coordo', 'project'])]),
+        'expense_total': fields.function(_expense_total_compute, method=True, string='Planned Expense in Func Currency',
+                                         type='float', digits_compute=dp.get_precision('Account'), readonly=True, store=True),
+    }
+
+    _order = 'instance_id'
+
+
+cash_request_recap_expense()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

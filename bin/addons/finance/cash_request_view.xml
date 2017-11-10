@@ -91,24 +91,34 @@
                             </page>
                             <page string="Planned Expense">
                                 <separator colspan="4" string="Planned expense for the coming period"/>
-                                <field name="planned_expense_ids" nolabel="1" context="{'mission': mission}">
-                                    <tree editable="bottom" string="Planned expenses entries">
-                                        <field name="prop_instance_id"/>
-                                        <field name="consumer_instance_id"
-                                               domain="[('level', 'in', ['coordo', 'project']), ('mission', '=', context.get('mission'))]"/>
-                                        <field name="is_local_expense"/>
-                                        <field name="account_id"/>
-                                        <field name="description"/>
-                                        <field name="is_budgeted"/>
-                                        <field name="quantity"/>
-                                        <field name="unit_price"/>
-                                        <field name="currency_id"/>
-                                        <field name="total_booking"/>
-                                        <field name="total_functional"/>
-                                    </tree>
-                                </field>
+                                <group colspan="4" col="2">
+                                    <field name="recap_expense_ids" nolabel="1">
+                                        <tree string="Recap Planned expenses">
+                                            <field name="instance_id"/>
+                                            <field name="expense_total"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                                <group colspan="4" col="2">
+                                    <field name="planned_expense_ids" nolabel="1" context="{'mission': mission}">
+                                        <tree editable="bottom" string="Planned expenses entries">
+                                            <field name="prop_instance_id"/>
+                                            <field name="consumer_instance_id"
+                                                   domain="[('level', 'in', ['coordo', 'project']), ('mission', '=', context.get('mission'))]"/>
+                                            <field name="is_local_expense"/>
+                                            <field name="account_id"/>
+                                            <field name="description"/>
+                                            <field name="is_budgeted"/>
+                                            <field name="quantity"/>
+                                            <field name="unit_price"/>
+                                            <field name="currency_id"/>
+                                            <field name="total_booking"/>
+                                            <field name="total_functional"/>
+                                        </tree>
+                                    </field>
+                                </group>
                             </page>
-                            <page string="Transfers Follow up">
+                            <page string="Transfers Follow-up">
                                 <field name="past_transfer_ids" nolabel="1">
                                     <tree string="Past Transfers">
                                         <field name="instance_id"/>
