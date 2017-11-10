@@ -96,6 +96,10 @@
                                         <tree string="Recap Planned expenses">
                                             <field name="instance_id"/>
                                             <field name="expense_total"/>
+                                            <field name="budget_expense_m"/>
+                                            <field name="budget_expense_m1"/>
+                                            <field name="budget_expense_m2"/>
+                                            <field name="budget_expense_m3"/>
                                         </tree>
                                     </field>
                                 </group>
