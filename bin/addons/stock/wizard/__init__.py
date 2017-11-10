@@ -34,5 +34,6 @@ import stock_location_product
 import stock_change_standard_price
 import stock_return_picking
 import stock_change_product_qty
+import physical_inventory_select_products
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
