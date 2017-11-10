@@ -285,7 +285,8 @@ class cash_request(osv.osv):
         if context is None:
             context = {}
         recap_mission_obj = self.pool.get('recap.mission')
-        cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['instance_ids', 'commitment_ids'], context=context)
+        fields_list = ['instance_ids', 'commitment_ids', 'recap_expense_ids']
+        cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=fields_list, context=context)
         # delete previous recap mission lines for this cash request
         old_lines = recap_mission_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
         recap_mission_obj.unlink(cr, uid, old_lines, context=context)
@@ -293,11 +294,15 @@ class cash_request(osv.osv):
         instances = cash_req.instance_ids
         for inst in instances:
             # Commitment lines
-            commitment_amount = 0.0
+            commitment_amount = expense_amount = 0.0
             for cl in cash_req.commitment_ids:
                 commitment_amount += cl.instance_id.id == inst.id and cl.total_commitment or 0.0
+            # Foreseen expenses
+            for rexp in cash_req.recap_expense_ids:
+                expense_amount += rexp.instance_id.id == inst.id and rexp.expense_total or 0.0
             recap_mission_vals = {'instance_id': inst.id,
                                   'commitment_amount': commitment_amount,
+                                  'expense_amount': expense_amount,
                                   'cash_request_id': cash_req.id}
             recap_mission_obj.create(cr, uid, recap_mission_vals, context=context)
 
