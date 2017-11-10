@@ -138,9 +138,10 @@ class PhysicalInventoryCounting(osv.osv):
 
     def create(self, cr, user, vals, context=None):
         # Compute line number
-        cr.execute("""SELECT MAX(line_no) FROM physical_inventory_counting WHERE inventory_id=%s""",
-                   (vals.get('inventory_id'),))
-        vals['line_no'] = (cr.fetchone()[0] or 0) + 1  # Last line number + 1
+        if not vals.get('line_no'):
+            cr.execute("""SELECT MAX(line_no) FROM physical_inventory_counting WHERE inventory_id=%s""",
+                       (vals.get('inventory_id'),))
+            vals['line_no'] = (cr.fetchone()[0] or 0) + 1  # Last line number + 1
 
         return super(PhysicalInventoryCounting, self).create(cr, user, vals, context)
 
