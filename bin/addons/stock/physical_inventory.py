@@ -61,35 +61,79 @@ class PhysicalInventory(osv.osv):
         Open the wizard to select the products according to specific filters..
         """
         context = context is None and {} or context
+        def read_single(model, id_, column):
+            return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
+        def create(model, vals):
+            return self.pool.get(model).create(cr, uid, vals, context=context)
+        def view(module, view):
+            return self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view)[1]
 
         # Prepare values to feed the wizard with
         assert len(ids) == 1
         inventory_id = ids[0]
-        full_inventory = self.read(cr, uid, ids, ['full_inventory'], context)[0]["full_inventory"]
-        vals = {"inventory_id": inventory_id,
-                "full_inventory": full_inventory
-                }
+
+        # Is it a full inventory ?
+        full_inventory = read_single(self._name, inventory_id, 'full_inventory')
 
         # Create the wizard
-        wiz_id = self.pool.get('physical.inventory.select.products').create(cr, uid, vals, context=context)
+        wiz_model = 'physical.inventory.select.products'
+        wiz_values = {"inventory_id": inventory_id,
+                      "full_inventory": full_inventory }
+        wiz_id = create(wiz_model, wiz_values)
         context['wizard_id'] = wiz_id
 
         # Get the view reference
-        data_obj = self.pool.get('ir.model.data')
-        view_id = data_obj.get_object_reference(cr, uid, 'stock', 'physical_inventory_select_products')[1]
+        view_id = view('stock', 'physical_inventory_select_products')
 
         # Return a description of the wizard view
         return {'type': 'ir.actions.act_window',
-                'res_model': 'physical.inventory.select.products',
+                'target': 'new',
+                'res_model': wiz_model,
                 'res_id': wiz_id,
                 'view_id': [view_id],
                 'view_type': 'form',
                 'view_mode': 'form',
-                'target': 'new',
                 'context': context}
 
-    def generate_counting_sheet(self, cr, user, ids, context=None):
-        pass
+
+    def generate_counting_sheet(self, cr, uid, ids, context=None):
+        """
+        Trigerred when clicking on the button "Generate counting sheet"
+
+        Open the wizard to fill the counting sheet with selected products.
+        Choose to include batch numbers / expiry date or not
+        """
+        context = context is None and {} or context
+        def read_single(model, id_, column):
+            return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
+        def create(model, vals):
+            return self.pool.get(model).create(cr, uid, vals, context=context)
+        def view(module, view):
+            return self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view)[1]
+
+        # Prepare values to feed the wizard with
+        assert len(ids) == 1
+        inventory_id = ids[0]
+
+        # Create the wizard
+        wiz_model = 'physical.inventory.generate.counting.sheet'
+        wiz_values = {"inventory_id": inventory_id}
+        wiz_id = create(wiz_model, wiz_values)
+        context['wizard_id'] = wiz_id
+
+        # Get the view reference
+        view_id = view('stock', 'physical_inventory_generate_counting_sheet')
+
+        # Return a description of the wizard view
+        return {'type': 'ir.actions.act_window',
+                'target': 'new',
+                'res_model': wiz_model,
+                'res_id': wiz_id,
+                'view_id': [view_id],
+                'view_type': 'form',
+                'view_mode': 'form',
+                'context': context}
+
 
     def export_xls_counting_sheet(self, cr, uid, ids, context=None):
         return {
