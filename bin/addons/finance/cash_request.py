@@ -404,6 +404,11 @@ class transfer_currency(osv.osv):
         (_check_percentage, _("The percentage of the currency is incorrect."), ['percentage']),
     ]
 
+    _sql_constraints = [
+        ('cash_request_currency_uniq', 'UNIQUE(cash_request_id, currency_id)',
+         _("You have already selected this currency.")),
+    ]
+
 
 transfer_currency()
 
