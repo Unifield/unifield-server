@@ -31,6 +31,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         'fill_bn_and_ed': fields.boolean('Prefill Batch Numbers and Expiry Date'),
     }
 
+
     def create(self, cr, user, vals, context=None):
 
         context = {} if context else context
@@ -40,7 +41,91 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         return super(physical_inventory_generate_counting_sheet, self).create(cr, user, vals, context=context)
 
 
-    def get_BN_and_ED_for_products(self, cr, uid, location_id, product_ids, context=None):
+    def generate_counting_sheet(self, cr, uid, wizard_ids, context=None):
+        context = {} if context else context
+        def read_single(model, id_, column):
+            return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+        def write(model, id_, vals):
+            return self.pool.get(model).write(cr, uid, [id_], vals, context=context)
+
+        # Get this wizard...
+        assert len(wizard_ids) == 1
+        wizard_id = wizard_ids[0]
+
+        # Get the selected option
+        fill_bn_and_ed = read_single(self._name, wizard_id, 'fill_bn_and_ed')
+
+        # Get location, products selected, and existing inventory lines
+        inventory_id = read_single(self._name, wizard_id, "inventory_id")
+        inventory = read_many("physical.inventory", [inventory_id], ['location_id',
+                                                                     'counting_line_ids',
+                                                                     'product_ids'])[0]
+
+        # Get relevant info for products to be able to create the inventory
+        # lines
+        location_id = inventory["location_id"][0]
+        product_ids = inventory["product_ids"]
+
+        bn_and_eds = self.get_BN_and_ED_for_products_at_location(cr, uid, location_id, product_ids, context=context)
+
+        products = read_many("product.product", product_ids, ["id",
+                                                              "uom_id"])
+
+        # Prepare the inventory lines to be created
+
+        inventory_counting_lines_to_create = []
+        for product in products:
+            product_id = product["id"]
+            product_uom_id = product["uom_id"][0]
+            bn_and_eds_for_this_product = bn_and_eds[product_id]
+            # If no bn / ed related to this product, create a single inventory
+            # line
+            if len(bn_and_eds_for_this_product) == 0:
+                values = { "line_no": len(inventory_counting_lines_to_create),
+                           "inventory_id": inventory_id,
+                            "product_id": product_id,
+                            "product_uom_id": product_uom_id,
+                            "batch_number": False,
+                            "expiry_date": False
+                          }
+                inventory_counting_lines_to_create.append(values)
+            # Otherwise, create an inventory line for this product ~and~ for
+            # each BN/ED
+            else:
+                for bn_and_ed in bn_and_eds_for_this_product:
+                    values = { "line_no": len(inventory_counting_lines_to_create),
+                               "inventory_id": inventory_id,
+                               "product_id": product_id,
+                               "product_uom_id": product_uom_id,
+                               "batch_number": bn_and_ed[0] if fill_bn_and_ed else False,
+                               "expiry_date":  bn_and_ed[1] if fill_bn_and_ed else False
+                             }
+                    inventory_counting_lines_to_create.append(values)
+
+        # Get the existing inventory counting lines (to be cleared)
+
+        existing_inventory_counting_lines = inventory["counting_line_ids"]
+
+        # Prepare the actual create/remove for inventory lines
+        # 2 is the code for removal/deletion, 0 is for addition/creation
+
+        delete_existing_inventory_counting_lines = [ (2,line_id) for line_id in existing_inventory_counting_lines ]
+
+        create_inventory_counting_lines = [ (0,0,line_values) for line_values in inventory_counting_lines_to_create ]
+
+        todo = []
+        todo.extend(delete_existing_inventory_counting_lines)
+        todo.extend(create_inventory_counting_lines)
+
+        # Do the actual write
+        write("physical.inventory", inventory_id, {'counting_line_ids': todo})
+
+        return {'type': 'ir.actions.act_window_close'}
+
+
+    def get_BN_and_ED_for_products_at_location(self, cr, uid, location_id, product_ids, context=None):
         context = {} if context else context
         def read_many(model, ids, columns):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)
@@ -65,42 +150,43 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
             product_id = move["product_id"][0]
 
-            BN_and_ED[product_id].add((move["prodlot_id"][0],
-                                       move["expired_date"]))
+            prodlot_id = move["prodlot_id"][1] if isinstance(move["prodlot_id"], tuple) else False
+            expired_date = move["expired_date"]
 
-#    def refresh_products(self, cr, uid, wizard_ids, context=None):
-#        context = {} if context else context
-#
-#        def read_single(model, id_, column):
-#            return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
-#
-#        def read_many(model, ids, columns):
-#            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
-#
-#        # Get this wizard...
-#        assert len(wizard_ids) == 1
-#        wizard_id = wizard_ids[0]
-#
-#        inventory_id = read_single(self._name, wizard_id, "inventory_id")
-#
-#        # Get the selected options
-#        w = read_many(self._name, [wizard_id], ['inventory_id',
-#                                                'full_inventory',
-#                                                'recent_moves_months_fullinvo',
-#                                                'first_filter',
-#                                                'recent_moves_months',
-#                                                'second_filter',
-#                                                'kc',
-#                                                'cs',
-#                                                'dg',
-#                                                'product_list',
-#                                                'nomen_manda_0',
-#                                                'nomen_manda_1',
-#                                                'nomen_manda_2',
-#                                                'nomen_manda_3'])[0]
-#
-#        # Find the location of the inventory
-#        location_id = read_single('physical.inventory', w["inventory_id"], "location_id")[0]
+            BN_and_ED[product_id].add((prodlot_id, expired_date))
+
+        return BN_and_ED
+
+
+    # FIXME : this is copy/pasta from the other wizard ...
+    # Should be factorized, probably in physical inventory, or stock somewhere.
+    def get_moves_at_location(self, cr, uid, location_id, context=None):
+        context = {} if context else context
+
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+
+        def search(model, domain):
+            return self.pool.get(model).search(cr, uid, domain, context=context)
+
+        assert isinstance(location_id, int)
+
+        # Get all the moves for in/out of that location
+        from_or_to_location = ['&', '|',
+                               ('location_id', 'in', [location_id]),
+                               ('location_dest_id', 'in', [location_id]),
+                               ('state', '=', 'done')]
+
+        moves_at_location_ids = search("stock.move", from_or_to_location)
+        moves_at_location = read_many("stock.move",
+                                      moves_at_location_ids,
+                                      ["product_id",
+                                       "date",
+                                       "product_qty",
+                                       "location_id",
+                                       "location_dest_id"])
+
+        return moves_at_location
 
 physical_inventory_generate_counting_sheet()
 
