@@ -81,6 +81,9 @@ class cash_request(osv.osv):
         'recap_mission_ids': fields.one2many('recap.mission', 'cash_request_id', 'Lines of Recap Mission', readonly=True),
         'planned_expense_ids': fields.one2many('cash.request.expense', 'cash_request_id', 'Planned expenses entries',
                                                required=True),
+        'past_transfer_ids': fields.many2many('account.move.line', 'cash_request_account_move_line_rel',
+                                              'cash_request_id', 'account_move_line_id',
+                                              string='Past Transfers', readonly=True),
     }
 
     def _check_buffer(self, cr, uid, ids):
@@ -151,11 +154,10 @@ class cash_request(osv.osv):
         """
         if context is None:
             context = {}
-        instance_ids = []
         instance_obj = self.pool.get('msf.instance')
         mission = self._get_mission(cr, uid, context=context)
-        instance_ids.extend(instance_obj.search(cr, uid, [('mission', '=', mission), ('level', '!=', 'section')],
-                                                order='level, code', context=context))  # coordo first
+        instance_ids = instance_obj.search(cr, uid, [('mission', '=', mission), ('level', '!=', 'section')],
+                                           order='level, code', context=context)  # coordo first
         return instance_ids
 
     _defaults = {
@@ -252,6 +254,28 @@ class cash_request(osv.osv):
                     commitment_obj.create(cr, uid, vals, context=context)
         return True
 
+    def _generate_past_transfers(self, cr, uid, cash_req_id, context=None):
+        """
+        Generates data for the Transfers Follow up Tab of the Cash Request:
+        JI with the accounting code selected in the main tab and within the same Fiscal Year as the Cash Request date
+        """
+        if context is None:
+            context = {}
+        if cash_req_id:
+            aml_obj = self.pool.get('account.move.line')
+            period_obj = self.pool.get('account.period')
+            cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['transfer_account_id', 'request_date'], context=context)
+            period_ids = period_obj.get_period_from_date(cr, uid, cash_req.request_date, context=context)
+            period = period_ids and period_obj.browse(cr, uid, period_ids[0], fields_to_fetch=['fiscalyear_id'], context=context)
+            fy = period and period.fiscalyear_id
+            if cash_req.transfer_account_id and fy:
+                aml_ids = aml_obj.search(cr, uid, [('account_id', '=', cash_req.transfer_account_id.id),
+                                                   ('date', '>=', fy.date_start), ('date', '<=', fy.date_stop)],
+                                         order='date desc', context=context)
+                vals = {'past_transfer_ids': [(6, 0, aml_ids)]}
+                self.write(cr, uid, cash_req_id, vals, context=context)
+        return True
+
     def _update_recap_mission(self, cr, uid, cash_req_id, context=None):
         """
         Updates the Recap Mission in the Main Tab of the Cash Request
@@ -288,6 +312,7 @@ class cash_request(osv.osv):
             if cash_req['request_date'] != datetime.today().strftime('%Y-%m-%d'):
                 raise osv.except_osv(_('Error'), _('The date of the Cash Request must be the date of the day.'))
             self._generate_commitments(cr, uid, cash_request_id, context=context)
+            self._generate_past_transfers(cr, uid, cash_request_id, context=context)
         return True
 
     def _get_total_cash_request(self, cr, uid, cash_req_id, context=None):

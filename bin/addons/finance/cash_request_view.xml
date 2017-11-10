@@ -108,6 +108,30 @@
                                     </tree>
                                 </field>
                             </page>
+                            <page string="Transfers Follow up">
+                                <field name="past_transfer_ids" nolabel="1">
+                                    <tree string="Past Transfers">
+                                        <field name="instance_id"/>
+                                        <field name="journal_id"/>
+                                        <field name="move_id"/>
+                                        <field name="name"/>
+                                        <field name="ref"/>
+                                        <field name="document_date"/>
+                                        <field name="date"/>
+                                        <field name="period_id"/>
+                                        <field name="account_id"/>
+                                        <field name="partner_txt"/>
+                                        <field name="debit_currency"/>
+                                        <field name="credit_currency"/>
+                                        <field name="currency_id"/>
+                                        <field name="debit"/>
+                                        <field name="credit"/>
+                                        <field name="functional_currency_id"/>
+                                        <field name="reconcile_txt"/>
+                                        <field name="state"/>
+                                    </tree>
+                                </field>
+                            </page>
                         </notebook>
                     </form>
                 </field>
