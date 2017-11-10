@@ -636,7 +636,7 @@ class cash_request_recap_expense(osv.osv):
 
     def _get_next_period_id_at_index(self, cr, uid, period_id, index, context=None):
         """
-        Returns the id of the period N+index, or False if it doesn't exist
+        Returns the id of the period N+index, or False if it doesn't exist (ignores special periods)
         Ex: Nov.2017 + index 2 => Jan.2018
         """
         if context is None:
