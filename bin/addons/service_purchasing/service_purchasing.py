@@ -223,7 +223,7 @@ class stock_move(osv.osv):
                 count(pick.type = 'in' and t.type in ('service_recep', 'service') and not dest.service_location and not dest.cross_docking_location_ok or NULL),
                 count(pick.type = 'internal' and not src.cross_docking_location_ok and t.type in ('service_recep', 'service') or NULL),
                 count(pick.type = 'internal' and not dest.service_location and t.type in ('service_recep', 'service') or NULL),
-                count(t.type in ('service_recep', 'service') and pick.type = 'out' and pick.subtype in ('standard', 'picking') and not src.cross_docking_location_ok or NULL),
+                count(t.type in ('service_recep', 'service') and pick.type = 'out' and pick.subtype in ('standard', 'picking') and not src.cross_docking_location_ok and not pick.dpo_out or NULL),
                 count(t.type not in ('service_recep', 'service') and (dest.service_location or src.service_location ) or NULL)
                 from stock_move m
                 left join stock_picking pick on m.picking_id = pick.id

@@ -365,8 +365,7 @@ class sale_order_line(osv.osv):
 
                 if not pick_to_use:
                     picking_data['name'] = self.pool.get('ir.sequence').get(cr, uid, seq_name)
-                    picking_data['dpo_pick'] = True
-                    pick_to_use = picking_obj.create(cr, uid, picking_data, context=context)
+                    pick_to_use = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
                     pick_name = picking_data['name']
                     self.infolog(cr, uid, "The Picking Ticket id:%s (%s) has been created from %s id:%s (%s)." % (
                         pick_to_use,
