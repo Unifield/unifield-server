@@ -395,7 +395,7 @@ class stock_picking(osv.osv):
                         if not move_ids:
                             # SLL edit, if move cannot be found, then use sync_linked_sol to find it:
                             sol_id = data.get('sale_line_id', False) and int(data['sale_line_id'].split('/')[-1]) or False
-                            remote_partner = self.pool.get('res.partner').search(cr, uid, [('name', '=', source)], context=context)
+                            remote_partner = self.pool.get('so.po.common').get_partner_id(cr, uid, source, context=context)
                             if sol_id and remote_partner:
                                 pol_id = self.pool.get('purchase.order.line').search(cr, uid, [
                                     ('order_id.partner_id', '=', remote_partner[0]),
