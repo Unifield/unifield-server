@@ -280,6 +280,55 @@ class sale_order_line(osv.osv):
         return pick_to_use and pick_to_use[0] or False
 
 
+    def get_existing_pick(self, cr, uid, ids, context=None):
+        '''
+        Search for an existing PICK/OUT/INT (depending on the flow) to use
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        pick_to_use = False
+
+        sol = self.browse(cr, uid, ids[0], context=context)
+
+        picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
+
+        # build domain:
+        domain = [
+            ('type', '=', picking_data['type']),
+            ('subtype', '=', picking_data['subtype']),
+            ('sale_id', '=', picking_data['sale_id']),
+            ('partner_id2', '=', sol.order_partner_id.id),
+            ('state', 'in', ['draft', 'confirmed', 'assigned']),
+        ]
+
+        # ... and search:
+        pick_to_use = self.pool.get('stock.picking').search(cr, uid, domain, context=context)
+        if pick_to_use:
+            pick_to_use = pick_to_use[0]
+
+        # update sequence name:
+        seq_name = picking_data['seq_name']
+        del(picking_data['seq_name'])
+
+        # if no pick found, then create a new one:
+        if not pick_to_use:
+            picking_data['name'] = self.pool.get('ir.sequence').get(cr, uid, seq_name)
+            pick_to_use = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
+            pick_name = picking_data['name']
+            self.infolog(cr, uid, "The Picking Ticket id:%s (%s) has been created from %s id:%s (%s)." % (
+                pick_to_use,
+                pick_name,
+                sol.order_id.procurement_request and _('Internal request') or _('Field order'),
+                sol.order_id.id,
+                sol.order_id.name,
+            ))
+
+        return pick_to_use
+
+
     def action_confirmed(self, cr, uid, ids, context=None):
         '''
         Workflow method called when confirming the sale.order.line
@@ -288,6 +337,7 @@ class sale_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
 
         for sol in self.browse(cr, uid, ids, context=context):
             if not sol.stock_take_date and sol.order_id.stock_take_date:
@@ -297,7 +347,9 @@ class sale_order_line(osv.osv):
                 ('linked_sol_id', '=', sol.id),
                 ('order_id.order_type', '=', 'direct'),
             ], context=context)
-            ir_non_stockable = sol.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep')
+
+            if sol.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep'): # IR non stockable
+                continue
 
             if linked_dpo_line:
                 # create or update PICK/OUT:
@@ -332,33 +384,16 @@ class sale_order_line(osv.osv):
                 self.pool.get('stock.move').write(cr, uid, [move_id], {'location_id': stock_loc, 'location_dest_id': stock_loc}, context=context)
                 # set PICK to done
                 self.pool.get('stock.picking').action_done(cr, uid, [pick_to_use], context=context)
-
-            elif not ir_non_stockable:
-                # create or update PICK/OUT:
+            else:
                 picking_data = self.pool.get('sale.order')._get_picking_data(cr, uid, sol.order_id, context=context, get_seq=False)
-                pick_to_use = self.pool.get('stock.picking').search(cr, uid, [
-                    ('type', '=', picking_data['type']),
-                    ('subtype', '=', picking_data['subtype']),
-                    ('sale_id', '=', picking_data['sale_id']),
-                    ('partner_id2', '=', sol.order_partner_id.id),
-                    ('state', 'in', ['draft', 'confirmed', 'assigned']),
-                ], context=context)
-                seq_name = picking_data['seq_name']
-                del(picking_data['seq_name'])
 
-                if not pick_to_use:
-                    picking_data['name'] = self.pool.get('ir.sequence').get(cr, uid, seq_name)
-                    pick_to_use = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
-                    pick_name = picking_data['name']
-                    self.infolog(cr, uid, "The Picking Ticket id:%s (%s) has been created from %s id:%s (%s)." % (
-                        pick_to_use,
-                        pick_name,
-                        sol.order_id.procurement_request and _('Internal request') or _('Field order'),
-                        sol.order_id.id,
-                        sol.order_id.name,
-                    ))
-                if pick_to_use and isinstance(pick_to_use, list):
-                    pick_to_use = pick_to_use[0]
+                if sol.order_id.procurement_request and picking_data['type'] == 'internal' and sol.type != 'make_to_stock':
+                    # in case of IR not sourced from stock, don't create INT
+                    continue
+
+                # create or update PICK/OUT/INT:
+                pick_to_use = self.get_existing_pick(cr, uid, sol.id, context=context)
+                
                 # Get move data and create the move
                 move_data = self.pool.get('sale.order')._get_move_data(cr, uid, sol.order_id, sol, pick_to_use, context=context)
                 move_id = self.pool.get('stock.move').create(cr, uid, move_data, context=context)
@@ -368,10 +403,11 @@ class sale_order_line(osv.osv):
                 pick_state = self.pool.get('stock.picking').read(cr, uid, pick_to_use, ['state'] ,context=context)['state']
                 if picking_data['type'] == 'out' and picking_data['subtype'] == 'standard' and pick_state == 'draft':
                     self.pool.get('stock.picking').draft_force_assign(cr, uid, [pick_to_use], context=context)
-
                 # run check availability on PICK/OUT:
                 if picking_data['type'] == 'out' and picking_data['subtype'] in ['picking', 'standard']:
                     self.pool.get('stock.picking').action_assign(cr, uid, [pick_to_use], context=context)
+                if picking_data['type'] == 'internal' and sol.type == 'make_to_stock' and sol.order_id.procurement_request:
+                    wf_service.trg_validate(uid, 'stock.picking', pick_to_use, 'button_confirm', cr)                    
 
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
 

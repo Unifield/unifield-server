@@ -20,6 +20,11 @@
             <field name="code">stock.picking.internal</field>
         </record>
 
+        <record id="seq_type_picking_system_internal" model="ir.sequence.type">
+            <field name="name">Picking SYS INT</field>
+            <field name="code">stock.picking.system.internal</field>
+        </record>
+
         <!--
             Sequences for pickings
         -->
@@ -44,6 +49,14 @@
             <field name="name">Picking INT</field>
             <field name="code">stock.picking.internal</field>
             <field name="prefix">INT/</field>
+            <field name="padding">5</field>
+            <field name="implementation">psql</field>
+        </record>
+
+        <record id="seq_picking_system_internal" model="ir.sequence">
+            <field name="name">Picking SYS INT</field>
+            <field name="code">stock.picking.system.internal</field>
+            <field name="prefix">SYS-INT/</field>
             <field name="padding">5</field>
             <field name="implementation">psql</field>
         </record>

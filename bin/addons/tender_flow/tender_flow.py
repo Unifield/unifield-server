@@ -577,6 +577,7 @@ class tender(osv.osv):
                 # attach new PO line:
                 pol_values = {
                     'order_id': po_to_use,
+                    'linked_sol_id': tender_line.sale_order_line_id.id or False,
                     'name': tender_line.product_id.partner_ref,
                     'product_qty': tender_line.qty,
                     'product_id': tender_line.product_id.id,
@@ -645,8 +646,7 @@ class tender(osv.osv):
         for tender in self.browse(cr, uid, ids, context=context):
             # trigger all related rfqs
             rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),], context=context)
-            for rfq_id in rfq_ids:
-                wf_service.trg_validate(uid, 'purchase.order', rfq_id, 'purchase_cancel', cr)
+            self.pool.get('purchase.order').cancel_rfq(cr, uid, ids, context=context)
 
             for line in tender.tender_line_ids:
                 t_line_obj.cancel_sourcing(cr, uid, [line.id], context=context)
@@ -1562,7 +1562,7 @@ class purchase_order(osv.osv):
                 'valid_till': fields.date(string='Valid Till', internal="purchase_order"),
                 # add readonly when state is Done
                 'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True, internal="purchase_order"),
-                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated'), ('done', 'Closed'), ('cancel', 'Cancel')], 'Order state', required=True, readonly=True, internal="purchase_order"),
+                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'Order state', required=True, readonly=True, internal="purchase_order"),
                 }
 
     _defaults = {
@@ -1607,6 +1607,28 @@ class purchase_order(osv.osv):
             vals['location_id'] = input_loc and input_loc[0] or False
 
         return super(purchase_order, self).create(cr, uid, vals, context=context)
+
+
+    def cancel_rfq(self, cr, uid, ids, context=None):
+        '''
+        method to cancel a RfQ and its lines
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
+
+        for rfq in self.browse(cr, uid, ids, context=context):
+            if not rfq.rfq_ok:
+                continue
+            for rfq_line in rfq.order_line:
+                wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, 'cancel', cr)
+
+            self.write(cr, uid, [rfq.id], {'rfq_state': 'cancel'}, context=context)
+
+        return True
+
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -2033,8 +2055,7 @@ class tender_cancel_wizard(osv.osv_memory):
 
         line_obj.fake_unlink(cr, uid, line_ids, context=context)
 
-        for rfq in rfq_ids:
-            wf_service.trg_validate(uid, 'purchase.order', rfq, 'purchase_cancel', cr)
+        self.pool.get('purchase.order').cancel_rfq(cr, uid, rfq_ids, context=context)
 
         for tender in tender_ids:
             wf_service.trg_validate(uid, 'tender', tender, 'tender_cancel', cr)

@@ -1404,7 +1404,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             # common domain:
             domain = [
                 ('partner_id', '=', sourcing_line.supplier.id),
-                ('state', 'in', ['draft']),
+                ('rfq_state', 'in', ['draft']),
                 ('delivery_requested_date', '=', sourcing_line.date_planned),
                 ('rfq_ok', '=', True),
                 ('order_type', '=', 'regular'),
@@ -1611,6 +1611,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             'details': sol.order_id.details,
             'delivery_requested_date': sol.date_planned,
             # 'rfq_delivery_address': tender.delivery_address and tender.delivery_address.id or False,
+            'from_procurement': True,
         }
         context.update({'rfq_ok': True})
         new_rfq_id = self.pool.get('purchase.order').create(cr, uid, rfq_values, context=context)
@@ -1714,7 +1715,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         rfq_to_use = self.create_rfq_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                         # log new RfQ:
                         rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, context=context)
-                        self.pool.get('purchase.order').log(cr, uid, rfq_to_use, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
                         self.pool.get('purchase.order').infolog(cr, uid, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
                     anal_dist = False
                     if not sourcing_line.procurement_request:
@@ -1739,7 +1739,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'original_uom': sourcing_line.original_uom.id,
                         })
                     self.pool.get('purchase.order.line').create(cr, uid, rfq_line_values, context=context)
-                    self.pool.get('purchase.order').update_source_document(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
+                    self.pool.get('purchase.order').update_source_document(cr, uid, rfq_to_use, sourcing_line.order_id.id, context=context)
 
                 elif sourcing_line.po_cft == 'cft':
                     tender_to_use = self.get_existing_tender(cr, uid, sourcing_line.id, context=context)
