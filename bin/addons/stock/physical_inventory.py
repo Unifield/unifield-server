@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import base64
 import time
+from dateutil.parser import parse
+
+import decimal_precision as dp
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 from osv import fields, osv
+from tools.misc import DEFAULT_SERVER_DATETIME_FORMAT, DEFAULT_SERVER_DATE_FORMAT
 from tools.translate import _
-import decimal_precision as dp
 
 
 PHYSICAL_INVENTORIES_STATES = (
@@ -23,9 +28,9 @@ class PhysicalInventory(osv.osv):
     _description = 'Physical Inventory'
 
     _columns = {
-        'ref': fields.char('Reference', size=64, required=True),
-        'name': fields.char('Name', size=64, required=True),
-        'date': fields.datetime('Creation Date', readonly=True, required=True),
+        'ref': fields.char('Reference', size=64, required=True, readonly=True),
+        'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'responsible': fields.char('Responsible', size=128, required=False),
         'date_done': fields.datetime('Date done', readonly=True),
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
@@ -33,22 +38,24 @@ class PhysicalInventory(osv.osv):
         'line_ids': fields.one2many('physical.inventory.line', 'inventory_id', 'Inventories',
                                     states={'closed': [('readonly', True)]}),
         'counting_line_ids': fields.one2many('physical.inventory.counting', 'inventory_id', 'Counting lines',
-                                    states={'closed': [('readonly', True)]}),
-        'location_id': fields.many2one('stock.location', 'Location', required=True),
+                                             states={'closed': [('readonly', True)]}),
+        'location_id': fields.many2one('stock.location', 'Location', required=True, readonly=True,
+                                       states={'draft': [('readonly', False)]}),
         'move_ids': fields.many2many('stock.move', 'physical_inventory_move_rel', 'inventory_id', 'move_id',
                                      'Created Moves'),
         'state': fields.selection(PHYSICAL_INVENTORIES_STATES, 'State', readonly=True, select=True),
         'company_id': fields.many2one('res.company', 'Company', readonly=True, select=True, required=True,
                                       states={'draft': [('readonly', False)]}),
         'full_inventory': fields.boolean('Full inventory', readonly=True, states={'draft': [('readonly', False)]}),
+        'file_to_import': fields.binary(string='File to import', filters='*.xml'),
     }
 
     _defaults = {
         'ref': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'physical.inventory'),
-        'date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'date': lambda *a: time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
         'state': 'draft',
         'company_id': lambda self, cr, uid,
-                             c: self.pool.get('res.company')._company_default_get(cr, uid, 'stock.inventory', context=c)
+                             c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c)
     }
 
     def perm_write(self, cr, user, ids, fields, context=None):
@@ -95,7 +102,7 @@ class PhysicalInventory(osv.osv):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'physical_inventory_counting_sheet_xls',
-            'datas': {'ids': ids},
+            'datas': {'ids': ids, 'target_filename': 'counting_sheet'},
             'nodestroy': True,
             'context': context,
         }
@@ -104,13 +111,305 @@ class PhysicalInventory(osv.osv):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'physical_inventory_counting_sheet_pdf',
-            'datas': {'ids': ids},
+            'datas': {'ids': ids, 'target_filename': 'counting_sheet'},
             'nodestroy': True,
             'context': context,
         }
 
     def import_counting_sheet(self, cr, uid, ids, context=None):
-        pass
+        """
+        Import an exported counting sheet
+        """
+        if not context:
+            context = {}
+
+        counting_sheet_header = {}
+        counting_sheet_lines = []
+        counting_sheet_errors = []
+
+        def add_error(message, file_row, file_col):
+            counting_sheet_errors.append('Cell %s%d: %s' % (chr(0x41 + file_col), file_row + 1, message))
+
+        inventory_rec = self.browse(cr, uid, ids, context=context)[0]
+        if not inventory_rec.file_to_import:
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        counting_sheet_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import))
+
+        product_obj = self.pool.get('product.product')
+        product_uom_obj = self.pool.get('product.uom')
+        counting_obj = self.pool.get('physical.inventory.counting')
+
+        for row_index, row in enumerate(counting_sheet_file.getRows()):
+
+            # === Process header ===
+
+            if row_index == 2:
+                counting_sheet_header.update({
+                    'inventory_counter_name': row.cells[2].data,  # Cell C3
+                    'inventory_date': row.cells[5].data  # Cell F3
+                })
+            elif row_index == 4:
+                inventory_reference = row.cells[2].data  # Cell C5
+                inventory_location = row.cells[5].data  # Cell F5
+                # Check location
+                if inventory_rec.location_id and inventory_rec.location_id.name != (inventory_location or '').strip():
+                    raise osv.except_osv(_('Error'), _("""Cell F5: Location is different to inventory location"""))
+                # Check reference
+                if inventory_rec.ref != (inventory_reference or '').strip():
+                    raise osv.except_osv(_('Error'), _("""Cell C5: Reference is different to inventory reference"""))
+                counting_sheet_header.update({
+                    'location_id': inventory_rec.location_id,
+                    'inventory_reference': inventory_reference
+                })
+            elif row_index == 6:
+                counting_sheet_header['inventory_name'] = row.cells[2].data  # Cell C7
+            if row_index < 9:
+                continue
+
+            # === Process lines ===
+
+            # Check number of columns
+            if len(row) != 9:
+                raise osv.except_osv(_('Error'), _("""You should have exactly 9 columns in this order:
+Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Date*, Specification*, BN Management*"""))
+
+            # Check line number
+            line_no = row.cells[0].data
+            if line_no is not None:
+                try:
+                    line_no = int(line_no)
+                except ValueError:
+                    line_no = None
+                    add_error("""Not valide line number""", row_index, 0)
+                # TODO: Vérifier les lignes en double
+
+            # Check product_code
+            product_code = row.cells[1].data
+            product_ids = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
+            product_id = False
+            if len(product_ids) == 1:
+                product_id = product_ids[0]
+            else:
+                add_error("""Product %s not found""" % product_code, row_index, 1)
+
+            # Check UoM
+            product_uom_id = False
+            product_uom = row.cells[3].data
+            product_uom_ids = product_uom_obj.search(cr, uid, [('name', '=like', product_uom)])
+            if len(product_uom_ids) == 1:
+                product_uom_id = product_uom_ids[0]
+            else:
+                add_error("""UoM %s unknown""" % product_uom, row_index, 3)
+
+            # Check quantity
+            quantity = row.cells[4].data
+            try:
+                quantity = counting_obj.quantity_validate(cr, quantity)
+            except ValueError:
+                add_error("""Quantity %s is not valide""" % quantity, row_index, 4)
+
+            # Check batch number
+            batch_name = row.cells[5].data
+
+            # Check expiry date
+            expiry_date = row.cells[6].data
+            if expiry_date:
+                expiry_date_type = row.cells[6].type
+                try:
+                    if expiry_date_type == 'datetime':
+                        expiry_date = expiry_date.strftime(DEFAULT_SERVER_DATE_FORMAT)
+                    elif expiry_date_type == 'str':
+                        expiry_date = parse(expiry_date).strftime(DEFAULT_SERVER_DATE_FORMAT)
+                    else:
+                        raise ValueError()
+                except ValueError:
+                    add_error("""Expiry date %s is not valide""" % expiry_date, row_index, 6)
+
+            data = {
+                'line_no': line_no,
+                'product_id': product_id,
+                'batch_number': batch_name,
+                'expiry_date': expiry_date,
+                'quantity': quantity,
+                'product_uom_id': product_uom_id,
+            }
+
+            # Check if line exist
+            line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no)])
+            if len(line_ids) > 0:
+                counting_sheet_lines.append((1, line_ids[0], data))
+            else:
+                counting_sheet_lines.append((0, 0, data))
+
+        # endfor
+
+        context['import_in_progress'] = True
+        wizard_obj = self.pool.get('physical.inventory.import.wizard')
+        if counting_sheet_errors:
+            # Errors found, open message box for exlain
+            self.write(cr, uid, ids, {'file_to_import': False}, context=context)
+            result = wizard_obj.message_box(cr, uid, title='Importation errors', message='\n'.join(counting_sheet_errors))
+        else:
+            # No error found. Write counting lines on Inventory
+            vals = {
+                'file_to_import': False,
+                'responsible': counting_sheet_header.get('inventory_counter_name'),
+                'counting_line_ids': counting_sheet_lines
+            }
+            self.write(cr, uid, ids, vals, context=context)
+            result = wizard_obj.message_box(cr, uid, title='Information', message='Counting sheet succefully imported.')
+        context['import_in_progress'] = False
+
+        return result
+
+    def action_done(self, cr, uid, ids, context=None):
+        """ Finish the inventory
+        @return: True
+        """
+        if context is None:
+            context = {}
+        move_obj = self.pool.get('stock.move')
+        for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
+            move_obj.action_done(cr, uid, inv['move_ids'], context=context)
+        self.write(cr, uid, ids, {'state': 'done', 'date_done': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)},
+                   context=context)
+        return True
+
+    def action_confirm(self, cr, uid, ids, context=None):
+        """ Confirm the inventory and writes its finished date
+        @return: True
+        """
+        if context is None:
+            context = {}
+        # to perform the correct inventory corrections we need analyze stock location by
+        # location, never recursively, so we use a special context
+        product_context = dict(context, compute_child=False)
+
+        location_obj = self.pool.get('stock.location')
+        product_obj = self.pool.get('product.product')
+        product_tmpl_obj = self.pool.get('product.template')
+        product_dict = {}
+        product_tmpl_dict = {}
+
+        for inv in self.read(cr, uid, ids, ['line_ids', 'date', 'name'], context=context):
+            move_ids = []
+
+            # gather all information needed for the lines treatment first to do less requests
+            inv_line_obj = self.pool.get('physical.inventory.line')
+
+            line_read = inv_line_obj.read(cr, uid, inv['line_ids'],
+                                          ['product_id', 'product_uom', 'prod_lot_id', 'location_id',
+                                           'product_qty', 'inventory_id', 'dont_move', 'comment',
+                                           'reason_type_id', 'average_cost'],
+                                          context=context)
+            product_id_list = [x['product_id'][0] for x in line_read if
+                               x['product_id'][0] not in product_dict]
+            product_id_list = list(set(product_id_list))
+            product_read = product_obj.read(cr, uid, product_id_list,
+                                            ['product_tmpl_id'], context=context)
+            for product in product_read:
+                product_id = product['id']
+                product_dict[product_id] = {}
+                product_dict[product_id]['p_tmpl_id'] = product['product_tmpl_id'][0]
+            tmpl_ids = [x['p_tmpl_id'] for x in product_dict.values()]
+
+            product_tmpl_id_list = [x for x in tmpl_ids if x not in
+                                    product_tmpl_dict]
+            product_tmpl_id_list = list(set(product_tmpl_id_list))
+            product_tmpl_read = product_tmpl_obj.read(cr, uid,
+                                                      product_tmpl_id_list, ['property_stock_inventory'],
+                                                      context=context)
+            product_tmpl_dict = dict((x['id'], x['property_stock_inventory'][0]) for x in product_tmpl_read)
+
+            for product_id in product_id_list:
+                product_tmpl_id = product_dict[product_id]['p_tmpl_id']
+                stock_inventory = product_tmpl_dict[product_tmpl_id]
+                product_dict[product_id]['stock_inventory'] = stock_inventory
+
+            for line in line_read:
+                pid = line['product_id'][0]
+                lot_id = line['prod_lot_id'] and line['prod_lot_id'][0] or False
+                product_context.update(uom=line['product_uom'][0],
+                                       date=inv['date'], prodlot_id=lot_id)
+                amount = location_obj._product_get(cr, uid,
+                                                   line['location_id'][0], [pid], product_context)[pid]
+
+                change = line['product_qty'] - amount
+                if change and self._hook_dont_move(cr, uid, dont_move=line['dont_move']):
+                    location_id = product_dict[line['product_id'][0]]['stock_inventory']
+                    value = {
+                        'name': 'INV:' + str(inv['id']) + ':' + inv['name'],
+                        'product_id': line['product_id'][0],
+                        'product_uom': line['product_uom'][0],
+                        'prodlot_id': lot_id,
+                        'date': inv['date'],
+                    }
+                    if change > 0:
+                        value.update( {
+                            'product_qty': change,
+                            'location_id': location_id,
+                            'location_dest_id': line['location_id'][0],
+                        })
+                    else:
+                        value.update( {
+                            'product_qty': -change,
+                            'location_id': line['location_id'][0],
+                            'location_dest_id': location_id,
+                        })
+                    value.update({
+                        'comment': line['comment'],
+                        'reason_type_id': line['reason_type_id'][0],
+                    })
+
+                    if self._name == 'initial.stock.inventory':
+                        value.update({'price_unit': line['average_cost']})
+                    move_ids.append(self._inventory_line_hook(cr, uid, None, value))
+                elif not change:
+                    inv_line_obj.write(cr, uid, [line['id']], {'dont_move': True}, context=context)
+            message = _('Inventory') + " '" + inv['name'] + "' "+ _("is validated.")
+            self.log(cr, uid, inv['id'], message)
+            self.write(cr, uid, [inv['id']], {'state': 'confirm', 'move_ids': [(6, 0, move_ids)]})
+        return True
+
+    def action_cancel_draft(self, cr, uid, ids, context=None):
+        """ Cancels the stock move and change inventory state to draft.
+        @return: True
+        """
+        inv_to_write = set()
+        for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
+            self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
+            inv_to_write.add(inv['id'])
+
+        self.write(cr, uid, list(inv_to_write), {'state':'draft'}, context=context)
+        return True
+
+    def action_cancel_inventary(self, cr, uid, ids, context=None):
+        """ Cancels both stock move and inventory
+        @return: True
+        """
+        move_obj = self.pool.get('stock.move')
+        account_move_obj = self.pool.get('account.move')
+        for inv in self.browse(cr, uid, ids, context=context):
+            move_obj.action_cancel(cr, uid, [x.id for x in inv.move_ids], context=context)
+            for move in inv.move_ids:
+                account_move_ids = account_move_obj.search(cr, uid, [('name',
+                                                                      '=', move.name)], order='NO_ORDER')
+                if account_move_ids:
+                    account_move_data_l = account_move_obj.read(cr, uid, account_move_ids, ['state'], context=context)
+                    for account_move in account_move_data_l:
+                        if account_move['state'] == 'posted':
+                            raise osv.except_osv(_('UserError'),
+                                                 _('You can not cancel inventory which has any account move with posted state.'))
+                        account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
+            line_ids = [x.id for x in inv.inventory_line_id]
+            if line_ids:
+                self.pool.get('stock.inventory.line').write(cr, uid, line_ids, {'dont_move': False}, context=context)
+            self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
+            if self._name == 'initial.stock.inventory':
+                self.infolog(cr, uid, "The Initial Stock inventory id:%s (%s) has been canceled" % (inv.id, inv.name))
+            else:
+                self.infolog(cr, uid, "The Physical inventory id:%s (%s) has been canceled" % (inv.id, inv.name))
+        return True
 
 
 PhysicalInventory()
@@ -162,7 +461,8 @@ class PhysicalInventoryCounting(osv.osv):
             try:
                 quantity = self.quantity_validate(cr, quantity)
             except ValueError:
-                return {'value': {'physical_qty': False}, 'warning': {'title': 'warning', 'message': 'Enter a valid quantity.'}}
+                return {'value': {'physical_qty': False},
+                        'warning': {'title': 'warning', 'message': 'Enter a valid quantity.'}}
         return {'value': {'physical_qty': quantity}}
 
     def on_change_product_id(self, cr, uid, ids, product_id, uom=False):
@@ -193,6 +493,8 @@ class PhysicalInventoryLine(osv.osv):
                                      string='Company', store=True, select=True, readonly=True),
         'prod_lot_id': fields.many2one('stock.production.lot', 'Production Lot',
                                        domain="[('product_id','=',product_id)]"),
+
+        'location_id': fields.related('inventory_id', 'location_id', type='many2one', string='location_id', readonly=True),
         'state': fields.related('inventory_id', 'state', type='char', string='State', readonly=True),
     }
 
