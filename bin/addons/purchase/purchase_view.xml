@@ -504,7 +504,7 @@
             <field name="res_model">purchase.order</field>
             <field name="view_mode">tree,form,graph,calendar</field>
             <field name="context">{'purchase_order': True}</field>
-            <field name="domain">[('tender_id', '=', False)]</field>
+            <field name="domain">[('tender_id', '=', False), ('rfq_ok', '=', False)]</field>
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
             <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
         </record>

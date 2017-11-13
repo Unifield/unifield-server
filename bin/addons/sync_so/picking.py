@@ -210,6 +210,7 @@ class stock_picking(osv.osv):
                   'quantity': data['product_qty'] or 0.0,
                   'note': data['note'],
                   'comment': data.get('comment'),
+                  'sale_line_id': data.get('sale_line_id', False) and data['sale_line_id'].get('id', False) or False,
                   }
         return result
 
@@ -391,6 +392,13 @@ class stock_picking(osv.osv):
                         #US-1294: Now search all moves of the given IN and line number
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
                         move_ids = move_obj.search(cr, uid, search_move, order='product_qty ASC', context=context)
+                        if not move_ids:
+                            # SLL edit, if move cannot be found, then use sync_linked_sol to find it:
+                            sol_id = data.get('sale_line_id', False) and int(data['sale_line_id'].split('/')[-1]) or False
+                            if sol_id:
+                                pol_id = self.pool.get('purchase.order.line').search(cr, uid, [('sync_linked_sol', 'ilike', '%%/%s' % sol_id)], context=context)
+                                if pol_id:
+                                    move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_id)], context=context)
                         if not move_ids:
                             #US-1294: absolutely no moves -> probably they are closed, just show the error message then ignore
                             closed_in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['done', 'cancel'], context)
@@ -590,7 +598,6 @@ class stock_picking(osv.osv):
             context = {}
         self._logger.info("+++ Cancel the relevant IN at %s due to the cancel of some specific move of the Pick ticket at supplier %s" % (cr.dbname, source))
 
-        wf_service = netsvc.LocalService("workflow")
         so_po_common = self.pool.get('so.po.common')
         po_obj = self.pool.get('purchase.order')
         pick_dict = out_info.to_dict()
@@ -603,7 +610,8 @@ class stock_picking(osv.osv):
             in_id = so_po_common.get_in_id_from_po_id(cr, uid, po_id, context)
             if in_id:
                 # Cancel the IN object to have all lines cancelled, but the IN object remained as closed, so the update of state is done right after
-                wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
+                incoming = self.pool.get('stock.picking').browse(cr, uid, in_id, context=context)
+                self.pool.get('stock.move').action_cancel(cr, uid, [move.id for move in incoming.move_lines], context=context)
                 self.write(cr, uid, in_id, {'state': 'done'}, context) # UTP-872: reset state of the IN to become closed
 
                 name = self.browse(cr, uid, in_id, context).name

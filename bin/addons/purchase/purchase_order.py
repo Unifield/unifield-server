@@ -1021,6 +1021,8 @@ class purchase_order(osv.osv):
             default['date_confirm'] = False
         if not default.get('related_sourcing_id', False):
             default['related_sourcing_id'] = False
+        if not 'rfq_state' in default:
+            default['rfq_state'] = 'draft'
 
         new_id = super(purchase_order, self).copy(cr, uid, p_id, default, context=context)
         if new_id:
@@ -1995,8 +1997,8 @@ class purchase_order(osv.osv):
             'price_unit': pol.price_unit,
             'date': pol.confirmed_delivery_date,
             'date_expected': pol.confirmed_delivery_date or pol.date_planned,
-            'line_number': pol.line_number,
             'comment': pol.comment,
+            'line_number': pol.line_number,
         }
 
         if incoming.reason_type_id:
@@ -2025,17 +2027,16 @@ class purchase_order(osv.osv):
             return False
 
         # compute source location:
-        input_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
-        input_loc = self.pool.get('stock.location').browse(cr, uid, input_id, context=context)
+        src_location = pol.order_id.location_id
 
         # compute destination location:
         dest = pol.order_id.location_id.id
         if pol.product_id.type == 'service_recep' and not pol.order_id.cross_docking_ok:
             # service with reception are directed to Service Location
             dest = self.pool.get('stock.location').get_service_location(cr, uid)
-        elif self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=pol.product_id, context=context):
+        elif self.pool.get('stock.location').chained_location_get(cr, uid, src_location, product=pol.product_id, context=context):
             # if input location has a chained location then use it
-            dest = self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=pol.product_id, context=context)[0].id
+            dest = self.pool.get('stock.location').chained_location_get(cr, uid, src_location, product=pol.product_id, context=context)[0].id
         else:
             sol = pol.linked_sol_id
             if sol:
@@ -2055,7 +2056,7 @@ class purchase_order(osv.osv):
             'product_uos_qty': pol.product_qty,
             'product_uom': pol.product_uom.id,
             'product_uos': pol.product_uom.id,
-            'location_id': input_id,
+            'location_id': src_location.id,
             'location_dest_id': dest,
             'picking_id': internal.id,
             'move_dest_id': pol.move_dest_id.id,
@@ -2375,6 +2376,7 @@ class purchase_order(osv.osv):
 
         # update price lists
         self.update_supplier_info(cr, uid, ids, context=context)
+
         # copy the po with rfq_ok set to False
         data = self.read(cr, uid, ids[0], ['name', 'amount_total'], context=context)
         if not data.get('amount_total', 0.00):
@@ -2382,7 +2384,9 @@ class purchase_order(osv.osv):
                 _('Error'),
                 _('Generation of PO aborted because no price defined on lines.'),
             )
+        context.update({'generate_po_from_rfq': True})
         new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': data['name']}, context=dict(context,keepOrigin=True))
+        context.pop('generate_po_from_rfq')
         # Remove lines with 0.00 as unit price
         no_price_line_ids = line_obj.search(cr, uid, [
             ('order_id', '=', new_po_id),
@@ -2393,9 +2397,6 @@ class purchase_order(osv.osv):
         data = self.read(cr, uid, new_po_id, ['name'], context=context)
         # log message describing the previous action
         self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.')%data['name'])
-        # close the current po
-        wf_service = netsvc.LocalService("workflow")
-        wf_service.trg_validate(uid, 'purchase.order', ids[0], 'rfq_done', cr)
 
         return new_po_id
 
@@ -2497,6 +2498,22 @@ class purchase_order(osv.osv):
                 to_process.append(po.id)
         self._finish_commitment(cr, uid, to_process, context=context)
         return super(purchase_order, self).action_done(cr, uid, ids, context=context)
+
+
+    def continue_sourcing(self, cr, uid, ids, context=None):
+        '''
+        On RfQ updated continue sourcing process (create PO)
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.generate_po_from_rfq(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'rfq_state': 'done'}, context=context)
+
+        return True
+
 
     def add_audit_line(self, cr, uid, order_id, old_state, new_state, context=None):
         """

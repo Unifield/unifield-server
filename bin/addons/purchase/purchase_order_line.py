@@ -1116,7 +1116,7 @@ class purchase_order_line(osv.osv):
             default = {}
 
         # do not copy canceled purchase.order.line:
-        pol = self.browse(cr, uid, p_id, fields_to_fetch=['state'], context=context)
+        pol = self.browse(cr, uid, p_id, fields_to_fetch=['state', 'order_id', 'linked_sol_id'], context=context)
         if pol.state in ['cancel', 'cancel_r']:
             return False
 
@@ -1127,6 +1127,10 @@ class purchase_order_line(osv.osv):
                 default[field] = False
 
         default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False})
+
+        # from RfQ line to PO line: grab the linked sol if has:
+        if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
+            default.update({'linked_sol_id': pol.linked_sol_id.id})
 
         if not context.get('keepDateAndDistrib'):
             if 'confirmed_delivery_date' not in default:

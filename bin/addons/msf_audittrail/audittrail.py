@@ -928,6 +928,12 @@ class audittrail_log_line(osv.osv):
             if not res[line.id]:
                 res[line.id] = line.field_description
 
+            # rename 'Field Order' to 'Order' in case of IR
+            if line.object_id.model == 'sale.order':
+                so = self.pool.get('sale.order').browse(cr, uid, line.res_id)
+                if so.procurement_request and res[line.id].find('Field Order') != -1:
+                    res[line.id] = res[line.id].replace('Field Order', 'Order')
+
         return res
 
     def _src_field_name(self, cr, uid, obj, name, args, context=None):
