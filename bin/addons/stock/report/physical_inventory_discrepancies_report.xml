@@ -859,7 +859,7 @@
    </Row>
    % for index,item in enumerate(objects[0].line_ids):
    <Row>
-    <Cell ss:StyleID="s30"><Data ss:Type="String">${index + 1}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s30"><Data ss:Type="String">${item.line_no}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s30"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s31"><Data ss:Type="String">${item.product_id and item.product_id.code or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s31"><Data ss:Type="String">${item.product_id and item.product_id.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>

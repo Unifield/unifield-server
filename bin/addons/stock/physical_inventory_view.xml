@@ -33,7 +33,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Counting sheet">
+                        <page string="Counting sheet" attrs="{'readonly': ['state', '!=', 'draft]}">
                             <group col="4" colspan="4">
                                 <button name="export_pdf_counting_sheet" string="Export pdf counting sheet"
                                         type="object" colspan="2" icon="gtk-print"/>
@@ -113,7 +113,7 @@
                                 </form>
                             </field>
                         </page>
-                        <page string="Posted Inventory">
+                        <page string="Posted Inventory" attrs="{'readonly': ['state', 'not in', ['confirm', 'closed']]}">
                             <field colspan="2" name="move_ids" nolabel="1" widget="one2many_list"
                                    context="{'inventory_id':active_id}"
                                    attrs="{'readonly': [('state', '!=', 'draft')]}">
@@ -147,11 +147,11 @@
                         <field name="state"/>
                     </group>
                     <group colspan="2">
-                        <button name="button_cancel" states="draft,counting,counted,validated" string="Cancel Inventory"
-                                type="workflow" icon="gtk-cancel"/>
+                        <button name="action_cancel_inventary" states="draft,counting,counted,validated" string="Cancel Inventory"
+                                type="object" icon="gtk-cancel"/>
                         <button name="generate_counting_sheet" states="draft,counted,validated" string="Generate Counting Sheet" 
                                 type="object" icon="gtk-go-forward"/>
-                        <button name="finish_counting" states="draft" string="Finish Counting" 
+                        <button name="finish_counting" states="counting" string="Finish Counting" 
                                 type="object" icon="gtk-paste-v"/>
                         <button name="action_confirm" states="validated" string="Validate Inventory" 
                                 type="object" icon="gtk-apply"/>

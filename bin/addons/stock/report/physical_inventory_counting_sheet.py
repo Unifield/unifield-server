@@ -12,7 +12,25 @@ class CountingSheetParser(report_sxw.rml_parse):
             'get_headers': self.get_headers,
             'next_counter': self.get_next_counter,
             'reset_counter': self.reset_counter,
+            'display_product_attributes': self.display_product_attributes,
+            'yesno': self.yesno,
+            'to_excel': self.to_excel,
         })
+
+    @staticmethod
+    def to_excel(value):
+        if isinstance(value, report_sxw._dttime_format):
+            return value.format().replace(' ', 'T')
+        return value
+
+    @staticmethod
+    def display_product_attributes(item):
+        attributes = {'is_ed': 'ED', 'is_kc': 'KC', 'is_dg': 'DG', 'is_cs': 'CS'}
+        return ','.join([name for attribute, name in attributes.items() if getattr(item, attribute, False)])
+
+    @staticmethod
+    def yesno(value):
+        return 'Y' if value else 'N'
 
     def get_next_counter(self):
         self.counter += 1
