@@ -44,7 +44,7 @@ CLAIM_TYPE_RELATION = {'in': 'supplier',
                        'out': 'customer'}
 # claim state
 CLAIM_STATE = [('draft', 'Draft'),
-               ('draft_progress', 'Draft in progress'),
+               ('draft_progress', 'Draft - In progress'),
                ('in_progress', 'Validated - In progress'),
                ('confirmed', 'Confirmed'),
                ('done', 'Closed')]
@@ -100,6 +100,15 @@ class return_claim(osv.osv):
         seq_id = seq_tools.create_sequence(cr, uid, vals, 'Return Claim', 'return.claim', prefix='', padding=5, context=context)
         vals.update({'sequence_id_return_claim': seq_id})
         return super(return_claim, self).create(cr, uid, vals, context=context)
+
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        only draft claim can be deleted
+        '''
+        data = self.read(cr, uid, ids, ['state'], context=context)
+        if not all([x['state'] == 'draft' for x in data]):
+            raise osv.except_osv(_('Warning !'), _('Only Claims in draft state can be deleted.'))
+        return super(return_claim, self).unlink(cr, uid, ids, context=context)
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
@@ -176,6 +185,34 @@ class return_claim(osv.osv):
                                                                                                 claim_partner_id=claim_partner_id,
                                                                                                 claim_picking_id=claim_picking_id))
         return res
+
+    def validate_draft_progress_claim(self, cr, uid, ids, context=None):
+        '''
+        Change the claim state from 'Draft - In progress' to 'Validated - In progress'
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'in_progress'}, context=context)
+
+        return True
+
+    def confirm_claim(self, cr, uid, ids, context=None):
+        '''
+        Change the claim state from 'Validated - In progress' to 'Confirmed
+        '''
+        # Some verifications
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
+
+        return True
 
     def close_claim(self, cr, uid, ids, context=None):
         '''
@@ -472,8 +509,38 @@ class return_claim(osv.osv):
         # results
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
-            result[obj.id] = {'contains_event_return_claim': len(obj.event_ids_return_claim) > 0}
-            result[obj.id] = {'fake_state_return_claim': obj.state}
+            result[obj.id] = {
+                'contains_event_return_claim': len(obj.event_ids_return_claim) > 0,
+                'fake_state_return_claim': obj.state,
+            }
+
+            # Check if the linked picking is done or cancelled,
+            # and if the linked events are done and each linked picking is done or cancelled
+            claim_is_done = True
+            if obj.state not in ('confirmed', 'done') or obj.picking_id_return_claim.state not in ('done', 'cancel'):
+                claim_is_done = False
+            for event in obj.event_ids_return_claim:
+                if event.state != 'done' or event.event_picking_id_claim_event.state not in ('done', 'cancel'):
+                    claim_is_done = False
+
+            result[obj.id].update({'claim_is_done': claim_is_done})
+
+            # Define if the next state is confirmed or closed
+            claim_next_state = 'waiting'
+            if obj.partner_id_return_claim.partner_type == 'internal':
+                if obj.origin_claim:
+                    if obj.state == 'in_progress' and obj.type_return_claim == 'customer':
+                        claim_next_state = 'confirm'
+                    elif obj.state == 'confirmed':
+                        claim_next_state = 'close'
+                else:
+                    if obj.state == 'confirmed':
+                        claim_next_state = 'close'
+            else:
+                if obj.state == 'in_progress':
+                    claim_next_state = 'close'
+
+            result[obj.id].update({'claim_next_state': claim_next_state})
 
         return result
 
@@ -515,9 +582,6 @@ class return_claim(osv.osv):
             string='State',
             readonly=True,
         ),
-        'request_missing': fields.boolean(
-            string='Request missing products/quantities'
-        ),
         'goods_expected': fields.boolean(
             string='Goods replacement/balance expected to be received'
         ),
@@ -526,7 +590,7 @@ class return_claim(osv.osv):
             size=512,
         ),
         'origin_claim': fields.char(
-            string='Reference of the original claim',
+            string='Original Claim Reference',
             size=512,
         ),
         # Many2one
@@ -588,6 +652,23 @@ class return_claim(osv.osv):
             readonly=True,
             multi='get_vals_claim',
         ),
+        'claim_is_done': fields.function(
+            _vals_get_claim,
+            method=True,
+            type='boolean',
+            string='Check if Claim is done',
+            readonly=True,
+            multi='get_vals_claim',
+        ),
+        'claim_next_state': fields.function(
+            _vals_get_claim,
+            method=True,
+            type='char',
+            size=128,
+            string='Define if the next state is confirmed or closed',
+            readonly=True,
+            multi='get_vals_claim',
+        )
     }
 
     def _get_default_src_loc_id(self, cr, uid, context=None):
@@ -720,10 +801,10 @@ class return_claim(osv.osv):
 
     def validated_claim_create_claim(self, cr, uid, source, claim_info, context=None):
         '''
-        Synchronisation method for claims
+        Synchronisation method for claims customer->supplier
+        - create counterpart claims for validated claims
         '''
         warehouse_obj = self.pool.get('stock.warehouse')
-        claim_obj = self.pool.get('return.claim')
         event_obj = self.pool.get('claim.event')
         sale_obj = self.pool.get('sale.order')
         pick_obj = self.pool.get('stock.picking')
@@ -740,7 +821,8 @@ class return_claim(osv.osv):
 
         sale_id = sale_obj.search(cr, uid, [('client_order_ref', 'ilike', claim_info.po_id_return_claim.name)],
                                       limit=1, order='id', context=context)[0]
-        subtype = 'picking' if 'SHIP' in claim_info.picking_id_return_claim.shipment_ref else 'standard'
+        subtype = 'standard' if claim_info.picking_id_return_claim.shipment_ref \
+                                and 'OUT' in claim_info.picking_id_return_claim.shipment_ref else 'picking'
         # fetch the original picking, ticket or out
         origin_pick_id = pick_obj.search(cr, uid, [('sale_id', '=', sale_id), ('type', '=', 'out'),
                                                    ('subtype', '=', subtype), ('backorder_id', '=', False)],
@@ -770,7 +852,6 @@ class return_claim(osv.osv):
             'description_return_claim': claim_info.description_return_claim,
             'follow_up_return_claim': claim_info.follow_up_return_claim,
             'po_so_return_claim': claim_info.po_so_return_claim,
-            'request_missing': claim_info.request_missing,
             'goods_expected': claim_info.goods_expected,
             'processor_origin': claim_info.processor_origin,
             'creation_date_return_claim': claim_info.creation_date_return_claim,
@@ -792,7 +873,7 @@ class return_claim(osv.osv):
 
         if claim_id:
             # only update if the claim is from synchro and in draft
-            if claim_obj.browse(cr, uid, claim_id, context=context).state == 'draft_progress':
+            if self.browse(cr, uid, claim_id, context=context).state == 'draft_progress':
                 # update linked claim event
                 event_id = event_obj.search(cr, uid, [('return_claim_id_claim_event', '=', claim_id)], limit=1, context=context)[0]
                 event_obj.update(cr, uid, event_id, event_values, context=context)
@@ -804,15 +885,41 @@ class return_claim(osv.osv):
                 'state': 'draft_progress',
                 'type_return_claim': 'customer',
             })
-            claim_id = claim_obj.create(cr, uid, claim_data, context=context)
+            claim_id = self.create(cr, uid, claim_data, context=context)
             # create the new event
             event_values.update({
                 'return_claim_id_claim_event': claim_id,
+                'state': 'done',  # the event must not be processed again
             })
             event_obj.create(cr, uid, event_values, context=context)
 
         name = self.browse(cr, uid, claim_id, context=context).name
-        message = "The claim " + name + " is created by sync and linked to the claim " + claim_info.name + " by Push Flow at " + source
+        message = _('The claim %s is created by sync and linked to the claim %s by Push Flow at %s.'
+                    % (name, claim_info.name, source))
+        self._logger.info(message)
+
+        return message
+
+    def closed_claim_confirm_original_claim(self, cr, uid, source, claim_info, context=None):
+        '''
+        Synchronisation method for claims supplier->customer:
+        - confirm original claims if their counterpart is closed
+        '''
+        if context is None:
+            context = {}
+
+        # search for the claim
+        origin_name = claim_info.origin_claim.split(".")[-1]
+        claim_id = self.search(cr, uid, [('name', '=', origin_name)], limit=1, context=context)[0]
+
+        if not claim_id:
+            raise osv.except_osv(_('Error !'), _('Original claim %s not found') % (origin_name))
+
+        self.write(cr, uid, claim_id, ({'state': 'confirmed'}), context=context)
+
+        name = self.browse(cr, uid, claim_id, context=context).name
+        message = _("The claim %s has been confirmed by the closed claim %s by Push Flow at %s."
+                    % (name, claim_info.name, source))
         self._logger.info(message)
 
         return message
@@ -867,7 +974,7 @@ class claim_event(osv.osv):
         if not event_type or not origin:
             return False
         # treat each event type
-        if event_type in ('return', 'surplus'):
+        if event_type in ('return', 'surplus', 'missing'):
             if claim_type == 'supplier':
                 # property_stock_supplier from partner
                 data = partner_obj.read(cr, uid, partner_id, ['property_stock_supplier'], context=context)
@@ -955,7 +1062,11 @@ class claim_event(osv.osv):
             # update the moves
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
             # get the move values according to claim type
-            move_obj.write(cr, uid, replacement_move_ids, replacement_move_values, context=context)
+            for replacement_move_id in replacement_move_ids:
+                move_values = replacement_values
+                this_move = move_obj.browse()
+                this_move_values.update({'purchase_line_id': event_picking.purchase_line_id.id})
+                move_obj.write(cr, uid, replacement_move_id, replacement_move_values, context=context)
             # confirm and check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
@@ -1246,7 +1357,7 @@ class claim_event(osv.osv):
             'name': event_picking.name + '-missing',
             'reason_type_id': context['common']['rt_goods_replacement'],
             'origin': origin_picking.origin,
-            'purchase_id': origin_picking.purchase_id.id,
+            # 'purchase_id': origin_picking.purchase_id.id,
             'sale_id': origin_picking.sale_id.id,
             'claim': True,
         }
@@ -1256,9 +1367,13 @@ class claim_event(osv.osv):
         # update the picking again - strange bug on runbot, the type was internal again...
         pick_obj.write(cr, uid, [event_picking.id], in_values, context=context)
         # update the destination location for each move
-        move_ids = [move.id for move in event_picking.move_lines]
-        # get the move values according to claim type
-        move_obj.write(cr, uid, move_ids, move_values, context=context)
+        original_line_numbers = [move.line_number for move in origin_picking.move_lines]
+        for i, move in enumerate(event_picking.move_lines):
+            move_values_with_line_numbers = move_values
+            # set the same line number as the original move
+            move_values_with_line_numbers.update({'line_number': original_line_numbers[i]})
+            # get the move values according to claim type
+            move_obj.write(cr, uid, move.id, move_values_with_line_numbers, context=context)
         # check availability of replacement picking
         picking_tools.confirm(cr, uid, event_picking.id, context=context)
         picking_tools.check_assign(cr, uid, event_picking.id, context=context)
@@ -2077,6 +2192,7 @@ class stock_picking(osv.osv):
                     'partner_id_return_claim': partner_id.id,
                     'picking_id_return_claim': picking_id,
                     'processor_origin': wizard._table_name,
+                    'goods_expected': wizard.claim_replacement_picking_expected,
                     'product_line_ids_return_claim': [(0, 0, {
                         'qty_claim_product_line': x.product_qty,
                         'price_unit_claim_product_line': x.price_unit,

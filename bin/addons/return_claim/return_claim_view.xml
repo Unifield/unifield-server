@@ -38,7 +38,7 @@
                         <group col="4" colspan="4">
                             <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                             <field name="type_return_claim"
-                                attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
+                                attrs="{'readonly': ['|', ('state', 'in', ('draft_progress', 'done')), ('contains_event_return_claim', '=', True)]}" />
                             <field name="category_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                             <field name="origin_claim" readonly="1" />
                         </group>
@@ -52,13 +52,12 @@
                                 <field name="picking_id_return_claim"
                                     domain="[('state', '=', 'done'), '|', '&amp;', ('type', 'in', ['out', 'in']), ('subtype', '=', 'standard'), '&amp;', '&amp;', ('type', '=', 'out'), ('subtype', '=', 'picking'), ('backorder_id', '!=', False)]"
                                     on_change="on_change_origin(picking_id_return_claim,context)"
-                                    attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
+                                    attrs="{'readonly': ['|', ('state', 'in', ('draft_progress', 'done')), ('contains_event_return_claim', '=', True)]}" />
                                 <field name="po_so_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                 <field name="partner_id_return_claim"
-                                    attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
+                                    attrs="{'readonly': ['|', ('state', 'in', ('draft_progress', 'done')), ('contains_event_return_claim', '=', True)]}" />
                                 <field name="order_line_number_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
-                                <!--<field name="goods_expected"-->
-                                       <!--attrs="{'invisible': ['|', ('state', 'in', ['draft', 'draft_progress']), ]}" />-->
+                                <field name="goods_expected" readonly="1" attrs="{'invisible': [('goods_expected', '=', False)]}" />
                                 <field name="description_return_claim" colspan="4" />
                             </page>
                             <page string="Events">
@@ -105,7 +104,7 @@
                             <page string="Products">
                                 <field name="default_src_location_id_return_claim" attrs="{'readonly': ['|', ('type_return_claim', 'not in', ['supplier', 'transport']), ('state', '!=', 'draft')]}" domain="[('usage', '!=', 'view')]" />
                                 <field name="product_line_ids_return_claim" mode="tree,form" nolabel="True" widget="one2many_list" colspan="4"
-                                    attrs="{'readonly': [('state', 'not in', ('draft', 'draft_progress))]}" context="{'claim_type': type_return_claim, 'default_src': default_src_location_id_return_claim, 'claim_partner': partner_id_return_claim}">
+                                    attrs="{'readonly': [('state', '!=', 'draft')]}" context="{'claim_type': type_return_claim, 'default_src': default_src_location_id_return_claim, 'claim_partner': partner_id_return_claim}">
                                     <tree string="Products" editable="top" colors="red:integrity_status_claim_product_line != 'empty'">
                                         <field name="name" invisible="True" />
                                         <field name="product_id_claim_product_line" domain="[('picking_ids', '=', parent.picking_id_return_claim)]"
@@ -144,9 +143,9 @@
                                 </field>
                                 <group colspan="2" col="2" />
                                 <button name="check_product_lines_integrity" type="object" string="Check Integrity" icon="gtk-apply"
-                                    attrs="{'readonly': [('state', 'not in', ('draft', 'draft_progress))]}" />
+                                    attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                 <button name="load_products" type="object" string="Load Products from IN/OUT" icon="gtk-add"
-                                    attrs="{'readonly': [('state', 'not in', ('draft', 'draft_progress))]}" />
+                                    attrs="{'readonly': [('state', '!=', 'draft')]}" />
                             </page>
                             <page string="Follow Up">
                                 <field name="follow_up_return_claim" nolabel="True" />
@@ -157,8 +156,16 @@
                             <field name="fake_state_return_claim" invisible="True" />
                         </group>
                         <group col="7" colspan="2">
+                            <field name="claim_is_done" invisible="True" />
+                            <field name="claim_next_state" invisible="True" />
+                            <button name="validate_draft_progress_claim" string="Validate Claim" icon="terp-check" type="object"
+                                    attrs="{'invisible': [('state', '!=', 'draft_progress')]}"/>
                             <!-- <button name="process_next_event" string="Process Next Event" type="object" icon="gtk-go-forward" attrs="{'readonly': [('contains_event_return_claim', '=', False)]}" /> -->
-                            <button name="close_claim" string="Close Claim" type="object" icon="gtk-close" attrs="{'invisible': [('state', '=', 'done')]}" />
+                            <button name="confirm_claim" string="Confirm Claim" type="object" icon="terp-camera_test"
+                                    attrs="{'invisible': [('claim_next_state', '!=', 'confirm')]}" />
+                            <button name="close_claim" string="Close Claim" type="object" icon="gtk-close"
+                                    attrs="{'invisible': [('claim_next_state', '!=', 'close')],
+                                            'readonly': [('state', '=', 'confirmed'), ('claim_is_done', '=', False)]}" />
                         </group>
                     </form>
                 </field>

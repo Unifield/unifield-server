@@ -1302,7 +1302,13 @@ class stock_picking(osv.osv):
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                 # Then we finish the good picking
                 self.action_move(cr, uid, [backorder_id], context=context)
-                wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
+                # Cancel missing IN instead of processing
+                if wizard.register_a_claim and wizard.claim_type == 'missing':
+                    move_ids = move_obj.search(cr, uid, [('picking_id', '=', backorder_id)])
+                    move_obj.action_cancel(cr, uid, move_ids, context=context)
+                    self.action_cancel(cr, uid, [backorder_id], context=context)
+                else:
+                    wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', picking_id, cr)
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                     'close_in': _('Done'),

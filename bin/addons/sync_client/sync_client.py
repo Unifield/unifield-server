@@ -595,7 +595,7 @@ class Entity(osv.osv):
                     field_obj = get_field_obj(related_model, field)
                 else:
                     field_obj = get_field_obj(model, field)
-                if field_obj._type in ('many2one', 'many2many', 'one2many'):
+                if field_obj and field_obj._type in ('many2one', 'many2many', 'one2many'):
                     model_set.add(field_obj._obj)
 
         # specific cases to sync BAR and FAR

@@ -325,7 +325,7 @@ class stock_picking(osv.osv):
         if shipment_ref:
             shipment_ref = source + "." + shipment_ref
 
-        if not pick_dict.get('claim', False):
+        if po_id:
             po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
             # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
             in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
@@ -339,6 +339,7 @@ class stock_picking(osv.osv):
                 'claim': pick_dict.get('claim', False),
                 'min_date': pick_dict.get('min_date', False),
                 'note': pick_dict.get('note', False),
+                'partner_id': self.pool.get('res.partner').search(cr, uid, [('name', '=', source)], context=context)[0],
                 'origin': pick_dict.get('origin', False),
                 'partner_type_stock_picking': pick_dict.get('partner_type_stock_picking', False),
                 'reason_type_id': context['common']['rt_goods_return'],
@@ -1147,6 +1148,67 @@ class stock_picking(osv.osv):
             invoice_result = super(stock_picking, self).action_invoice_create(cr, uid, ids,
                                                                               journal_id=journal_id, group=group, type=type, context=context)
         return invoice_result
+
+    def goods_expecting_picking_from_claim_creates_fo(self, cr, uid, source, stock_picking, context=None):
+        '''
+        Create a new FO and its lines to internal partner if the IN has '-replacement' or '-missing' in its name and
+        its state is available
+        '''
+        if context is None:
+            context = {}
+
+        sale_obj = self.pool.get('sale.order')
+        product_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+        partner_obj = self.pool.get('res.partner')
+        partner_adress_obj = self.pool.get('res.partner.address')
+        pricelist_obj = self.pool.get('product.pricelist')
+
+        po_info = stock_picking.purchase_id
+        lines = stock_picking.move_lines
+        partner_id = partner_obj.search(cr, uid, [('name', '=', source)], limit=1, context=context)[0]
+        partner_type = partner_obj.read(cr, uid, partner_id, ['partner_type'], context=context)['partner_type']
+        partner_address_id = partner_adress_obj.search(cr, uid, [('partner_id', '=', partner_id)], limit=1, context=context)[0]
+
+        fo_data = {
+            'client_order_ref': source + '.' + po_info.name,
+            'delivery_requested_date': po_info.delivery_requested_date,
+            'details': po_info.details,
+            'note': po_info.notes,
+            'categ': po_info.categ,
+            'partner_id': partner_id,
+            'partner_type': partner_type,
+            'partner_order_id': partner_address_id,
+            'partner_invoice_id': partner_address_id,
+            'partner_shipping_id': partner_address_id,
+            'order_type': po_info.order_type,
+            'priority': po_info.priority,
+            'loan_duration': po_info.loan_duration,
+            'is_a_counterpart': po_info.is_a_counterpart,
+            'stock_take_date': po_info.stock_take_date,
+            'pricelist_id': pricelist_obj.search(cr, uid, [('name', '=', po_info.pricelist_id.name)], limit=1, context=context)[0],
+            'order_line': [(0, 0, {
+                'name': x.name,
+                'line_number': x.line_number,
+                'product_id': product_obj.search(cr, uid, [('name', '=', x.product_id.name)], limit=1, context=context)[0],
+                'product_uom_qty': x.product_qty,
+                'product_uom': uom_obj.search(cr, uid, [('name', '=', x.product_uom.name)], limit=1, context=context)[0],
+                'price_unit': x.price_unit,
+                'order_partner_id': partner_id,
+                'comment': x.comment,
+                'stock_take_date': po_info.stock_take_date,
+            }) for x in lines],
+        }
+
+        fo_id = sale_obj.create(cr, uid, fo_data, context=context)
+        fo_name = sale_obj.read(cr, uid, fo_id, ['name'], context=context)['name']
+
+        message = _('IN %s processed to FO %s by Push Flow at %s.' % (stock_picking.name, fo_name, source))
+        self._logger.info(message)
+
+        return message
+
+
 stock_picking()
 
 class shipment(osv.osv):
