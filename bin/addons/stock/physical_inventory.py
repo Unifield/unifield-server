@@ -131,6 +131,9 @@ class PhysicalInventory(osv.osv):
         # Get the view reference
         view_id = view('stock', 'physical_inventory_generate_counting_sheet')
 
+        # Switch to couting state
+        self.write(cr, uid, ids, {'state': 'counting'}, context=context)
+
         # Return a description of the wizard view
         return {'type': 'ir.actions.act_window',
                 'target': 'new',
@@ -140,7 +143,6 @@ class PhysicalInventory(osv.osv):
                 'view_type': 'form',
                 'view_mode': 'form',
                 'context': context}
-
 
     def export_xls_counting_sheet(self, cr, uid, ids, context=None):
         return {
@@ -306,10 +308,20 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
 
         return result
 
+    def import_discrepancy_report(self, cr, uid, ids, context=None):
+        pass
+
+    def export_discrepancy_report(self, cr, uid, ids, context=None):
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'physical_inventory_discrepancies_report_xls',
+            'datas': {'ids': ids, 'target_filename': 'discrepancies'},
+            'nodestroy': True,
+            'context': context,
+        }
+
     def action_done(self, cr, uid, ids, context=None):
-        """ Finish the inventory
-        @return: True
-        """
+        """ Finish the inventory"""
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
@@ -317,14 +329,13 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             move_obj.action_done(cr, uid, inv['move_ids'], context=context)
         self.write(cr, uid, ids, {'state': 'done', 'date_done': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)},
                    context=context)
-        return True
 
     def action_confirm(self, cr, uid, ids, context=None):
-        """ Confirm the inventory and writes its finished date
-        @return: True
-        """
+        """ Confirm the inventory and writes its finished date"""
+
         if context is None:
             context = {}
+
         # to perform the correct inventory corrections we need analyze stock location by
         # location, never recursively, so we use a special context
         product_context = dict(context, compute_child=False)
@@ -355,10 +366,10 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 product_id = product['id']
                 product_dict[product_id] = {}
                 product_dict[product_id]['p_tmpl_id'] = product['product_tmpl_id'][0]
+
             tmpl_ids = [x['p_tmpl_id'] for x in product_dict.values()]
 
-            product_tmpl_id_list = [x for x in tmpl_ids if x not in
-                                    product_tmpl_dict]
+            product_tmpl_id_list = [x for x in tmpl_ids if x not in product_tmpl_dict]
             product_tmpl_id_list = list(set(product_tmpl_id_list))
             product_tmpl_read = product_tmpl_obj.read(cr, uid,
                                                       product_tmpl_id_list, ['property_stock_inventory'],
@@ -375,11 +386,10 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 lot_id = line['prod_lot_id'] and line['prod_lot_id'][0] or False
                 product_context.update(uom=line['product_uom'][0],
                                        date=inv['date'], prodlot_id=lot_id)
-                amount = location_obj._product_get(cr, uid,
-                                                   line['location_id'][0], [pid], product_context)[pid]
+                amount = location_obj._product_get(cr, uid, line['location_id'][0], [pid], product_context)[pid]
 
                 change = line['product_qty'] - amount
-                if change and self._hook_dont_move(cr, uid, dont_move=line['dont_move']):
+                if change:
                     location_id = product_dict[line['product_id'][0]]['stock_inventory']
                     value = {
                         'name': 'INV:' + str(inv['id']) + ':' + inv['name'],
@@ -389,13 +399,13 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                         'date': inv['date'],
                     }
                     if change > 0:
-                        value.update( {
+                        value.update({
                             'product_qty': change,
                             'location_id': location_id,
                             'location_dest_id': line['location_id'][0],
                         })
                     else:
-                        value.update( {
+                        value.update({
                             'product_qty': -change,
                             'location_id': line['location_id'][0],
                             'location_dest_id': location_id,
@@ -404,40 +414,27 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                         'comment': line['comment'],
                         'reason_type_id': line['reason_type_id'][0],
                     })
-
-                    if self._name == 'initial.stock.inventory':
-                        value.update({'price_unit': line['average_cost']})
-                    move_ids.append(self._inventory_line_hook(cr, uid, None, value))
-                elif not change:
-                    inv_line_obj.write(cr, uid, [line['id']], {'dont_move': True}, context=context)
-            message = _('Inventory') + " '" + inv['name'] + "' "+ _("is validated.")
+                    move_ids.append(self.pool.get('stock.move').create(cr, uid, value))
+                # elif not change:
+                #     inv_line_obj.write(cr, uid, [line['id']], {'dont_move': True}, context=context)
+            message = _('Inventory') + " '" + inv['name'] + "' " + _("is validated.")
             self.log(cr, uid, inv['id'], message)
             self.write(cr, uid, [inv['id']], {'state': 'confirm', 'move_ids': [(6, 0, move_ids)]})
-        return True
 
     def action_cancel_draft(self, cr, uid, ids, context=None):
-        """ Cancels the stock move and change inventory state to draft.
-        @return: True
-        """
-        inv_to_write = set()
+        """ Cancels the stock move and change inventory state to draft."""
         for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
             self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
-            inv_to_write.add(inv['id'])
-
-        self.write(cr, uid, list(inv_to_write), {'state':'draft'}, context=context)
-        return True
+        self.write(cr, uid, ids, {'state': 'draft'}, context=context)
 
     def action_cancel_inventary(self, cr, uid, ids, context=None):
-        """ Cancels both stock move and inventory
-        @return: True
-        """
+        """ Cancels both stock move and inventory"""
         move_obj = self.pool.get('stock.move')
         account_move_obj = self.pool.get('account.move')
         for inv in self.browse(cr, uid, ids, context=context):
             move_obj.action_cancel(cr, uid, [x.id for x in inv.move_ids], context=context)
             for move in inv.move_ids:
-                account_move_ids = account_move_obj.search(cr, uid, [('name',
-                                                                      '=', move.name)], order='NO_ORDER')
+                account_move_ids = account_move_obj.search(cr, uid, [('name', '=', move.name)], order='NO_ORDER')
                 if account_move_ids:
                     account_move_data_l = account_move_obj.read(cr, uid, account_move_ids, ['state'], context=context)
                     for account_move in account_move_data_l:
@@ -445,15 +442,8 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                             raise osv.except_osv(_('UserError'),
                                                  _('You can not cancel inventory which has any account move with posted state.'))
                         account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
-            line_ids = [x.id for x in inv.inventory_line_id]
-            if line_ids:
-                self.pool.get('stock.inventory.line').write(cr, uid, line_ids, {'dont_move': False}, context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
-            if self._name == 'initial.stock.inventory':
-                self.infolog(cr, uid, "The Initial Stock inventory id:%s (%s) has been canceled" % (inv.id, inv.name))
-            else:
-                self.infolog(cr, uid, "The Physical inventory id:%s (%s) has been canceled" % (inv.id, inv.name))
-        return True
+            self.infolog(cr, uid, "The Physical inventory id:%s (%s) has been canceled" % (inv.id, inv.name))
 
 
 PhysicalInventory()
@@ -507,7 +497,7 @@ class PhysicalInventoryCounting(osv.osv):
             except ValueError:
                 return {'value': {'physical_qty': False},
                         'warning': {'title': 'warning', 'message': 'Enter a valid quantity.'}}
-        return {'value': {'physical_qty': quantity}}
+        return {'value': {'quantity': quantity}}
 
     def on_change_product_id(self, cr, uid, ids, product_id, uom=False):
         """Changes UoM and quantity if product_id changes."""

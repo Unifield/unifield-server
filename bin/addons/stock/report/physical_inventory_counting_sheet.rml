@@ -174,10 +174,10 @@
             <para style="table_item_data">[[ formatLang(p.expiry_date, date=True)  or '' ]]</para>
           </td>
           <td>
-            <para style="table_item_data"></para>
+            <para style="table_item_data">[[ display_product_attributes(p) ]]</para>
           </td>
           <td>
-            <para style="table_item_data"></para>
+            <para style="table_item_data">[[ yesno(p.is_bn) ]]</para>
           </td>
         </tr>
       </blockTable>
