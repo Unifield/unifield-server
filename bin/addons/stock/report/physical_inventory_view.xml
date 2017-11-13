@@ -24,7 +24,7 @@
             model="physical.inventory"
             name="physical_inventory_discrepancies_report_xls"
             report_type="webkit"
-            menu="True"
+            menu="False"
             />
     </data>
 </openerp>

@@ -857,7 +857,7 @@
     <Cell ss:StyleID="s45"><Data ss:Type="String">Comments / actions (in case of discrepancy)</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
-   % for index,item in enumerate(objects[0].line_ids):
+   % for index,item in enumerate(objects[0].discrepancy_line_ids):
    <Row>
     <Cell ss:StyleID="s30"><Data ss:Type="String">${item.line_no}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s30"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
