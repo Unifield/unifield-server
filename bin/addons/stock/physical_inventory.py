@@ -528,18 +528,41 @@ class PhysicalInventoryLine(osv.osv):
     _description = 'Physical Inventory Line'
 
     _columns = {
-        'inventory_id': fields.many2one('stock.inventory', 'Inventory', ondelete='cascade', select=True),
-        'product_id': fields.many2one('product.product', 'Product', required=True, select=True),
-        'product_uom_id': fields.many2one('product.uom', 'Product UOM', required=True),
-        'count_qty': fields.float('Quantity', digits_compute=dp.get_precision('Product UoM')),
-        'initial_qty': fields.float('Quantity', digits_compute=dp.get_precision('Product UoM')),
-        'company_id': fields.related('inventory_id', 'company_id', type='many2one', relation='res.company',
-                                     string='Company', store=True, select=True, readonly=True),
-        'prod_lot_id': fields.many2one('stock.production.lot', 'Production Lot',
-                                       domain="[('product_id','=',product_id)]"),
+        # Link to inventory
+        'inventory_id': fields.many2one('stock.inventory', 'Inventory', ondelete='cascade'),
 
-        'location_id': fields.related('inventory_id', 'location_id', type='many2one', string='location_id', readonly=True),
-        'state': fields.related('inventory_id', 'state', type='char', string='State', readonly=True),
+        # Product
+        'product_id': fields.many2one('product.product', 'Product', required=True),
+        'default_code': fields.related('product_id', 'default_code', string="Code",
+                                       type='char', readonly=True),
+        'name': fields.related('product_id', 'name', string="Description",
+                               type='char', readonly=True),
+        'product_uom_id': fields.many2one('product.uom', 'UOM', required=True, readonly=True),
+        'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', string="Family",
+                                         type='many2one', readonly=True),
+        'standard_price': fields.related('product_id', 'standard_price', string="Unit Price",
+                                         type='integer', readonly=True),
+        'currency_id': fields.related('product_id', 'currency_id', string="Currency",
+                                      type='many2one', readonly=True),
+
+        # BN / ED
+        'prod_lot_id': fields.many2one('stock.production.lot', 'Production Lot', readonly=True),
+        # TODO : add expiry date also²
+
+        # Count
+        'line_no': fields.integer(string=_('Line #'), readonly=True),
+        'theoretical_qty': fields.float('Theoretical Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'counted_qty': fields.float('Counted Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+
+        # Unused / To be removed ?
+        #'company_id': fields.related('inventory_id', 'company_id', type='many2one', relation='res.company',
+        #                             string='Company', store=True, select=True, readonly=True),
+        #'location_id': fields.related('inventory_id', 'location_id', type='many2one', string='location_id', readonly=True),
+        #'state': fields.related('inventory_id', 'state', type='char', string='State', readonly=True),
+
+        # Discrepancy analysis
+        'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', required=True, select=True),
+        'comment': fields.char(size=128, string='Comment'),
     }
 
     def perm_write(self, cr, user, ids, fields, context=None):

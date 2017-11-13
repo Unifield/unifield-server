@@ -72,6 +72,47 @@
                                 </form>
                             </field>
                         </page>
+                        <page string="Discrepancy report">
+                            <group col="4" colspan="4">
+                                <button name="export_xls_discrepancy_report" string="Export XLS discrepancy report" 
+                                    type="object" icon="gtk-print" colspan="2"/>
+                                <button name="export_pdf_discrepancy_report" string="Export PDF discrepancy report" 
+                                    type="object" icon="gtk-print" colspan="2"/>
+                                <button name="import_discrepancy_report" string="Import XLS discrepancy report" 
+                                    type="object" icon="gtk-save" colspan="2"/>
+                            </group>
+                            <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list"
+                                   attrs="{'readonly': [('state', '!=', 'draft')]}">
+                                <tree string="Discrepancies" editable="bottom">
+                                    <field name="line_no" />
+                                    <field name="nomen_manda_2" />
+                                    <field name="default_code" />
+                                    <field name="name" />
+                                    <field name="product_uom_id" />
+                                    <field name="standard_price" />
+                                    <field name="currency_id" />
+                                    <field name="theoretical_qty" />
+                                    <field name="counted_qty" />
+                                    <field name="prod_lot_id" />
+                                    <field name="reason_type_id" widget="selection" />
+                                    <field name="comment" />
+                                </tree>
+                                <form string="Discrepancy line">
+                                    <field name="line_no" />
+                                    <field name="nomen_manda_2" />
+                                    <field name="default_code" />
+                                    <field name="name" />
+                                    <field name="product_uom_id" />
+                                    <field name="standard_price" />
+                                    <field name="currency_id" />
+                                    <field name="theoretical_qty" />
+                                    <field name="counted_qty" />
+                                    <field name="prod_lot_id" />
+                                    <field name="reason_type_id" widget="selection" />
+                                    <field name="comment" />
+                                </form>
+                            </field>
+                        </page>
                         <page string="Posted Inventory">
                             <field colspan="2" name="move_ids" nolabel="1" widget="one2many_list"
                                    context="{'inventory_id':active_id}"
@@ -110,14 +151,14 @@
                                 type="workflow" icon="gtk-cancel"/>
                         <button name="generate_counting_sheet" states="draft,counted,validated" string="Generate Counting Sheet" 
                                 type="object" icon="gtk-go-forward"/>
-                        <button name="button_counted" states="counting" string="Counted" 
-                                type="workflow"/>
-                        <button name="action_confirm" states="validated" string="Validate Inventory" type="object"
-                                icon="gtk-apply"/>
-                        <button name="action_done" states="confirm" string="Confirm Inventory" type="object"
-                                icon="gtk-jump-to"/>
-                        <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object"
-                                icon="gtk-convert"/>
+                        <button name="button_counted" states="draft" string="Counted" 
+                                type="object" icon="gtk-paste-v"/>
+                        <button name="action_confirm" states="validated" string="Validate Inventory" 
+                                type="object" icon="gtk-apply"/>
+                        <button name="action_done" states="confirm" string="Confirm Inventory"
+                                type="object" icon="gtk-jump-to"/>
+                        <button name="action_cancel_draft" states="cancel" string="Set to Draft"
+                                type="object" icon="gtk-convert"/>
                     </group>
                 </form>
             </field>
