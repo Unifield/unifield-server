@@ -35,12 +35,12 @@
                         </page>
                         <page string="Counting sheet">
                             <group col="4" colspan="4">
-                                <button name="export_xls_counting_sheet" string="Export XLS counting sheet" 
-                                    type="object" icon="gtk-print" colspan="2"/>
-                                <button name="export_pdf_counting_sheet" string="Export PDF counting sheet" 
-                                    type="object" icon="gtk-print" colspan="2"/>
-                                <button name="import_counting_sheet" string="Import XLS counting sheet" 
-                                    type="object" icon="gtk-save" colspan="2"/>
+                                <button name="export_pdf_counting_sheet" string="Export pdf counting sheet"
+                                        type="object" colspan="2" icon="gtk-print"/>
+                                <button name="export_xls_counting_sheet" string="Export xls counting sheet"
+                                        type="object" colspan="2" icon="gtk-print"/>
+                                <field name="file_to_import" colspan="2"/>
+                                <button name="import_counting_sheet" string="Import xls counting sheet" type="object" colspan="2" icon="gtk-save"/>
                             </group>
                             <field colspan="4" name="counting_line_ids" nolabel="1" widget="one2many_list"
                                    attrs="{'readonly': [('state', '!=', 'draft')]}">
