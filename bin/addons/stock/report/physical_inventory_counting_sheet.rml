@@ -149,7 +149,6 @@
       </tr>
     </blockTable>
     <section>
-      [[ reset_counter() ]]
       <para style="default">[[ repeatIn(o.counting_line_ids, 'p') ]]</para>
       <blockTable colWidths="2.0cm,3.0cm,8.0cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm" style="TableItem">
         <tr>
@@ -172,7 +171,7 @@
             <para style="table_item_data">[[ p.batch_number or '' ]]</para>
           </td>
           <td>
-            <para style="table_item_data">[[ p.expiry_date or '' ]]</para>
+            <para style="table_item_data">[[ formatLang(p.expiry_date, date=True)  or '' ]]</para>
           </td>
           <td>
             <para style="table_item_data"></para>

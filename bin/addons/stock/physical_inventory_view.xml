@@ -20,7 +20,7 @@
                         <page string="Products">
                             <button name="action_select_products" states="draft" string="Products Selection" type="object"
                                     icon="gtk-add"/>
-                            <field colspan="4" name="product_ids" nolabel="1">
+                            <field colspan="4" name="product_ids" nolabel="1" attrs="{'readonly': [('full_inventory', '=', True)]}">
                                 <tree string="Products">
                                     <field name="default_code"/>
                                     <field name="name"/>
@@ -34,12 +34,14 @@
                             </field>
                         </page>
                         <page string="Counting sheet">
-                            <button name="export_xls_counting_sheet" string="Export XLS counting sheet" 
-                                type="object" icon="gtk-print"/>
-                            <button name="export_pdf_counting_sheet" string="Export PDF counting sheet" 
-                                type="object" icon="gtk-print"/>
-                            <button name="import_counting_sheet" string="Import XLS counting sheet" 
-                                type="object" icon="gtk-save"/>
+                            <group col="4" colspan="4">
+                                <button name="export_xls_counting_sheet" string="Export XLS counting sheet" 
+                                    type="object" icon="gtk-print" colspan="2"/>
+                                <button name="export_pdf_counting_sheet" string="Export PDF counting sheet" 
+                                    type="object" icon="gtk-print" colspan="2"/>
+                                <button name="import_counting_sheet" string="Import XLS counting sheet" 
+                                    type="object" icon="gtk-save" colspan="2"/>
+                            </group>
                             <field colspan="4" name="counting_line_ids" nolabel="1" widget="one2many_list"
                                    attrs="{'readonly': [('state', '!=', 'draft')]}">
                                 <tree string="Counting lines" editable="bottom">
