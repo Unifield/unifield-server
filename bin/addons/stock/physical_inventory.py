@@ -35,7 +35,7 @@ class PhysicalInventory(osv.osv):
         'date_done': fields.datetime('Date done', readonly=True),
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
                                         'product_id', 'inventory_id', string="Product selection"),
-        'line_ids': fields.one2many('physical.inventory.line', 'inventory_id', 'Inventories',
+        'discrepancy_line_ids': fields.one2many('physical.inventory.discrepancy', 'inventory_id', 'Discrepancy lines',
                                     states={'closed': [('readonly', True)]}),
         'counting_line_ids': fields.one2many('physical.inventory.counting', 'inventory_id', 'Counting lines',
                                              states={'closed': [('readonly', True)]}),
@@ -140,6 +140,92 @@ class PhysicalInventory(osv.osv):
                 'view_type': 'form',
                 'view_mode': 'form',
                 'context': context}
+
+    def finish_counting(self, cr, uid, inventory_ids, context=None):
+        """
+        Trigerred when clicking on the button "Finish counting"
+
+        Analyze the counted lines to look for discrepancy, and fill the
+        'discrepancy lines' accordingly.
+        """
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+
+        # Get this inventory...
+        assert len(inventory_ids) == 1
+        inventory_id = inventory_ids[0]
+
+        # Get the location and counting lines
+        inventory = read_many(self._name, [inventory_id], [ "location_id",
+                                                            "counting_line_ids" ])[0]
+
+        location_id = inventory["location_id"]
+        counting_line_ids = inventory["counting_line_ids"]
+
+        counting_lines = read_many('physical.inventory.counting', counting_line_ids, [ "line_no",
+                                                                                       "product_id",
+                                                                                       "batch_number"])
+
+        print counting_lines
+
+
+    def get_stock_for_products_at_location(self, cr, uid, product_ids, location_id, context=None):
+        context = {} if context else context
+
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+
+        def search(model, domain):
+            return self.pool.get(model).search(cr, uid, domain, context=context)
+
+        assert isinstance(product_ids, list)
+        assert isinstance(location_id, int)
+
+        # Get all the moves for in/out of that location for the products
+        move_for_products_at_location = ['&', '&', '|',
+                                        ('location_id', 'in', [location_id]),
+                                        ('location_dest_id', 'in', [location_id]),
+                                        ("product_id", 'in', product_ids),
+                                        ('state', '=', 'done')]
+
+        moves_at_location_ids = search("stock.move", move_for_products_at_location)
+        moves_at_location = read_many("stock.move",
+                                      moves_at_location_ids,
+                                      ["product_id",
+                                       "product_qty",
+                                       "prodlot_id",
+                                       "location_id",
+                                       "location_dest_id"])
+
+        # Sum all lines to get a set of (product, batchnumber) -> qty
+        stocks = {}
+        for move in moves_at_location:
+
+            product_id = move["product_id"][0]
+            product_qty = move["product_qty"]
+            batch_id = move["prodlot_id"][0] if move["prodlot_id"] else None
+
+            product_and_batch_id = (product_id, batch_id)
+
+            # Init the quantity to 0 if batch is not present in dict yet
+            # (NB: batch_id can be None, but that's not an issue for dicts ;))
+            if not product_and_batch_id in stocks.keys():
+                stocks[product_and_batch_id] = 0.0
+
+            move_out = (move["location_id"][0] == location_id)
+            move_in = (move["location_dest_id"][0] == location_id)
+
+            if move_in:
+                stocks[product_and_batch_id] += product_qty
+            elif move_out:
+                stocks[product_and_batch_id] -= product_qty
+            else:
+                # This shouldnt happen
+                pass
+
+        print stocks
+
+        return stocks
 
 
     def export_xls_counting_sheet(self, cr, uid, ids, context=None):
@@ -339,7 +425,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             move_ids = []
 
             # gather all information needed for the lines treatment first to do less requests
-            inv_line_obj = self.pool.get('physical.inventory.line')
+            inv_line_obj = self.pool.get('physical.inventory.discrepancy')
 
             line_read = inv_line_obj.read(cr, uid, inv['line_ids'],
                                           ['product_id', 'product_uom', 'prod_lot_id', 'location_id',
@@ -523,9 +609,9 @@ class PhysicalInventoryCounting(osv.osv):
 PhysicalInventoryCounting()
 
 
-class PhysicalInventoryLine(osv.osv):
-    _name = 'physical.inventory.line'
-    _description = 'Physical Inventory Line'
+class PhysicalInventoryDiscrepancy(osv.osv):
+    _name = 'physical.inventory.discrepancy'
+    _description = 'Physical Inventory Discrepancy Line'
 
     _columns = {
         # Link to inventory
@@ -568,5 +654,4 @@ class PhysicalInventoryLine(osv.osv):
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
 
-
-PhysicalInventoryLine()
+PhysicalInventoryDiscrepancy()

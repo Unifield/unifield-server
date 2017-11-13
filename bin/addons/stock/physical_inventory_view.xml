@@ -81,7 +81,7 @@
                                 <button name="import_discrepancy_report" string="Import XLS discrepancy report" 
                                     type="object" icon="gtk-save" colspan="2"/>
                             </group>
-                            <field colspan="4" name="line_ids" nolabel="1" widget="one2many_list"
+                            <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
                                    attrs="{'readonly': [('state', '!=', 'draft')]}">
                                 <tree string="Discrepancies" editable="bottom">
                                     <field name="line_no" />
@@ -151,7 +151,7 @@
                                 type="workflow" icon="gtk-cancel"/>
                         <button name="generate_counting_sheet" states="draft,counted,validated" string="Generate Counting Sheet" 
                                 type="object" icon="gtk-go-forward"/>
-                        <button name="button_counted" states="draft" string="Counted" 
+                        <button name="finish_counting" states="draft" string="Finish Counting" 
                                 type="object" icon="gtk-paste-v"/>
                         <button name="action_confirm" states="validated" string="Validate Inventory" 
                                 type="object" icon="gtk-apply"/>
