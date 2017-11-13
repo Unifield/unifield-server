@@ -2337,7 +2337,7 @@ class stock_picking(osv.osv):
         return res
 
     _columns = {'flow_type': fields.selection([('full', 'Full'), ('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False), ], }, string='Flow Type'),
-                'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing')], string='Subtype'),
+                'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing'), ('sysint', 'System Internal')], string='Subtype'),
                 'backorder_ids': fields.one2many('stock.picking', 'backorder_id', string='Backorder ids',),
                 'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
                 'previous_step_ids': fields.one2many('stock.picking', 'previous_step_id', string='Previous Step ids',),
@@ -4524,10 +4524,19 @@ class stock_picking(osv.osv):
             context = {}
         move_obj = self.pool.get('stock.move')
         obj_data = self.pool.get('ir.model.data')
-
+        wf_service = netsvc.LocalService("workflow")
 
         # check the state of the picking
         for picking in self.browse(cr, uid, ids, context=context):
+            # update PO line if needed:
+            # e.g.: 300 qty => received 250, then cancel 50 => need to update PO line at cancelation
+            if picking.type == 'in' and picking.purchase_id:
+                for stock_move in picking.move_lines:
+                    if stock_move.purchase_line_id:
+                        if not move_obj.search_exist(cr, uid, [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'not in', ['cancel', 'cancel_r', 'done'])], context=context):
+                            # all in lines processed for this po line
+                            wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
+
             # if draft and shipment is in progress, we cannot cancel
             if picking.subtype == 'picking' and picking.state in ('draft',):
                 if self.has_picking_ticket_in_progress(cr, uid, [picking.id], context=context)[picking.id]:
@@ -5005,7 +5014,6 @@ class stock_move(osv.osv):
                 continue
 
             pick_type = move.picking_id.type
-            pick_cancel = move.picking_id.change_reason
             pick_subtype = move.picking_id.subtype
             pick_state = move.picking_id.state
             subtype_ok = pick_type == 'out' and (pick_subtype == 'standard' or (pick_subtype == 'picking' and pick_state == 'draft'))
@@ -5015,23 +5023,33 @@ class stock_move(osv.osv):
                 pick_obj._create_sync_message_for_field_order(cr, uid, move.picking_id, context=context)
 
             if pick_type == 'in' and move.purchase_line_id:
+                # cancel the linked PO line partially or fully:
+                resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced or context.get('do_resource', False)
+                if move.purchase_line_id.product_qty - move.product_qty != 0:
+                    self.pool.get('purchase.order.line').cancel_partial_qty(cr, uid, [move.purchase_line_id.id], cancel_qty=move.product_qty, resource=resource, context=context)
+                else:
+                    signal = 'cancel_r' if resource else 'cancel'
+                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
+
+                not_done_moves = self.pool.get('stock.move').search(cr, uid, [
+                    ('purchase_line_id', '=', move.purchase_line_id.id),
+                    ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                    ('picking_id.type', '=', 'in'),
+                ], context=context)
+                if (not not_done_moves) or all([x in ids for x in not_done_moves]):
+                    # all in lines processed or will be processed for this po line
+                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
+
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
-                    if sol.order_id.procurement_request and pick_cancel:
-                        continue
-
                     # If the line will be sourced in another way, do not cancel the OUT move
                     if solc_obj.search(cr, uid, [('fo_sync_order_line_db_id', '=', sol.sync_order_line_db_id), ('resource_sync_line_db_id', '!=', False)],
                                        limit=1, order='NO_ORDER', context=context):
                         continue
 
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
-                    if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
-                        sol_obj.add_resource_line(cr, uid, sol.id, sol.order_id.id, diff_qty, context=context)
-                    sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, resource=move.has_to_be_resourced,context=context)
-                    signal = 'cancel_r' if move.has_to_be_resourced else 'cancel'
-                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
-
+                    if move.picking_id.partner_id2.partner_type not in ['internal','section','intermission']:
+                        sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, resource=resource,context=context)
                     # Cancel the remaining OUT line
                     if diff_qty < sol.product_uom_qty:
                         data_back = self.create_data_back(move)
@@ -5045,6 +5063,9 @@ class stock_move(osv.osv):
                         if out_move_id:
                             context.setdefault('not_resource_move', []).append(out_move_id)
                             self.action_cancel(cr, uid, [out_move_id], context=context)
+
+                self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
+
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:

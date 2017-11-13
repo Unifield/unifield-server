@@ -1313,8 +1313,11 @@
             <field name="arch" type="xml">
                 <search string="Internal Picking List">
                     <group col="8" colspan="4">
-                        <filter icon="terp-check" string="Available" domain="[('state','=','assigned')]" help="Assigned Internal Moves"/>
+                        <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Internal Moves"/>
                         <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Internal Moves" />
+                        <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Internal Moves already processed"/>
+                        <separator orientation="vertical"/>
+                        <filter icon="gtk-execute" name="sysint" string="System INT" domain="[('subtype', '!=', 'sysint')]" help="System internal moves"/>
                         <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="origin"/>
@@ -1343,7 +1346,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','internal')]</field>
-            <field name="context">{'contact_display': 'partner_address',"search_default_available":1}</field>
+            <field name="context">{'contact_display': 'partner_address', "search_default_sysint":1, 'subtype': 'internal', 'picking_type': 'internal_move'}</field>
             <field name="search_view_id" ref="view_picking_internal_search"/>
             <field name="help">Internal Moves display all inventory operations you have to perform in your warehouse. All operations can be categorized into stock journals, so that each worker has his own list of operations to perform in his own journal. Most operations are prepared automatically by OpenERP according to your preconfigured logistics rules, but you can also record manual stock operations.</field>
         </record>

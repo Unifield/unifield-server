@@ -105,15 +105,7 @@ class account_invoice(osv.osv):
                         ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id], invl.account_id.id)
                         invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
                 # Fetch SO line analytic distribution
-                if invl.sale_order_line_id:
-                    distrib_id = invl.sale_order_line_id.analytic_distribution_id and invl.sale_order_line_id.analytic_distribution_id.id or False
-                    if distrib_id:
-                        new_invl_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
-                        if not new_invl_distrib_id:
-                            raise osv.except_osv(_('Error'), _('An error occurred for analytic distribution copy for invoice.'))
-                        # create default funding pool lines
-                        ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id], invl.account_id.id)
-                        invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
+                    # sol AD copy moved into _invoice_line_hook
         return True
 
     def update_commitments(self, cr, uid, ids, context=None):

@@ -922,7 +922,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self._check_browse_param(line, method='_check_loan_conditions')
 
         l_type = line.type == 'make_to_order'
-        o_state = line.state not in ('draft', 'confirmed') or False
+        o_state = line.state not in ('draft', 'confirmed', 'done')
         ctx_cond = not context.get('fromOrderLine')
         o_type = line.order_id and line.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] or False
 
@@ -1146,6 +1146,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             })
 
         if 'state' in vals and vals['state'] == 'cancel':
+            context.update({'noraise': True})
             self.write(cr, uid, ids, {'cf_estimated_delivery_date': False}, context=context)
 
         if 'type' in vals:
@@ -1403,7 +1404,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             # common domain:
             domain = [
                 ('partner_id', '=', sourcing_line.supplier.id),
-                ('state', 'in', ['draft']),
+                ('rfq_state', 'in', ['draft']),
                 ('delivery_requested_date', '=', sourcing_line.date_planned),
                 ('rfq_ok', '=', True),
                 ('order_type', '=', 'regular'),
@@ -1435,6 +1436,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 ('state', 'in', ['draft']),
                 ('delivery_requested_date', '=', self.compute_delivery_requested_date(cr, uid, sourcing_line.id, context=context)),
                 ('order_type', '=', 'loan'),
+                ('is_a_counterpart', '=', True),
             ]
             res_id = self.pool.get('purchase.order').search(cr, uid, domain, context=context)
 
@@ -1526,6 +1528,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'delivery_requested_date': self.compute_delivery_requested_date(cr, uid, sourcing_line.id, context=context),
                 'related_sourcing_id': sourcing_line.related_sourcing_id.id or False,
                 'unique_fo_id': sourcing_line.order_id.id if (sourcing_line.supplier and sourcing_line.supplier.po_by_project == 'isolated') else False,
+                'is_a_counterpart': True,
+                'loan_duration': sourcing_line.order_id.loan_duration,
             }
 
         return self.pool.get('purchase.order').create(cr, uid, po_values, context=context)
@@ -1607,6 +1611,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             'details': sol.order_id.details,
             'delivery_requested_date': sol.date_planned,
             # 'rfq_delivery_address': tender.delivery_address and tender.delivery_address.id or False,
+            'from_procurement': True,
         }
         context.update({'rfq_ok': True})
         new_rfq_id = self.pool.get('purchase.order').create(cr, uid, rfq_values, context=context)
@@ -1627,7 +1632,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             if sourcing_line.type == 'make_to_stock':
-                if sourcing_line.loan_type:
+                if sourcing_line.order_id.order_type == 'loan' and not sourcing_line.order_id.is_a_counterpart:
                     # In case of loan, create the PO for later goods return:
                     po_loan = self.get_existing_po_loan_for_goods_return(cr, uid, sourcing_line.id, context=context)
                     if not po_loan:
@@ -1650,6 +1655,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'linked_sol_id': sourcing_line.id,
                     }
                     self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
+
+                # sourcing line: set delivery confirmed date to today:
+                self.write(cr, uid, [sourcing_line.id], {'confirmed_delivery_date': datetime.now().strftime(DEFAULT_SERVER_DATE_FORMAT)}, context=context)               
 
                 # update SO line with good state:
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
@@ -1687,16 +1695,20 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'nomen_manda_1': sourcing_line.nomen_manda_1.id or False,
                         'nomen_manda_2': sourcing_line.nomen_manda_2.id or False,
                         'nomen_manda_3': sourcing_line.nomen_manda_3.id or False,
+                        'date_planned': sourcing_line.date_planned,
+                        'stock_take_date': sourcing_line.stock_take_date or False,
                     }
                     if not sourcing_line.product_id:
                         pol_values['name'] = sourcing_line.comment
                     if sourcing_line.procurement_request:
                         pol_values.update({
+                            'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         })
                     self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
                     self.pool.get('purchase.order').write(cr, uid, po_to_use, {'dest_partner_ids': [(4, sourcing_line.order_id.partner_id.id, 0)]}, context=context)
+                    self.pool.get('purchase.order').update_source_document(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
 
                 elif sourcing_line.po_cft == 'rfq':
                     rfq_to_use = self.get_existing_rfq(cr, uid, sourcing_line.id, context=context)
@@ -1704,7 +1716,6 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         rfq_to_use = self.create_rfq_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                         # log new RfQ:
                         rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, context=context)
-                        self.pool.get('purchase.order').log(cr, uid, rfq_to_use, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
                         self.pool.get('purchase.order').infolog(cr, uid, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
                     anal_dist = False
                     if not sourcing_line.procurement_request:
@@ -1725,10 +1736,12 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     if sourcing_line.procurement_request:
                         rfq_line_values.update({
+                            'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         })
                     self.pool.get('purchase.order.line').create(cr, uid, rfq_line_values, context=context)
+                    self.pool.get('purchase.order').update_source_document(cr, uid, rfq_to_use, sourcing_line.order_id.id, context=context)
 
                 elif sourcing_line.po_cft == 'cft':
                     tender_to_use = self.get_existing_tender(cr, uid, sourcing_line.id, context=context)
@@ -1752,6 +1765,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     if sourcing_line.procurement_request:
                         tender_values.update({
+                            'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         })

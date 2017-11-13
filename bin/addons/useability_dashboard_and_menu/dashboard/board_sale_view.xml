@@ -31,7 +31,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="context">{'procurement_request': True}</field>
-            <field name="domain">[('state','=','draft'), ('procurement_request', '=', True)]</field>
+            <field name="domain">[('state','in',['draft', 'draft_p']), ('procurement_request', '=', True)]</field>
             <field name="view_id" ref="view_sales_tree"/>
         </record>
     
@@ -41,7 +41,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="context">{'procurement_request': False}</field>
-            <field name="domain">[('state','=','draft'),('procurement_request', '!=', True)]</field>
+            <field name="domain">[('state','in',['draft', 'draft_p']),('procurement_request', '!=', True)]</field>
             <field name="view_id" ref="view_sales_tree"/>
         </record>
     
@@ -51,7 +51,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="context">{'procurement_request': True}</field>
-            <field name="domain">[('state','=','validated'), ('procurement_request', '=', True)]</field>
+            <field name="domain">[('state','in', ['validated', 'validated_p']), ('procurement_request', '=', True)]</field>
             <field name="view_id" ref="view_sales_tree"/>
         </record>
 
@@ -61,7 +61,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="context">{'procurement_request': False}</field>
-            <field name="domain">[('state','=','validated'), ('procurement_request', '!=', True)]</field>
+            <field name="domain">[('state','in',['validated', 'validated_p']), ('procurement_request', '!=', True)]</field>
             <field name="view_id" ref="view_sales_tree"/>
         </record>
 
@@ -70,7 +70,7 @@
             <field name="res_model">sale.order</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('state','=','sourced'), '|', ('procurement_request', '=', True), ('procurement_request', '!=', True)]</field>
+            <field name="domain">[('state','in', ['sourced', 'sourced_p']), '|', ('procurement_request', '=', True), ('procurement_request', '!=', True)]</field>
             <field name="view_id" ref="view_sales_tree"/>
         </record>
 

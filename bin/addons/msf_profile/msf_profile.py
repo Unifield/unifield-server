@@ -49,6 +49,13 @@ class patch_scripts(osv.osv):
     }
 
     # UF7.0 patches
+    def post_sll(self, cr, uid, *a, **b):
+        cr.drop_index_if_exists('ir_ui_view', 'ir_ui_view_model_type_priority')
+        cr.drop_constraint_if_exists('ir_ui_view', 'ir_ui_view_unique_view')
+        cr.execute('CREATE UNIQUE INDEX ir_ui_view_model_type_priority ON ir_ui_view (priority, type, model) WHERE inherit_id IS NULL')
+        cr.execute("delete from ir_ui_view where name='aaa' and model='aaa' and priority=5")
+        return True
+
     def us_3306(self, cr, uid, *a, **b):
         '''setup currency rate constraint
         '''
@@ -78,6 +85,35 @@ class patch_scripts(osv.osv):
                 """ % ('res_currency_rate', 'res_currency_rate_rate_unique',
                        'unique(name, currency_id)'))
         return True
+
+    def us_2676(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'section':
+            cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''code'']' where model='account.analytic.journal' and res_id in
+                (select id from account_analytic_journal where code='ENGI')
+            ''')
+        return True
+
+    def us_3345_remove_space_in_employee_name(self, cr, uid, *a, **b):
+        """
+        Removes spaces at the beginning and end of employee name
+        """
+        sql_resource_table = """
+            UPDATE resource_resource SET name = TRIM(name) WHERE id IN (SELECT resource_id FROM hr_employee);
+            """
+        sql_employee_table = """
+            UPDATE hr_employee SET name_resource = TRIM(name_resource);
+            """
+        cr.execute(sql_resource_table)
+        cr.execute(sql_employee_table)
+
 
     # OLD patches
     def us_3048_patch(self, cr, uid, *a, **b):

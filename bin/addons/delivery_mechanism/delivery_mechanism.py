@@ -258,7 +258,7 @@ class stock_move(osv.osv):
         location_dest_id = super(stock_move, self)._get_location_for_internal_request(cr, uid, context=context, **kwargs)
         move = kwargs['move']
         linked_sol = move.purchase_line_id.linked_sol_id or False
-        if linked_sol and linked_sol.procurement_request and linked_sol.order_id.location_requestor_id.usage != 'customer':
+        if linked_sol and linked_sol.order_id.procurement_request and linked_sol.order_id.location_requestor_id.usage != 'customer':
             location_dest_id = linked_sol.order_id.location_requestor_id.id
 
         return location_dest_id
@@ -1164,10 +1164,11 @@ class stock_picking(osv.osv):
                 # and the remaining quantity to list of moves to put in backorder
                 if diff_qty > 0.00 and move.state != 'cancel':
                     backordered_moves.append((move, diff_qty, average_values, data_back, move_sptc_values))
-                    # decrement qty of linked INTernal move:
-                    internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
-                    if internal_move:
-                        move_obj.write(cr, uid, internal_move, {'product_qty': diff_qty, 'product_uos_qty': diff_qty}, context=context)
+                    if not sync_in:
+                        # decrement qty of linked INTernal move:
+                        internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
+                        if internal_move:
+                            move_obj.write(cr, uid, internal_move, {'product_qty': diff_qty, 'product_uos_qty': diff_qty}, context=context)
                 else:
                     for sptc_values in move_sptc_values:
                         # track change that will be created:
@@ -1176,10 +1177,11 @@ class stock_picking(osv.osv):
                             'transaction_name': _('Reception %s') % move.picking_id.name,
                             'sptc_values': sptc_values.copy(),
                         })
-                    # cancel linked INTernal move (INT):
-                    internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
-                    if internal_move:
-                        move_obj.action_cancel(cr, uid, internal_move, context=context)
+                    if not sync_in:
+                        # cancel linked INTernal move (INT):
+                        internal_move = self.pool.get('stock.move').search(cr, uid, [('linked_incoming_move', '=', move.id)], context=context)
+                        if internal_move:
+                            move_obj.action_cancel(cr, uid, internal_move, context=context)
 
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'progress_line': _('Done (%s/%s)') % (move_done, total_moves),

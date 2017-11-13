@@ -277,7 +277,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
     def add_audit_line(self, cr, uid, order_id, old_state, new_state, context=None):
         """
-        If state_hidden_sale_order is modified, add an audittrail.log.line
+        If state is modified, add an audittrail.log.line
         @param cr: Cursor to the database
         @param uid: ID of the user that change the state
         @param order_id: ID of the sale.order on which the state is modified
@@ -304,7 +304,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # If the field 'state_hidden_sale_order' is not in the fields to trace, don't trace it.
         fld_ids = fld_obj.search(cr, uid, [
             ('model', '=', 'sale.order'),
-            ('name', '=', 'state_hidden_sale_order'),
+            ('name', '=', 'state'),
         ], context=context)
         rule_domain = [('object_id', '=', object_id)]
         if not old_state:
@@ -345,8 +345,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'fct_res_id': False,
             'sub_obj_name': '',
             'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
-            'field_description': _('State'),
-            'trans_field_description': _('State'),
+            'field_description': _('Order state'),
+            'trans_field_description': _('Order state'),
             'new_value': new_state,
             'new_value_text': new_state_txt or new_state,
             'new_value_fct': False,
@@ -400,7 +400,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         line_ids = line_obj.search(cr, uid, [
             ('order_id', 'in', ids),
-            ('order_id.state', 'not in', ['draft', 'cancel']),
+            ('state', 'not in', ['draft', 'cancel', 'cancel_r']),
             ('order_id.import_in_progress', '=', False),
             ('product_uom_qty', '<=', 0.00),
         ], limit=1, order='NO_ORDER', context=context)
@@ -479,6 +479,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in sol_states]):
                         res[so.id] = 'confirmed_p'
 
+            # add audit line in track change if state has changed:
+            if so.state != res[so.id]:
+                self.add_audit_line(cr, uid, so.id, so.state, res[so.id], context=context)
 
         return res
 
@@ -550,7 +553,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=False),
         'yml_module_name': fields.char(size=1024, string='Name of the module which created the object in the yml tests', readonly=True),
         'company_id2': fields.many2one('res.company', 'Company', select=1),
-        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)], 'validated_p': [('readonly', False)]}),
+        'order_line': fields.one2many('sale.order.line', 'order_id', 'Order Lines', readonly=False),
         'partner_invoice_id': fields.many2one('res.partner.address', 'Invoice Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}, help="Invoice address for current field order."),
         'partner_order_id': fields.many2one('res.partner.address', 'Ordering Contact', readonly=True, required=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}, help="The name and address of the contact who requested the order or quotation."),
         'partner_shipping_id': fields.many2one('res.partner.address', 'Shipping Address', readonly=True, required=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}, help="Shipping address for current field order."),
@@ -567,7 +570,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
   - The 'Shipping & Manual Invoice' will create the picking order directly and wait for the user to manually click on the 'Invoice' button to generate the draft invoice.
   - The 'Invoice On Order After Delivery' choice will generate the draft invoice based on sales order after all picking lists have been finished.
   - The 'Invoice From The Picking' choice is used to create an invoice during the picking process."""),
-        'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True),
+        'split_type_sale_order': fields.selection(SALE_ORDER_SPLIT_SELECTION, required=True, readonly=True, internal=1),
         'original_so_id_sale_order': fields.many2one('sale.order', 'Original Field Order', readonly=True),
         'active': fields.boolean('Active', readonly=True),
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
@@ -1280,13 +1283,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
     def order_line_change(self, cr, uid, ids, order_line):
 
-        assert (len(ids) == 1)
 
         values = {'no_line': True}
 
         if order_line:
             values = {'no_line': False}
 
+        if not ids:
+            return {'value': values}
+        assert (len(ids) == 1)
         # Also update the 'state' of the purchase order
         states = self.read(cr, uid, ids, ['state', 'state_hidden_sale_order'])
         values["state"] = states[0]["state"]
@@ -1876,29 +1881,29 @@ class sale_order_line(osv.osv):
     _description = 'Sales Order Line'
     _columns = {
         'order_id': fields.many2one('sale.order', 'Order Reference', required=True, ondelete='cascade', select=True, readonly=True, states={'draft':[('readonly',False)]}),
-        'name': fields.char('Description', size=256, required=True, select=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'name': fields.char('Description', size=256, required=True, select=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'sequence': fields.integer('Sequence', help="Gives the sequence order when displaying a list of sales order lines."),
-        'delay': fields.float('Delivery Lead Time', required=True, help="Number of days between the order confirmation the shipping of the products to the customer", readonly=True, states={'draft': [('readonly', False)]}),
+        'delay': fields.float('Delivery Lead Time', required=True, help="Number of days between the order confirmation the shipping of the products to the customer", readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'product_id': fields.many2one('product.product', 'Product', domain=[('sale_ok', '=', True)], change_default=True),
         'invoice_lines': fields.many2many('account.invoice.line', 'sale_order_line_invoice_rel', 'order_line_id', 'invoice_id', 'Invoice Lines', readonly=True),
         'invoiced': fields.boolean('Invoiced', readonly=True),
         'procurement_id': fields.many2one('procurement.order', 'Procurement', select=1),
-        'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Sale Price Computation'), readonly=True, states={'draft': [('readonly', False)]}),
+        'price_unit': fields.float('Unit Price', required=True, digits_compute=dp.get_precision('Sale Price Computation'), readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute= dp.get_precision('Sale Price')),
-        'tax_id': fields.many2many('account.tax', 'sale_order_tax', 'order_line_id', 'tax_id', 'Taxes', readonly=True, states={'draft': [('readonly', False)]}),
-        'type': fields.selection([('make_to_stock', 'from stock'), ('make_to_order', 'on order')], 'Procurement Method', required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'property_ids': fields.many2many('mrp.property', 'sale_order_line_property_rel', 'order_id', 'property_id', 'Properties', readonly=True, states={'draft': [('readonly', False)]}),
+        'tax_id': fields.many2many('account.tax', 'sale_order_tax', 'order_line_id', 'tax_id', 'Taxes', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'type': fields.selection([('make_to_stock', 'from stock'), ('make_to_order', 'on order')], 'Procurement Method', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'property_ids': fields.many2many('mrp.property', 'sale_order_line_property_rel', 'order_id', 'property_id', 'Properties', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'address_allotment_id': fields.many2one('res.partner.address', 'Allotment Partner'),
-        'product_uom_qty': fields.float('Quantity (UoM)', digits=(16, 2), required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'product_uom': fields.many2one('product.uom', 'Unit of Measure ', required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'product_uos_qty': fields.float('Quantity (UoS)', readonly=True, states={'draft': [('readonly', False)]}),
+        'product_uom_qty': fields.float('Quantity (UoM)', digits=(16, 2), required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'product_uom': fields.many2one('product.uom', 'Unit of Measure ', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'product_uos_qty': fields.float('Quantity (UoS)', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'product_uos': fields.many2one('product.uom', 'Product UoS'),
         'product_packaging': fields.many2one('product.packaging', 'Packaging'),
         'move_ids': fields.one2many('stock.move', 'sale_line_id', 'Inventory Moves', readonly=True),
-        'discount': fields.float('Discount (%)', digits=(16, 2), readonly=True, states={'draft': [('readonly', False)]}),
+        'discount': fields.float('Discount (%)', digits=(16, 2), readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'number_packages': fields.function(_number_packages, method=True, type='integer', string='Number Packages'),
         'notes': fields.text('Notes'),
-        'th_weight': fields.float('Weight', readonly=True, states={'draft': [('readonly', False)]}),
+        'th_weight': fields.float('Weight', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'state': fields.selection(SALE_ORDER_LINE_STATE_SELECTION, 'State', required=True, readonly=True,
                                   help='* The \'Draft\' state is set when the related sales order in draft state. \
             \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
@@ -2041,6 +2046,28 @@ class sale_order_line(osv.osv):
             wf_service.trg_write(uid, 'sale.order', line.order_id.id, cr)
         return res
 
+    def copy(self, cr, uid, id, default=None, context=None):
+        '''
+        copy from sale order line
+        '''
+        if not context:
+            context = {}
+
+        if not default:
+            default = {}
+
+        default.update({
+            'sync_order_line_db_id': False,
+            'manually_corrected': False,
+            'created_by_po': False,
+            'created_by_po_line': False,
+            'created_by_rfq': False,
+            'created_by_rfq_line': False,
+        })
+
+        return super(sale_order_line, self).copy(cr, uid, id, default, context)
+
+
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
         reset link to purchase order from update of on order purchase order
@@ -2050,6 +2077,11 @@ class sale_order_line(osv.osv):
 
         if context is None:
             context = {}
+
+        # do not copy canceled sale.order.line:
+        sol = self.browse(cr, uid, id, fields_to_fetch=['state'], context=context)
+        if sol.state in ['cancel', 'cancel_r']:
+            return False
 
         # if the po link is not in default, we set both to False (both values are closely related)
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
@@ -2072,10 +2104,7 @@ class sale_order_line(osv.osv):
             'set_as_sourced_n': False,
         })
 
-        #if not context.get('keepDateAndDistrib') and 'source_sync_line_id' not in default:
-        #    default['source_sync_line_id'] = False
-
-        for x in ['modification_comment', 'original_qty', 'original_price', 'original_uom']:
+        for x in ['modification_comment', 'original_product', 'original_qty', 'original_price', 'original_uom', 'sync_linked_pol', 'resourced_original_line']:
             if x not in default:
                 default[x] = False
 
@@ -2656,27 +2685,6 @@ class sale_order_line(osv.osv):
         else:
             default_data.update({'type': 'make_to_order'})
         return default_data
-
-    def copy(self, cr, uid, id, default=None, context=None):
-        '''
-        copy from sale order line
-        '''
-        if not context:
-            context = {}
-
-        if not default:
-            default = {}
-
-        default.update({
-            'sync_order_line_db_id': False,
-            'manually_corrected': False,
-            'created_by_po': False,
-            'created_by_po_line': False,
-            'created_by_rfq': False,
-            'created_by_rfq_line': False,
-        })
-
-        return super(sale_order_line, self).copy(cr, uid, id, default, context)
 
     def check_empty_line(self, cr, uid, ids, vals, context=None):
         '''

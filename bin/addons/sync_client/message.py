@@ -63,6 +63,7 @@ class local_message_rule(osv.osv):
         'destination_name': fields.char('Fields to extract destination', size=256, required=True),
         'active' : fields.boolean('Active', select=True),
         'type' : fields.char('Group Type', size=256),
+        'wait_while': fields.text('Wait while', required=False, help='Wait during specified domain to send the message'),
     }
 
     _logger = logging.getLogger('sync.client')
@@ -147,6 +148,7 @@ class local_message_rule(osv.osv):
                 'arguments': arguments,
                 'destination_name': partner_name,
                 'sent' : False,
+                'res_object': '%s,%s' % (model_name, res_id),
                 'generate_message' : True,
             }
             msg_to_send_obj.create(cr, uid, data, context=context)
@@ -206,7 +208,6 @@ class message_to_send(osv.osv):
     _rec_name = 'identifier'
 
     _columns = {
-
         'identifier' : fields.char('Identifier', size=128, readonly=True),
         'sent' : fields.boolean('Sent ?', readonly=True),
         'generate_message' : fields.boolean("Generate By system", readonly=True),
@@ -214,6 +215,8 @@ class message_to_send(osv.osv):
         'arguments':fields.text('Arguments of the method', required = True, readonly=True),
         'destination_name':fields.char('Destination Name', size=256, required = True, readonly=True),
         'sent_date' : fields.datetime('Sent Date', readonly=True),
+        'res_object': fields.char('Res object', size=256, readonly=True),
+        'waiting': fields.boolean('Waiting ?', readonly=True, help='Is the message waiting to be send'),
     }
 
     _defaults = {
@@ -314,6 +317,18 @@ class message_to_send(osv.osv):
                                    self.search(cr, uid, [('sent', '=', False)],
                                                limit=max_size, order='id asc', context=context),
                                    context=context):
+            if message.res_object:
+                res_model, res_id = message.res_object.split(',')
+                res_id = int(res_id)
+                rule = self.pool.get('sync.client.message_rule').get_rule_by_remote_call(cr, uid, message.remote_call, context=context)
+                if rule and rule.wait_while: 
+                    domain = eval(rule.wait_while)
+                    if res_id in self.pool.get(res_model).search(cr, uid, domain, context=context):
+                        self.write(cr, uid, [message.id], {'waiting': True}, context=context)
+                        continue
+
+            if message.waiting:
+                self.write(cr, uid, [message.id], {'waiting': False}, context=context)
             packet.append({
                 'id' : message.identifier,
                 'call' : message.remote_call,

@@ -1,0 +1,994 @@
+Feature: SSL InterMission Complete Supply flow
+
+@supply @irfoextcu @SSL
+Scenario: SSL InterMission Complete Supply flow
+
+   
+#PARAMETRIZATION: 
+# HQ1C2: need to create a intermediate stock "EXTRA"
+# HQ1C2: need to activate HQ1C1 as intermission partner
+# HQ1C2: need to create local product ADAPZCOO1 via IMPORT (important to create it via import and fill the xmlid column))
+# HQ1C1: need to activate HQ1C2 as intermission partner
+# HQ1C1: need to have 100000 quantity of ADAPCABL1S- in LOG
+# HQ1C1: need to have 100000 quantity of ADAPZCOO1- in LOG 
+# HQ1C1: need to have 100000 quantity of DINJCEFA1V- in MED with batch number BCOO1 exp:31/Oct/2020
+# HQ1C1: need to create local product ADAPZCOO1 via IMPORT (important to create it via import and fill the xmlid column)
+
+
+   ###################################################################
+    ## CREATE AN IR IN HQ1C2 (reference in IR_REFERENCE)
+    ###################################################################
+
+#HQ1C2: IR CREATION	
+    I log into instance "HQ1C2"
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+    I click on "New"
+    I fill "Requestor" with "LogCoo"
+    I fill "Location Requestor" with "EXTRA"
+    I fill "Requested date" with "28/May/2016"
+	
+   # Add multiple products at the same time
+	I click on "Add multiple lines" and open the window
+	I click on "Add" and open the window
+	I fill "Code" with "ADAP"
+	I click on "Search"
+	I click "checkbox" on line:
+	 | CODE        |
+	 | ADAPCABL1S- |
+	 | ADAPCART02- |
+	 
+	 
+	I click on "Select" and close the window
+	I click "Edit" on line:
+	 | CODE        |
+	 | ADAPCABL1S- |
+	I fill "10" within column "QTY"
+	I validate the line
+
+	I click "Edit" on line:
+	 | CODE        |
+	 | ADAPCART02- |
+	I fill "10" within column "QTY"
+	I validate the line
+	
+	I click on "Add products" and close the window
+
+	
+	
+    # Add products line by line
+    I click on "New"
+    I fill "[ADAPZCOO1] Local Product" within column "Product"
+    I fill "30.00" within column "Quantity (UoM)"
+    I validate the line
+
+    I fill "[DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial" within column "Product"
+    I fill "30.00" within column "Quantity (UoM)"
+    I validate the line
+
+    I store "Order Reference" in "IR_REFERENCE"
+	
+
+#HQ1C2:IR VALIDATION	
+    I click on "Validate lines"		
+		
+	I should see in the main table the following data:
+        | PRODUCT                                                                 | STATE     |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)   | Validated |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   |	Validated |	
+		| [ADAPZCOO1] Local Product                                               | Validated |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Validated |
+
+
+	I click on "Save"
+	I should see "Validated" in "Order State"
+	
+#HQ1C2:IR SOURCING
+
+	I click on menu "Orders Sourcing Tool"
+	I fill "Order" with "{{IR_REFERENCE}}"
+	I click on "Search"
+	
+    I tick all the lines
+    I click "Source lines" in the side panel and open the window
+
+    I fill "Supplier" with "HQ1C1"	
+    I click on "Save & source" and close the window
+
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I fill "ORDER REFERENCE" with "{{IR_REFERENCE}}"
+	
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+	
+	I should see in the main table the following data:
+        | PRODUCT                                                               | STATE   |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem) | Sourced |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                 | Sourced |	
+		| [ADAPZCOO1] Local Product                                             | Sourced |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                      | Sourced |
+
+	I should see "Sourced" in "Order State"		
+
+#HQ1C2:PO_REF_C2 Validation
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I toggle on "DRAFT"
+
+    I click "Search" until I see:
+        | SOURCE DOCUMENT    |
+        | *{{IR_REFERENCE}}* |
+    I click "Edit" on line:
+        | SOURCE DOCUMENT    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                    |STATE  | 
+        | ADAPCABL1S-  |(computer) CABLE, SERIAL interface for two PC (fem/fem) | Draft |
+        | ADAPCART02-  |(printer Laserwriter ) CARTRIDGE INKING                 | Draft |	
+        | ADAPZCOO1    | Local Product                                          | Draft |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                     | Draft |		
+				
+    I should see "Draft" in "Order State"		
+	I store "Order Reference" in "PO_REF_C2"
+
+		
+	I click on "Analytical Distribution" and open the window
+	I click on "New"
+	I fill "SUP" within column "DESTINATION"
+	I fill "HT211" within column "COST CENTER"
+	I validate the line
+	I click on "Save" and close the window
+	
+	I click on "Validate lines"
+	
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE     |
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Validated |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Validated |	
+        | ADAPZCOO1    | Local Product                                           | Validated |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Validated |	
+
+    I should see "Validated" in "Order State"
+
+	
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT                                                                 | STATE     |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)   | Sourced-v |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   |	Sourced-v |	
+		| [ADAPZCOO1] Local Product                                               | Sourced-v |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Sourced-v |
+		
+	I should see "Sourced-p" in "Order State"   
+	   
+	   
+		  	  
+####################
+## SYNCHRONIZATION
+###################
+		  
+    I synchronize "HQ1C2"
+    I log out
+    I synchronize "HQ1C1"
+	I log into instance "HQ1C1"
+	
+#HQ1C1: FO Validation (AD update by line)
+	
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+    I toggle on "Draft"
+
+	I click "Edit" on line:
+        | CUSTOMER REFERENCE |
+        | *{{PO_REF_C2}}     |	
+
+	   
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE |
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Draft |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Draft |	
+        | ADAPZCOO1    | Local Product                                           | Draft |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Draft |	
+
+    I should see "Draft" in "State"	
+	I store "Order Reference" in "FO_REFERENCE"	
+
+
+	I click "Analytical distribution" on line and open the window:
+       | PRODUCT CODE  | PRODUCT DESCRIPTION                                      |
+       | ADAPCABL1S-   | (computer) CABLE, SERIAL interface for two PC (fem/fem)  |
+	I click on "New"   
+	I fill "HT111" within column "COST CENTER"
+    I validate the line
+	I click on "Save" and close the window	
+	I click "Validate" on line:
+       | PRODUCT CODE  | PRODUCT DESCRIPTION                                      |
+       | ADAPCABL1S-   | (computer) CABLE, SERIAL interface for two PC (fem/fem)  |
+
+	I click "Analytical distribution" on line and open the window:
+       | PRODUCT CODE  | PRODUCT DESCRIPTION                     |
+       | ADAPCART02-   | (printer Laserwriter ) CARTRIDGE INKING |
+	I click on "New"   
+	I fill "cc-intermission" within column "COST CENTER"
+    I validate the line
+	I click on "Save" and close the window	
+	I click "Validate" on line:
+       | PRODUCT CODE  | PRODUCT DESCRIPTION                     |
+       | ADAPCART02-   | (printer Laserwriter ) CARTRIDGE INKING |
+	
+	I click "Analytical distribution" on line and open the window:
+       | PRODUCT CODE  | PRODUCT DESCRIPTION |
+       | ADAPZCOO1     | Local Product       |
+	I click on "New"   
+	I fill "HT111" within column "COST CENTER"
+    I validate the line
+	I click on "Save" and close the window	
+	I click "Validate" on line:
+       | PRODUCT CODE  | PRODUCT DESCRIPTION |
+       | ADAPZCOO1     | Local Product       |
+
+	   
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE     |
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Validated |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Validated |
+        | ADAPZCOO1    | Local Product                                           | Validated |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Draft     |	
+	   
+	I click on "Save"
+	I should see "Draft-p" in "State"	   
+
+
+#HQ1C1: FO sourcing
+	
+	I click on menu "Orders Sourcing Tool"
+	I fill "Order" with "{{FO_REFERENCE}}"
+	I click on "Search"
+
+    I click "Edit" on line:
+        | PRODUCT                                                              |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)|
+	I fill "from Stock" within column "PROC. METHOD"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT                                                              |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)|
+
+
+    I click "Edit" on line:
+        | PRODUCT                   |
+        | [ADAPZCOO1] Local Product |
+	I fill "from Stock" within column "PROC. METHOD"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT                   |
+        | [ADAPZCOO1] Local Product |
+		
+		
+    I click "Edit" on line:
+        | PRODUCT                                               |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING |
+	I fill "ITCompany" within column "SUPPLIER"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT                                               |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING |		
+		
+		
+		
+    I click on menu "Field Orders"
+
+	I click "Edit" on line:
+        | ORDER REFERENCE   |
+        | *{{FO_REFERENCE}} |
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE     |
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Confirmed |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Sourced   |	
+        | ADAPZCOO1    | Local Product                                           | Confirmed |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Draft     |	
+
+    I should see "Draft-p" in "State"	
+	
+	   
+####################
+## SYNCHRONIZATION
+###################
+	   
+    I synchronize "HQ1C1"
+	I log out
+    I synchronize "HQ1C2"
+	I log into instance "HQ1C2"	
+		
+#HQ1C2: check on IR, PO and IN updates
+		
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT                                                                 | STATE      |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)   | Confirmed  |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   |	Sourced-sy |	
+		| [ADAPZCOO1] Local Product                                               | Confirmed  |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Sourced-v  |
+		
+	I should see "Sourced-p" in "Order State" 		
+		
+
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I click "Edit" on line:
+        | REFERENCE     |
+        | {{PO_REF_C2}} |	
+	
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE      |
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Confirmed  |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Sourced-sy |	
+        | ADAPZCOO1    | Local Product                                           | Confirmed  |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Validated  |		   
+	   
+	I should see "Validated-p" in "Order State"	
+	
+	
+    I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER   |
+		| {{PO_REF_C2}} |
+
+	I should see in the main table the following data:
+        | PRODUCT                                                               | STATE     |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem) | Available |
+        | [ADAPZCOO1] Local Product                                             | Available |
+		
+	I should see "Available" in "State"
+	
+
+#INSTANCE CHANGE
+
+	I log into instance "HQ1C1"
+
+#HQ1C1: PO_REF_C1 Validation	
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I toggle on "DRAFT"
+    I click "Edit" on line:
+        | SOURCE DOCUMENT    | SUPPLIER   |
+        | *{{FO_REFERENCE}}* |  ITCompany |   
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                    |STATE  | 
+        | ADAPCART02-  |(printer Laserwriter ) CARTRIDGE INKING | Draft |	
+				
+    I should see "Draft" in "Order State"		
+	I store "Order Reference" in "PO_REF_C1"
+
+	I click on "Validate lines"
+
+	I open tab "Delivery"
+	I fill "Delivery Confirmed Date" with "28/May/2017"
+
+
+    I click on "Apply to all lines" and open the window
+	I click on "Yes" and close the window	
+	
+	I click on "Confirm lines"
+	
+	I open tab "Purchase Order"
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                    |STATE      | 
+        | ADAPCART02-  |(printer Laserwriter ) CARTRIDGE INKING | Confirmed |	
+				
+    I should see "Confirmed" in "Order State"	
+
+
+#HQ1C1: IN PO_REF_C1 processing
+	I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	
+	I click on menu "Incoming Shipments"
+	I click "Edit" on line:
+		| PURCHASE ORDER |
+		| {{PO_REF_C1}}  |
+
+	I should see in the main table the following data:
+        | PRODUCT                                                | STATE     |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING  | Available |
+	
+    I click on "Process" and open the window
+	I click on "Copy all"	
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open
+
+	
+#HQ1C1: PPS	
+	I click on menu "Deliveries|Picking"
+
+	I click "Search" until I see:
+        | ORIGIN            |
+        | {{FO_REFERENCE}}  |
+	I click "Edit" on line:
+        | ORIGIN           | LINES STATE |
+        | {{FO_REFERENCE}} |  *vailable* |
+	
+	I should see in the main table the following data:
+        | PRODUCT                                                               | STATE     |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem) | Available |
+        | [ADAPZCOO1] Local Product                                             | Available |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                 | Available |		
+
+		
+	I Click on "Convert to Simple Out"
+	I click on "Process" and open the window
+	I Click on "Copy all"
+
+    I click on "Process" and close the window if necessary
+    I click on "Close" and close the window if a window is open
+	
+	I should see in the main table the following data:
+        | PRODUCT                                                               | STATE  |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed |
+        | [ADAPZCOO1] Local Product                                             | Closed |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                 | Closed |		
+		
+	I should see "Closed" in "State"
+
+#HQ1C1: FO updates	
+	I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+
+	I click "Edit" on line:
+        | ORDER REFERENCE   |
+        | *{{FO_REFERENCE}} |	
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE  |
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Closed |	
+        | ADAPZCOO1    | Local Product                                           | Closed |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Draft  |	
+
+    I should see "Draft-p" in "State"	   
+
+
+####################
+## SYNCHRONIZATION
+###################
+	
+	I synchronize "HQ1C1"
+    I synchronize "HQ1C2"
+	I log into instance "HQ1C2"
+
+#HQ1C2: checks on IR and PO updates	
+	
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I fill "ORDER REFERENCE" with "{{IR_REFERENCE}}"
+    I click "Edit" on line:
+	    | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |	
+
+	I should see in the main table the following data:
+        | PRODUCT                                                                 | STATE     |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)   | Confirmed |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   |	Confirmed |	
+		| [ADAPZCOO1] Local Product                                               | Confirmed |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Sourced-v |
+		
+	I should see "Sourced-p" in "Order State" 		
+	
+	
+		
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I click "Edit" on line:
+        | REFERENCE     |
+        | {{PO_REF_C2}} |		
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE     |
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Confirmed |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Confirmed |	
+        | ADAPZCOO1    | Local Product                                           | Confirmed |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Validated |		   
+	   
+	I should see "Validated-p" in "Order State"			
+		   
+#HQ1C2: IN processing
+    I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER | STATE             |
+		| {{PO_REF_C2}}  | Available Shipped | 
+
+
+	I should see in the main table the following data:
+        | PRODUCT                                                               | STATE     | DESTINATION LOCATION |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem) | Available |    Input             |
+        | [ADAPZCOO1] Local Product                                             | Available |    Input             |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                 | Available |    Input             | 
+# Products go to cross docking while they shoud be sent to Input location since Intermediate Stock		
+		
+
+
+		
+    I click on "Process" and open the window
+	I click on "Copy all"
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open
+	
+	I should see "Closed" in "State"
+
+	
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I fill "REFERENCE" with "{{PO_REF_C2}}"
+
+    I click on "Search"
+
+    I click "Edit" on line:
+        | REFERENCE          |
+        | *{{PO_REF_C2}}* |	
+	
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE     |
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed    |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Closed    |	
+        | ADAPZCOO1    | Local Product                                           | Closed    |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Validated |		   
+	   
+	I should see "Validated-p" in "Order State"	
+	
+	
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I fill "ORDER REFERENCE" with "{{IR_REFERENCE}}"
+    I click "Edit" on line:
+	    | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |	
+
+	I should see in the main table the following data:
+        | PRODUCT                                                                 | STATE     |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)   | Closed    |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   |	Closed    |	
+		| [ADAPZCOO1] Local Product                                               | Closed    |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Sourced-v |
+		
+	I should see "Sourced-p" in "Order State" 			
+	
+	
+
+    I log into instance "HQ1C1"	
+	
+#HQ1C1: FO line validation (split) 
+
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE   |
+        | *{{FO_REFERENCE}} |	
+
+	   
+    I click "Split line" on line and open the window:
+       | PRODUCT CODE  | PRODUCT DESCRIPTION                |
+       | DINJCEFA1V-   | CEFAZOLIN, 1 g, (IV), powder, vial |  
+	I fill "New line quantity" with "20.00"
+	I click on "Split line" and close the window
+	
+    I click "Analytical distribution" on line and open the window:
+       | PRODUCT CODE  | PRODUCT DESCRIPTION                | QTY   |
+       | DINJCEFA1V-   | CEFAZOLIN, 1 g, (IV), powder, vial | 10.00 |
+	I click on "New"   
+	I fill "HT111" within column "COST CENTER"
+    I validate the line
+	I click on "Save" and close the window
+
+
+    I click "Analytical distribution" on line and open the window:
+       | PRODUCT CODE  | PRODUCT DESCRIPTION                | QTY   |
+       | DINJCEFA1V-   | CEFAZOLIN, 1 g, (IV), powder, vial | 20.00 |
+	I click on "New"   
+	I fill "cc-intermission" within column "COST CENTER"
+    I validate the line
+	I click on "Save" and close the window	
+
+	I click on "Validate lines"
+	
+	I click on "Save"
+	I should see "Validated-p" in "State"
+
+	
+#HQ1C1: Sourcing	
+	I click on menu "Orders Sourcing Tool"
+	I fill "Order" with "{{FO_REFERENCE}}"
+	I click on "Search"
+
+    I click "Edit" on line:
+        | PRODUCT                                          | QTY   |
+        | [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial | 10.00 |
+	I fill "from Stock" within column "PROC. METHOD"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT                                          | QTY   |
+        | [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial | 10.00 |
+
+
+    I click "Edit" on line:
+        | PRODUCT                                          | QTY   |
+        | [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial | 20.00 |
+	I fill "Local Market" within column "SUPPLIER"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT                                          | QTY   |
+        | [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial | 20.00 |
+	
+	
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE   |
+        | *{{FO_REFERENCE}} |	
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE     |  QTY  | 
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed    |   *   |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Closed    |   *   |	
+        | ADAPZCOO1    | Local Product                                           | Closed    |   *   |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Confirmed | 10.00 |	
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Sourced   | 20.00 |
+		
+    I should see "Sourced-p" in "State"	    		
+	
+#HQ1C1: PPS for split product from Stock	
+
+    I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Deliveries|Picking"
+
+	I click "Search" until I see:
+        | ORIGIN            |
+        | {{FO_REFERENCE}}  |
+	I click "Edit" on line:
+        | ORIGIN           | LINES STATE |
+        | {{FO_REFERENCE}} |  *vailable* |
+	
+	I should see in the main table the following data:
+        | PRODUCT                                          | STATE     |
+        | [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial | Available |
+	
+		
+	I Click on "Convert to Simple Out"
+	I click on "Process" and open the window
+	I Click on "Copy all"
+
+    I click on "Process" and close the window if necessary
+    I click on "Close" and close the window if a window is open
+	
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE   |
+        | *{{FO_REFERENCE}} |	
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                | STATE   |  QTY  | 
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial | Closed  | 10.00 |	
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial | Sourced | 20.00 |
+		
+    I should see "Sourced-p" in "State"	  	
+	
+		
+####################
+## SYNCHRONIZATION
+###################	
+	
+    I log out
+    I synchronize "HQ1C1"
+    I synchronize "HQ1C2"
+	I log into instance "HQ1C2"
+
+#HQ1C2: check on IR, PO updates
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+    I click "Edit" on line:
+	    | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |	
+
+
+	I should see in the main table the following data:
+        | PRODUCT                                                                 | STATE      | QUANTITY (UOM) |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)   | Closed     |       *        |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   |	Closed     |       *        |	
+		| [ADAPZCOO1] Local Product                                               | Closed     |       *        |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Confirmed  |     10.00      |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Sourced-sy |     20.00      |
+		
+	I should see "Sourced-p" in "Order State" 
+
+	
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I fill "REFERENCE" with "{{PO_REF_C2}}"
+
+    I click on "Search"
+
+    I click "Edit" on line:
+        | REFERENCE          |
+        | *{{PO_REF_C2}}* |	
+	
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE      | QUANTITY |
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed     |     *    |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Closed     |     *    |	
+        | ADAPZCOO1    | Local Product                                           | Closed     |     *    |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Confirmed  |   10.00  |		   
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Sourced-sy |   20.00  |
+	
+	I should see "Sourced-p" in "Order State"	
+	
+
+#HQ1C2: IN shipped processing	
+    I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER | STATE             |
+		| {{PO_REF_C2}}  | Available Shipped | 
+	
+		
+	I should see in the main table the following data:
+        | PRODUCT                                          | STATE     | DESTINATION LOCATION | BATCH |
+        | [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial | Available |         Input        | BCOO1 |
+
+#Should be input location
+		
+    I click on "Process" and open the window
+	I click on "Copy all"
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open
+	
+	I should see "Closed" in "State"
+	
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+    I click "Edit" on line:
+	    | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |	
+
+
+	I should see in the main table the following data:
+        | PRODUCT                                          | STATE      | QUANTITY (UOM) |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial | Closed     |     10.00      |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial | Sourced-sy |     20.00      |
+		
+	I should see "Sourced-p" in "Order State"
+
+
+	
+	I log into instance "HQ1C1"
+
+#HQ1C1: PO_REF_C1LM	processing
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | SOURCE DOCUMENT    | SUPPLIER      |
+        | *{{FO_REFERENCE}}* |  Local Market |    
+
+	I click "Validate" on line:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                |
+	    | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial |
+
+	I open tab "Delivery"
+	I fill "Delivery Confirmed Date" with "28/May/2017"
+
+    I click on "Apply to all lines" and open the window
+	I click on "Yes" and close the window	
+	
+	I open tab "Purchase Order"
+	I click "Confirm" on line:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                |
+	    | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial |
+	
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                | STATE     |
+	    | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial | Confirmed |	
+
+	I click on "Save"	
+    I should see "Confirmed" in "Order State"	
+	I store "Order Reference" in "PO_REF_C1LM"
+
+	
+#HQ1C1: IN PO_REF_C1LM processing	
+	I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER    |
+		| *{{PO_REF_C1LM}}* | 
+
+    I click on "Process" and open the window
+	I click on "Copy all"
+	
+		I click "Edit" on line:
+        | PRODUCT                                          |
+        | [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial |
+
+	I fill "batch{{ID}}" within column "Batch Number" and open the window
+    I click on "New"
+    I fill "Expiry Date" with "20/May/2020"
+    I click on "Save" and close the window
+    I validate the line
+	
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open
+	
+#HQ1C1: PPS	
+	I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Deliveries|Picking"
+
+	
+	I click "Edit" on line:
+
+	    | ORIGIN           | LINES STATE |
+        | {{FO_REFERENCE}} | *vailable*  |
+	
+	I click on "Create Picking..." and open the window
+	I click on "Copy all"
+	I click on "Create Picking" and close the window
+		
+	I click on "Validate Picking..." and open the window
+	I click on "Copy all"
+	I click on "Validate Picking" and close the window
+
+    I click on "Pack..." and open the window
+	I click on "Next"
+	I click "Edit" on line:
+        | FROM P. |
+        | 1       |
+
+	I fill "2" within column "Weight P.P [KG]"
+	I validate the line
+
+	I click on "Process" and close the window
+
+	I click on "Create Shipment..." and open the window
+	I click on "Create Shipment" and close the window
+
+	I click on "Validate"
+
+	I store "Reference" in "SHIPREF_1"	
+
+
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+	I click "Edit" on line:
+        | ORDER REFERENCE   |
+        | *{{FO_REFERENCE}} |	
+
+	I should see in the main table the following data:	
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE  |  QTY  | 
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed |   *   |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Closed |   *   |	
+        | ADAPZCOO1    | Local Product                                           | Closed |   *   |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Closed | 10.00 |	
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Closed | 20.00 |
+			
+    I should see "Closed" in "State"	  		
+	
+
+####################
+## SYNCHRONIZATION
+###################
+	
+	
+    I log out
+    I synchronize "HQ1C1"
+    I synchronize "HQ1C2"
+	I log into instance "HQ1C2"
+
+#HQ1C2:	IR updates
+	I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+
+    I click "Edit" on line:
+	    | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |	
+
+	I should see in the main table the following data:
+        | PRODUCT                                          | STATE     | QUANTITY (UOM) |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial | Closed    |    10.00       |
+	    | [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial | Confirmed |    20.00       | 
+
+	I should see "Confirmed-p" in "Order State"
+
+#HQ1C2: IN processing		
+	
+	I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER  | STATE             |
+		| *{{PO_REF_C2}}* | Available Shipped | 
+		
+	I should see in the main table the following data:
+        | PRODUCT                                          | STATE     | BATCH       | DESTINATION LOCATION|
+        | [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial | Available | batch{{ID}} |        Input        |
+#Destination	
+
+    I click on "Process" and open the window
+	I click on "Copy all"
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open	
+	
+	
+#HQ1C2: IR, PO final checks
+	I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | REFERENCE       |
+        | *{{PO_REF_C2}}* |  
+
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                                     | STATE  | QUANTITY |
+        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Closed |     *    |
+        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Closed |     *    |	
+        | ADAPZCOO1    | Local Product                                           | Closed |     *    |
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Closed |   10.00  |		   
+        | DINJCEFA1V-  | CEFAZOLIN, 1 g, (IV), powder, vial                      | Closed |   20.00  |
+
+	
+	I should see "Closed" in "Order State"	
+
+
+	
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+    I click "Edit" on line:
+	    | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |	
+
+
+	I should see in the main table the following data:
+        | PRODUCT                                                                 | STATE  | QUANTITY (UOM) |
+        | [ADAPCABL1S-] (computer) CABLE, SERIAL interface for two PC (fem/fem)   | Closed |       *        |
+        | [ADAPCART02-] (printer Laserwriter ) CARTRIDGE INKING                   |	Closed |       *        |	
+		| [ADAPZCOO1] Local Product                                               | Closed |       *        |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Closed |     10.00      |
+		| [DINJCEFA1V-] CEFAZOLIN, 1 g, (IV), powder, vial                        | Closed |     20.00      |
+
+		
+	I should see "Closed" in "Order State"
+	
+	

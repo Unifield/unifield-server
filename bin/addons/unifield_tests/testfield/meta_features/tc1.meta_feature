@@ -283,7 +283,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Validated |   25.00  |  500.00  |	
        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Draft     |	10.00  |     *    |
 
-	   
 	I should see "Draft-p" in "Order State"
 
 #LINE 9	
@@ -357,7 +356,6 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Validated |	
        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Validated |	
 
-	   
 	I should see "Validated" in "Order State"	   
 	   
     I open tab menu "ORDERS"
@@ -476,7 +474,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
        | ADAPCABL1S-  | (computer) CABLE, SERIAL interface for two PC (fem/fem) | Confirmed |	
        | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING                 | Validated |	
 
-	   
+
 	I should see "Validated-p" in "Order State"	
 	
 	
@@ -825,10 +823,10 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | PRODUCT CODE | PRODUCT DESCRIPTION                                 |STATE  | 
         | DORADIDA15T  | DIDANOSINE (ddI), 150 mg, chewable dispersable tab. | Draft |
 
-	I store "Order Reference" in "PO_REF_COO_2"	
-	
     I should see "Validated" in "Order State"
 
+	I store "Order Reference" in "PO_REF_COO_2"	
+	
     I open tab menu "ORDERS"
     I click on menu "Internal Requests"
 	I click "Edit" on line:
@@ -978,11 +976,12 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
         | *{{FO_REFERENCE}}* |  ITCompany |    
 
 
+
 	I click "Edit" on line and open the window:
         | PRODUCT CODE | PRODUCT DESCRIPTION                     |
 	    | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING |
-   I fill "Delivery Confirmed Date" with "05/Oct/2017"	
-   I click on "Save & Close" and close the window
+    I fill "Delivery Confirmed Date" with "05/Oct/2017"	
+    I click on "Save & Close" and close the window
 
 	I click "Confirm" on line:
         | PRODUCT CODE | PRODUCT DESCRIPTION                     |
@@ -991,7 +990,7 @@ Scenario: SSL Complete Supply flow from Project IR to Ext CU via FO (with split)
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                     | STATE     |
 	    | ADAPCART02-  | (printer Laserwriter ) CARTRIDGE INKING | Confirmed |
-	
+
 	I should see "Validated-p" in "Order State"
 
 	I open tab menu "ORDERS"	

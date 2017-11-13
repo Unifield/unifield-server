@@ -149,21 +149,17 @@
                         <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
                         <field name="details"/>
                         <newline/>
-                        <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('rfq_state', 'not in', ['sent', 'updated'])]}"/>
-                        <field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('rfq_state', 'not in', ['draft', 'sent'])]}"/>
-                        <field name="rfq_ok" invisible="1"/>
-                        <field name="rfq_delivery_address" colspan="4" domain="[('dest_address', '=', company_id)]" attrs="{'invisible': [('rfq_ok', '=', False)], 'readonly': ['|', ('tender_id', '!=', False), ('state', 'not in', ['draft', 'sent'])]}"/>
                     </group>
                     <field name="parent_order_name" readonly="True" attrs="{'invisible': [('parent_order_name', '=', False)]}"/>
                     <newline/>
                     <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}"/>
                     <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                     <newline/>
-                    <group colspan="4" col="8" attrs="{'invisible': ['|', ('analytic_distribution_id', '=', False), ('rfq_ok' ,'=', True)]}">
+                    <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
                         <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft,validated"/>
                     </group>
-                    <group colspan="4" col="8" attrs="{'invisible': ['|', ('analytic_distribution_id', '!=', False), ('rfq_ok', '=', True)]}">
+                    <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
                         <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
                         <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft,validated"/>
                     </group>
@@ -176,7 +172,7 @@
                                 <field name="po_from_ir" invisible="1"/>
                                 <field name="po_from_fo" invisible="1"/>
                                 <field name="canceled_end" invisible="1"/>
-                                <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id, 'split_po': related_sourcing_id}),  ('check_partner_rfq', '=', tender_id), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
+                                <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id, 'split_po': related_sourcing_id}), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
                                 <field name="partner_type"/>
                                 <field name="partner_address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"/>
                                 <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft'])]}" widget="char"/>
@@ -197,14 +193,18 @@
                                 <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
                                 <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': ['|', ('po_from_fo', '=', True), ('po_from_ir', '=', True)]}"/>
                                 <button name="button_remove_lines" string="Delete Lines" confirm="This document originated from an IR/FO, if you delete these products now, they will all be deleted. If you wish to Cancel &amp; Resource them, please do this line by line." icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': [('po_from_fo', '=', False), ('po_from_ir', '=', False)]}"/>
-                                <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': rfq_ok}"/>
+                                <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': False}"/>
                                 <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object"/>
                             </group>
                             <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_n', 'validated_p'])]}"/>
                             <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_n', 'validated_p'])]}"/>
-                            <field colspan="4" name="order_line" nolabel="1" mode="tree,form" context="{'purchase_id': active_id, 'partner_type': partner_type, 'categ': categ, 'pricelist_id': pricelist_id, 'rfq_ok': rfq_ok, 'from_fo': po_from_fo or po_from_ir or False}" on_change="order_line_change(order_line)">
-                                <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'validated_n', 'validated']"
-                                        filter_selector="[('Hide cancelled', ('state', 'not in', ['cancel', 'cancel_r'])), ('Show all', ''), ('Show cancelled only', ('state', 'in', ['cancel', 'cancel_r']))]">
+                            <field name="order_line" colspan="4" nolabel="1" mode="tree,form"
+                                context="{'purchase_id': active_id, 'partner_type': partner_type, 'categ': categ, 'pricelist_id': pricelist_id, 'rfq_ok': False, 'from_fo': po_from_fo or po_from_ir or False}"
+                                on_change="order_line_change(order_line)"
+                                filter_selector="[('Hide cancelled', ('state', 'not in', ['cancel', 'cancel_r'])), ('Show all', ''), ('Show cancelled only', ('state', 'in', ['cancel', 'cancel_r']))]"
+                                o2m_selectable="2"
+                                >
+                                <tree string="Lines" hide_delete_button="True" colors="red:to_correct_ok == True or inactive_product == True or red_color == True; #C8C8C8: fake_state == 'cancel'; orange:product_qty == 0.00;blue: soq_updated == True" noteditable="fake_state not in ['draft', 'validated_n', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}">
                                     <field name="line_number"/>
                                     <field name="default_code"/>
                                     <field name="default_name"/>
@@ -224,14 +224,13 @@
                                     <field name="stock_take_date"/>
                                     <field name="price_subtotal"/>
                                     <field name="currency_id"/>
-                                    <button name="button_analytic_distribution" string="Analytical distribution" type="object" attrs="{'invisible': [('rfq_ok', '=', True)]}" context="{'partner_type': parent.partner_type}" icon="terp-stock_symbol-selection"/>
-                                    <field name="analytic_distribution_state_recap" invisible="context.get('rfq_ok')"/>
+                                    <button name="button_analytic_distribution" string="Analytical distribution" type="object" context="{'partner_type': parent.partner_type}" icon="terp-stock_symbol-selection"/>
+                                    <field name="analytic_distribution_state_recap" />
                                     <field name="account_4_distribution" string="Acc. for Ana. Distrib." invisible="1"/>
                                     <field name="kit_pol_check" invisible="True"/>
                                     <field name="po_state_stored" invisible="True"/>
                                     <button name="de_kitting" context="{'product_id': product_id}" string="Replace with kit components..." type="object" icon="gtk-dnd-multiple" attrs="{'invisible':['|', ('kit_pol_check', '=', False), ('po_state_stored', '!=', 'confirmed')]}"/>
                                     <field name="red_color" invisible="1"/>
-                                    <field name="rfq_ok" invisible="1"/>
                                     <field name="tender_line_id" invisible="1"/>
                                     <field name="to_correct_ok" invisible="1"/>
                                     <field name="fake_state" invisible="1"/>
@@ -239,9 +238,9 @@
                                     <field name="inactive_product" invisible="1"/>
                                     <field name="soq_updated" invisible="1" readonly="1"/>
                                     <field name="order_state_purchase_order_line" invisible="True"/>
-                                    <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': ['|', ('rfq_ok', '=', True), ('fake_state', 'not in', ('draft', 'validated', 'validated_n'))]}"/>
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'validated_n'])]}"/>
-                                    <button string="Confirm" icon="terp-check" name="button_confirmed" type="object" attrs="{'invisible': [('fake_state', 'not in', ['validated'])]}"/>
+                                    <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated', 'validated_n'))]}"/>
+                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
+                                    <button string="Confirm" icon="terp-check" name="button_confirmed" type="object" attrs="{'invisible': [('fake_state', 'not in', ['validated', 'validated_n'])]}" header="True"/>
                                     <button string="Validate reception" icon="terp-camera_test" name="done" type="workflow" attrs="{'invisible': ['|', ('fake_state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}"/>
                                     <button string="Cancel" icon="gtk-del" type="object" name="ask_unlink" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'validated', 'validated_n'])]}"/>
                                 </tree>
@@ -274,7 +273,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Delivery &amp; Invoicing" attrs="{'invisible': [('rfq_ok', '=', True)]}">
+                        <page string="Delivery &amp; Invoicing">
                             <group colspan="4" col="4">
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
@@ -304,7 +303,7 @@
                             <field name="date_approve" invisible="1"/>
                             <newline/>
                         </page>
-                        <page string="Invoices" attrs="{'invisible': [('rfq_ok', '=', True)]}">
+                        <page string="Invoices">
                             <group colspan="2" col="2">
                                 <separator string="Invoice Control" colspan="2"/>
                                 <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}"/>
@@ -349,13 +348,13 @@
                         </page>
                     </notebook>
                     <group col="11" colspan="4">
-                        <group colspan="12" col="19" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}">
+                        <group colspan="12" col="19" attrs="{'invisible': ['|', ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}">
                             <field name="display_intl_transport_ok" invisible="1"/>
                             <field name="intl_supplier_ok" invisible="1"/>
-                            <field name="transport_mode" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],                 'readonly': [('shipped_rate', '!=', 0.00)]                 }"/>
+                            <field name="transport_mode" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'readonly': [('shipped_rate', '!=', 0.00)]}"/>
                             <label colspan="15"/>
-                            <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)],                 'required': [('rfq_ok', '=', False), ('intl_supplier_ok', '=', True)],                 'readonly': [('shipped_rate', '!=', 0.00)]                 }" nolabel="1"/>
-                            <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('rfq_ok', '=', False), ('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', '!=', 0.00)]}" nolabel="1"/>
+                            <field name="transport_cost" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)], 'readonly': [('shipped_rate', '!=', 0.00)]}" nolabel="1"/>
+                            <field name="transport_currency_id" domain="[('is_po_functional', '=', pricelist_id)]" attrs="{'invisible': [('display_intl_transport_ok', '=', False)], 'required': [('intl_supplier_ok', '=', True)],'readonly': [('shipped_rate', '!=', 0.00)]}" nolabel="1"/>
                             <separator colspan="19" attrs="{'invisible': [('display_intl_transport_ok', '=', False)]}"/>
                         </group>
                         <field name="currency_id" readonly="1"/>
@@ -369,29 +368,17 @@
                         <field name="functional_amount_tax"/>
                         <field name="functional_amount_total"/>
                         <newline/>
-                        <field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
+                        <field name="total_price_include_transport" readonly="1" attrs="{'invisible': ['|', ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
                         <newline/>
-                        <field name="func_total_price_include_transport" readonly="1" attrs="{'invisible': ['|', '|', ('rfq_ok', '=', True), ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
+                        <field name="func_total_price_include_transport" readonly="1" attrs="{'invisible': ['|', ('categ', '=', 'transport'), ('display_intl_transport_ok', '=', False)]}"/>
                     </group>
                     <group colspan="4" col="16">
-                        <field name="state" attrs="{'invisible': [('rfq_ok', '=', True)]}" readonly="1"/>
-                        <field name="rfq_state" attrs="{'invisible': [('rfq_ok', '=', False)]}" readonly="1"/>
-                        <field name="from_procurement" invisible="1"/>
+                        <field name="state" readonly="1"/>
                         <button name="close_lines" type="object" string="Validate the reception" icon="terp-camera_test" attrs="{'invisible': ['|', ('state', '!=', 'confirmed'), ('order_type', '!=', 'direct')]}"/>
-                        <button name="purchase_cancel" type="object" attrs="{'invisible': ['|', ('rfq_state', 'not in', ['draft', 'validated', 'sent']), '&amp;',('partner_type', 'not in', ('external', 'esc')), ('state', '=', 'validated')]}" string="Cancel" icon="gtk-cancel"/>
+                        <button name="purchase_cancel" type="object" attrs="{'invisible': [('state', 'not in', ['draft']), ('partner_type', 'not in', ('external', 'esc'))]}" string="Cancel" icon="gtk-cancel"/>
                         <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" attrs="{'invisible': ['|', '|', '|', '|', '|', ('canceled_end', '=', True), ('po_from_fo', '=', True), ('po_from_ir', '=', True), ('po_from_rr', '=', True), ('tender_id', '!=', False), ('state', '!=', 'cancel')]}"/>
-                        <!-- UTP-469 − Remove the cancel button
-                             <button name="action_cancel" states="approved,except_picking,except_invoice,wait" string="Cancel Purchase Order" type="object" icon="gtk-cancel"  attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state','not in', ['confirmed','except_picking','except_invoice','wait'])]}"/> -->
-                        <button name="picking_ok" states="except_picking" string="Manually Corrected" icon="gtk-convert" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_picking')]}"/>
-                        <button name="invoice_ok" states="except_invoice" string="Manually Corrected" icon="gtk-convert" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'except_invoice')]}"/>
-                        <button name="purchase_appbuyer" states="wait_auth" string="Approve Purchase" icon="gtk-ok" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('state', '!=', 'wait_auth')]}"/>
                         <button name="validate_lines" states="draft,draft_p" string="Validate lines" type="object" icon="gtk-go-forward"/>
                         <button name="confirm_lines" states="validated,validated_p" string="Confirm lines" icon="gtk-go-forward" type="object"/>
-                        <button name="rfq_sent" type="object" string="Send RfQ" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('rfq_state', '!=', 'draft')]}"/>
-                        <button name="check_rfq_updated" type="object" string="RfQ Updated" icon="gtk-go-forward" attrs="{'invisible': ['|', ('rfq_ok', '=', False), ('rfq_state', '!=', 'sent')]}"/>
-                        <button name="generate_po_from_rfq" type="object" string="Generate Po" icon="gtk-dnd-multiple" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', True)], 'readonly': [('amount_total', '=', 0.00)]}"/>
-                        <button name="rfq_done" string="RfQ Closed" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', True)]}"/>
-                        <button name="rfq_done" string="Continue sourcing" icon="gtk-go-forward" attrs="{'invisible': ['|', '|', ('tender_id', '!=', False), ('rfq_state', '!=', 'updated'), ('from_procurement', '=', False)]}"/>
                     </group>
                 </form>
             </field>
@@ -517,7 +504,7 @@
             <field name="res_model">purchase.order</field>
             <field name="view_mode">tree,form,graph,calendar</field>
             <field name="context">{'purchase_order': True}</field>
-            <field name="domain">[('tender_id', '=', False)]</field>
+            <field name="domain">[('tender_id', '=', False), ('rfq_ok', '=', False)]</field>
             <field name="search_view_id" ref="purchase.view_purchase_order_filter"/>
             <field name="help">Use this menu to search within your purchase orders by references, supplier, products, etc. For each purchase order, you can track the products received, and control the supplier invoices.</field>
         </record>

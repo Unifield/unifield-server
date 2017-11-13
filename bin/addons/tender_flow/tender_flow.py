@@ -566,7 +566,7 @@ class tender(osv.osv):
                     continue
 
                 # search or create PO to use:
-                po_to_use = self.pool.get('sale.order.line').get_existing_po(cr, uid, [tender_line.id], context=context)
+                po_to_use = self.pool.get('tender.line').get_existing_po(cr, uid, [tender_line.id], context=context)
                 if not po_to_use:
                     po_to_use = self.pool.get('tender.line').create_po_from_tender_line(cr, uid, [tender_line.id], context=context)
                     # log new PO:
@@ -577,6 +577,7 @@ class tender(osv.osv):
                 # attach new PO line:
                 pol_values = {
                     'order_id': po_to_use,
+                    'linked_sol_id': tender_line.sale_order_line_id.id or False,
                     'name': tender_line.product_id.partner_ref,
                     'product_qty': tender_line.qty,
                     'product_id': tender_line.product_id.id,
@@ -636,17 +637,13 @@ class tender(osv.osv):
         if context is None:
             context = {}
 
-        po_obj = self.pool.get('purchase.order')
         t_line_obj = self.pool.get('tender.line')
-        wf_service = netsvc.LocalService("workflow")
 
         # set state
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         for tender in self.browse(cr, uid, ids, context=context):
             # trigger all related rfqs
-            rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),], context=context)
-            for rfq_id in rfq_ids:
-                wf_service.trg_validate(uid, 'purchase.order', rfq_id, 'purchase_cancel', cr)
+            self.pool.get('purchase.order').cancel_rfq(cr, uid, ids, context=context)
 
             for line in tender.tender_line_ids:
                 t_line_obj.cancel_sourcing(cr, uid, [line.id], context=context)
@@ -1118,7 +1115,7 @@ class tender_line(osv.osv):
 
     def get_existing_po(self, cr, uid, ids, context=None):
         """
-        SOURCING PROCESS: Do we have to create new PO/DPO or use an existing one ?
+        SOURCING PROCESS: Do we have to create new PO or use an existing one ?
         If an existing one can be used, then returns his ID, otherwise returns False
         @return ID (int) of document to use or False
         """
@@ -1134,7 +1131,7 @@ class tender_line(osv.osv):
             domain = [
                 ('partner_id', '=', rfq_line.partner_id.id),
                 ('state', 'in', ['draft']),
-                ('delivery_requested_date', '=', rfq_line.delivery_requested_date),
+                ('delivery_requested_date', '=', rfq_line.date_planned),
                 ('rfq_ok', '=', False),
                 ('order_type', '=', 'regular'),
             ]
@@ -1554,15 +1551,15 @@ class purchase_order(osv.osv):
                 return False
         return True
 
-    _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True),
-                'rfq_delivery_address': fields.many2one('res.partner.address', string='Delivery address'),
-                'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True),
-                'from_procurement': fields.boolean(string='RfQ created by a procurement order'),
-                'rfq_ok': fields.boolean(string='Is RfQ ?'),
-                'valid_till': fields.date(string='Valid Till'),
+    _columns = {'tender_id': fields.many2one('tender', string="Tender", readonly=True, internal="purchase_order"),
+                'rfq_delivery_address': fields.many2one('res.partner.address', string='Delivery address', internal="purchase_order"),
+                'origin_tender_id': fields.many2one('tender', string='Tender', readonly=True, internal=True),
+                'from_procurement': fields.boolean(string='RfQ created by a procurement order', internal=True),
+                'rfq_ok': fields.boolean(string='Is RfQ ?', internal=True),
+                'valid_till': fields.date(string='Valid Till', internal="purchase_order"),
                 # add readonly when state is Done
-                'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True),
-                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated'), ('done', 'Closed'), ('cancel', 'Cancel')], 'Order state', required=True, readonly=True),
+                'sale_order_id': fields.many2one('sale.order', string='Link between RfQ and FO', readonly=True, internal="purchase_order"),
+                'rfq_state': fields.selection([('draft', 'Draft'), ('sent', 'Sent'), ('updated', 'Updated'), ('done', 'Closed'), ('cancel', 'Cancelled')], 'Order state', required=True, readonly=True, internal="purchase_order"),
                 }
 
     _defaults = {
@@ -1607,6 +1604,28 @@ class purchase_order(osv.osv):
             vals['location_id'] = input_loc and input_loc[0] or False
 
         return super(purchase_order, self).create(cr, uid, vals, context=context)
+
+
+    def cancel_rfq(self, cr, uid, ids, context=None):
+        '''
+        method to cancel a RfQ and its lines
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
+
+        for rfq in self.browse(cr, uid, ids, context=context):
+            if not rfq.rfq_ok:
+                continue
+            for rfq_line in rfq.order_line:
+                wf_service.trg_validate(uid, 'purchase.order.line', rfq_line.id, 'cancel', cr)
+
+            self.write(cr, uid, [rfq.id], {'rfq_state': 'cancel'}, context=context)
+
+        return True
+
 
     def unlink(self, cr, uid, ids, context=None):
         '''
@@ -2033,8 +2052,7 @@ class tender_cancel_wizard(osv.osv_memory):
 
         line_obj.fake_unlink(cr, uid, line_ids, context=context)
 
-        for rfq in rfq_ids:
-            wf_service.trg_validate(uid, 'purchase.order', rfq, 'purchase_cancel', cr)
+        self.pool.get('purchase.order').cancel_rfq(cr, uid, rfq_ids, context=context)
 
         for tender in tender_ids:
             wf_service.trg_validate(uid, 'tender', tender, 'tender_cancel', cr)

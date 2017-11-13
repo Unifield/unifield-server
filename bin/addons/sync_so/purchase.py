@@ -47,13 +47,6 @@ class purchase_order_line_sync(osv.osv):
         'sync_local_id': fields.function(_get_sync_local_id, type='char', method=True, string='ID', help='for internal use only'),
     }
 
-    def copy(self, cr, uid, id, default=None, context=None):
-        if not default:
-            default = {}
-        if 'sync_linked_sol' not in default:
-            default['sync_linked_sol'] = False
-        return super(purchase_order_line_sync, self).copy(cr, uid, id, default, context=context)
-
     def sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
         '''
         Update original PO lines from remote SO lines
@@ -111,9 +104,9 @@ class purchase_order_line_sync(osv.osv):
                 orig_pol = self.search(cr, uid, [('sync_linked_sol', '=', sync_linked_sol)], context=context)
                 if not orig_pol:
                     raise Exception, "Original PO line not found when trying to split the PO line"
-                orig_pol_info = self.browse(cr, uid, orig_pol[0], fields_to_fetch=['linked_sol_id', 'line_number'], context=context)
+                orig_pol_info = self.browse(cr, uid, orig_pol[0], fields_to_fetch=['linked_sol_id', 'line_number', 'origin'], context=context)
+                pol_values['line_number'] = orig_pol_info.line_number
                 if orig_pol_info.linked_sol_id:
-                    pol_values['line_number'] = orig_pol_info.line_number
                     pol_values['origin'] =  orig_pol_info.origin
             # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)
             # so we have to create this new PO line:

@@ -46,13 +46,6 @@ class sale_order_line_sync(osv.osv):
         'resourced_original_remote_line': fields.char(size=256, string='Orig customer PO line', select=1, help='INTERNAL USE: id of the remote cancelled and resourced line, the parent of the current line. Usefull to fill the field resourced_original_line in the other instance'),
     }
 
-    def copy(self, cr, uid, id, default=None, context=None):
-        if not default:
-            default = {}
-        if 'sync_linked_pol' not in default:
-            default['sync_linked_pol'] = False
-        return super(sale_order_line_sync, self).copy(cr, uid, id, default, context=context)
-
     def create_so_line(self, cr, uid, source, line_info, context=None):
         if context is None:
             context = {}

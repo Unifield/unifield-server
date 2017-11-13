@@ -690,7 +690,7 @@ class audittrail_rule(osv.osv):
 
             for res_id in res_ids:
                 parent_field_id = False
-                if parent_field:
+                if parent_field and new_values_computed[res_id][parent_field]:
                     parent_field_id = new_values_computed[res_id][parent_field][0]
 
                 inherit_field_id = False
@@ -927,6 +927,12 @@ class audittrail_log_line(osv.osv):
             # No translation
             if not res[line.id]:
                 res[line.id] = line.field_description
+
+            # rename 'Field Order' to 'Order' in case of IR
+            if line.object_id.model == 'sale.order':
+                so = self.pool.get('sale.order').browse(cr, uid, line.res_id)
+                if so.procurement_request and res[line.id].find('Field Order') != -1:
+                    res[line.id] = res[line.id].replace('Field Order', 'Order')
 
         return res
 

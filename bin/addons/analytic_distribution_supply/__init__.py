@@ -21,7 +21,6 @@
 #
 ##############################################################################
 
-import purchase
 import invoice
 import analytic_distribution
 import stock

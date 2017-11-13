@@ -203,7 +203,7 @@ Scenario: SSL Mission flow with PO line addition and deletion
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Validated |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Validated |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Draft     |
-
+	
 	I should see "Draft-p" in "State"	
 		
 #LINE 9
@@ -359,16 +359,21 @@ Scenario: SSL Mission flow with PO line addition and deletion
     |  ADAPDCDRB-- |
 	
 	I click on "Cancel only" and close the window
-	
+
+	I set "Show all" on lines filter
+	I should see in the main table the following data:
+		| PRODUCT CODE | STATE     |
+        | ADAPDCDRB--  | Cancelled |
 	
     
 	I click on "New" and open the window
     I fill "Product" with "[ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB"
 	I fill "Quantity" with "25.00"
 	I fill "Unit Price" with "1.00"	
+	
 
-#I click on "Save & Close" and close the window
-#I should see a popup with "*Invalid form, correct red fields."
+#    I click on "Save & Close" and close the window
+#    I should see a popup with "*Invalid form, correct red fields."
 	
     I click on button_id "order_line/select_fo_select" and open the window
     I fill "ORDER REFERENCE" with "{{FO_REFERENCE}}"
@@ -380,11 +385,12 @@ Scenario: SSL Mission flow with PO line addition and deletion
     I fill "Order in sync. instance" with "{{IR_REFERENCE}}"
 	I click on "Save & Close" and close the window
 	
-	
+	I set "Show all" on lines filter	
 	I should see in the main table the following data:
 	   | LINE  |  PRODUCT CODE  | PRODUCT DESCRIPTION                          | QUANTITY | STATE       |                       
        |   1   | ADAPCOLABAG    | (laptop computer) CARRYING BAG               |  20.00   | Validated   |
 	   |   2   | ADAPMOUSOUS    | MOUSE, optical, USB port                     |  15.00   | Validated   |
+       |   3   | ADAPDCDRB--    | DISK, CD-R (recordable), data, cakebox of 25 |  20.00   | Cancelled   |
 	   |   4   | ADAPKBDAUSB    | KEYBOARD, AZERTY, external, USB              |  25.00   | Validated-n |
 	
 	   
@@ -393,11 +399,13 @@ Scenario: SSL Mission flow with PO line addition and deletion
 	I click "Edit" on line:
         | ORDER REFERENCE  |
         | {{FO_REFERENCE}} |	
-	   
+
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE      | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Sourced-v |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Sourced-v |	
+		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Cancelled |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Draft     |
 	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB                  | Sourced-n |  
 
@@ -432,11 +440,13 @@ Scenario: SSL Mission flow with PO line addition and deletion
 	I click on "Save" and close the window	
 
 	I click on "Confirm lines"	
-	
+
+	I set "Show all" on lines filter	
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Confirmed |
         | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Confirmed |	
+		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
 	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  
 	
 	
@@ -460,11 +470,12 @@ Scenario: SSL Mission flow with PO line addition and deletion
         | ORDER REFERENCE  |
         | {{FO_REFERENCE}} |	
 
-	   
+	I set "Show all" on lines filter	   
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Confirmed |
         | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Confirmed |	
+		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
         | ADAPMEMK1--  | MEMORY KEY, USB                              | Draft     |
 	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  
 	
@@ -477,11 +488,14 @@ Scenario: SSL Mission flow with PO line addition and deletion
        | ADAPMEMK1--  | MEMORY KEY, USB     | Draft|
 
     I click on "OK, cancel line" and close the window	   
-	   
+
+	I set "Show all" on lines filter	
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Confirmed |
         | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Confirmed |	
+		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
+        | ADAPMEMK1--  | MEMORY KEY, USB                              | Cancelled |
 	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  	
 
 	I should see "Confirmed" in "State"	   
@@ -502,11 +516,14 @@ Scenario: SSL Mission flow with PO line addition and deletion
 	I click "Edit" on line:
         | ORDER REFERENCE    |
         | *{{IR_REFERENCE}}* |
-		
+
+	I set "Show all" on lines filter		
  	I should see in the main table the following data:
         | PRODUCT                                                     |STATE      |
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG                | Confirmed |
         | [ADAPMOUSOUS] MOUSE, optical, USB port                      | Confirmed |
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25  | Cancelled |
+        | [ADAPMEMK1--] MEMORY KEY, USB                               | Cancelled |
 	   	| [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB               | Confirmed |
 				
     I should see "Confirmed" in "Order state"
@@ -519,11 +536,14 @@ Scenario: SSL Mission flow with PO line addition and deletion
     I click "Edit" on line:
         | REFERENCE          |
         | {{PO_REFERENCE_1}} |	    		
-	
+
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:
        | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Confirmed |
        | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Confirmed |	
+	   | ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
+       | ADAPMEMK1--  | MEMORY KEY, USB                              | Cancelled |
 	   | ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  	
 	
     I should see "Confirmed" in "Order State"	
@@ -586,7 +606,8 @@ Scenario: SSL Mission flow with PO line addition and deletion
     I click "Edit" on line:
         | REFERENCE          |
         | {{PO_REF_COO}} |	    		
-	
+
+		
 	I should see in the main table the following data:
        | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Closed    |
@@ -696,11 +717,14 @@ Scenario: SSL Mission flow with PO line addition and deletion
     I click "Edit" on line:
         | REFERENCE          |
         | {{PO_REFERENCE_1}} |	    		
-	
+
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:
        | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Closed    |
        | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Closed    |	
+	   | ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
+       | ADAPMEMK1--  | MEMORY KEY, USB                              | Cancelled |
 	   | ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Confirmed |  	
 	
     I should see "Confirmed-p" in "Order State"	
@@ -734,13 +758,15 @@ Scenario: SSL Mission flow with PO line addition and deletion
 
     I click on "Search"
     I click "Edit" on line:
-        | REFERENCE          |
+        | REFERENCE      |
         | {{PO_REF_COO}} |	    		
-	
+
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:
        | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Closed    |
        | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Closed    |	
+	   | ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
 	   | ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Closed    |  	
 	
     I should see "Closed" in "Order State"	
@@ -752,7 +778,7 @@ Scenario: SSL Mission flow with PO line addition and deletion
 
 	I click "Edit" on line:
         | ORIGIN           | LINES STATE |
-        | {{FO_REFERENCE}} | *vailable*   |
+        | {{FO_REFERENCE}} | *vailable*  |
 	
    I should see in the main table the following data:
         | PRODUCT                                                    | STATE     | 
@@ -792,11 +818,13 @@ Scenario: SSL Mission flow with PO line addition and deletion
         | ORDER REFERENCE  |
         | {{FO_REFERENCE}} |	
 
-	   
+	I set "Show all" on lines filter	   
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
         | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Closed    |
         | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Closed    |	
+		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
+        | ADAPMEMK1--  | MEMORY KEY, USB                              | Cancelled |
 	   	| ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Closed    |  
 	
 	I should see "Closed" in "State"
@@ -840,11 +868,14 @@ Scenario: SSL Mission flow with PO line addition and deletion
     I click "Edit" on line:
         | REFERENCE          |
         | {{PO_REFERENCE_1}} |	    		
-	
+
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:
        | PRODUCT CODE | PRODUCT DESCRIPTION                          |STATE      | 
        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                | Closed    |
        | ADAPMOUSOUS  | MOUSE, optical, USB port                     | Closed    |	
+	   | ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
+       | ADAPMEMK1--  | MEMORY KEY, USB                              | Cancelled |
 	   | ADAPKBDAUSB  | KEYBOARD, AZERTY, external, USB              | Closed    |  	
 	
     I should see "Closed" in "Order State"		
@@ -879,10 +910,13 @@ Scenario: SSL Mission flow with PO line addition and deletion
         | ORDER REFERENCE    |
         | *{{IR_REFERENCE}}* |
 		
- 	I should see in the main table the following data:
+	I set "Show all" on lines filter
+	I should see in the main table the following data:
         | PRODUCT                                                    |STATE      | 
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG               | Closed    |
         | [ADAPMOUSOUS] MOUSE, optical, USB port                     | Closed    |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25 | Cancelled |
+        | [ADAPMEMK1--] MEMORY KEY, USB                              | Cancelled |
 	   	| [ADAPKBDAUSB] KEYBOARD, AZERTY, external, USB              | Closed    | 	
 
     I should see "Closed" in "Order state"	

@@ -239,9 +239,11 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
         | [ADAPCOLABAG] (laptop computer) CARRYING BAG | Available |	
 		
 	I click on "Cancel and Resource" and close the window	
-	
+
+
     I should see in the main table the following data:
         | PRODUCT                                                         | STATE       | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled-r |
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Available   |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Available   |
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Available   |
@@ -254,6 +256,7 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
 
 	I should see in the main table the following data:
         | PRODUCT                                                         | STATE         | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled     |
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Not Available |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Not Available |
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Not Available |
@@ -267,9 +270,10 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
         | REFERENCE          |
         | {{PO_REFERENCE_1}} |	
 		
-	
+	I set "Show all" on lines filter	
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE        | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Cancelled-r |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Confirmed   |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Confirmed   |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Confirmed   |
@@ -282,8 +286,10 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
         | ORDER REFERENCE    |
         | *{{IR_REFERENCE}}* |
 
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:
         | PRODUCT                                                         | STATE       | ORIGINAL FO/IR LINE |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled-r |                     |
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Confirmed   |                     |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Confirmed   |                     |
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Confirmed   |                     |
@@ -306,8 +312,10 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
     I click on "Refresh" until "Done" in "Processing of lines" if a window is open
     I click on "Close" and close the window if a window is open	
 
+	
     I should see in the main table the following data:
         | PRODUCT                                                         | STATE       | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled-r |
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Closed      |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Closed      |
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Closed      |
@@ -321,9 +329,10 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
         | REFERENCE          |
         | {{PO_REFERENCE_1}} |	
 		
-	
+	I set "Show all" on lines filter	
 	I should see in the main table the following data:
         | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE        | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Cancelled-r |
         | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Closed      |	
 		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Closed      |
         | ADAPMEMK1--  | MEMORY KEY, USB                                  | Closed      |
@@ -336,8 +345,10 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
         | ORDER REFERENCE    |
         | *{{IR_REFERENCE}}* |
 
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:
         | PRODUCT                                                         | STATE       | ORIGINAL FO/IR LINE |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled-r |                     |
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Confirmed   |                     |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Confirmed   |                     |
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Confirmed   |                     |
@@ -357,6 +368,7 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
 
 	I should see in the main table the following data:
         | PRODUCT                                                         | STATE     | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled |
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Available |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Available |
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Available |
@@ -369,6 +381,7 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
 
 	I should see in the main table the following data:
         | PRODUCT                                                         | STATE     | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled |
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Closed    |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Closed    |
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Closed    |
@@ -579,8 +592,10 @@ Scenario: SSL Instance flow Cancel and  Resource IN line
         | ORDER REFERENCE    |
         | *{{IR_REFERENCE}}* |
 
+	I set "Show all" on lines filter		
 	I should see in the main table the following data:
         | PRODUCT                                                         | STATE       | ORIGINAL FO/IR LINE |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled-r |                     |
         | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Closed      |                     |	
 		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Closed      |                     |
         | [ADAPMEMK1--] MEMORY KEY, USB                                   | Closed      |                     |

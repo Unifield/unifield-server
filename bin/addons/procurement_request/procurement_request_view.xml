@@ -9,6 +9,7 @@
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <form string="Internal Request">
+                    <field name="sourcing_trace_ok" invisible="1" />
                     <group colspan="6" attrs="{'invisible': [('state', 'not in', ['validated', 'validated_p'])]}">
                         <html>
                             <p style="text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
@@ -34,12 +35,15 @@
                         <field name="fo_to_resource" invisible="1" />
                         <field name="parent_order_name" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
                     </group>
+
                     <notebook colspan="5">
                         <page string="Products">
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" on_change="order_line_change(order_line)">
-                                <tree string="Products" editable="top" noteditable="fake_state not in ['draft', 'validated']"
-                                        filter_selector="[('Hide cancelled', ('state', 'not in', ['cancel', 'cancel_r'])), ('Show all', ''), ('Show cancelled only', ('state', 'in', ['cancel', 'cancel_r']))]">
+                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1"
+                                on_change="order_line_change(order_line)"
+                                filter_selector="[('Hide cancelled', ('state', 'not in', ['cancel', 'cancel_r'])), ('Show all', ''), ('Show cancelled only', ('state', 'in', ['cancel', 'cancel_r']))]"
+                                o2m_selectable="2">
+                                <tree string="Products" editable="top" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}">
                                     <field name="product_id" on_change="requested_product_id_change(product_id, comment, parent.categ)"
                                     context="available_for_restriction='consumption',search_default_not_restricted=1"
                                     attrs="{'required': [('product_ok', '=', False)]}" />
@@ -63,6 +67,8 @@
                                     icon="terp-go-week" />
                                     <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
                                     <field name="original_changed" readonly="1"/>
+                                    <button name="button_view_changed" string="View Current/Original" type="object" icon="terp-stock_zoom"
+                                            attrs="{'invisible': [('original_changed', '=', False)]}"/>
                                     <field name="price_unit"/>
                                     <field name="notes" />
                                     <field name="display_resourced_orig_line" />
@@ -87,7 +93,8 @@
                                         icon="terp-stock_effects-object-colorize"
                                         attrs="{'invisible': [('fake_state', 'in', ('confirmed', 'cancel', 'cancel_r', 'done', 'exception'))]}"
                                         />
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
+                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" header="True"
+                                            attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                 </tree>
                                 <form>
                                    <field name="product_id" colspan="4" />
@@ -117,6 +124,9 @@
                         </page>
                         <page string="Notes">
                             <field name="notes" nolabel="1" />
+                        </page>
+                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
+                            <field name="sourcing_trace" colspan="4" nolabel="1" />
                         </page>
                     </notebook>
                 </form>
