@@ -622,29 +622,6 @@ class cash_request_recap_expense(osv.osv):
             result[expense.id] = total
         return result
 
-    def _get_next_period_id(self, cr, uid, period_id, context=None):
-        """
-        Returns the id of the next period if it exists (ignores special periods), else returns False
-        """
-        if context is None:
-            context = {}
-        period_obj = self.pool.get('account.period')
-        period = period_obj.browse(cr, uid, period_id, fields_to_fetch=['date_stop'], context=context)
-        next_period_ids = period_obj.search(cr, uid, [('date_start', '>', period.date_stop), ('special', '=', False)],
-                                            order='date_start', limit=1, context=context)
-        return next_period_ids and next_period_ids[0] or False
-
-    def _get_next_period_id_at_index(self, cr, uid, period_id, index, context=None):
-        """
-        Returns the id of the period N+index, or False if it doesn't exist (ignores special periods)
-        Ex: Nov.2017 + index 2 => Jan.2018
-        """
-        if context is None:
-            context = {}
-        for i in range(index):
-            period_id = period_id and self._get_next_period_id(cr, uid, period_id, context=context)
-        return period_id or False
-
     def _budgeted_expense_compute(self, cr, uid, ids, month_index, context=None):
         """
         Sums all the budgets amounts for all the CCs targeted instance by instance:
@@ -670,7 +647,7 @@ class cash_request_recap_expense(osv.osv):
             cc_ids = [cc.cost_center_id.id for cc in target_ccs]
             # get the month FY
             cash_req_month_id = expense.cash_request_id.month_period_id.id
-            month_id = self._get_next_period_id_at_index(cr, uid, cash_req_month_id, month_index, context=None)
+            month_id = period_obj.get_next_period_id_at_index(cr, uid, cash_req_month_id, month_index, context=None)
             if month_id:
                 month = period_obj.browse(cr, uid, month_id, fields_to_fetch=['fiscalyear_id', 'number'], context=context)
                 fy = month.fiscalyear_id

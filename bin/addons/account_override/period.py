@@ -78,6 +78,28 @@ def get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):
         return period.date_stop
     return date
 
+def get_next_period_id(self, cr, uid, period_id, context=None):
+    """
+    Returns the id of the next period if it exists (ignores special periods), else returns False
+    """
+    if context is None:
+        context = {}
+    period = self.browse(cr, uid, period_id, fields_to_fetch=['date_stop'], context=context)
+    next_period_ids = self.search(cr, uid, [('date_start', '>', period.date_stop), ('special', '=', False)],
+                                  order='date_start', limit=1, context=context)
+    return next_period_ids and next_period_ids[0] or False
+
+def get_next_period_id_at_index(self, cr, uid, period_id, index, context=None):
+    """
+    Returns the id of the period N+index, or False if it doesn't exist (ignores special periods)
+    Ex: Nov.2017 + index 2 => Jan.2018
+    """
+    if context is None:
+        context = {}
+    for i in range(index):
+        period_id = period_id and get_next_period_id(self, cr, uid, period_id, context=context)
+    return period_id or False
+
 class account_period(osv.osv):
     _name = 'account.period'
     _inherit = 'account.period'
@@ -87,6 +109,12 @@ class account_period(osv.osv):
 
     def get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):
         return get_date_in_period(self, cr, uid, date, period_id, context)
+
+    def get_next_period_id(self, cr, uid, period_id, context=None):
+        return get_next_period_id(self, cr, uid, period_id, context)
+
+    def get_next_period_id_at_index(self, cr, uid, period_id, index, context=None):
+        return get_next_period_id_at_index(self, cr, uid, period_id, index, context)
 
 account_period()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
