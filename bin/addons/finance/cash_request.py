@@ -647,7 +647,7 @@ class cash_request_recap_expense(osv.osv):
             cc_ids = [cc.cost_center_id.id for cc in target_ccs]
             # get the month FY
             cash_req_month_id = expense.cash_request_id.month_period_id.id
-            month_id = period_obj.get_next_period_id_at_index(cr, uid, cash_req_month_id, month_index, context=None)
+            month_id = period_obj.get_next_period_id_at_index(cr, uid, cash_req_month_id, month_index, context=context)
             if month_id:
                 month = period_obj.browse(cr, uid, month_id, fields_to_fetch=['fiscalyear_id', 'number'], context=context)
                 fy = month.fiscalyear_id
