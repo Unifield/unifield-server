@@ -28,6 +28,10 @@ class PhysicalInventory(osv.osv):
     _description = 'Physical Inventory'
 
     def _inventory_totals(self, cr, uid, ids, field_names, arg, context=None):
+
+        #inventories = read_many("physical.inventory", ids, ["discrepancy_line_ids",
+        #                                                    "counting_line_ids"])
+
         return {}
 
     _columns = {
@@ -753,6 +757,9 @@ class PhysicalInventoryDiscrepancy(osv.osv):
     def _total_product_qty_and_values(self, cr, uid, ids, field_names, arg, context=None):
         return {}
 
+    def _discrepancy(self, cr, uid, ids, field_names, arg, context=None):
+        return {}
+
     _columns = {
         # Link to inventory
         'inventory_id': fields.many2one('stock.inventory', 'Inventory', ondelete='cascade'),
@@ -775,12 +782,14 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # BN / ED
         'batch_number': fields.char(_('Batch number'), size=30, readonly=True),
-        # TODO : add expiry date also
+        'expiry_date': fields.date(string=_('Expiry date')),
 
         # Count
         'line_no': fields.integer(string=_('Line #'), readonly=True),
         'theoretical_qty': fields.float('Theoretical Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'counted_qty': fields.float('Counted Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'discrepancy_qty': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Quantity")),
+        'discrepancy_value': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Value")),
 
         # Unused / To be removed ?
         #'company_id': fields.related('inventory_id', 'company_id', type='many2one', relation='res.company',
