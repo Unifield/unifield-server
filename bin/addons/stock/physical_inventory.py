@@ -48,6 +48,7 @@ class PhysicalInventory(osv.osv):
                                       states={'draft': [('readonly', False)]}),
         'full_inventory': fields.boolean('Full inventory', readonly=True, states={'draft': [('readonly', False)]}),
         'file_to_import': fields.binary(string='File to import', filters='*.xml'),
+        'file_to_import2': fields.binary(string='File to import', filters='*.xml'),
     }
 
     _defaults = {
@@ -102,7 +103,6 @@ class PhysicalInventory(osv.osv):
                 'view_mode': 'form',
                 'context': context}
 
-
     def generate_counting_sheet(self, cr, uid, ids, context=None):
         """
         Trigerred when clicking on the button "Generate counting sheet"
@@ -143,7 +143,6 @@ class PhysicalInventory(osv.osv):
                 'view_type': 'form',
                 'view_mode': 'form',
                 'context': context}
-
 
     def finish_counting(self, cr, uid, inventory_ids, context=None):
         """
@@ -267,7 +266,6 @@ class PhysicalInventory(osv.osv):
 
         return {}
 
-
     def get_stock_for_products_at_location(self, cr, uid, product_ids, location_id, context=None):
         context = {} if context else context
 
@@ -323,7 +321,6 @@ class PhysicalInventory(osv.osv):
                 pass
 
         return stocks
-
 
     def export_xls_counting_sheet(self, cr, uid, ids, context=None):
         return {
@@ -489,10 +486,48 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
 
         return result
 
-    def import_discrepancy_report(self, cr, uid, ids, context=None):
-        pass
+    def import_xls_discrepancy_report(self, cr, uid, ids, context=None):
+        """Import an exported discrepancy report"""
+        if not context:
+            context = {}
 
-    def export_discrepancy_report(self, cr, uid, ids, context=None):
+        discrepancy_report_header = {}
+        discrepancy_report_lines = []
+        discrepancy_report_errors = []
+
+        def add_error(message, file_row, file_col):
+            discrepancy_report_errors.append('Cell %s%d: %s' % (chr(0x41 + file_col), file_row + 1, message))
+
+        inventory_rec = self.browse(cr, uid, ids, context=context)[0]
+        if not inventory_rec.file_to_import2:
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+
+        discrepancy_report_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import2))
+
+        # product_obj = self.pool.get('product.product')
+        # product_uom_obj = self.pool.get('product.uom')
+        # counting_obj = self.pool.get('physical.inventory.counting')
+
+        for row_index, row in enumerate(discrepancy_report_file.getRows()):
+            pass
+
+        context['import_in_progress'] = True
+        wizard_obj = self.pool.get('physical.inventory.import.wizard')
+        if discrepancy_report_errors:
+            # Errors found, open message box for exlain
+            self.write(cr, uid, ids, {'file_to_import2': False}, context=context)
+            result = wizard_obj.message_box(cr, uid, title='Importation errors',
+                                            message='\n'.join(discrepancy_report_errors))
+        else:
+            # No error found. update comment and reason for discrepancies lines on Inventory
+            vals = {'file_to_import2': False}
+            self.write(cr, uid, ids, vals, context=context)
+            result = wizard_obj.message_box(cr, uid, title='Information', message='Counting sheet succefully imported.')
+        context['import_in_progress'] = False
+
+        return result
+
+    def export_xls_discrepancy_report(self, cr, uid, ids, context=None):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'physical_inventory_discrepancies_report_xls',
@@ -527,13 +562,13 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         product_dict = {}
         product_tmpl_dict = {}
 
-        for inv in self.read(cr, uid, ids, ['line_ids', 'date', 'name'], context=context):
+        for inv in self.read(cr, uid, ids, ['discrepancy_line_ids', 'date', 'name'], context=context):
             move_ids = []
 
             # gather all information needed for the lines treatment first to do less requests
             inv_line_obj = self.pool.get('physical.inventory.discrepancy')
 
-            line_read = inv_line_obj.read(cr, uid, inv['line_ids'],
+            line_read = inv_line_obj.read(cr, uid, inv['discrepancy_line_ids'],
                                           ['product_id', 'product_uom', 'prod_lot_id', 'location_id',
                                            'product_qty', 'inventory_id', 'dont_move', 'comment',
                                            'reason_type_id', 'average_cost'],

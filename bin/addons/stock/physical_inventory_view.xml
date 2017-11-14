@@ -75,10 +75,9 @@
                         <page string="Discrepancy report">
                             <group col="4" colspan="4">
                                 <button name="export_xls_discrepancy_report" string="Export XLS discrepancy report" 
-                                    type="object" icon="gtk-print" colspan="2"/>
-                                <button name="export_pdf_discrepancy_report" string="Export PDF discrepancy report" 
-                                    type="object" icon="gtk-print" colspan="2"/>
-                                <button name="import_discrepancy_report" string="Import XLS discrepancy report" 
+                                    type="object" icon="gtk-print" colspan="4"/>
+                                <field name="file_to_import2" colspan="2"/>
+                                <button name="import_xls_discrepancy_report" string="Import XLS discrepancy report"
                                     type="object" icon="gtk-save" colspan="2"/>
                             </group>
                             <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
