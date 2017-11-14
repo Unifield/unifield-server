@@ -876,7 +876,7 @@ class return_claim(osv.osv):
             if self.browse(cr, uid, claim_id, context=context).state == 'draft_progress':
                 # update linked claim event
                 event_id = event_obj.search(cr, uid, [('return_claim_id_claim_event', '=', claim_id)], limit=1, context=context)[0]
-                event_obj.update(cr, uid, event_id, event_values, context=context)
+                event_obj.write(cr, uid, event_id, event_values, context=context)
                 # update claim if already created
                 self.write(cr, uid, claim_id, claim_data, context)
         else:
@@ -1061,12 +1061,14 @@ class claim_event(osv.osv):
             pick_obj.write(cr, uid, replacement_id, replacement_values, context=context)
             # update the moves
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
-            # get the move values according to claim type
-            for replacement_move_id in replacement_move_ids:
-                move_values = replacement_values
-                this_move = move_obj.browse()
-                this_move_values.update({'purchase_line_id': event_picking.purchase_line_id.id})
-                move_obj.write(cr, uid, replacement_move_id, replacement_move_values, context=context)
+            # update the destination location for each move
+            event_line_numbers = [move.line_number for move in event_picking.move_lines]
+            for i, move in enumerate(pick_obj.browse(cr, uid, replacement_id, context=context).move_lines):
+                replacement_move_values_with_line_numbers = replacement_move_values
+                # set the same line number as the original move
+                replacement_move_values_with_line_numbers.update({'line_number': event_line_numbers[i]})
+                # get the move values according to claim type
+                move_obj.write(cr, uid, replacement_move_ids, replacement_move_values_with_line_numbers, context=context)
             # confirm and check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
@@ -1157,8 +1159,14 @@ class claim_event(osv.osv):
             pick_obj.write(cr, uid, replacement_id, replacement_values, context=context)
             # update the moves
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
-            # get the move values according to claim type
-            move_obj.write(cr, uid, replacement_move_ids, replacement_move_values, context=context)
+            # update the destination location for each move
+            event_line_numbers = [move.line_number for move in event_picking.move_lines]
+            for i, move in enumerate(pick_obj.browse(cr, uid, replacement_id, context=context).move_lines):
+                replacement_move_values_with_line_numbers = replacement_move_values
+                # set the same line number as the original move
+                replacement_move_values_with_line_numbers.update({'line_number': event_line_numbers[i]})
+                # get the move values according to claim type
+                move_obj.write(cr, uid, replacement_move_ids, replacement_move_values_with_line_numbers, context=context)
             # check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
@@ -1260,8 +1268,14 @@ class claim_event(osv.osv):
             pick_obj.write(cr, uid, replacement_id, replacement_values, context=context)
             # update the moves
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
-            # get the move values according to claim type
-            move_obj.write(cr, uid, replacement_move_ids, replacement_move_values, context=context)
+            # update the destination location for each move
+            event_line_numbers = [move.line_number for move in event_picking.move_lines]
+            for i, move in enumerate(pick_obj.browse(cr, uid, replacement_id, context=context).move_lines):
+                replacement_move_values_with_line_numbers = replacement_move_values
+                # set the same line number as the original move
+                replacement_move_values_with_line_numbers.update({'line_number': event_line_numbers[i]})
+                # get the move values according to claim type
+                move_obj.write(cr, uid, replacement_move_ids, replacement_move_values_with_line_numbers, context=context)
             # confirm and check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
@@ -1357,7 +1371,7 @@ class claim_event(osv.osv):
             'name': event_picking.name + '-missing',
             'reason_type_id': context['common']['rt_goods_replacement'],
             'origin': origin_picking.origin,
-            # 'purchase_id': origin_picking.purchase_id.id,
+            'purchase_id': origin_picking.purchase_id.id,
             'sale_id': origin_picking.sale_id.id,
             'claim': True,
         }

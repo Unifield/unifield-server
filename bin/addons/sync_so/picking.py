@@ -1178,6 +1178,8 @@ class stock_picking(osv.osv):
                 'price_unit': x.price_unit,
                 'order_partner_id': partner_id,
                 'comment': x.comment,
+                'from_claim_missing_goods': True,
+                'date_planned': po_info.delivery_requested_date,
                 'stock_take_date': po_info.stock_take_date,
             }) for x in lines],
         }
