@@ -84,19 +84,29 @@
                                    attrs="{'readonly': [('state', '!=', 'draft')]}">
                                 <tree string="Discrepancies" editable="bottom">
                                     <field name="line_no" />
-                                    <field name="product_id" />
+                                    <field name="nomen_manda_2" />
+                                    <field name="default_code" />
+                                    <field name="name" />
+                                    <field name="standard_price" />
+                                    <field name="currency_id" />
+                                    <field name="batch_number" />
                                     <field name="theoretical_qty" />
                                     <field name="counted_qty" />
-                                    <field name="batch_number" />
+                                    <field name="product_uom_id" />
                                     <field name="reason_type_id" widget="selection" />
                                     <field name="comment" />
                                 </tree>
                                 <form string="Discrepancy line">
                                     <field name="line_no" />
-                                    <field name="product_id" />
+                                    <field name="nomen_manda_2" />
+                                    <field name="default_code" />
+                                    <field name="name" />
+                                    <field name="standard_price" />
+                                    <field name="currency_id" />
+                                    <field name="batch_number" />
                                     <field name="theoretical_qty" />
                                     <field name="counted_qty" />
-                                    <field name="batch_number" />
+                                    <field name="product_uom_id" />
                                     <field name="reason_type_id" widget="selection" />
                                     <field name="comment" />
                                 </form>

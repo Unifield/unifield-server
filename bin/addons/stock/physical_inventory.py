@@ -234,7 +234,7 @@ class PhysicalInventory(osv.osv):
                   "batch_number": product_and_batch_id[1],
                   "theoretical_qty": theoretical_quantities.get(product_and_batch_id, 0.0),
                   "counted_qty": counted_quantities.get(product_and_batch_id, 0.0),
-                  #"product_uom_id": uom
+                  "product_uom_id": uom
                 })
 
         # Sort discrepancies according to line number
@@ -254,12 +254,6 @@ class PhysicalInventory(osv.osv):
         todo = []
         todo.extend(delete_existing_discrepancy_lines)
         todo.extend(create_discrepancy_lines)
-
-
-        print "----"
-        for t in todo:
-            print t
-        print "----"
 
         # Do the actual write
         write("physical.inventory", inventory_id, {'discrepancy_line_ids': todo})
@@ -300,7 +294,7 @@ class PhysicalInventory(osv.osv):
 
             product_id = move["product_id"][0]
             product_qty = move["product_qty"]
-            batch_id = move["prodlot_id"][1] if move["prodlot_id"] else None
+            batch_id = move["prodlot_id"][1] if move["prodlot_id"] else False
 
             product_and_batch_id = (product_id, batch_id)
 
@@ -739,20 +733,22 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # Product
         'product_id': fields.many2one('product.product', 'Product', required=True),
-        #'default_code': fields.related('product_id', 'default_code', string="Code",
-        #                               type='char', readonly=True),
-        #'name': fields.related('product_id', 'name', string="Description",
-        #                       type='char', readonly=True),
-        #'product_uom_id': fields.many2one('product.uom', 'UOM', required=True, readonly=True),
-        #'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', string="Family",
-        #                                 type='many2one', readonly=True),
-        #'standard_price': fields.related('product_id', 'standard_price', string="Unit Price",
-        #                                 type='integer', readonly=True),
-        #'currency_id': fields.related('product_id', 'currency_id', string="Currency",
-        #                              type='many2one', readonly=True),
+        'default_code': fields.related('product_id', 'default_code', string="Code",
+                                       type='char', readonly=True),
+        'name': fields.related('product_id', 'name', string="Description",
+                               type='char', readonly=True),
+
+        'product_uom_id': fields.many2one('product.uom', 'UOM', required=True, readonly=True),
+
+        'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', string="Family",
+                                         relation="product.nomenclature", type='many2one', readonly=True),
+        'standard_price': fields.related('product_id', 'standard_price', string="Unit Price",
+                                         type='integer', readonly=True),
+        'currency_id': fields.related('product_id', 'currency_id', string="Currency",
+                                      relation='res.currency', type='many2one', readonly=True),
 
         # BN / ED
-        'batch_number': fields.char(_('Batch number'), size=30),
+        'batch_number': fields.char(_('Batch number'), size=30, readonly=True),
         # TODO : add expiry date also²
 
         # Count
