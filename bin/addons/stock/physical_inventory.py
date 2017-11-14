@@ -152,8 +152,13 @@ class PhysicalInventory(osv.osv):
         Analyze the counted lines to look for discrepancy, and fill the
         'discrepancy lines' accordingly.
         """
+        context = {} if context else context
+        def read_single(model, id_, column):
+            return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
         def read_many(model, ids, columns):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+        def write(model, id_, vals):
+            return self.pool.get(model).write(cr, uid, [id_], vals, context=context)
 
         # Get this inventory...
         assert len(inventory_ids) == 1
@@ -161,16 +166,106 @@ class PhysicalInventory(osv.osv):
 
         # Get the location and counting lines
         inventory = read_many(self._name, [inventory_id], [ "location_id",
+                                                            "discrepancy_line_ids",
                                                             "counting_line_ids" ])[0]
 
-        location_id = inventory["location_id"]
+        location_id = inventory["location_id"][0]
         counting_line_ids = inventory["counting_line_ids"]
 
         counting_lines = read_many('physical.inventory.counting', counting_line_ids, [ "line_no",
                                                                                        "product_id",
-                                                                                       "batch_number"])
+                                                                                       "product_uom_id",
+                                                                                       "batch_number",
+                                                                                       "quantity"])
 
-        print counting_lines
+        # Extract the list of (unique) product ids
+        product_ids = [ line["product_id"][0] for line in counting_lines ]
+        product_ids = list(set(product_ids))
+
+        # Fetch the theoretical quantities
+        # This will be a dict like { (product_id_1, BN_string_1) : theo_qty_1,
+        #                            (product_id_2, BN_string_2) : theo_qty_2 }
+        theoretical_quantities = self.get_stock_for_products_at_location(cr, uid, product_ids, location_id, context=context)
+
+        # Create a similar dictionnary for counted quantities
+        counted_quantities = {}
+        line_nos = {}
+        uoms = {}
+        for line in counting_lines:
+            product_and_batch_id = (line["product_id"][0],
+                                    line["batch_number"] or False)
+            counted_quantities[product_and_batch_id] = float(line["quantity"])
+            line_nos[product_and_batch_id] = line["line_no"]
+            uoms[product_and_batch_id] = line["product_uom_id"][0]
+
+        # Now, compare theoretical and counted quantities
+
+        # First, create a unique set containing all product/batches
+        all_product_and_batch_ids = set().union(theoretical_quantities,
+                                                counted_quantities)
+
+        discrepancies = []
+
+        # For each of them, compare the theoretical and counted qty
+        for product_and_batch_id in all_product_and_batch_ids:
+
+            # If the key is not known, assume 0
+            theoretical_qty = theoretical_quantities.get(product_and_batch_id, 0.0)
+            counted_qty = counted_quantities.get(product_and_batch_id, 0.0)
+
+            if counted_qty != theoretical_qty:
+
+
+                # If this product/batch is known in the counting line, use
+                # the existing line number
+                if product_and_batch_id in line_nos:
+                    line_no = line_nos[product_and_batch_id]
+                    uom = uoms[product_and_batch_id]
+                # Otherwise, create additional line numbers starting from
+                # the total of existing lines
+                else:
+                    line_no = len(counted_quantities) + 1 + len(discrepancies)
+                    product_id = product_and_batch_id[0]
+                    uom = read_single("product.product", product_id, "uom_id")[0]
+
+                discrepancies.append( \
+                { "inventory_id": inventory_id,
+                  "line_no": line_no,
+                  "product_id": product_and_batch_id[0],
+                  "batch_number": product_and_batch_id[1],
+                  "theoretical_qty": theoretical_quantities.get(product_and_batch_id, 0.0),
+                  "counted_qty": counted_quantities.get(product_and_batch_id, 0.0),
+                  #"product_uom_id": uom
+                })
+
+        # Sort discrepancies according to line number
+        discrepancies = sorted(discrepancies, key=lambda d: d["line_no"])
+
+        # Get the existing inventory discrepancy lines (to be cleared)
+
+        existing_discrepancy_line_ids = inventory["discrepancy_line_ids"]
+
+        # Prepare the actual create/remove for discrepancy lines
+        # 2 is the code for removal/deletion, 0 is for addition/creation
+
+        delete_existing_discrepancy_lines = [ (2,line_id) for line_id in existing_discrepancy_line_ids ]
+
+        create_discrepancy_lines = [ (0,0,discrepancy) for discrepancy in discrepancies ]
+
+        todo = []
+        todo.extend(delete_existing_discrepancy_lines)
+        todo.extend(create_discrepancy_lines)
+
+
+        print "----"
+        for t in todo:
+            print t
+        print "----"
+
+        # Do the actual write
+        write("physical.inventory", inventory_id, {'discrepancy_line_ids': todo})
+
+        return {}
 
 
     def get_stock_for_products_at_location(self, cr, uid, product_ids, location_id, context=None):
@@ -207,7 +302,7 @@ class PhysicalInventory(osv.osv):
 
             product_id = move["product_id"][0]
             product_qty = move["product_qty"]
-            batch_id = move["prodlot_id"][0] if move["prodlot_id"] else None
+            batch_id = move["prodlot_id"][1] if move["prodlot_id"] else None
 
             product_and_batch_id = (product_id, batch_id)
 
@@ -226,8 +321,6 @@ class PhysicalInventory(osv.osv):
             else:
                 # This shouldnt happen
                 pass
-
-        print stocks
 
         return stocks
 
@@ -611,20 +704,20 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # Product
         'product_id': fields.many2one('product.product', 'Product', required=True),
-        'default_code': fields.related('product_id', 'default_code', string="Code",
-                                       type='char', readonly=True),
-        'name': fields.related('product_id', 'name', string="Description",
-                               type='char', readonly=True),
-        'product_uom_id': fields.many2one('product.uom', 'UOM', required=True, readonly=True),
-        'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', string="Family",
-                                         type='many2one', readonly=True),
-        'standard_price': fields.related('product_id', 'standard_price', string="Unit Price",
-                                         type='integer', readonly=True),
-        'currency_id': fields.related('product_id', 'currency_id', string="Currency",
-                                      type='many2one', readonly=True),
+        #'default_code': fields.related('product_id', 'default_code', string="Code",
+        #                               type='char', readonly=True),
+        #'name': fields.related('product_id', 'name', string="Description",
+        #                       type='char', readonly=True),
+        #'product_uom_id': fields.many2one('product.uom', 'UOM', required=True, readonly=True),
+        #'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', string="Family",
+        #                                 type='many2one', readonly=True),
+        #'standard_price': fields.related('product_id', 'standard_price', string="Unit Price",
+        #                                 type='integer', readonly=True),
+        #'currency_id': fields.related('product_id', 'currency_id', string="Currency",
+        #                              type='many2one', readonly=True),
 
         # BN / ED
-        'prod_lot_id': fields.many2one('stock.production.lot', 'Production Lot', readonly=True),
+        'batch_number': fields.char(_('Batch number'), size=30),
         # TODO : add expiry date also²
 
         # Count
@@ -639,7 +732,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         #'state': fields.related('inventory_id', 'state', type='char', string='State', readonly=True),
 
         # Discrepancy analysis
-        'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', required=True, select=True),
+        'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', select=True),
         'comment': fields.char(size=128, string='Comment'),
     }
 
