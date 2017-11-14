@@ -2741,11 +2741,14 @@ class sale_order_line(osv.osv):
         if order_id and self.pool.get('sale.order').read(cr, uid, order_id, ['procurement_request'], context)['procurement_request']:
             vals.update({'cost_price': vals.get('cost_price', False)})
 
+        # force the line creation with the good state, otherwise track changes for order state will
+        # go back to draft (US-3671):
+        if vals.get('set_as_sourced_n', False):
+            vals['state'] = 'sourced_n'
 
         '''
         Add the database ID of the SO line to the value sync_order_line_db_id
         '''
-
         so_line_ids = super(sale_order_line, self).create(cr, uid, vals, context=context)
         if not vals.get('sync_order_line_db_id', False):  # 'sync_order_line_db_id' not in vals or vals:
             if vals.get('order_id', False):
