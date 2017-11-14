@@ -27,6 +27,9 @@ class PhysicalInventory(osv.osv):
     _name = 'physical.inventory'
     _description = 'Physical Inventory'
 
+    def _inventory_totals(self, cr, uid, ids, field_names, arg, context=None):
+        return {}
+
     _columns = {
         'ref': fields.char('Reference', size=64, required=True, readonly=True),
         'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
@@ -51,15 +54,15 @@ class PhysicalInventory(osv.osv):
         'file_to_import2': fields.binary(string='File to import', filters='*.xml'),
 
         # Total for product
-        'inventory_lines_number':             fields.function('_inventory_totals', method=True, type='integer', string=_("Number of inventory lines")),
-        'discrepancy_lines_number':           fields.function('_inventory_totals', method=True, type='integer', string=_("Number of discrepancy lines")),
-        'discrepancy_lines_percent':          fields.function('_inventory_totals', method=True, type='float',   string=_("Percent of lines with discrepancies")),
-        'inventory_lines_value':              fields.function('_inventory_totals', method=True, type='float',   string=_("Total value of inventory")),
-        'discrepancy_lines_value':            fields.function('_inventory_totals', method=True, type='float',   string=_("Value of discrepancies")),
-        'discrepancy_lines_percent_value':    fields.function('_inventory_totals', method=True, type='float',   string=_("Percent of value of discrepancies")),
-        'inventory_lines_absvalue':           fields.function('_inventory_totals', method=True, type='float',   string=_("Absolute value of inventory")),
-        'discrepancy_lines_absvalue':         fields.function('_inventory_totals', method=True, type='float',   string=_("Absolute value of discrepancies")),
-        'discrepancy_lines_percent_absvalue': fields.function('_inventory_totals', method=True, type='float',   string=_("Percent of absolute value of discrepancies")),
+        'inventory_lines_number':             fields.function(_inventory_totals, multi="inventory_total", method=True, type='integer', string=_("Number of inventory lines")),
+        'discrepancy_lines_number':           fields.function(_inventory_totals, multi="inventory_total", method=True, type='integer', string=_("Number of discrepancy lines")),
+        'discrepancy_lines_percent':          fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Percent of lines with discrepancies")),
+        'inventory_lines_value':              fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Total value of inventory")),
+        'discrepancy_lines_value':            fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Value of discrepancies")),
+        'discrepancy_lines_percent_value':    fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Percent of value of discrepancies")),
+        'inventory_lines_absvalue':           fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Absolute value of inventory")),
+        'discrepancy_lines_absvalue':         fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Absolute value of discrepancies")),
+        'discrepancy_lines_percent_absvalue': fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Percent of absolute value of discrepancies")),
     }
 
     _defaults = {
@@ -69,9 +72,6 @@ class PhysicalInventory(osv.osv):
         'company_id': lambda self, cr, uid,
                              c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c)
     }
-
-    def _inventory_totals(self, cr, uid, ids, field_names, arg, context=None):
-        return {}
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
@@ -750,6 +750,9 @@ class PhysicalInventoryDiscrepancy(osv.osv):
     _name = 'physical.inventory.discrepancy'
     _description = 'Physical Inventory Discrepancy Line'
 
+    def _total_product_qty_and_values(self, cr, uid, ids, field_names, arg, context=None):
+        return {}
+
     _columns = {
         # Link to inventory
         'inventory_id': fields.many2one('stock.inventory', 'Inventory', ondelete='cascade'),
@@ -792,13 +795,10 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         # Total for product
         'total_product_theoretical_qty': fields.float('Total Theoretical Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'total_product_counted_qty': fields.float('Total Counted Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True),
-        'total_product_counted_value': fields.function('_total_product_qty_and_values', method=True, type='float', string=_("Total Counted Value for product")),
-        'total_product_discrepancy_qty': fields.function('_total_product_qty_and_values', method=True, type='float', string=_("Total Discrepancy for product")),
-        'total_product_discrepancy_value': fields.function('_total_product_qty_and_values', method=True, type='float', string=_("Total Discrepancy Value for product"))
+        'total_product_counted_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Counted Value for product")),
+        'total_product_discrepancy_qty': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy for product")),
+        'total_product_discrepancy_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy Value for product"))
     }
-
-    def _total_product_qty_and_values(self, cr, uid, ids, field_names, arg, context=None):
-        return {}
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
