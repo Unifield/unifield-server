@@ -1567,7 +1567,7 @@ class purchase_order(osv.osv):
 
         # check if the current PO was created from scratch :
         if order_type == 'direct':
-            if not self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', 'in', ids), ('linked_sol_id', '=', False)]):
+            if not self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', 'in', ids), ('linked_sol_id', '!=', False)]):
                 order_type_value = self.read(cr, uid, ids, ['order_type'])
                 order_type_value = order_type_value[0].get('order_type', 'regular') if order_type_value else 'regular'
                 return {
