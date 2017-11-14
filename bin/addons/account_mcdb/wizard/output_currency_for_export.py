@@ -98,28 +98,35 @@ class output_currency_for_export(osv.osv_memory):
             res.update({'domain': {'currency_id': [('currency_table_id', '=', fx_table_id), ('active', 'in', ['True', 'False'])]}, 'value': {'currency_id' : False}})
         return res
 
-    def button_validate(self, cr, uid, ids, context=None):
+    def button_validate(self, cr, uid, ids, context=None, datas_from_selector={}):
         """
         Launch export wizard
         """
         # Some verifications
-        if not context or not context.get('active_ids', False) or not context.get('active_model', False):
+        if (not context or not context.get('active_ids', False) or not context.get('active_model', False)) and not datas_from_selector:
             raise osv.except_osv(_('Error'), _('An error has occurred. Please contact an administrator.'))
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        model = context.get('active_model')
+        model = datas_from_selector.get('model') or context.get('active_model')
         display_fp = context.get('display_fp', False)
-        wiz = self.browse(cr, uid, ids, context=context)[0]
+        wiz = currency_id = choice = False
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.id or False
-        currency_id = wiz and wiz.currency_id and wiz.currency_id.id or company_currency
-        choice = wiz and wiz.export_format or False
-        if not choice:
-            raise osv.except_osv(_('Error'), _('Please choose an export format!'))
+        if datas_from_selector:
+            currency_id = 'output_currency_id' in datas_from_selector and datas_from_selector['output_currency_id'] or company_currency
+            choice = datas_from_selector.get('export_format')
+        else:
+            wiz = self.browse(cr, uid, ids, context=context)[0]
+            currency_id = wiz and wiz.currency_id and wiz.currency_id.id or company_currency
+            choice = wiz and wiz.export_format or False
+            if not choice:
+                raise osv.except_osv(_('Error'), _('Please choose an export format!'))
         datas = {}
         # Check user choice
-        if wiz.export_selected:
+        if datas_from_selector:
+            datas = {'ids': datas_from_selector.get('ids')}
+        elif wiz and wiz.export_selected:
             datas = {'ids': context.get('active_ids', [])}
         else:
             #export_obj = self.pool.get(model)
@@ -130,7 +137,8 @@ class output_currency_for_export(osv.osv_memory):
         context.update({'output_currency_id': currency_id})
         # Update datas for context
         datas.update({'context': context})
-        if wiz.currency_id:
+        display_output_curr = datas_from_selector and datas_from_selector.get('output_currency_id') or wiz and wiz.currency_id
+        if display_output_curr:
             # seems that there is a bug on context, so using datas permit to transmit info
             datas.update({'output_currency_id': currency_id, 'context': context})
         # Update report name if come from analytic
@@ -142,7 +150,7 @@ class output_currency_for_export(osv.osv_memory):
 
         context.update({'display_fp': display_fp})
 
-        if model == 'account.analytic.line' and wiz.state == 'free':
+        if not datas_from_selector and model == 'account.analytic.line' and wiz and wiz.state == 'free':
             report_name = 'account.analytic.line.free'
             context.update({'display_fp': False})
 
@@ -151,13 +159,13 @@ class output_currency_for_export(osv.osv_memory):
         elif choice == 'xls':
             report_name += '_xls'
 
+        filename = datas_from_selector.get('target_filename') or '%s_%s' % (context.get('target_filename_prefix', 'Export_search_result'), time.strftime('%Y%m%d'))
+        datas['target_filename'] = filename
 
-        datas['target_filename'] = '%s_%s' % (context.get('target_filename_prefix', 'Export_search_result'), time.strftime('%Y%m%d'))
-
-        if model in ('account.move.line', 'account.analytic.line') and choice in ('csv', 'xls'):
+        if model in ('account.move.line', 'account.analytic.line') and choice in ('csv', 'xls', 'pdf'):
             background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': datas['target_filename'], 'report_name': report_name}, context=context)
             context['background_id'] = background_id
-            context['background_time'] = wiz.background_time
+            context['background_time'] = wiz and wiz.background_time or 2
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,

@@ -250,16 +250,14 @@ class account_mcdb(osv.osv):
             }
         return {}
 
-    def button_validate(self, cr, uid, ids, context=None):
+    def _get_domain(self, cr, uid, ids, context=None):
         """
-        Validate current forms and give result
+        Returns the domain to use to get the selector results
         """
-        # Some verifications
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Prepare some values
         domain = []
         wiz = self.browse(cr, uid, [ids[0]], context=context)[0]
         res_model = wiz and wiz.model or False
@@ -489,6 +487,23 @@ class account_mcdb(osv.osv):
                 # Add elements to domain which would be use for filtering
                 for el in domain_elements:
                     domain.append(el)
+            if res_model == 'account.move.line':
+                # US-1290: JI export search result always exclude IB entries
+                domain = [ ('period_id.number', '>', 0), ] + domain
+        return domain
+
+    def button_validate(self, cr, uid, ids, context=None):
+        """
+        Validate current forms and give result
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        domain = self._get_domain(cr, uid, ids, context)
+        wiz = self.browse(cr, uid, [ids[0]], context=context)[0]
+        res_model = wiz and wiz.model or False
+        if res_model:
             # Output currency display (with fx_table)
             if wiz.fx_table_id:
                 context.update({'fx_table_id': wiz.fx_table_id.id, 'currency_table_id': wiz.fx_table_id.id})
@@ -508,10 +523,6 @@ class account_mcdb(osv.osv):
             view_id = view_id and view_id[1] or False
             search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, search_model, search_view)
             search_view_id = search_view_id and search_view_id[1] or False
-
-            if res_model == 'account.move.line':
-                # US-1290: JI export search result always exclude IB entries
-                domain = [ ('period_id.number', '>', 0), ] + domain
 
             context['target_filename_prefix'] = name
 
@@ -972,6 +983,45 @@ class account_mcdb(osv.osv):
         to_clean = [x[0] for x in res]
         self.unlink(cr, uid, to_clean)
         return True
+
+    def _export_from_selector(self, cr, uid, ids, export_format='pdf', context=None):
+        """
+        Triggers the same export as from the "output.currency.for.export" wizard
+        => gets data to use, puts it in a dict and passed it in param. of the wizard method as datas_from_selector
+        """
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        aal_obj = self.pool.get('account.analytic.line')
+        user_obj = self.pool.get('res.users')
+        export_wizard_obj = self.pool.get('output.currency.for.export')
+        domain = self._get_domain(cr, uid, ids, context)
+        selector = self.browse(cr, uid, [ids[0]], fields_to_fetch=['model', 'display_in_output_currency'], context=context)[0]
+        res_model = selector and selector.model or False
+        result_ids = []
+        target_filename = 'selector'
+        if res_model == 'account.move.line':
+            result_ids = aml_obj.search(cr, uid, domain, context=context)
+            target_filename = 'GL Selector'
+        elif res_model == 'account.analytic.line':
+            result_ids = aal_obj.search(cr, uid, domain, context=context)
+            target_filename = 'Analytic Selector'
+        output_currency_id = False
+        if selector.display_in_output_currency:
+            output_currency_id = selector.display_in_output_currency.id
+        datas = {}
+        datas['ids'] = result_ids
+        datas['model'] = res_model
+        datas['export_format'] = export_format
+        datas['output_currency_id'] = output_currency_id
+        datas['target_filename'] = target_filename
+        return export_wizard_obj.button_validate(cr, uid, result_ids, context=context, datas_from_selector=datas)
+
+    def export_pdf(self, cr, uid, ids, context=None):
+        return self._export_from_selector(cr, uid, ids, export_format='pdf', context=context)
+
+    def export_xls(self, cr, uid, ids, context=None):
+        return self._export_from_selector(cr, uid, ids, export_format='xls', context=context)
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
