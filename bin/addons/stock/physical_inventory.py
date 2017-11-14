@@ -49,6 +49,17 @@ class PhysicalInventory(osv.osv):
         'full_inventory': fields.boolean('Full inventory', readonly=True, states={'draft': [('readonly', False)]}),
         'file_to_import': fields.binary(string='File to import', filters='*.xml'),
         'file_to_import2': fields.binary(string='File to import', filters='*.xml'),
+
+        # Total for product
+        'inventory_lines_number':             fields.function('_inventory_totals', method=True, type='integer', string=_("Number of inventory lines")),
+        'discrepancy_lines_number':           fields.function('_inventory_totals', method=True, type='integer', string=_("Number of discrepancy lines")),
+        'discrepancy_lines_percent':          fields.function('_inventory_totals', method=True, type='float',   string=_("Percent of lines with discrepancies")),
+        'inventory_lines_value':              fields.function('_inventory_totals', method=True, type='float',   string=_("Total value of inventory")),
+        'discrepancy_lines_value':            fields.function('_inventory_totals', method=True, type='float',   string=_("Value of discrepancies")),
+        'discrepancy_lines_percent_value':    fields.function('_inventory_totals', method=True, type='float',   string=_("Percent of value of discrepancies")),
+        'inventory_lines_absvalue':           fields.function('_inventory_totals', method=True, type='float',   string=_("Absolute value of inventory")),
+        'discrepancy_lines_absvalue':         fields.function('_inventory_totals', method=True, type='float',   string=_("Absolute value of discrepancies")),
+        'discrepancy_lines_percent_absvalue': fields.function('_inventory_totals', method=True, type='float',   string=_("Percent of absolute value of discrepancies")),
     }
 
     _defaults = {
@@ -58,6 +69,9 @@ class PhysicalInventory(osv.osv):
         'company_id': lambda self, cr, uid,
                              c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c)
     }
+
+    def _inventory_totals(self, cr, uid, ids, field_names, arg, context=None):
+        return {}
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
@@ -664,19 +678,28 @@ class PhysicalInventoryCounting(osv.osv):
     _description = 'Physical Inventory Counting Line'
 
     _columns = {
+        # Link to inventory
         'inventory_id': fields.many2one('stock.inventory', _('Inventory'), ondelete='cascade', select=True),
-        'line_no': fields.integer(string=_('Line #'), readonly=True),
+
+        # Product
         'product_id': fields.many2one('product.product', _('Product'), required=True, select=True,
                                       domain=[('type', '<>', 'service')]),
         'product_uom_id': fields.many2one('product.uom', _('Product UOM'), required=True),
-        'batch_number': fields.char(_('Batch number'), size=30),
-        'expiry_date': fields.date(string=_('Expiry date')),
-        'quantity': fields.char(_('Quantity'), size=15),
+        'standard_price': fields.integer(string=_("Unit Price"), readonly=True),
+        'currency_id': fields.many2one('res.currency', "Currency", readonly=True),
         'is_bn': fields.related('product_id', 'batch_management', string='BN', type='boolean', readonly=True),
         'is_ed': fields.related('product_id', 'perishable', string='ED', type='boolean', readonly=True),
         'is_kc': fields.related('product_id', 'is_kc', string='KC', type='boolean', readonly=True),
         'is_dg': fields.related('product_id', 'is_dg', string='DG', type='boolean', readonly=True),
         'is_cs': fields.related('product_id', 'is_cs', string='CS', type='boolean', readonly=True),
+
+        # Batch / Expiry date
+        'batch_number': fields.char(_('Batch number'), size=30),
+        'expiry_date': fields.date(string=_('Expiry date')),
+
+        # Specific to inventory
+        'line_no': fields.integer(string=_('Line #'), readonly=True),
+        'quantity': fields.char(_('Quantity'), size=15),
     }
 
     def create(self, cr, user, vals, context=None):
@@ -742,14 +765,14 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', string="Family",
                                          relation="product.nomenclature", type='many2one', readonly=True),
-        'standard_price': fields.related('product_id', 'standard_price', string="Unit Price",
-                                         type='integer', readonly=True),
-        'currency_id': fields.related('product_id', 'currency_id', string="Currency",
-                                      relation='res.currency', type='many2one', readonly=True),
+
+        # TODO : fill standardprice / currencyid when creating these lines
+        'standard_price': fields.integer(string=_("Unit Price"), readonly=True),
+        'currency_id': fields.many2one('res.currency', "Currency", readonly=True),
 
         # BN / ED
         'batch_number': fields.char(_('Batch number'), size=30, readonly=True),
-        # TODO : add expiry date also²
+        # TODO : add expiry date also
 
         # Count
         'line_no': fields.integer(string=_('Line #'), readonly=True),
@@ -765,7 +788,17 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         # Discrepancy analysis
         'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', select=True),
         'comment': fields.char(size=128, string='Comment'),
+
+        # Total for product
+        'total_product_theoretical_qty': fields.float('Total Theoretical Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'total_product_counted_qty': fields.float('Total Counted Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'total_product_counted_value': fields.function('_total_product_qty_and_values', method=True, type='float', string=_("Total Counted Value for product")),
+        'total_product_discrepancy_qty': fields.function('_total_product_qty_and_values', method=True, type='float', string=_("Total Discrepancy for product")),
+        'total_product_discrepancy_value': fields.function('_total_product_qty_and_values', method=True, type='float', string=_("Total Discrepancy Value for product"))
     }
+
+    def _total_product_qty_and_values(self, cr, uid, ids, field_names, arg, context=None):
+        return {}
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
