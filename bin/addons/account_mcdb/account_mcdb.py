@@ -987,7 +987,7 @@ class account_mcdb(osv.osv):
     def export_pdf(self, cr, uid, ids, context=None):
         """
         Triggers the same export as from the "output.currency.for.export" wizard
-        => gets data to use, puts it in a dict and passed it in param. of the wizard method as datas_from_selector
+        => gets data to use, puts it in a dict and passed it in param. of the wizard method as data_from_selector
         """
         if context is None:
             context = {}
@@ -1009,13 +1009,13 @@ class account_mcdb(osv.osv):
         output_currency_id = False
         if selector.display_in_output_currency:
             output_currency_id = selector.display_in_output_currency.id
-        datas = {}
-        datas['ids'] = result_ids
-        datas['model'] = res_model
-        datas['export_format'] = 'pdf'
-        datas['output_currency_id'] = output_currency_id
-        datas['target_filename'] = target_filename
-        return export_wizard_obj.button_validate(cr, uid, result_ids, context=context, datas_from_selector=datas)
+        data = {}
+        data['ids'] = result_ids
+        data['model'] = res_model
+        data['export_format'] = 'pdf'
+        data['output_currency_id'] = output_currency_id
+        data['target_filename'] = target_filename
+        return export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=datas)
 
 account_mcdb()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

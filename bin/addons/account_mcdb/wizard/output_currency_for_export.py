@@ -98,24 +98,24 @@ class output_currency_for_export(osv.osv_memory):
             res.update({'domain': {'currency_id': [('currency_table_id', '=', fx_table_id), ('active', 'in', ['True', 'False'])]}, 'value': {'currency_id' : False}})
         return res
 
-    def button_validate(self, cr, uid, ids, context=None, datas_from_selector={}):
+    def button_validate(self, cr, uid, ids, context=None, data_from_selector={}):
         """
         Launch export wizard
         """
         # Some verifications
-        if (not context or not context.get('active_ids', False) or not context.get('active_model', False)) and not datas_from_selector:
+        if (not context or not context.get('active_ids', False) or not context.get('active_model', False)) and not data_from_selector:
             raise osv.except_osv(_('Error'), _('An error has occurred. Please contact an administrator.'))
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
-        model = datas_from_selector.get('model') or context.get('active_model')
+        model = data_from_selector.get('model') or context.get('active_model')
         display_fp = context.get('display_fp', False)
         wiz = currency_id = choice = False
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         company_currency = user and user.company_id and user.company_id.currency_id and user.company_id.currency_id.id or False
-        if datas_from_selector:
-            currency_id = 'output_currency_id' in datas_from_selector and datas_from_selector['output_currency_id'] or company_currency
-            choice = datas_from_selector.get('export_format')
+        if data_from_selector:
+            currency_id = 'output_currency_id' in data_from_selector and data_from_selector['output_currency_id'] or company_currency
+            choice = data_from_selector.get('export_format')
         else:
             wiz = self.browse(cr, uid, ids, context=context)[0]
             currency_id = wiz and wiz.currency_id and wiz.currency_id.id or company_currency
@@ -124,8 +124,8 @@ class output_currency_for_export(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Please choose an export format!'))
         datas = {}
         # Check user choice
-        if datas_from_selector:
-            datas = {'ids': datas_from_selector.get('ids')}
+        if data_from_selector:
+            datas = {'ids': data_from_selector.get('ids')}
         elif wiz and wiz.export_selected:
             datas = {'ids': context.get('active_ids', [])}
         else:
@@ -137,7 +137,7 @@ class output_currency_for_export(osv.osv_memory):
         context.update({'output_currency_id': currency_id})
         # Update datas for context
         datas.update({'context': context})
-        display_output_curr = datas_from_selector and datas_from_selector.get('output_currency_id') or wiz and wiz.currency_id
+        display_output_curr = data_from_selector and data_from_selector.get('output_currency_id') or wiz and wiz.currency_id
         if display_output_curr:
             # seems that there is a bug on context, so using datas permit to transmit info
             datas.update({'output_currency_id': currency_id, 'context': context})
@@ -150,7 +150,7 @@ class output_currency_for_export(osv.osv_memory):
 
         context.update({'display_fp': display_fp})
 
-        if not datas_from_selector and model == 'account.analytic.line' and wiz and wiz.state == 'free':
+        if not data_from_selector and model == 'account.analytic.line' and wiz and wiz.state == 'free':
             report_name = 'account.analytic.line.free'
             context.update({'display_fp': False})
 
@@ -159,7 +159,7 @@ class output_currency_for_export(osv.osv_memory):
         elif choice == 'xls':
             report_name += '_xls'
 
-        filename = datas_from_selector.get('target_filename') or '%s_%s' % (context.get('target_filename_prefix', 'Export_search_result'), time.strftime('%Y%m%d'))
+        filename = data_from_selector.get('target_filename') or '%s_%s' % (context.get('target_filename_prefix', 'Export_search_result'), time.strftime('%Y%m%d'))
         datas['target_filename'] = filename
 
         if model in ('account.move.line', 'account.analytic.line') and choice in ('csv', 'xls', 'pdf'):
