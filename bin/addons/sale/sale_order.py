@@ -1950,7 +1950,7 @@ class sale_order_line(osv.osv):
         'set_as_sourced_n': fields.boolean(string='Sourced-n line', help='Line created in a further PO, so we have to create it back in the flow'), # used for wkf transition
         'modification_comment': fields.char('Modification Comment', size=1024),
         # to prevent PO line and IN creation after synchro of FO created by replacement/missing IN
-        'from_claim_missing_goods': fields.boolean(string='Prevent PO line and IN creation after synchro of FO created by replacement/missing IN'),
+        'in_name_goods_return': fields.char(string='To find the right IN after synchro of FO created by replacement/missing IN', size=256),
     }
     _order = 'sequence, id desc'
     _defaults = {

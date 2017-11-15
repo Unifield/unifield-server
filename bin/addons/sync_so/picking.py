@@ -335,8 +335,17 @@ class stock_picking(osv.osv):
 
         if po_id:
             po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
-            # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-            in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
+            in_name_goods_return = False
+            for line in pick_dict['move_lines']['sale_line_id']:
+                if line['in_name_goods_return']:
+                    in_name_goods_return = line['in_name_goods_return'].split(".")[-1]
+            if in_name_goods_return:
+                # search for the right IN in case of synchro of multiple missing/replacement IN
+                in_id = self.pool.get('stock.picking')\
+                    .search(cr, uid, [('name', '=', in_name_goods_return), ('purchase_id', '=', po_id), ('state', '=', 'assigned')], limit=1, context=context)[0]
+            else:
+                # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
+                in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
         else:
             # locations
             warehouse_ids = warehouse_obj.search(cr, uid, [], limit=1)
@@ -1178,7 +1187,8 @@ class stock_picking(osv.osv):
                 'price_unit': x.price_unit,
                 'order_partner_id': partner_id,
                 'comment': x.comment,
-                'from_claim_missing_goods': True,
+                'is_line_split': True,
+                'in_name_goods_return': source + '.' + stock_picking.name,
                 'date_planned': po_info.delivery_requested_date,
                 'stock_take_date': po_info.stock_take_date,
             }) for x in lines],
