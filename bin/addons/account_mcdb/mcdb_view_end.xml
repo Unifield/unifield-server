@@ -5,5 +5,5 @@
                     <separator string=" " colspan="4"/>
                     <button name="button_clear" type="object" string="Clear" icon="gtk-clear" colspan="2"/>
                     <button name="button_validate" type="object" string="Search" icon="gtk-find" colspan="2"/>
-                    <button icon="gtk-print" name="export_pdf" string="Export PDF" type="object" colspan="4"/>
+                    <button icon="gtk-print" name="export_pdf" string="Export PDF report" type="object" colspan="4"/>
                     <field name="model" invisible="1"/>
