@@ -47,6 +47,7 @@
     <paraStyle name="Index" fontName="Helvetica"/>
     <paraStyle name="Table Contents" fontName="Helvetica"/>
     <paraStyle name="Table Heading" fontName="Helvetica" alignment="CENTER"/>
+    <paraStyle name="Total" fontName="Helvetica-Bold" fontSize="9.0" leading="10" alignment="CENTER"/>
     <images/>
   </stylesheet>
   <story>
@@ -191,6 +192,73 @@
         </td>
         <td>
           <para style="P3">[[ o.move_state and getSel(o, 'move_state') or '' ]]</para>
+        </td>
+      </tr>
+      <!-- TOTAL -->
+      <tr>
+        [[ data.get('context') and data['context'].get('from_selector') or removeParentNode('tr') ]]
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and ' ' or removeParentNode('td') ]]</para>
+        </td>
+        <td>
+          <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and ' ' or removeParentNode('td') ]]</para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <parawrap style="Total">Total Booking Curr.</parawrap>
+        </td>
+        <td>
+          <para style="Total">[[ formatLang(total_booking(objects) or 0.0) ]]</para>
+        </td>
+        <td>
+          <parawrap style="Total">Total Func. Curr.</parawrap>
+        </td>
+        <td>
+          <para style="Total">[[ formatLang(total_functional(objects) or 0.0) ]]</para>
+        </td>
+        <td>
+          <parawrap style="Total">Total Out. Curr.</parawrap>
+        </td>
+        <td>
+          <para style="Total">[[ formatLang(total_output(objects) or 0.0) ]]</para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
         </td>
       </tr>
     </blockTable>

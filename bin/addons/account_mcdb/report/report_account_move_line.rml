@@ -49,6 +49,7 @@
     <paraStyle name="Index" fontName="Helvetica"/>
     <paraStyle name="Table Contents" fontName="Helvetica"/>
     <paraStyle name="Table Heading" fontName="Helvetica" alignment="CENTER"/>
+    <paraStyle name="Total" fontName="Helvetica-Bold" fontSize="9.0" leading="10" alignment="CENTER"/>
     <images/>
   </stylesheet>
   <story>
@@ -174,6 +175,64 @@
         </td>
         <td>
           <para style="P3">[[ o.move_state and getSel(o, 'move_state') or '' ]]</para>
+        </td>
+      </tr>
+      <!-- TOTAL -->
+      <tr>
+        [[ data.get('context') and data['context'].get('from_selector') or removeParentNode('tr') ]]
+        <td>
+          <parawrap style="Total">TOTAL</parawrap>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <parawrap style="Total">Total Booking Curr.</parawrap>
+        </td>
+        <td>
+          <para style="Total">[[ formatLang(total_booking_debit(objects) or 0.0) ]]</para>
+        </td>
+        <td>
+          <para style="Total">[[ formatLang(total_booking_credit(objects) or 0.0) ]]</para>
+        </td>
+        <td>
+          <parawrap style="Total">Total Output Curr.</parawrap>
+        </td>
+        <td>
+          <para style="Total">[[ formatLang(total_output_debit(objects) or 0.0) ]]</para>
+        </td>
+        <td>
+          <para style="Total">[[ formatLang(total_output_credit(objects) or 0.0) ]]</para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
+        </td>
+        <td>
+          <para style="P3"></para>
         </td>
       </tr>
     </blockTable>

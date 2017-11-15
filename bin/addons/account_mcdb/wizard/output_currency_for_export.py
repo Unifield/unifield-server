@@ -143,7 +143,12 @@ class output_currency_for_export(osv.osv_memory):
             datas.update({'output_currency_id': currency_id, 'context': context})
         # Update report name if come from analytic
         report_name = 'account.move.line'
-        if model == 'account.analytic.line':
+        if data_from_selector:
+            if model == 'account.move.line':
+                report_name = 'gl.selector'
+            else:
+                report_name = 'analytic.selector'
+        elif model == 'account.analytic.line':
             report_name = 'account.analytic.line'
         elif model == 'account.bank.statement.line':
             report_name = 'account.bank.statement.line'
@@ -166,6 +171,8 @@ class output_currency_for_export(osv.osv_memory):
             background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': datas['target_filename'], 'report_name': report_name}, context=context)
             context['background_id'] = background_id
             context['background_time'] = wiz and wiz.background_time or 2
+        if data_from_selector:
+            context['from_selector'] = True
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
