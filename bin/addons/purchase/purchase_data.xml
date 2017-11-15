@@ -36,11 +36,11 @@
     <data noupdate="0">
         <record id="pol_state_cancel" model="purchase.order.line.state">
             <field name="name">cancel</field>
-            <field name="sequence">1000</field>
+            <field name="sequence">1</field>
         </record>
         <record id="pol_state_cancel_r" model="purchase.order.line.state">
             <field name="name">cancel_r</field>
-            <field name="sequence">1001</field>
+            <field name="sequence">2</field>
         </record>
         <record id="pol_state_draft" model="purchase.order.line.state">
             <field name="name">draft</field>
