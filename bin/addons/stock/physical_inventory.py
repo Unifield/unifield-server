@@ -19,7 +19,7 @@ PHYSICAL_INVENTORIES_STATES = (
     ('validated', _('Validated')),
     ('confirmed', _('Confirmed')),
     ('closed', _('Closed')),
-    ('cancelled', _('Cancelled'))
+    ('cancel', _('Cancelled'))
 )
 
 
@@ -686,7 +686,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                                                  _('You can not cancel inventory which has any account move with posted state.'))
                         account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
-            self.infolog(cr, uid, "The Physical inventory id:%s (%s) has been canceled" % (inv.id, inv.name))
+            self.infolog(cr, uid, "The Physical inventory id:%s (%s) has been cancelled" % (inv.id, inv.name))
 
 
 PhysicalInventory()
