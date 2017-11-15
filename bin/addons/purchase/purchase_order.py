@@ -2034,20 +2034,13 @@ class purchase_order(osv.osv):
         if pol.product_id.type == 'service_recep' and not pol.order_id.cross_docking_ok:
             # service with reception are directed to Service Location
             dest = self.pool.get('stock.location').get_service_location(cr, uid)
+        elif pol.product_id.type == 'consu':
+            dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+        elif pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage != 'customer':
+            dest = pol.linked_sol_id.order_id.location_requestor_id.id
         elif self.pool.get('stock.location').chained_location_get(cr, uid, src_location, product=pol.product_id, context=context):
             # if input location has a chained location then use it
             dest = self.pool.get('stock.location').chained_location_get(cr, uid, src_location, product=pol.product_id, context=context)[0].id
-        else:
-            sol = pol.linked_sol_id
-            if sol:
-                if not (sol.order_id and sol.order_id.procurement_request):
-                    pass
-                elif pol.product_id.type == 'service_recep':
-                    dest = self.pool.get('stock.location').get_service_location(cr, uid)
-                elif pol.product_id.type == 'consu':
-                    dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
-                elif sol.order_id.location_requestor_id.usage != 'customer':
-                    dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
 
         values = {
             'name': ''.join((pol.order_id.name, ': ', (pol.name or ''))),
