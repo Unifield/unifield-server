@@ -456,6 +456,7 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
    </Borders>
+   <NumberFormat ss:Format="Short Date"/>
   </Style>
   <Style ss:ID="s78">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
@@ -584,14 +585,14 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s20"><Data ss:Type="String">Inventory Name </Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s72"><Data ss:Type="String">${ objects[0].name or '' }</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:Index="8" ss:StyleID="s20"><Data ss:Type="String">Inventory date</Data><Comment
       ss:Author="MSFadmin"><ss:Data xmlns="http://www.w3.org/TR/REC-html40"><B><Font
          html:Face="Tahoma" x:Family="Swiss" html:Size="8" html:Color="#000000">MSFadmin:</Font></B><Font
         html:Face="Tahoma" x:Family="Swiss" html:Size="8" html:Color="#000000">&#10;Date de fin d'inventaire&#10;</Font></ss:Data></Comment><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s73"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="DateTime">${ to_excel(objects[0].date) }</Data><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:Index="17" ss:StyleID="s20"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -599,7 +600,7 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s20"><Data ss:Type="String">Location</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s21"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s21"><Data ss:Type="String">${ objects[0].location_id and objects[0].location_id.name or '' }</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="8.25">
@@ -655,17 +656,17 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:Index="16" ss:MergeAcross="1" ss:StyleID="s78"><Data ss:Type="String">Total at the end</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s58"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s58"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="String">${objects[0].inventory_lines_number}</Data><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s57"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s57"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="String">${objects[0].inventory_lines_value}</Data><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s65"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s65"><NamedCell ss:Name="Print_Titles"/><Data ss:Type="String">${objects[0].inventory_lines_absvalue}</Data><NamedCell
       ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:Height="15.75">
     <Cell ss:Index="3" ss:StyleID="s20"><Data ss:Type="String">Inventory resp Name</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s72"><Data ss:Type="String">${ objects[0].responsible or '' }</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:Index="8" ss:StyleID="s25"><Data ss:Type="String">Signature of responsible </Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
@@ -685,11 +686,11 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="s78"><Data ss:Type="String">With discrepencies</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s58"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s58"><Data ss:Type="String">${objects[0].discrepancy_lines_number}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s58"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s58"><Data ss:Type="String">${objects[0].discrepancy_lines_value}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s66"><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s66"><Data ss:Type="String">${objects[0].discrepancy_lines_absvalue}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:Height="15.75">
@@ -723,11 +724,11 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="s80"><Data ss:Type="String">%</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="Error">#DIV/0!</Data><NamedCell
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${objects[0].discrepancy_lines_percent}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s67"><Data ss:Type="Error">#DIV/0!</Data><NamedCell
+    <Cell ss:StyleID="s67"><Data ss:Type="String">${objects[0].discrepancy_lines_percent_value}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s68"><Data ss:Type="Error">#DIV/0!</Data><NamedCell
+    <Cell ss:StyleID="s68"><Data ss:Type="String">${objects[0].discrepancy_lines_percent_absvalue}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:Height="15.75">
@@ -918,7 +919,7 @@
    <ProtectScenarios>False</ProtectScenarios>
   </WorksheetOptions>
   <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
-   <Range>R11C19,R12C19</Range>
+   <Range>R11C19</Range>
    <Type>List</Type>
    <Value>DATA!C1</Value>
   </DataValidation>
