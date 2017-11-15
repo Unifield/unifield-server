@@ -645,6 +645,11 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             'context': context,
         }
 
+    def action_counted(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        self.write(cr, uid, ids, {'state': 'counted'}, context=context)
+
     def action_done(self, cr, uid, ids, context=None):
         """ Finish the inventory"""
         if context is None:
@@ -654,6 +659,11 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             move_obj.action_done(cr, uid, inv['move_ids'], context=context)
         self.write(cr, uid, ids, {'state': 'done', 'date_done': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)},
                    context=context)
+
+    def action_validate(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
     def action_confirm(self, cr, uid, ids, context=None):
         """ Confirm the inventory and writes its finished date"""
@@ -665,9 +675,11 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         # location, never recursively, so we use a special context
         product_context = dict(context, compute_child=False)
 
-        location_obj = self.pool.get('stock.location')
+        # location_obj = self.pool.get('stock.location')
         product_obj = self.pool.get('product.product')
         product_tmpl_obj = self.pool.get('product.template')
+        prod_lot_obj = self.pool.get('stock.production.lot')
+
         product_dict = {}
         product_tmpl_dict = {}
 
@@ -678,10 +690,9 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             inv_line_obj = self.pool.get('physical.inventory.discrepancy')
 
             line_read = inv_line_obj.read(cr, uid, inv['discrepancy_line_ids'],
-                                          ['product_id', 'product_uom', 'prod_lot_id', 'location_id',
-                                           'product_qty', 'inventory_id', 'dont_move', 'comment',
-                                           'reason_type_id', 'average_cost'],
-                                          context=context)
+                                          ['inventory_id', 'product_id', 'product_uom_id', 'batch_number', 'expiry_date', 'location_id',
+                                           'discrepancy_qty', 'reason_type_id', 'comment', 'ignored', 'line_no'], context=context)
+
             product_id_list = [x['product_id'][0] for x in line_read if
                                x['product_id'][0] not in product_dict]
             product_id_list = list(set(product_id_list))
@@ -706,20 +717,47 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 stock_inventory = product_tmpl_dict[product_tmpl_id]
                 product_dict[product_id]['stock_inventory'] = stock_inventory
 
+            errors = []
             for line in line_read:
-                pid = line['product_id'][0]
-                lot_id = line['prod_lot_id'] and line['prod_lot_id'][0] or False
-                product_context.update(uom=line['product_uom'][0],
-                                       date=inv['date'], prodlot_id=lot_id)
-                amount = location_obj._product_get(cr, uid, line['location_id'][0], [pid], product_context)[pid]
+                if not line['ignored'] and not line['reason_type_id']:
+                    errors.append('Line %d: Adjustement type missing' % line['line_no'])
 
-                change = line['product_qty'] - amount
+            if errors:
+                # Errors found, open message box for exlain
+                wizard_obj = self.pool.get('physical.inventory.import.wizard')
+                return wizard_obj.message_box(cr, uid, title='Confirmation errors', message='\n'.join(errors))
+
+            for line in line_read:
+                if line['ignored']:
+                    continue
+                pid = line['product_id'][0]
+                bn = line['batch_number']
+                ed = line['expiry_date']
+
+                change = line['discrepancy_qty']  # - amount
                 if change:
+                    if ed:
+                        domain = [('product_id', '=', pid), ('life_date', '=', ed)]
+                        if bn:
+                            domain.append(('name', '=like', bn))
+                        prod_lot_id = prod_lot_obj.search(cr, uid, domain)
+                        if prod_lot_id:
+                            lot_id = prod_lot_id[0]
+                        else:
+                            lot_id = prod_lot_obj.create(cr, uid, {'product_id': pid, 'life_date': ed, 'name': bn})
+                    else:
+                        lot_id = False
+                    # lot_id = line['prod_lot_id'] and line['prod_lot_id'][0] or False
+                    product_context.update(uom=line['product_uom_id'][0],
+                                           date=inv['date'], prodlot_id=lot_id)
+
+                    # amount = location_obj._product_get(cr, uid, line['location_id'][0], [pid], product_context)[pid]
+
                     location_id = product_dict[line['product_id'][0]]['stock_inventory']
                     value = {
                         'name': 'INV:' + str(inv['id']) + ':' + inv['name'],
                         'product_id': line['product_id'][0],
-                        'product_uom': line['product_uom'][0],
+                        'product_uom': line['product_uom_id'][0],
                         'prodlot_id': lot_id,
                         'date': inv['date'],
                     }
@@ -744,7 +782,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 #     inv_line_obj.write(cr, uid, [line['id']], {'dont_move': True}, context=context)
             message = _('Inventory') + " '" + inv['name'] + "' " + _("is validated.")
             self.log(cr, uid, inv['id'], message)
-            self.write(cr, uid, [inv['id']], {'state': 'confirm', 'move_ids': [(6, 0, move_ids)]})
+            self.write(cr, uid, [inv['id']], {'state': 'confirmed', 'move_ids': [(6, 0, move_ids)]})
 
     def action_cancel_draft(self, cr, uid, ids, context=None):
         """ Cancels the stock move and change inventory state to draft."""
@@ -829,7 +867,7 @@ class PhysicalInventoryCounting(osv.osv):
             try:
                 quantity = self.quantity_validate(cr, quantity)
             except ValueError:
-                return {'value': {'physical_qty': False},
+                return {'value': {'quantity': False},
                         'warning': {'title': 'warning', 'message': 'Enter a valid quantity.'}}
         return {'value': {'quantity': quantity}}
 
@@ -886,7 +924,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
     _columns = {
         # Link to inventory
         'inventory_id': fields.many2one('physical.inventory', 'Inventory', ondelete='cascade'),
-        'location_id': fields.related('inventory_id', 'location_id', type='many2one', string='location_id', readonly=True),
+        'location_id': fields.related('inventory_id', 'location_id', type='many2one', relation='stock.location',  string='location_id', readonly=True),
 
         # Product
         'product_id': fields.many2one('product.product', 'Product', required=True),

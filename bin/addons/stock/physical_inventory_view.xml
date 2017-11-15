@@ -108,7 +108,7 @@
                             </group>
                             <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
                                    attrs="{'readonly': [('state', '!=', 'draft')]}">
-                                <tree string="Discrepancies" editable="bottom">
+                                <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True">
                                     <field name="line_no" />
                                     <field name="nomen_manda_2" />
                                     <field name="default_code" />
@@ -187,16 +187,20 @@
                     </group>
                     <group colspan="2">
                         <button name="action_cancel_inventary" states="draft,counting,counted,validated" string="Cancel Inventory"
-                                type="object" icon="gtk-cancel"/>
-                        <button name="generate_counting_sheet" states="draft,counted,validated" string="Generate Counting Sheet"
+                                type="object" icon="gtk-cancel" confirm="Do you confirm that you want to cancel the inventory ?"/>
+                        <button name="generate_counting_sheet" states="draft" string="Generate Counting Sheet"
                                 type="object" icon="gtk-go-forward"/>
-                        <button name="finish_counting" states="counting" string="Finish Counting"
+                        <button name="action_counted" states="counting" string="Finish Counting"
                                 type="object" icon="gtk-paste-v"/>
-                        <button name="action_confirm" states="validated" string="Validate Inventory"
-                                type="object" icon="gtk-apply"/>
-                        <button name="action_done" states="confirm" string="Confirm Inventory"
-                                type="object" icon="gtk-jump-to"/>
-                        <button name="action_cancel_draft" states="cancel" string="Set to Draft"
+                        <button name="finish_counting" states="counted,validated" string="Generate discrepancies"
+                                type="object" icon="gtk-paste-v"/>
+                        <button name="action_validate" states="counted" string="Finished"
+                                type="object" icon="gtk-apply" confirm="Do you confirm that you have finished the inventory ?"/>
+                        <button name="action_confirm" states="validated" string="Confirm Inventory"
+                                type="object" icon="gtk-jump-to" confirm="Do you confirm that you want confirm the inventory ?"/>
+                        <button name="action_done" states="confirmed" string="Close Inventory"
+                                type="object" icon="gtk-jump-to" confirm="Do you confirm that you want to close the inventory ?"/>
+                        <button name="action_cancel_draft" states="validated" string="Set to Draft"
                                 type="object" icon="gtk-convert"/>
                     </group>
                 </form>
