@@ -74,7 +74,33 @@
                         </page>
                         <page string="Discrepancy report">
                             <group col="4" colspan="4">
-                                <button name="export_xls_discrepancy_report" string="Export XLS discrepancy report" 
+                                <group col="1" colspan="1">
+                                    <label string="" />
+                                    <label string="Total at the end" />
+                                    <label string="With discrepancies" />
+                                    <label string="Percent" />
+                                </group>
+                                <group col="1" colspan="1">
+                                    <label string="Number of lines" />
+                                    <field name="inventory_lines_number" nolabel="1" />
+                                    <field name="discrepancy_lines_number" nolabel="1" />
+                                    <field name="discrepancy_lines_percent" nolabel="1" />
+                                </group>
+                                <group col="1" colspan="1">
+                                    <label string="Value" />
+                                    <field name="inventory_lines_value" nolabel="1" />
+                                    <field name="discrepancy_lines_value" nolabel="1" />
+                                    <field name="discrepancy_lines_percent_value" nolabel="1" />
+                                </group>
+                                <group col="1" colspan="1">
+                                    <label string="Absolute value" />
+                                    <field name="inventory_lines_absvalue" nolabel="1" />
+                                    <field name="discrepancy_lines_absvalue" nolabel="1" />
+                                    <field name="discrepancy_lines_percent_absvalue" nolabel="1" />
+                                </group>
+                            </group>
+                            <group col="4" colspan="4">
+                                <button name="export_xls_discrepancy_report" string="Export XLS discrepancy report"
                                     type="object" icon="gtk-print" colspan="4"/>
                                 <field name="file_to_import2" colspan="2"/>
                                 <button name="import_xls_discrepancy_report" string="Import XLS discrepancy report"
@@ -92,9 +118,16 @@
                                     <field name="batch_number" />
                                     <field name="theoretical_qty" />
                                     <field name="counted_qty" />
+                                    <field name="discrepancy_qty" />
+                                    <field name="discrepancy_value" />
                                     <field name="product_uom_id" />
                                     <field name="reason_type_id" widget="selection" />
                                     <field name="comment" />
+                                    <field name="total_product_theoretical_qty" />
+                                    <field name="total_product_counted_qty" />
+                                    <field name="total_product_counted_value" />
+                                    <field name="total_product_discrepancy_qty" />
+                                    <field name="total_product_discrepancy_value" />
                                 </tree>
                                 <form string="Discrepancy line">
                                     <field name="line_no" />
@@ -106,9 +139,16 @@
                                     <field name="batch_number" />
                                     <field name="theoretical_qty" />
                                     <field name="counted_qty" />
+                                    <field name="discrepancy_qty" />
+                                    <field name="discrepancy_value" />
                                     <field name="product_uom_id" />
                                     <field name="reason_type_id" widget="selection" />
                                     <field name="comment" />
+                                    <field name="total_product_theoretical_qty" />
+                                    <field name="total_product_counted_qty" />
+                                    <field name="total_product_counted_value" />
+                                    <field name="total_product_discrepancy_qty" />
+                                    <field name="total_product_discrepancy_value" />
                                 </form>
                             </field>
                         </page>
@@ -148,11 +188,11 @@
                     <group colspan="2">
                         <button name="action_cancel_inventary" states="draft,counting,counted,validated" string="Cancel Inventory"
                                 type="object" icon="gtk-cancel"/>
-                        <button name="generate_counting_sheet" states="draft,counted,validated" string="Generate Counting Sheet" 
+                        <button name="generate_counting_sheet" states="draft,counted,validated" string="Generate Counting Sheet"
                                 type="object" icon="gtk-go-forward"/>
-                        <button name="finish_counting" states="counting" string="Finish Counting" 
+                        <button name="finish_counting" states="counting" string="Finish Counting"
                                 type="object" icon="gtk-paste-v"/>
-                        <button name="action_confirm" states="validated" string="Validate Inventory" 
+                        <button name="action_confirm" states="validated" string="Validate Inventory"
                                 type="object" icon="gtk-apply"/>
                         <button name="action_done" states="confirm" string="Confirm Inventory"
                                 type="object" icon="gtk-jump-to"/>

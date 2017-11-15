@@ -3618,6 +3618,8 @@ class orm(orm_template):
                 res2 = self._columns[val[0]].get(cr, self, ids, val, user, context=context, values=res)
                 for pos in val:
                     for record in res:
+                        if not record['id'] in res2:
+                            raise Exception("Could not process key %s" % key)
                         if isinstance(res2[record['id']], str): res2[record['id']] = eval(res2[record['id']]) #TOCHECK : why got string instend of dict in python2.6
                         multi_fields = res2.get(record['id'],{})
                         if multi_fields:

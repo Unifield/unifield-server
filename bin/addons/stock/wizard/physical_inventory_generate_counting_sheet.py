@@ -71,7 +71,9 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         bn_and_eds = self.get_BN_and_ED_for_products_at_location(cr, uid, location_id, product_ids, context=context)
 
         products = read_many("product.product", product_ids, ["id",
-                                                              "uom_id"])
+                                                              "uom_id",
+                                                              "standard_price",
+                                                              "currency_id"])
 
         # Prepare the inventory lines to be created
 
@@ -79,6 +81,8 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         for product in products:
             product_id = product["id"]
             product_uom_id = product["uom_id"][0]
+            standard_price = product["standard_price"]
+            currency_id = product["currency_id"][0]
             bn_and_eds_for_this_product = bn_and_eds[product_id]
             # If no bn / ed related to this product, create a single inventory
             # line
@@ -87,6 +91,8 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                            "inventory_id": inventory_id,
                             "product_id": product_id,
                             "product_uom_id": product_uom_id,
+                            "currency_id": currency_id,
+                            "standard_price": standard_price,
                             "batch_number": False,
                             "expiry_date": False
                           }
@@ -99,6 +105,8 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                                "inventory_id": inventory_id,
                                "product_id": product_id,
                                "product_uom_id": product_uom_id,
+                               "currency_id": currency_id,
+                               "standard_price": standard_price,
                                "batch_number": bn_and_ed[0] if fill_bn_and_ed else False,
                                "expiry_date":  bn_and_ed[1] if fill_bn_and_ed else False
                              }
@@ -120,7 +128,9 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         todo.extend(create_inventory_counting_lines)
 
         # Do the actual write
-        write("physical.inventory", inventory_id, {'counting_line_ids': todo})
+        # TODO : Test if Draft state here
+        write("physical.inventory", inventory_id, {'counting_line_ids': todo,
+                                                   'state': 'counting'})
 
         return {'type': 'ir.actions.act_window_close'}
 
