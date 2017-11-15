@@ -336,9 +336,9 @@ class stock_picking(osv.osv):
         if po_id:
             po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
             in_name_goods_return = False
-            for line in pick_dict['move_lines']['sale_line_id']:
-                if line['in_name_goods_return']:
-                    in_name_goods_return = line['in_name_goods_return'].split(".")[-1]
+            for move_line in pick_dict['move_lines']:
+                if move_line['sale_line_id']['in_name_goods_return']:
+                    in_name_goods_return = move_line['sale_line_id']['in_name_goods_return'].split(".")[-1]
             if in_name_goods_return:
                 # search for the right IN in case of synchro of multiple missing/replacement IN
                 in_id = self.pool.get('stock.picking')\
@@ -1187,7 +1187,6 @@ class stock_picking(osv.osv):
                 'price_unit': x.price_unit,
                 'order_partner_id': partner_id,
                 'comment': x.comment,
-                'is_line_split': True,
                 'in_name_goods_return': source + '.' + stock_picking.name,
                 'date_planned': po_info.delivery_requested_date,
                 'stock_take_date': po_info.stock_take_date,

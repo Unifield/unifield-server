@@ -488,6 +488,7 @@ class purchase_order_line(osv.osv):
         'original_currency_id': fields.many2one('res.currency', 'Original Currency'),
         'modification_comment': fields.char('Modification Comment', size=1024),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
+        'from_synchro_return_goods': fields.boolean(string='PO Line created by synch of IN replacement/missing'),
 
         # finance
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),

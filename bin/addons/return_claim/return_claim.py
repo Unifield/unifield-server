@@ -1044,6 +1044,7 @@ class claim_event(osv.osv):
                 'purchase_id': event_picking.purchase_id.id,
                 'sale_id': event_picking.sale_id.id,
                 'invoice_state': inv_status,
+                'claim': True,
             }
             replacement_move_values = {'reason_type_id': context['common']['rt_goods_replacement'], 'state': 'draft'}
 
@@ -1142,6 +1143,7 @@ class claim_event(osv.osv):
                 'purchase_id': event_picking.purchase_id.id,
                 'sale_id': event_picking.sale_id.id,
                 'invoice_state': inv_status,
+                'claim': True,
             }
             replacement_move_values = {'reason_type_id': context['common']['rt_goods_replacement'], 'state': 'draft'}
 
@@ -1250,6 +1252,7 @@ class claim_event(osv.osv):
                 'purchase_id': origin_picking.purchase_id.id,
                 'sale_id': origin_picking.sale_id.id,
                 'invoice_state': inv_status,
+                'claim': True,
             }
             replacement_move_values = {'reason_type_id': context['common']['rt_goods_replacement']}
 
