@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<document filename="test.pdf">
-  <template pageSize="(1191.0,842.0)" title="Test" author="Martin Simon" allowSplitting="20">
+<document filename="journal_items.pdf">
+  <template pageSize="(1191.0,842.0)" title="Journal Items" allowSplitting="20">
     <pageTemplate id="first">
       <frame id="first" x1="14.0" y1="14.0" width="1163" height="814"/>
 
