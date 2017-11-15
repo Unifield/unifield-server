@@ -28,11 +28,52 @@ class PhysicalInventory(osv.osv):
     _description = 'Physical Inventory'
 
     def _inventory_totals(self, cr, uid, ids, field_names, arg, context=None):
-        result = {}
-        for _id in ids:
-            for field_name in field_names:
-                result[_id] = {field_name: 0}
-        return result
+        context = context is None and {} or context
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+
+        inventories = read_many("physical.inventory", ids, ["discrepancy_line_ids",
+                                                            "counting_line_ids"])
+
+        totals = {}
+        for inventory in inventories:
+
+            counting_lines = read_many("physical.inventory.counting",
+                                       inventory["counting_line_ids"],
+                                       ["quantity",
+                                        "standard_price"])
+
+            discrepancy_lines = read_many("physical.inventory.discrepancy",
+                                          inventory["discrepancy_line_ids"],
+                                          ["discrepancy_value"])
+
+            # TODO :Check upstream that these value can really be converted in
+            # float..
+
+
+            total = {
+                'inventory_lines_number': len(counting_lines),
+                'discrepancy_lines_number': len(discrepancy_lines),
+
+                'inventory_lines_value': sum([ float(l["quantity"]) * float(l["standard_price"])
+                                               for l in counting_lines ]),
+                'discrepancy_lines_value': sum([ float(l["discrepancy_value"])
+                                                 for l in discrepancy_lines ]),
+
+                'inventory_lines_absvalue': sum([ abs(float(l["quantity"])) * float(l["standard_price"])
+                                                  for l in counting_lines ]),
+                'discrepancy_lines_absvalue': sum([ abs(float(l["discrepancy_value"]))
+                                                    for l in discrepancy_lines ]),
+            }
+
+            total['discrepancy_lines_percent'] = 100 * total['discrepancy_lines_number'] / total['inventory_lines_number'] if total['inventory_lines_number'] else 0.0
+            total['discrepancy_lines_percent_value'] = 100 * total['discrepancy_lines_value'] / total['inventory_lines_value'] if total['inventory_lines_value'] else 0.0
+            total['discrepancy_lines_percent_absvalue'] = 100 * total['discrepancy_lines_absvalue'] / total['inventory_lines_absvalue'] if total['inventory_lines_absvalue'] else 0.0
+
+            totals[inventory["id"]] = total
+
+        return totals
+
 
     _columns = {
         'ref': fields.char('Reference', size=64, required=True, readonly=True),
@@ -149,9 +190,6 @@ class PhysicalInventory(osv.osv):
         # Get the view reference
         view_id = view('stock', 'physical_inventory_generate_counting_sheet')
 
-        # Switch to couting state
-        self.write(cr, uid, ids, {'state': 'counting'}, context=context)
-
         # Return a description of the wizard view
         return {'type': 'ir.actions.act_window',
                 'target': 'new',
@@ -192,6 +230,8 @@ class PhysicalInventory(osv.osv):
         counting_lines = read_many('physical.inventory.counting', counting_line_ids, [ "line_no",
                                                                                        "product_id",
                                                                                        "product_uom_id",
+                                                                                       "standard_price",
+                                                                                       "currency_id",
                                                                                        "batch_number",
                                                                                        "quantity"])
 
@@ -205,15 +245,21 @@ class PhysicalInventory(osv.osv):
         theoretical_quantities = self.get_stock_for_products_at_location(cr, uid, product_ids, location_id, context=context)
 
         # Create a similar dictionnary for counted quantities
+        counting_lines_per_product_and_batch = {}
         counted_quantities = {}
-        line_nos = {}
-        uoms = {}
         for line in counting_lines:
+
             product_and_batch_id = (line["product_id"][0],
                                     line["batch_number"] or False)
+
             counted_quantities[product_and_batch_id] = float(line["quantity"])
-            line_nos[product_and_batch_id] = line["line_no"]
-            uoms[product_and_batch_id] = line["product_uom_id"][0]
+
+            counting_lines_per_product_and_batch[product_and_batch_id] = {
+                "line_no": line["line_no"],
+                "product_uom_id": line["product_uom_id"][0],
+                "standard_price": line["standard_price"],
+                "currency_id": line["currency_id"][0]
+            }
 
         # Now, compare theoretical and counted quantities
 
@@ -232,18 +278,26 @@ class PhysicalInventory(osv.osv):
 
             if counted_qty != theoretical_qty:
 
-
                 # If this product/batch is known in the counting line, use
                 # the existing line number
-                if product_and_batch_id in line_nos:
-                    line_no = line_nos[product_and_batch_id]
-                    uom = uoms[product_and_batch_id]
+                if product_and_batch_id in counting_lines_per_product_and_batch:
+                    line_no = counting_lines_per_product_and_batch[product_and_batch_id]["line_no"]
+                    product_uom_id = counting_lines_per_product_and_batch[product_and_batch_id]["product_uom_id"]
+                    standard_price = counting_lines_per_product_and_batch[product_and_batch_id]["standard_price"]
+                    currency_id = counting_lines_per_product_and_batch[product_and_batch_id]["currency_id"]
+
                 # Otherwise, create additional line numbers starting from
                 # the total of existing lines
                 else:
                     line_no = len(counted_quantities) + 1 + len(discrepancies)
                     product_id = product_and_batch_id[0]
-                    uom = read_single("product.product", product_id, "uom_id")[0]
+                    infos = read_many("product.product", [product_id], ["uom_id",
+                                                                        "standard_price",
+                                                                        "currency_id"])[0]
+                    product_uom_id = infos["uom_id"][0]
+                    standard_price = infos["standard_price"]
+                    currency_id = infos["currency_id"][0]
+
 
                 discrepancies.append( \
                 { "inventory_id": inventory_id,
@@ -252,7 +306,9 @@ class PhysicalInventory(osv.osv):
                   "batch_number": product_and_batch_id[1],
                   "theoretical_qty": theoretical_quantities.get(product_and_batch_id, 0.0),
                   "counted_qty": counted_quantities.get(product_and_batch_id, 0.0),
-                  "product_uom_id": uom
+                  "product_uom_id": product_uom_id,
+                  "standard_price": standard_price,
+                  "currency_id": currency_id
                 })
 
         # Sort discrepancies according to line number
@@ -277,7 +333,8 @@ class PhysicalInventory(osv.osv):
         write("physical.inventory", inventory_id, {'discrepancy_line_ids': todo})
 
         # TODO: compute items with not found batch number. Sample for testing only:
-        items = [{'message': 'Batch number 1...', 'line_id': 22}]
+        #items = [{'message': 'Batch number 1...', 'line_id': 22}]
+        items = []
         if items:
             return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Advertissment', items)
         else:
@@ -723,7 +780,7 @@ class PhysicalInventoryCounting(osv.osv):
 
     _columns = {
         # Link to inventory
-        'inventory_id': fields.many2one('stock.inventory', _('Inventory'), ondelete='cascade', select=True),
+        'inventory_id': fields.many2one('physical.inventory', _('Inventory'), ondelete='cascade', select=True),
 
         # Product
         'product_id': fields.many2one('product.product', _('Product'), required=True, select=True,
@@ -794,24 +851,43 @@ class PhysicalInventoryDiscrepancy(osv.osv):
     _name = 'physical.inventory.discrepancy'
     _description = 'Physical Inventory Discrepancy Line'
 
-    def _total_product_qty_and_values(self, cr, uid, ids, field_names, arg, context=None):
-        result = {}
-        for _id in ids:
-            for field_name in field_names:
-                result[_id] = {field_name: 0.0}
-        return result
 
     def _discrepancy(self, cr, uid, ids, field_names, arg, context=None):
-        result = {}
-        for _id in ids:
-            for field_name in field_names:
-                result[_id] = {field_name: 0.0}
-        return result
+        context = context is None and {} or context
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+
+        lines = read_many("physical.inventory.discrepancy", ids, ["theoretical_qty",
+                                                                  "counted_qty",
+                                                                  "standard_price"])
+
+        discrepancies = {}
+        for line in lines:
+            discrepancy_qty = line["counted_qty"] - line["theoretical_qty"]
+            discrepancy_value = discrepancy_qty * line["standard_price"]
+            discrepancies[line["id"]] = { "discrepancy_qty": discrepancy_qty,
+                                          "discrepancy_value": discrepancy_value }
+
+        return discrepancies
+
+
+    def _total_product_qty_and_values(self, cr, uid, ids, field_names, arg, context=None):
+
+        # TODO : correctly implement this...
+        ret = {}
+
+        for id_ in ids:
+            ret[id_] = {'total_product_counted_value': 0.0,
+                        'total_product_discrepancy_qty': 0.0,
+                        'total_product_discrepancy_value': 0.0 }
+
+        return ret
 
     _columns = {
         # Link to inventory
-        'inventory_id': fields.many2one('stock.inventory', 'Inventory', ondelete='cascade'),
+        'inventory_id': fields.many2one('physical.inventory', 'Inventory', ondelete='cascade'),
         'location_id': fields.related('inventory_id', 'location_id', type='many2one', string='location_id', readonly=True),
+
         # Product
         'product_id': fields.many2one('product.product', 'Product', required=True),
         'default_code': fields.related('product_id', 'default_code', string="Code",

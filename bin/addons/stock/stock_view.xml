@@ -190,7 +190,6 @@
             <field name="search_view_id" ref="view_inventory_filter" />
             <field name="help">Periodical Inventories are used to count the number of products available per location. You can use it once a year when you do the general inventory or whenever you need it, to correct the current stock level of a product.</field>
         </record>
-        <menuitem action="action_inventory_form" id="menu_action_inventory_form" parent="menu_stock_inventory_control" sequence="30"/>
 
         <record id="action_inventory_form_draft" model="ir.actions.act_window">
             <field name="name">Draft Physical Inventories</field>
