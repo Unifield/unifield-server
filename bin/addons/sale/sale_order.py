@@ -423,6 +423,24 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return result
 
+    def from_so_state_to_sol_state(self, cr, uid, ids, state_str=False, context=None):
+        '''
+        convert a FO/IR state to a FO/IR line state
+        @param state_str: if set return the SOL state from the given string
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        if not state_str:
+            so = self.browse(cr, uid, ids[0], context=context)
+            res = so.state.split('_')[0]
+        else:
+            res = state_str.split('_')[0]
+
+        return res
+
     def _get_less_advanced_sol_state(self, cr, uid, ids, field_name, arg, context=None):
         """
         Get the less advanced state of the sale order lines
@@ -436,48 +454,41 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         res = {}
         for so in self.browse(cr, uid, ids, context=context):
-            sol_states = set()
-            for sol in so.order_line:
-                if sol.state.startswith('cancel'): # cancel state must be ignored at this level (only accurate when all lines are canceled)
-                    continue
-                elif sol.resourced_at_state and sols_obj.get_sequence(cr, uid, ids, sol.resourced_at_state, context=context) > sols_obj.get_sequence(cr, uid, ids, sol.state, context=context):
-                    # case of ressourced lines: 
-                    # resourced lines must not make the FO state going back
-                    state_transformed = so.state.split('_')[0]
-                    if sols_obj.get_sequence(cr, uid, ids, state_transformed, context=context) < sols_obj.get_sequence(cr, uid, ids, sol.state, context=context):
-                        sol_states.add(sol.state)
-                    else:
-                        sol_states.add(state_transformed)
-                else:
-                    sol_states.add(sol.state)
+            sol_states = set([sol.state for sol in so.order_line if not sol.state.startswith('cancel')])
 
             if all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
             else: # else compute the less advanced state:
-                res[so.id] = self.pool.get('sale.order.line.state').get_less_advanced_state(cr, uid, ids, sol_states, context=context)
+                res[so.id] = sols_obj.get_less_advanced_state(cr, uid, ids, sol_states, context=context)
 
                 if res[so.id] == 'draft': # set the draft-p state ?
-                    draft_sequence = self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, 'draft', context=context)
+                    draft_sequence = sols_obj.get_sequence(cr, uid, ids, 'draft', context=context)
                     # do we have a line further then draft in our FO ?
-                    if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > draft_sequence for s in sol_states]):
+                    if any([sols_obj.get_sequence(cr, uid, ids, s, context=context) > draft_sequence for s in sol_states]):
                         res[so.id] = 'draft_p'
                 elif res[so.id] == 'validated': # set the validated-p state ?
-                    validated_sequence = self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, 'validated', context=context)
+                    validated_sequence = sols_obj.get_sequence(cr, uid, ids, 'validated', context=context)
                     # do we have a line further then validated in our FO ?
-                    if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > validated_sequence for s in sol_states]):
+                    if any([sols_obj.get_sequence(cr, uid, ids, s, context=context) > validated_sequence for s in sol_states]):
                         res[so.id] = 'validated_p'
                 elif res[so.id].startswith('sourced'): # set the source-p state ?
-                    sourced_sequence = self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, 'sourced', context=context)
+                    sourced_sequence = sols_obj.get_sequence(cr, uid, ids, 'sourced', context=context)
                     # do we have a line further then sourced in our FO ?
-                    if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > sourced_sequence for s in sol_states]):
+                    if any([sols_obj.get_sequence(cr, uid, ids, s, context=context) > sourced_sequence for s in sol_states]):
                         res[so.id] = 'sourced_p'
                     else:
                         res[so.id] = 'sourced'
                 elif res[so.id] == 'confirmed': # set the source-p state ?
-                    confirmed_sequence = self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, 'confirmed', context=context)
+                    confirmed_sequence = sols_obj.get_sequence(cr, uid, ids, 'confirmed', context=context)
                     # do we have a line further then confirmed in our FO ?
-                    if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in sol_states]):
+                    if any([sols_obj.get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in sol_states]):
                         res[so.id] = 'confirmed_p'
+
+            # if computed state is less advanced then the current one, then keep the current state:
+            trans_so_state_start = self.from_so_state_to_sol_state(cr, uid, so.id, context=context)
+            trans_so_state_end = self.from_so_state_to_sol_state(cr, uid, [], state_str=res[so.id], context=context)
+            if sols_obj.get_sequence(cr, uid, [], trans_so_state_end, context=context) < sols_obj.get_sequence(cr, uid, [], trans_so_state_start, context=context):
+                res[so.id] = so.state
 
             # add audit line in track change if state has changed:
             if so.state != res[so.id]:
@@ -2431,6 +2442,7 @@ class sale_order_line(osv.osv):
             wf_service.trg_write(uid, 'sale.order', order, cr)
 
         return so_to_cancel_id
+
 
     def add_resource_line(self, cr, uid, line, order_id, qty_diff, context=None):
         '''
