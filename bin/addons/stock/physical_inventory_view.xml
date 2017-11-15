@@ -241,7 +241,7 @@
         </record>
         <!-- Action -->
         <record id="action_physical_inventory" model="ir.actions.act_window">
-            <field name="name">Physical Inventories (New)</field>
+            <field name="name">Physical Inventories</field>
             <field name="type">ir.actions.act_window</field>
             <field name="res_model">physical.inventory</field>
             <field name="view_type">form</field>

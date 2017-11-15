@@ -66,9 +66,9 @@ class PhysicalInventory(osv.osv):
                                                     for l in discrepancy_lines ]),
             }
 
-            total['discrepancy_lines_percent'] = 100 * total['discrepancy_lines_number'] / total['inventory_lines_number']
-            total['discrepancy_lines_percent_value'] = 100 * total['discrepancy_lines_value'] / total['inventory_lines_value']
-            total['discrepancy_lines_percent_absvalue'] = 100 * total['discrepancy_lines_absvalue'] / total['inventory_lines_absvalue']
+            total['discrepancy_lines_percent'] = 100 * total['discrepancy_lines_number'] / total['inventory_lines_number'] if total['inventory_lines_number'] else 0.0
+            total['discrepancy_lines_percent_value'] = 100 * total['discrepancy_lines_value'] / total['inventory_lines_value'] if total['inventory_lines_value'] else 0.0
+            total['discrepancy_lines_percent_absvalue'] = 100 * total['discrepancy_lines_absvalue'] / total['inventory_lines_absvalue'] if total['inventory_lines_absvalue'] else 0.0
 
             totals[inventory["id"]] = total
 
@@ -333,7 +333,8 @@ class PhysicalInventory(osv.osv):
         write("physical.inventory", inventory_id, {'discrepancy_line_ids': todo})
 
         # TODO: compute items with not found batch number. Sample for testing only:
-        items = [{'message': 'Batch number 1...', 'line_id': 22}]
+        #items = [{'message': 'Batch number 1...', 'line_id': 22}]
+        items = []
         if items:
             return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Advertissment', items)
         else:
