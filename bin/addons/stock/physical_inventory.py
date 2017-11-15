@@ -28,11 +28,11 @@ class PhysicalInventory(osv.osv):
     _description = 'Physical Inventory'
 
     def _inventory_totals(self, cr, uid, ids, field_names, arg, context=None):
-
-        #inventories = read_many("physical.inventory", ids, ["discrepancy_line_ids",
-        #                                                    "counting_line_ids"])
-
-        return {}
+        result = {}
+        for _id in ids:
+            for field_name in field_names:
+                result[_id] = {field_name: 0}
+        return result
 
     _columns = {
         'ref': fields.char('Reference', size=64, required=True, readonly=True),
@@ -276,7 +276,22 @@ class PhysicalInventory(osv.osv):
         # Do the actual write
         write("physical.inventory", inventory_id, {'discrepancy_line_ids': todo})
 
-        return {}
+        # TODO: compute items with not found batch number. Sample for testing only:
+        items = [{'message': 'Batch number 1...', 'line_id': 22}]
+        if items:
+            return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Advertissment', items)
+        else:
+            return {}
+
+    def pre_process_discrepancies(self, cr, uid, items, context=None):
+        discrepancies = self.pool.get('physical.inventory.discrepancy')
+        ignore_ids = [item['line_id'] for item in items if item['action'] == 'ignore']
+        count_ids = [item['line_id'] for item in items if item['action'] == 'count']
+
+        if ignore_ids:
+            discrepancies.write(cr, uid, ignore_ids, {'counted_qty': 0.0, 'ignored': False})
+        if count_ids:
+            discrepancies.write(cr, uid, count_ids, {'ignored': True})
 
     def get_stock_for_products_at_location(self, cr, uid, product_ids, location_id, context=None):
         context = {} if context else context
@@ -755,15 +770,23 @@ class PhysicalInventoryDiscrepancy(osv.osv):
     _description = 'Physical Inventory Discrepancy Line'
 
     def _total_product_qty_and_values(self, cr, uid, ids, field_names, arg, context=None):
-        return {}
+        result = {}
+        for _id in ids:
+            for field_name in field_names:
+                result[_id] = {field_name: 0.0}
+        return result
 
     def _discrepancy(self, cr, uid, ids, field_names, arg, context=None):
-        return {}
+        result = {}
+        for _id in ids:
+            for field_name in field_names:
+                result[_id] = {field_name: 0.0}
+        return result
 
     _columns = {
         # Link to inventory
         'inventory_id': fields.many2one('stock.inventory', 'Inventory', ondelete='cascade'),
-
+        'location_id': fields.related('inventory_id', 'location_id', type='many2one', string='location_id', readonly=True),
         # Product
         'product_id': fields.many2one('product.product', 'Product', required=True),
         'default_code': fields.related('product_id', 'default_code', string="Code",
@@ -794,7 +817,6 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         # Unused / To be removed ?
         #'company_id': fields.related('inventory_id', 'company_id', type='many2one', relation='res.company',
         #                             string='Company', store=True, select=True, readonly=True),
-        #'location_id': fields.related('inventory_id', 'location_id', type='many2one', string='location_id', readonly=True),
         #'state': fields.related('inventory_id', 'state', type='char', string='State', readonly=True),
 
         # Discrepancy analysis
@@ -806,10 +828,12 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'total_product_counted_qty': fields.float('Total Counted Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'total_product_counted_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Counted Value for product")),
         'total_product_discrepancy_qty': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy for product")),
-        'total_product_discrepancy_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy Value for product"))
+        'total_product_discrepancy_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy Value for product")),
+        'ignored': fields.boolean('Ignored', readonly=True)
     }
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
+
 
 PhysicalInventoryDiscrepancy()

@@ -487,7 +487,7 @@
    <NamedRange ss:Name="Print_Titles" ss:RefersTo="=stock!R1:R10"/>
    <NamedRange ss:Name="Print_Area" ss:RefersTo="=stock!R1C1:R11C20"/>
   </Names>
-  <Table ss:ExpandedColumnCount="21" ss:ExpandedRowCount="13" x:FullColumns="1"
+  <Table ss:ExpandedRowCount="13" x:FullColumns="1"
    x:FullRows="1" ss:DefaultColumnWidth="60.75" ss:DefaultRowHeight="15">
    <Column ss:Index="2" ss:AutoFitWidth="0" ss:Width="54"/>
    <Column ss:AutoFitWidth="0" ss:Width="69"/>
@@ -860,70 +860,27 @@
    % for index,item in enumerate(objects[0].discrepancy_line_ids):
    <Row>
     <Cell ss:StyleID="s30"><Data ss:Type="String">${item.line_no}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s30"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s30"><Data ss:Type="String">${item.nomen_manda_2 and item.nomen_manda_2.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s31"><Data ss:Type="String">${item.product_id and item.product_id.code or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s31"><Data ss:Type="String">${item.product_id and item.product_id.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s38"><Data ss:Type="String">${item.product_uom and item.product_uom.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s43"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s43"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s30"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s31"><Data ss:Type="String">${item.product_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s38"><Data ss:Type="String">${item.prod_lot_id and item.prod_lot_id.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s38"><Data ss:Type="String">${item.product_uom_id and item.product_uom_id.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s43"><Data ss:Type="String">${item.standard_price}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s43"><Data ss:Type="String">${item.currency_id and item.currency_id.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s30"><Data ss:Type="String">${item.theoretical_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s31"><Data ss:Type="String">${item.counted_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s38"><Data ss:Type="String">${item.batch_number or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s32"><Data ss:Type="String">${item.expiry_date or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s43"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s43"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s42"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s36"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s36"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s36"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s46"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s50"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s48"><Data ss:Type="String"></Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s43"><Data ss:Type="String">${item.discrepancy_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s43"><Data ss:Type="String">${item.discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s42"><Data ss:Type="String">${item.total_product_theoretical_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s36"><Data ss:Type="String">${item.total_product_counted_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s36"><Data ss:Type="String">${item.total_product_counted_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s36"><Data ss:Type="String">${item.total_product_discrepancy_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s46"><Data ss:Type="String">${item.total_product_discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s50"><Data ss:Type="String">${item.reason_type_id and item.reason_type_id.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s48"><Data ss:Type="String">${item.comment or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
    % endfor
-   <Row ss:Height="15.75">
-    <Cell ss:StyleID="s33"/>
-    <Cell ss:StyleID="s33"/>
-    <Cell ss:StyleID="s34"/>
-    <Cell ss:StyleID="s34"/>
-    <Cell ss:StyleID="s39"/>
-    <Cell ss:StyleID="s44"/>
-    <Cell ss:StyleID="s44"/>
-    <Cell ss:StyleID="s33"/>
-    <Cell ss:StyleID="s34"/>
-    <Cell ss:StyleID="s39"/>
-    <Cell ss:StyleID="s35"/>
-    <Cell ss:StyleID="s44"/>
-    <Cell ss:StyleID="s44"/>
-    <Cell ss:StyleID="s40"/>
-    <Cell ss:StyleID="s34"/>
-    <Cell ss:StyleID="s34"/>
-    <Cell ss:StyleID="s34"/>
-    <Cell ss:StyleID="s39"/>
-    <Cell ss:StyleID="s51"/>
-    <Cell ss:StyleID="s49"/>
-   </Row>
-   <Row>
-    <Cell ss:Index="2" ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-    <Cell ss:StyleID="s18"/>
-   </Row>
   </Table>
   <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
@@ -963,11 +920,11 @@
   <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
    <Range>R11C19,R12C19</Range>
    <Type>List</Type>
-   <Value>DATA!R1C1:R5C1</Value>
+   <Value>DATA!C1</Value>
   </DataValidation>
  </Worksheet>
  <Worksheet ss:Name="DATA">
-  <Table ss:ExpandedColumnCount="1" ss:ExpandedRowCount="5" x:FullColumns="1"
+  <Table ss:ExpandedRowCount="5" x:FullColumns="1"
    x:FullRows="1" ss:DefaultColumnWidth="60" ss:DefaultRowHeight="15">
    <Row>
     <Cell><Data ss:Type="String">Item 1</Data></Cell>

@@ -13,5 +13,26 @@
                 </form>
             </field>
         </record>
+        <record id="physical_inventory_action_box_wizard_view" model="ir.ui.view">
+            <field name="name">Importation Report</field>
+            <field name="model">physical.inventory.import.wizard</field>
+            <field name="type">form</field>
+            <field name="priority">17</field>
+            <field name="arch" type="xml">
+                <form>
+                    <field name="line_ids" nolabel="1" colspan="4">
+                        <tree editable="bottom" hide_new_button="True" hide_delete_button="True">
+                            <field name="message"/>
+                            <field name="action"/>
+                        </tree>
+                    </field>
+                    <button string="Count all as 0" colspan="2" name="action_count_all" type="object"/>
+                    <button string="Ignore all" colspan="2" name="action_ignore_all" type="object"/>
+                    <separator colspan="4"/>
+                    <button string="Validate" colspan="2" name="action_validate" type="object"/>
+                    <button string="Cancel" colspan="2" name="action_close" type="object"/>
+                </form>
+            </field>
+        </record>
     </data>
 </openerp>
