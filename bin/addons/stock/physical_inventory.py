@@ -19,7 +19,7 @@ PHYSICAL_INVENTORIES_STATES = (
     ('validated', _('Validated')),
     ('confirmed', _('Confirmed')),
     ('closed', _('Closed')),
-    ('cancelled', _('Cancelled'))
+    ('cancel', _('Cancelled'))
 )
 
 
@@ -332,7 +332,22 @@ class PhysicalInventory(osv.osv):
         # Do the actual write
         write("physical.inventory", inventory_id, {'discrepancy_line_ids': todo})
 
-        return {}
+        # TODO: compute items with not found batch number. Sample for testing only:
+        items = [{'message': 'Batch number 1...', 'line_id': 22}]
+        if items:
+            return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Advertissment', items)
+        else:
+            return {}
+
+    def pre_process_discrepancies(self, cr, uid, items, context=None):
+        discrepancies = self.pool.get('physical.inventory.discrepancy')
+        ignore_ids = [item['line_id'] for item in items if item['action'] == 'ignore']
+        count_ids = [item['line_id'] for item in items if item['action'] == 'count']
+
+        if ignore_ids:
+            discrepancies.write(cr, uid, ignore_ids, {'counted_qty': 0.0, 'ignored': False})
+        if count_ids:
+            discrepancies.write(cr, uid, count_ids, {'ignored': True})
 
     def get_stock_for_products_at_location(self, cr, uid, product_ids, location_id, context=None):
         context = {} if context else context
@@ -727,7 +742,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                                                  _('You can not cancel inventory which has any account move with posted state.'))
                         account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
-            self.infolog(cr, uid, "The Physical inventory id:%s (%s) has been canceled" % (inv.id, inv.name))
+            self.infolog(cr, uid, "The Physical inventory id:%s (%s) has been cancelled" % (inv.id, inv.name))
 
 
 PhysicalInventory()
@@ -842,10 +857,10 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         return ret
 
-
     _columns = {
         # Link to inventory
         'inventory_id': fields.many2one('physical.inventory', 'Inventory', ondelete='cascade'),
+        'location_id': fields.related('inventory_id', 'location_id', type='many2one', string='location_id', readonly=True),
 
         # Product
         'product_id': fields.many2one('product.product', 'Product', required=True),
@@ -877,7 +892,6 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         # Unused / To be removed ?
         #'company_id': fields.related('inventory_id', 'company_id', type='many2one', relation='res.company',
         #                             string='Company', store=True, select=True, readonly=True),
-        #'location_id': fields.related('inventory_id', 'location_id', type='many2one', string='location_id', readonly=True),
         #'state': fields.related('inventory_id', 'state', type='char', string='State', readonly=True),
 
         # Discrepancy analysis
@@ -889,10 +903,12 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'total_product_counted_qty': fields.float('Total Counted Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'total_product_counted_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Counted Value for product")),
         'total_product_discrepancy_qty': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy for product")),
-        'total_product_discrepancy_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy Value for product"))
+        'total_product_discrepancy_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy Value for product")),
+        'ignored': fields.boolean('Ignored', readonly=True)
     }
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
+
 
 PhysicalInventoryDiscrepancy()

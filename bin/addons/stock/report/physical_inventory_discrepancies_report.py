@@ -12,7 +12,14 @@ class DiscrepanciesReportParser(report_sxw.rml_parse):
             'get_headers': self.get_headers,
             'next_counter': self.get_next_counter,
             'reset_counter': self.reset_counter,
+            'to_excel': self.to_excel,
         })
+
+    @staticmethod
+    def to_excel(value):
+        if isinstance(value, report_sxw._dttime_format):
+            return value.format().replace(' ', 'T')
+        return value
 
     def get_next_counter(self):
         self.counter += 1
