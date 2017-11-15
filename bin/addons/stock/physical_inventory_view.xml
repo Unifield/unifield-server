@@ -107,7 +107,8 @@
                                     type="object" icon="gtk-save" colspan="2"/>
                             </group>
                             <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
-                                   attrs="{'readonly': [('state', '!=', 'draft')]}">
+                                   attrs="{'readonly': [('state', '!=', 'draft')]}"
+                                   domain="[('ignored', '=', False)]">
                                 <tree string="Discrepancies" editable="bottom">
                                     <field name="line_no" />
                                     <field name="nomen_manda_2" />

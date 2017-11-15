@@ -47,23 +47,33 @@ class PhysicalInventory(osv.osv):
                                           inventory["discrepancy_line_ids"],
                                           ["discrepancy_value"])
 
-            # TODO :Check upstream that these value can really be converted in
-            # float..
+            inventory_lines_value = 0
+            inventory_lines_absvalue = 0
+            for l in counting_lines:
+                try:
+                    inventory_lines_value += float(l["quantity"]) * float(l["standard_price"])
+                    inventory_lines_absvalue += abs(float(l["quantity"])) * float(l["standard_price"])
+                except:
+                    # Most likely we couldnt parse the quantity / price...
+                    pass
 
+            discrepancy_lines_value = 0
+            discrepancy_lines_absvalue = 0
+            for l in discrepancy_lines:
+                try:
+                    discrepancy_lines_value += float(l["discrepancy_value"])
+                    discrepancy_lines_absvalue += abs(float(l["discrepancy_value"]))
+                except:
+                    # Most likely we couldnt parse the quantity / price...
+                    pass
 
             total = {
                 'inventory_lines_number': len(counting_lines),
                 'discrepancy_lines_number': len(discrepancy_lines),
-
-                'inventory_lines_value': sum([ float(l["quantity"]) * float(l["standard_price"])
-                                               for l in counting_lines ]),
-                'discrepancy_lines_value': sum([ float(l["discrepancy_value"])
-                                                 for l in discrepancy_lines ]),
-
-                'inventory_lines_absvalue': sum([ abs(float(l["quantity"])) * float(l["standard_price"])
-                                                  for l in counting_lines ]),
-                'discrepancy_lines_absvalue': sum([ abs(float(l["discrepancy_value"]))
-                                                    for l in discrepancy_lines ]),
+                'inventory_lines_value': inventory_lines_value,
+                'discrepancy_lines_value': discrepancy_lines_value,
+                'inventory_lines_absvalue': inventory_lines_absvalue,
+                'discrepancy_lines_absvalue':discrepancy_lines_absvalue
             }
 
             total['discrepancy_lines_percent'] = 100 * total['discrepancy_lines_number'] / total['inventory_lines_number'] if total['inventory_lines_number'] else 0.0
@@ -200,6 +210,7 @@ class PhysicalInventory(osv.osv):
                 'view_mode': 'form',
                 'context': context}
 
+
     def finish_counting(self, cr, uid, inventory_ids, context=None):
         """
         Trigerred when clicking on the button "Finish counting"
@@ -252,54 +263,91 @@ class PhysicalInventory(osv.osv):
             product_and_batch_id = (line["product_id"][0],
                                     line["batch_number"] or False)
 
-            counted_quantities[product_and_batch_id] = float(line["quantity"])
+            qty = float(line["quantity"]) if line["quantity"] else False
+            counted_quantities[product_and_batch_id] = qty
 
             counting_lines_per_product_and_batch[product_and_batch_id] = {
                 "line_no": line["line_no"],
                 "product_uom_id": line["product_uom_id"][0],
                 "standard_price": line["standard_price"],
-                "currency_id": line["currency_id"][0]
+                "currency_id": line["currency_id"][0] if line["currency_id"] else 1 # FIXME
             }
 
-        # Now, compare theoretical and counted quantities
+        # Create a similar dictionnary for existing discrepancies
+        previous_discrepancy_line_ids = inventory["discrepancy_line_ids"]
+        previous_discrepancy_lines = read_many('physical.inventory.discrepancy',
+                                                 previous_discrepancy_line_ids,
+                                                 [ "product_id",
+                                                   "batch_number",
+                                                   "ignored" ])
+
+        previous_discrepancies = {}
+        for line in previous_discrepancy_lines:
+            product_and_batch_id = (line["product_id"][0],
+                                    line["batch_number"] or False)
+            previous_discrepancies[product_and_batch_id] = {
+                "id": line["id"],
+                "ignored": line["ignored"],
+                "todelete": True
+            }
+
+        ###################################################
+        # Now, compare theoretical and counted quantities #
+        ###################################################
 
         # First, create a unique set containing all product/batches
         all_product_and_batch_ids = set().union(theoretical_quantities,
                                                 counted_quantities)
 
-        discrepancies = []
+        new_discrepancies = []
+        update_discrepancies = {}
+        anomalies = []
 
         # For each of them, compare the theoretical and counted qty
         for product_and_batch_id in all_product_and_batch_ids:
 
             # If the key is not known, assume 0
             theoretical_qty = theoretical_quantities.get(product_and_batch_id, 0.0)
-            counted_qty = counted_quantities.get(product_and_batch_id, 0.0)
+            counted_qty = counted_quantities.get(product_and_batch_id, None)
 
-            if counted_qty != theoretical_qty:
+            # If no discrepancy, nothing to do
+            # (Use a continue to save 1 indentation level..)
+            if counted_qty == theoretical_qty:
+                # FIXME : check if there's an existing discrepancy to be deleted ?
+                continue
 
-                # If this product/batch is known in the counting line, use
-                # the existing line number
-                if product_and_batch_id in counting_lines_per_product_and_batch:
-                    line_no = counting_lines_per_product_and_batch[product_and_batch_id]["line_no"]
-                    product_uom_id = counting_lines_per_product_and_batch[product_and_batch_id]["product_uom_id"]
-                    standard_price = counting_lines_per_product_and_batch[product_and_batch_id]["standard_price"]
-                    currency_id = counting_lines_per_product_and_batch[product_and_batch_id]["currency_id"]
+            # If this product/batch is known in the counting line, use
+            # the existing line number
+            if product_and_batch_id in counting_lines_per_product_and_batch:
+                line_no = counting_lines_per_product_and_batch[product_and_batch_id]["line_no"]
+                product_uom_id = counting_lines_per_product_and_batch[product_and_batch_id]["product_uom_id"]
+                standard_price = counting_lines_per_product_and_batch[product_and_batch_id]["standard_price"]
+                currency_id = counting_lines_per_product_and_batch[product_and_batch_id]["currency_id"]
 
-                # Otherwise, create additional line numbers starting from
-                # the total of existing lines
-                else:
-                    line_no = len(counted_quantities) + 1 + len(discrepancies)
-                    product_id = product_and_batch_id[0]
-                    infos = read_many("product.product", [product_id], ["uom_id",
-                                                                        "standard_price",
-                                                                        "currency_id"])[0]
-                    product_uom_id = infos["uom_id"][0]
-                    standard_price = infos["standard_price"]
-                    currency_id = infos["currency_id"][0]
+            # Otherwise, create additional line numbers starting from
+            # the total of existing lines
+            else:
+                # FIXME : propably does not guarrantee uniqueness of line_no
+                # in some edge cases when discrepency report is regenerated
+                # multiple times...
+                line_no = len(counted_quantities) + 1 + len(new_discrepancies)
+                product_id = product_and_batch_id[0]
+                infos = read_many("product.product", [product_id], ["uom_id",
+                                                                    "standard_price",
+                                                                    "currency_id"])[0]
+                product_uom_id = infos["uom_id"][0]
+                standard_price = infos["standard_price"]
+                currency_id = infos["currency_id"][0]
 
-
-                discrepancies.append( \
+            if product_and_batch_id in previous_discrepancies:
+                previous_discrepancies[product_and_batch_id]["todelete"] = False
+                existing_id = previous_discrepancies[product_and_batch_id]["id"]
+                update_discrepancies[existing_id] = {
+                  "line_no": line_no,
+                  "counted_qty": counted_quantities.get(product_and_batch_id, 0.0),
+                }
+            else:
+                new_discrepancies.append( \
                 { "inventory_id": inventory_id,
                   "line_no": line_no,
                   "product_id": product_and_batch_id[0],
@@ -311,34 +359,55 @@ class PhysicalInventory(osv.osv):
                   "currency_id": currency_id
                 })
 
+
         # Sort discrepancies according to line number
-        discrepancies = sorted(discrepancies, key=lambda d: d["line_no"])
-
-        # Get the existing inventory discrepancy lines (to be cleared)
-
-        existing_discrepancy_line_ids = inventory["discrepancy_line_ids"]
+        new_discrepancies = sorted(new_discrepancies, key=lambda d: d["line_no"])
 
         # Prepare the actual create/remove for discrepancy lines
-        # 2 is the code for removal/deletion, 0 is for addition/creation
+        # 0 is for addition/creation
+        # 1 is for update
+        # 2 is the code for removal/deletion
 
-        delete_existing_discrepancy_lines = [ (2,line_id) for line_id in existing_discrepancy_line_ids ]
-
-        create_discrepancy_lines = [ (0,0,discrepancy) for discrepancy in discrepancies ]
+        create_discrepancy_lines = [ (0,0,discrepancy) for discrepancy in new_discrepancies ]
+        update_discrepancy_lines = [ (1,id_,values) for id_, values in update_discrepancies.items() ]
+        delete_discrepancy_lines = [ (2,line["id"]) for line in previous_discrepancies.values() if line["todelete"] ]
 
         todo = []
-        todo.extend(delete_existing_discrepancy_lines)
+        todo.extend(delete_discrepancy_lines)
+        todo.extend(update_discrepancy_lines)
         todo.extend(create_discrepancy_lines)
 
         # Do the actual write
         write("physical.inventory", inventory_id, {'discrepancy_line_ids': todo})
 
-        # TODO: compute items with not found batch number. Sample for testing only:
-        #items = [{'message': 'Batch number 1...', 'line_id': 22}]
-        items = []
-        if items:
-            return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Advertissment', items)
+        return self.resolve_discrepancies_anomalies(cr, uid, inventory_id, context=context)
+
+
+    def resolve_discrepancies_anomalies(self, cr, uid, inventory_id, context=None):
+        context = {} if context else context
+        def read_single(model, id_, column):
+            return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+
+        discrepancy_line_ids = read_single("physical.inventory", inventory_id, 'discrepancy_line_ids')
+
+        discrepancy_lines = read_many('physical.inventory.discrepancy',
+                                      discrepancy_line_ids,
+                                      [ "line_no",
+                                        "counted_qty"])
+
+        anomalies = []
+        for line in discrepancy_lines:
+            if line["counted_qty"] == False or line["counted_qty"] == None:
+                anomalies.append({"message": "Quantity for line %s is incorrect. Ignore line or count as 0 ?" % line["line_no"],
+                                  "line_id": line["id"]})
+
+        if anomalies:
+            return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Advertissment', anomalies)
         else:
             return {}
+
 
     def pre_process_discrepancies(self, cr, uid, items, context=None):
         discrepancies = self.pool.get('physical.inventory.discrepancy')
@@ -346,9 +415,9 @@ class PhysicalInventory(osv.osv):
         count_ids = [item['line_id'] for item in items if item['action'] == 'count']
 
         if ignore_ids:
-            discrepancies.write(cr, uid, ignore_ids, {'counted_qty': 0.0, 'ignored': False})
+            discrepancies.write(cr, uid, ignore_ids, {'ignored': True})
         if count_ids:
-            discrepancies.write(cr, uid, count_ids, {'ignored': True})
+            discrepancies.write(cr, uid, count_ids, {'counted_qty': 0.0, 'ignored': False})
 
     def get_stock_for_products_at_location(self, cr, uid, product_ids, location_id, context=None):
         context = {} if context else context
