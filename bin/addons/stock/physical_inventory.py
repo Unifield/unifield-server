@@ -534,9 +534,33 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         # product_obj = self.pool.get('product.product')
         # product_uom_obj = self.pool.get('product.uom')
         # counting_obj = self.pool.get('physical.inventory.counting')
+        reason_type_obj = self.pool.get('stock.reason.type')
+        discrepancy_obj = self.pool.get('physical.inventory.discrepancy')
 
         for row_index, row in enumerate(discrepancy_report_file.getRows()):
-            pass
+            if row_index < 10:
+                continue
+            adjustment_type = row.cells[18].data
+            if adjustment_type:
+                reason_ids = reason_type_obj.search(cr, uid, [('name', '=like', adjustment_type)], context=context)
+                if reason_ids:
+                    adjustment_type = reason_ids[0]
+                else:
+                    add_error('Unknown adjustment type %s' % adjustment_type, row_index, 18)
+                    adjustment_type = False
+
+            comment = row.cells[19].data
+
+            line_no = row.cells[0].data
+            line_ids = discrepancy_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no)])
+            if line_ids:
+                line_no = line_ids[0]
+            else:
+                add_error('Unknown line no %s' % line_no, row_index, 0)
+                line_no = False
+
+            discrepancy_report_lines.append((1, 0, {'reason_type_id': adjustment_type, 'comment': comment}))
+        # endfor
 
         context['import_in_progress'] = True
         wizard_obj = self.pool.get('physical.inventory.import.wizard')
@@ -547,9 +571,10 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                                             message='\n'.join(discrepancy_report_errors))
         else:
             # No error found. update comment and reason for discrepancies lines on Inventory
-            vals = {'file_to_import2': False}
+            vals = {'file_to_import2': False, 'discrepancy_line_ids': discrepancy_report_lines}
             self.write(cr, uid, ids, vals, context=context)
-            result = wizard_obj.message_box(cr, uid, title='Information', message='Counting sheet succefully imported.')
+            result = wizard_obj.message_box(cr, uid, title='Information',
+                                            message='Discrepancy report succefully imported.')
         context['import_in_progress'] = False
 
         return result
