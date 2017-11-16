@@ -73,17 +73,20 @@ class patch_scripts(osv.osv):
                                            ('name', '=', '2014-01-01')], order='id',
                                           limit=1)
                 if rate_id:
-                    rate_obj.unlink(cr, uid, rate_id)
+                    cr.execute('delete from res_currency_rate where id = %s', (rate_id[0],))
                     imd_obj = self.pool.get('ir.model.data')
                     imd_ids = imd_obj.search(cr, uid, [('model', '=', 'res.currency.rate'), ('res_id', '=', rate_id[0])])
                     imd_obj.unlink(cr, uid, imd_ids)
                 cr.commit()
 
                 # add the constraint
-                cr.execute("""
-                ALTER TABLE "%s" ADD CONSTRAINT "%s" %s
-                """ % ('res_currency_rate', 'res_currency_rate_rate_unique',
-                       'unique(name, currency_id)'))
+                try:
+                    cr.execute("""
+                        ALTER TABLE "%s" ADD CONSTRAINT "%s" %s
+                        """ % ('res_currency_rate', 'res_currency_rate_rate_unique',
+                               'unique(name, currency_id)'))
+                except:
+                    self._logger.warn('Unable to set unique constraint on currency rate')
         return True
 
     def us_2676(self, cr, uid, *a, **b):
@@ -114,6 +117,9 @@ class patch_scripts(osv.osv):
         cr.execute(sql_resource_table)
         cr.execute(sql_employee_table)
 
+    def us_3756_remove_space_partner(self, cr, uid, *a, **b):
+        cr.execute('UPDATE res_partner SET name = TRIM(name)')
+        return True
 
     # OLD patches
     def us_3048_patch(self, cr, uid, *a, **b):
