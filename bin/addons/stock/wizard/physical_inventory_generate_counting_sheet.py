@@ -28,9 +28,14 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
     _columns = {
         'inventory_id': fields.many2one('physical.inventory', 'Inventory', readonly=True),
-        'fill_bn_and_ed': fields.boolean('Prefill Batch Numbers and Expiry Date'),
+        'prefill_bn': fields.boolean('Prefill Batch Numbers'),
+        'prefill_ed': fields.boolean('Prefill Expiry Dates'),
     }
 
+    _defaults = {
+        'prefill_bn': True,
+        'prefill_ed': True
+    }
 
     def create(self, cr, user, vals, context=None):
 
@@ -55,7 +60,8 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         wizard_id = wizard_ids[0]
 
         # Get the selected option
-        fill_bn_and_ed = read_single(self._name, wizard_id, 'fill_bn_and_ed')
+        prefill_bn = read_single(self._name, wizard_id, 'prefill_bn')
+        prefill_ed = read_single(self._name, wizard_id, 'prefill_ed')
 
         # Get location, products selected, and existing inventory lines
         inventory_id = read_single(self._name, wizard_id, "inventory_id")
@@ -107,8 +113,8 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                                "product_uom_id": product_uom_id,
                                "currency_id": currency_id,
                                "standard_price": standard_price,
-                               "batch_number": bn_and_ed[0] if fill_bn_and_ed else False,
-                               "expiry_date":  bn_and_ed[1] if fill_bn_and_ed else False
+                               "batch_number": bn_and_ed[0] if prefill_bn else False,
+                               "expiry_date":  bn_and_ed[1] if prefill_ed else False
                              }
                     inventory_counting_lines_to_create.append(values)
 

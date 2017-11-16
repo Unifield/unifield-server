@@ -7,7 +7,8 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Generate Counting Sheet">
-                    <field name="fill_bn_and_ed"/>
+                    <field name="prefill_bn" colspan="4"/>
+                    <field name="prefill_ed" colspan="4"/>
                     <button name="generate_counting_sheet" string="Generate counting sheet" icon="gtk-go-forward" colspan="4" type="object" />
                 </form>
             </field>
