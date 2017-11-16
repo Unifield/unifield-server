@@ -87,6 +87,7 @@ class patch_scripts(osv.osv):
                                'unique(name, currency_id)'))
                 except:
                     self._logger.warn('Unable to set unique constraint on currency rate')
+                    cr.rollback()
         return True
 
     def us_2676(self, cr, uid, *a, **b):
