@@ -160,10 +160,14 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
             product_id = move["product_id"][0]
 
-            prodlot_id = move["prodlot_id"][1] if isinstance(move["prodlot_id"], tuple) else False
+            batch_number = move["prodlot_id"][1] if isinstance(move["prodlot_id"], tuple) else False
             expired_date = move["expired_date"]
 
-            BN_and_ED[product_id].add((prodlot_id, expired_date))
+            # Dirty hack to ignore/hide internal batch numbers ("MSFBN")
+            if batch_number and batch_number.startswith("MSFBN"):
+                batch_number = False
+
+            BN_and_ED[product_id].add((batch_number, expired_date))
 
         return BN_and_ED
 

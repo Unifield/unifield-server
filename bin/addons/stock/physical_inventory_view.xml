@@ -115,6 +115,7 @@
                                     <field name="standard_price" />
                                     <field name="currency_id" />
                                     <field name="batch_number" />
+                                    <field name="expiry_date" />
                                     <field name="theoretical_qty" />
                                     <field name="counted_qty" />
                                     <field name="discrepancy_qty" />
@@ -135,6 +136,7 @@
                                     <field name="standard_price" />
                                     <field name="currency_id" />
                                     <field name="batch_number" />
+                                    <field name="expiry_date" />
                                     <field name="theoretical_qty" />
                                     <field name="counted_qty" />
                                     <field name="discrepancy_qty" />

@@ -245,13 +245,16 @@ class PhysicalInventory(osv.osv):
         location_id = inventory["location_id"][0]
         counting_line_ids = inventory["counting_line_ids"]
 
-        counting_lines = read_many('physical.inventory.counting', counting_line_ids, [ "line_no",
-                                                                                       "product_id",
-                                                                                       "product_uom_id",
-                                                                                       "standard_price",
-                                                                                       "currency_id",
-                                                                                       "batch_number",
-                                                                                       "quantity"])
+        counting_lines = read_many('physical.inventory.counting',
+                                   counting_line_ids,
+                                   [ "line_no",
+                                     "product_id",
+                                     "product_uom_id",
+                                     "standard_price",
+                                     "currency_id",
+                                     "batch_number",
+                                     "expiry_date",
+                                     "quantity"])
 
         # Extract the list of (unique) product ids
         product_ids = [ line["product_id"][0] for line in counting_lines ]
@@ -263,17 +266,18 @@ class PhysicalInventory(osv.osv):
         theoretical_quantities = self.get_stock_for_products_at_location(cr, uid, product_ids, location_id, context=context)
 
         # Create a similar dictionnary for counted quantities
-        counting_lines_per_product_and_batch = {}
+        counting_lines_per_product_batch_expirtydate = {}
         counted_quantities = {}
         for line in counting_lines:
 
-            product_and_batch_id = (line["product_id"][0],
-                                    line["batch_number"] or False)
+            product_batch_expirydate = (line["product_id"][0],
+                                        line["batch_number"] or False,
+                                        line["expiry_date"])
 
             qty = float(line["quantity"]) if line["quantity"] else False
-            counted_quantities[product_and_batch_id] = qty
+            counted_quantities[product_batch_expirydate] = qty
 
-            counting_lines_per_product_and_batch[product_and_batch_id] = {
+            counting_lines_per_product_batch_expirtydate[product_batch_expirydate] = {
                 "line_no": line["line_no"],
                 "product_uom_id": line["product_uom_id"][0],
                 "standard_price": line["standard_price"],
@@ -286,13 +290,15 @@ class PhysicalInventory(osv.osv):
                                                  previous_discrepancy_line_ids,
                                                  [ "product_id",
                                                    "batch_number",
+                                                   "expiry_date",
                                                    "ignored" ])
 
         previous_discrepancies = {}
         for line in previous_discrepancy_lines:
-            product_and_batch_id = (line["product_id"][0],
-                                    line["batch_number"] or False)
-            previous_discrepancies[product_and_batch_id] = {
+            product_batch_expirydate = (line["product_id"][0],
+                                        line["batch_number"] or False,
+                                        line["expiry_date"])
+            previous_discrepancies[product_batch_expirydate] = {
                 "id": line["id"],
                 "ignored": line["ignored"],
                 "todelete": True
@@ -303,19 +309,19 @@ class PhysicalInventory(osv.osv):
         ###################################################
 
         # First, create a unique set containing all product/batches
-        all_product_and_batch_ids = set().union(theoretical_quantities,
-                                                counted_quantities)
+        all_product_batch_expirydate = set().union(theoretical_quantities,
+                                                   counted_quantities)
 
         new_discrepancies = []
         update_discrepancies = {}
         anomalies = []
 
         # For each of them, compare the theoretical and counted qty
-        for product_and_batch_id in all_product_and_batch_ids:
+        for product_batch_expirydate in all_product_batch_expirydate:
 
             # If the key is not known, assume 0
-            theoretical_qty = theoretical_quantities.get(product_and_batch_id, 0.0)
-            counted_qty = counted_quantities.get(product_and_batch_id, None)
+            theoretical_qty = theoretical_quantities.get(product_batch_expirydate, 0.0)
+            counted_qty = counted_quantities.get(product_batch_expirydate, None)
 
             # If no discrepancy, nothing to do
             # (Use a continue to save 1 indentation level..)
@@ -325,20 +331,21 @@ class PhysicalInventory(osv.osv):
 
             # If this product/batch is known in the counting line, use
             # the existing line number
-            if product_and_batch_id in counting_lines_per_product_and_batch:
-                line_no = counting_lines_per_product_and_batch[product_and_batch_id]["line_no"]
-                product_uom_id = counting_lines_per_product_and_batch[product_and_batch_id]["product_uom_id"]
-                standard_price = counting_lines_per_product_and_batch[product_and_batch_id]["standard_price"]
-                currency_id = counting_lines_per_product_and_batch[product_and_batch_id]["currency_id"]
+            if product_batch_expirydate in counting_lines_per_product_batch_expirtydate:
+                this_product_batch_expirydate = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]
+                line_no = this_product_batch_expirydate["line_no"]
+                product_uom_id = this_product_batch_expirydate["product_uom_id"]
+                standard_price = this_product_batch_expirydate["standard_price"]
+                currency_id = this_product_batch_expirydate["currency_id"]
 
             # Otherwise, create additional line numbers starting from
             # the total of existing lines
             else:
-                # FIXME : propably does not guarrantee uniqueness of line_no
-                # in some edge cases when discrepency report is regenerated
-                # multiple times...
+                # FIXME : propably does not guarrantee uniqueness and
+                # 'incremenctaliness' of line_no in some edge cases when
+                # discrepancy report is regenerated multiple times...
                 line_no = len(counted_quantities) + 1 + len(new_discrepancies)
-                product_id = product_and_batch_id[0]
+                product_id = product_batch_expirydate[0]
                 infos = read_many("product.product", [product_id], ["uom_id",
                                                                     "standard_price",
                                                                     "currency_id"])[0]
@@ -346,21 +353,22 @@ class PhysicalInventory(osv.osv):
                 standard_price = infos["standard_price"]
                 currency_id = infos["currency_id"][0]
 
-            if product_and_batch_id in previous_discrepancies:
-                previous_discrepancies[product_and_batch_id]["todelete"] = False
-                existing_id = previous_discrepancies[product_and_batch_id]["id"]
+            if product_batch_expirydate in previous_discrepancies:
+                previous_discrepancies[product_batch_expirydate]["todelete"] = False
+                existing_id = previous_discrepancies[product_batch_expirydate]["id"]
                 update_discrepancies[existing_id] = {
                   "line_no": line_no,
-                  "counted_qty": counted_quantities.get(product_and_batch_id, 0.0),
+                  "counted_qty": counted_quantities.get(product_batch_expirydate, 0.0),
                 }
             else:
                 new_discrepancies.append( \
                 { "inventory_id": inventory_id,
                   "line_no": line_no,
-                  "product_id": product_and_batch_id[0],
-                  "batch_number": product_and_batch_id[1],
-                  "theoretical_qty": theoretical_quantities.get(product_and_batch_id, 0.0),
-                  "counted_qty": counted_quantities.get(product_and_batch_id, 0.0),
+                  "product_id": product_batch_expirydate[0],
+                  "batch_number": product_batch_expirydate[1],
+                  "expiry_date": product_batch_expirydate[2],
+                  "theoretical_qty": theoretical_quantities.get(product_batch_expirydate, 0.0),
+                  "counted_qty": counted_quantities.get(product_batch_expirydate, 0.0),
                   "product_uom_id": product_uom_id,
                   "standard_price": standard_price,
                   "currency_id": currency_id
@@ -454,6 +462,7 @@ class PhysicalInventory(osv.osv):
                                       ["product_id",
                                        "product_qty",
                                        "prodlot_id",
+                                       "expired_date",
                                        "location_id",
                                        "location_dest_id"])
 
@@ -463,22 +472,27 @@ class PhysicalInventory(osv.osv):
 
             product_id = move["product_id"][0]
             product_qty = move["product_qty"]
-            batch_id = move["prodlot_id"][1] if move["prodlot_id"] else False
+            batch_number = move["prodlot_id"][1] if move["prodlot_id"] else False
+            expiry_date = move["expired_date"]
 
-            product_and_batch_id = (product_id, batch_id)
+            # Dirty hack to ignore/hide internal batch numbers ("MSFBN")
+            if batch_number and batch_number.startswith("MSFBN"):
+                batch_number = False
+
+            product_batch_expirydate = (product_id, batch_number, expiry_date)
 
             # Init the quantity to 0 if batch is not present in dict yet
             # (NB: batch_id can be None, but that's not an issue for dicts ;))
-            if not product_and_batch_id in stocks.keys():
-                stocks[product_and_batch_id] = 0.0
+            if not product_batch_expirydate in stocks.keys():
+                stocks[product_batch_expirydate] = 0.0
 
             move_out = (move["location_id"][0] == location_id)
             move_in = (move["location_dest_id"][0] == location_id)
 
             if move_in:
-                stocks[product_and_batch_id] += product_qty
+                stocks[product_batch_expirydate] += product_qty
             elif move_out:
-                stocks[product_and_batch_id] -= product_qty
+                stocks[product_batch_expirydate] -= product_qty
             else:
                 # This shouldnt happen
                 pass
