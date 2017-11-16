@@ -893,7 +893,7 @@ class PhysicalInventoryCounting(osv.osv):
         'product_id': fields.many2one('product.product', _('Product'), required=True, select=True,
                                       domain=[('type', '<>', 'service')]),
         'product_uom_id': fields.many2one('product.uom', _('Product UOM'), required=True),
-        'standard_price': fields.integer(string=_("Unit Price"), readonly=True),
+        'standard_price': fields.float(_("Unit Price"), readonly=True),
         'currency_id': fields.many2one('res.currency', "Currency", readonly=True),
         'is_bn': fields.related('product_id', 'batch_management', string='BN', type='boolean', readonly=True),
         'is_ed': fields.related('product_id', 'perishable', string='ED', type='boolean', readonly=True),
@@ -997,18 +997,13 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # Product
         'product_id': fields.many2one('product.product', 'Product', required=True),
-        'default_code': fields.related('product_id', 'default_code', string="Code",
-                                       type='char', readonly=True),
-        'name': fields.related('product_id', 'name', string="Description",
-                               type='char', readonly=True),
 
         'product_uom_id': fields.many2one('product.uom', 'UOM', required=True, readonly=True),
 
         'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', string="Family",
                                          relation="product.nomenclature", type='many2one', readonly=True),
 
-        # TODO : fill standardprice / currencyid when creating these lines
-        'standard_price': fields.integer(string=_("Unit Price"), readonly=True),
+        'standard_price': fields.float(_("Unit Price"), readonly=True),
         'currency_id': fields.many2one('res.currency', "Currency", readonly=True),
 
         # BN / ED

@@ -111,8 +111,7 @@
                                 <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True">
                                     <field name="line_no" />
                                     <field name="nomen_manda_2" />
-                                    <field name="default_code" />
-                                    <field name="name" />
+                                    <field name="product_id" />
                                     <field name="standard_price" />
                                     <field name="currency_id" />
                                     <field name="batch_number" />
@@ -132,8 +131,7 @@
                                 <form string="Discrepancy line">
                                     <field name="line_no" />
                                     <field name="nomen_manda_2" />
-                                    <field name="default_code" />
-                                    <field name="name" />
+                                    <field name="product_id" />
                                     <field name="standard_price" />
                                     <field name="currency_id" />
                                     <field name="batch_number" />
