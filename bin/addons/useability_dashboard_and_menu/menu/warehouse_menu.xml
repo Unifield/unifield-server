@@ -107,12 +107,6 @@
                   sequence="23"
                   action="mission_stock.mission_stock_wizard_action" />
 	              
-	    <menuitem name="Physical Inventories"
-	              action="stock.action_inventory_form" 
-	              id="stock.menu_action_inventory_form" 
-	              parent="stock.menu_stock_inventory_control" 
-	              sequence="24"/>
-	              
         <menuitem name="Last Product Inventories"
                   parent="stock.menu_stock_inventory_control" 
                   action="stock.action_stock_line_date" 
