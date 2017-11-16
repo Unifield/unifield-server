@@ -78,28 +78,28 @@
                         </page>
                         <page string="Discrepancy report">
                             <group col="4" colspan="4">
-                                <group col="1" colspan="1">
+                                <group col="4" colspan="4">
                                     <label string="" />
-                                    <label string="Total at the end" />
-                                    <label string="With discrepancies" />
-                                    <label string="Percent" />
-                                </group>
-                                <group col="1" colspan="1">
                                     <label string="Number of lines" />
-                                    <field name="inventory_lines_number" nolabel="1" />
-                                    <field name="discrepancy_lines_number" nolabel="1" />
-                                    <field name="discrepancy_lines_percent" nolabel="1" />
-                                </group>
-                                <group col="1" colspan="1">
                                     <label string="Value" />
-                                    <field name="inventory_lines_value" nolabel="1" />
-                                    <field name="discrepancy_lines_value" nolabel="1" />
-                                    <field name="discrepancy_lines_percent_value" nolabel="1" />
-                                </group>
-                                <group col="1" colspan="1">
                                     <label string="Absolute value" />
+                                </group>
+                                <group col="4" colspan="4">
+                                    <label string="Total at the end" />
+                                    <field name="inventory_lines_number" nolabel="1" />
+                                    <field name="inventory_lines_value" nolabel="1" />
                                     <field name="inventory_lines_absvalue" nolabel="1" />
+                                </group>
+                                <group col="4" colspan="4">
+                                    <label string="With discrepancies" />
+                                    <field name="discrepancy_lines_number" nolabel="1" />
+                                    <field name="discrepancy_lines_value" nolabel="1" />
                                     <field name="discrepancy_lines_absvalue" nolabel="1" />
+                                </group>
+                                <group col="4" colspan="4">
+                                    <label string="Percent" />
+                                    <field name="discrepancy_lines_percent" nolabel="1" />
+                                    <field name="discrepancy_lines_percent_value" nolabel="1" />
                                     <field name="discrepancy_lines_percent_absvalue" nolabel="1" />
                                 </group>
                             </group>
@@ -111,9 +111,10 @@
                                     type="object" icon="gtk-save" colspan="2"/>
                             </group>
                             <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
-                                   domain="[('ignored', '!=', True)]"
+                                   filter_selector="[('Hide ignored', ('ignored', '!=', True), ('Show all', ''), ('Show ignored only', ('ignored', '=', 'True))]"
                                    attrs="{'readonly': [('state', '!=', 'draft')]}">
-                                <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True">
+                               <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True"
+                                     colors="grey:ignored==True">
                                     <field name="line_no" />
                                     <field name="nomen_manda_2" />
                                     <field name="product_id" />

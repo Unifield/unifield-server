@@ -1132,6 +1132,8 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'ignored': fields.boolean('Ignored', readonly=True)
     }
 
+    _order = "product_id asc, line_no asc"
+
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
 
