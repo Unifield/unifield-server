@@ -3480,11 +3480,16 @@ class stock_picking(osv.osv):
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, new_picking_id, context=context)
 
-                # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
-                wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
-                # Then we finish the picking
-                self.action_move(cr, uid, [new_picking_id])
-                wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_done', cr)
+                if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
+                    move_ids = move_obj.search(cr, uid, [('picking_id', '=', new_picking_id)])
+                    move_obj.action_cancel(cr, uid, move_ids, context=context)
+                    self.action_cancel(cr, uid, [new_picking_id], context=context)
+                else:
+                    # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
+                    wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
+                    # Then we finish the picking
+                    self.action_move(cr, uid, [new_picking_id])
+                    wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_done', cr)
                 # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
                 self._hook_create_sync_messages(cr, uid, new_picking_id, context)
 
@@ -3502,12 +3507,17 @@ class stock_picking(osv.osv):
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, picking.id, context=context)
 
-                self.action_move(cr, uid, [picking.id])
-                wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
-                update_vals = {'state':'done', 'date_done':time.strftime('%Y-%m-%d %H:%M:%S')}
-                if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
-                    update_vals.update({'already_replicated': False})
-                self.write(cr, uid, picking.id, update_vals)
+                if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
+                    move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking.id)])
+                    move_obj.action_cancel(cr, uid, move_ids, context=context)
+                    self.action_cancel(cr, uid, [picking.id], context=context)
+                else:
+                    self.action_move(cr, uid, [picking.id])
+                    wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
+                    update_vals = {'state':'done', 'date_done':time.strftime('%Y-%m-%d %H:%M:%S')}
+                    if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
+                        update_vals.update({'already_replicated': False})
+                    self.write(cr, uid, picking.id, update_vals)
 
                 # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
                 self._hook_create_sync_messages(cr, uid, [picking.id], context)

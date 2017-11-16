@@ -1051,8 +1051,7 @@ class claim_event(osv.osv):
             if claim_type == 'supplier':
                 replacement_values.update({'type': 'in'})
                 # receive back from supplier, destination default input
-                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id,
-                                                'location_dest_id': context['common']['input_id']})
+                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id})
             elif claim_type == 'customer':
                 replacement_values.update({'type': 'out'})
                 # resend to customer, from stock by default (can be changed by user later)
@@ -1150,8 +1149,7 @@ class claim_event(osv.osv):
             if claim_type == 'supplier':
                 replacement_values.update({'type': 'in'})
                 # receive back from supplier, destination default input
-                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id,
-                                                'location_dest_id': context['common']['input_id']})
+                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id})
             elif claim_type == 'customer':
                 replacement_values.update({'type': 'out'})
                 # resend to customer, from stock by default (can be changed by user later)
@@ -1189,6 +1187,7 @@ class claim_event(osv.osv):
         context.update({'from_claim': True})
 
         # objects
+        data_obj = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
         picking_tools = self.pool.get('picking.tools')
@@ -1224,8 +1223,8 @@ class claim_event(osv.osv):
                           }
         move_values = {'type': 'out',
                        'reason_type_id': context['common']['rt_goods_return'],
-                       'location_id': context['common']['stock_id'],
-                       'location_dest_id': claim.partner_id_return_claim.property_stock_customer.id,
+                       'location_id': context['common']['input_id'],
+                       'location_dest_id': data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1],
                        }
         # update the picking
         pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
@@ -1235,9 +1234,8 @@ class claim_event(osv.osv):
         move_ids = [move.id for move in event_picking.move_lines]
         # get the move values according to claim type
         move_obj.write(cr, uid, move_ids, move_values, context=context)
-        # assign all moves and check assign for event picking
-        move_obj.force_assign(cr, uid, move_ids, context=context)
-        picking_tools.check_assign(cr, uid, event_picking.id, context=context)
+        # confirm the moves but not the pick to be able to convert to OUT
+        move_obj.action_confirm(cr, uid, move_ids, context=context)
         # do we need replacement?
         if obj.replacement_picking_expected_claim_event:
             # we copy the event return picking
@@ -1259,8 +1257,7 @@ class claim_event(osv.osv):
             if claim_type == 'supplier':
                 replacement_values.update({'type': 'in'})
                 # receive back from supplier, destination default input
-                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id,
-                                                'location_dest_id': context['common']['input_id']})
+                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id})
             elif claim_type == 'customer':
                 replacement_values.update({'type': 'out'})
                 # resend to customer, from stock by default (can be changed by user later)
@@ -1298,6 +1295,7 @@ class claim_event(osv.osv):
         context.update({'from_claim': True})
 
         # objects
+        data_obj = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
         picking_tools = self.pool.get('picking.tools')
@@ -1331,8 +1329,8 @@ class claim_event(osv.osv):
                           }
         move_values = {'type': 'out',
                        'reason_type_id': context['common']['rt_goods_return'],
-                       'location_id': context['common']['stock_id'],
-                       'location_dest_id': claim.partner_id_return_claim.property_stock_customer.id,
+                       'location_id': context['common']['input_id'],
+                       'location_dest_id': data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1],
                        }
         # update the picking
         pick_obj.write(cr, uid, [event_picking.id], picking_values, context=context)
@@ -1342,10 +1340,8 @@ class claim_event(osv.osv):
         move_ids = [move.id for move in event_picking.move_lines]
         # get the move values according to claim type
         move_obj.write(cr, uid, move_ids, move_values, context=context)
-        # assign moves linked to event_picking
-        move_obj.force_assign(cr, uid, move_ids, context=context)
-        # check assign for event picking
-        picking_tools.check_assign(cr, uid, event_picking.id, context=context)
+        # confirm the moves but not the pick to be able to convert to OUT
+        move_obj.action_confirm(cr, uid, move_ids, context=context)
 
         return True
 
