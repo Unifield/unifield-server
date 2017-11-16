@@ -31,6 +31,8 @@ class PhysicalInventory(osv.osv):
         context = context is None and {} or context
         def read_many(model, ids, columns):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+        def search(model, domain):
+            return self.pool.get(model).search(cr, uid, domain, context=context)
 
         inventories = read_many("physical.inventory", ids, ["discrepancy_line_ids",
                                                             "counting_line_ids"])
@@ -40,11 +42,16 @@ class PhysicalInventory(osv.osv):
 
             counting_lines = read_many("physical.inventory.counting",
                                        inventory["counting_line_ids"],
-                                       ["quantity",
-                                        "standard_price"])
+                                       ["quantity", "standard_price"])
+
+            # Keep only non-ignored lines
+            discrepancy_line_ids = search("physical.inventory.discrepancy",
+                                          ['&',
+                                           ('ignored', '!=', True),
+                                           ("id", "in", inventory["discrepancy_line_ids"])])
 
             discrepancy_lines = read_many("physical.inventory.discrepancy",
-                                          inventory["discrepancy_line_ids"],
+                                          discrepancy_line_ids,
                                           ["discrepancy_value"])
 
             inventory_lines_value = 0
@@ -395,10 +402,13 @@ class PhysicalInventory(osv.osv):
         discrepancy_lines = read_many('physical.inventory.discrepancy',
                                       discrepancy_line_ids,
                                       [ "line_no",
-                                        "counted_qty"])
+                                        "counted_qty",
+                                        "ignored"])
 
         anomalies = []
         for line in discrepancy_lines:
+            if line["ignored"]:
+                continue
             if line["counted_qty"] == False or line["counted_qty"] == None:
                 anomalies.append({"message": "Quantity for line %s is incorrect. Ignore line or count as 0 ?" % line["line_no"],
                                   "line_id": line["id"]})
