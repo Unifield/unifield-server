@@ -16,6 +16,10 @@
                     <field name="responsible"/>
                     <field name="date_done"/>
                     <field name="full_inventory"/>
+                    <button colspan="2" name="set_full_inventory" states="draft" string="Set as full inventory" type="object"
+                        icon="gtk-about" 
+                        confirm="Setting as 'full inventory' is irreversible. Do you confirm ?" 
+                        attrs="{'invisible': [('full_inventory', '=', True)]}"/>
                     <notebook colspan="4">
                         <page string="Products">
                             <button name="action_select_products" states="draft" string="Products Selection" type="object"
@@ -33,7 +37,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Counting sheet" attrs="{'readonly': ['state', '!=', 'draft]}">
+                        <page string="Counting sheet" attrs="{'readonly': [('state', '!=', 'draft')]}">
                             <group col="4" colspan="4">
                                 <button name="export_pdf_counting_sheet" string="Export pdf counting sheet"
                                         type="object" colspan="2" icon="gtk-print"/>
@@ -107,6 +111,7 @@
                                     type="object" icon="gtk-save" colspan="2"/>
                             </group>
                             <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
+                                   domain="[('ignored', '!=', True)]"
                                    attrs="{'readonly': [('state', '!=', 'draft')]}">
                                 <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True">
                                     <field name="line_no" />
@@ -128,6 +133,7 @@
                                     <field name="total_product_counted_value" />
                                     <field name="total_product_discrepancy_qty" />
                                     <field name="total_product_discrepancy_value" />
+                                    <field name="ignored" invisible="True"/>
                                 </tree>
                                 <form string="Discrepancy line">
                                     <field name="line_no" />
@@ -149,6 +155,7 @@
                                     <field name="total_product_counted_value" />
                                     <field name="total_product_discrepancy_qty" />
                                     <field name="total_product_discrepancy_value" />
+                                    <field name="ignored" invisible="True"/>
                                 </form>
                             </field>
                         </page>

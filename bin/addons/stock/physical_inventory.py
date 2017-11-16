@@ -111,7 +111,7 @@ class PhysicalInventory(osv.osv):
         'state': fields.selection(PHYSICAL_INVENTORIES_STATES, 'State', readonly=True, select=True),
         'company_id': fields.many2one('res.company', 'Company', readonly=True, select=True, required=True,
                                       states={'draft': [('readonly', False)]}),
-        'full_inventory': fields.boolean('Full inventory', readonly=True, states={'draft': [('readonly', False)]}),
+        'full_inventory': fields.boolean('Full inventory', readonly=True),
         'file_to_import': fields.binary(string='File to import', filters='*.xml'),
         'file_to_import2': fields.binary(string='File to import', filters='*.xml'),
 
@@ -137,6 +137,12 @@ class PhysicalInventory(osv.osv):
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
+
+
+    def set_full_inventory(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'full_inventory': True})
+        return {}
+
 
     def action_select_products(self, cr, uid, ids, context=None):
         """
