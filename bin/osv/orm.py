@@ -3895,6 +3895,7 @@ class orm(orm_template):
         """
         if not ids:
             return True
+        assert isinstance(vals, dict), "orm.write() expects a dictionnary as 4th argument!"
         readonly = None
         for field in vals.copy():
             fobj = None
