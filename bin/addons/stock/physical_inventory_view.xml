@@ -263,6 +263,6 @@
             <field name="help">Periodical Inventories are used to count the number of products available per location. You can use it once a year when you do the general inventory or whenever you need it, to correct the current stock level of a product.</field>
         </record>
         <!-- Menu -->
-        <menuitem action="action_physical_inventory" id="menu_action_physical_inventory" parent="menu_stock_inventory_control" sequence="30"/>
+        <menuitem action="action_physical_inventory" id="menu_action_physical_inventory" parent="menu_stock_inventory_control" sequence="23"/>
     </data>
 </openerp>
