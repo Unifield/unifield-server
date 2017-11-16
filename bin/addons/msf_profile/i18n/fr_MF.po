@@ -73206,10 +73206,12 @@ msgstr "Produits par Zone"
 msgid "Allotment Partner"
 msgstr "Partenaire Répartition"
 
-#. modules: financing_contract, consumption_calculation, register_accounting, account
+#. modules: financing_contract, consumption_calculation, register_accounting, account, account_mcdb
 #: report:expiry.report:0
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:546
 #: report:addons/register_accounting/report/pending_cheque_xls.mako:267
+#: report:account.analytic.line:0
+#: report:account.move.line:0
 msgid "TOTAL"
 msgstr "TOTAL"
 
@@ -100073,3 +100075,29 @@ msgstr "Sous-Total (devise fonctionnelle)"
 #: field:sale.order.line,modification_comment:0
 msgid "Modification Comment"
 msgstr "Commentaire de Modification"
+
+#. module: account_mcdb
+#: view:account.mcdb:0
+msgid "Export PDF report"
+msgstr "Exporter rapport PDF"
+
+#. module: account_mcdb
+#: report:account.move.line:0
+#: report:account.analytic.line:0
+msgid "Total Booking Curr."
+msgstr "Total Devise d'Enreg."
+
+#. module: account_mcdb
+#: report:account.analytic.line:0
+msgid "Total Out. Curr."
+msgstr "Total Devise Sort."
+
+#. module: account_mcdb
+#: report:account.move.line:0
+msgid "Total Output Curr."
+msgstr "Total Devise Sortante"
+
+#. module: account_mcdb
+#: report:account.analytic.line:0
+msgid "Total Func. Curr."
+msgstr "Total Devise Fonc."
