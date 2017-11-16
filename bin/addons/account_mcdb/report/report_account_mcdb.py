@@ -64,7 +64,7 @@ class report_gl_selector(report_sxw.rml_parse):
 
 report_sxw.report_sxw('report.gl.selector', 'account.move.line',
                       'addons/account_mcdb/report/report_account_move_line.rml',
-                      parser=report_gl_selector, header=None)
+                      parser=report_gl_selector, header='internal landscape')
 
 
 class report_analytic_selector(report_sxw.rml_parse):
