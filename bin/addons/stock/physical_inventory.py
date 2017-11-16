@@ -395,6 +395,12 @@ class PhysicalInventory(osv.osv):
         # Do the actual write
         write("physical.inventory", inventory_id, {'discrepancy_line_ids': todo})
 
+
+        self._update_total_product(cr, uid, inventory_id,
+                                            theoretical_quantities,
+                                            counted_quantities,
+                                            context=context)
+
         return self.resolve_discrepancies_anomalies(cr, uid, inventory_id, context=context)
 
 
@@ -425,6 +431,49 @@ class PhysicalInventory(osv.osv):
             return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Advertissment', anomalies)
         else:
             return {}
+
+
+    def _update_total_product(self, cr, uid, inventory_id, theoretical_qties, counted_qties, context=None):
+        """
+        theoretical_qties and counted_qties are indexed with (product_id, batchnumber, expirydate)
+        """
+        def read_single(model, id_, column):
+            return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+        def write(model, id_, vals):
+            return self.pool.get(model).write(cr, uid, [id_], vals, context=context)
+
+        discrepancy_line_ids = read_single("physical.inventory",
+                                           inventory_id,
+                                           'discrepancy_line_ids')
+
+        discrepancy_lines = read_many("physical.inventory.discrepancy",
+                                      discrepancy_line_ids,
+                                      ["product_id"])
+
+        all_product_ids = set([ l["product_id"][0] for l in discrepancy_lines ])
+
+        total_product_theoretical_qties = {}
+        total_product_counted_qties = {}
+        for product_id in all_product_ids:
+
+            # FIXME : how to not take into account ignored lines in the count ? :/
+            total_product_theoretical_qties[product_id] = sum([ qty for k, qty in theoretical_qties.items() if k[0] == product_id ])
+            total_product_counted_qties[product_id] = sum([ qty for k, qty in counted_qties.items() if k[0] == product_id ])
+
+        update_discrepancy_lines = {}
+        for line in discrepancy_lines:
+            id_ = line["id"]
+            product_id = line["product_id"][0]
+            update_discrepancy_lines[id_] = {
+                'total_product_theoretical_qty': total_product_theoretical_qties[product_id],
+                'total_product_counted_qty': total_product_counted_qties[product_id]
+            }
+
+        todo = [ (1,id_,values) for id_, values in update_discrepancy_lines.items() ]
+
+        write("physical.inventory", inventory_id, {'discrepancy_line_ids':todo})
 
 
     def pre_process_discrepancies(self, cr, uid, items, context=None):
@@ -1003,16 +1052,30 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
 
     def _total_product_qty_and_values(self, cr, uid, ids, field_names, arg, context=None):
+        def search(model, domain):
+            return self.pool.get(model).search(cr, uid, domain, context=context)
+        def read_many(model, ids, columns):
+            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
 
-        # TODO : correctly implement this...
-        ret = {}
+        discrepancy_lines = read_many(self._name, ids, ["product_id",
+                                                        "standard_price",
+                                                        "total_product_theoretical_qty",
+                                                        "total_product_counted_qty" ])
 
-        for id_ in ids:
-            ret[id_] = {'total_product_counted_value': 0.0,
-                        'total_product_discrepancy_qty': 0.0,
-                        'total_product_discrepancy_value': 0.0 }
+        total_product_qty_and_values = {}
+        for line in discrepancy_lines:
+            id_ = line["id"]
+            counted = line["total_product_theoretical_qty"]
+            theo = line["total_product_counted_qty"]
+            price = line["standard_price"]
+            total_product_qty_and_values[id_] = {
+                'total_product_counted_value': counted * price,
+                'total_product_discrepancy_qty': counted - theo,
+                'total_product_discrepancy_value': (counted - theo) * price
+            }
 
-        return ret
+        return total_product_qty_and_values
+
 
     _columns = {
         # Link to inventory
