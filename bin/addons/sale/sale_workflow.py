@@ -148,7 +148,7 @@ class sale_order_line(osv.osv):
             new_sol_id = self.copy(cr, uid, sol.id, {
                 'resourced_original_line': sol.id, 
                 'resourced_original_remote_line': sol.sync_linked_pol,
-                'resourced_at_state': sol.state,
+                'resourced_at_state': sol.state if not sol.original_line_id else sol.original_line_id.state, # case of split
             }, context=context)
             wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 

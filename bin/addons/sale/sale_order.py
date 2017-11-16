@@ -463,7 +463,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     if sols_obj.get_sequence(cr, uid, ids, state_transformed, context=context) < sols_obj.get_sequence(cr, uid, ids, sol.state, context=context):
                         sol_states.add(sol.state)
                     else:
-                        sol_states.add(state_transformed)
+                        sol_states.add(sol.resourced_at_state)
                 else:
                     sol_states.add(sol.state)
 
@@ -509,7 +509,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'state': fields.function(_get_less_advanced_sol_state, string='Order State', method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
                                      'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-                                     'sale.order.line': (_get_order, ['state'], 10),    
+                                     'sale.order.line': (_get_order, ['state', 'resourced_at_state'], 10),    
                                  },
                                  select=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'."
                                  ),

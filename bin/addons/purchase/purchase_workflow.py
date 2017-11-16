@@ -128,6 +128,13 @@ class purchase_order_line(osv.osv):
                 sol_values['modification_comment'] = pol.modification_comment
 
             if create_line:
+                # if PO line is a split, then new sol should be set as a split too:
+                if pol.is_line_split and pol.original_line_id:
+                    original_sol_id = pol.original_line_id.linked_sol_id.id or False
+                    sol_values.update({
+                        'is_line_split': True,
+                        'original_line_id': original_sol_id,
+                    })
                 sol_values.update({
                     'order_id': so_id,
                     'date_planned': pol.date_planned,
