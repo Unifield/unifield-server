@@ -434,7 +434,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ids = [ids]
 
         if not state_str:
-            so = self.browse(cr, uid, ids[0], context=context)
+            so = self.browse(cr, uid, ids[0], fields_to_fetch=['state'], context=context)
             res = so.state.split('_')[0]
         else:
             res = state_str.split('_')[0]

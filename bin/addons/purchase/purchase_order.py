@@ -405,13 +405,10 @@ class purchase_order(osv.osv):
 
         res = {}
         for po in self.browse(cr, uid, ids, context=context):
-            pol_states = set([line.state for line in po.order_line])
+            pol_states = set([pol.state for pol in po.order_line if not pol.state.startswith('cancel')])
             if all([s.startswith('cancel') for s in pol_states]): # if all lines are cancelled then the PO is cancelled
                 res[po.id] = 'cancel'
             else: # else compute the less advanced state:
-                # cancel state must be ignored:
-                pol_states.discard('cancel')
-                pol_states.discard('cancel_r')
                 res[po.id] = self.pool.get('purchase.order.line.state').get_less_advanced_state(cr, uid, ids, pol_states, context=context)
 
                 if res[po.id] == 'draft': # set the draft-p state ?
