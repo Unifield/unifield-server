@@ -26,11 +26,11 @@
     <data noupdate="0">
         <record id="sol_state_cancel" model="sale.order.line.state">
             <field name="name">cancel</field>
-            <field name="sequence">1</field>
+            <field name="sequence">1000</field>
         </record>
         <record id="sol_state_cancel_r" model="sale.order.line.state">
             <field name="name">cancel_r</field>
-            <field name="sequence">2</field>
+            <field name="sequence">1001</field>
         </record>
         <record id="sol_state_draft" model="sale.order.line.state">
             <field name="name">draft</field>

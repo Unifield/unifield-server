@@ -454,7 +454,18 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         res = {}
         for so in self.browse(cr, uid, ids, context=context):
-            sol_states = set([sol.state for sol in so.order_line if not sol.state.startswith('cancel')])
+            sol_states = set()
+            for sol in so.order_line:
+                if sol.state.startswith('cancel'):
+                    continue
+                elif sol.resourced_at_state and sols_obj.get_sequence(cr, uid, ids, sol.resourced_at_state, context=context) > sols_obj.get_sequence(cr, uid, ids, sol.state, context=context):
+                    state_transformed = self.from_so_state_to_sol_state(cr, uid, [], state_str=so.state, context=context)
+                    if sols_obj.get_sequence(cr, uid, ids, state_transformed, context=context) < sols_obj.get_sequence(cr, uid, ids, sol.state, context=context):
+                        sol_states.add(sol.state)
+                    else:
+                        sol_states.add(state_transformed)
+                else:
+                    sol_states.add(sol.state)
 
             if all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
@@ -483,12 +494,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     # do we have a line further then confirmed in our FO ?
                     if any([sols_obj.get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in sol_states]):
                         res[so.id] = 'confirmed_p'
-
-            # if computed state is less advanced then the current one, then keep the current state:
-            trans_so_state_start = self.from_so_state_to_sol_state(cr, uid, so.id, context=context)
-            trans_so_state_end = self.from_so_state_to_sol_state(cr, uid, [], state_str=res[so.id], context=context)
-            if sols_obj.get_sequence(cr, uid, [], trans_so_state_end, context=context) < sols_obj.get_sequence(cr, uid, [], trans_so_state_start, context=context):
-                res[so.id] = so.state
 
             # add audit line in track change if state has changed:
             if so.state != res[so.id]:
