@@ -65,4 +65,47 @@
             <field name="sequence">80</field>
         </record>
     </data>
+
+    <data noupdate="0">
+        <record id="so_state_draft" model="sale.order.state">
+            <field name="name">draft</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="so_state_draft_p" model="sale.order.state">
+            <field name="name">draft_p</field>
+            <field name="sequence">15</field>
+        </record>
+        <record id="so_state_validated" model="sale.order.state">
+            <field name="name">validated</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="so_state_validated_p" model="sale.order.state">
+            <field name="name">validated_p</field>
+            <field name="sequence">25</field>
+        </record>
+        <record id="so_state_sourced" model="sale.order.state">
+            <field name="name">sourced</field>
+            <field name="sequence">30</field>
+        </record>
+        <record id="so_state_sourced_p" model="sale.order.state">
+            <field name="name">sourced_p</field>
+            <field name="sequence">35</field>
+        </record>
+        <record id="so_state_confirmed" model="sale.order.state">
+            <field name="name">confirmed</field>
+            <field name="sequence">40</field>
+        </record>
+        <record id="so_state_confirmed_p" model="sale.order.state">
+            <field name="name">confirmed_p</field>
+            <field name="sequence">45</field>
+        </record>
+        <record id="so_state_done" model="sale.order.state">
+            <field name="name">done</field>
+            <field name="sequence">50</field>
+        </record>
+        <record id="so_state_cancel" model="sale.order.state">
+            <field name="name">cancel</field>
+            <field name="sequence">1000</field>
+        </record>
+    </data>
 </openerp>
