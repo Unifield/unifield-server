@@ -1,13 +1,8 @@
 <?xml version="1.0"?>
 <document filename="analytic_journal_items.pdf">
-  <template pageSize="(1191.0,842.0)" title="Analytic Journal Items" allowSplitting="20">
+  <template pageSize="(842.0,595.0)" title="Analytic Journal Items" allowSplitting="20">
     <pageTemplate id="first">
-      <frame id="first" x1="14.0" y1="14.0" width="1163" height="814"/>
-      <pageGraphics>
-          <setFont name="Helvetica" size="8"/>
-          <fill color="black"/>
-          <drawString x="1100" y="5">Page <pageNumber /> / </drawString><drawString x="1160" y="5"><pageCount /></drawString>
-      </pageGraphics>
+      <frame id="first" x1="28.0" y1="57.0" width="817" height="481"/>
     </pageTemplate>
   </template>
   <stylesheet>
@@ -34,11 +29,11 @@
     <initialize>
       <paraStyle name="all" alignment="justify"/>
     </initialize>
-    <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="16.0" leading="20" alignment="CENTER" backColor="#e6e6e6"/>
-    <paraStyle name="P2" fontName="Helvetica" fontSize="8.0" leading="10"/>
-    <paraStyle name="P3" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER"/>
-    <paraStyle name="P4" fontName="Helvetica" fontSize="8.0" leading="10" alignment="RIGHT"/>
-    <paraStyle name="P5" fontName="Helvetica" fontSize="8.0" leading="10"/>
+    <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="14.0" leading="20" alignment="CENTER" backColor="#e6e6e6"/>
+    <paraStyle name="P2" fontName="Helvetica" fontSize="7.0" leading="10"/>
+    <paraStyle name="P3" fontName="Helvetica" fontSize="7.0" leading="10" alignment="CENTER"/>
+    <paraStyle name="P4" fontName="Helvetica" fontSize="7.0" leading="10" alignment="RIGHT"/>
+    <paraStyle name="P5" fontName="Helvetica" fontSize="7.0" leading="10"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
     <paraStyle name="Heading" fontName="Helvetica" fontSize="14.0" leading="17" spaceBefore="12.0" spaceAfter="6.0"/>
     <paraStyle name="Text body" fontName="Helvetica" spaceBefore="0.0" spaceAfter="6.0"/>
@@ -47,11 +42,11 @@
     <paraStyle name="Index" fontName="Helvetica"/>
     <paraStyle name="Table Contents" fontName="Helvetica"/>
     <paraStyle name="Table Heading" fontName="Helvetica" alignment="CENTER"/>
-    <paraStyle name="Total" fontName="Helvetica-Bold" fontSize="9.0" leading="10" alignment="CENTER"/>
+    <paraStyle name="Total" fontName="Helvetica-Bold" fontSize="7.0" leading="10" alignment="CENTER"/>
     <images/>
   </stylesheet>
   <story>
-    <blockTable colWidths="1162.0" style="Tableau1">
+    <blockTable colWidths="816.0" style="Tableau1">
       <tr>
         <td>
           <para style="P1">Analytic Journal Items</para>
@@ -62,7 +57,7 @@
       <font color="white"> </font>
     </para>
     <!-- colWidths="41.0,41.0,41.0,226.0,44.0,66.0,66.0,62.0,53.0,78.0,78.0,78.0,39.0,39.0,39.0,39.0,39.0,39.0,52.0" -->
-    <blockTable style="Tableau3">
+    <blockTable style="Tableau3" colWidths="40.0,33.0,45.0,49.0,38.0,48.0,48.0,31.0,40.0,40.0,35.0,33.0,45.0,42.0,34.0,42.0,34.0,42.0,32.0,38.0,36.0">
       <tr>
         <td>
           <para style="P3">Proprietary Instance</para>
@@ -131,64 +126,64 @@
       <tr>
         <td>
           <para style="P3">[[ repeatIn(objects, 'o') ]]</para>
-          <para style="P3">[[ o.instance_id and o.instance_id.code or '' ]]</para>
+          <parawrap style="P3">[[ o.instance_id and o.instance_id.code or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</para>
+          <parawrap style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.move_id and o.move_id.move_id and o.move_id.move_id.name or '' ]]</para>
+          <parawrap style="P3">[[ o.move_id and o.move_id.move_id and o.move_id.move_id.name or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.name or '' ]]</para>
+          <parawrap style="P3">[[ o.name or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.ref or '' ]]</para>
+          <parawrap style="P3">[[ o.ref or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ formatLang(o.document_date, date=True) or '' ]]</para>
+          <parawrap style="P3">[[ formatLang(o.document_date, date=True) or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ formatLang(o.date, date=True) or '' ]]</para>
+          <parawrap style="P3">[[ formatLang(o.date, date=True) or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P4">[[ o.period_id and o.period_id.name or '' ]]</para>
+          <parawrap style="P4">[[ o.period_id and o.period_id.name or '' ]]</parawrap>
         </td>
         <td>
           <parawrap style="P3">[[ "%s - %s" % (o.general_account_id and o.general_account_id.code or '', o.general_account_id and o.general_account_id.name and o.general_account_id.name or '') ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and (o.destination_id and o.destination_id.code or '') or removeParentNode('td') ]]</para>
+          <parawrap style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and (o.destination_id and o.destination_id.code or '') or removeParentNode('td') ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and (o.cost_center_id and o.cost_center_id.code or '') or removeParentNode('td') ]]</para>
+          <parawrap style="P3">[[ data.get('context') and data['context'].get('display_fp', False) and (o.cost_center_id and o.cost_center_id.code or '') or removeParentNode('td') ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.account_id and o.account_id.code or '' ]]</para>
+          <parawrap style="P3">[[ o.account_id and o.account_id.code or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P4">[[ o.partner_txt or '' ]]</para>
+          <parawrap style="P4">[[ o.partner_txt or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P4">[[ o.amount_currency or '0.0' ]]</para>
+          <parawrap style="P4">[[ o.amount_currency or '0.0' ]]</parawrap>
         </td>
         <td>
-          <para style="P4">[[ o.currency_id and o.currency_id.name or '' ]]</para>
+          <parawrap style="P4">[[ o.currency_id and o.currency_id.name or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.amount or '0.0' ]]</para>
+          <parawrap style="P3">[[ o.amount or '0.0' ]]</parawrap>
         </td>
         <td>
-          <para style="P4">[[ o.company_id and o.company_id.currency_id and o.company_id.currency_id.name or '' ]]</para>
+          <parawrap style="P4">[[ o.company_id and o.company_id.currency_id and o.company_id.currency_id.name or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P4">[[ o.output_amount or '0.0' ]]</para>
+          <parawrap style="P4">[[ o.output_amount or '0.0' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.output_currency and o.output_currency.name or '' ]]</para>
+          <parawrap style="P3">[[ o.output_currency and o.output_currency.name or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.reversal_origin and o.reversal_origin.move_id and o.reversal_origin.move_id.name or '' ]]</para>
+          <parawrap style="P3">[[ o.reversal_origin and o.reversal_origin.move_id and o.reversal_origin.move_id.name or '' ]]</parawrap>
         </td>
         <td>
           <para style="P3">[[ o.move_state and getSel(o, 'move_state') or '' ]]</para>
@@ -234,22 +229,22 @@
           <para style="P3"></para>
         </td>
         <td>
-          <parawrap style="Total">Total Booking Curr.</parawrap>
+          <para style="Total">Total Booking Curr.</para>
         </td>
         <td>
-          <para style="Total">[[ formatLang(total_booking(objects) or 0.0) ]]</para>
+          <parawrap style="Total">[[ formatLang(total_booking(objects) or 0.0) ]]</parawrap>
         </td>
         <td>
-          <parawrap style="Total">Total Func. Curr.</parawrap>
+          <para style="Total">Total Func. Curr.</para>
         </td>
         <td>
-          <para style="Total">[[ formatLang(total_functional(objects) or 0.0) ]]</para>
+          <parawrap style="Total">[[ formatLang(total_functional(objects) or 0.0) ]]</parawrap>
         </td>
         <td>
-          <parawrap style="Total">Total Out. Curr.</parawrap>
+          <para style="Total">Total Out. Curr.</para>
         </td>
         <td>
-          <para style="Total">[[ formatLang(total_output(objects) or 0.0) ]]</para>
+          <parawrap style="Total">[[ formatLang(total_output(objects) or 0.0) ]]</parawrap>
         </td>
         <td>
           <para style="P3"></para>

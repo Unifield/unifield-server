@@ -116,10 +116,10 @@
       <tr>
         <td>
           <para style="P3">[[ repeatIn(objects, 'o') ]]</para>
-          <para style="P3">[[ o.instance_id and o.instance_id.code or '' ]]</para>
+          <parawrap style="P3">[[ o.instance_id and o.instance_id.code or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</para>
+          <parawrap style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</parawrap>
         </td>
         <td>
           <parawrap style="P5">[[ o.move_id and o.move_id.name or '' ]]</parawrap>
@@ -131,13 +131,13 @@
           <parawrap style="P3">[[ o.ref or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ formatLang(o.document_date, date=True) or '' ]]</para>
+          <parawrap style="P3">[[ formatLang(o.document_date, date=True) or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ formatLang(o.date, date=True) or '']]</para>
+          <parawrap style="P3">[[ formatLang(o.date, date=True) or '']]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.period_id and o.period_id.name or '' ]]</para>
+          <parawrap style="P3">[[ o.period_id and o.period_id.name or '' ]]</parawrap>
         </td>
         <td>
           <parawrap style="P3">[[ "%s - %s" % (o.account_id and o.account_id.code or '', o.account_id and o.account_id.name or '') ]]</parawrap>
@@ -146,35 +146,35 @@
           <parawrap style="P3">[[ o.partner_txt or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P4">[[ o.debit_currency or '0.0' ]]</para>
+          <parawrap style="P4">[[ o.debit_currency or '0.0' ]]</parawrap>
         </td>
         <td>
-          <para style="P4">[[ o.credit_currency or '0.0' ]]</para>
+          <parawrap style="P4">[[ o.credit_currency or '0.0' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.currency_id and o.currency_id.name or '' ]]</para>
+          <parawrap style="P3">[[ o.currency_id and o.currency_id.name or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P4">[[ o.output_amount_debit or '0.0' ]]</para>
+          <parawrap style="P4">[[ o.output_amount_debit or '0.0' ]]</parawrap>
         </td>
         <td>
-          <para style="P4">[[ o.output_amount_credit or '0.0' ]]</para>
+          <parawrap style="P4">[[ o.output_amount_credit or '0.0' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.output_currency and o.output_currency.name or '' ]]</para>
+          <parawrap style="P3">[[ o.output_currency and o.output_currency.name or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.reconcile_txt and o.reconcile_txt or '' ]]</para>
+          <parawrap style="P3">[[ o.reconcile_txt and o.reconcile_txt or '' ]]</parawrap>
         </td>
         <td>
-          <para style="P3">[[ o.move_state and getSel(o, 'move_state') or '' ]]</para>
+          <parawrap style="P3">[[ o.move_state and getSel(o, 'move_state') or '' ]]</parawrap>
         </td>
       </tr>
       <!-- TOTAL -->
       <tr>
         [[ data.get('context') and data['context'].get('from_selector') or removeParentNode('tr') ]]
         <td>
-          <parawrap style="Total">TOTAL</parawrap>
+          <para style="Total">TOTAL</para>
         </td>
         <td>
           <para style="P3"></para>
@@ -201,22 +201,22 @@
           <para style="P3"></para>
         </td>
         <td>
-          <parawrap style="Total">Total Booking Curr.</parawrap>
+          <para style="Total">Total Booking Curr.</para>
         </td>
         <td>
-          <para style="Total">[[ formatLang(total_booking_debit(objects) or 0.0) ]]</para>
+          <parawrap style="Total">[[ formatLang(total_booking_debit(objects) or 0.0) ]]</parawrap>
         </td>
         <td>
-          <para style="Total">[[ formatLang(total_booking_credit(objects) or 0.0) ]]</para>
+          <parawrap style="Total">[[ formatLang(total_booking_credit(objects) or 0.0) ]]</parawrap>
         </td>
         <td>
-          <parawrap style="Total">Total Output Curr.</parawrap>
+          <para style="Total">Total Output Curr.</para>
         </td>
         <td>
-          <para style="Total">[[ formatLang(total_output_debit(objects) or 0.0) ]]</para>
+          <parawrap style="Total">[[ formatLang(total_output_debit(objects) or 0.0) ]]</parawrap>
         </td>
         <td>
-          <para style="Total">[[ formatLang(total_output_credit(objects) or 0.0) ]]</para>
+          <parawrap style="Total">[[ formatLang(total_output_credit(objects) or 0.0) ]]</parawrap>
         </td>
         <td>
           <para style="P3"></para>

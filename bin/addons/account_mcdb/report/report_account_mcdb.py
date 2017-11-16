@@ -105,5 +105,5 @@ class report_analytic_selector(report_sxw.rml_parse):
 
 report_sxw.report_sxw('report.analytic.selector', 'account.analytic.line',
                       'addons/account_mcdb/report/report_account_analytic_line.rml',
-                      parser=report_analytic_selector, header=None)
+                      parser=report_analytic_selector, header='internal landscape')
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
