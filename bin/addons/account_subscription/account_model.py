@@ -287,7 +287,7 @@ class account_model(osv.osv):
                                                    'and must be written without spaces.') % model.name)
             except Exception:
                 raise osv.except_osv(_('Error'), _('The name of the Recurring Model used is incorrect: %s\n'
-                                                   'You can find a list of the usable prefixes/suffixes on the Recurring Model form.') % model.name)
+                                                   'You can find a list of the formatted strings usable on the Recurring Model form.') % model.name)
             move_id = account_move_obj.create(cr, uid, {
                 'ref': entry['name'],
                 'period_id': period_id,
