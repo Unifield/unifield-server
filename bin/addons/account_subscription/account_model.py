@@ -266,7 +266,16 @@ class account_model(osv.osv):
 
         for model in self.browse(cr, uid, ids, context=context):
             try:
-                entry['name'] = model.name%{'year':time.strftime('%Y'), 'month':time.strftime('%m'), 'date':time.strftime('%Y-%m')}
+                posting_date = time.strftime('%Y-%m-%d')  # today's date by default
+                if context.get('date') and isinstance(context['date'], str) and len(context['date'].split('-')) == 3:
+                    posting_date = context['date']
+                year = posting_date.split('-')[0]
+                month = posting_date.split('-')[1]
+                year_month = "%s-%s" % (year, month)
+                entry['name'] = model.name % \
+                    {'year': year,
+                     'month': month,
+                     'date': year_month}
             except (KeyError, TypeError, ValueError):
                 '''
                 Examples of: KeyError => model of the month %(montht)s
