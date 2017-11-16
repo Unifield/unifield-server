@@ -167,7 +167,7 @@
           <parawrap style="P3">[[ o.reconcile_txt and o.reconcile_txt or '' ]]</parawrap>
         </td>
         <td>
-          <parawrap style="P3">[[ o.move_state and getSel(o, 'move_state') or '' ]]</parawrap>
+          <para style="P3">[[ o.move_state and getSel(o, 'move_state') or '' ]]</para>
         </td>
       </tr>
       <!-- TOTAL -->
