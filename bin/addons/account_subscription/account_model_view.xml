@@ -37,7 +37,7 @@
                             </group>
                             <field name="analytic_distribution_id" invisible="1"/>
                             <field colspan="6" nolabel="1" name="lines_id" widget="one2many_list"/>
-                            <separator colspan="6" string="Legend (for prefix, suffix)"/>
+                            <separator colspan="6" string="Legend (for the Model Name)"/>
                             <group col="8" colspan="6">
                                 <group>
                                     <label colspan="6" string="Year of the Posting Date: %%(year)s"/>

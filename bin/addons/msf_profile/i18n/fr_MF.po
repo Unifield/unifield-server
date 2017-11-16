@@ -48121,9 +48121,8 @@ msgstr "Report can not be edited due to missing FX rates in specific currency ta
 msgid "Access Controls List"
 msgstr "Liste des Contrôles d'accès"
 
-#. modules: base, account_subscription
+#. module: base
 #: view:ir.sequence:0
-#: view:account.model:0
 msgid "Legend (for prefix, suffix)"
 msgstr "Légende (pour le préfixe, suffixe)"
 
@@ -100087,9 +100086,9 @@ msgstr "Veuillez vérifier le nom du Modèle Périodique utilisé : %s\n"
 #: code:addons/account_subscription/account_model.py:280
 #, python-format
 msgid "The name of the Recurring Model used is incorrect: %s\n"
-"You can find a list of the usable prefixes/suffixes on the Recurring Model form."
+"You can find a list of the formatted strings usable on the Recurring Model form."
 msgstr "Le nom du Modèle Périodique utilisé est incorrect : %s\n"
-"Vous pouvez trouver une liste des préfixes/suffixes utilisables dans le formulaire des Modèles Périodiques."
+"Vous pouvez trouver une liste des chaînes formatées utilisables dans le formulaire des Modèles Périodiques."
 
 #. module: account_subscription
 #: view:account.model:0
@@ -100105,3 +100104,8 @@ msgstr "Mois de la Date de Comptabilisation : %(month)s"
 #: view:account.model:0
 msgid "Year and Month of the Posting Date: %(date)s"
 msgstr "Année et Mois de la Date de Comptabilisation : %(date)s"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Legend (for the Model Name)"
+msgstr "Légende (pour le Nom du Modèle)"
