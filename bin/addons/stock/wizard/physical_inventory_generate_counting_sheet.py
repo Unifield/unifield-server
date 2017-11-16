@@ -93,7 +93,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
             # If no bn / ed related to this product, create a single inventory
             # line
             if len(bn_and_eds_for_this_product) == 0:
-                values = { "line_no": len(inventory_counting_lines_to_create),
+                values = { "line_no": len(inventory_counting_lines_to_create) + 1,
                            "inventory_id": inventory_id,
                             "product_id": product_id,
                             "product_uom_id": product_uom_id,
@@ -107,7 +107,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
             # each BN/ED
             else:
                 for bn_and_ed in bn_and_eds_for_this_product:
-                    values = { "line_no": len(inventory_counting_lines_to_create),
+                    values = { "line_no": len(inventory_counting_lines_to_create) + 1,
                                "inventory_id": inventory_id,
                                "product_id": product_id,
                                "product_uom_id": product_uom_id,

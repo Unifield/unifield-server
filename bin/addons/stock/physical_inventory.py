@@ -140,7 +140,11 @@ class PhysicalInventory(osv.osv):
 
 
     def set_full_inventory(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'full_inventory': True})
+        context = context is None and {} or context
+
+        # Set full inventory as true and unlink all products already selected
+        self.write(cr, uid, ids, {'full_inventory': True,
+                                  'product_ids': [(5)]}, context=context)
         return {}
 
 
@@ -1071,8 +1075,8 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         total_product_qty_and_values = {}
         for line in discrepancy_lines:
             id_ = line["id"]
-            counted = line["total_product_theoretical_qty"]
-            theo = line["total_product_counted_qty"]
+            theo = line["total_product_theoretical_qty"]
+            counted = line["total_product_counted_qty"]
             price = line["standard_price"]
             total_product_qty_and_values[id_] = {
                 'total_product_counted_value': counted * price,
