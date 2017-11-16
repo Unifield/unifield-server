@@ -265,7 +265,20 @@ class account_model(osv.osv):
             raise osv.except_osv(_('Warning'), _('This period should be in open state: %s') % (period.name))
 
         for model in self.browse(cr, uid, ids, context=context):
-            entry['name'] = model.name%{'year':time.strftime('%Y'), 'month':time.strftime('%m'), 'date':time.strftime('%Y-%m')}
+            try:
+                entry['name'] = model.name%{'year':time.strftime('%Y'), 'month':time.strftime('%m'), 'date':time.strftime('%Y-%m')}
+            except (KeyError, TypeError, ValueError):
+                '''
+                Examples of: KeyError => model of the month %(montht)s
+                             TypeError => model of the %(month)s/ % (year)s
+                             ValueError => model of the month %month)s / model of the month % (month)s
+                '''
+                raise osv.except_osv(_('Error'), _('Please check the name of the Recurring Model used: %s\n'
+                                                   'Only the keys %%(year)s / %%(month)s / %%(date)s can be used '
+                                                   'and must be written without spaces.') % model.name)
+            except Exception:
+                raise osv.except_osv(_('Error'), _('The name of the Recurring Model used is incorrect: %s\n'
+                                                   'You can find a list of the usable prefixes/suffixes on the Recurring Model form.') % model.name)
             move_id = account_move_obj.create(cr, uid, {
                 'ref': entry['name'],
                 'period_id': period_id,

@@ -48121,8 +48121,9 @@ msgstr "Report can not be edited due to missing FX rates in specific currency ta
 msgid "Access Controls List"
 msgstr "Liste des Contrôles d'accès"
 
-#. module: base
+#. modules: base, account_subscription
 #: view:ir.sequence:0
+#: view:account.model:0
 msgid "Legend (for prefix, suffix)"
 msgstr "Légende (pour le préfixe, suffixe)"
 
@@ -100073,3 +100074,34 @@ msgstr "Sous-Total (devise fonctionnelle)"
 #: field:sale.order.line,modification_comment:0
 msgid "Modification Comment"
 msgstr "Commentaire de Modification"
+
+#. module: account_subscription
+#: code:addons/account_subscription/account_model.py:276
+#, python-format
+msgid "Please check the name of the Recurring Model used: %s\n"
+"Only the keys %%(year)s / %%(month)s / %%(date)s can be used and must be written without spaces."
+msgstr "Veuillez vérifier le nom du Modèle Périodique utilisé : %s\n"
+"Seules les clés %%(year)s / %%(month)s / %%(date)s peuvent être utilisées et doivent être écrites sans espaces."
+
+#. module: account_subscription
+#: code:addons/account_subscription/account_model.py:280
+#, python-format
+msgid "The name of the Recurring Model used is incorrect: %s\n"
+"You can find a list of the usable prefixes/suffixes on the Recurring Model form."
+msgstr "Le nom du Modèle Périodique utilisé est incorrect : %s\n"
+"Vous pouvez trouver une liste des préfixes/suffixes utilisables dans le formulaire des Modèles Périodiques."
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Year of the Posting Date: %(year)s"
+msgstr "Année de la Date de Comptabilisation : %(year)s"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Month of the Posting Date: %(month)s"
+msgstr "Mois de la Date de Comptabilisation : %(month)s"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Year and Month of the Posting Date: %(date)s"
+msgstr "Année et Mois de la Date de Comptabilisation : %(date)s"
