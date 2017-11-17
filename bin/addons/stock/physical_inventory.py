@@ -128,13 +128,20 @@ class PhysicalInventory(osv.osv):
     }
 
     _defaults = {
-        'ref': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'physical.inventory'),
+        'ref': False,
         'date': lambda *a: time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
         'state': 'draft',
         'full_inventory': False,
         'company_id': lambda self, cr, uid,
                              c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c)
     }
+
+    def create(self, cr, uid, values, context):
+        context = context is None and {} or context
+        values["ref"] = self.pool.get('ir.sequence').get(cr, uid, 'physical.inventory')
+
+        return super(PhysicalInventory, self).create(cr, uid, values, context=context)
+
 
     def copy(self, cr, uid, id_, default=None, context=None):
         default = default is None and {} or default
