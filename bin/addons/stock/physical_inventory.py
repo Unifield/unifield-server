@@ -363,7 +363,7 @@ class PhysicalInventory(osv.osv):
 
             # If the key is not known, assume 0
             theoretical_qty = theoretical_quantities.get(product_batch_expirydate, 0.0)
-            counted_qty = counted_quantities.get(product_batch_expirydate, None)
+            counted_qty = counted_quantities.get(product_batch_expirydate, -1.0)
 
             # If no discrepancy, nothing to do
             # (Use a continue to save 1 indentation level..)
@@ -400,7 +400,7 @@ class PhysicalInventory(osv.osv):
                 existing_id = previous_discrepancies[product_batch_expirydate]["id"]
                 update_discrepancies[existing_id] = {
                   "line_no": line_no,
-                  "counted_qty": counted_quantities.get(product_batch_expirydate, 0.0),
+                  "counted_qty": counted_qty
                 }
             else:
                 new_discrepancies.append( \
@@ -409,8 +409,8 @@ class PhysicalInventory(osv.osv):
                   "product_id": product_batch_expirydate[0],
                   "batch_number": product_batch_expirydate[1],
                   "expiry_date": product_batch_expirydate[2],
-                  "theoretical_qty": theoretical_quantities.get(product_batch_expirydate, 0.0),
-                  "counted_qty": counted_quantities.get(product_batch_expirydate, 0.0),
+                  "theoretical_qty": theoretical_qty,
+                  "counted_qty": counted_qty,
                   "product_uom_id": product_uom_id,
                   "standard_price": standard_price,
                   "currency_id": currency_id
@@ -458,6 +458,9 @@ class PhysicalInventory(osv.osv):
         discrepancy_lines = read_many('physical.inventory.discrepancy',
                                       discrepancy_line_ids,
                                       [ "line_no",
+                                        "product_id",
+                                        "batch_number",
+                                        "expiry_date",
                                         "counted_qty",
                                         "ignored"])
 
@@ -465,12 +468,23 @@ class PhysicalInventory(osv.osv):
         for line in discrepancy_lines:
             if line["ignored"]:
                 continue
-            if line["counted_qty"] == False or line["counted_qty"] == None:
-                anomalies.append({"message": "Quantity for line %s is incorrect. Ignore line or count as 0 ?" % line["line_no"],
+            anomaly = False
+            if line["counted_qty"] == False:
+                anomaly = "Quantity for line %s is incorrect." % line["line_no"]
+            if line["counted_qty"] < 0.0:
+                anomaly = "A line for product '%s'" % line["product_id"][1]
+                if line["batch_number"] or line["expiry_date"]:
+                    anomaly += " with Batch number '%s' and Expiry date '%s'"  % (line["batch_number"] or '', line["expiry_date"] or '')
+                else:
+                    anomaly += " (no batch number / expiry date)"
+                anomaly += " was expected but not found."
+
+            if anomaly:
+                anomalies.append({"message": anomaly + " Ignore line or count as 0 ?",
                                   "line_id": line["id"]})
 
         if anomalies:
-            return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Advertissment', anomalies)
+            return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Warning', anomalies)
         else:
             return {}
 
@@ -524,7 +538,7 @@ class PhysicalInventory(osv.osv):
         count_ids = [item['line_id'] for item in items if item['action'] == 'count']
 
         if ignore_ids:
-            discrepancies.write(cr, uid, ignore_ids, {'ignored': True})
+            discrepancies.write(cr, uid, ignore_ids, {'counted_qty': 0.0, 'ignored': True})
         if count_ids:
             discrepancies.write(cr, uid, count_ids, {'counted_qty': 0.0, 'ignored': False})
 
