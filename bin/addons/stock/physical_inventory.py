@@ -23,6 +23,10 @@ PHYSICAL_INVENTORIES_STATES = (
 )
 
 
+class NegativeValueError(ValueError):
+    """Negative value Exception"""
+
+
 class PhysicalInventory(osv.osv):
     _name = 'physical.inventory'
     _description = 'Physical Inventory'
@@ -587,17 +591,24 @@ class PhysicalInventory(osv.osv):
         counting_sheet_lines = []
         counting_sheet_errors = []
 
-        def add_error(message, file_row, file_col):
-            counting_sheet_errors.append('Cell %s%d: %s' % (chr(0x41 + file_col), file_row + 1, message))
+        def add_error(message, file_row, file_col=None):
+            if file_col is not None:
+                _msg = 'Cell %s%d: %s' % (chr(0x41 + file_col), file_row + 1, message)
+            else:
+                _msg = 'Line %d: %s' % (file_row + 1, message)
+            counting_sheet_errors.append(_msg)
 
         inventory_rec = self.browse(cr, uid, ids, context=context)[0]
         if not inventory_rec.file_to_import:
-            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+            osv.except_osv(_('Error'), _('Nothing to import.'))
         counting_sheet_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import))
 
         product_obj = self.pool.get('product.product')
         product_uom_obj = self.pool.get('product.uom')
         counting_obj = self.pool.get('physical.inventory.counting')
+
+        line_list = []
+        line_items = []
 
         for row_index, row in enumerate(counting_sheet_file.getRows()):
 
@@ -613,10 +624,11 @@ class PhysicalInventory(osv.osv):
                 inventory_location = row.cells[5].data  # Cell F5
                 # Check location
                 if inventory_rec.location_id and inventory_rec.location_id.name != (inventory_location or '').strip():
-                    raise osv.except_osv(_('Error'), _("""Cell F5: Location is different to inventory location"""))
+                    add_error(_('Location is different to inventory location'), row_index, 5)
+
                 # Check reference
                 if inventory_rec.ref != (inventory_reference or '').strip():
-                    raise osv.except_osv(_('Error'), _("""Cell C5: Reference is different to inventory reference"""))
+                    add_error(_('Reference is different to inventory reference'), row_index, 2)
                 counting_sheet_header.update({
                     'location_id': inventory_rec.location_id,
                     'inventory_reference': inventory_reference
@@ -630,18 +642,21 @@ class PhysicalInventory(osv.osv):
 
             # Check number of columns
             if len(row) != 9:
-                raise osv.except_osv(_('Error'), _("""You should have exactly 9 columns in this order:
-Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Date*, Specification*, BN Management*"""))
+                add_error(_("""_(Reference is different to inventory reference, You should have exactly 9 columns in this order:
+Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Date*, Specification*, BN Management*"""), row_index)
+                break
 
             # Check line number
             line_no = row.cells[0].data
             if line_no is not None:
                 try:
                     line_no = int(line_no)
+                    if line_no in line_list:
+                        add_error("""Line number is duplicate. If added line, this cell must be empty.""", row_index, 0)
+                    line_list.append(line_no)
                 except ValueError:
                     line_no = None
                     add_error("""Not valide line number""", row_index, 0)
-                # TODO: Vérifier les lignes en double
 
             # Check product_code
             product_code = row.cells[1].data
@@ -665,8 +680,10 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             quantity = row.cells[4].data
             try:
                 quantity = counting_obj.quantity_validate(cr, quantity)
+            except NegativeValueError:
+                add_error('Quantity %s is negative' % quantity, row_index, 4)
             except ValueError:
-                add_error("""Quantity %s is not valide""" % quantity, row_index, 4)
+                add_error('Quantity %s is not valide' % quantity, row_index, 4)
 
             # Check batch number
             batch_name = row.cells[5].data
@@ -684,6 +701,13 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                         raise ValueError()
                 except ValueError:
                     add_error("""Expiry date %s is not valide""" % expiry_date, row_index, 6)
+
+            # Check duplicate line (Same product_id, batch_number, expirty_date)
+            item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
+            if item in line_items:
+                add_error("""Duplicate line (same product, batch number and expiry date)""", row_index)
+            else:
+                line_items.append(item)
 
             data = {
                 'line_no': line_no,
@@ -734,9 +758,13 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         def add_error(message, file_row, file_col):
             discrepancy_report_errors.append('Cell %s%d: %s' % (chr(0x41 + file_col), file_row + 1, message))
 
+        def raise_error(message):
+            self.write(cr, uid, ids, {'file_to_import2': False}, context=context)
+            raise osv.except_osv(_('Error'), message)
+
         inventory_rec = self.browse(cr, uid, ids, context=context)[0]
         if not inventory_rec.file_to_import2:
-            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+            raise_error(_('Nothing to import.'))
 
         discrepancy_report_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import2))
 
@@ -1006,10 +1034,12 @@ class PhysicalInventoryCounting(osv.osv):
     def quantity_validate(cr, quantity):
         """Return a valide quantity or raise ValueError exception"""
         if quantity:
+            if quantity.strip().lower() == 'nan':
+                raise ValueError()
             float_width, float_prec = dp.get_precision('Product UoM')(cr)
             quantity = float(quantity)
             if quantity < 0:
-                raise ValueError()
+                raise NegativeValueError()
             quantity = '%.*f' % (float_prec, quantity)
         return quantity
 
@@ -1018,6 +1048,9 @@ class PhysicalInventoryCounting(osv.osv):
         if quantity:
             try:
                 quantity = self.quantity_validate(cr, quantity)
+            except NegativeValueError:
+                return {'value': {'quantity': False},
+                        'warning': {'title': 'warning', 'message': 'Negative quantity is not permit.'}}
             except ValueError:
                 return {'value': {'quantity': False},
                         'warning': {'title': 'warning', 'message': 'Enter a valid quantity.'}}
