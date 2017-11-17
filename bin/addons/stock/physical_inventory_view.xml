@@ -118,44 +118,44 @@
                                     <field name="line_no" />
                                     <field name="nomen_manda_2" />
                                     <field name="product_id" />
+                                    <field name="product_uom_id" />
                                     <field name="standard_price" />
                                     <field name="currency_id" />
-                                    <field name="batch_number" />
-                                    <field name="expiry_date" />
                                     <field name="theoretical_qty" />
                                     <field name="counted_qty" />
+                                    <field name="batch_number" />
+                                    <field name="expiry_date" />
                                     <field name="discrepancy_qty" />
                                     <field name="discrepancy_value" />
-                                    <field name="product_uom_id" />
-                                    <field name="reason_type_id" widget="selection" />
-                                    <field name="comment" />
                                     <field name="total_product_theoretical_qty" />
                                     <field name="total_product_counted_qty" />
                                     <field name="total_product_counted_value" />
                                     <field name="total_product_discrepancy_qty" />
                                     <field name="total_product_discrepancy_value" />
+                                    <field name="reason_type_id" widget="selection" />
+                                    <field name="comment" />
                                     <field name="ignored" invisible="True"/>
                                 </tree>
                                 <form string="Discrepancy line">
                                     <field name="line_no" />
                                     <field name="nomen_manda_2" />
                                     <field name="product_id" />
+                                    <field name="product_uom_id" />
                                     <field name="standard_price" />
                                     <field name="currency_id" />
-                                    <field name="batch_number" />
-                                    <field name="expiry_date" />
                                     <field name="theoretical_qty" />
                                     <field name="counted_qty" />
+                                    <field name="batch_number" />
+                                    <field name="expiry_date" />
                                     <field name="discrepancy_qty" />
                                     <field name="discrepancy_value" />
-                                    <field name="product_uom_id" />
-                                    <field name="reason_type_id" widget="selection" />
-                                    <field name="comment" />
                                     <field name="total_product_theoretical_qty" />
                                     <field name="total_product_counted_qty" />
                                     <field name="total_product_counted_value" />
                                     <field name="total_product_discrepancy_qty" />
                                     <field name="total_product_discrepancy_value" />
+                                    <field name="reason_type_id" widget="selection" />
+                                    <field name="comment" />
                                     <field name="ignored" invisible="True"/>
                                 </form>
                             </field>
