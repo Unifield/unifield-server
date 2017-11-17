@@ -631,7 +631,7 @@ class PhysicalInventory(osv.osv):
 
         inventory_rec = self.browse(cr, uid, ids, context=context)[0]
         if not inventory_rec.file_to_import:
-            osv.except_osv(_('Error'), _('Nothing to import.'))
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
         counting_sheet_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import))
 
         product_obj = self.pool.get('product.product')
@@ -713,11 +713,17 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 quantity = counting_obj.quantity_validate(cr, quantity)
             except NegativeValueError:
                 add_error('Quantity %s is negative' % quantity, row_index, 4)
+                quantity = 0.0
             except ValueError:
+                quantity = 0.0
                 add_error('Quantity %s is not valide' % quantity, row_index, 4)
+
+            product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable'])
 
             # Check batch number
             batch_name = row.cells[5].data
+            if not batch_name and product_info['batch_management'] and float(quantity or 0) > 0:
+                add_error('Batch number is required', row_index, 5)
 
             # Check expiry date
             expiry_date = row.cells[6].data
@@ -732,6 +738,8 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                         raise ValueError()
                 except ValueError:
                     add_error("""Expiry date %s is not valide""" % expiry_date, row_index, 6)
+            if not expiry_date and product_info['perishable'] and float(quantity or 0) > 0:
+                add_error('Expiry date is required', row_index, 6)
 
             # Check duplicate line (Same product_id, batch_number, expirty_date)
             item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
@@ -789,13 +797,9 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         def add_error(message, file_row, file_col):
             discrepancy_report_errors.append('Cell %s%d: %s' % (chr(0x41 + file_col), file_row + 1, message))
 
-        def raise_error(message):
-            self.write(cr, uid, ids, {'file_to_import2': False}, context=context)
-            raise osv.except_osv(_('Error'), message)
-
         inventory_rec = self.browse(cr, uid, ids, context=context)[0]
         if not inventory_rec.file_to_import2:
-            raise_error(_('Nothing to import.'))
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
         discrepancy_report_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import2))
 
@@ -890,6 +894,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         product_obj = self.pool.get('product.product')
         product_tmpl_obj = self.pool.get('product.template')
         prod_lot_obj = self.pool.get('stock.production.lot')
+        picking_obj = self.pool.get('stock.picking')
 
         product_dict = {}
         product_tmpl_dict = {}
@@ -949,13 +954,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 if change:
                     if ed:
                         if bn:
-                            prod_lot_id = prod_lot_obj.search(cr, uid,
-                                                              [('product_id', '=', pid), ('life_date', '=', ed),
-                                                               ('name', '=like', bn)])
-                            if prod_lot_id:
-                                lot_id = prod_lot_id[0]
-                            else:
-                                lot_id = prod_lot_obj.create(cr, uid, {'product_id': pid, 'life_date': ed, 'name': bn})
+                            lot_id = picking_obj.retrieve_batch_number(cr, uid, pid, {'name': bn, 'life_date': ed}, context=context)
                         else:
                             lot_id = prod_lot_obj._get_prodlot_from_expiry_date(cr, uid, ed, pid)
                     else:
