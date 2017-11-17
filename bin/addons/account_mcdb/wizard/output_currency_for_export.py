@@ -124,8 +124,8 @@ class output_currency_for_export(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Please choose an export format!'))
         datas = {}
         # Check user choice
-        if data_from_selector:
-            datas = {'ids': data_from_selector.get('ids')}
+        if data_from_selector and data_from_selector.get('ids'):
+            datas = {'ids': data_from_selector['ids']}
         elif wiz and wiz.export_selected:
             datas = {'ids': context.get('active_ids', [])}
         else:
