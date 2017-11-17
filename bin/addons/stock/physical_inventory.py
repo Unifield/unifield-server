@@ -3,6 +3,7 @@
 import base64
 import time
 from dateutil.parser import parse
+import math
 
 import decimal_precision as dp
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -1086,12 +1087,12 @@ class PhysicalInventoryCounting(osv.osv):
     def quantity_validate(cr, quantity):
         """Return a valide quantity or raise ValueError exception"""
         if quantity:
-            if quantity.strip().lower() == 'nan':
-                raise ValueError()
             float_width, float_prec = dp.get_precision('Product UoM')(cr)
             quantity = float(quantity)
             if quantity < 0:
                 raise NegativeValueError()
+            if math.isnan(quantity):
+                raise ValueError()
             quantity = '%.*f' % (float_prec, quantity)
         return quantity
 
