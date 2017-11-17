@@ -136,6 +136,8 @@ class PhysicalInventory(osv.osv):
                              c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c)
     }
 
+    _order = "ref desc, date desc"
+
     def create(self, cr, uid, values, context):
         context = context is None and {} or context
         values["ref"] = self.pool.get('ir.sequence').get(cr, uid, 'physical.inventory')
