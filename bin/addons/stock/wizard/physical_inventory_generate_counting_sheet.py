@@ -76,32 +76,20 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
         bn_and_eds = self.get_BN_and_ED_for_products_at_location(cr, uid, location_id, product_ids, context=context)
 
-        products = read_many("product.product", product_ids, ["id",
-                                                              "uom_id",
-                                                              "standard_price",
-                                                              "currency_id"])
-
         # Prepare the inventory lines to be created
 
         inventory_counting_lines_to_create = []
-        for product in products:
-            product_id = product["id"]
-            product_uom_id = product["uom_id"][0]
-            standard_price = product["standard_price"]
-            currency_id = product["currency_id"][0]
+        for product_id in product_ids:
             bn_and_eds_for_this_product = bn_and_eds[product_id]
             # If no bn / ed related to this product, create a single inventory
             # line
             if len(bn_and_eds_for_this_product) == 0:
                 values = { "line_no": len(inventory_counting_lines_to_create) + 1,
                            "inventory_id": inventory_id,
-                            "product_id": product_id,
-                            "product_uom_id": product_uom_id,
-                            "currency_id": currency_id,
-                            "standard_price": standard_price,
-                            "batch_number": False,
-                            "expiry_date": False
-                          }
+                           "product_id": product_id,
+                           "batch_number": False,
+                           "expiry_date": False
+                         }
                 inventory_counting_lines_to_create.append(values)
             # Otherwise, create an inventory line for this product ~and~ for
             # each BN/ED
@@ -110,9 +98,6 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                     values = { "line_no": len(inventory_counting_lines_to_create) + 1,
                                "inventory_id": inventory_id,
                                "product_id": product_id,
-                               "product_uom_id": product_uom_id,
-                               "currency_id": currency_id,
-                               "standard_price": standard_price,
                                "batch_number": bn_and_ed[0] if prefill_bn else False,
                                "expiry_date":  bn_and_ed[1] if prefill_ed else False
                              }

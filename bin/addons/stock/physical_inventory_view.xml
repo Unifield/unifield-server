@@ -200,8 +200,8 @@
                                 type="object" icon="gtk-go-forward"/>
                         <button name="action_counted" states="counting" string="Finish Counting"
                                 type="object" icon="gtk-paste-v"/>
-                        <button name="finish_counting" states="counted,validated" string="Generate discrepancies"
-                                type="object" icon="gtk-paste-v"/>
+                        <button name="generate_discrepancies" states="counted,validated" string="Generate discrepancies"
+                                type="object" icon="gtk-refresh"/>
                         <button name="action_validate" states="counted" string="Finished"
                                 type="object" icon="gtk-apply" confirm="Do you confirm that you have finished the inventory ?"/>
                         <button name="action_confirm" states="validated" string="Confirm Inventory"
