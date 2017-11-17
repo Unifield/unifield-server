@@ -260,7 +260,7 @@ class PhysicalInventory(osv.osv):
                 'context': context}
 
 
-    def finish_counting(self, cr, uid, inventory_ids, context=None):
+    def generate_discrepancies(self, cr, uid, inventory_ids, context=None):
         """
         Trigerred when clicking on the button "Finish counting"
 
@@ -320,10 +320,7 @@ class PhysicalInventory(osv.osv):
             counted_quantities[product_batch_expirydate] = qty
 
             counting_lines_per_product_batch_expirtydate[product_batch_expirydate] = {
-                "line_no": line["line_no"],
-                "product_uom_id": line["product_uom_id"][0],
-                "standard_price": line["standard_price"],
-                "currency_id": line["currency_id"][0] if line["currency_id"] else 1 # FIXME
+                "line_no": line["line_no"]
             }
 
         # Create a similar dictionnary for existing discrepancies
@@ -376,9 +373,6 @@ class PhysicalInventory(osv.osv):
             if product_batch_expirydate in counting_lines_per_product_batch_expirtydate:
                 this_product_batch_expirydate = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]
                 line_no = this_product_batch_expirydate["line_no"]
-                product_uom_id = this_product_batch_expirydate["product_uom_id"]
-                standard_price = this_product_batch_expirydate["standard_price"]
-                currency_id = this_product_batch_expirydate["currency_id"]
 
             # Otherwise, create additional line numbers starting from
             # the total of existing lines
@@ -387,13 +381,6 @@ class PhysicalInventory(osv.osv):
                 # 'incremenctaliness' of line_no in some edge cases when
                 # discrepancy report is regenerated multiple times...
                 line_no = len(counted_quantities) + 1 + len(new_discrepancies)
-                product_id = product_batch_expirydate[0]
-                infos = read_many("product.product", [product_id], ["uom_id",
-                                                                    "standard_price",
-                                                                    "currency_id"])[0]
-                product_uom_id = infos["uom_id"][0]
-                standard_price = infos["standard_price"]
-                currency_id = infos["currency_id"][0]
 
             if product_batch_expirydate in previous_discrepancies:
                 previous_discrepancies[product_batch_expirydate]["todelete"] = False
@@ -410,10 +397,7 @@ class PhysicalInventory(osv.osv):
                   "batch_number": product_batch_expirydate[1],
                   "expiry_date": product_batch_expirydate[2],
                   "theoretical_qty": theoretical_qty,
-                  "counted_qty": counted_qty,
-                  "product_uom_id": product_uom_id,
-                  "standard_price": standard_price,
-                  "currency_id": currency_id
+                  "counted_qty": counted_qty
                 })
 
 
@@ -1046,6 +1030,22 @@ class PhysicalInventoryCounting(osv.osv):
                        (vals.get('inventory_id'),))
             vals['line_no'] = (cr.fetchone()[0] or 0) + 1  # Last line number + 1
 
+        if (not vals.get('product_uom_id')
+        or  not vals.get('standard_price')
+        or  not vals.get('currency_id')):
+
+            product_id = vals.get('product_id')
+            product = self.pool.get("product.product").read(cr, user,
+                                                            [product_id],
+                                                            ["uom_id",
+                                                             "standard_price",
+                                                             "currency_id"],
+                                                             context=context)[0]
+
+            vals['product_uom_id'] = product['uom_id'][0]
+            vals['standard_price'] = product['standard_price']
+            vals['currency_id'] = product['currency_id'][0]
+
         return super(PhysicalInventoryCounting, self).create(cr, user, vals, context)
 
     @staticmethod
@@ -1179,6 +1179,27 @@ class PhysicalInventoryDiscrepancy(osv.osv):
     }
 
     _order = "product_id asc, line_no asc"
+
+    def create(self, cr, user, vals, context=None):
+
+        if (not vals.get('product_uom_id')
+        or  not vals.get('standard_price')
+        or  not vals.get('currency_id')):
+
+            product_id = vals.get('product_id')
+            product = self.pool.get("product.product").read(cr, user,
+                                                            [product_id],
+                                                            ["uom_id",
+                                                             "standard_price",
+                                                             "currency_id"],
+                                                             context=context)[0]
+
+            vals['product_uom_id'] = product['uom_id'][0]
+            vals['standard_price'] = product['standard_price']
+            vals['currency_id'] = product['currency_id'][0]
+
+        return super(PhysicalInventoryDiscrepancy, self).create(cr, user, vals, context)
+
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
