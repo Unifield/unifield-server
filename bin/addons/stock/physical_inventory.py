@@ -93,7 +93,7 @@ class PhysicalInventory(osv.osv):
 
 
     _columns = {
-        'ref': fields.char('Reference', size=64, required=True, readonly=True),
+        'ref': fields.char('Reference', size=64, readonly=True),
         'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'responsible': fields.char('Responsible', size=128, required=False),
@@ -131,9 +131,32 @@ class PhysicalInventory(osv.osv):
         'ref': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'physical.inventory'),
         'date': lambda *a: time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
         'state': 'draft',
+        'full_inventory': False,
         'company_id': lambda self, cr, uid,
                              c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c)
     }
+
+    def copy(self, cr, uid, id_, default=None, context=None):
+        default = default is None and {} or default
+        context = context is None and {} or context
+        default = default.copy()
+
+        default['state'] = 'draft'
+        default['date'] = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        fields_to_empty = ["ref",
+                           "full_inventory",
+                           "date_done",
+                           "file_to_import",
+                           "file_to_import2",
+                           "counting_line_ids",
+                           "discrepancy_line_ids",
+                           "move_ids"]
+
+        for field in fields_to_empty:
+            default[field] = False
+
+        return super(PhysicalInventory, self).copy(cr, uid, id_, default, context=context)
+
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
