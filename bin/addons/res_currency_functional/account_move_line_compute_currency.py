@@ -271,7 +271,7 @@ class account_move_line_compute_currency(osv.osv):
                 vals.update({'analytic_distribution_id': distrib_id})
             # the ref of the expense line is the B/S account code and name
             reconciled_acc = account_id and acc_obj.read(cr, uid, account_id, ['code', 'name'], context=context)
-            fxa_ref = reconciled_acc and "%s - %s" % (reconciled_acc['code'], reconciled_acc['name'])
+            fxa_ref = reconciled_acc and '%s - %s' % (reconciled_acc['code'], reconciled_acc['name']) or ''
             vals.update({'account_id': addendum_line_account_id,
                          'debit': addendum_db or 0.0,
                          'credit': addendum_cr or 0.0,
