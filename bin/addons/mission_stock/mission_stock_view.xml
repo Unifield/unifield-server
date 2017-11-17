@@ -145,8 +145,8 @@
                 <!-- <field name="secondary_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="cu_qty" />
                 <!-- <field name="cu_val" invisible="not context.get('with_valuation')" /> -->
-                <field name="product_amc" />
-                <field name="reviewed_consumption" />
+                <field name="product_amc" invisible="context.get('is_full_view')" />
+                <field name="reviewed_consumption" invisible="context.get('is_full_view')" />
                 <field name="in_pipe_qty" />
                 <field name="categ_id" invisible="1" />
                 <field name="type" invisible="1" />

@@ -167,6 +167,7 @@ class mission_stock_wizard(osv.osv_memory):
             'mission_report_id': wiz_id.report_id.id,
             'with_valuation': wiz_id.with_valuation == 'true' and True or False,
             'split_stock': wiz_id.split_stock == 'true' and True or False,
+            'is_full_view': wiz_id.report_id.full_view,
         })
 
         return {'type': 'ir.actions.act_window',
