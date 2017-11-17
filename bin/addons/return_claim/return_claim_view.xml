@@ -156,16 +156,16 @@
                             <field name="fake_state_return_claim" invisible="True" />
                         </group>
                         <group col="7" colspan="2">
-                            <field name="claim_is_done" invisible="True" />
-                            <field name="claim_next_state" invisible="True" />
+                            <field name="has_missing_events" invisible="True" />
+                            <field name="prevent_stock_discrepancies"
+                                   attrs="{'invisible': ['&amp;', '|', '|', ('state', '!=', 'draft_progress'),
+                                   ('type_return_claim', '!=', 'customer'), ('has_missing_events', '=', False), ('prevent_stock_discrepancies', '=', False)],
+                                           'readonly': [('state', '!=', 'draft_progress'), ('has_missing_events', '=', False)]}"/>
                             <button name="validate_draft_progress_claim" string="Validate Claim" icon="terp-check" type="object"
                                     attrs="{'invisible': [('state', '!=', 'draft_progress')]}"/>
                             <!-- <button name="process_next_event" string="Process Next Event" type="object" icon="gtk-go-forward" attrs="{'readonly': [('contains_event_return_claim', '=', False)]}" /> -->
-                            <button name="confirm_claim" string="Confirm Claim" type="object" icon="terp-camera_test"
-                                    attrs="{'invisible': [('claim_next_state', '!=', 'confirm')]}" />
                             <button name="close_claim" string="Close Claim" type="object" icon="gtk-close"
-                                    attrs="{'invisible': [('claim_next_state', '!=', 'close')],
-                                            'readonly': [('state', '=', 'confirmed'), ('claim_is_done', '=', False)]}" />
+                                    attrs="{'invisible': [('state', '!=', 'in_progress')]}" />
                         </group>
                     </form>
                 </field>
@@ -192,9 +192,8 @@
                 <field name="arch" type="xml">
                     <search string="Search Claim">
                         <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
-                        <filter icon="terp-document-new" name="draft_progress" string="Draft in Progress" domain="[('state','=','draft_progress')]" separator="1" />
+                        <filter icon="terp-document-new" name="draft_progress" string="Draft - in Progress" domain="[('state','=','draft_progress')]" separator="1" />
                         <filter icon="terp-check" name="completed" string="Validated - In Progress" domain="[('state','=', 'in_progress')]" separator="1" />
-                        <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
                         <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                         <separator orientation="vertical" />
                         <filter icon="terp-personal" name="supplier" string="Supplier" domain="[('type_return_claim','=','supplier')]" separator="1" />
