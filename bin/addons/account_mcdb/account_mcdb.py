@@ -984,6 +984,69 @@ class account_mcdb(osv.osv):
         self.unlink(cr, uid, to_clean)
         return True
 
+    def _get_values_from_selection_field(self, cr, uid, field, field_ids, operator, context):
+        """
+        Ex: ('period_id', 'in', (2, 1))
+        field => dict with all the data of the field
+        field_ids => (2, 1)
+        ==> Feb 2017, Jan 2017
+        """
+        value = field_ids
+        if 'relation' in field:
+            rel_obj = self.pool.get(field['relation'])
+            if isinstance(field_ids, (int, long)):
+                field_ids = [field_ids]
+            elif isinstance(field_ids, tuple):
+                field_ids = list(field_ids)
+            if operator.lower() == 'not in':
+                # reverse the selection to display all the items selected
+                field_ids = rel_obj.search(cr, uid, [('id', 'not in', field_ids)], context=context)
+            record_ids = rel_obj.browse(cr, uid, field_ids, context=context)
+            values_list = []
+            for record in record_ids:
+                record_str = hasattr(record, 'code') and getattr(record, 'code') or \
+                             hasattr(record, 'name') and getattr(record, 'name') or ''
+                values_list.append(record_str)
+            value = ', '.join(values_list)
+        return value
+
+    def get_selection_from_domain(self, cr, uid, domain, model, context=None):
+        """
+        Returns a String corresponding to the domain in parameter
+        """
+        if context is None:
+            context = {}
+        obj = self.pool.get(model)
+        obj_data = obj.fields_get(cr, uid, '')  # data on all fields on aml or aal
+        composed_filters = {
+            'account_id.user_type': _('Account types'),
+        }
+        dom_selections = []
+        for dom in domain:
+            # standard use case
+            title = value = ""
+            operator = dom[1]
+            if operator.lower() in ('in', '=', 'like', 'ilike'):
+                operator = ':'
+            if '.' not in dom[0]:
+                field = obj_data[dom[0]]
+                title = field['string']
+                value = self._get_values_from_selection_field(cr, uid, field, dom[2], operator, context)
+            else:
+                if dom[0] in composed_filters:
+                    title = composed_filters[dom[0]]
+                    second_obj = self.pool.get(obj_data[dom[0].split('.')[0]]['relation'])
+                    second_obj_data = second_obj.fields_get(cr, uid, '')  # data on all fields of the second obj
+                    second_obj_field = second_obj_data[dom[0].split('.')[1]]
+                    value = self._get_values_from_selection_field(cr, uid, second_obj_field, dom[2], operator, context)
+                else:
+                    continue
+            if operator.lower() == 'not in':
+                # the selection has been reversed ==> display "field : value"
+                operator = ':'
+            dom_selections.append("%s %s %s" % (title, operator, value))
+        return '; '.join(dom_selections)
+
     def export_pdf(self, cr, uid, ids, context=None):
         """
         Triggers the same export as from the "output.currency.for.export" wizard
@@ -998,6 +1061,7 @@ class account_mcdb(osv.osv):
         domain = self._get_domain(cr, uid, ids, context)
         selector = self.browse(cr, uid, [ids[0]], fields_to_fetch=['model', 'display_in_output_currency'], context=context)[0]
         res_model = selector and selector.model or False
+        header = self.get_selection_from_domain(cr, uid, domain, res_model, context=context)
         result_ids = []
         target_filename = 'selector'
         if res_model == 'account.move.line':
