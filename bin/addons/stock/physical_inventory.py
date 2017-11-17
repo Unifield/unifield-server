@@ -3,6 +3,7 @@
 import base64
 import time
 from dateutil.parser import parse
+import math
 
 import decimal_precision as dp
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -826,7 +827,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 add_error('Unknown line no %s' % line_no, row_index, 0)
                 line_no = False
 
-            discrepancy_report_lines.append((1, 0, {'reason_type_id': adjustment_type, 'comment': comment}))
+            discrepancy_report_lines.append((1, line_no, {'reason_type_id': adjustment_type, 'comment': comment}))
         # endfor
 
         context['import_in_progress'] = True
@@ -952,14 +953,16 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 change = line['discrepancy_qty']  # - amount
                 if change:
                     if ed:
-                        domain = [('product_id', '=', pid), ('life_date', '=', ed)]
                         if bn:
-                            domain.append(('name', '=like', bn))
-                        prod_lot_id = prod_lot_obj.search(cr, uid, domain)
-                        if prod_lot_id:
-                            lot_id = prod_lot_id[0]
+                            prod_lot_id = prod_lot_obj.search(cr, uid,
+                                                              [('product_id', '=', pid), ('life_date', '=', ed),
+                                                               ('name', '=like', bn)])
+                            if prod_lot_id:
+                                lot_id = prod_lot_id[0]
+                            else:
+                                lot_id = prod_lot_obj.create(cr, uid, {'product_id': pid, 'life_date': ed, 'name': bn})
                         else:
-                            lot_id = prod_lot_obj.create(cr, uid, {'product_id': pid, 'life_date': ed, 'name': bn})
+                            lot_id = prod_lot_obj._get_prodlot_from_expiry_date(cr, uid, ed, pid)
                     else:
                         lot_id = False
                     # lot_id = line['prod_lot_id'] and line['prod_lot_id'][0] or False
@@ -1056,6 +1059,10 @@ class PhysicalInventoryCounting(osv.osv):
         'quantity': fields.char(_('Quantity'), size=15),
     }
 
+    _sql_constraints = [
+        ('line_uniq', 'UNIQUE(inventory_id, product_id, batch_number, expiry_date)', _('The line product, batch number and expiry date must be unique!')),
+    ]
+
     def create(self, cr, user, vals, context=None):
         # Compute line number
         if not vals.get('line_no'):
@@ -1085,12 +1092,12 @@ class PhysicalInventoryCounting(osv.osv):
     def quantity_validate(cr, quantity):
         """Return a valide quantity or raise ValueError exception"""
         if quantity:
-            if quantity.strip().lower() == 'nan':
-                raise ValueError()
             float_width, float_prec = dp.get_precision('Product UoM')(cr)
             quantity = float(quantity)
             if quantity < 0:
                 raise NegativeValueError()
+            if math.isnan(quantity):
+                raise ValueError()
             quantity = '%.*f' % (float_prec, quantity)
         return quantity
 

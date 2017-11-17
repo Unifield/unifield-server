@@ -54,8 +54,8 @@
                                     <field name="line_no"/>
                                     <field name="product_id" on_change="on_change_product_id(product_id,product_uom)"/>
                                     <field name="product_uom_id"/>
-                                    <field name="batch_number"/>
-                                    <field name="expiry_date"/>
+                                    <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
+                                    <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
                                     <field name="quantity" on_change="on_change_quantity(quantity)"/>
                                     <field name="is_bn" string="BN"/>
                                     <field name="is_ed" string="ED"/>
@@ -67,8 +67,8 @@
                                     <field name="line_no"/>
                                     <field name="product_id" on_change="on_change_product_id(product_id,product_uom)"/>
                                     <field name="product_uom_id"/>
-                                    <field name="batch_number"/>
-                                    <field name="expiry_date"/>
+                                    <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
+                                    <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
                                     <field name="quantity" on_change="on_change_quantity(quantity)"/>
                                     <field name="is_bn" string="BN"/>
                                     <field name="is_ed" string="ED"/>
