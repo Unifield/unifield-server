@@ -21,11 +21,12 @@
                         confirm="Setting as 'full inventory' is irreversible. Do you confirm ?" 
                         attrs="{'invisible': [('full_inventory', '=', True)]}"/>
                     <notebook colspan="4">
-                        <page string="Products">
+                        <page string="Products" attrs="{'readonly': [('state', 'not in', ['draft'])]}">
                             <button name="action_select_products" states="draft" string="Products Selection" type="object"
                                     icon="gtk-add"/>
-                            <field colspan="4" name="product_ids" nolabel="1" attrs="{'readonly': [('full_inventory', '=', True)]}">
-                                <tree string="Products">
+                                <field colspan="4" name="product_ids" nolabel="1" 
+                                       attrs="{'readonly': ['|', ('full_inventory', '=', True), ('state', 'not in', ['draft'])]}">
+                                <tree string="Products" noteditable="1">
                                     <field name="default_code"/>
                                     <field name="name"/>
                                     <field name="uom_id"/>
@@ -37,8 +38,9 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Counting sheet" attrs="{'readonly': [('state', '!=', 'draft')]}">
-                            <group col="4" colspan="4">
+                        <page string="Counting sheet" attrs="{'invisible': [('state', 'in', ['draft'])], 'readonly': [('state', 'not in', ['counting', 'counted', 'validated'])]}">
+                            <group col="4" colspan="4"
+                                attrs="{'invisible': [('state', 'not in', ['counting', 'counted', 'validated'])]}">
                                 <button name="export_pdf_counting_sheet" string="Export pdf counting sheet"
                                         type="object" colspan="2" icon="gtk-print"/>
                                 <button name="export_xls_counting_sheet" string="Export xls counting sheet"
@@ -47,13 +49,13 @@
                                 <button name="import_counting_sheet" string="Import xls counting sheet" type="object" colspan="2" icon="gtk-save"/>
                             </group>
                             <field colspan="4" name="counting_line_ids" nolabel="1" widget="one2many_list"
-                                   attrs="{'readonly': [('state', '!=', 'draft')]}">
+                                attrs="{'readonly': [('state', 'not in', ['counting', 'counted', 'validated'])]}">
                                 <tree string="Counting lines" editable="bottom">
                                     <field name="line_no"/>
                                     <field name="product_id" on_change="on_change_product_id(product_id,product_uom)"/>
                                     <field name="product_uom_id"/>
-                                    <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)]}"/>
-                                    <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)]}"/>
+                                    <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
+                                    <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
                                     <field name="quantity" on_change="on_change_quantity(quantity)"/>
                                     <field name="is_bn" string="BN"/>
                                     <field name="is_ed" string="ED"/>
@@ -65,8 +67,8 @@
                                     <field name="line_no"/>
                                     <field name="product_id" on_change="on_change_product_id(product_id,product_uom)"/>
                                     <field name="product_uom_id"/>
-                                    <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)]}"/>
-                                    <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)]}"/>
+                                    <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
+                                    <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
                                     <field name="quantity" on_change="on_change_quantity(quantity)"/>
                                     <field name="is_bn" string="BN"/>
                                     <field name="is_ed" string="ED"/>
@@ -76,7 +78,7 @@
                                 </form>
                             </field>
                         </page>
-                        <page string="Discrepancy report">
+                        <page string="Discrepancy report" attrs="{'invisible': [('state', 'in', ['draft','counting'])], 'readonly': [('state', 'not in', ['counted', 'validated', 'confirmed'])]}">
                             <group col="4" colspan="4">
                                 <group col="4" colspan="4">
                                     <label string="" />
@@ -103,7 +105,7 @@
                                     <field name="discrepancy_lines_percent_absvalue" nolabel="1" />
                                 </group>
                             </group>
-                            <group col="4" colspan="4">
+                            <group col="4" colspan="4" attrs="{'invisible': [('state', 'not in', ['counted', 'validated'])]}">
                                 <button name="export_xls_discrepancy_report" string="Export XLS discrepancy report"
                                     type="object" icon="gtk-print" colspan="4"/>
                                 <field name="file_to_import2" colspan="2"/>
@@ -111,59 +113,57 @@
                                     type="object" icon="gtk-save" colspan="2"/>
                             </group>
                             <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
-                                   filter_selector="[('Hide ignored', ('ignored', '!=', True)), ('Show all', ''), ('Show ignored only', ('ignored', '=', True))]"
-                                   attrs="{'readonly': [('state', '!=', 'draft')]}">
+                                   filter_selector="[('Hide ignored', ('ignored', '!=', True)), ('Show all', ''), ('Show ignored only', ('ignored', '=', True))]">
                                <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True"
                                      colors="grey:ignored==True">
                                     <field name="line_no" />
                                     <field name="nomen_manda_2" />
                                     <field name="product_id" />
+                                    <field name="product_uom_id" />
                                     <field name="standard_price" />
                                     <field name="currency_id" />
-                                    <field name="batch_number" />
-                                    <field name="expiry_date" />
                                     <field name="theoretical_qty" />
                                     <field name="counted_qty" />
+                                    <field name="batch_number" />
+                                    <field name="expiry_date" />
                                     <field name="discrepancy_qty" />
                                     <field name="discrepancy_value" />
-                                    <field name="product_uom_id" />
-                                    <field name="reason_type_id" widget="selection" />
-                                    <field name="comment" />
                                     <field name="total_product_theoretical_qty" />
                                     <field name="total_product_counted_qty" />
                                     <field name="total_product_counted_value" />
                                     <field name="total_product_discrepancy_qty" />
                                     <field name="total_product_discrepancy_value" />
+                                    <field name="reason_type_id" widget="selection" />
+                                    <field name="comment" />
                                     <field name="ignored" invisible="True"/>
                                 </tree>
                                 <form string="Discrepancy line">
                                     <field name="line_no" />
                                     <field name="nomen_manda_2" />
                                     <field name="product_id" />
+                                    <field name="product_uom_id" />
                                     <field name="standard_price" />
                                     <field name="currency_id" />
-                                    <field name="batch_number" />
-                                    <field name="expiry_date" />
                                     <field name="theoretical_qty" />
                                     <field name="counted_qty" />
+                                    <field name="batch_number" />
+                                    <field name="expiry_date" />
                                     <field name="discrepancy_qty" />
                                     <field name="discrepancy_value" />
-                                    <field name="product_uom_id" />
-                                    <field name="reason_type_id" widget="selection" />
-                                    <field name="comment" />
                                     <field name="total_product_theoretical_qty" />
                                     <field name="total_product_counted_qty" />
                                     <field name="total_product_counted_value" />
                                     <field name="total_product_discrepancy_qty" />
                                     <field name="total_product_discrepancy_value" />
+                                    <field name="reason_type_id" widget="selection" />
+                                    <field name="comment" />
                                     <field name="ignored" invisible="True"/>
                                 </form>
                             </field>
                         </page>
-                        <page string="Posted Inventory" attrs="{'readonly': ['state', 'not in', ['confirm', 'closed']]}">
+                        <page string="Posted Inventory" attrs="{'invisible': [('state', 'not in', ['confirmed', 'closed'])], 'readonly': [('state', 'not in', ['confirmed'])]}">
                             <field colspan="2" name="move_ids" nolabel="1" widget="one2many_list"
-                                   context="{'inventory_id':active_id}"
-                                   attrs="{'readonly': [('state', '!=', 'draft')]}">
+                                   context="{'inventory_id':active_id}">
                                 <tree string="Stock Moves">
                                     <field name="product_id"/>
                                     <field name="product_qty"
@@ -196,19 +196,28 @@
                     <group colspan="2">
                         <button name="action_cancel_inventary" states="draft,counting,counted,validated" string="Cancel Inventory"
                                 type="object" icon="gtk-cancel" confirm="Do you confirm that you want to cancel the inventory ?"/>
+
                         <button name="generate_counting_sheet" states="draft" string="Generate Counting Sheet"
                                 type="object" icon="gtk-go-forward"/>
+
                         <button name="action_counted" states="counting" string="Finish Counting"
                                 type="object" icon="gtk-paste-v"/>
+
                         <button name="generate_discrepancies" states="counted,validated" string="Generate discrepancies"
                                 type="object" icon="gtk-refresh"/>
+
                         <button name="action_validate" states="counted" string="Finished"
                                 type="object" icon="gtk-apply" confirm="Do you confirm that you have finished the inventory ?"/>
+
+                        <button name="action_recount" states="validated" string="Recount"
+                                type="object" icon="gtk-undo"/>
                         <button name="action_confirm" states="validated" string="Confirm Inventory"
                                 type="object" icon="gtk-jump-to" confirm="Do you confirm that you want confirm the inventory ?"/>
+
                         <button name="action_done" states="confirmed" string="Close Inventory"
                                 type="object" icon="gtk-jump-to" confirm="Do you confirm that you want to close the inventory ?"/>
-                        <button name="action_cancel_draft" states="validated" string="Set to Draft"
+
+                        <button name="action_cancel_draft" states="cancel" string="Set to Draft"
                                 type="object" icon="gtk-convert"/>
                     </group>
                 </form>

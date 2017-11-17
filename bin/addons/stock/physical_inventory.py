@@ -875,6 +875,11 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         self.write(cr, uid, ids, {'state': 'done', 'date_done': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)},
                    context=context)
 
+    def action_recount(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        self.write(cr, uid, ids, {'state': 'counting'}, context=context)
+
     def action_validate(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
