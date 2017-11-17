@@ -23,6 +23,7 @@ from osv import osv, fields
 
 import time
 import logging
+import netsvc
 
 from tools.translate import _
 import decimal_precision as dp
@@ -196,24 +197,45 @@ class return_claim(osv.osv):
             ids = [ids]
 
         pick_obj = self.pool.get('stock.picking')
+        address_obj = self.pool.get('res.partner.address')
+        loc_obj = self.pool.get('stock.location')
+        wf_service = netsvc.LocalService('workflow')
 
-        claim = self.browse(cr, uid, ids[0],context=context)
+        # load context data
+        self.pool.get('data.tools').load_common_data(cr, uid, ids, context=context)
+
+        claim = self.browse(cr, uid, ids[0], context=context)
         if claim.prevent_stock_discrepancies:
             out_origin = pick_obj.browse(cr, uid, claim.picking_id_return_claim.id, fields_to_fetch=['origin'], context=context).origin
-            linked_in_id = pick_obj.search(cr, uid, [('origin', 'like', out_origin)])
-            partner_id = pick_obj.browse(cr, uid, claim.picking_id_return_claim.id, fields_to_fetch=['origin'], context=context).partner_id.id
+            linked_in_id = pick_obj.search(cr, uid, [('origin', 'like', out_origin)], order='id', limit=1, context=context)[0]
+            in_partner = pick_obj.browse(cr, uid, linked_in_id, context=context).partner_id
+            stock_loc = loc_obj.browse(cr, uid, context['common']['stock_id'], context=context)
+            # IN values to prevent discrepancies if the claim is missing-type
             in_values = {
-                'partner_id': partner_id,
+                'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in'),
+                'type': 'in',
+                'subtype': 'standard',
+                'partner_id': in_partner.id,
+                'partner_id2': in_partner.id,
+                'address_id': address_obj.search(cr, uid, [('partner_id', '=', in_partner.id)], context=context)[0] or False,
+                'invoice_state': 'none',
+                'reason_type_id': context['common']['rt_goods_replacement'],
                 'move_lines': [(0, 0, {
                     'name': x.name,
                     'product_id': x.product_id_claim_product_line.id,
                     'product_qty': x.qty_claim_product_line,
                     'product_uom': x.uom_id_claim_product_line.id,
-                    'location_id': ,
-                    'location_dest_id': ,
+                    'location_id': context['common']['input_id'],
+                    'location_dest_id': loc_obj.chained_location_get(cr, uid, stock_loc, product=x.product_id_claim_product_line)[0].id,
+                    'reason_type_id': context['common']['rt_goods_replacement'],
                 }) for x in claim.product_line_ids_return_claim],
             }
-            pick_obj.create(cr, uid, in_values, context=context)
+            # creation of the new IN
+            new_in = pick_obj.create(cr, uid, in_values, context=context)
+            # confirm and close IN
+            wf_service.trg_validate(uid, 'stock.picking', new_in, 'button_confirm', cr)
+            pick_obj.action_move(cr, uid, [new_in], context=context)
+            wf_service.trg_validate(uid, 'stock.picking', new_in, 'button_done', cr)
 
         self.write(cr, uid, ids, {'state': 'in_progress'}, context=context)
 

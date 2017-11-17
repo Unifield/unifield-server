@@ -231,6 +231,7 @@ class stock_location(osv.osv):
     def _hook_chained_location_get(self, cr, uid, context={}, *args, **kwargs):
         return kwargs.get('result', None)
 
+    ##################### TODO Remove ##################################
     def chained_location_get(self, cr, uid, location, partner=None, product=None, context=None):
         """ Finds chained location
         @param location: Location id

@@ -160,7 +160,7 @@
                             <field name="prevent_stock_discrepancies"
                                    attrs="{'invisible': ['&amp;', '|', '|', ('state', '!=', 'draft_progress'),
                                    ('type_return_claim', '!=', 'customer'), ('has_missing_events', '=', False), ('prevent_stock_discrepancies', '=', False)],
-                                           'readonly': [('state', '!=', 'draft_progress'), ('has_missing_events', '=', False)]}"/>
+                                           'readonly': [('state', '!=', 'draft_progress')]}"/>
                             <button name="validate_draft_progress_claim" string="Validate Claim" icon="terp-check" type="object"
                                     attrs="{'invisible': [('state', '!=', 'draft_progress')]}"/>
                             <!-- <button name="process_next_event" string="Process Next Event" type="object" icon="gtk-go-forward" attrs="{'readonly': [('contains_event_return_claim', '=', False)]}" /> -->
