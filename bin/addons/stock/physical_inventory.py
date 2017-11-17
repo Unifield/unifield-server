@@ -97,7 +97,7 @@ class PhysicalInventory(osv.osv):
 
 
     _columns = {
-        'ref': fields.char('Reference', size=64, required=True, readonly=True),
+        'ref': fields.char('Reference', size=64, readonly=True),
         'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'responsible': fields.char('Responsible', size=128, required=False),
@@ -132,12 +132,44 @@ class PhysicalInventory(osv.osv):
     }
 
     _defaults = {
-        'ref': lambda obj, cr, uid, context: obj.pool.get('ir.sequence').get(cr, uid, 'physical.inventory'),
+        'ref': False,
         'date': lambda *a: time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
         'state': 'draft',
+        'full_inventory': False,
         'company_id': lambda self, cr, uid,
                              c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c)
     }
+
+    _order = "ref desc, date desc"
+
+    def create(self, cr, uid, values, context):
+        context = context is None and {} or context
+        values["ref"] = self.pool.get('ir.sequence').get(cr, uid, 'physical.inventory')
+
+        return super(PhysicalInventory, self).create(cr, uid, values, context=context)
+
+
+    def copy(self, cr, uid, id_, default=None, context=None):
+        default = default is None and {} or default
+        context = context is None and {} or context
+        default = default.copy()
+
+        default['state'] = 'draft'
+        default['date'] = time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+        fields_to_empty = ["ref",
+                           "full_inventory",
+                           "date_done",
+                           "file_to_import",
+                           "file_to_import2",
+                           "counting_line_ids",
+                           "discrepancy_line_ids",
+                           "move_ids"]
+
+        for field in fields_to_empty:
+            default[field] = False
+
+        return super(PhysicalInventory, self).copy(cr, uid, id_, default, context=context)
+
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
@@ -335,7 +367,7 @@ class PhysicalInventory(osv.osv):
 
             # If the key is not known, assume 0
             theoretical_qty = theoretical_quantities.get(product_batch_expirydate, 0.0)
-            counted_qty = counted_quantities.get(product_batch_expirydate, None)
+            counted_qty = counted_quantities.get(product_batch_expirydate, -1.0)
 
             # If no discrepancy, nothing to do
             # (Use a continue to save 1 indentation level..)
@@ -372,7 +404,7 @@ class PhysicalInventory(osv.osv):
                 existing_id = previous_discrepancies[product_batch_expirydate]["id"]
                 update_discrepancies[existing_id] = {
                   "line_no": line_no,
-                  "counted_qty": counted_quantities.get(product_batch_expirydate, 0.0),
+                  "counted_qty": counted_qty
                 }
             else:
                 new_discrepancies.append( \
@@ -381,8 +413,8 @@ class PhysicalInventory(osv.osv):
                   "product_id": product_batch_expirydate[0],
                   "batch_number": product_batch_expirydate[1],
                   "expiry_date": product_batch_expirydate[2],
-                  "theoretical_qty": theoretical_quantities.get(product_batch_expirydate, 0.0),
-                  "counted_qty": counted_quantities.get(product_batch_expirydate, 0.0),
+                  "theoretical_qty": theoretical_qty,
+                  "counted_qty": counted_qty,
                   "product_uom_id": product_uom_id,
                   "standard_price": standard_price,
                   "currency_id": currency_id
@@ -430,6 +462,9 @@ class PhysicalInventory(osv.osv):
         discrepancy_lines = read_many('physical.inventory.discrepancy',
                                       discrepancy_line_ids,
                                       [ "line_no",
+                                        "product_id",
+                                        "batch_number",
+                                        "expiry_date",
                                         "counted_qty",
                                         "ignored"])
 
@@ -437,12 +472,23 @@ class PhysicalInventory(osv.osv):
         for line in discrepancy_lines:
             if line["ignored"]:
                 continue
-            if line["counted_qty"] == False or line["counted_qty"] == None:
-                anomalies.append({"message": "Quantity for line %s is incorrect. Ignore line or count as 0 ?" % line["line_no"],
+            anomaly = False
+            if line["counted_qty"] == False:
+                anomaly = "Quantity for line %s is incorrect." % line["line_no"]
+            if line["counted_qty"] < 0.0:
+                anomaly = "A line for product '%s'" % line["product_id"][1]
+                if line["batch_number"] or line["expiry_date"]:
+                    anomaly += " with Batch number '%s' and Expiry date '%s'"  % (line["batch_number"] or '', line["expiry_date"] or '')
+                else:
+                    anomaly += " (no batch number / expiry date)"
+                anomaly += " was expected but not found."
+
+            if anomaly:
+                anomalies.append({"message": anomaly + " Ignore line or count as 0 ?",
                                   "line_id": line["id"]})
 
         if anomalies:
-            return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Advertissment', anomalies)
+            return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Warning', anomalies)
         else:
             return {}
 
@@ -496,7 +542,7 @@ class PhysicalInventory(osv.osv):
         count_ids = [item['line_id'] for item in items if item['action'] == 'count']
 
         if ignore_ids:
-            discrepancies.write(cr, uid, ignore_ids, {'ignored': True})
+            discrepancies.write(cr, uid, ignore_ids, {'counted_qty': 0.0, 'ignored': True})
         if count_ids:
             discrepancies.write(cr, uid, count_ids, {'counted_qty': 0.0, 'ignored': False})
 

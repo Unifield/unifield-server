@@ -111,7 +111,7 @@
                                     type="object" icon="gtk-save" colspan="2"/>
                             </group>
                             <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
-                                   filter_selector="[('Hide ignored', ('ignored', '!=', True), ('Show all', ''), ('Show ignored only', ('ignored', '=', 'True))]"
+                                   filter_selector="[('Hide ignored', ('ignored', '!=', True)), ('Show all', ''), ('Show ignored only', ('ignored', '=', True))]"
                                    attrs="{'readonly': [('state', '!=', 'draft')]}">
                                <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True"
                                      colors="grey:ignored==True">
