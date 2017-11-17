@@ -841,13 +841,20 @@ class stock_mission_report(osv.osv):
             cr.execute(GET_EXPORT_REQUEST, (lang, report_id))
             request_result = cr.dictfetchall()
 
+            report = self.browse(cr, uid, report_id, fields_to_fetch=['full_view'], context=context)
+            hide_amc_fmc = report.full_view and (self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.level in ['section', 'coordo'])
+
             logger.info('___ Start CSV and XLS generation...')
             for report_type in HEADER_DICT.keys():
+                header = HEADER_DICT[report_type]
+                if hide_amc_fmc:
+                    header = tuple(x for x in header if x[0] not in ('AMC', 'FMC'))
+
                 params = {
                     'report_id': report_id,
                     'report_type': report_type,
                     'attachments_path': attachments_path,
-                    'header': HEADER_DICT[report_type],
+                    'header': header,
                     'write_attachment_in_db': write_attachment_in_db,
                     'product_values': product_values,}
 
