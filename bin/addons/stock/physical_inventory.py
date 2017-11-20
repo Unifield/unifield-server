@@ -1271,7 +1271,6 @@ class PhysicalInventoryDiscrepancy(osv.osv):
             if comment:
                 to_update["comment"] = comment
             if to_update:
-                print to_update
                 move_obj.write(cr, uid, [line["move_id"]], to_update, context=context)
 
         return r
