@@ -443,7 +443,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             if not sol_states:
                 res[so.id] = 'draft'
-            if all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
+            elif all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
             else: # else compute the less advanced state:
                 sol_states.discard('cancel')
