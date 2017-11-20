@@ -22,3 +22,4 @@
 import sale_follow_up_report
 import sale_follow_up_report_multi
 import ir_follow_up_location_report
+import ir_track_changes_report

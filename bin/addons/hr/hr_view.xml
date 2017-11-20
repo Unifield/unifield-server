@@ -106,10 +106,11 @@
                     <filter icon="terp-personal+" domain="[('active','=',True)]" name="active" string="Active" groups="base.group_extended"/>
                     <separator orientation="vertical" />
                     <field name="name"/>
+                    <field name="identification_id"/>
                     <field name="department_id" widget="selection">
                     <filter icon="terp-personal+" domain="[('department_id','=',context.get('department_id',False))]" string="My Departments Employee"/>
                     </field>
-                    <field name="job_id" widget="selection"/>
+                    <field name="job_id"/>
                     <field name="parent_id"/>
                     <newline />
                     <group expand="0" string="Group By...">
@@ -220,24 +221,6 @@
             </field>
         </record>
 
-        <record id="action2" model="ir.actions.act_window">
-            <field name="name">Employee Hierarchy</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">hr.employee</field>
-            <field name="domain">[('id','in',active_ids)]</field>
-            <field name="view_type">tree</field>
-            <field name="view_id" ref="view_partner_tree2"/>
-        </record>
-
-        <ir_set>
-            <field eval="'action'" name="key"/>
-            <field eval="'client_action_multi'" name="key2"/>
-            <field eval="['hr.employee']" name="models"/>
-            <field name="name">Employees Hierarchy</field>
-            <field eval="'ir.actions.act_window,'+str(action2)" name="value"/>
-            <field eval="True" name="isobject"/>
-            <field eval="True" name="replace"/>
-        </ir_set>
 
         <!--
         ============

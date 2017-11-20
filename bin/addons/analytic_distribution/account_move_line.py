@@ -319,7 +319,9 @@ class account_move_line(osv.osv):
         self.pool.get('account.analytic.line').unlink(cr, uid, ana_ids, context=context)
         res = super(account_move_line, self).unlink(cr, uid, ids, context=context, check=check) #ITWG-84: Pass also the check flag to the super!
         # Revalidate move
-        self.pool.get('account.move').validate(cr, uid, move_ids, context=context)
+        # US-3251 exclude moves about to be deleted
+        moves_to_validate = [move_id for move_id in move_ids if move_id not in context.get('move_ids_to_delete', [])]
+        self.pool.get('account.move').validate(cr, uid, moves_to_validate, context=context)
         return res
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
@@ -398,7 +400,7 @@ class account_move_line(osv.osv):
                         vals.update({'destination_id': l.account_id.default_destination_id.id})
                 if l.employee_id.funding_pool_id:
                     vals.update({'analytic_id': l.employee_id.funding_pool_id.id})
-                    if vals.get('cost_center_id') not in l.employee_id.funding_pool_id.cost_center_ids:
+                    if vals.get('cost_center_id') not in [cc.id for cc in l.employee_id.funding_pool_id.cost_center_ids]:
                         # Fetch default funding pool: MSF Private Fund
                         try:
                             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]

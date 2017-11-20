@@ -27,7 +27,7 @@ from osv import osv
 from report_webkit.webkit_report import WebKitParser as OldWebKitParser
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
-from purchase_override import PURCHASE_ORDER_STATE_SELECTION
+from purchase import PURCHASE_ORDER_STATE_SELECTION
 
 import pooler
 import time

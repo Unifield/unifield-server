@@ -1,0 +1,605 @@
+Feature: SSL Instance flow Cancel and  Resource IN line
+
+@supply @SSL
+Scenario: SSL Instance flow Cancel and  Resource IN line
+
+   
+#PARAMETRIZATION: 
+# HQ1C1: need to have OFFICE as external Consumption Unit
+
+
+   ###################################################################
+    ## CREATE AN IR IN HQ1C1 (reference in IR_REFERENCE)
+    ###################################################################
+
+	
+# LINE 2
+
+    I log into instance "HQ1C1"
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+    I click on "New"
+    I fill "Requestor" with "LogCoo"
+    I fill "Location Requestor" with "OFFICE"
+    I fill "Requested date" with "30/May/2016"
+	
+   # Add multiple products at the same time
+	I click on "Add multiple lines" and open the window
+	I click on "Add" and open the window
+	I fill "Code" with "ADAP"
+	I click on "Search"
+	I click "checkbox" on line:
+	 | CODE        |
+	 | ADAPCOLABAG |
+	 | ADAPCOLALOK |
+	 | ADAPDCDRB-- |
+	 | ADAPMEMK1-- |	 
+	 
+	I click on "Select" and close the window
+	I click "Edit" on line:
+	 | CODE        |
+	 | ADAPCOLABAG |
+	I fill "20" within column "QTY"
+	I validate the line
+	I click "Edit" on line:
+	 | CODE        |
+	 | ADAPCOLALOK |
+	I fill "20" within column "QTY"
+	I validate the line
+	I click "Edit" on line:
+	 | CODE        |
+	 | ADAPDCDRB-- |
+	I fill "20" within column "QTY"
+	I validate the line
+
+	I click "Edit" on line:
+	 | CODE        |
+	 | ADAPMEMK1-- |
+	I fill "20" within column "QTY"
+	I validate the line
+    I click on "Add products" and close the window
+
+    I store "Order Reference" in "IR_REFERENCE"
+	
+# LINE 3
+	
+    I click on "Validate lines"	
+		
+	I should see in the main table the following data:
+        | PRODUCT                                                         | STATE     | QUANTITY (UOM)| 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Validated |    20.00      |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Validated |    20.00      |
+        | [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      |	Validated |    20.00      |	
+		| [ADAPMEMK1--] MEMORY KEY, USB                                   | Validated |    20.00      |
+
+	I should see "Validated" in "Order State"
+	
+
+# LINE 4
+	
+	I click on menu "Orders Sourcing Tool"
+	I fill "Order" with "{{IR_REFERENCE}}"
+	I click on "Search"
+	
+    I tick all the lines
+    I click "Source lines" in the side panel and open the window
+
+    I fill "Supplier" with "Local Market"	
+    I click on "Save & source" and close the window
+	
+
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I fill "ORDER REFERENCE" with "{{IR_REFERENCE}}"
+	
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+	
+	I should see in the main table the following data:
+        | PRODUCT                                                         | STATE   | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Sourced |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Sourced |
+        | [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      |	Sourced |	
+		| [ADAPMEMK1--] MEMORY KEY, USB                                   | Sourced |
+		
+	I should see "Sourced" in "Order State"
+
+# LINE 5
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I toggle on "DRAFT"
+
+    I click "Edit" on line:
+        | SOURCE DOCUMENT    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE  | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Draft |
+        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Draft |	
+		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Draft |
+        | ADAPMEMK1--  | MEMORY KEY, USB                                  | Draft |
+		
+	I click on "Analytical Distribution" and open the window
+	I click on "New"
+	I fill "SUP" within column "DESTINATION"
+	I fill "HT101" within column "COST CENTER"
+	I validate the line
+	I click on "Save" and close the window
+	
+	I click on "Validate lines"
+	
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE      | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Validated |
+        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Validated |	
+		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Validated |
+        | ADAPMEMK1--  | MEMORY KEY, USB                                  | Validated |
+		
+    I should see "Validated" in "Order State"		
+	I store "Order Reference" in "PO_REFERENCE_1"	
+			
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT                                                         | STATE     | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Sourced-v |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Sourced-v |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Sourced-v |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Sourced-v |
+		
+	I should see "Sourced-p" in "Order State"			
+
+#LINE 6
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I fill "REFERENCE" with "{{PO_REFERENCE_1}}"
+
+    I click on "Search"
+    I click "Edit" on line:
+        | REFERENCE          |
+        | {{PO_REFERENCE_1}} |	
+
+	I open tab "Delivery"
+	I fill "Delivery Confirmed Date" with "28/May/2017"	
+
+    I click on "Apply to all lines" and open the window
+	I click on "Yes" and close the window
+	
+	I click on "Confirm lines"
+
+    I open tab "Purchase Order"
+	
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE      | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Confirmed |
+        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Confirmed |	
+		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Confirmed |
+        | ADAPMEMK1--  | MEMORY KEY, USB                                  | Confirmed |
+		
+    I should see "Confirmed" in "Order State"		
+
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT                                                         | STATE     | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Confirmed |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Confirmed |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Confirmed |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Confirmed |
+	
+	I should see "Confirmed" in "Order State"	
+		
+	I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+
+    I click on menu "Deliveries|Delivery Orders"
+    I toggle off "AVAILABLE"
+	I click "Edit" on line:
+        | ORIGIN           |
+        | {{IR_REFERENCE}} |
+
+	I should see in the main table the following data:
+         | PRODUCT                                                        | STATE         | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Not Available |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Not Available |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Not Available |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Not Available |
+
+	I should see "Confirmed" in "State"	
+
+	
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER       |
+		| *{{PO_REFERENCE_1}}* | 
+    I should see in the main table the following data:
+        | PRODUCT                                                         | STATE     | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Available |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Available |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Available |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Available |
+
+#LINE 7	
+	
+    I click "Cancel" on line and open the window:
+        | PRODUCT                                      | STATE     | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG | Available |	
+		
+	I click on "Cancel and Resource" and close the window	
+
+
+    I should see in the main table the following data:
+        | PRODUCT                                                         | STATE       | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled-r |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Available   |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Available   |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Available   |
+
+    I click on menu "Deliveries|Delivery Orders"
+    I toggle off "AVAILABLE"
+	I click "Edit" on line:
+        | ORIGIN           |
+        | {{IR_REFERENCE}} |
+
+	I should see in the main table the following data:
+        | PRODUCT                                                         | STATE         | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled     |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Not Available |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Not Available |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Not Available |
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I fill "REFERENCE" with "{{PO_REFERENCE_1}}"
+
+    I click on "Search"
+    I click "Edit" on line:
+        | REFERENCE          |
+        | {{PO_REFERENCE_1}} |	
+		
+	I set "Show all" on lines filter	
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE        | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Cancelled-r |
+        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Confirmed   |	
+		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Confirmed   |
+        | ADAPMEMK1--  | MEMORY KEY, USB                                  | Confirmed   |
+
+    I should see "Confirmed" in "Order State"				
+	
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+	I set "Show all" on lines filter		
+	I should see in the main table the following data:
+        | PRODUCT                                                         | STATE       | ORIGINAL FO/IR LINE |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled-r |                     |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Confirmed   |                     |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Confirmed   |                     |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Confirmed   |                     |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Resourced-v |          1          |
+
+	I should see "Confirmed" in "Order State"
+		
+# LINE 8
+		
+	I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER       |
+		| *{{PO_REFERENCE_1}}* | 
+	I click on "Process" and open the window
+	I click on "Copy all"
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open	
+
+	
+    I should see in the main table the following data:
+        | PRODUCT                                                         | STATE       | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled-r |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Closed      |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Closed      |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Closed      |
+		
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I fill "REFERENCE" with "{{PO_REFERENCE_1}}"
+
+    I click on "Search"
+    I click "Edit" on line:
+        | REFERENCE          |
+        | {{PO_REFERENCE_1}} |	
+		
+	I set "Show all" on lines filter	
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION                              |STATE        | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG                    | Cancelled-r |
+        | ADAPCOLALOK  |(laptop computer) LOCK, with key, Kensington slot | Closed      |	
+		| ADAPDCDRB--  | DISK, CD-R (recordable), data, cakebox of 25     | Closed      |
+        | ADAPMEMK1--  | MEMORY KEY, USB                                  | Closed      |
+
+    I should see "Closed" in "Order State"				
+		
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+	I set "Show all" on lines filter		
+	I should see in the main table the following data:
+        | PRODUCT                                                         | STATE       | ORIGINAL FO/IR LINE |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled-r |                     |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Confirmed   |                     |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Confirmed   |                     |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Confirmed   |                     |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Resourced-v |          1          |
+		
+	I should see "Confirmed" in "Order State"			
+		
+# LINE 9		
+		
+	I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+    I click on menu "Deliveries|Delivery Orders"
+    I toggle off "AVAILABLE"
+	I click "Edit" on line:
+        | ORIGIN           |
+        | {{IR_REFERENCE}} |
+
+	I should see in the main table the following data:
+        | PRODUCT                                                         | STATE     | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Available |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Available |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Available |
+    
+	I click on "Process" and open the window
+	I click on "Copy all"
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open	
+
+	I should see in the main table the following data:
+        | PRODUCT                                                         | STATE     | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Closed    |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Closed    |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Closed    |
+		
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT                                                         | STATE       | ORIGINAL FO/IR LINE |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Closed      |                     |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Closed      |                     |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Closed      |                     |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Resourced-v |          1          |
+
+	I should see "Confirmed-p" in "Order State"			
+
+#LINE 10
+
+    I open tab menu "ORDERS"	
+	I click on menu "Orders Sourcing Tool"
+	I fill "Order" with "{{IR_REFERENCE}}"
+	I click on "Search"
+
+	I click "Edit" on line:
+        | PRODUCT                                      |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG |
+	I fill "ITCompany" within column "SUPPLIER"
+	I validate the line
+	I click "Source Line" on line:
+        | PRODUCT                                      |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG |
+
+		
+    I click on menu "Internal Requests"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT                                      | STATE       | ORIGINAL FO/IR LINE |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG | Resourced-s |          1          |
+		
+		
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+    I toggle on "DRAFT"
+
+    I click "Edit" on line:
+        | SOURCE DOCUMENT    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION           |STATE  | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG | Draft |
+		
+		
+#LINE 11
+		
+	I click on "Analytical Distribution" and open the window
+	I click on "New"
+	I fill "SUP" within column "DESTINATION"
+	I fill "HT101" within column "COST CENTER"
+	I validate the line
+	I click on "Save" and close the window
+	
+	I click on "Validate lines"
+	
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION           |STATE      | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG | Validated |
+
+    I should see "Validated" in "Order State"				
+		
+	I store "Order Reference" in "PO_REFERENCE_2"	
+
+	
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT                                      | STATE        | ORIGINAL FO/IR LINE |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG | Resourced-pv |          1          |
+
+    I should see "Confirmed-p" in "Order State"
+	
+#LINE 12
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | SOURCE DOCUMENT    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION           |STATE      | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG | Validated |   	
+	
+	I open tab "Delivery"
+	I fill "Delivery Confirmed Date" with "28/May/2017"
+	
+    I click on "Apply to all lines" and open the window
+	I click on "Yes" and close the window	
+	
+	I click on "Confirm lines"
+	I should see "Confirmed" in "Order State"
+	
+	I open tab "Purchase Order"
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION           |STATE      | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG | Confirmed | 	
+		
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT                                      | STATE       | ORIGINAL FO/IR LINE |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG | Resourced-c |          1          |
+
+    I should see "Confirmed-p" in "Order State"	
+	
+#LINE 13
+
+	I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+	I click on menu "Incoming Shipments"
+
+	I click "Edit" on line:
+		| PURCHASE ORDER       |
+		| *{{PO_REFERENCE_2}}* | 
+
+    I should see in the main table the following data:
+        | PRODUCT                                      | STATE     | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG | Available |
+
+    I click on "Process" and open the window
+	I click on "Copy all"
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open	
+
+    I should see in the main table the following data:
+        | PRODUCT                                      | STATE  | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG | Closed |
+
+    I open tab menu "PURCHASES"
+    I click on menu "Purchase Orders"
+
+    I click "Edit" on line:
+        | REFERENCE            |
+        | *{{PO_REFERENCE_2}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT CODE | PRODUCT DESCRIPTION           |STATE   | 
+        | ADAPCOLABAG  |(laptop computer) CARRYING BAG | Closed | 
+
+
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+	I should see in the main table the following data:
+        | PRODUCT                                      | STATE       | ORIGINAL FO/IR LINE |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG | Resourced-c |          1          |
+
+    I should see "Confirmed-p" in "Order State"	
+
+
+	I open tab menu "WAREHOUSE"
+	I open accordion menu "Warehouse Management"
+    I click on menu "Deliveries|Delivery Orders"
+	I click "Edit" on line:
+        | ORIGIN           |
+        | {{IR_REFERENCE}} |
+
+	I should see in the main table the following data:
+        | PRODUCT                                      | STATE     | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG | Available |
+
+
+#LINE 14		
+	I click on "Process" and open the window
+	I click on "Copy all"
+    I click on "Process" and close the window if necessary
+    I click on "Refresh" until "Done" in "Processing of lines" if a window is open
+    I click on "Close" and close the window if a window is open	
+
+	I should see in the main table the following data:
+        | PRODUCT                                       | STATE  | 
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG  | Closed |
+ 
+
+    I open tab menu "ORDERS"
+    I click on menu "Internal Requests"
+	I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+	I set "Show all" on lines filter		
+	I should see in the main table the following data:
+        | PRODUCT                                                         | STATE       | ORIGINAL FO/IR LINE |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Cancelled-r |                     |
+        | [ADAPCOLALOK] (laptop computer) LOCK, with key, Kensington slot | Closed      |                     |	
+		| [ADAPDCDRB--] DISK, CD-R (recordable), data, cakebox of 25      | Closed      |                     |
+        | [ADAPMEMK1--] MEMORY KEY, USB                                   | Closed      |                     |
+        | [ADAPCOLABAG] (laptop computer) CARRYING BAG                    | Closed      |          1          |
+
+		
+	I should see "Closed" in "Order State"

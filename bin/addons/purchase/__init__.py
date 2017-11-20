@@ -18,14 +18,53 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.     
 #
 ##############################################################################
+ORDER_PRIORITY = [
+    ('emergency', 'Emergency'),
+    ('normal', 'Normal'),
+    ('priority', 'Priority'),
+]
 
-import purchase
+ORDER_CATEGORY = [
+    ('medical', 'Medical'),
+    ('log', 'Logistic'),
+    ('service', 'Service'),
+    ('transport', 'Transport'),
+    ('other', 'Other'),
+]
+
+PURCHASE_ORDER_LINE_STATE_SELECTION = [
+    ('draft', 'Draft'),
+    ('validated_n', 'Validated-n'),
+    ('validated', 'Validated'),
+    ('sourced_sy', 'Sourced-sy'),
+    ('sourced_v', 'Sourced-v'),
+    ('sourced_n', 'Sourced-n'),
+    ('confirmed', 'Confirmed'),
+    ('done', 'Closed'),
+    ('cancel', 'Cancelled'),
+    ('cancel_r', 'Cancelled-r'),
+]
+
+PURCHASE_ORDER_STATE_SELECTION = [
+    ('draft', 'Draft'),
+    ('draft_p', 'Draft-p'),
+    ('validated', 'Validated'),
+    ('validated_p', 'Validated-p'),
+    ('sourced_p', 'Sourced-p'),
+    ('confirmed', 'Confirmed'),
+    ('confirmed_p', 'Confirmed-p'),
+    ('done', 'Closed'),
+    ('cancel', 'Cancelled'),
+]
+
+import purchase_order
+import purchase_order_line
+import purchase_workflow
 import partner
 import stock
 import wizard
 import report
-import stock
 import company
-
+import procurement_order
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

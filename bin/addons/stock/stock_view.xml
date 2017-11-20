@@ -242,19 +242,7 @@
                 </tree>
             </field>
         </record>
-        <record id="action_tracking_form" model="ir.actions.act_window">
-            <field name="name">Packs</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">stock.tracking</field>
-            <field name="view_type">form</field>
-            <field name="view_id" ref="view_tracking_tree"/>
-            <field name="help">This is the list of all your packs. When you select a Pack, you can get the upstream or downstream traceability of the products contained in the pack.</field>
-        </record>
         <menuitem id="menu_traceability" name="Traceability" parent="menu_stock_root" sequence="3"/>
-        <menuitem action="action_tracking_form" id="menu_action_tracking_form"
-            groups="base.group_extended"
-            sequence="6"
-            parent="menu_traceability"/>
 
         <record id="lot_line_tree" model="ir.ui.view">
             <field name="name">stock.tracking.tree</field>
@@ -1325,8 +1313,11 @@
             <field name="arch" type="xml">
                 <search string="Internal Picking List">
                     <group col="8" colspan="4">
-                        <filter icon="terp-check" string="Available" domain="[('state','=','assigned')]" help="Assigned Internal Moves"/>
+                        <filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Internal Moves"/>
                         <filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Internal Moves" />
+                        <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Internal Moves already processed"/>
+                        <separator orientation="vertical"/>
+                        <filter icon="gtk-execute" name="sysint" string="System INT" domain="[('subtype', '!=', 'sysint')]" help="System internal moves"/>
                         <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="origin"/>
@@ -1355,7 +1346,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar</field>
             <field name="domain">[('type','=','internal')]</field>
-            <field name="context">{'contact_display': 'partner_address',"search_default_available":1}</field>
+            <field name="context">{'contact_display': 'partner_address', "search_default_sysint":1, 'subtype': 'internal', 'picking_type': 'internal_move'}</field>
             <field name="search_view_id" ref="view_picking_internal_search"/>
             <field name="help">Internal Moves display all inventory operations you have to perform in your warehouse. All operations can be categorized into stock journals, so that each worker has his own list of operations to perform in his own journal. Most operations are prepared automatically by OpenERP according to your preconfigured logistics rules, but you can also record manual stock operations.</field>
         </record>
@@ -1846,15 +1837,6 @@
             name="Related Picking"
             res_model="stock.picking"
             src_model="stock.move"/>
-
-        <act_window
-            context="{'search_default_future': 1,'search_default_product_id': [active_id]}"
-            domain="[('state','in',('waiting','confirmed','assigned'))]"
-            id="act_product_stock_move_futur_open"
-            name="Future Stock Moves"
-            res_model="stock.move"
-            src_model="product.product"
-            groups="base.group_extended"/>
 
         <record id="ir_act_product_location_open" model="ir.values">
             <field name="key2">tree_but_open</field>

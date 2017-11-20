@@ -233,6 +233,7 @@ def _tz_get(self,cr,uid, context=None):
 
 class users(osv.osv):
     __admin_ids = {}
+    __sync_user_ids = {}
     _uid_cache = {}
     _name = "res.users"
     _order = 'name'
@@ -490,6 +491,8 @@ class users(osv.osv):
         'is_sync_config': fields.function(_is_sync_config, fnct_search=_search_role, method=True, string='Is Sync Config ?', type="boolean"),
         'instance_level': fields.function(_get_instance_level, fnct_search=_search_instance_level, method=True, string='Instance level', type="char"),
         'log_xmlrpc': fields.boolean('Log XMLRPC requests', help="Log the XMLRPC requests of this user into a dedicated file"),
+        'last_use_shortcut': fields.datetime('Last use of shortcut', help="Last date when a shortcut was used", readonly=True),
+        'nb_shortcut_used': fields.integer('Number of shortcut used', help="Number of time a shortcut has been used by this user", readonly=True),
     }
 
     def on_change_company_id(self, cr, uid, ids, company_id):
@@ -543,6 +546,13 @@ class users(osv.osv):
             mdid = ir_model_data_obj._get_id(cr, 1, 'base', 'user_root')
             self.__admin_ids[cr.dbname] = ir_model_data_obj.read(cr, 1, [mdid], ['res_id'])[0]['res_id']
         return self.__admin_ids[cr.dbname]
+
+    def _get_sync_user_id(self, cr):
+        if self.__sync_user_ids.get(cr.dbname) is None:
+            ir_model_data_obj = self.pool.get('ir.model.data')
+            mdid = ir_model_data_obj._get_id(cr, 1, 'base', 'user_sync')
+            self.__sync_user_ids[cr.dbname] = ir_model_data_obj.read(cr, 1, [mdid], ['res_id'])[0]['res_id']
+        return self.__sync_user_ids[cr.dbname]
 
     def _get_company(self,cr, uid, context=None, uid2=False):
         if not uid2:

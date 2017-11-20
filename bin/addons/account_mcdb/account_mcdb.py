@@ -43,6 +43,7 @@ class account_mcdb(osv.osv):
         'document_code': fields.char(string='Sequence number', size=255),
         'document_state': fields.selection([('posted', 'Posted'), ('draft', 'Unposted')], string="Entry Status"),
         'period_ids': fields.many2many(obj='account.period', rel="account_period_mcdb", id1="mcdb_id", id2="period_id", string="Accounting Period"),
+        'fiscalyear_id': fields.many2one('account.fiscalyear', string='Fiscal Year'),
         'account_ids': fields.many2many(obj='account.account', rel='account_account_mcdb', id1='mcdb_id', id2='account_id', string="Account Code"),
         'partner_id': fields.many2one('res.partner', string="Partner"),
         'employee_id': fields.many2one('hr.employee', string="Employee"),
@@ -357,7 +358,8 @@ class account_mcdb(osv.osv):
                         domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
             # Then MANY2ONE fields
             for m2o in [('abs_id', 'statement_id'), ('partner_id', 'partner_id'), ('employee_id', 'employee_id'),
-                        ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id')]:
+                        ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id'),
+                        ('fiscalyear_id', 'fiscalyear_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
             # Finally others fields
@@ -411,9 +413,15 @@ class account_mcdb(osv.osv):
             # REALLOCATION field
             if wiz.reallocated:
                 if wiz.reallocated == 'reallocated':
+                    # entries corrected by the system (= not marked as corrected manually)
                     domain.append(('is_reallocated', '=', True))
+                    domain.append('|')
+                    domain.append(('move_id', '=', False))
+                    domain.append(('move_id.is_manually_corrected', '=', False))
                 elif wiz.reallocated == 'unreallocated':
+                    domain.append('|')
                     domain.append(('is_reallocated', '=', False))
+                    domain.append(('move_id.is_manually_corrected', '=', True))
             # REVERSED field
             if wiz.reversed:
                 if wiz.reversed == 'reversed':

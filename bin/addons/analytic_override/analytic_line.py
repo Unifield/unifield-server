@@ -46,7 +46,7 @@ class account_analytic_line(osv.osv):
             res[r['id']] = False
             if r['imported_commitment'] and r['journal_id']:
                 rj = aaj_obj.read(cr, uid, [r['journal_id'][0]],
-                    ['type', 'code', ], context=context)[0]
+                                  ['type', 'code', ], context=context)[0]
                 if rj:
                     res[r['id']]  = rj['type'] =='engagement' and \
                         rj['code'] == 'ENGI' or False
@@ -67,6 +67,25 @@ class account_analytic_line(osv.osv):
                 res[al.id] = True
         return res
 
+    def _search_is_free(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Returns a domain that, according to the args used, includes or excludes the Free1 / Free2 Analytic Accounts
+        """
+        domain = []
+        if context is None:
+            context = {}
+        analytic_acc_obj = self.pool.get('account.analytic.account')
+        if args:
+            if args[0][1] != '=' or len(args[0]) < 3 or not isinstance(args[0][2], bool):
+                raise osv.except_osv(_('Error'), _('Filter not implemented.'))
+            if args[0][2] is True:
+                operator = 'in'
+            else:
+                operator = 'not in'
+            free_account_ids = analytic_acc_obj.search(cr, uid, [('category', 'in', ['FREE1', 'FREE2'])], order='NO_ORDER', context=context)
+            domain.append(('account_id', operator, free_account_ids))
+        return domain
+
     def _get_reversal_origin_txt(cr, uid, ids, field_names, args, context=None):
         ret = {}
         if not ids:
@@ -77,7 +96,7 @@ class account_analytic_line(osv.osv):
             account_analytic_line a1, account_analytic_line a2
             where a2.id = a1.reversal_origin and
             a1.id in %s ''', (tuple(ids),)
-        )
+                   )
         for x in cr.fetchall():
             ret[x[0]] = x[1]
         return ret
@@ -91,11 +110,11 @@ class account_analytic_line(osv.osv):
         'from_write_off': fields.boolean(string='Write-off?', readonly=True, help="Indicates that this line come from a write-off account line."),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]"),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
-        'free_account': fields.function(_get_is_free, method=True, type='boolean', string='Free account?', help="Is that line comes from a Free 1 or Free 2 account?"),
+        'free_account': fields.function(_get_is_free, fnct_search=_search_is_free, method=True, type='boolean', string='Free account?', help="Does that line come from a Free 1 or Free 2 account?"),
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
         'reversal_origin_txt': fields.function(_get_reversal_origin_txt, string="Reversal origin", type='char', size=256,
                                                store={
-                                                    'account.analytic.line': (_get_analytic_reversal, ['name', 'reversal_origin'], 20),
+                                                   'account.analytic.line': (_get_analytic_reversal, ['name', 'reversal_origin'], 20),
                                                }),
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'is_reversal': fields.boolean('Reversal?'),
@@ -104,10 +123,10 @@ class account_analytic_line(osv.osv):
         'document_date': fields.date('Document Date', readonly=True, required=True),
         'functional_currency_id': fields.related('company_id', 'currency_id', string="Func. Currency", type="many2one", relation="res.currency", readonly=True),
         'amount': fields.float('Func. Amount', required=True, digits_compute=dp.get_precision('Account'),
-            help='Calculated by multiplying the quantity and the price given in the Product\'s cost price. Always expressed in the company main currency.', readonly=True),
+                               help='Calculated by multiplying the quantity and the price given in the Product\'s cost price. Always expressed in the company main currency.', readonly=True),
         'exported': fields.boolean("Exported"),
         'is_engi': fields.function(_is_engi, type='boolean', method=True,
-            string='Is intl engagement'),
+                                   string='Is intl engagement'),
     }
 
     _defaults = {
@@ -166,7 +185,7 @@ class account_analytic_line(osv.osv):
         """
         for aal in self.browse(cr, uid, ids):
             self.pool.get('finance.tools').check_document_date(cr, uid,
-                aal.document_date, aal.date, show_date=True)
+                                                               aal.document_date, aal.date, show_date=True)
         return True
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -199,13 +218,13 @@ class account_analytic_line(osv.osv):
                         # international commitments line (journal ENGI) but not
                         #  allow delete of other engagements line
                         etree.SubElement(tree, 'button',
-                            name='unlink',
-                            type='object',
-                            icon='gtk-del',
-                            context='context',
-                            attrs="{'invisible': [('is_engi', '!=', True)]}",
-                            confirm='Do you really want to delete selected record(s) ?'
-                        )
+                                         name='unlink',
+                                         type='object',
+                                         icon='gtk-del',
+                                         context='context',
+                                         attrs="{'invisible': [('is_engi', '!=', True)]}",
+                                         confirm='Do you really want to delete selected record(s) ?'
+                                         )
 
             if view_type == 'search' and not is_commitment:
                 # BKLG-4/6: commitments desactivated, no ENGI filter
@@ -233,8 +252,8 @@ class account_analytic_line(osv.osv):
                 vals['document_date'] = strftime('%Y-%m-%d')
         if vals.get('document_date', False) and vals.get('date', False):
             self.pool.get('finance.tools').check_document_date(cr, uid,
-                vals.get('document_date'), vals.get('date'), show_date=True,
-                context=context)
+                                                               vals.get('document_date'), vals.get('date'), show_date=True,
+                                                               context=context)
         # Default behaviour
         res = super(account_analytic_line, self).create(cr, uid, vals, context=context)
         # Check date

@@ -26,8 +26,8 @@
                         <group colspan="4" col="6" attrs="{'invisible': [('different_currencies', '!=', True)]}">
                             <label string ="" colspan="2"/>
                             <button icon="gtk-cancel" special="cancel" string="Cancel"/>
-                                <button icon="gtk-apply" string="Reconcile" name="total_reconcile" type="object" default_focus="1" attrs="{'invisible': [('state', 'in', ['partial', 'partial_change'])]}" confirm="You are about to reconcile entries in different currencies; you will trigger the creation of an automated adjustment in functional currency"/>
-                                <button icon="gtk-ok" string="Partial Reconcile" name="partial_reconcile" type="object" attrs="{'invisible': [('state', 'in', ['total', 'total_change'])]}" confirm="You are about to reconcile entries in different currencies; you will trigger the creation of an automated adjustment in functional currency"/>
+                                <button icon="gtk-apply" string="Reconcile" name="total_reconcile" type="object" default_focus="1" attrs="{'invisible': [('state', 'in', ['partial', 'partial_change'])]}" confirm="You are about to reconcile entries in different currencies; you will trigger the creation of an automated FX adjustment."/>
+                                <button icon="gtk-ok" string="Partial Reconcile" name="partial_reconcile" type="object" attrs="{'invisible': [('state', 'in', ['total', 'total_change'])]}" confirm="You are about to reconcile entries in different currencies; you will trigger the creation of an automated FX adjustment."/>
                         </group>
                         <field name="state" invisible="1"/>
                         <field name="different_currencies" invisible="1"/>

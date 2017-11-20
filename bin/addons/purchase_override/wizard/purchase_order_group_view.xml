@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-    <!-- uf-1832: we display the button for everyone by removing the groups="base.group_extended" -->
-        <delete id="purchase.action_view_purchase_order_group" model="ir.actions.act_window">
-        </delete>
         
         <act_window name="Merge Purchase orders"
             res_model="purchase.order.group"

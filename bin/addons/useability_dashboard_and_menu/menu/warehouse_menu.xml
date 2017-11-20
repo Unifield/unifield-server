@@ -17,7 +17,7 @@
         />
     
         <!-- we move the menu 'deliver products' from the menu sale to the menu warehouse' -->
-        <menuitem id="sale_override.menu_sale_action_picking_tree_out_move" 
+        <menuitem id="sale.menu_sale_action_picking_tree_out_move" 
         parent="stock.menu_stock_root" 
         />
         

@@ -716,7 +716,7 @@ class sync_manager(osv.osv):
         return (True, last_seq, get_md5(last_seq))
 
     @check_validated
-    def get_update(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
+    def get_update(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, init_sync=False, context=None):
         """
             @param entity : string : uuid of the synchronizing entity
             @param last_seq : integer : Last sequence of update receive succefully in the previous pull session.
@@ -747,7 +747,7 @@ class sync_manager(osv.osv):
                               }
 
         """
-        package = self.pool.get("sync.server.update").get_package(cr, uid, entity, last_seq, offset, max_size, max_seq, recover=recover, context=context)
+        package = self.pool.get("sync.server.update").get_package(cr, uid, entity, last_seq, offset, max_size, max_seq, recover=recover, init_sync=init_sync, context=context)
         return (True, package or False, not package, get_md5(package))
 
     """

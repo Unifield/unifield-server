@@ -35,16 +35,19 @@ class account_invoice_refund(osv.osv_memory):
         """
         # @@@override@account.wizard.account_invoice_refund.py
         obj_journal = self.pool.get('account.journal')
+        obj_inv = self.pool.get('account.invoice')
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         if context is None:
             context = {}
         args = [('type', '=', 'sale_refund')]
-        if context.get('type', False):
-            if context['type'] in ('in_invoice', 'in_refund'):
+        doc_to_refund_id = context.get('active_ids') and context['active_ids'][0]
+        if doc_to_refund_id:
+            source_type = obj_inv.read(cr, uid, doc_to_refund_id, ['type'], context=context)['type']
+            if source_type in ('in_invoice', 'in_refund'):
                 args = [('type', '=', 'purchase_refund')]
         if user.company_id.instance_id:
             args.append(('is_current_instance','=',True))
-        journal = obj_journal.search(cr, uid, args)
+        journal = obj_journal.search(cr, uid, args, order='id', limit=1, context=context)
         return journal and journal[0] or False
 
     def _get_document_date(self, cr, uid, context=None):

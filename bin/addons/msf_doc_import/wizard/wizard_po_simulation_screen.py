@@ -29,6 +29,7 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 import logging
 import os
+import netsvc
 
 from mx import DateTime
 
@@ -70,7 +71,7 @@ LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
                  (7, _('Currency'), 'mandatory'),
                  (8, _('Origin'), 'optionnal'),
                  (14, _('Comment'), 'optionnal'),
-                 (10, _('Delivery Confirmed Date'), 'mandatory', ('!=', ['confirmed'])),
+                 (10, _('Delivery Confirmed Date'), 'mandatory', ('!=', ['validated'])),
                  (16, _('Project Ref.'), 'optionnal'),
                  (17, _('Message ESC 1'), 'optionnal'),
                  (18, _('Message ESC 2'), 'optionnal'),
@@ -1345,6 +1346,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
 
+            if line.po_line_id.state in ('confirmed', 'done', 'cancel', 'cancel_r'):
+                write_vals['type_change'] = 'error'
+                errors.append(_('PO line #%s has been confirmed or cancelled and consequently is not editable') % line.in_line_number)
+
             # Comment
             write_vals['imp_comment'] = values[14] and values[14].strip()
 
@@ -1540,6 +1545,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         line_obj = self.pool.get('purchase.order.line')
         split_obj = self.pool.get('split.purchase.order.line.wizard')
         simu_obj = self.pool.get('wizard.import.po.simulation.screen')
+        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -1556,12 +1562,11 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             percent_completed = int(float(line_treated) / float(nb_lines) * 100)
             if line.po_line_id and line.type_change != 'ignore' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
                 continue
-
             if line.type_change in ('ignore', 'error'):
-                # Don't do anything
                 continue
-            elif line.type_change == 'del' and line.po_line_id:
-                line_obj.fake_unlink(cr, uid, [line.po_line_id.id], context=context)
+
+            if line.type_change == 'del' and line.po_line_id:
+                wf_service.trg_validate(uid, 'purchase.order.line', line.po_line_id.id, 'cancel', cr)
             elif line.type_change == 'split' and line.parent_line_id:
                 # Call the split line wizard
                 po_line_id = False
@@ -1596,6 +1601,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals = {'product_uom': line.imp_uom.id,
                                  'product_id': line.imp_product_id.id,
                                  'price_unit': line.imp_price,
+                                 'set_as_validated_n': True,
                                  }
                     if line.imp_drd:
                         line_vals['date_planned'] = line.imp_drd
@@ -1641,6 +1647,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'price_unit': line.imp_price,
                              'product_qty': line.imp_qty,
                              'date_planned': line.imp_drd or line.simu_id.order_id.delivery_requested_date,
+                             'set_as_validated_n': True,
                              }
                 if line.imp_dcd:
                     line_vals['confirmed_delivery_date'] = line.imp_dcd

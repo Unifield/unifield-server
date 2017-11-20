@@ -149,6 +149,7 @@
                             <field name="document_date"/>
                             <field name="date" select='1'/>
                             <field name="period_id" context="{'period_id':self, 'search_default_period_id':self}"/>
+                            <field name="fiscalyear_id"/>
                         </group>
                         <newline/>
                         <group>
@@ -342,6 +343,7 @@
                                 <field name="document_date" select="1"/>
                                 <field name="date" select="1" string="Posting Date"/>
                                 <field name="period_id" domain="[]"/>
+                                <field name="fiscalyear_id"/>
                             </group>
                             <newline/>
                             <group col='8' colspan='4'>

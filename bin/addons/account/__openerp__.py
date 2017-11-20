@@ -122,20 +122,6 @@ module named account_voucher.
         #        'account_unit_test.xml',
     ],
     'test': [
-        'test/account_customer_invoice.yml',
-        'test/account_supplier_invoice.yml',
-        'test/account_change_currency.yml',
-        'test/chart_of_account.yml',
-        'test/account_period_close.yml',
-        'test/account_fiscalyear_close_state.yml',
-        'test/account_use_model.yml',
-        'test/account_validate_account_move.yml',
-        'test/account_fiscalyear_close.yml',
-        'test/account_bank_statement.yml',
-        'test/account_cash_statement.yml',
-        'test/account_report.yml',
-        
-
     ],
     'installable': True,
     'active': False,

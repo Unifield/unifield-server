@@ -10,5 +10,5 @@
     'data': [ ],
     'installable': True,
     'active': False,
-    'web': True,
+    'web': False,
 }

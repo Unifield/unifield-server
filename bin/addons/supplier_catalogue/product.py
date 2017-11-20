@@ -84,26 +84,10 @@ class product_supplierinfo(osv.osv):
 
         return res
 
-    def _get_seller_delay(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Returns the supplier lt
-        '''
-        res = {}
-        for price in self.browse(cr, uid, ids, context=context):
-            product_id = self.pool.get('product.product').search(cr, uid, [('product_tmpl_id', '=', price.id)])
-            product = self.pool.get('product.product').browse(cr, uid, product_id)
-            res[price.id] = (price.name and price.name.supplier_lt) or (product_id and int(product[0].procure_delay)) or 1
-
-        return res
-
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Associated catalogue', ondelete='cascade'),
         'editable': fields.function(_get_editable, method=True, string='Editable', store=False, type='boolean'),
         'min_qty': fields.float('Minimal Quantity', required=False, help="The minimal quantity to purchase to this supplier, expressed in the supplier Product UoM if not empty, in the default unit of measure of the product otherwise."),
-        'product_uom': fields.related('product_id', 'uom_id', string="Supplier UoM", type='many2one', relation='product.uom',  
-                                      help="Choose here the Unit of Measure in which the prices and quantities are expressed below."),
-        'delay': fields.function(_get_seller_delay, method=True, type='integer', string='Indicative Delivery LT', help='Lead time in days between the confirmation of the purchase order and the reception of the products in your warehouse. Used by the scheduler for automatic computation of the purchase order planning.'),
-
     }
 
     _defaults = {
