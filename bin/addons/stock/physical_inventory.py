@@ -370,7 +370,6 @@ class PhysicalInventory(osv.osv):
             # If no discrepancy, nothing to do
             # (Use a continue to save 1 indentation level..)
             if counted_qty == theoretical_qty:
-                # FIXME : check if there's an existing discrepancy to be deleted ?
                 continue
 
             # If this product/batch is known in the counting line, use
@@ -948,9 +947,11 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 wizard_obj = self.pool.get('physical.inventory.import.wizard')
                 return wizard_obj.message_box(cr, uid, title='Confirmation errors', message='\n'.join(errors))
 
+            discrepancy_to_move = {}
             for line in line_read:
                 if line['ignored']:
                     continue
+                line_id = line['id']
                 pid = line['product_id'][0]
                 bn = line['batch_number']
                 ed = line['expiry_date']
@@ -994,12 +995,17 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                         'comment': line['comment'],
                         'reason_type_id': line['reason_type_id'][0],
                     })
-                    move_ids.append(self.pool.get('stock.move').create(cr, uid, value))
+                    move_id = self.pool.get('stock.move').create(cr, uid, value)
+                    move_ids.append(move_id)
+                    discrepancy_to_move[line_id] = move_id
                 # elif not change:
                 #     inv_line_obj.write(cr, uid, [line['id']], {'dont_move': True}, context=context)
             message = _('Inventory') + " '" + inv['name'] + "' " + _("is validated.")
             self.log(cr, uid, inv['id'], message)
             self.write(cr, uid, [inv['id']], {'state': 'confirmed', 'move_ids': [(6, 0, move_ids)]})
+            for line_id, move_id in discrepancy_to_move.items():
+                inv_line_obj.write(cr, uid, [line_id], {'move_id': move_id}, context=context)
+
 
     def action_cancel_draft(self, cr, uid, ids, context=None):
         """ Cancels the stock move and change inventory state to draft."""
@@ -1219,12 +1225,14 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'total_product_counted_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Counted Value for product")),
         'total_product_discrepancy_qty': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy for product")),
         'total_product_discrepancy_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy Value for product")),
-        'ignored': fields.boolean('Ignored', readonly=True)
+        'ignored': fields.boolean('Ignored', readonly=True),
+        'move_id': fields.integer(readonly=True)
     }
 
     _order = "product_id asc, line_no asc"
 
     def create(self, cr, user, vals, context=None):
+        context = context is None and {} or context
 
         if (not vals.get('product_uom_id')
         or  not vals.get('standard_price')
@@ -1243,6 +1251,30 @@ class PhysicalInventoryDiscrepancy(osv.osv):
             vals['currency_id'] = product['currency_id'][0]
 
         return super(PhysicalInventoryDiscrepancy, self).create(cr, user, vals, context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        context = context is None and {} or context
+
+        r = super(PhysicalInventoryDiscrepancy, self).write(cr, uid, ids, vals, context=context)
+        move_obj = self.pool.get("stock.move")
+
+        lines = self.read(cr, uid, ids, ["move_id", "comment"], context=context)
+
+        for line in lines:
+            if not line["move_id"]:
+                continue
+            reason_type_id = vals.get("reason_type_id", False)
+            comment = vals.get("comment", False)
+            to_update = {}
+            if reason_type_id:
+                to_update["reason_type_id"] = reason_type_id
+            if comment:
+                to_update["comment"] = comment
+            if to_update:
+                print to_update
+                move_obj.write(cr, uid, [line["move_id"]], to_update, context=context)
+
+        return r
 
 
     def perm_write(self, cr, user, ids, fields, context=None):
