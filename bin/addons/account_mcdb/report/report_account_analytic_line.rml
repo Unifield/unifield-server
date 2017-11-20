@@ -207,7 +207,6 @@
       </tr>
       <!-- TOTAL -->
       <tr>
-        [[ data.get('context') and data['context'].get('from_selector') or removeParentNode('tr') ]]
         <td>
           <para style="Total">TOTAL</para>
         </td>
