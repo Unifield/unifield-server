@@ -31,6 +31,7 @@ from threading import Lock
 import time
 import xmlrpclib
 import netsvc
+import re
 
 from msf_field_access_rights.osv_override import _get_instance_level
 
@@ -52,12 +53,13 @@ class patch_scripts(osv.osv):
     # UF7.0 patches
     def post_sll(self, cr, uid, *a, **b):
         # set constraint on ir_ui_view
+
         cr.drop_index_if_exists('ir_ui_view', 'ir_ui_view_model_type_priority')
         cr.drop_constraint_if_exists('ir_ui_view', 'ir_ui_view_unique_view')
         cr.execute('CREATE UNIQUE INDEX ir_ui_view_model_type_priority ON ir_ui_view (priority, type, model) WHERE inherit_id IS NULL')
         cr.execute("delete from ir_ui_view where name='aaa' and model='aaa' and priority=5")
 
-        if not cr.column_exists('purchase_order', 'state=state_moved0'):
+        if not cr.column_exists('purchase_order', 'state_moved0'):
             self._logger.warn("New db, no sll migration")
             return True
 
@@ -151,6 +153,45 @@ class patch_scripts(osv.osv):
                 ''', (state, tuple(sol_ids)))
 
 
+        # do not re-generate messages
+        cr.execute("select identifier,create_date from sync_client_message_to_send  where identifier like '%/purchase_order/%' or identifier like '%/sale_order/%' order by id")
+        so = {}
+        po = {}
+        for x in cr.fetchall():
+            m = re.match(".*/([0-9]+)_[0-9]+$", x[0])
+            if not m:
+                continue
+            obj_id = int(m.group(1))
+            if '/purchase_order/' in x[0]:
+                dict_to_up = po
+            else:
+                dict_to_up = so
+            if obj_id not in dict_to_up or dict_to_up[obj_id] < x[1]:
+                dict_to_up[obj_id] = x[1]
+
+        for so_id, date in so.iteritems():
+            cr.execute('''select id from sale_order_line
+                where order_id =%s
+            ''', (so_id,))
+            sol_ids = [x[0] for x in cr.fetchall()]
+            sol_ids.append(0)
+            cr.execute("""update ir_model_data set sync_date=%s
+                where module='sd' and
+                    ( model='sale.order' and res_id=%s or model='sale.order.line' and res_id in %s)
+            """, (date, so_id, tuple(sol_ids))
+            )
+
+        for po_id, date in po.iteritems():
+            cr.execute('''select id from purchase_order_line
+                where order_id = %s
+            ''', (po_id,))
+            pol_ids = [x[0] for x in cr.fetchall()]
+            pol_ids.append(0)
+            cr.execute("""update ir_model_data set sync_date=%s
+                where module='sd' and
+                    ( model='purchase.order' and res_id=%s or model='purchase.order.line' and res_id in %s)
+            """, (date, po_id, tuple(pol_ids))
+            )
 
         return True
 
