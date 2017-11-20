@@ -960,6 +960,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                     if ed:
                         if bn:
                             lot_id = picking_obj.retrieve_batch_number(cr, uid, pid, {'name': bn, 'life_date': ed}, context=context)
+                            lot_id = lot_id[0]
                         else:
                             lot_id = prod_lot_obj._get_prodlot_from_expiry_date(cr, uid, ed, pid)
                     else:
