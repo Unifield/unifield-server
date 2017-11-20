@@ -1100,6 +1100,7 @@ class account_mcdb(osv.osv):
         data['export_format'] = 'pdf'
         data['output_currency_id'] = output_currency_id
         data['target_filename'] = target_filename
+        data['header'] = header
         return export_wizard_obj.button_validate(cr, uid, result_ids, context=context, data_from_selector=data)
 
 account_mcdb()

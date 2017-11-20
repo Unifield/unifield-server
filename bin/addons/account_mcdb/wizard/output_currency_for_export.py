@@ -173,6 +173,8 @@ class output_currency_for_export(osv.osv_memory):
             context['background_time'] = wiz and wiz.background_time or 2
         if data_from_selector:
             context['from_selector'] = True
+            if data_from_selector.get('header'):
+                datas['header'] = data_from_selector['header']
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,

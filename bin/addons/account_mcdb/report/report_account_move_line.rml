@@ -32,6 +32,7 @@
     <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="14.0" leading="20" alignment="CENTER" backColor="#e6e6e6"/>
     <paraStyle name="P2" fontName="Helvetica" fontSize="7.0" leading="10"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="7.0" leading="10" alignment="CENTER"/>
+    <paraStyle name="P3Left" fontName="Helvetica" fontSize="7.0" leading="10" alignment="LEFT"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="7.0" leading="10" alignment="RIGHT"/>
     <paraStyle name="P5" fontName="Helvetica" fontSize="7.0" leading="10" alignment="CENTER"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
@@ -56,6 +57,22 @@
     <para style="P2">
       <font color="white"> </font>
     </para>
+
+    <!-- Display the SELECTION done in G/L selector -->
+    <blockTable colWidths="816.0" style="Tableau3">
+      [[ 'header' in data or removeParentNode('blockTable') ]]
+      <tr>
+        <td>
+          <para style="P3">[[ 'header' in data and "Selection" ]]</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P3Left">[[ 'header' in data and data['header'] ]]</para>
+        </td>
+      </tr>
+    </blockTable>
+
     <blockTable colWidths="45.0,45.0,58.0,52.0,45.0,48.0,48.0,43.0,45.0,45.0,45.0,45.0,40.0,45.0,42.0,43.0,42.0,40.0" style="Tableau3">
       <tr>
         <td>

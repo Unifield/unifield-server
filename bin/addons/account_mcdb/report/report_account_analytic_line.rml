@@ -32,6 +32,7 @@
     <paraStyle name="P1" fontName="Helvetica-Bold" fontSize="14.0" leading="20" alignment="CENTER" backColor="#e6e6e6"/>
     <paraStyle name="P2" fontName="Helvetica" fontSize="7.0" leading="10"/>
     <paraStyle name="P3" fontName="Helvetica" fontSize="7.0" leading="10" alignment="CENTER"/>
+    <paraStyle name="P3Left" fontName="Helvetica" fontSize="7.0" leading="10" alignment="LEFT"/>
     <paraStyle name="P4" fontName="Helvetica" fontSize="7.0" leading="10" alignment="RIGHT"/>
     <paraStyle name="P5" fontName="Helvetica" fontSize="7.0" leading="10"/>
     <paraStyle name="Standard" fontName="Helvetica"/>
@@ -46,7 +47,7 @@
     <images/>
   </stylesheet>
   <story>
-    <blockTable colWidths="816.0" style="Tableau1">
+    <blockTable colWidths="825.0" style="Tableau1">
       <tr>
         <td>
           <para style="P1">Analytic Journal Items</para>
@@ -56,6 +57,22 @@
     <para style="P2">
       <font color="white"> </font>
     </para>
+
+    <!-- Display the SELECTION done in Analytic selector -->
+    <blockTable colWidths="825.0" style="Tableau3">
+      [[ 'header' in data or removeParentNode('blockTable') ]]
+      <tr>
+        <td>
+          <para style="P3">[[ 'header' in data and "Selection" ]]</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="P3Left">[[ 'header' in data and data['header'] ]]</para>
+        </td>
+      </tr>
+    </blockTable>
+
     <!-- colWidths="41.0,41.0,41.0,226.0,44.0,66.0,66.0,62.0,53.0,78.0,78.0,78.0,39.0,39.0,39.0,39.0,39.0,39.0,52.0" -->
     <blockTable style="Tableau3" colWidths="40.0,33.0,45.0,49.0,38.0,48.0,48.0,31.0,40.0,40.0,35.0,33.0,45.0,42.0,34.0,42.0,34.0,42.0,32.0,38.0,36.0">
       <tr>
