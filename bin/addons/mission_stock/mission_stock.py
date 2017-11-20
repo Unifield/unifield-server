@@ -546,7 +546,7 @@ class stock_mission_report(osv.osv):
         line_obj = self.pool.get('stock.mission.report.line')
         self.write(cr, uid, report_ids, {'export_state': 'in_progress',
                                          'export_error_msg': False}, context=context)
-        for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
+        for report in self.read(cr, uid, report_ids, ['local_report', 'full_view', 'instance_id'], context=context):
             try:
                 self.write(cr, uid, report['id'], {'report_ok': False},
                            context=context)
@@ -583,14 +583,17 @@ class stock_mission_report(osv.osv):
                 if msr_in_progress._already_processed(cr, uid, report['id'], context):
                     continue
 
-                logger.info("""___ updating the report lines of the report: %s, at %s (this may take very long time!)""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
-                if context.get('update_full_report'):
-                    full_view = self.search(cr, uid, [('full_view', '=', True)])
-                    if full_view:
-                        line_obj.update_full_view_line(cr, uid, context=context)
-                elif not report['full_view']:
-                    # Update all lines
-                    self.update_lines(cr, uid, [report['id']])
+                report_instance = self.pool.get('msf.instance').browse(cr, uid, report['instance_id'], fields_to_fetch=['level'], context=context)
+                if not ((_get_instance_level(self, cr, uid) == 'coordo' and report_instance.level == 'project') or \
+                                                                (_get_instance_level(self, cr, uid) == 'hq' and report_instance.level == 'coordo')):
+                    logger.info("""___ updating the report lines of the report: %s, at %s (this may take very long time!)""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
+                    if context.get('update_full_report'):
+                        full_view = self.search(cr, uid, [('full_view', '=', True)])
+                        if full_view:
+                            line_obj.update_full_view_line(cr, uid, context=context)
+                    elif not report['full_view']:
+                        # Update all lines
+                        self.update_lines(cr, uid, [report['id']])
 
                 logger.info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
                 self._get_export(cr, uid, report['id'], product_values,
