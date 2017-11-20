@@ -60,15 +60,15 @@
 
     <!-- Display the SELECTION done in G/L selector -->
     <blockTable colWidths="816.0" style="Tableau3">
-      [[ 'header' in data or removeParentNode('blockTable') ]]
+      [[ data.get('context') and data['context'].get('from_selector') or removeParentNode('blockTable') ]]
       <tr>
         <td>
-          <para style="P3">[[ 'header' in data and "Selection" ]]</para>
+          <para style="P3">Selection</para>
         </td>
       </tr>
       <tr>
         <td>
-          <para style="P3Left">[[ 'header' in data and data['header'] ]]</para>
+          <para style="P3Left">[[ 'header' in data and data['header'] or '-' ]]</para>
         </td>
       </tr>
     </blockTable>

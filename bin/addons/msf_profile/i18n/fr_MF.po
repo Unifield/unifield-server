@@ -4280,9 +4280,11 @@ msgstr "Default Purchase Pricelist Version"
 msgid "Only Event in draft state can be deleted."
 msgstr "Seul les évènements sous statut brouillon peuvent être effacés."
 
-#. modules: base, product_asset
+#. modules: base, product_asset, account_mcdb
 #: selection:ir.translation,type:0
 #: view:product.asset.event:0
+#: report:account.analytic.line:0
+#: report:account.move.line:0
 msgid "Selection"
 msgstr "Sélection"
 

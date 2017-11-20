@@ -176,6 +176,8 @@ class output_currency_for_export(osv.osv_memory):
             background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': datas['target_filename'], 'report_name': report_name}, context=context)
             context['background_id'] = background_id
             context['background_time'] = wiz and wiz.background_time or 2
+        if data_from_selector:
+            context['from_selector'] = True
         if data_from_selector.get('header'):
             datas['header'] = data_from_selector['header']
         return {
