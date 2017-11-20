@@ -1053,6 +1053,10 @@ class account_mcdb(osv.osv):
                 operator = dom[1]
                 if operator.lower() in ('in', '=', 'like', 'ilike'):
                     operator = ':'
+                elif operator in ('>', '>='):
+                    operator = _("from:")
+                elif operator in ('<', '<='):
+                    operator = _("to:")
                 if '.' not in dom[0]:
                     field = obj_data[dom[0]]
                     title = field['string']

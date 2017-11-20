@@ -14261,11 +14261,18 @@ msgstr "Version installée"
 msgid "Procurement Order Cycle"
 msgstr "Procurement Order Cycle"
 
-#. module: financing_contract
+#. modules: financing_contract, account_mcdb
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:422
 #: report:addons/financing_contract/report/project_expenses_xls.mako:426
+#: code:addons/account_mcdb/account_mcdb.py:1059
 msgid "to:"
-msgstr "to:"
+msgstr "à :"
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/account_mcdb.py:1057
+#, python-format
+msgid "from:"
+msgstr "de :"
 
 #. module: account_hq_entries
 #: field:res.company,counterpart_hq_entries_default_account:0
