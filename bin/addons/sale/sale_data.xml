@@ -23,6 +23,7 @@
         <function eval="('default',False,'shop_id', [('sale.order', False)], shop, True, False, False, False, True)" id="sale_default_set" model="ir.values" name="set"/>
     </data>
 
+    <!-- WARNING :: sequence numbers are matching between SO and SO line for comparison purpose -->
     <data noupdate="0">
         <record id="sol_state_cancel" model="sale.order.line.state">
             <field name="name">cancel</field>
@@ -93,15 +94,15 @@
         </record>
         <record id="so_state_confirmed" model="sale.order.state">
             <field name="name">confirmed</field>
-            <field name="sequence">40</field>
+            <field name="sequence">70</field>
         </record>
         <record id="so_state_confirmed_p" model="sale.order.state">
             <field name="name">confirmed_p</field>
-            <field name="sequence">45</field>
+            <field name="sequence">75</field>
         </record>
         <record id="so_state_done" model="sale.order.state">
             <field name="name">done</field>
-            <field name="sequence">50</field>
+            <field name="sequence">80</field>
         </record>
         <record id="so_state_cancel" model="sale.order.state">
             <field name="name">cancel</field>

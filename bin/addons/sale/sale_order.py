@@ -441,6 +441,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             for sol in so.order_line:
                 sol_states = set([sol.state for sol in so.order_line])
 
+            if not sol_states:
+                res[so.id] = 'draft'
             if all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
             else: # else compute the less advanced state:
@@ -475,6 +477,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # SO state must not go back:
             if sos_obj.get_sequence(cr, uid, [], res[so.id]) < sos_obj.get_sequence(cr, uid, [], so.state):
                 res[so.id] = so.state
+                # add the '_p' if needed: 
+                if res[so.id] in ['draft', 'validated', 'confirmed']:
+                    current_state_sequence = sols_obj.get_sequence(cr, uid, [], so.state)
+                    has_line_further = any([sols_obj.get_sequence(cr, uid, [], s, context=context) > current_state_sequence for s in sol_states]) 
+                    if has_line_further:
+                        res[so.id] = '%s_p' % res[so.id]
+
 
             # add audit line in track change if state has changed:
             if so.state != res[so.id]:
