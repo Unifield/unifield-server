@@ -57,6 +57,10 @@ class patch_scripts(osv.osv):
         cr.execute('CREATE UNIQUE INDEX ir_ui_view_model_type_priority ON ir_ui_view (priority, type, model) WHERE inherit_id IS NULL')
         cr.execute("delete from ir_ui_view where name='aaa' and model='aaa' and priority=5")
 
+        if not cr.column_exists('purchase_order', 'state=state_moved0'):
+            self._logger.warn("New db, no sll migration")
+            return True
+
         # rfq
         cr.execute("update purchase_order set state=state_moved0")
         cr.execute("update purchase_order set rfq_state='cancel' where state='cancel' and rfq_ok='t'")
