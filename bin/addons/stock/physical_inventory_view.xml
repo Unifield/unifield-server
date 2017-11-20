@@ -161,7 +161,7 @@
                                 </form>
                             </field>
                         </page>
-                        <page string="Posted Inventory" attrs="{'invisible': [('state', 'not in', ['confirmed', 'closed'])], 'readonly': [('state', 'not in', ['confirmed'])]}">
+                        <page string="Posted Inventory" attrs="{'invisible': [('state', 'not in', ['confirmed', 'closed'])]}">
                             <field colspan="2" name="move_ids" nolabel="1" widget="one2many_list"
                                    context="{'inventory_id':active_id}">
                                 <tree string="Stock Moves">
@@ -172,20 +172,10 @@
                                     <field name="prodlot_id"/>
                                     <field name="reason_type_id" widget="selection"
                                            domain="[('is_inventory', '=', True)]"/>
-                                    <button name="%(stock.track_line)d" string="Split in production" type="action"
-                                            icon="terp-stock_effects-object-colorize"
-                                            attrs="{'invisible': [('prodlot_id','&lt;&gt;',False)]}"
-                                            states="draft,done,cancel"
-                                            context="{'inventory_id':parent.id}"/>
                                     <field name="tracking_id"/>
-                                    <button name="%(stock.split_into)d" string="Put in a new pack" type="action"
-                                            icon="terp-stock_effects-object-colorize"
-                                            context="{'inventory_id':parent.id}"
-                                            states="draft,done,cancel"/>
                                     <field name="location_id"/>
                                     <field name="location_dest_id"/>
                                     <field name="date" string="Date"/>
-                                    <field name="state" invisible="True"/>
                                 </tree>
                             </field>
                         </page>

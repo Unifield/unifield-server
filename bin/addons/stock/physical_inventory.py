@@ -112,7 +112,7 @@ class PhysicalInventory(osv.osv):
         'location_id': fields.many2one('stock.location', 'Location', required=True, readonly=True,
                                        states={'draft': [('readonly', False)]}),
         'move_ids': fields.many2many('stock.move', 'physical_inventory_move_rel', 'inventory_id', 'move_id',
-                                     'Created Moves'),
+                                     'Created Moves', readonly=True),
         'state': fields.selection(PHYSICAL_INVENTORIES_STATES, 'State', readonly=True, select=True),
         'company_id': fields.many2one('res.company', 'Company', readonly=True, select=True, required=True,
                                       states={'draft': [('readonly', False)]}),
@@ -868,7 +868,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         move_obj = self.pool.get('stock.move')
         for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
             move_obj.action_done(cr, uid, inv['move_ids'], context=context)
-        self.write(cr, uid, ids, {'state': 'done', 'date_done': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)},
+        self.write(cr, uid, ids, {'state': 'closed', 'date_done': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)},
                    context=context)
 
     def action_recount(self, cr, uid, ids, context=None):
