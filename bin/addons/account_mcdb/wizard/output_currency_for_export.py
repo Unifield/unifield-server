@@ -128,9 +128,7 @@ class output_currency_for_export(osv.osv_memory):
             datas = {'ids': data_from_selector['ids']}
         elif wiz and wiz.export_selected:
             datas = {'ids': context.get('active_ids', [])}
-        else:
-            context['from_domain'] = True
-            if wiz and not wiz.export_selected and choice == 'pdf':
+        elif wiz and not wiz.export_selected and choice == 'pdf':
                 # get the ids of the entries (for gl.selector/analytic.selector report if we come from JI/AJI view)
                 dom = context.get('search_domain', [])
                 if model == 'account.move.line':
@@ -139,6 +137,8 @@ class output_currency_for_export(osv.osv_memory):
                 if export_obj:
                     limit = 5000  # max for PDF + issue if a large number of entries is exported (cf US-661)
                     datas = {'ids': export_obj.search(cr, uid, dom, context=context, limit=limit)}
+        else:
+            context['from_domain'] = True
         # Update context with wizard currency or default currency
         context.update({'output_currency_id': currency_id})
         # Update datas for context
