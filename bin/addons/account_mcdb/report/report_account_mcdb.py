@@ -26,12 +26,29 @@ class report_gl_selector(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(report_gl_selector, self).__init__(cr, uid, name, context=context)
         self.total = {}
+        self.current_line_position = 0
+        self.nb_lines = 0
         self.localcontext.update({
             'total_booking_debit': self._get_total_booking_debit,
             'total_booking_credit': self._get_total_booking_credit,
             'total_output_debit': self._get_total_output_debit,
             'total_output_credit': self._get_total_output_credit,
+            'update_percent': self._update_percent,
         })
+
+    def _update_percent(self, data, objects):
+        """
+        Updates the loading percentage for the report running in background
+        """
+        if self.nb_lines == 0:
+            self.nb_lines = len(objects)
+        if data.get('context') and data.get('context').get('background_id'):
+            bg_obj = self.pool.get('memory.background.report')
+            self.current_line_position += 1
+            if self.current_line_position % 50 == 0:  # update percentage every 50 lines
+                percent = self.current_line_position / float(self.nb_lines)
+                bg_obj.update_percent(self.cr, self.uid, [data['context']['background_id']], percent)
+        return True
 
     def _get_total(self, data):
         """
@@ -72,11 +89,28 @@ class report_analytic_selector(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(report_analytic_selector, self).__init__(cr, uid, name, context=context)
         self.total = {}
+        self.current_line_position = 0
+        self.nb_lines = 0
         self.localcontext.update({
             'total_booking': self._get_total_booking,
             'total_functional': self._get_total_functional,
             'total_output': self._get_total_output,
+            'update_percent': self._update_percent,
         })
+
+    def _update_percent(self, data, objects):
+        """
+        Updates the loading percentage for the report running in background
+        """
+        if self.nb_lines == 0:
+            self.nb_lines = len(objects)
+        if data.get('context') and data.get('context').get('background_id'):
+            bg_obj = self.pool.get('memory.background.report')
+            self.current_line_position += 1
+            if self.current_line_position % 50 == 0:  # update percentage every 50 lines
+                percent = self.current_line_position / float(self.nb_lines)
+                bg_obj.update_percent(self.cr, self.uid, [data['context']['background_id']], percent)
+        return True
 
     def _get_total(self, data):
         """

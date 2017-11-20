@@ -133,7 +133,7 @@
       <tr>
         <td>
           <para style="P3">[[ repeatIn(objects, 'o') ]]</para>
-          <parawrap style="P3">[[ o.instance_id and o.instance_id.code or '' ]]</parawrap>
+          <parawrap style="P3">[[ update_percent(data, objects) and o.instance_id and o.instance_id.code or '' ]]</parawrap>
         </td>
         <td>
           <parawrap style="P3">[[ o.journal_id and o.journal_id.code or '' ]]</parawrap>
