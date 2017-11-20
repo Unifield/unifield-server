@@ -28138,6 +28138,7 @@ msgstr "Si coché , tous les produits de cette zone sont sans affectation"
 
 #. module: account_mcdb
 #: view:account.mcdb:0
+#: code:addons/account_mcdb/account_mcdb.py:0
 msgid "Account types"
 msgstr "Types de Compte"
 
@@ -65645,6 +65646,7 @@ msgstr "Ireland"
 
 #. module: account_mcdb
 #: field:account.mcdb,document_state:0
+#: code:addons/account_mcdb/account_mcdb.py:1032
 msgid "Entry Status"
 msgstr "Statut Écritures"
 
@@ -88975,6 +88977,7 @@ msgstr "Prix de base pour le calcul du prix client. Parfois appelé prix catalog
 
 #. module: account_mcdb
 #: field:account.mcdb,analytic_axis:0
+#: code:addons/account_mcdb/account_mcdb.py:1033
 msgid "Display"
 msgstr "Afficher"
 
