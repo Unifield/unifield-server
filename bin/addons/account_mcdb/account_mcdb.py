@@ -984,67 +984,88 @@ class account_mcdb(osv.osv):
         self.unlink(cr, uid, to_clean)
         return True
 
-    def _get_values_from_selection_field(self, cr, uid, field, field_ids, operator, context):
+    def _get_value_from_field(self, cr, uid, field, value, operator, context):
         """
-        Ex: ('period_id', 'in', (2, 1))
-        field => dict with all the data of the field
-        field_ids => (2, 1)
-        ==> Feb 2017, Jan 2017
+        Depending on the field type, returns the value to take into account
+        Ex: for the domain ('ref', 'ilike', u'%RefTest%') it will return: RefTest,
+        for ('period_id', 'in', (2, 1)) it will return: Feb 2017, Jan 2017
+        :param field: dict with all the data of the field
+        :param value: ex: (2, 1)
+        :param operator: ex: 'in', 'not in'...
         """
-        value = field_ids
-        if 'relation' in field:
+        if field and field['type'] == 'char':
+            value = value.strip('%')  # remove the '%' added for ilike
+        if field and 'relation' in field:
             rel_obj = self.pool.get(field['relation'])
-            if isinstance(field_ids, (int, long)):
-                field_ids = [field_ids]
-            elif isinstance(field_ids, tuple):
-                field_ids = list(field_ids)
-            if operator.lower() == 'not in':
-                # reverse the selection to display all the items selected
-                field_ids = rel_obj.search(cr, uid, [('id', 'not in', field_ids)], context=context)
-            record_ids = rel_obj.browse(cr, uid, field_ids, context=context)
-            values_list = []
-            for record in record_ids:
-                record_str = hasattr(record, 'code') and getattr(record, 'code') or \
-                             hasattr(record, 'name') and getattr(record, 'name') or ''
-                values_list.append(record_str)
-            value = ', '.join(values_list)
+            if isinstance(value, (int, long)):
+                value = [value]
+            elif isinstance(value, tuple):
+                value = list(value)
+            if rel_obj and isinstance(value, list):
+                if operator.lower() == 'not in':
+                    # reverse the selection to display all the items not excluded
+                    value = rel_obj.search(cr, uid, [('id', 'not in', value)], context=context)
+                record_ids = rel_obj.browse(cr, uid, value, context=context)
+                values_list = []
+                for record in record_ids:
+                    record_str = hasattr(record, 'code') and getattr(record, 'code') or \
+                                 hasattr(record, 'name') and getattr(record, 'name') or ''
+                    values_list.append(record_str)
+                value = ', '.join(values_list)
         return value
 
     def get_selection_from_domain(self, cr, uid, domain, model, context=None):
         """
-        Returns a String corresponding to the domain in parameter
+        Returns a String corresponding to the domain in parameter:
+        criteria separated with ";" and followed by ":" for the value
         """
         if context is None:
             context = {}
-        obj = self.pool.get(model)
-        obj_data = obj.fields_get(cr, uid, '')  # data on all fields on aml or aal
-        composed_filters = {
-            'account_id.user_type': _('Account types'),
-        }
         dom_selections = []
-        for dom in domain:
-            # standard use case
-            title = value = ""
-            operator = dom[1]
-            if operator.lower() in ('in', '=', 'like', 'ilike'):
-                operator = ':'
-            if '.' not in dom[0]:
-                field = obj_data[dom[0]]
-                title = field['string']
-                value = self._get_values_from_selection_field(cr, uid, field, dom[2], operator, context)
-            else:
-                if dom[0] in composed_filters:
-                    title = composed_filters[dom[0]]
-                    second_obj = self.pool.get(obj_data[dom[0].split('.')[0]]['relation'])
-                    second_obj_data = second_obj.fields_get(cr, uid, '')  # data on all fields of the second obj
-                    second_obj_field = second_obj_data[dom[0].split('.')[1]]
-                    value = self._get_values_from_selection_field(cr, uid, second_obj_field, dom[2], operator, context)
-                else:
+        obj = self.pool.get(model)
+        if obj:
+            obj_data = obj.fields_get(cr, uid, '')  # data on all fields on aml or aal
+            # map the composed filters with their corresponding titles
+            composed_filters = {
+                'account_id.user_type': _('Account types'),
+                'general_account_id.user_type': _('Account types'),
+                'move_id.state': _('Entry Status'),
+                'account_id.category': _('Display'),
+            }
+            to_ignore = \
+                ['&',  # always 'and' by default
+                 '|',  # whenever there is a '|' in the domain, we keep only one field to determine the name in the header
+                 'move_id.move_id.name', 'commitment_line_id.commit_id.name',  # only entry_sequence is kept
+                 'move_id', 'move_id.is_manually_corrected',  # only is_reallocated is kept
+                 'period_id.number',  # the check on period number != 0 is not part of the user selection in the interface
+                 ]
+            for dom in domain:
+                if dom[0] in to_ignore or len(dom) != 3:
                     continue
-            if operator.lower() == 'not in':
-                # the selection has been reversed ==> display "field : value"
-                operator = ':'
-            dom_selections.append("%s %s %s" % (title, operator, value))
+                # standard use case: simple fields
+                title = value = ""
+                operator = dom[1]
+                if operator.lower() in ('in', '=', 'like', 'ilike'):
+                    operator = ':'
+                if '.' not in dom[0]:
+                    field = obj_data[dom[0]]
+                    title = field['string']
+                    value = self._get_value_from_field(cr, uid, field, dom[2], operator, context)
+                # composed filters
+                elif dom[0] in composed_filters:
+                    title = composed_filters[dom[0]]
+                    # get the "second_obj" to use, for ex. for account_id.user_type => self.pool.get('account.account')
+                    obj_name = dom[0].split('.')[0]
+                    second_obj = 'relation' in obj_data[obj_name] and self.pool.get(obj_data[obj_name]['relation'])
+                    if second_obj:
+                        second_obj_data = second_obj.fields_get(cr, uid, '')  # data on all fields of the second obj
+                        second_obj_field = second_obj_data[dom[0].split('.')[1]]
+                        value = self._get_value_from_field(cr, uid, second_obj_field, dom[2], operator, context)
+                if operator.lower() == 'not in':
+                    # the selection has been reversed in _get_value_from_field ==> display "field : value"
+                    operator = ':'
+                if title and operator and value:
+                    dom_selections.append("%s %s %s" % (title, operator, value))
         return '; '.join(dom_selections)
 
     def export_pdf(self, cr, uid, ids, context=None):
