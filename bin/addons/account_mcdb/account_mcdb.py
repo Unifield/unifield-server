@@ -1054,9 +1054,9 @@ class account_mcdb(osv.osv):
                 if operator.lower() in ('in', '=', 'like', 'ilike'):
                     operator = ':'
                 elif operator in ('>', '>='):
-                    operator = _("from:")
+                    operator = " %s" % _("from:")
                 elif operator in ('<', '<='):
-                    operator = _("to:")
+                    operator = " %s" % _("to:")
                 if '.' not in dom[0]:
                     field = obj_data[dom[0]]
                     title = field['string']
@@ -1075,8 +1075,8 @@ class account_mcdb(osv.osv):
                     # the selection has been reversed in _get_value_from_field ==> display "field : value"
                     operator = ':'
                 if title and operator and value:
-                    dom_selections.append("%s %s %s" % (title, operator, value))
-        return '; '.join(dom_selections)
+                    dom_selections.append("%s%s %s" % (title, operator, value))
+        return ' ; '.join(dom_selections)
 
     def export_pdf(self, cr, uid, ids, context=None):
         """
