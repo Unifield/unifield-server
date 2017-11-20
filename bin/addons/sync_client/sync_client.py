@@ -961,9 +961,16 @@ class Entity(osv.osv):
 
         rule_obj = self.pool.get("sync.client.message_rule")
 
+        to_update = {}
         messages_count = 0
         for rule in rule_obj.browse(cr, uid, rule_obj.search(cr, uid, [('type', '!=', 'USB')], context=context), context=context):
-            messages_count += messages.create_from_rule(cr, uid, rule, None, context=context)
+            generated_ids, ignored_ids = messages.create_from_rule(cr, uid, rule, None, context=context)
+            messages_count += len(generated_ids)
+            to_update.setdefault(rule.model, []).extend(generated_ids + ignored_ids)
+
+        for model, ids in to_update.iteritems():
+            if ids:
+                cr.execute('update ir_model_data set sync_date=NOW() where model=%s and res_id in %s', (model, tuple(ids)))
         return messages_count
 
     @sync_subprocess('msg_push_send')

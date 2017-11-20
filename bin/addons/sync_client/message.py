@@ -240,6 +240,8 @@ class message_to_send(osv.osv):
             domain = rule.domain and eval(rule.domain) or []
             obj_ids_temp = self.pool.get(rule.model).search_ext(cr, uid, domain, order=order, context=context)
 
+        obj_ids_temp = self.pool.get(rule.model).need_to_push(cr, uid, obj_ids_temp)
+
         '''
             Add only real new messages to sync those haven't been synced before! This reduces significantly the cost of calculating the args (which is heavy)
             The solution is to get the identifiers, then check to remove those exist but not sent, no need to calculate args for them 
@@ -252,6 +254,7 @@ class message_to_send(osv.osv):
                    self.search(cr, uid, [('identifier', '=',
                                           identifiers[obj_id])], context=context)]
 
+        ignored_ids = list(set(obj_ids_temp) - set(obj_ids))
         dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
         for obj_id in obj_ids:
@@ -260,11 +263,13 @@ class message_to_send(osv.osv):
             else: # UF-2483: fake RW sync on creation of the RW instance 
                 args[obj_id] = "Initial RW Sync - Ignore"
 
+        generated_ids = []
         for id in obj_ids:
             # US-1467: Check if this fo has any line, if not just ignore it and show a warning message in log file!
             if 'normal_fo_create_po' in rule.remote_call and args[id] and args[id][0]:
                 if len(args[id][0].get('order_line')) == 0:
                     self._logger.warn("::::WARNING: The FO %s (state: %s) has no line! Cannot be synced!" % (args[id][0].get('name'), args[id][0].get('state')))
+                    ignored_ids.append(id)
                     continue
 
             for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
@@ -273,7 +278,9 @@ class message_to_send(osv.osv):
                     destination = 'fake'
                 # UF-2483: By default the "sent" parameter is False
                 self.create_message(cr, uid, identifiers[id], rule.remote_call, args[id], destination, initial, context)
-        return len(obj_ids)
+            generated_ids.append(id)
+
+        return generated_ids, ignored_ids
 
     def _generate_message_uuid(self, cr, uid, model, ids, server_rule_id, context=None):
         return dict( (id, "%s_%s" % (name, server_rule_id)) \
