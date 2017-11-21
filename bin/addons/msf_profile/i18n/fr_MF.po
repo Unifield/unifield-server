@@ -3719,15 +3719,17 @@ msgstr "Amériques/Dawson"
 msgid "Picking - available"
 msgstr "Picking - disponible"
 
-#. modules: account, msf_audittrail
+#. modules: account, msf_audittrail, account_mcdb
 #: selection:account.tax.template,applicable_type:0
 #: code:addons/msf_audittrail/audittrail.py:1064
+#: code:addons/account_mcdb/account_mcdb.py:1006
 #, python-format
 msgid "True"
 msgstr "Vrai"
 
-#. module: msf_audittrail
+#. modules: msf_audittrail, account_mcdb
 #: code:addons/msf_audittrail/audittrail.py:1066
+#: code:addons/account_mcdb/account_mcdb.py:1006
 #, python-format
 msgid "False"
 msgstr "Faux"

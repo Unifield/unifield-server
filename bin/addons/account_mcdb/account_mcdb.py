@@ -989,6 +989,7 @@ class account_mcdb(osv.osv):
         Depending on the field type, returns the value to take into account
         Ex: for the domain ('ref', 'ilike', u'%RefTest%') it will return: RefTest,
         for ('move_id.state', '=', u'draft') it will return: 'Unposted',
+        for ('is_reallocated', '=', '0) it will return: "False"
         for ('period_id', 'in', (2, 1)) it will return: Feb 2017, Jan 2017
         :param field: dict with all the data of the field
         :param value: ex: (2, 1)
@@ -1001,6 +1002,8 @@ class account_mcdb(osv.osv):
                 if value == f[0]:  # key
                     value = f[1]  # value
                     break
+        elif field and field['type'] == 'boolean':
+            value = value and _('True') or _('False')
         elif field and 'relation' in field:
             rel_obj = self.pool.get(field['relation'])
             if isinstance(value, (int, long)):
