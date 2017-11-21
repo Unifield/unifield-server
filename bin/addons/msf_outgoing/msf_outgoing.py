@@ -3402,6 +3402,11 @@ class stock_picking(osv.osv):
                     'location_id': line.location_id and line.location_id.id,
                 }
 
+                if wizard.register_a_claim and wizard.claim_replacement_picking_expected:
+                    values.update({
+                        'purchase_line_id': move.purchase_line_id and move.purchase_line_id.id or False,
+                    })
+
                 if quantity < move.product_qty and move_data[move.id]['original_qty'] > move_data[move.id]['processed_qty']:
                     # Create a new move
                     new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
@@ -3484,6 +3489,10 @@ class stock_picking(osv.osv):
                     move_ids = move_obj.search(cr, uid, [('picking_id', '=', new_picking_id)])
                     move_obj.action_cancel(cr, uid, move_ids, context=context)
                     self.action_cancel(cr, uid, [new_picking_id], context=context)
+                    # check the OUT availability
+                    out_domain = [('backorder_id', '=', new_picking_id), ('type', '=', 'out')]
+                    out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
+                    self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
                 else:
                     # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
                     wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
@@ -3511,10 +3520,14 @@ class stock_picking(osv.osv):
                     move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking.id)])
                     move_obj.action_cancel(cr, uid, move_ids, context=context)
                     self.action_cancel(cr, uid, [picking.id], context=context)
+                    # check the OUT availability
+                    out_domain = [('backorder_id', '=', picking.id), ('type', '=', 'out')]
+                    out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
+                    self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
                 else:
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
-                    update_vals = {'state':'done', 'date_done':time.strftime('%Y-%m-%d %H:%M:%S')}
+                    update_vals = {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}
                     if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                         update_vals.update({'already_replicated': False})
                     self.write(cr, uid, picking.id, update_vals)

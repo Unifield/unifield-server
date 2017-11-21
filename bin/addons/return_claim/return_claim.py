@@ -23,7 +23,6 @@ from osv import osv, fields
 
 import time
 import logging
-import netsvc
 
 from tools.translate import _
 import decimal_precision as dp
@@ -197,20 +196,20 @@ class return_claim(osv.osv):
             ids = [ids]
 
         pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
         address_obj = self.pool.get('res.partner.address')
         loc_obj = self.pool.get('stock.location')
-        wf_service = netsvc.LocalService('workflow')
 
         # load context data
         self.pool.get('data.tools').load_common_data(cr, uid, ids, context=context)
 
         claim = self.browse(cr, uid, ids[0], context=context)
+        # To prevent discrepancies if the customer claim is missing-type
         if claim.prevent_stock_discrepancies:
             out_origin = pick_obj.browse(cr, uid, claim.picking_id_return_claim.id, fields_to_fetch=['origin'], context=context).origin
             linked_in_id = pick_obj.search(cr, uid, [('origin', 'like', out_origin)], order='id', limit=1, context=context)[0]
             in_partner = pick_obj.browse(cr, uid, linked_in_id, context=context).partner_id
             stock_loc = loc_obj.browse(cr, uid, context['common']['stock_id'], context=context)
-            # IN values to prevent discrepancies if the claim is missing-type
             in_values = {
                 'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in'),
                 'type': 'in',
@@ -233,9 +232,10 @@ class return_claim(osv.osv):
             # creation of the new IN
             new_in = pick_obj.create(cr, uid, in_values, context=context)
             # confirm and close IN
-            wf_service.trg_validate(uid, 'stock.picking', new_in, 'button_confirm', cr)
-            pick_obj.action_move(cr, uid, [new_in], context=context)
-            wf_service.trg_validate(uid, 'stock.picking', new_in, 'button_done', cr)
+            move_ids = move_obj.search(cr, uid, [('picking_id', '=', new_in)], context=context)
+            pick_obj.action_move(cr, uid, move_ids, context=context)
+            move_obj.action_done(cr, uid, move_ids, context=context)
+            pick_obj.action_done(cr, uid, [new_in], context=context)
 
         self.write(cr, uid, ids, {'state': 'in_progress'}, context=context)
 
@@ -1011,6 +1011,9 @@ class claim_event(osv.osv):
 
         - no change to event picking, replacement possible if agreement with supplier
         '''
+        context = context.copy()
+        context.update({'keep_prodlot': True, 'keepPoLine': True})
+
         # objects
         picking_tools = self.pool.get('picking.tools')
         move_obj = self.pool.get('stock.move')
@@ -1043,7 +1046,7 @@ class claim_event(osv.osv):
                 'reason_type_id': context['common']['rt_goods_replacement'],
                 'backorder_id': event_picking.id,
                 'origin': event_picking.origin,
-                'purchase_id': event_picking.purchase_id.id,
+                'purchase_id': obj.return_claim_id_claim_event.picking_id_return_claim.purchase_id.id,
                 'sale_id': event_picking.sale_id.id,
                 'invoice_state': inv_status,
                 'claim': True,
@@ -1053,7 +1056,8 @@ class claim_event(osv.osv):
             if claim_type == 'supplier':
                 replacement_values.update({'type': 'in'})
                 # receive back from supplier, destination default input
-                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id})
+                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id,
+                                                'location_dest_id': context['common']['input_id']})
             elif claim_type == 'customer':
                 replacement_values.update({'type': 'out'})
                 # resend to customer, from stock by default (can be changed by user later)
@@ -1065,15 +1069,17 @@ class claim_event(osv.osv):
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
             # update the destination location for each move
             event_line_numbers = [move.line_number for move in event_picking.move_lines]
-            for i, move in enumerate(pick_obj.browse(cr, uid, replacement_id, context=context).move_lines):
+            for i, move_id in enumerate(replacement_move_ids):
                 replacement_move_values_with_line_numbers = replacement_move_values
                 # set the same line number as the original move
                 replacement_move_values_with_line_numbers.update({'line_number': event_line_numbers[i]})
                 # get the move values according to claim type
-                move_obj.write(cr, uid, replacement_move_ids, replacement_move_values_with_line_numbers, context=context)
+                move_obj.write(cr, uid, move_id, replacement_move_values_with_line_numbers, context=context)
             # confirm and check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
+
+        context.update({'keep_prodlot': False, 'keepPoLine': False})
 
         return True
 
@@ -1083,8 +1089,12 @@ class claim_event(osv.osv):
 
         - destination of picking moves becomes Quarantine (Analyze), replacement possible if agreement with supplier
         '''
+        context = context.copy()
+        context.update({'keep_prodlot': True, 'keepPoLine': True})
+
         # objects
         move_obj = self.pool.get('stock.move')
+        pick_obj = self.pool.get('stock.picking')
         picking_tools = self.pool.get('picking.tools')
         # event picking object
         event_picking = obj.event_picking_id_claim_event
@@ -1096,8 +1106,62 @@ class claim_event(osv.osv):
         move_ids = [move.id for move in event_picking.move_lines]
         move_obj.write(cr, uid, move_ids, {'location_dest_id': context['common']['quarantine_anal']}, context=context)
         # validate the event picking if not from picking wizard
-        if not obj.from_picking_wizard_claim_event:
+        if not obj.from_picking_wizard_claim_event and not obj.replacement_picking_expected_claim_event:
             self._validate_picking(cr, uid, event_picking.id, context=context)
+
+        if obj.replacement_picking_expected_claim_event:
+            # claim
+            claim = obj.return_claim_id_claim_event
+            # claim type
+            claim_type = claim.type_return_claim
+            # don't generate financial documents if the claim is linked to an internal or intermission partner
+            inv_status = claim.partner_id_return_claim.partner_type in ['internal',
+                                                                        'intermission'] and 'none' or '2binvoiced'
+            # we copy the event return picking
+            replacement_id = pick_obj.copy(cr, uid, event_picking.id, context=dict(context, keepLineNumber=True))
+            # we update the replacement picking object and lines
+            replacement_values = {
+                'name': event_picking.name + '-replacement',
+                'partner_id': claim.partner_id_return_claim.id,  # both partner needs to be filled??
+                'partner_id2': claim.partner_id_return_claim.id,
+                'reason_type_id': context['common']['rt_goods_replacement'],
+                'backorder_id': event_picking.id,
+                'origin': event_picking.origin,
+                'purchase_id': obj.return_claim_id_claim_event.picking_id_return_claim.purchase_id.id,
+                'sale_id': event_picking.sale_id.id,
+                'invoice_state': inv_status,
+                'claim': True,
+            }
+            replacement_move_values = {'reason_type_id': context['common']['rt_goods_replacement'], 'state': 'draft'}
+
+            if claim_type == 'supplier':
+                replacement_values.update({'type': 'in'})
+                # receive back from supplier, destination default input
+                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id,
+                                                'location_dest_id': context['common']['input_id']})
+            elif claim_type == 'customer':
+                replacement_values.update({'type': 'out'})
+                # resend to customer, from stock by default (can be changed by user later)
+                replacement_move_values.update({'location_id': context['common']['stock_id'],
+                                                'location_dest_id': claim.partner_id_return_claim.property_stock_customer.id})
+            # write the new values
+            pick_obj.write(cr, uid, replacement_id, replacement_values, context=context)
+            # update the moves
+            replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
+            # update the destination location for each move
+            event_line_numbers = [move.line_number for move in event_picking.move_lines]
+            for i, move_id in enumerate(replacement_move_ids):
+                replacement_move_values_with_line_numbers = replacement_move_values
+                # set the same line number as the original move
+                replacement_move_values_with_line_numbers.update({'line_number': event_line_numbers[i]})
+                # get the move values according to claim type
+                move_obj.write(cr, uid, move_id, replacement_move_values_with_line_numbers, context=context)
+            # check availability of replacement picking
+            picking_tools.confirm(cr, uid, replacement_id, context=context)
+            picking_tools.check_assign(cr, uid, replacement_id, context=context)
+
+        context.update({'keep_prodlot': False, 'keepPoLine': False})
+
         return True
 
     def _do_process_scrap(self, cr, uid, obj, context=None):
@@ -1106,6 +1170,9 @@ class claim_event(osv.osv):
 
         - destination of picking moves becomes Quarantine (before scrap)
         '''
+        context = context.copy()
+        context.update({'keep_prodlot': True, 'keepPoLine': True})
+
         # objects
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
@@ -1141,7 +1208,7 @@ class claim_event(osv.osv):
                 'reason_type_id': context['common']['rt_goods_replacement'],
                 'backorder_id': event_picking.id,
                 'origin': event_picking.origin,
-                'purchase_id': event_picking.purchase_id.id,
+                'purchase_id': obj.return_claim_id_claim_event.picking_id_return_claim.purchase_id.id,
                 'sale_id': event_picking.sale_id.id,
                 'invoice_state': inv_status,
                 'claim': True,
@@ -1151,7 +1218,8 @@ class claim_event(osv.osv):
             if claim_type == 'supplier':
                 replacement_values.update({'type': 'in'})
                 # receive back from supplier, destination default input
-                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id})
+                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id,
+                                                'location_dest_id': context['common']['input_id']})
             elif claim_type == 'customer':
                 replacement_values.update({'type': 'out'})
                 # resend to customer, from stock by default (can be changed by user later)
@@ -1163,15 +1231,17 @@ class claim_event(osv.osv):
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
             # update the destination location for each move
             event_line_numbers = [move.line_number for move in event_picking.move_lines]
-            for i, move in enumerate(pick_obj.browse(cr, uid, replacement_id, context=context).move_lines):
+            for i, move_id in enumerate(replacement_move_ids):
                 replacement_move_values_with_line_numbers = replacement_move_values
                 # set the same line number as the original move
                 replacement_move_values_with_line_numbers.update({'line_number': event_line_numbers[i]})
                 # get the move values according to claim type
-                move_obj.write(cr, uid, replacement_move_ids, replacement_move_values_with_line_numbers, context=context)
+                move_obj.write(cr, uid, move_id, replacement_move_values_with_line_numbers, context=context)
             # check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
+
+        context.update({'keep_prodlot': False, 'keepPoLine': False})
 
         return True
 
@@ -1186,7 +1256,7 @@ class claim_event(osv.osv):
         - if replacement is needed, we create a new picking
         '''
         context = context.copy()
-        context.update({'from_claim': True})
+        context.update({'from_claim': True, 'keep_prodlot': True, 'keepPoLine': True})
 
         # objects
         data_obj = self.pool.get('ir.model.data')
@@ -1259,7 +1329,8 @@ class claim_event(osv.osv):
             if claim_type == 'supplier':
                 replacement_values.update({'type': 'in'})
                 # receive back from supplier, destination default input
-                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id})
+                replacement_move_values.update({'location_id': claim.partner_id_return_claim.property_stock_supplier.id,
+                                                'location_dest_id': context['common']['input_id']})
             elif claim_type == 'customer':
                 replacement_values.update({'type': 'out'})
                 # resend to customer, from stock by default (can be changed by user later)
@@ -1272,15 +1343,17 @@ class claim_event(osv.osv):
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
             # update the destination location for each move
             event_line_numbers = [move.line_number for move in event_picking.move_lines]
-            for i, move in enumerate(pick_obj.browse(cr, uid, replacement_id, context=context).move_lines):
+            for i, move_id in enumerate(replacement_move_ids):
                 replacement_move_values_with_line_numbers = replacement_move_values
                 # set the same line number as the original move
                 replacement_move_values_with_line_numbers.update({'line_number': event_line_numbers[i]})
                 # get the move values according to claim type
-                move_obj.write(cr, uid, replacement_move_ids, replacement_move_values_with_line_numbers, context=context)
+                move_obj.write(cr, uid, move_id, replacement_move_values_with_line_numbers, context=context)
             # confirm and check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
+
+        context.update({'keep_prodlot': False, 'keepPoLine': False})
 
         return True
 
@@ -1294,13 +1367,12 @@ class claim_event(osv.osv):
         - (is not set to done - defined in _picking_done_cond)
         '''
         context = context.copy()
-        context.update({'from_claim': True})
+        context.update({'from_claim': True, 'keep_prodlot': True})
 
         # objects
         data_obj = self.pool.get('ir.model.data')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
-        picking_tools = self.pool.get('picking.tools')
         # event picking object
         event_picking_id = pick_obj.copy(cr, uid, obj.event_picking_id_claim_event.id, context=context)
         event_picking = pick_obj.browse(cr, uid, event_picking_id, context=context)
@@ -1345,6 +1417,8 @@ class claim_event(osv.osv):
         # confirm the moves but not the pick to be able to convert to OUT
         move_obj.action_confirm(cr, uid, move_ids, context=context)
 
+        context.update({'keep_prodlot': False})
+
         return True
 
     def _do_process_missing(self, cr, uid, obj, context=None):
@@ -1356,7 +1430,7 @@ class claim_event(osv.osv):
         - (is not set to done - defined in _picking_done_cond)
         '''
         context = context.copy()
-        context.update({'from_claim': True})
+        context.update({'from_claim': True, 'keep_prodlot': True})
 
         # objects
         move_obj = self.pool.get('stock.move')
@@ -1392,6 +1466,8 @@ class claim_event(osv.osv):
         # check availability of replacement picking
         picking_tools.confirm(cr, uid, event_picking.id, context=context)
         picking_tools.check_assign(cr, uid, event_picking.id, context=context)
+
+        context.update({'keep_prodlot': False})
 
         return True
 

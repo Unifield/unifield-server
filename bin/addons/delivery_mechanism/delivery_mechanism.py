@@ -180,7 +180,7 @@ class stock_move(osv.osv):
         # the tag 'from_button' was added in the web client (openerp/controllers/form.py in the method duplicate) on purpose
         if context.get('from_button'):
             # UF-1797: when we duplicate a doc we delete the link with the poline
-            if 'purchase_line_id' not in defaults:
+            if 'purchase_line_id' not in defaults and not context.get('keepPoLine', False):
                 defaults.update(purchase_line_id=False)
             if context.get('subtype', False) == 'incoming':
                 # we reset the location_dest_id to 'INPUT' for the 'incoming shipment'
@@ -1303,7 +1303,15 @@ class stock_picking(osv.osv):
 
                 wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                 # Then we finish the good picking
-                self.action_move(cr, uid, [backorder_id], context=context)
+                if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
+                    # To cancel the created INT
+                    self.action_move(cr, uid, [backorder_id], return_goods=True, context=context)
+                    # check the OUT availability
+                    out_domain = [('backorder_id', '=', backorder_id), ('type', '=', 'out')]
+                    out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
+                    self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
+                else:
+                    self.action_move(cr, uid, [backorder_id], context=context)
                 # Cancel missing IN instead of processing
                 if wizard.register_a_claim and wizard.claim_type == 'missing':
                     move_ids = move_obj.search(cr, uid, [('picking_id', '=', backorder_id)])
@@ -1335,7 +1343,15 @@ class stock_picking(osv.osv):
                         self.write(cr, uid, [picking_id], {'state': 'shipped'}, context=context)
                     return picking_id
                 else:
-                    self.action_move(cr, uid, [picking_id], context=context)
+                    if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
+                        # To cancel the created INT
+                        self.action_move(cr, uid, [picking_id], return_goods=True, context=context)
+                        # check the OUT availability
+                        out_domain = [('backorder_id', '=', picking_id), ('type', '=', 'out')]
+                        out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
+                        self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
+                    else:
+                        self.action_move(cr, uid, [picking_id], context=context)
                     # Cancel missing IN instead of processing
                     if wizard.register_a_claim and wizard.claim_type == 'missing':
                         move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id)])
