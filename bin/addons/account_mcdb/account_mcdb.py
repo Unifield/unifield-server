@@ -1095,11 +1095,12 @@ class account_mcdb(osv.osv):
         header = self.get_selection_from_domain(cr, uid, domain, res_model, context=context)
         result_ids = []
         target_filename = 'selector'
+        limit = 5000  # max for PDF + issue if a large number of entries is exported (cf US-661)
         if res_model == 'account.move.line':
-            result_ids = aml_obj.search(cr, uid, domain, context=context)
+            result_ids = aml_obj.search(cr, uid, domain, context=context, limit=limit)
             target_filename = 'GL Selector'
         elif res_model == 'account.analytic.line':
-            result_ids = aal_obj.search(cr, uid, domain, context=context)
+            result_ids = aal_obj.search(cr, uid, domain, context=context, limit=limit)
             target_filename = 'Analytic Selector'
         output_currency_id = False
         if selector.display_in_output_currency:
