@@ -53,7 +53,6 @@ class patch_scripts(osv.osv):
     # UF7.0 patches
     def post_sll(self, cr, uid, *a, **b):
         # set constraint on ir_ui_view
-
         cr.drop_index_if_exists('ir_ui_view', 'ir_ui_view_model_type_priority')
         cr.drop_constraint_if_exists('ir_ui_view', 'ir_ui_view_unique_view')
         cr.execute('CREATE UNIQUE INDEX ir_ui_view_model_type_priority ON ir_ui_view (priority, type, model) WHERE inherit_id IS NULL')
@@ -120,9 +119,12 @@ class patch_scripts(osv.osv):
                 ''', (state, tuple(pol_ids)))
 
         po_ids = po_obj.search(cr, uid, [('state', '=', 'confirmed_wait')])
-        self._logger.warn("%d PO confirmed wait to trigger: %s" % (len(po_ids), po_ids))
-        if po_ids:
-            po_obj.confirm_lines(cr, uid, po_ids)
+        self._logger.warn("%d PO confirmed wait to trigger." % (len(po_ids), ))
+        for po_id in  po_ids:
+            self._logger.warn("PO id:%d, confirm %d lines" % (po_id, len(po_ids)))
+            pol_ids = pol_obj.search(cr, uid, [('state', '=', 'confirmed'), ('order_id', '=', po_id)])
+            if pol_ids:
+                pol_obj.action_confirmed(cr, uid, pol_ids)
 
         # so
         cr.execute("update sale_order set state=state_moved0")
@@ -130,12 +132,12 @@ class patch_scripts(osv.osv):
         cr.execute("delete from wkf_activity act where act.wkf_id in (select wkf.id from wkf where wkf.osv='sale.order')")
         cr.execute("delete from wkf_instance inst where inst.wkf_id in (select wkf.id from wkf where wkf.osv='sale.order')")
         cr.execute("update sale_order set state='confirmed' where state in ('manual', 'progress')");
-        cr.execute("update sale_order_line set state='draft' where order_id in (select id from sale_order where state='draft')")
-        cr.execute("update sale_order_line set state='validated' where order_id in (select id from sale_order where state='validated')")
-        cr.execute("update sale_order_line set state='sourced' where order_id in (select id from sale_order where state='sourced')")
-        cr.execute("update sale_order_line set state='confirmed' where order_id in (select id from sale_order where state='confirmed')")
-        cr.execute("update sale_order_line set state='done' where order_id in (select id from sale_order where state='done')")
-        cr.execute("update sale_order_line set state='cancel' where order_id in (select id from sale_order where state='cancel')")
+        #cr.execute("update sale_order_line set state='draft' where order_id in (select id from sale_order where state='draft')")
+        cr.execute("update sale_order_line set state='validated' where order_id in (select id from sale_order where state='validated') and state='draft'")
+        #cr.execute("update sale_order_line set state='sourced' where order_id in (select id from sale_order where state='sourced')")
+        #cr.execute("update sale_order_line set state='confirmed' where order_id in (select id from sale_order where state='confirmed')")
+        #cr.execute("update sale_order_line set state='done' where order_id in (select id from sale_order where state='done')")
+        #cr.execute("update sale_order_line set state='cancel' where order_id in (select id from sale_order where state='cancel')")
 
 
         sol_obj = self.pool.get('sale.order.line')
@@ -152,6 +154,11 @@ class patch_scripts(osv.osv):
                     where inst_id in (select inst.id from wkf_instance inst where inst.res_id in %s and  wkf_id = (select id from wkf where wkf.osv='sale.order.line'))
                 ''', (state, tuple(sol_ids)))
 
+        to_source_ids = sol_obj.search(cr, uid, [('state', '=', 'sourced'), ('order_id.state', '=', 'validated')])
+        # so partially confirmed: we must generate next doc on sourced line
+        for to_source_id in to_source_ids:
+            self._logger.warn("Source FO line %s" % (to_source_id,))
+            self.pool.get('sale.order.line').source_line(cr, uid, [to_source_id])
 
         # do not re-generate messages
         cr.execute("select identifier,create_date from sync_client_message_to_send  where identifier like '%/purchase_order/%' or identifier like '%/sale_order/%' order by id")
