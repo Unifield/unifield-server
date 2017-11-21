@@ -585,6 +585,9 @@ class purchase_order_line(osv.osv):
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
 
+            if pol.is_line_split and pol.original_line_id and pol.order_id.partner_id.partner_type not in ['external', 'esc'] and pol.set_as_sourced_n:
+                self.write(cr, uid, [pol.original_line_id.id], {'product_qty': pol.original_line_id.product_qty - pol.product_qty}, context=context)
+
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
 
         return True
