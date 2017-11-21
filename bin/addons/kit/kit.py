@@ -304,18 +304,25 @@ class composition_kit(osv.osv):
 
         for kit in self.browse(cr, uid, ids, context=context):
 
+            def qty_available(id_):
+                request_context = context.copy()
+                request_context.update({ 'states': ('done',),
+                                         'what': ('in', 'out'),
+                                         'location_category': ['stock', 'consumption_unit'] })
+                return self.pool.get("product.product").get_product_available(cr, uid, [id_], context=request_context)
+
             # For kits with a batch, take the stock of the batch
             # Otherwise, take the global stock of the product
             if kit.composition_reference:
-                stock = kit.composition_product_id.qty_available
-                if stock <= 0:
-                    raise osv.except_osv(_('Error'),
-                                         _('This kit product is not available in stock !'))
+                product_id = kit.composition_product_id.id
             else:
-                stock = kit.composition_lot_id.stock_available
-                if stock <= 0:
-                    raise osv.except_osv(_('Error'),
-                                         _('This kit product / batch is not available in stock !'))
+                product_id = kit.composition_lot_id.id
+
+            stock = qty_available(product_id)
+
+            if stock <= 0:
+                raise osv.except_osv(_('Error'),
+                                     _('This kit product / batch is not available in stock !'))
 
 
     def substitute_items(self, cr, uid, ids, context=None):
