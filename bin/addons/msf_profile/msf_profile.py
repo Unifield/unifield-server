@@ -142,9 +142,20 @@ class patch_scripts(osv.osv):
 
         sol_obj = self.pool.get('sale.order.line')
 
+
+        cr.execute('''select sol.id from sale_order_line sol, purchase_order_line pol, purchase_order o
+            where pol.linked_sol_id = sol.id and pol.order_id = o.id and o.state='draft' and sol.state='confirmed'
+        ''')
+        from_confirmed_to_sourced = [x[0] for x in cr.fetchall()]
+
+
         for state in ('draft', 'validated', 'sourced', 'confirmed'):
             sol_ids = sol_obj.search(cr, uid, [('state', '=', state)])
             self._logger.warn("%d %s SO lines: create wkf" % (len(sol_ids), state))
+            if state == 'sourced':
+                sol_ids += from_confirmed_to_sourced
+            elif state == 'confirmed':
+                sol_ids = list(set(sol_ids) - set(from_confirmed_to_sourced))
             if sol_ids:
                 for sol in sol_ids:
                     wkf.trg_create(1, 'sale.order.line', sol, cr)
@@ -159,6 +170,20 @@ class patch_scripts(osv.osv):
         for to_source_id in to_source_ids:
             self._logger.warn("Source FO line %s" % (to_source_id,))
             self.pool.get('sale.order.line').source_line(cr, uid, [to_source_id])
+
+
+        # set FO as sourced if PO line is draft
+        if from_confirmed_to_sourced:
+            cr.execute("update sale_order_line set state='sourced' where id in %s", (tuple(from_confirmed_to_sourced),))
+
+        # set FO as sourced-v if PO line is Validated
+        cr.execute('''select sol.id from sale_order_line sol, purchase_order_line pol
+            where pol.linked_sol_id = sol.id and pol.state='validated' and sol.state in ('sourced', 'confirmed')
+        ''')
+        to_sourced_v = [x[0] for x in cr.fetchall()]
+        if to_sourced_v:
+            cr.execute("update sale_order_line set state='sourced_v' where id in %s", (tuple(to_sourced_v),))
+
 
         # do not re-generate messages
         cr.execute("select identifier,create_date from sync_client_message_to_send  where identifier like '%/purchase_order/%' or identifier like '%/sale_order/%' order by id")
