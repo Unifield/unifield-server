@@ -1051,7 +1051,7 @@ class account_mcdb(osv.osv):
                  'move_id.move_id.name', 'commitment_line_id.commit_id.name',  # only entry_sequence is kept
                  'move_id', 'move_id.is_manually_corrected',  # only is_reallocated is kept (in G/L Selector)
                  'period_id.number',  # the check on period number != 0 is not part of the user selection in the interface
-                 'account_id.reconcile',  # only reconcile_id is kept (in JI view)
+                 'account_id.reconcile',  # only reconcile_id is kept (filter 'Unreconciled' in JI view)
                  ]
             if context.get('from', False) == 'account.move.line':
                 to_ignore.remove('move_id')  # 'move_id' (Entry Sequence) should not be ignored if we come from the JI view
