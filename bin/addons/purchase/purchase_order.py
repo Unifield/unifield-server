@@ -159,7 +159,7 @@ class purchase_order(osv.osv):
             amount_total = 0.00
             amount_received = 0.00
             for line in order.order_line:
-                if line.state == 'cancel':
+                if line.state in ['cancel', 'cancel_r']:
                     continue
 
                 amount_total += line.product_qty
