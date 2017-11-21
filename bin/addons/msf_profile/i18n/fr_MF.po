@@ -44471,8 +44471,9 @@ msgstr "Reconcile date"
 #. modules: financing_contract, account_mcdb
 #: field:account.mcdb,document_code:0
 #: report:addons/financing_contract/report/project_expenses_xls.mako:470
+#: code:addons/account_mcdb/account_mcdb.py:1043
 msgid "Sequence number"
-msgstr "Sequence number"
+msgstr "Numéro de Séquence"
 
 #. module: register_accounting
 #: report:addons/register_accounting/report/fully_report_xls.mako:980

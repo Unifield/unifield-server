@@ -1040,6 +1040,7 @@ class account_mcdb(osv.osv):
                 'general_account_id.user_type': _('Account types'),
                 'move_id.state': _('Entry Status'),
                 'account_id.category': _('Display'),
+                'move_id.name': _('Sequence number'),
             }
             to_ignore = \
                 ['&',  # always 'and' by default
@@ -1048,6 +1049,8 @@ class account_mcdb(osv.osv):
                  'move_id', 'move_id.is_manually_corrected',  # only is_reallocated is kept
                  'period_id.number',  # the check on period number != 0 is not part of the user selection in the interface
                  ]
+            if context.get('from', False) == 'account.move.line':
+                to_ignore.remove('move_id')  # 'move_id' (Entry Sequence) should not be ignored if we come from the JI view
             for dom in domain:
                 if dom[0] in to_ignore or len(dom) != 3:
                     continue
