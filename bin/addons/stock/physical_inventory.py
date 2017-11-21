@@ -279,6 +279,8 @@ class PhysicalInventory(osv.osv):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)
         def write(model, id_, vals):
             return self.pool.get(model).write(cr, uid, [id_], vals, context=context)
+        def write_many(model, ids, vals):
+            return self.pool.get(model).write(cr, uid, ids, vals, context=context)
 
         # Get this inventory...
         assert len(inventory_ids) == 1
@@ -325,6 +327,7 @@ class PhysicalInventory(osv.osv):
             counted_quantities[product_batch_expirydate] = qty
 
             counting_lines_per_product_batch_expirtydate[product_batch_expirydate] = {
+                "line_id": line["id"],
                 "line_no": line["line_no"]
             }
 
@@ -358,7 +361,7 @@ class PhysicalInventory(osv.osv):
 
         new_discrepancies = []
         update_discrepancies = {}
-        anomalies = []
+        counting_lines_with_no_discrepancy = []
 
         # For each of them, compare the theoretical and counted qty
         for product_batch_expirydate in all_product_batch_expirydate:
@@ -370,6 +373,9 @@ class PhysicalInventory(osv.osv):
             # If no discrepancy, nothing to do
             # (Use a continue to save 1 indentation level..)
             if counted_qty == theoretical_qty:
+                if product_batch_expirydate in counting_lines_per_product_batch_expirtydate:
+                    counting_line_id = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]["line_id"]
+                    counting_lines_with_no_discrepancy.append(counting_line_id)
                 continue
 
             # If this product/batch is known in the counting line, use
@@ -404,6 +410,10 @@ class PhysicalInventory(osv.osv):
                   "counted_qty": counted_qty
                 })
 
+        # Update discrepancy flags on counting lines
+        counting_lines_with_discrepancy = [ l["id"] for l in counting_lines if  not l["id"] in counting_lines_with_no_discrepancy ]
+        write_many("physical.inventory.counting", counting_lines_with_discrepancy,    {"discrepancy": True})
+        write_many("physical.inventory.counting", counting_lines_with_no_discrepancy, {"discrepancy": False})
 
         # Sort discrepancies according to line number
         new_discrepancies = sorted(new_discrepancies, key=lambda d: d["line_no"])
@@ -903,11 +913,26 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         product_dict = {}
         product_tmpl_dict = {}
 
-        for inv in self.read(cr, uid, ids, ['discrepancy_line_ids', 'date', 'name'], context=context):
+        for inv in self.read(cr, uid, ids, ['counting_line_ids',
+                                            'discrepancy_line_ids',
+                                            'date',
+                                            'name'], context=context):
             move_ids = []
 
             # gather all information needed for the lines treatment first to do less requests
+            counting_line_obj = self.pool.get('physical.inventory.counting')
             inv_line_obj = self.pool.get('physical.inventory.discrepancy')
+
+
+            counting_lines_with_no_discrepancy_ids = counting_line_obj.search(cr, uid, [("inventory_id", '=', inv["id"]),
+                                                                                        ("discrepancy", '=', False)],
+                                                                                        context=context)
+
+            counting_lines_with_no_discrepancy = counting_line_obj.read(cr, uid, counting_lines_with_no_discrepancy_ids,
+                                                                                 ['product_id',
+                                                                                  'batch_number',
+                                                                                  'expiry_date'],
+                                                                                 context=context)
 
             line_read = inv_line_obj.read(cr, uid, inv['discrepancy_line_ids'],
                                           ['inventory_id', 'product_id', 'product_uom_id', 'batch_number', 'expiry_date', 'location_id',
@@ -947,6 +972,28 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 wizard_obj = self.pool.get('physical.inventory.import.wizard')
                 return wizard_obj.message_box(cr, uid, title='Confirmation errors', message='\n'.join(errors))
 
+
+            def get_prodlot_id(bn, ed):
+                if not ed:
+                    return False
+                elif bn:
+                    return picking_obj.retrieve_batch_number(cr, uid, pid, {'name': bn, 'life_date': ed}, context=context)[0]
+                else:
+                    return prod_lot_obj._get_prodlot_from_expiry_date(cr, uid, ed, pid)
+
+            # For each counting lines which had no discrepancy, keep track of
+            # the real batch number id
+            for line in counting_lines_with_no_discrepancy:
+                line_id = line['id']
+                pid = line['product_id'][0]
+                bn = line['batch_number']
+                ed = line['expiry_date']
+
+                lot_id = get_prodlot_id(bn, ed)
+
+                counting_line_obj.write(cr, uid, [line_id], {"prod_lot_id": lot_id}, context=context)
+
+
             discrepancy_to_move = {}
             for line in line_read:
                 if line['ignored']:
@@ -957,49 +1004,49 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 ed = line['expiry_date']
 
                 change = line['discrepancy_qty']  # - amount
-                if change:
-                    if ed:
-                        if bn:
-                            lot_id = picking_obj.retrieve_batch_number(cr, uid, pid, {'name': bn, 'life_date': ed}, context=context)
-                        else:
-                            lot_id = prod_lot_obj._get_prodlot_from_expiry_date(cr, uid, ed, pid)
-                    else:
-                        lot_id = False
-                    # lot_id = line['prod_lot_id'] and line['prod_lot_id'][0] or False
-                    product_context.update(uom=line['product_uom_id'][0],
-                                           date=inv['date'], prodlot_id=lot_id)
 
-                    # amount = location_obj._product_get(cr, uid, line['location_id'][0], [pid], product_context)[pid]
+                # Ignore lines with no discrepancies (there shouldnt be any
+                # by definition/construction of the discrepancy lines)
+                if not change:
+                    continue
 
-                    location_id = product_dict[line['product_id'][0]]['stock_inventory']
-                    value = {
-                        'name': 'INV:' + str(inv['id']) + ':' + inv['name'],
-                        'product_id': line['product_id'][0],
-                        'product_uom': line['product_uom_id'][0],
-                        'prodlot_id': lot_id,
-                        'date': inv['date'],
-                    }
-                    if change > 0:
-                        value.update({
-                            'product_qty': change,
-                            'location_id': location_id,
-                            'location_dest_id': line['location_id'][0],
-                        })
-                    else:
-                        value.update({
-                            'product_qty': -change,
-                            'location_id': line['location_id'][0],
-                            'location_dest_id': location_id,
-                        })
+                lot_id = get_prodlot_id(bn, ed)
+
+                # lot_id = line['prod_lot_id'] and line['prod_lot_id'][0] or False
+                product_context.update(uom=line['product_uom_id'][0],
+                                       date=inv['date'], prodlot_id=lot_id)
+
+                # amount = location_obj._product_get(cr, uid, line['location_id'][0], [pid], product_context)[pid]
+
+                location_id = product_dict[line['product_id'][0]]['stock_inventory']
+                value = {
+                    'name': 'INV:' + str(inv['id']) + ':' + inv['name'],
+                    'product_id': line['product_id'][0],
+                    'product_uom': line['product_uom_id'][0],
+                    'prodlot_id': lot_id,
+                    'date': inv['date'],
+                }
+                if change > 0:
                     value.update({
-                        'comment': line['comment'],
-                        'reason_type_id': line['reason_type_id'][0],
+                        'product_qty': change,
+                        'location_id': location_id,
+                        'location_dest_id': line['location_id'][0],
                     })
-                    move_id = self.pool.get('stock.move').create(cr, uid, value)
-                    move_ids.append(move_id)
-                    discrepancy_to_move[line_id] = move_id
-                # elif not change:
-                #     inv_line_obj.write(cr, uid, [line['id']], {'dont_move': True}, context=context)
+                else:
+                    value.update({
+                        'product_qty': -change,
+                        'location_id': line['location_id'][0],
+                        'location_dest_id': location_id,
+                    })
+                value.update({
+                    'comment': line['comment'],
+                    'reason_type_id': line['reason_type_id'][0],
+                })
+                move_id = self.pool.get('stock.move').create(cr, uid, value)
+                move_ids.append(move_id)
+                discrepancy_to_move[line_id] = move_id
+
+
             message = _('Inventory') + " '" + inv['name'] + "' " + _("is validated.")
             self.log(cr, uid, inv['id'], message)
             self.write(cr, uid, [inv['id']], {'state': 'confirmed', 'move_ids': [(6, 0, move_ids)]})
@@ -1062,6 +1109,10 @@ class PhysicalInventoryCounting(osv.osv):
         # Specific to inventory
         'line_no': fields.integer(string=_('Line #'), readonly=True),
         'quantity': fields.char(_('Quantity'), size=15),
+        'discrepancy': fields.boolean('Discrepancy found', readonly=True),
+
+        # Actual batch number id, filled after the inventory switches to done
+        'prod_lot_id': fields.many2one('stock.production.lot', 'Production Lot', readonly=True)
     }
 
     _sql_constraints = [
