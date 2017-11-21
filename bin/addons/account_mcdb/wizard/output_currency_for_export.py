@@ -183,6 +183,9 @@ class output_currency_for_export(osv.osv_memory):
             context['background_time'] = wiz and wiz.background_time or 2
         if data_from_selector.get('header'):
             datas['header'] = data_from_selector['header']
+        # truncate the header if is is too long
+        if 'header' in datas and len(datas['header']) > 7500:
+            datas['header'] = "%s..." % datas['header'][:7500]
         if 'ids' in datas and not datas['ids']:
             raise osv.except_osv(_('Error'), _('There is no data to export.'))
         return {
