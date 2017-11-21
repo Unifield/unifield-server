@@ -100113,3 +100113,9 @@ msgstr "Total Devise Sortante"
 #: report:account.analytic.line:0
 msgid "Total Func. Curr."
 msgstr "Total Devise Fonc."
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/wizard/output_currency_for_export.py:189
+#, python-format
+msgid "There is no data to export."
+msgstr "Il n'y a pas de données à exporter."

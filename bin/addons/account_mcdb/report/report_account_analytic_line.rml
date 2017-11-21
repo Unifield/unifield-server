@@ -60,7 +60,6 @@
 
     <!-- Display the SELECTION done in Analytic selector -->
     <blockTable colWidths="825.0" style="Tableau3">
-      [[ data.get('context') and data['context'].get('from_selector') or removeParentNode('blockTable') ]]
       <tr>
         <td>
           <para style="P3">Selection</para>

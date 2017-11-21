@@ -108,6 +108,7 @@ class output_currency_for_export(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
+        mcdb_obj = self.pool.get('account.mcdb')
         model = data_from_selector.get('model') or context.get('active_model')
         display_fp = context.get('display_fp', False)
         wiz = currency_id = choice = False
@@ -129,14 +130,18 @@ class output_currency_for_export(osv.osv_memory):
         elif wiz and wiz.export_selected:
             datas = {'ids': context.get('active_ids', [])}
         elif wiz and not wiz.export_selected and choice == 'pdf':
-                # get the ids of the entries (for gl.selector/analytic.selector report if we come from JI/AJI view)
+                # get the ids of the entries and the header to display
+                # (for gl.selector/analytic.selector report if we come from JI/AJI view)
                 dom = context.get('search_domain', [])
                 if model == 'account.move.line':
                     dom.append(('period_id.number', '!=', 0))  # exclude IB entries
                 export_obj = self.pool.get(model)
                 if export_obj:
                     limit = 5000  # max for PDF + issue if a large number of entries is exported (cf US-661)
-                    datas = {'ids': export_obj.search(cr, uid, dom, context=context, limit=limit)}
+                    datas = {
+                        'ids': export_obj.search(cr, uid, dom, context=context, limit=limit),
+                        'header': mcdb_obj.get_selection_from_domain(cr, uid, dom, model, context=context),
+                    }
         else:
             context['from_domain'] = True
         # Update context with wizard currency or default currency
@@ -176,10 +181,10 @@ class output_currency_for_export(osv.osv_memory):
             background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': datas['target_filename'], 'report_name': report_name}, context=context)
             context['background_id'] = background_id
             context['background_time'] = wiz and wiz.background_time or 2
-        if data_from_selector:
-            context['from_selector'] = True
         if data_from_selector.get('header'):
             datas['header'] = data_from_selector['header']
+        if 'ids' in datas and not datas['ids']:
+            raise osv.except_osv(_('Error'), _('There is no data to export.'))
         return {
             'type': 'ir.actions.report.xml',
             'report_name': report_name,
