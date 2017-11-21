@@ -103,7 +103,7 @@ class account_model_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             if line.account_id.user_type.code in ('expense', 'income'):
                 if line.have_analytic_distribution_from_header \
-                    and not line.model_id.analytic_distribution_id:
+                        and not line.model_id.analytic_distribution_id:
                     # line has no AD
                     res[line.id] = 'no_header'
                 else:
@@ -115,19 +115,19 @@ class account_model_line(osv.osv):
 
     _columns = {
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
-            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
-            string='Header Distrib.?'),
+                                                                  string='Header Distrib.?'),
         'is_allocatable': fields.function(_get_is_allocatable, method=True, type='boolean', string="Is allocatable?", readonly=True, store=False),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30,
-            string="Distribution",
-            help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
+                                                             string="Distribution",
+                                                             help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
         'sequence': fields.integer('Sequence', readonly=True, help="The sequence field is used to order the resources from lower sequences to higher ones"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'exp_in_ad_state': fields.function(_get_exp_in_line_state, method=True, type='selection',
-             selection=[('no_exp_in', 'Not expense/income'), ('no_header', 'No header'), ('valid', 'Valid'), ('invalid', 'Invalid')],
-             string='Expense/income line status'),  # UFTP-103
+                                           selection=[('no_exp_in', 'Not expense/income'), ('no_header', 'No header'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                           string='Expense/income line status'),  # UFTP-103
     }
 
     _defaults = {
@@ -179,14 +179,14 @@ class account_model_line(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def copy_data(self, cr, uid, id, default=None, context=None):
@@ -230,9 +230,9 @@ class account_model(osv.osv):
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'has_any_bad_ad_line_exp_in': fields.function(_has_any_bad_ad_line_exp_in,
-             method=True, type='boolean',
-             string='Has bad analytic distribution on expense/income lines',
-             help='There is lines with expense or income accounts with invalid analytic distribution or using header AD that is not defined or not compatible.'),  # UFTP-103
+                                                      method=True, type='boolean',
+                                                      string='Has bad analytic distribution on expense/income lines',
+                                                      help='There is lines with expense or income accounts with invalid analytic distribution or using header AD that is not defined or not compatible.'),  # UFTP-103
     }
 
     _defaults = {
@@ -265,7 +265,20 @@ class account_model(osv.osv):
             raise osv.except_osv(_('Warning'), _('This period should be in open state: %s') % (period.name))
 
         for model in self.browse(cr, uid, ids, context=context):
-            entry['name'] = model.name%{'year':time.strftime('%Y'), 'month':time.strftime('%m'), 'date':time.strftime('%Y-%m')}
+            try:
+                entry['name'] = model.name%{'year':time.strftime('%Y'), 'month':time.strftime('%m'), 'date':time.strftime('%Y-%m')}
+            except (KeyError, TypeError, ValueError):
+                '''
+                Examples of: KeyError => model of the month %(montht)s
+                             TypeError => model of the %(month)s/ % (year)s
+                             ValueError => model of the month %month)s / model of the month % (month)s
+                '''
+                raise osv.except_osv(_('Error'), _('Please check the name of the Recurring Model used: %s\n'
+                                                   'Only the keys %%(year)s / %%(month)s / %%(date)s can be used '
+                                                   'and must be written without spaces.') % model.name)
+            except Exception:
+                raise osv.except_osv(_('Error'), _('The name of the Recurring Model used is incorrect: %s\n'
+                                                   'You can find a list of the formatted strings usable on the Recurring Model form.') % model.name)
             move_id = account_move_obj.create(cr, uid, {
                 'ref': entry['name'],
                 'period_id': period_id,
@@ -295,7 +308,7 @@ class account_model(osv.osv):
                 if line.date_maturity == 'partner':
                     if not line.partner_id:
                         raise osv.except_osv(_('Error !'), _("Maturity date of entry line generated by model line '%s' of model '%s' is based on partner payment term!" \
-                                                                "\nPlease define partner on it!")%(line.name, model.name))
+                                                             "\nPlease define partner on it!")%(line.name, model.name))
                     if line.partner_id.property_payment_term:
                         payment_term_id = line.partner_id.property_payment_term.id
                         pterm_list = pt_obj.compute(cr, uid, payment_term_id, value=1, date_ref=date_maturity)
@@ -363,14 +376,14 @@ class account_model(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Global analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Global analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def button_reset_distribution(self, cr, uid, ids, context=None):
