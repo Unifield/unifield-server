@@ -18,6 +18,10 @@
             <field name="method">us_3345_remove_space_in_employee_name</field>
         </record>
 
+        <record id="us_3756_remove_space_partner" model="patch.scripts">
+            <field name="method">us_3756_remove_space_partner</field>
+        </record>
+
         <!-- OLD -->
 
         <record id="us_3048_patch" model="patch.scripts">
