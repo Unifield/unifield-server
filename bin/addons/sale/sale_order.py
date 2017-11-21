@@ -433,27 +433,22 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if isinstance(ids, (int, long)):
             ids = [ids]
         sols_obj = self.pool.get('sale.order.line.state')
+        sos_obj = self.pool.get('sale.order.state')
 
         res = {}
         for so in self.browse(cr, uid, ids, context=context):
             sol_states = set()
             for sol in so.order_line:
-                if sol.state.startswith('cancel'): # cancel state must be ignored at this level (only accurate when all lines are canceled)
-                    continue
-                elif sol.resourced_at_state and sols_obj.get_sequence(cr, uid, ids, sol.resourced_at_state, context=context) > sols_obj.get_sequence(cr, uid, ids, sol.state, context=context):
-                    # case of ressourced lines: 
-                    # resourced lines must not make the FO state going back
-                    state_transformed = so.state.split('_')[0]
-                    if sols_obj.get_sequence(cr, uid, ids, state_transformed, context=context) < sols_obj.get_sequence(cr, uid, ids, sol.state, context=context):
-                        sol_states.add(sol.state)
-                    else:
-                        sol_states.add(state_transformed)
-                else:
-                    sol_states.add(sol.state)
+                sol_states = set([sol.state for sol in so.order_line])
 
-            if all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
+            if not sol_states:
+                res[so.id] = 'draft'
+            elif all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
             else: # else compute the less advanced state:
+                sol_states.discard('cancel')
+                sol_states.discard('cancel_r')
+
                 res[so.id] = self.pool.get('sale.order.line.state').get_less_advanced_state(cr, uid, ids, sol_states, context=context)
 
                 if res[so.id] == 'draft': # set the draft-p state ?
@@ -478,6 +473,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     # do we have a line further then confirmed in our FO ?
                     if any([self.pool.get('sale.order.line.state').get_sequence(cr, uid, ids, s, context=context) > confirmed_sequence for s in sol_states]):
                         res[so.id] = 'confirmed_p'
+
+            # SO state must not go back:
+            if sos_obj.get_sequence(cr, uid, [], res[so.id]) < sos_obj.get_sequence(cr, uid, [], so.state):
+                res[so.id] = so.state
+                # add the '_p' if needed: 
+                if res[so.id] in ['draft', 'validated', 'confirmed']:
+                    current_state_sequence = sols_obj.get_sequence(cr, uid, [], so.state)
+                    has_line_further = any([sols_obj.get_sequence(cr, uid, [], s, context=context) > current_state_sequence for s in sol_states]) 
+                    if has_line_further:
+                        res[so.id] = '%s_p' % res[so.id]
+
 
             # add audit line in track change if state has changed:
             if so.state != res[so.id]:
@@ -3638,6 +3644,53 @@ class sale_order_line_state(osv.osv):
 
 
 sale_order_line_state()
+
+
+class sale_order_state(osv.osv):
+    _name = "sale.order.state"
+    _description = "States of a sale order"
+
+    _columns = {
+        'name': fields.text(string='SO state', store=True),
+        'sequence': fields.integer(string='Sequence'),
+    }
+
+    def get_less_advanced_state(self, cr, uid, ids, states, context=None):
+        '''
+        Return the less advanced state of gives sale order states
+        @param states: a list of string
+        '''
+        if not states:
+            return False
+
+        cr.execute("""
+            SELECT name
+            FROM sale_order_state
+            WHERE name IN %s
+            ORDER BY sequence;
+        """, (tuple(states),))
+        min_state = cr.fetchone()
+
+        return min_state[0] if min_state else False
+
+    def get_sequence(self, cr, uid, ids, state, context=None):
+        '''
+        return the sequence of the given state
+        @param state: the state's name as a string
+        '''
+        if not state:
+            return False
+
+        cr.execute("""
+            SELECT sequence
+            FROM sale_order_state
+            WHERE name = %s;
+        """, (state,))
+        sequence = cr.fetchone()
+
+        return sequence[0] if sequence else False
+
+sale_order_state()
 
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
