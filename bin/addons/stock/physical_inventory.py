@@ -873,6 +873,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         if context is None:
             context = {}
         self.write(cr, uid, ids, {'state': 'counted'}, context=context)
+        return {}
 
     def action_done(self, cr, uid, ids, context=None):
         """ Finish the inventory"""
@@ -883,16 +884,19 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             move_obj.action_done(cr, uid, inv['move_ids'], context=context)
         self.write(cr, uid, ids, {'state': 'closed', 'date_done': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)},
                    context=context)
+        return {}
 
     def action_recount(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         self.write(cr, uid, ids, {'state': 'counting'}, context=context)
+        return {}
 
     def action_validate(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+        return {}
 
     def action_confirm(self, cr, uid, ids, context=None):
         """ Confirm the inventory and writes its finished date"""
@@ -1058,6 +1062,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
             self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+        return {}
 
     def action_cancel_inventary(self, cr, uid, ids, context=None):
         """ Cancels both stock move and inventory"""
@@ -1076,6 +1081,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                         account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
             self.infolog(cr, uid, "The Physical inventory id:%s (%s) has been cancelled" % (inv.id, inv.name))
+        return {}
 
 
 PhysicalInventory()

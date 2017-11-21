@@ -200,6 +200,7 @@ class physical_inventory_select_products(osv.osv_memory):
 
             # Show them in the preview
             self.update_product_preview(cr, uid, wizard_id, products, context=context)
+        return {}
 
 
     def update_product_preview(self, cr, uid, wizard_id, product_ids, context=None):
