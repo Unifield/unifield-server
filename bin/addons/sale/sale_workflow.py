@@ -149,6 +149,7 @@ class sale_order_line(osv.osv):
                 'resourced_original_line': sol.id, 
                 'resourced_original_remote_line': sol.sync_linked_pol,
                 'resourced_at_state': sol.state,
+                'is_line_split': False,
             }, context=context)
             wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 

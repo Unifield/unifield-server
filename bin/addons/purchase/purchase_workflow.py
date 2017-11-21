@@ -121,6 +121,8 @@ class purchase_order_line(osv.osv):
                 'stock_take_date': line_stock_take,
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
                 'type': 'make_to_order',
+                'is_line_split': pol.is_line_split,
+                'original_line_id': pol.original_line_id.linked_sol_id.id if pol.original_line_id else False,
             }
 
             # update modification comment if it is set
