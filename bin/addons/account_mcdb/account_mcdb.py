@@ -995,7 +995,7 @@ class account_mcdb(osv.osv):
         :param value: ex: (2, 1)
         :param operator: ex: 'in', 'not in'...
         """
-        if field and field['type'] == 'char':
+        if field and field['type'] in ['char', 'text']:
             value = value.strip('%')  # remove the '%' added for ilike
         elif field and 'selection' in field:
             for f in field['selection']:
