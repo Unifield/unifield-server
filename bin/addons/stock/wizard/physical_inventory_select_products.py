@@ -270,10 +270,10 @@ class physical_inventory_select_products(osv.osv_memory):
                 # This shouldnt happen
                 pass
 
-        # Keep only products for which stock > 0
+        # Keep only products for which stock != 0 (including negative ones)
         products_in_stock = set([product_id
                                  for product_id, stock in stocks.items()
-                                 if stock > 0])
+                                 if stock != 0.0])
 
         return products_in_stock
 
