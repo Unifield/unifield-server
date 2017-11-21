@@ -1005,22 +1005,25 @@ class account_mcdb(osv.osv):
         elif field and field['type'] == 'boolean':
             value = value and _('True') or _('False')
         elif field and 'relation' in field:
-            rel_obj = self.pool.get(field['relation'])
-            if isinstance(value, (int, long)):
-                value = [value]
-            elif isinstance(value, tuple):
-                value = list(value)
-            if rel_obj and isinstance(value, list):
-                if operator.lower() == 'not in':
-                    # reverse the selection to display all the items not excluded
-                    value = rel_obj.search(cr, uid, [('id', 'not in', value)], context=context)
-                record_ids = rel_obj.browse(cr, uid, value, context=context)
-                values_list = []
-                for record in record_ids:
-                    record_str = hasattr(record, 'code') and getattr(record, 'code') or \
-                                 hasattr(record, 'name') and getattr(record, 'name') or ''
-                    values_list.append(record_str)
-                value = ', '.join(values_list)
+            if value is False:  # ex: ('reconcile_id', '=', False)
+                value = _('False')
+            else:
+                rel_obj = self.pool.get(field['relation'])
+                if isinstance(value, (int, long)):
+                    value = [value]
+                elif isinstance(value, tuple):
+                    value = list(value)
+                if rel_obj and isinstance(value, list):
+                    if operator.lower() == 'not in':
+                        # reverse the selection to display all the items not excluded
+                        value = rel_obj.search(cr, uid, [('id', 'not in', value)], context=context)
+                    record_ids = rel_obj.browse(cr, uid, value, context=context)
+                    values_list = []
+                    for record in record_ids:
+                        record_str = hasattr(record, 'code') and getattr(record, 'code') or \
+                                     hasattr(record, 'name') and getattr(record, 'name') or ''
+                        values_list.append(record_str)
+                    value = ', '.join(values_list)
         return value
 
     def get_selection_from_domain(self, cr, uid, domain, model, context=None):
@@ -1048,6 +1051,7 @@ class account_mcdb(osv.osv):
                  'move_id.move_id.name', 'commitment_line_id.commit_id.name',  # only entry_sequence is kept
                  'move_id', 'move_id.is_manually_corrected',  # only is_reallocated is kept (in G/L Selector)
                  'period_id.number',  # the check on period number != 0 is not part of the user selection in the interface
+                 'account_id.reconcile',  # only reconcile_id is kept (in JI view)
                  ]
             if context.get('from', False) == 'account.move.line':
                 to_ignore.remove('move_id')  # 'move_id' (Entry Sequence) should not be ignored if we come from the JI view
