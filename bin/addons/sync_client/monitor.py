@@ -341,10 +341,13 @@ class sync_version_instance_monitor(osv.osv):
 
     def _get_default_postgresql_disk_space(self, cr, uid, context=None):
         if os.name == 'nt':
-            # get the pass from the database
-            cr.execute('SHOW data_directory')
-            postgres_path = cr.fetchone()
-            postgres_path = postgres_path  and postgres_path[0] or None
+            try:
+                # get the path from the database
+                cr.execute('SHOW data_directory')
+                postgres_path = cr.fetchone()
+                postgres_path = postgres_path  and postgres_path[0] or None
+            except:
+                return "?"
         else:
             # for linux (RB)
             postgres_path = '/var/lib/postgresql/'
