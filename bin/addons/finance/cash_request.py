@@ -696,7 +696,7 @@ class cash_request_recap_expense(osv.osv):
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
         'instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True, readonly=True,
                                        domain=[('level', 'in', ['coordo', 'project'])]),
-        'expense_total': fields.function(_expense_total_compute, method=True, string='Planned Expense in Func Currency',
+        'expense_total': fields.function(_expense_total_compute, method=True, string='Planned Expenses for the period M',
                                          type='float', digits_compute=dp.get_precision('Account'), readonly=True, store=True),
         'budget_expense_m': fields.function(_budgeted_expense_m_compute, method=True,
                                             string='Budgeted expenses for the period M', type='float',

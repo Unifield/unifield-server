@@ -82,7 +82,7 @@
                             <page string="Commitment">
                                 <separator colspan="4" string="Commitment"/>
                                 <field name="commitment_ids" nolabel="1">
-                                    <tree string="Engagement entries">
+                                    <tree string="Engagement Entries in func. currency">
                                         <field name="instance_id"/>
                                         <field name="total_commitment"
                                                string="Total Engagement in Func. currency for the month to come"/>
@@ -93,7 +93,7 @@
                                 <separator colspan="4" string="Planned expense for the coming period"/>
                                 <group colspan="4" col="2">
                                     <field name="recap_expense_ids" nolabel="1">
-                                        <tree string="Recap Planned expenses">
+                                        <tree string="Recap Planned Expenses in func. currency">
                                             <field name="instance_id"/>
                                             <field name="expense_total"/>
                                             <field name="budget_expense_m"/>
@@ -105,7 +105,7 @@
                                 </group>
                                 <group colspan="4" col="2">
                                     <field name="planned_expense_ids" nolabel="1" context="{'mission': mission}">
-                                        <tree editable="bottom" string="Planned expenses entries">
+                                        <tree editable="bottom" string="Planned Expenses entries">
                                             <field name="prop_instance_id"/>
                                             <field name="consumer_instance_id"
                                                    domain="[('level', 'in', ['coordo', 'project']), ('mission', '=', context.get('mission'))]"/>
