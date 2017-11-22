@@ -1385,7 +1385,7 @@ class purchase_order_line(osv.osv):
             if not sale_id:
                 res['warning'] = {
                     'title': _('Warning'),
-                    'message': _('The reference \'%s\' put in the Origin field doesn\'t match with any FO/IR. No FO/IR line will be created for this PO line') % origin,
+                    'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line') % origin,
                 }
                 res['value'] = {
                     'display_sync_ref': False,
