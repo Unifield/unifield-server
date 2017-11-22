@@ -351,10 +351,7 @@
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s19"><Data ss:Type="String">Inventory date</Data><Comment
-      ss:Author="MSFadmin"><ss:Data xmlns="http://www.w3.org/TR/REC-html40"><B><Font
-         html:Face="Tahoma" x:Family="Swiss" html:Size="8" html:Color="#000000">MSFadmin:</Font></B><Font
-        html:Face="Tahoma" x:Family="Swiss" html:Size="8" html:Color="#000000">&#10;Date de fin d'inventaire&#10;</Font></ss:Data></Comment><NamedCell
+    <Cell ss:StyleID="s19"><Data ss:Type="String">Inventory date</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="m2667643071564"><NamedCell
       ss:Name="Print_Titles"/><Data ss:Type="DateTime">${ to_excel(objects[0].date) }</Data></Cell>
@@ -428,11 +425,7 @@
    <Row ss:AutoFitHeight="0" ss:Height="31.875" ss:StyleID="s23">
     <Cell ss:StyleID="s34"><Data ss:Type="String">Line #</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s35"><Data ss:Type="String">Item  code</Data><Comment
-      ss:Author="Raffaelle HAGEN"><ss:Data
-       xmlns="http://www.w3.org/TR/REC-html40"><B><Font html:Face="Tahoma"
-         x:Family="Swiss" html:Size="9" html:Color="#000000">Raffaelle HAGEN:</Font></B><Font
-        html:Face="Tahoma" x:Family="Swiss" html:Size="9" html:Color="#000000">&#10;Where product has many batchs, the same line is displayed multiple times (according to different number of batches)</Font></ss:Data></Comment><NamedCell
+    <Cell ss:StyleID="s35"><Data ss:Type="String">Item  code</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s35"><Data ss:Type="String">Description</Data><NamedCell
@@ -441,30 +434,14 @@
     <Cell ss:StyleID="s36"><Data ss:Type="String">UoM</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s37"><Data ss:Type="String">Quantity counted</Data><Comment
-      ss:Author="Raffaelle HAGEN"><ss:Data
-       xmlns="http://www.w3.org/TR/REC-html40"><B><Font html:Face="Tahoma"
-         x:Family="Swiss" html:Size="9" html:Color="#000000">Raffaelle HAGEN:</Font></B><Font
-        html:Face="Tahoma" x:Family="Swiss" html:Size="9" html:Color="#000000">&#10;Column to be blank at export and when re-imported this is mandatory</Font></ss:Data></Comment><NamedCell
+    <Cell ss:StyleID="s37"><Data ss:Type="String">Quantity counted</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s38"><Data ss:Type="String">Batch number</Data><Comment
-      ss:Author="Raffaelle HAGEN"><ss:Data
-       xmlns="http://www.w3.org/TR/REC-html40"><B><Font html:Face="Tahoma"
-         x:Family="Swiss" html:Size="9" html:Color="#000000">Raffaelle HAGEN:</Font></B><Font
-        html:Face="Tahoma" x:Family="Swiss" html:Size="9" html:Color="#000000">&#10;Mandatory for BN products</Font></ss:Data></Comment><NamedCell
+    <Cell ss:StyleID="s38"><Data ss:Type="String">Batch number</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s39"><Data ss:Type="String">Expiry date</Data><Comment
-      ss:Author="Raffaelle HAGEN"><ss:Data
-       xmlns="http://www.w3.org/TR/REC-html40"><B><Font html:Face="Tahoma"
-         x:Family="Swiss" html:Size="9" html:Color="#000000">Raffaelle HAGEN:</Font></B><Font
-        html:Face="Tahoma" x:Family="Swiss" html:Size="9" html:Color="#000000">&#10;Mandatory for ED products (same checks as currently are applied)</Font></ss:Data></Comment><NamedCell
+    <Cell ss:StyleID="s39"><Data ss:Type="String">Expiry date</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s39"><Data ss:Type="String">Specification</Data><Comment
-      ss:Author="Arnaud Camilli"><ss:Data
-       xmlns="http://www.w3.org/TR/REC-html40"><B><Font html:Face="Tahoma"
-         x:Family="Swiss" html:Size="9" html:Color="#000000">Arnaud Camilli:&#10;Values could be DG, CS or KC</Font></B><Font
-        html:Face="Tahoma" x:Family="Swiss" html:Size="9" html:Color="#000000">&#10;</Font></ss:Data></Comment><NamedCell
+    <Cell ss:StyleID="s39"><Data ss:Type="String">Specification</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s40"><Data ss:Type="String">BN Management</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
