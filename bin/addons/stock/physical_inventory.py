@@ -450,6 +450,13 @@ class PhysicalInventory(osv.osv):
             return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
         def read_many(model, ids, columns):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)
+        def product_identity_str(line):
+            str_ = "product '%s'" % line["product_id"][1]
+            if line["batch_number"] or line["expiry_date"]:
+                str_ += " with Batch number '%s' and Expiry date '%s'"  % (line["batch_number"] or '', line["expiry_date"] or '')
+            else:
+                str_ += " (no batch number / expiry date)"
+            return str_
 
         discrepancy_line_ids = read_single("physical.inventory", inventory_id, 'discrepancy_line_ids')
 
@@ -468,14 +475,9 @@ class PhysicalInventory(osv.osv):
                 continue
             anomaly = False
             if line["counted_qty"] == False:
-                anomaly = "Quantity for line %s is incorrect." % line["line_no"]
+                anomaly = "Quantity for line %s, %s is incorrect." % (line["line_no"], product_identity_str(line))
             if line["counted_qty"] < 0.0:
-                anomaly = "A line for product '%s'" % line["product_id"][1]
-                if line["batch_number"] or line["expiry_date"]:
-                    anomaly += " with Batch number '%s' and Expiry date '%s'"  % (line["batch_number"] or '', line["expiry_date"] or '')
-                else:
-                    anomaly += " (no batch number / expiry date)"
-                anomaly += " was expected but not found."
+                anomaly = "A line for %s was expected but not found." % product_identity_str(line)
 
             if anomaly:
                 anomalies.append({"message": anomaly + " Ignore line or count as 0 ?",
