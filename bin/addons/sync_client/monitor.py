@@ -347,6 +347,7 @@ class sync_version_instance_monitor(osv.osv):
                 postgres_path = cr.fetchone()
                 postgres_path = postgres_path  and postgres_path[0] or None
             except:
+                cr.rollback()
                 return "?"
         else:
             # for linux (RB)
