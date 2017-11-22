@@ -395,6 +395,7 @@ class purchase_order_line(osv.osv):
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
+        'original_line_id': fields.many2one('purchase.order.line', string='Original line', help='ID of the original line before split'),
         'linked_sol_id': fields.many2one('sale.order.line', string='Linked FO line', help='Linked Sale Order line in case of PO line from sourcing', readonly=True),
         'sync_linked_sol': fields.char(size=256, string='Linked FO line at synchro'),
         # UTP-972: Use boolean to indicate if the line is a split line
@@ -1322,9 +1323,8 @@ class purchase_order_line(osv.osv):
                 'old_line_qty': pol.product_qty - cancel_qty,
                 'new_line_qty': cancel_qty,
             }, context=context)
-            context.update({'return_new_line_id': True})
+            context.update({'return_new_line_id': True, 'keepLineNumber': True})
             new_po_line = split_obj.split_line(cr, uid, [split_id], context=context)
-            context.pop('return_new_line_id')
 
             # udpate linked FO lines if has:
             self.write(cr, uid, [new_po_line], {'origin': pol.origin}, context=context) # otherwise not able to link with FO

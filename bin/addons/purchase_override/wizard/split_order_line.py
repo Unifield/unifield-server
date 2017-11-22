@@ -100,6 +100,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
             sale_line_id = split.corresponding_so_line_id_split_po_line_wizard and split.corresponding_so_line_id_split_po_line_wizard.id or False
             po_copy_data = {
                 'is_line_split': True, # UTP-972: Indicate only that the line is a split one
+                'original_line_id': split.purchase_line_id.id,
                 'change_price_manually': split.purchase_line_id.change_price_manually,
                 'price_unit': split.purchase_line_id.price_unit,
                 'move_dest_id': move_dest_id,

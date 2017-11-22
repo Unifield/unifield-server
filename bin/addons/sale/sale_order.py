@@ -2404,7 +2404,8 @@ class sale_order_line(osv.osv):
 
         if qty_diff >= line.product_uom_qty:
             # Delete the line and the procurement
-            self.write(cr, uid, [line.id], {'state': 'cancel_r' if resource else 'cancel'}, context=context)
+            if not (context.get('picking_type', '') == 'incoming_shipment' and context.get('split_line')):
+                self.write(cr, uid, [line.id], {'state': 'cancel_r' if resource else 'cancel'}, context=context)
 
             # Cancel OUT line when IR line has been canceled:
             picking_ids = set()

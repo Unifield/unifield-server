@@ -40,6 +40,37 @@ class purchase_order_line(osv.osv):
 
         return True
 
+    def check_and_update_original_line_at_split_cancellation(self, cr, uid, ids, context=None):
+        '''
+        Check if we are in case we must update original line, because line has been split and cancelled
+        E.g: FO(COO) -> PO ext(COO) -> IN line partial cancel
+                => then we must update PO (PROJ) line with new product qty (= original qty - cancelled qty)
+        If yes, then we update PO line, IN and SYS-INT with new qty
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.is_line_split and pol.original_line_id and pol.order_id.partner_id.partner_type not in ['external', 'esc'] and pol.set_as_sourced_n:
+                new_qty = pol.original_line_id.product_qty - pol.product_qty
+                # update the PO line with new qty
+                self.write(cr, uid, [pol.original_line_id.id], {'product_qty': new_qty}, context=context)
+
+                # update the linked IN if has:
+                domain = [('purchase_line_id', '=', pol.original_line_id.id), ('type', '=', 'in'), ('state', '=', 'assigned')]
+                linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
+                if linked_in_move:
+                    self.pool.get('stock.move').write(cr, uid, linked_in_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
+                    # update SYS-INT if has:
+                    domain = [('linked_incoming_move', '=', linked_in_move[0]), ('type', '=', 'internal')]
+                    sys_int_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
+                    if sys_int_move:
+                        self.pool.get('stock.move').write(cr, uid, sys_int_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
+
+        return True
+
     def update_fo_lines(self, cr, uid, ids, context=None):
         '''
         update corresponding FO lines in the same instance
@@ -121,6 +152,8 @@ class purchase_order_line(osv.osv):
                 'stock_take_date': line_stock_take,
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
                 'type': 'make_to_order',
+                'is_line_split': pol.is_line_split,
+                'original_line_id': pol.original_line_id.linked_sol_id.id if pol.original_line_id else False,
             }
 
             # update modification comment if it is set
@@ -563,6 +596,8 @@ class purchase_order_line(osv.osv):
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
 
+            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
+
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
         return True
@@ -582,6 +617,8 @@ class purchase_order_line(osv.osv):
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
+
+            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
 
