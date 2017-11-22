@@ -225,6 +225,10 @@ class patch_scripts(osv.osv):
             """, (date, po_id, tuple(pol_ids))
             )
 
+
+        # Set sync id on POL/SOL
+        cr.execute("update purchase_order_line set sync_linked_sol=regexp_replace(sync_order_line_db_id,'/FO([0-9-]+)_([0-9]+)$', '/FO\\1/\\2') where sync_order_line_db_id ~ '/FO([0-9-]+)_([0-9]+)$' ")
+        cr.execute("update sale_order_line set sync_linked_pol=regexp_replace(source_sync_line_id,'/PO([0-9-]+)_([0-9]+)$', '/PO\\1/\\2') where source_sync_line_id ~ '/PO([0-9-]+)_([0-9]+)$'")
         return True
 
     def us_3306(self, cr, uid, *a, **b):
