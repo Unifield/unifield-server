@@ -96,7 +96,7 @@ class physical_inventory_select_products(osv.osv_memory):
 
         context = {} if context else context
 
-        return self.pool.get('product.nomenclature') \
+        return self.pool.get('product.product') \
             .onChangeSearchNomenclature(cr, uid, id, position, type,
                                         nomen_manda_0,
                                         nomen_manda_1,
