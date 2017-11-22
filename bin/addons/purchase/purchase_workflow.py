@@ -40,6 +40,23 @@ class purchase_order_line(osv.osv):
 
         return True
 
+    def check_and_update_original_line_at_split_cancellation(self, cr, uid, ids, context=None):
+        '''
+        Check if we are in case we must update original line, because line has been split and cancelled
+        E.g: FO(COO) -> PO ext(COO) -> IN line partial cancel
+                => then we must update PO (PROJ) line with new product qty (= original qty - cancelled qty)
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.is_line_split and pol.original_line_id and pol.order_id.partner_id.partner_type not in ['external', 'esc'] and pol.set_as_sourced_n:
+                self.write(cr, uid, [pol.original_line_id.id], {'product_qty': pol.original_line_id.product_qty - pol.product_qty}, context=context)
+
+        return True
+
     def update_fo_lines(self, cr, uid, ids, context=None):
         '''
         update corresponding FO lines in the same instance
@@ -565,6 +582,8 @@ class purchase_order_line(osv.osv):
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
 
+            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
+
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
         return True
@@ -585,8 +604,7 @@ class purchase_order_line(osv.osv):
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
 
-            if pol.is_line_split and pol.original_line_id and pol.order_id.partner_id.partner_type not in ['external', 'esc'] and pol.set_as_sourced_n:
-                self.write(cr, uid, [pol.original_line_id.id], {'product_qty': pol.original_line_id.product_qty - pol.product_qty}, context=context)
+            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
 
