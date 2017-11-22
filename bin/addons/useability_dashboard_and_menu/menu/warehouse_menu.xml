@@ -112,6 +112,11 @@
                   action="stock.action_stock_line_date" 
                   id="stock.menu_report_stock_line_date" 
                   sequence="25"/>
-                  
+
+        <menuitem name="Previous Physical Inventories"
+                  action="stock.action_inventory_form" 
+                  id="stock.menu_action_inventory_form" 
+                  parent="stock.menu_stock_inventory_control" 
+                  sequence="30"/>
     </data>
 </openerp>
