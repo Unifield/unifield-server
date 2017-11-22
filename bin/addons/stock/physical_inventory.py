@@ -692,11 +692,11 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 try:
                     line_no = int(line_no)
                     if line_no in line_list:
-                        add_error("""Line number is duplicate. If added line, this cell must be empty.""", row_index, 0)
+                        add_error("""Line number is duplicate. If you added a line, please keep the line number empty.""", row_index, 0)
                     line_list.append(line_no)
                 except ValueError:
                     line_no = None
-                    add_error("""Not valide line number""", row_index, 0)
+                    add_error("""Invalid line number""", row_index, 0)
 
             # Check product_code
             product_code = row.cells[1].data
@@ -767,7 +767,16 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             }
 
             # Check if line exist
-            line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no)])
+            if line_no:
+                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no)])
+            else:
+                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
+                                                         ('product_id', '=', product_id),
+                                                         ('batch_number', '=', batch_name),
+                                                         ('expiry_date', '=', expiry_date)])
+                if line_ids:
+                    del data["line_no"]
+
             if len(line_ids) > 0:
                 counting_sheet_lines.append((1, line_ids[0], data))
             else:
