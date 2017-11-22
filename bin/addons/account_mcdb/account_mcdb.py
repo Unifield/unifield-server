@@ -391,9 +391,9 @@ class account_mcdb(osv.osv):
             post_sup = ('posting_date_from', 'date')
             if getattr(wiz, post_sup[0]):
                 domain.append((post_sup[1], '>=', getattr(wiz, post_sup[0])))
-            doc_inf = ('posting_date_to', 'date')
-            if getattr(wiz, doc_inf[0]):
-                domain.append((doc_inf[1], '<=', getattr(wiz, doc_inf[0])))
+            post_inf = ('posting_date_to', 'date')
+            if getattr(wiz, post_inf[0]):
+                domain.append((post_inf[1], '<=', getattr(wiz, post_inf[0])))
             # RECONCILE field
             if wiz.reconcile_id:
                 # total or partial and override  reconciled status
