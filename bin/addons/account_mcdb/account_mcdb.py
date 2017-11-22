@@ -987,7 +987,8 @@ class account_mcdb(osv.osv):
     def _get_data_from_field(self, cr, uid, field, value, operator, context):
         """
         Depending on the field type, returns the value to take into account,
-        and the new operator to use if the selection has been reversed: for ex. 'not in' becomes ':'
+        and the new operator to use if the selection has been reversed: for ex. 'not in' or '!=' becomes ':'
+        (NOT done for "simple" fields as fields.char because we can't "reversed" the selection in that case)
         Ex. for the value: for the domain ('ref', 'ilike', u'%RefTest%'): RefTest,
         for ('move_id.state', '=', u'draft'): 'Unposted',
         for ('is_reallocated', '=', '0): "False"
@@ -1004,7 +1005,11 @@ class account_mcdb(osv.osv):
                     value = f[1]  # value
                     break
         elif field and field['type'] == 'boolean':
-            value = value and _('True') or _('False')
+            if operator == '!':
+                value = value and _('False') or _('True')
+                operator = ':'  # the selection has been reversed
+            else:
+                value = value and _('True') or _('False')
         elif field and 'relation' in field:
             if value is False:  # ex: ('reconcile_id', '=', False)
                 if operator == '!=':
@@ -1012,6 +1017,12 @@ class account_mcdb(osv.osv):
                     operator = ':'  # the selection has been reversed
                 else:
                     value = _('False')
+            elif value is True:
+                if operator == '!=':
+                    value = _('False')
+                    operator = ':'  # the selection has been reversed
+                else:
+                    value = _('True')
             else:
                 rel_obj = self.pool.get(field['relation'])
                 if isinstance(value, (int, long)):
