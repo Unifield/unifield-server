@@ -1262,14 +1262,9 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         # Count
         'line_no': fields.integer(string=_('Line #'), readonly=True),
         'theoretical_qty': fields.float('Theoretical Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True),
-        'counted_qty': fields.float('Counted Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'counted_qty': fields.float('Counted Quantity', digits_compute=dp.get_precision('Product UoM')),
         'discrepancy_qty': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Quantity")),
         'discrepancy_value': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Value")),
-
-        # Unused / To be removed ?
-        #'company_id': fields.related('inventory_id', 'company_id', type='many2one', relation='res.company',
-        #                             string='Company', store=True, select=True, readonly=True),
-        #'state': fields.related('inventory_id', 'state', type='char', string='State', readonly=True),
 
         # Discrepancy analysis
         'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', select=True),
