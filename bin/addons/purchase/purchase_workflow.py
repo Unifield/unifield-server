@@ -45,6 +45,7 @@ class purchase_order_line(osv.osv):
         Check if we are in case we must update original line, because line has been split and cancelled
         E.g: FO(COO) -> PO ext(COO) -> IN line partial cancel
                 => then we must update PO (PROJ) line with new product qty (= original qty - cancelled qty)
+        If yes, then we update PO line, IN and SYS-INT with new qty
         '''
         if context is None:
             context = {}
@@ -53,7 +54,21 @@ class purchase_order_line(osv.osv):
 
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.is_line_split and pol.original_line_id and pol.order_id.partner_id.partner_type not in ['external', 'esc'] and pol.set_as_sourced_n:
-                self.write(cr, uid, [pol.original_line_id.id], {'product_qty': pol.original_line_id.product_qty - pol.product_qty}, context=context)
+                new_qty = pol.original_line_id.product_qty - pol.product_qty
+                qty_to_cancel = pol.product_qty
+                # update the PO line with new qty
+                self.write(cr, uid, [pol.original_line_id.id], {'product_qty': new_qty}, context=context)
+
+                # update the linked IN if has:
+                domain = [('purchase_line_id', '=', pol.original_line_id.id), ('type', '=', 'in'), ('state', '=', 'assigned')]
+                linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
+                if linked_in_move:
+                    self.pool.get('stock.move').write(cr, uid, linked_in_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
+                    # update SYS-INT if has:
+                    domain = [('linked_incoming_move', '=', linked_in_move[0]), ('type', '=', 'internal')]
+                    sys_int_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
+                    if sys_int_move:
+                        self.pool.get('stock.move').write(cr, uid, sys_int_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
 
         return True
 
