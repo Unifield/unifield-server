@@ -997,6 +997,10 @@ class account_mcdb(osv.osv):
         :param value: ex: (2, 1)
         :param operator: ex: 'not in'...
         """
+        if field and 'relation' not in field:
+            # in case a list of values is used for a simple field, get the corresponding string
+            if isinstance(value, list):
+                value = ", ".join(["%s" % v for v in value])
         if field and field['type'] in ['char', 'text']:
             value = value.strip('%')  # remove the '%' added for ilike
         elif field and 'selection' in field:
@@ -1033,7 +1037,7 @@ class account_mcdb(osv.osv):
                     if operator.lower() == 'not in':
                         # reverse the selection to display all the items not excluded
                         value = rel_obj.search(cr, uid, [('id', 'not in', value)], context=context)
-                        operator = 'in'  # the selection has been reversed
+                        operator = ':'  # the selection has been reversed
                     record_ids = rel_obj.browse(cr, uid, value, context=context)
                     values_list = []
                     for record in record_ids:
