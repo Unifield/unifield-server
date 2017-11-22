@@ -100,7 +100,7 @@ class patch_scripts(osv.osv):
 
 
 
-        cr.execute("update purchase_order_line pol set linked_sol_id=(select sol.id from sale_order_line sol where sol.procurement_id = pol.procurement_id) where pol.procurement_id is not null")
+        cr.execute("update purchase_order_line pol set linked_sol_id=(select sol.id from sale_order_line sol where sol.procurement_id = pol.procurement_id) where pol.procurement_id is not null and pol.order_id not in (select id from purchase_order where state='split')")
 
         # tigger WKF
         pol_obj = self.pool.get('purchase.order.line')
