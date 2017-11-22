@@ -381,12 +381,19 @@ class account_mcdb(osv.osv):
             if wiz.document_state and wiz.document_state != '':
                 domain.append(('move_id.state', '=', wiz.document_state))
             # DATE fields
-            for sup in [('posting_date_from', 'date'), ('document_date_from', 'document_date')]:
-                if getattr(wiz, sup[0]):
-                    domain.append((sup[1], '>=', getattr(wiz, sup[0])))
-            for inf in [('posting_date_to', 'date'), ('document_date_to', 'document_date')]:
-                if getattr(wiz, inf[0]):
-                    domain.append((inf[1], '<=', getattr(wiz, inf[0])))
+            # first doc date, then posting date to get a consistent display in the header when the selection is exported
+            doc_sup = ('document_date_from', 'document_date')
+            if getattr(wiz, doc_sup[0]):
+                domain.append((doc_sup[1], '>=', getattr(wiz, doc_sup[0])))
+            doc_inf = ('document_date_to', 'document_date')
+            if getattr(wiz, doc_inf[0]):
+                domain.append((doc_inf[1], '<=', getattr(wiz, doc_inf[0])))
+            post_sup = ('posting_date_from', 'date')
+            if getattr(wiz, post_sup[0]):
+                domain.append((post_sup[1], '>=', getattr(wiz, post_sup[0])))
+            doc_inf = ('posting_date_to', 'date')
+            if getattr(wiz, doc_inf[0]):
+                domain.append((doc_inf[1], '<=', getattr(wiz, doc_inf[0])))
             # RECONCILE field
             if wiz.reconcile_id:
                 # total or partial and override  reconciled status
