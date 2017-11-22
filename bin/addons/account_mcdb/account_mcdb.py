@@ -984,16 +984,17 @@ class account_mcdb(osv.osv):
         self.unlink(cr, uid, to_clean)
         return True
 
-    def _get_value_from_field(self, cr, uid, field, value, operator, context):
+    def _get_data_from_field(self, cr, uid, field, value, operator, context):
         """
-        Depending on the field type, returns the value to take into account
-        Ex: for the domain ('ref', 'ilike', u'%RefTest%') it will return: RefTest,
-        for ('move_id.state', '=', u'draft') it will return: 'Unposted',
-        for ('is_reallocated', '=', '0) it will return: "False"
-        for ('period_id', 'in', (2, 1)) it will return: Feb 2017, Jan 2017
+        Depending on the field type, returns the value to take into account,
+        and the new operator to use if the selection has been reversed: for ex. 'not in' becomes ':'
+        Ex. for the value: for the domain ('ref', 'ilike', u'%RefTest%'): RefTest,
+        for ('move_id.state', '=', u'draft'): 'Unposted',
+        for ('is_reallocated', '=', '0): "False"
+        for ('period_id', 'in', (2, 1)): Feb 2017, Jan 2017
         :param field: dict with all the data of the field
         :param value: ex: (2, 1)
-        :param operator: ex: 'in', 'not in'...
+        :param operator: ex: 'not in'...
         """
         if field and field['type'] in ['char', 'text']:
             value = value.strip('%')  # remove the '%' added for ilike
@@ -1006,7 +1007,11 @@ class account_mcdb(osv.osv):
             value = value and _('True') or _('False')
         elif field and 'relation' in field:
             if value is False:  # ex: ('reconcile_id', '=', False)
-                value = _('False')
+                if operator == '!=':
+                    value = _('True')  # ex: ('employee_id', '!=', False)
+                    operator = ':'  # the selection has been reversed
+                else:
+                    value = _('False')
             else:
                 rel_obj = self.pool.get(field['relation'])
                 if isinstance(value, (int, long)):
@@ -1017,6 +1022,7 @@ class account_mcdb(osv.osv):
                     if operator.lower() == 'not in':
                         # reverse the selection to display all the items not excluded
                         value = rel_obj.search(cr, uid, [('id', 'not in', value)], context=context)
+                        operator = 'in'  # the selection has been reversed
                     record_ids = rel_obj.browse(cr, uid, value, context=context)
                     values_list = []
                     for record in record_ids:
@@ -1024,7 +1030,7 @@ class account_mcdb(osv.osv):
                                      hasattr(record, 'name') and getattr(record, 'name') or ''
                         values_list.append(record_str)
                     value = ', '.join(values_list)
-        return value
+        return value, operator
 
     def get_selection_from_domain(self, cr, uid, domain, model, context=None):
         """
@@ -1070,7 +1076,7 @@ class account_mcdb(osv.osv):
                 if '.' not in dom[0]:
                     field = obj_data[dom[0]]
                     title = field['string']
-                    value = self._get_value_from_field(cr, uid, field, dom[2], operator, context)
+                    value, operator = self._get_data_from_field(cr, uid, field, dom[2], operator, context)
                 # composed filters
                 elif dom[0] in composed_filters:
                     title = composed_filters[dom[0]]
@@ -1080,10 +1086,7 @@ class account_mcdb(osv.osv):
                     if second_obj:
                         second_obj_data = second_obj.fields_get(cr, uid, '')  # data on all fields of the second obj
                         second_obj_field = second_obj_data[dom[0].split('.')[1]]
-                        value = self._get_value_from_field(cr, uid, second_obj_field, dom[2], operator, context)
-                if operator.lower() == 'not in':
-                    # the selection has been reversed in _get_value_from_field ==> display "field : value"
-                    operator = ':'
+                        value, operator = self._get_data_from_field(cr, uid, second_obj_field, dom[2], operator, context)
                 if title and operator and value:
                     dom_selections.append("%s%s %s" % (title, operator, value))
         return ' ; '.join(dom_selections)
