@@ -5118,6 +5118,8 @@ class pack_family_memory(osv.osv):
     dynamic memory object for pack families
     '''
     _name = 'pack.family.memory'
+    _order = 'sale_order_id, from_pack, id'
+
     _auto = False
     def init(self, cr):
         tools.sql.drop_view_if_exists(cr, 'pack_family_memory')
