@@ -39,7 +39,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
     def create(self, cr, user, vals, context=None):
 
-        context = {} if context else context
+        context = context if context else {}
 
         assert 'inventory_id' in vals
 
@@ -47,7 +47,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
 
     def generate_counting_sheet(self, cr, uid, wizard_ids, context=None):
-        context = {} if context else context
+        context = context if context else {}
         def read_single(model, id_, column):
             return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
         def read_many(model, ids, columns):
@@ -127,7 +127,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
 
     def get_BN_and_ED_for_products_at_location(self, cr, uid, location_id, product_ids, context=None):
-        context = {} if context else context
+        context = context if context else {}
         def read_many(model, ids, columns):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)
 
@@ -166,7 +166,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
     # FIXME : this is copy/pasta from the other wizard ...
     # Should be factorized, probably in physical inventory, or stock somewhere.
     def get_moves_at_location(self, cr, uid, location_id, context=None):
-        context = {} if context else context
+        context = context if context else {}
 
         def read_many(model, ids, columns):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)

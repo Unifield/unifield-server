@@ -272,7 +272,7 @@ class PhysicalInventory(osv.osv):
         Analyze the counted lines to look for discrepancy, and fill the
         'discrepancy lines' accordingly.
         """
-        context = {} if context else context
+        context = context if context else {}
         def read_single(model, id_, column):
             return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
         def read_many(model, ids, columns):
@@ -445,7 +445,7 @@ class PhysicalInventory(osv.osv):
 
 
     def resolve_discrepancies_anomalies(self, cr, uid, inventory_id, context=None):
-        context = {} if context else context
+        context = context if context else {}
         def read_single(model, id_, column):
             return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
         def read_many(model, ids, columns):
@@ -543,7 +543,7 @@ class PhysicalInventory(osv.osv):
             discrepancies.write(cr, uid, count_ids, {'counted_qty': 0.0, 'ignored': False})
 
     def get_stock_for_products_at_location(self, cr, uid, product_ids, location_id, context=None):
-        context = {} if context else context
+        context = context if context else {}
 
         def read_many(model, ids, columns):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)

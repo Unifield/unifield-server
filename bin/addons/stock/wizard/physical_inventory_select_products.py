@@ -76,7 +76,7 @@ class physical_inventory_select_products(osv.osv_memory):
 
     def create(self, cr, user, vals, context=None):
 
-        context = {} if context else context
+        context = context if context else {}
 
         assert 'inventory_id' in vals
         assert 'full_inventory' in vals
@@ -94,7 +94,7 @@ class physical_inventory_select_products(osv.osv_memory):
                                    num=True,
                                    context=None):
 
-        context = {} if context else context
+        context = context if context else {}
 
         return self.pool.get('product.product') \
             .onChangeSearchNomenclature(cr, uid, id, position, type,
@@ -117,7 +117,7 @@ class physical_inventory_select_products(osv.osv_memory):
     # When clicking 'Refresh'
     #
     def refresh_products(self, cr, uid, wizard_ids, context=None):
-        context = {} if context else context
+        context = context if context else {}
 
         def read_single(model, id_, column):
             return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
@@ -204,7 +204,7 @@ class physical_inventory_select_products(osv.osv_memory):
 
 
     def update_product_preview(self, cr, uid, wizard_id, product_ids, context=None):
-        context = {} if context else context
+        context = context if context else {}
 
         assert isinstance(wizard_id, int)
         assert isinstance(product_ids, list) or isinstance(product_ids, set)
@@ -215,7 +215,7 @@ class physical_inventory_select_products(osv.osv_memory):
         self.write(cr, uid, [wizard_id], vals, context=context)
 
     def get_moves_at_location(self, cr, uid, location_id, context=None):
-        context = {} if context else context
+        context = context if context else {}
 
         def read_many(model, ids, columns):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)
@@ -243,7 +243,7 @@ class physical_inventory_select_products(osv.osv_memory):
         return moves_at_location
 
     def get_products_in_stock_at_location(self, cr, uid, location_id, context=None):
-        context = {} if context else context
+        context = context if context else {}
 
         assert isinstance(location_id, int)
 
@@ -279,7 +279,7 @@ class physical_inventory_select_products(osv.osv_memory):
         return products_in_stock
 
     def get_products_with_recent_moves_at_location(self, cr, uid, location_id, recent_moves_months, context=None):
-        context = {} if context else context
+        context = context if context else {}
 
         assert isinstance(location_id, int)
         assert isinstance(recent_moves_months, int)
@@ -300,7 +300,7 @@ class physical_inventory_select_products(osv.osv_memory):
         return recently_moved_products
 
     def filter_products_with_special_care(self, cr, uid, product_ids, special_care_criterias, context=None):
-        context = {} if context else context
+        context = context if context else {}
 
         def search(model, domain):
             return self.pool.get(model).search(cr, uid, domain, context=context)
@@ -326,7 +326,7 @@ class physical_inventory_select_products(osv.osv_memory):
         return products_filtered
 
     def filter_products_with_nomenclature(self, cr, uid, product_ids, nomenclature, context=None):
-        context = {} if context else context
+        context = context if context else {}
 
         def search(model, domain):
             return self.pool.get(model).search(cr, uid, domain, context=context)
@@ -346,7 +346,7 @@ class physical_inventory_select_products(osv.osv_memory):
         return products_filtered
 
     def filter_products_with_product_list(self, cr, uid, product_ids, product_list_id, context=None):
-        context = {} if context else context
+        context = context if context else {}
 
         def search(model, domain):
             return self.pool.get(model).search(cr, uid, domain, context=context)
@@ -373,7 +373,7 @@ class physical_inventory_select_products(osv.osv_memory):
     # When clicking 'Add product'
     #
     def add_products(self, cr, uid, wizard_ids, context=None):
-        context = {} if context else context
+        context = context if context else {}
 
         # Get this wizard...
         assert len(wizard_ids) == 1
@@ -385,7 +385,7 @@ class physical_inventory_select_products(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
     def update_products_in_inventory(self, cr, uid, wizard_id, context=None):
-        context = {} if context else context
+        context = context if context else {}
 
         def read_single(model, id_, column):
             return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
