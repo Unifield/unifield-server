@@ -649,12 +649,16 @@ class so_po_common(osv.osv_memory):
 
             if line_dict.get('source_sync_line_id'):
                 values['original_purchase_line_id'] = line_dict['source_sync_line_id']
+                if not line_dict.get('sync_linked_pol') and 'PO' in line_dict['source_sync_line_id']:
+                    values['sync_linked_pol'] = line_dict['source_sync_line_id'].replace('_', '/')
 
             line_ids = False
             sync_order_line_db_id = False
             if line_dict.get('sync_order_line_db_id'):
                 sync_order_line_db_id = line.sync_order_line_db_id
                 values['sync_order_line_db_id'] = sync_order_line_db_id
+                if not line_dict.get('sync_linked_sol') and  'FO' in line_dict.get('sync_order_line_db_id'):
+                    values['sync_linked_sol'] = sync_order_line_db_id.replace('_', '/')
 
                 line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', po_id)], context=context)
                 lines_to_split = self.pool.get('purchase.order.line.to.split').search(cr, uid, [('new_sync_order_line_db_id', '=', sync_order_line_db_id), ('splitted', '=', False)], context=context)
