@@ -342,6 +342,9 @@ class account_bank_statement(osv.osv):
         if context is None:
             context = {}
 
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
+
         # Search the customized view we made for Supplier Invoice (for * Register's users)
         currency =  self.read(cr, uid, ids, ['currency'])[0]['currency']
         if isinstance(currency, tuple):
@@ -380,6 +383,8 @@ class account_bank_statement(osv.osv):
         from_cheque = False
         if st.journal_id.type == 'cheque':
             from_cheque = True
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
         return {
             'name': "Import Invoice",
             'type': 'ir.actions.act_window',
@@ -409,6 +414,8 @@ class account_bank_statement(osv.osv):
         st = self.browse(cr, uid, ids[0], context=context)
         i = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None,
                                                                    'period_id': st.period_id.id}, context=context)
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
         return {
             'name': "Import Cheque",
             'type': 'ir.actions.act_window',
@@ -482,6 +489,11 @@ class account_bank_statement(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
+
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
+
+
         date = time.strftime('%Y-%m-%d')
         registers = self.browse(cr, uid, ids, context=context)
         register = registers and registers[0] or False
@@ -761,6 +773,15 @@ class account_bank_statement_line(osv.osv):
     _inherit = "account.bank.statement.line"
 
     _order = 'sequence_for_order desc, sequence_for_reference desc, document_date desc, date desc, id desc'
+
+
+    def check_access_rule(self, cr, uid, ids, operation, context=None):
+        if operation == 'create':
+            real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        else:
+            real_uid = uid
+
+        return super(account_bank_statement_line, self).check_access_rule(cr, real_uid, ids, operation, context=context)
 
     def _get_state(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """

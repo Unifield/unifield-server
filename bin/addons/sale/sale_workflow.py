@@ -502,7 +502,9 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        context.pop('no_check_line')
 
         # generate sync message:
         return_info = {}
@@ -524,7 +526,9 @@ class sale_order_line(osv.osv):
 
         resourced_sol = self.create_resource_line(cr, uid, ids, context=context)
 
+        context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
+        context.pop('no_check_line')
 
         # generate sync message for original FO line:
         return_info = {}
