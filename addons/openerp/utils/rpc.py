@@ -347,7 +347,9 @@ class RPCSession(object):
         if not (db and user and password):
             return -1
 
-        client_ip = cherrypy.request.wsgi_environ.get('HTTP_X_FORWARDED_FOR', 'NO_IP_FOUND')
+        client_ip = cherrypy.request.wsgi_environ.get('HTTP_X_FORWARDED_FOR', False) \
+                 or cherrypy.request.wsgi_environ.get('REMOTE_ADDR', 'NO_IP_FOUND')
+
         if self.is_banned(client_ip):
             return -6
 
