@@ -102,6 +102,22 @@ class patch_scripts(osv.osv):
 
         cr.execute("update purchase_order_line pol set linked_sol_id=(select sol.id from sale_order_line sol where sol.procurement_id = pol.procurement_id) where pol.procurement_id is not null and pol.order_id not in (select id from purchase_order where state='split')")
 
+
+        # this msg rule is needed as it can be triggered during this update procedure
+        self.pool.get('sync.client.message_rule').create(cr, uid, {
+            'name': 'FO line updates PO line',
+            'server_id': 999,
+            'model': 'sale.order.line',
+            'domain': "[('order_id.partner_type', '!=', 'external'), ('state', '!=', 'draft')]",
+            'sequence_number': 12,
+            'remote_call': 'purchase.order.line.sol_update_original_pol',
+            'arguments': "['resourced_original_line/id', 'resourced_original_remote_line','sync_sourced_origin', 'sync_local_id', 'sync_linked_pol', 'order_id/name', 'product_id/id', 'product_id/name', 'name', 'state','product_uom_qty', 'product_uom', 'price_unit', 'analytic_distribution_id/id','comment','have_analytic_distribution_from_header','line_number', 'nomen_manda_0/id','nomen_manda_1/id','nomen_manda_2/id','nomen_manda_3/id', 'nomenclature_description','notes','default_name','default_code','date_planned','is_line_split', 'original_line_id/id', 'confirmed_delivery_date', 'stock_take_date', 'cancel_split_ok', 'modification_comment']",
+            'destination_name': 'partner_id',
+            'active': True,
+            'type': 'MISSION',
+            'wait_while': "[('order_id.state', 'in', ['draft', 'draft_p']), ('order_id.partner_type', 'not in', ['external', 'esc']), ('order_id.client_order_ref', '=', False)]",
+        })
+
         # tigger WKF
         pol_obj = self.pool.get('purchase.order.line')
         po_obj = self.pool.get('purchase.order')
