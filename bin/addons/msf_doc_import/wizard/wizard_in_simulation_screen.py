@@ -925,9 +925,11 @@ Nothing has been imported because of %s. See below:
                 '''
 
                 import_error_ok = False
+                can_be_imported = True
                 # Generate the message
                 if len(values_header_errors):
                     import_error_ok = True
+                    can_be_imported = False
                     message += '\n## Error on header values ##\n\n'
                     for err in values_header_errors:
                         message += '%s\n' % err
@@ -939,7 +941,7 @@ Nothing has been imported because of %s. See below:
                         message += '%s\n' % err
 
                 header_values['message'] = message
-                header_values['state'] = import_error_ok and 'error' or 'simu_done'
+                header_values['state'] = can_be_imported and 'simu_done' or 'error'
                 header_values['percent_completed'] = 100.0
                 header_values['import_error_ok'] = import_error_ok
                 self.write(cr, uid, [wiz.id], header_values, context=context)
