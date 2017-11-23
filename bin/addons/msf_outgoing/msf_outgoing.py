@@ -4491,8 +4491,6 @@ class stock_picking(osv.osv):
                 fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.original_so_id_sale_order.id, return_info, 'purchase.order.normal_fo_create_po', context=context)
             else:
                 fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.normal_fo_create_po', context=context)
-            fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.create_split_po', context=context)
-            fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.update_split_po', context=context)
 
     def action_cancel(self, cr, uid, ids, context=None):
         '''
