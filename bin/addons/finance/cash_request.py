@@ -413,19 +413,36 @@ class cash_request(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Allow the creation / duplication / edition of a Cash Request at coordo level
+        Allows the creation/duplication at coordo level, and the edition at coordo and project
         """
         if context is None:
             context = {}
         res = super(cash_request, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context,
                                                         toolbar=toolbar, submenu=submenu)
         company = self._get_company(cr, uid, context=context)
-        if company.instance_id and company.instance_id.level == 'coordo' and view_type in ['form', 'tree']:
-            res['arch'] = res['arch']\
-                .replace('hide_new_button="1"', '')\
-                .replace('hide_edit_button="1"', '')\
-                .replace('hide_duplicate_button="1"', '')
+        level = company.instance_id and company.instance_id.level or ''
+        if view_type in ['form', 'tree']:
+            if level == 'coordo':
+                res['arch'] = res['arch']\
+                    .replace('hide_new_button="1"', '')\
+                    .replace('hide_duplicate_button="1"', '')\
+                    .replace('hide_edit_button="1"', '')
+            elif level in ('coordo', 'project'):
+                res['arch'] = res['arch'].replace('hide_edit_button="1"', '')
         return res
+
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        Deletes Cash Request if it is in Draft state
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for cash_req in self.browse(cr, uid, ids, fields_to_fetch=['state']):
+            if cash_req.state != 'draft':
+                raise osv.except_osv(_('Error'), _('Cash Requests can only be deleted in Draft state.'))
+        return super(cash_request, self).unlink(cr, uid, ids, context=context)
 
 
 cash_request()
