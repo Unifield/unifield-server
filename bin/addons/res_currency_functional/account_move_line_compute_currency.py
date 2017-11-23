@@ -78,6 +78,7 @@ class account_move_line_compute_currency(osv.osv):
         to_create = False
         previous = None
         has_section_line = False
+        acc_obj = self.pool.get('account.account')
         for line in self.browse(cr, uid, lines):
             if not previous:
                 previous = line.instance_id.id
@@ -209,7 +210,7 @@ class account_move_line_compute_currency(osv.osv):
                 addendum_line_account_id = addendum_line_debit_account_id
                 addendum_line_account_default_destination_id = addendum_line_debit_account_default_destination_id
             # create an analytic distribution if addendum_line_account_id is an analytic-a-holic account
-            account = self.pool.get('account.account').browse(cr, uid, addendum_line_account_id)
+            account = acc_obj.browse(cr, uid, addendum_line_account_id, context=context)
             if account and account.is_analytic_addicted:
                 distrib_id = self.pool.get('analytic.distribution').create(cr, uid, {}, context={})
                 # add a cost center for analytic distribution
@@ -268,7 +269,14 @@ class account_move_line_compute_currency(osv.osv):
             # Create addendum_line
             if distrib_id:
                 vals.update({'analytic_distribution_id': distrib_id})
-            vals.update({'account_id': addendum_line_account_id, 'debit': addendum_db or 0.0, 'credit': addendum_cr or 0.0,})
+            # the ref of the expense line is the B/S account code and name
+            reconciled_acc = account_id and acc_obj.read(cr, uid, account_id, ['code', 'name'], context=context)
+            fxa_ref = reconciled_acc and '%s - %s' % (reconciled_acc['code'], reconciled_acc['name']) or False
+            vals.update({'account_id': addendum_line_account_id,
+                         'debit': addendum_db or 0.0,
+                         'credit': addendum_cr or 0.0,
+                         'ref': fxa_ref,
+                         'reference': fxa_ref})
             addendum_line_id = self.create(cr, uid, vals, context=context)
             # Validate move
             self.pool.get('account.move').post(cr, uid, [move_id], context=context)

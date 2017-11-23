@@ -1062,10 +1062,6 @@ class account_move(osv.osv):
                         context[el] = vals.get(el)
                         ml_vals.update({el: vals.get(el)})
 
-                # UFTP-262: For manual_name (description on account.move), update "name" on account.move.line
-                if 'manual_name' in vals:
-                    ml_vals.update({'name': vals.get('manual_name', '')})
-
                 # Update document date AND date at the same time
                 if ml_vals:
                     ml_id_list  = [ml.id for ml in m.line_id]
@@ -1145,6 +1141,17 @@ class account_move(osv.osv):
                     if curr_aml.id != prev_currency_id:
                         raise osv.except_osv(_('Warning'), _('You cannot have two different currencies for the same Journal Entry!'))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
+
+    def update_line_description(self, cr, uid, ids, context=None):
+        """
+        Updates the description of the JIs with the one of the JE
+        """
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        for m in self.browse(cr, uid, ids, fields_to_fetch=['manual_name', 'line_id'], context=context):
+            if m.manual_name and m.line_id:
+                aml_obj.write(cr, uid, [ml.id for ml in m.line_id], {'name': m.manual_name}, context=context)
 
     def copy(self, cr, uid, a_id, default={}, context=None):
         """

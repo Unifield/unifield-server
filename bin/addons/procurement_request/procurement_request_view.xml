@@ -9,6 +9,7 @@
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <form string="Internal Request">
+                    <field name="sourcing_trace_ok" invisible="1" />
                     <group colspan="6" attrs="{'invisible': [('state', 'not in', ['validated', 'validated_p'])]}">
                         <html>
                             <p style="text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
@@ -18,12 +19,12 @@
                     </group>
                     <group col="6" colspan="4" name="header">
                         <field name="name" />
-                        <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
-                        <field name="warehouse_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
-                        <field name="requestor" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
-                        <field name="location_requestor_id" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
-                        <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
-                        <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" />
+                        <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="warehouse_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="requestor" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="location_requestor_id" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                         <field name="functional_currency_id" />
                         <field name="categ" on_change="onchange_categ(categ)" />
                         <group colspan="2" col="3">
@@ -34,6 +35,7 @@
                         <field name="fo_to_resource" invisible="1" />
                         <field name="parent_order_name" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
                     </group>
+
                     <notebook colspan="5">
                         <page string="Products">
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
@@ -65,6 +67,8 @@
                                     icon="terp-go-week" />
                                     <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
                                     <field name="original_changed" readonly="1"/>
+                                    <button name="button_view_changed" string="View Current/Original" type="object" icon="terp-stock_zoom"
+                                            attrs="{'invisible': [('original_changed', '=', False)]}"/>
                                     <field name="price_unit"/>
                                     <field name="notes" />
                                     <field name="display_resourced_orig_line" />
@@ -120,6 +124,9 @@
                         </page>
                         <page string="Notes">
                             <field name="notes" nolabel="1" />
+                        </page>
+                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
+                            <field name="sourcing_trace" colspan="4" nolabel="1" />
                         </page>
                     </notebook>
                 </form>

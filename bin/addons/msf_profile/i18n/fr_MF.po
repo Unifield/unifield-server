@@ -53473,8 +53473,10 @@ msgstr "Certificat ?"
 msgid "Open XLS file"
 msgstr "Ovrir le fichier XLS"
 
-#. module: hr
+#. modules: hr, account, register_accounting
 #: field:hr.employee,bank_account_id:0
+#: field:account.journal,bank_account_number:0
+#: field:account.bank.statement,bank_account_number:0
 msgid "Bank Account Number"
 msgstr "Numéro de Compte Bancaire"
 
@@ -68496,7 +68498,7 @@ msgstr "Calcul la création du Bon de Commande"
 #. module: register_accounting
 #: report:bank.reconciliation:0
 msgid "Bank account number:"
-msgstr "Bank account number:"
+msgstr "Numéro de Compte Bancaire :"
 
 #. module: base
 #: help:res.partner.address,active:0
@@ -72578,7 +72580,7 @@ msgstr "Assistant d'exécution du bon de picking"
 msgid "Transport mode"
 msgstr "Transport mode"
 
-#. modules: account_override, msf_profile, base, purchase, msf_outgoing
+#. modules: account_override, msf_profile, base, purchase, msf_outgoing, account
 #: view:account.invoice:0
 #: view:res.bank:0
 #: field:res.config.users,address_id:0
@@ -72592,6 +72594,7 @@ msgstr "Transport mode"
 #: field:shipment.wizard,address_id:0
 #: view:res.users:0
 #: field:purchase.order,partner_address_id:0
+#: field:account.journal,bank_address:0
 msgid "Address"
 msgstr "Adresse"
 
@@ -72653,10 +72656,11 @@ msgstr "Approvisionnement- Méthode"
 
 #. modules: account_override, register_accounting
 #: field:account.move,imported:0
+#: field:account.move.line,imported:0
 #: view:account.invoice:0
 #: selection:account.invoice,imported_state:0
 msgid "Imported"
-msgstr "Imported"
+msgstr "Importé"
 
 #. module: kit
 #: code:addons/kit/wizard/kit_mass_import.py:126
@@ -78345,8 +78349,8 @@ msgstr "La méthode à utiliser pour trouver les entrées cibles au lieu du doma
 #. module: update_client
 #: code:addons/update_client/wizard.py:222
 #, python-format
-msgid "But it seems you don't have an Internet access. Please provide the patches manually."
-msgstr "But it seems you don't have an Internet access. Please provide the patches manually."
+msgid "But it seems that the SYNC_SERVER is not reachable. Please check you internet connection or provide the patches manually."
+msgstr "Mais il semble que le SYNC_SERVER ne soit pas atteignable. Veuillez vérifier votre connexion internet ou fournir les patches manuellement."
 
 #. module: hr
 #: field:hr.employee,country_id:0
@@ -99810,3 +99814,298 @@ msgstr "Le partenaire %s n'est pas autorisé pour ce document."
 #, python-format
 msgid "Creating Debit Note lines by file import is not allowed."
 msgstr "La création de lignes d'une Note de Débit via l'import d'un fichier n'est pas autorisée."
+
+#. module: sale_override
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:61
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:84
+#, python-format
+msgid "line %s"
+msgstr "ligne %s"
+
+#. module: sale_override
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:71
+#, python-format
+msgid ", %s"
+msgstr ", %s"
+
+#. module: sale_override
+#: code:addons/sale_override/wizard/delete_sale_order_line.py:69
+#, python-format
+msgid " and %s"
+msgstr " et %s"
+
+#. module: account
+#: code:addons/account/account.py:1555
+#, python-format
+msgid "The Description is missing for one of the lines."
+msgstr "Il manque la Description pour l'une des lignes."
+
+#. module: finance
+#: view:account.move:0
+msgid "Update Description for Lines"
+msgstr "Mettre à jour la Description pour les Lignes"
+
+#. module: finance
+#: view:account.move:0
+msgid "Update Lines"
+msgstr "Mettre à jour les Lignes"
+
+#. module: account
+#: field:account.journal,bank_swift_code:0
+msgid "Swift Code"
+msgstr "Code Swift"
+
+#. module: account
+#: field:account.journal,bank_account_name:0
+msgid "Bank Account Name"
+msgstr "Nom du Compte Bancaire"
+
+#. modules: purchase, purchase_override, procurement_request
+#: field:sale.order.line,original_price:0
+#: field:purchase.order.line,original_price:0
+#: field:purchase.order.merged.line,original_price:0
+msgid "Original Price"
+msgstr "Prix d'Origine"
+
+#. modules: purchase, purchase_override, procurement_request
+#: field:sale.order.line,original_product:0
+#: field:purchase.order.line,original_product:0
+#: field:purchase.order.merged.line,original_product:0
+msgid "Original Product"
+msgstr "Produit d'Origine"
+
+#. modules: purchase, purchase_override, procurement_request
+#: field:sale.order.line,original_uom:0
+#: field:purchase.order.line,original_uom:0
+#: field:purchase.order.merged.line,original_uom:0
+msgid "Original UoM"
+msgstr "UdM d'Origine"
+
+#. modules: purchase, purchase_followup, purchase_override
+#: field:purchase.order.line,original_currency_id:0
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:244
+#: field:purchase.order.merged.line,original_currency_id:0
+msgid "Original Currency"
+msgstr "Devise d'Origine"
+
+#. modules: purchase, purchase_override, procurement_request
+#: field:sale.order.line,original_changed:0
+#: field:purchase.order.line,original_changed:0
+#: field:purchase.order.merged.line,original_changed:0
+msgid "Changed"
+msgstr "Changé"
+
+#. modules: sales_followup, purchase, purchase_followup, purchase_override, procurement_request
+#: field:sale.order.line,original_qty:0
+#: field:purchase.order.line,original_qty:0
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:239
+#: field:purchase.order.merged.line,original_qty:0
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:231
+msgid "Original Qty"
+msgstr "Qté d'Origine"
+
+#. module: sales_followup
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:236
+msgid "Original Subtotal"
+msgstr "Sous-Total d'Origine"
+
+#. module: purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:246
+msgid "Original Price in functional currency"
+msgstr "Prix d'Origine en devise fonctionnelle"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:240
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:232
+msgid "Original UoM"
+msgstr "UdM d'Origine"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:236
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:228
+msgid "Original Code"
+msgstr "Code d'Origine"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:243
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:234
+msgid "Original Unit Price"
+msgstr "Prix Unitaire d'Origine"
+
+#. module: purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:248
+msgid "Original Subtotal (functional currency)"
+msgstr "Sous-Total d'Origine (devise fonctionnelle)"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:241
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:233
+msgid "Unit Price"
+msgstr "Prix Unitaire"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:231
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:223
+msgid "Order ref"
+msgstr "Ref commande"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:192
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:184
+msgid "Address:"
+msgstr "Adresse:"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:181
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:173
+msgid "Name:"
+msgstr "Nom:"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:249
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:237
+msgid "Modification comment"
+msgstr "Commentaire de modification"
+
+#. module: sales_followup
+#: model:ir.actions.report.xml,name:sales_followup.report_ir_track_changes_xls
+msgid "Internal Request Track Changes Excel Export"
+msgstr "Export Excel du Suivi des Changements des Demandes Internes"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:176
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:168
+msgid "Instance information"
+msgstr "Informations sur l'instance"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:206
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:198
+msgid "Order Ref:"
+msgstr "Ref Commande:"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:213
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:205
+msgid "Date of the request:"
+msgstr "Date de la requête:"
+
+#. modules: sales_followup, purchase_followup
+#: code:addons/purchase_followup/wizard/po_track_changes_wizard.py:94
+#: code:addons/sales_followup/wizard/ir_track_changes_wizard.py:94
+#, python-format
+msgid "No data found with these parameters"
+msgstr "Aucune donnée n'a été trouvée avec ces paramètres"
+
+#. module: sales_followup
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:235
+msgid "Subtotal"
+msgstr "Sous-Total"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:195
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:187
+msgid "Date end:"
+msgstr "Date de fin:"
+
+#. modules: sales_followup
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:229
+#, python-format
+msgid "Qty"
+msgstr "Qté"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:178
+#: view:po.track.changes.wizard:0
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:170
+#: view:ir.track.changes.wizard:0
+msgid "Request parameters"
+msgstr "Paramètres de la requête"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:184
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:176
+msgid "Date start:"
+msgstr "Date de départ:"
+
+#. module: sales_followup
+#: model:ir.actions.act_window,name:sales_followup.action_ir_track_changes_wizard
+#: model:ir.ui.menu,name:sales_followup.menu_ir_track_changes
+msgid "IR Track Changes"
+msgstr "Suivi Changements Demandes Internes"
+
+#. modules: sales_followup, purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:232
+#: report:addons/sales_followup/report/ir_track_changes_report_xls.mako:224
+#, python-format
+msgid "Status"
+msgstr "État"
+
+#. module: purchase_followup
+#: model:ir.actions.act_window,name:purchase_followup.action_po_track_changes_wizard
+#: model:ir.ui.menu,name:purchase_followup.menu_po_track_changes
+msgid "PO Track Changes"
+msgstr "Suivi Changements Bons de Commande"
+
+#. module: purchase_followup
+#: model:ir.actions.report.xml,name:purchase_followup.report_po_track_changes_xls
+msgid "Purchase Order Track Changes Excel Export"
+msgstr "Export Excel du Suivi des Changements des Bons de Commande"
+
+#. module: purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:245
+msgid "Price in functional currency"
+msgstr "Prix dans la devise fonctionnelle"
+
+#. modules: purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:242
+msgid "Currency"
+msgstr "Devise"
+
+#. module: purchase_followup
+#: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:247
+msgid "Subtotal (functional currency)"
+msgstr "Sous-Total (devise fonctionnelle)"
+
+#. modules: purchase, purchase_override, sale
+#: field:purchase.order.line,modification_comment:0
+#: field:purchase.order.merged.line,modification_comment:0
+#: field:sale.order.line,modification_comment:0
+msgid "Modification Comment"
+msgstr "Commentaire de Modification"
+
+#. module: account_subscription
+#: code:addons/account_subscription/account_model.py:276
+#, python-format
+msgid "Please check the name of the Recurring Model used: %s\n"
+"Only the keys %%(year)s / %%(month)s / %%(date)s can be used and must be written without spaces."
+msgstr "Veuillez vérifier le nom du Modèle Périodique utilisé : %s\n"
+"Seules les clés %%(year)s / %%(month)s / %%(date)s peuvent être utilisées et doivent être écrites sans espaces."
+
+#. module: account_subscription
+#: code:addons/account_subscription/account_model.py:280
+#, python-format
+msgid "The name of the Recurring Model used is incorrect: %s\n"
+"You can find a list of the formatted strings usable on the Recurring Model form."
+msgstr "Le nom du Modèle Périodique utilisé est incorrect : %s\n"
+"Vous pouvez trouver une liste des chaînes formatées utilisables dans le formulaire des Modèles Périodiques."
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Year of the Posting Date: %(year)s"
+msgstr "Année de la Date de Comptabilisation : %(year)s"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Month of the Posting Date: %(month)s"
+msgstr "Mois de la Date de Comptabilisation : %(month)s"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Year and Month of the Posting Date: %(date)s"
+msgstr "Année et Mois de la Date de Comptabilisation : %(date)s"
+
+#. module: account_subscription
+#: view:account.model:0
+msgid "Legend (for the Model Name)"
+msgstr "Légende (pour le Nom du Modèle)"

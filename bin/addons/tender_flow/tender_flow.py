@@ -637,15 +637,12 @@ class tender(osv.osv):
         if context is None:
             context = {}
 
-        po_obj = self.pool.get('purchase.order')
         t_line_obj = self.pool.get('tender.line')
-        wf_service = netsvc.LocalService("workflow")
 
         # set state
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         for tender in self.browse(cr, uid, ids, context=context):
             # trigger all related rfqs
-            rfq_ids = po_obj.search(cr, uid, [('tender_id', '=', tender.id),], context=context)
             self.pool.get('purchase.order').cancel_rfq(cr, uid, ids, context=context)
 
             for line in tender.tender_line_ids:

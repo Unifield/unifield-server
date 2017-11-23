@@ -328,7 +328,7 @@ class stock_picking(osv.osv):
         po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
 
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-        in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
+        in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned', 'shipped'], context)
         if in_id:
             in_name = self.read(cr, uid, in_id, ['name'], context=context)['name']
             in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
@@ -395,8 +395,12 @@ class stock_picking(osv.osv):
                         if not move_ids:
                             # SLL edit, if move cannot be found, then use sync_linked_sol to find it:
                             sol_id = data.get('sale_line_id', False) and int(data['sale_line_id'].split('/')[-1]) or False
-                            if sol_id:
-                                pol_id = self.pool.get('purchase.order.line').search(cr, uid, [('sync_linked_sol', 'ilike', '%%/%s' % sol_id)], context=context)
+                            remote_partner = self.pool.get('so.po.common').get_partner_id(cr, uid, source, context=context)
+                            if sol_id and remote_partner:
+                                pol_id = self.pool.get('purchase.order.line').search(cr, uid, [
+                                    ('order_id.partner_id', '=', remote_partner[0]),
+                                    ('sync_linked_sol', 'ilike', '%%/%s' % sol_id),
+                                ], context=context)
                                 if pol_id:
                                     move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_id)], context=context)
                         if not move_ids:
@@ -598,7 +602,6 @@ class stock_picking(osv.osv):
             context = {}
         self._logger.info("+++ Cancel the relevant IN at %s due to the cancel of some specific move of the Pick ticket at supplier %s" % (cr.dbname, source))
 
-        wf_service = netsvc.LocalService("workflow")
         so_po_common = self.pool.get('so.po.common')
         po_obj = self.pool.get('purchase.order')
         pick_dict = out_info.to_dict()

@@ -669,6 +669,10 @@ class account_journal(osv.osv):
         'entry_posted': fields.boolean('Skip \'Draft\' State for Manual Entries', help='Check this box if you don\'t want new journal entries to pass through the \'draft\' state and instead goes directly to the \'posted state\' without any manual validation. \nNote that journal entries that are automatically created by the system are always skipping that state.'),
         'company_id': fields.many2one('res.company', 'Company', required=True, select=1, help="Company related to this journal"),
         'allow_date':fields.boolean('Check Date not in the Period', help= 'If set to True then do not accept the entry if the entry date is not into the period dates'),
+        'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
+        'bank_account_name': fields.char('Bank Account Name', size=256, required=False),
+        'bank_swift_code': fields.char('Swift Code', size=32, required=False),
+        'bank_address': fields.text('Address', required=False),
     }
 
     _defaults = {
@@ -1578,6 +1582,9 @@ class account_move(osv.osv):
                 if line.account_id.currency_id and line.currency_id:
                     if line.account_id.currency_id.id != line.currency_id.id and (line.account_id.currency_id.id != line.account_id.company_id.currency_id.id):
                         raise osv.except_osv(_('Error'), _("""Couldn't create move with currency different from the secondary currency of the account "%s - %s". Clear the secondary currency field of the account definition if you want to accept all currencies.""") % (line.account_id.code, line.account_id.name))
+
+                if context.get('from_web_menu') and not line.name:
+                    raise osv.except_osv(_('Error'), _('The Description is missing for one of the lines.'))
 
             # When clicking on "Save" for a MANUAL Journal Entry:
             # - Check that the period is open.

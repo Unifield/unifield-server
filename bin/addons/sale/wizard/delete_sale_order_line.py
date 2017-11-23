@@ -22,6 +22,8 @@
 from osv import osv
 from xml.sax.saxutils import escape
 import netsvc
+from tools.translate import _
+
 
 class delete_sale_order_line_wizard(osv.osv_memory):
     _name = 'delete.sale.order.line.wizard'
@@ -57,14 +59,17 @@ class delete_sale_order_line_wizard(osv.osv_memory):
             parent_so_id = 0
             for index, line_id in enumerate(line_ids, start=1):
                 line = so_line.browse(cr, uid, line_id, context=context)
+                name = _('line %s') % (line.line_number)
+                if line.product_id:
+                    name = line.product_id.default_code
                 if hasattr(line, 'name'):
                     if index == 1:
-                        names += line.product_id.default_code
+                        names += name
                         parent_so_id = line.order_id.id
                     elif index == len(line_ids):
-                        names += ' and ' + line.product_id.default_code
+                        names += _(' and %s') % (name)
                     else:
-                        names += ', ' + line.product_id.default_code
+                        names += _(', %s') % (name)
 
             if parent_so_id != 0:
                 escaped_default_code = escape(names)
@@ -79,12 +84,15 @@ class delete_sale_order_line_wizard(osv.osv_memory):
                 result['arch'] = _moves_arch_lst
         else:
             line = so_line.browse(cr, uid, line_ids[0], context=context)
+            name = _('line %s') % (line.line_number)
+            if line.product_id:
+                name = line.product_id.default_code
 
             if hasattr(line, 'name'):
-                escaped_default_code = escape(line.product_id.default_code)
+                escaped_default_code = escape(name)
                 _moves_arch_lst = """
                                 <form>
-                                <separator colspan="6" string="You are about to delete the product %s, are you sure you wish to proceed ?"/>
+                                <separator colspan="6" string="You are about to cancel the product %s, are you sure you wish to proceed ?"/>
                                 <button name="fake_unlink" string="OK, cancel line" type="object" icon="gtk-apply" 
                                     context="{'line_id': %s, 'order_id': %s}"/>
                                 <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>

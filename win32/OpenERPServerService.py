@@ -32,7 +32,6 @@ import subprocess
 import os
 import thread
 
-EXIT_UPDATE_REQUIRE_RESTART = 1
 
 class OpenERPServerService(win32serviceutil.ServiceFramework):
     # required info
@@ -89,12 +88,9 @@ class OpenERPServerService(win32serviceutil.ServiceFramework):
             # - other exit stauts:
             #       server crashed? exit with an error message
             exit_status = self.terpprocess.wait()
-            if exit_status == EXIT_UPDATE_REQUIRE_RESTART:
-                servicemanager.LogInfoMsg("OpenERP has been updated, restarting...")
-                continue  # restart openerp process
             if exit_status == 0:
                 break  # normal exit
-            sys.exit(exit_status)
+            os._exit(exit_status)
 
 def ctrlHandler(ctrlType):
     return True
