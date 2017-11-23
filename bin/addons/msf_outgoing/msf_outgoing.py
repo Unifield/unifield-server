@@ -5202,7 +5202,7 @@ class pack_family_memory(osv.osv):
             if num_of_packs:
                 values['amount'] = pf_memory['total_amount'] / num_of_packs
             values['total_weight'] = pf_memory['weight'] * num_of_packs
-            values['total_volume'] = (pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0
+            values['total_volume'] = round((pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0, 4)
             values['fake_state'] = pf_memory['state']
 
             result[pf_memory['id']] = values
