@@ -393,8 +393,8 @@ class cash_request(osv.osv):
         Recap Mission Lines + Recap Planned expenses + Total to transfer (with a split per currencies)
         """
         for cash_req_id in ids:
-            self._update_recap_mission(cr, uid, cash_req_id, context=None)
             self._update_recap_expense(cr, uid, cash_req_id, context=None)
+            self._update_recap_mission(cr, uid, cash_req_id, context=None)
             self._compute_total_to_transfer(cr, uid, cash_req_id, context=context)
         return True
 
