@@ -194,6 +194,18 @@
     ss:Bold="1"/>
    <Interior ss:Color="#D9D9D9" ss:Pattern="Solid"/>
   </Style>
+    <Style ss:ID="s41">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"
+    ss:Bold="1"/>
+   <Interior ss:Color="#D9D9D9" ss:Pattern="Solid"/>
+  </Style>
   <Style ss:ID="s51">
    <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
    <Borders>
@@ -233,6 +245,14 @@
    <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="9" ss:Color="#000000"/>
   </Style>
   <Style ss:ID="s109">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="s209">
    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -327,6 +347,7 @@
    <Column ss:AutoFitWidth="0" ss:Width="66"/>
    <Column ss:AutoFitWidth="0" ss:Width="82.5" ss:Span="1"/>
    <Column ss:Index="9" ss:AutoFitWidth="0" ss:Width="75.75"/>
+   <Column ss:Index="10" ss:AutoFitWidth="0" ss:Width="75.75"/>
    <Row ss:Height="31.5">
     <Cell ss:Index="2" ss:MergeAcross="6" ss:StyleID="s51"><Data ss:Type="String">INVENTORY COUNTING SHEET</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
@@ -445,6 +466,8 @@
       ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s40"><Data ss:Type="String">BN Management</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
+    <Cell ss:StyleID="s41"><Data ss:Type="String">ED Management</Data><NamedCell
+      ss:Name="Print_Titles"/></Cell>
    </Row>
 % for index,item in enumerate(objects[0].counting_line_ids):
    <Row ss:AutoFitHeight="0" ss:Height="15.75">
@@ -465,6 +488,7 @@
     % endif
     <Cell ss:StyleID="s108"><Data ss:Type="String">${display_product_attributes(item)}</Data></Cell>
     <Cell ss:StyleID="s109"><Data ss:Type="String">${yesno(item.is_bn)}</Data></Cell>
+    <Cell ss:StyleID="s209"><Data ss:Type="String">${yesno(item.is_ed)}</Data></Cell>
    </Row>
 % endfor
    </Table>
