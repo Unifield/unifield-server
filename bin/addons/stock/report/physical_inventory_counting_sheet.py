@@ -25,7 +25,7 @@ class CountingSheetParser(report_sxw.rml_parse):
 
     @staticmethod
     def display_product_attributes(item):
-        attributes = {'is_ed': 'ED', 'is_kc': 'KC', 'is_dg': 'DG', 'is_cs': 'CS'}
+        attributes = {'is_kc': 'KC', 'is_dg': 'DG', 'is_cs': 'CS'}
         return ','.join([name for attribute, name in attributes.items() if getattr(item, attribute, False)])
 
     @staticmethod

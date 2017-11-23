@@ -683,9 +683,9 @@ class PhysicalInventory(osv.osv):
             # === Process lines ===
 
             # Check number of columns
-            if len(row) != 9:
+            if len(row) != 10:
                 add_error(_("""_(Reference is different to inventory reference, You should have exactly 9 columns in this order:
-Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Date*, Specification*, BN Management*"""), row_index)
+Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Date*, Specification*, BN Management*, , ED Management*"""), row_index)
                 break
 
             # Check line number

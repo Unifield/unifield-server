@@ -17,7 +17,7 @@
      <blockTableStyle id="TableItem">
       <blockAlignment value="LEFT"/>
       <blockValign value="TOP"/>
-      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="8,-1"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="9,-1"/>
     </blockTableStyle>
     <initialize>
       <paraStyle name="all" alignment="justify"/>
@@ -26,13 +26,13 @@
     <paraStyle name="title" fontName="Helvetica-Bold" fontSize="12.0" leading="15" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="table_header_label" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>    <paraStyle name="tbl_header_left" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
     <paraStyle name="table_header_value" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>    <paraStyle name="tbl_header_left" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
-    <paraStyle name="table_item_header" fontName="Helvetica-Bold" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="table_item_header" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
     <paraStyle name="table_item_data" rightIndent="0.0" leftIndent="0.0" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
   </stylesheet>
   <story>
   <pto>
   <pto_header>
-    <blockTable colWidths="2.0cm,3.0cm,8.0cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm" style="TableItem">
+    <blockTable colWidths="1.5cm,2.0cm,7.5cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm,2.0cm" style="TableItem">
       <tr>
         <td>
           <para style="table_item_header">Line #</para>
@@ -60,6 +60,9 @@
         </td>
         <td>
           <para style="table_item_header">BN managment</para>
+        </td>
+        <td>
+          <para style="table_item_header">ED managment</para>
         </td>
       </tr>
     </blockTable>
@@ -117,7 +120,7 @@
     <para style="default">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="2.0cm,3.0cm,8.0cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm" style="TableItem">
+    <blockTable colWidths="1.5cm,2.0cm,7.5cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm,2.0cm" style="TableItem">
       <tr>
         <td>
           <para style="table_item_header">Line #</para>
@@ -146,11 +149,14 @@
         <td>
           <para style="table_item_header">BN managment</para>
         </td>
+        <td>
+          <para style="table_item_header">ED managment</para>
+        </td>
       </tr>
     </blockTable>
     <section>
       <para style="default">[[ repeatIn(o.counting_line_ids, 'p') ]]</para>
-      <blockTable colWidths="2.0cm,3.0cm,8.0cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm" style="TableItem">
+      <blockTable colWidths="1.5cm,2.0cm,7.5cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm,2.0cm" style="TableItem">
         <tr>
           <td>
             <para style="table_item_data">[[ p.line_no ]]</para>
@@ -178,6 +184,9 @@
           </td>
           <td>
             <para style="table_item_data">[[ yesno(p.is_bn) ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ yesno(p.is_ed) ]]</para>
           </td>
         </tr>
       </blockTable>
