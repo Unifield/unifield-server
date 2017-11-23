@@ -225,7 +225,7 @@ class purchase_order_line(osv.osv):
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=1024),
         'comment': fields.char('Comment', size=1024),
-        'name': fields.char('Comment', size=1024, required=True),
+        'name': fields.char('Product description', size=1024, required=True),
         'default_code': fields.function(_get_product_code_name, type='char', size=1024,
             method=True, string='Product Code', multi="product",),
         'default_name': fields.function(_get_product_code_name, type='char', size=1024,
@@ -560,7 +560,7 @@ class sale_order_line(osv.osv):
     _columns = {
         'nomenclature_code': fields.char('Nomenclature code', size=1024),
         'comment': fields.char('Comment', size=1024),
-        'name': fields.char('Comment', size=1024, required=True, select=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'name': fields.char('Product description', size=1024, required=True, select=True, readonly=True, states={'draft': [('readonly', False)]}),
         'default_code': fields.function(_get_product_code_name, type='char', size=1024,
             method=True, string='Product Code', multi="product",),
         'default_name': fields.function(_get_product_code_name, type='char', size=1024,
