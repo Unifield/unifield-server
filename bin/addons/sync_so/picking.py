@@ -1177,6 +1177,7 @@ class stock_picking(osv.osv):
             'loan_duration': po_info.loan_duration,
             'is_a_counterpart': po_info.is_a_counterpart,
             'stock_take_date': po_info.stock_take_date,
+            'claim_name_goods_return': source + '.' + stock_picking.claim_name,
             'pricelist_id': pricelist_obj.search(cr, uid, [('name', '=', po_info.pricelist_id.name)], limit=1, context=context)[0],
             'order_line': [(0, 0, {
                 'name': x.name,

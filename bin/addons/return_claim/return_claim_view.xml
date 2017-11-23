@@ -157,13 +157,17 @@
                         </group>
                         <group col="7" colspan="2">
                             <field name="has_missing_events" invisible="True" />
+                            <field name="original_pick_partner_external_or_esc" invisible="True" />
+                            <field name="is_forwarded" invisible="True" />
+                            <button name="claim_to_external_partner" string="Forward Claim to External Supplier" icon="gtk-go-forward" type="object"
+                                    attrs="{'invisible': ['|', '|', '|', ('state', 'not in', ['in_progress', 'done']), ('origin_claim', '=', False),
+                                    ('is_forwarded', '=', True), ('original_pick_partner_external_or_esc', '=', False)]}"/>
                             <field name="prevent_stock_discrepancies"
                                    attrs="{'invisible': ['&amp;', '|', '|', ('state', '!=', 'draft_progress'),
                                    ('type_return_claim', '!=', 'customer'), ('has_missing_events', '=', False), ('prevent_stock_discrepancies', '=', False)],
                                            'readonly': [('state', '!=', 'draft_progress')]}"/>
                             <button name="validate_draft_progress_claim" string="Validate Claim" icon="terp-check" type="object"
                                     attrs="{'invisible': [('state', '!=', 'draft_progress')]}"/>
-                            <!-- <button name="process_next_event" string="Process Next Event" type="object" icon="gtk-go-forward" attrs="{'readonly': [('contains_event_return_claim', '=', False)]}" /> -->
                             <button name="close_claim" string="Close Claim" type="object" icon="gtk-close"
                                     attrs="{'invisible': [('state', '!=', 'in_progress')]}" />
                         </group>

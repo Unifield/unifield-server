@@ -665,6 +665,7 @@ class stock_picking(osv.osv):
             select=True, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'company_id': fields.many2one('res.company', 'Company', required=True, select=True),
         'claim': fields.boolean('Claim'),
+        'claim_name': fields.char(string='Name of the claim', size=512),
     }
     _defaults = {
         'name': lambda self, cr, uid, context: '/',
@@ -726,6 +727,10 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         default = default.copy()
+        default.update({
+            'claim': False,
+            'claim_name': '',
+        })
         picking_obj = self.read(cr, uid, id, ['name', 'type'], context=context)
         move_obj = self.pool.get('stock.move')
         if ('name' not in default) or (picking_obj['name'] == '/'):

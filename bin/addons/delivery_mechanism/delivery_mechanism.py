@@ -307,6 +307,7 @@ class stock_move(osv.osv):
                                fields_to_fetch=['picking_id', 'purchase_line_id', 'id']):
             res[obj.id] = {'move_id': False, 'picking_id': False, 'picking_version': 0, 'quantity': 0, 'moves': []}
             if obj.picking_id and obj.picking_id.type == 'in':
+                move_ids = False
                 # we are looking for corresponding OUT move from sale order line
                 if obj.purchase_line_id and obj.purchase_line_id.linked_sol_id:
                     # find the corresponding OUT move
@@ -317,6 +318,17 @@ class stock_move(osv.osv):
                                                      ('picking_id.type', '=', 'out'),
                                                      ('processed_stock_move', '=', False),
                                                      ], order="state desc", context=context)
+                elif obj.sale_line_id and ('replacement' in obj.picking_id.name or 'missing' in obj.picking_id.name):
+                    # find the corresponding OUT move if SO line id
+                    move_ids = self.search(cr, uid, [('product_id', '=', data_back['product_id']),
+                                                     ('state', 'in', ('assigned', 'confirmed')),
+                                                     ('sale_line_id', '=', obj.sale_line_id.id),
+                                                     ('in_out_updated', '=', False),
+                                                     ('picking_id.type', '=', 'out'),
+                                                     ('processed_stock_move', '=', False),
+                                                     ], order="state desc", context=context)
+
+                if move_ids:
                     # list of matching out moves
                     integrity_check = []
                     for move in self.browse(cr, uid, move_ids, context=context):
