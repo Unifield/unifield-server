@@ -398,6 +398,22 @@ class cash_request(osv.osv):
             self._compute_total_to_transfer(cr, uid, cash_req_id, context=context)
         return True
 
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Allow the creation / duplication / edition of a Cash Request at coordo level
+        """
+        if context is None:
+            context = {}
+        res = super(cash_request, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context,
+                                                        toolbar=toolbar, submenu=submenu)
+        company = self._get_company(cr, uid, context=context)
+        if company.instance_id and company.instance_id.level == 'coordo' and view_type in ['form', 'tree']:
+            res['arch'] = res['arch']\
+                .replace('hide_new_button="1"', '')\
+                .replace('hide_edit_button="1"', '')\
+                .replace('hide_duplicate_button="1"', '')
+        return res
+
 
 cash_request()
 

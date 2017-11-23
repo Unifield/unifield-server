@@ -7,7 +7,8 @@
                 <field name="model">cash.request</field>
                 <field name="type">form</field>
                 <field name="arch" type="xml">
-                    <form string="Cash Request">
+                    <!-- creation/duplication/edition is blocked by default but allowed in coordo (see fields_view_get) -->
+                    <form string="Cash Request" hide_new_button="1" hide_duplicate_button="1" hide_edit_button="1">
                         <notebook colspan="4">
                             <page string="Main Tab">
                                 <button name="generate_cash_request" type="object" string="Generate" icon="gtk-execute"/>
@@ -157,7 +158,8 @@
                 <field name="model">cash.request</field>
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
-                    <tree>
+                    <!-- creation/edition is blocked by default but allowed in coordo (see fields_view_get) -->
+                    <tree hide_new_button="1" hide_edit_button="1">
                         <field name="name"/>
                         <field name="request_date"/>
                         <field name="month_period_id"/>
