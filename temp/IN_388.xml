@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<data>
+    <record model="stock.picking" key="name">
+        <field name="freight"></field>
+        <field name="name">IN/00388</field>
+        <field name="origin">17/partial12-finance_HQ1/HT101/PO00288:17/partial12-finance_HQ1/HT101/FO00111</field>
+        <field name="partner_id" key="name">
+            <field name="name">ITCompany</field>
+        </field>
+        <field name="transport_mode"></field>
+        <field name="note"></field>
+        <field name="message_esc"></field>
+        <field name="move_lines">
+			<record>
+				<field name="parcel_from">1</field>
+				<field name="parcel_to">1</field>
+				<field name="parcel_qty">1</field>
+				<field name="total_weight">200</field>
+				<field name="total_volume">10000</field>
+				<field name="total_height">20</field>
+				<field name="total_length">25</field>
+				<field name="total_width">20</field>
+				<field name="message_esc1">From pack 2353</field>
+				<field name="message_esc2">To pack 2353</field>				
+            <record>
+                <field name="line_number">1</field>
+                <field name="external_ref"></field>
+                <field name="product_id" key="default_code,name">
+                    <field name="product_code">ADAPCABL1P-</field>
+                    <field name="product_name">(printer) CABLE, PARALLEL interface PC/printer</field>
+                </field>
+                <field name="product_qty">90.0</field>
+                <field name="product_uom" key="name">
+                    <field name="name">PCE</field>
+                </field>
+                <field name="price_unit">4.93</field>
+                <field name="price_currency_id" key="name">
+                    <field name="name">EUR</field>
+                </field>
+                <field name="prodlot_id"></field>
+                <field name="expired_date"></field>
+                <field name="packing_list"></field>
+                <field name="message_esc1"></field>
+                <field name="message_esc2"></field>
+            </record>
+            </record>
+			<record>
+				<field name="parcel_from">2</field>
+				<field name="parcel_to">4</field>
+				<field name="parcel_qty"></field>
+				<field name="total_weight">200.3</field>
+				<field name="total_volume">10000</field>
+				<field name="total_height">20</field>
+				<field name="total_length">25</field>
+				<field name="total_width"></field>
+				<field name="message_esc1">From pack 2353</field>
+				<field name="message_esc2">To pack 2353</field>				
+            <record>
+                <field name="line_number">2</field>
+                <field name="external_ref"></field>
+                <field name="product_id" key="default_code,name">
+                    <field name="product_code">ADAPCABLTEL</field>
+                    <field name="product_name">CABLE, TELEPHONE, plug RJ 12</field>
+                </field>
+                <field name="product_qty">880.0</field>
+                <field name="product_uom" key="name">
+                    <field name="name">PCE</field>
+                </field>
+                <field name="price_unit">2.8</field>
+                <field name="price_currency_id" key="name">
+                    <field name="name">EUR</field>
+                </field>
+                <field name="prodlot_id"></field>
+                <field name="expired_date"></field>
+                <field name="packing_list"></field>
+                <field name="message_esc1"></field>
+                <field name="message_esc2"></field>
+            </record>
+            </record>
+        </field>
+    </record>
+</data>

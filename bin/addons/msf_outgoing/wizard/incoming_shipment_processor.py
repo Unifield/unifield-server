@@ -65,6 +65,7 @@ class stock_incoming_processor(osv.osv):
         ),
         'draft': fields.boolean('Draft'),
         'already_processed': fields.boolean('Already processed'),
+        'linked_to_out': fields.boolean('Is this IN linked to a single Pick (same FO) ?'),
     }
 
     _defaults = {
@@ -91,6 +92,20 @@ class stock_incoming_processor(osv.osv):
             )
 
         picking = picking_obj.browse(cr, uid, vals.get('picking_id'), context=context)
+
+        cr.execute("""
+            select so.id from
+            stock_move m
+            left join purchase_order_line pol on m.purchase_line_id = pol.id
+            left join sale_order_line sol on sol.id = pol.sale_order_line_id
+            left join sale_order so on so.id = sol.order_id
+            where m.picking_id = %s and so.procurement_request = 'f'
+            group by so.id
+            """, (vals.get('picking_id'), ))
+        if cr.rowcount == 1:
+            vals['linked_to_out'] = True
+        else:
+            vals['linked_to_out'] = False
 
         if not vals.get('dest_type', False):
             cd_move = move_obj.search(cr, uid, [
@@ -394,6 +409,12 @@ class stock_incoming_processor(osv.osv):
                 'target': 'same',
                 'res_id': simu_id,
                 'context': context}
+
+    def launch_simulation_pack(self, cr, uid, ids, context=None):
+        data = self.launch_simulation(cr, uid, ids, context)
+        self.pool.get('wizard.import.in.simulation.screen').write(cr, uid, data['res_id'], {'with_pack': True})
+        data['name'] = _('Incoming shipment simulation screen (pick and pack mode)')
+        return data
 
 stock_incoming_processor()
 
@@ -733,6 +754,7 @@ class stock_move_in_processor(osv.osv):
             multi='product_info',
             help="Ticked if the product is a Controlled Substance",
         ),
+        'pack_info_id': fields.many2one('wizard.import.in.pack.simulation.screen', 'Pack Info'),
     }
 
     """

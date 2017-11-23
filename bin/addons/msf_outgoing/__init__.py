@@ -58,6 +58,15 @@ INTEGRITY_STATUS_SELECTION = [('empty', ''),
                               ('not_exist_in_picking', 'Does not exist in selected IN/OUT'),
                               ]
 
+PACK_INTEGRITY_STATUS_SELECTION = [
+    ('empty', ''),
+    ('ok', 'Ok'),
+    ('missing_1', 'The first sequence must start with 1'),
+    ('to_smaller_than_from', 'To value must be greater or equal to From value'),
+    ('overlap', 'The sequence overlaps previous one'),
+    ('gap', 'A gap exist in the sequence'),
+
+]
 import msf_outgoing
 import wizard
 import report

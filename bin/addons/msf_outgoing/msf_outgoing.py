@@ -3650,6 +3650,7 @@ class stock_picking(osv.osv):
                     'composition_list_id': line.composition_list_id and line.composition_list_id.id,
                     'pt_created': True,
                     'backmove_id': line.move_id.id,
+                    'pack_info_id': line.move_id.pack_info_id and line.move_id.pack_info_id.id or False,
                 }
                 context['keepLineNumber'] = True
                 move_obj.copy(cr, uid, line.move_id.id, cp_values, context=context)
@@ -3861,6 +3862,7 @@ class stock_picking(osv.osv):
                     'asset_id': line.asset_id and line.asset_id.id,
                     'composition_list_id': line.composition_list_id and line.composition_list_id.id,
                     'original_qty_partial': orig_qty,
+                    'pack_info_id': line.move_id.pack_info_id and line.move_id.pack_info_id.id or False,
                 }
 
                 # Update or create the validate picking ticket line
