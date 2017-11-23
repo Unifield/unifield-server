@@ -342,6 +342,16 @@ class cash_request(osv.osv):
                 self.write(cr, uid, cash_request_id, {'state': 'validated'}, context=context)
         return True
 
+    def set_to_done(self, cr, uid, ids, context=None):
+        """
+        Changes the state of the cash req. to Done (which makes it readonly)
+        """
+        if context is None:
+            context = {}
+        for cash_request_id in ids:
+            self.write(cr, uid, cash_request_id, {'state': 'done'}, context=context)
+        return True
+
     def _get_total_cash_request(self, cr, uid, cash_req_id, context=None):
         """
         Sums all the amounts of the Cash Request
