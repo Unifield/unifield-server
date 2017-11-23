@@ -326,17 +326,20 @@ class cash_request(osv.osv):
 
     def generate_cash_request(self, cr, uid, ids, context=None):
         """
-        Computes all automatic fields of the Cash Request
-        if the date of the Cash Request is today's date (else raises an error)
+        - Computes all automatic fields of the Cash Request
+          if the date of the Cash Request is today's date (else raises an error)
+        - Changes the state of the cash req. to Validated
         """
         if context is None:
             context = {}
         for cash_request_id in ids:
-            cash_req = self.read(cr, uid, cash_request_id, ['request_date'], context=context)
+            cash_req = self.read(cr, uid, cash_request_id, ['request_date', 'state'], context=context)
             if cash_req['request_date'] != datetime.today().strftime('%Y-%m-%d'):
                 raise osv.except_osv(_('Error'), _('The date of the Cash Request must be the date of the day.'))
             self._generate_commitments(cr, uid, cash_request_id, context=context)
             self._generate_past_transfers(cr, uid, cash_request_id, context=context)
+            if cash_req['state'] != 'done':
+                self.write(cr, uid, cash_request_id, {'state': 'validated'}, context=context)
         return True
 
     def _get_total_cash_request(self, cr, uid, cash_req_id, context=None):
