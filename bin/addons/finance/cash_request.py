@@ -52,7 +52,7 @@ class cash_request(osv.osv):
                                                  required=True),
         'bank_journal_id': fields.many2one('account.journal', 'Bank', required=True, domain=[('type', '=', 'bank')]),
         'state': fields.selection(
-            [('draft', 'Draft'), ('validated', 'Validated'), ('done', 'Done')], 'State',
+            [('draft', 'Draft'), ('open', 'Open'), ('done', 'Done')], 'State',
             required=True, readonly=True),
         'instance_ids': fields.many2many('msf.instance', 'cash_request_instance_rel', 'cash_request_id', 'instance_id',
                                          string='Mission Settings', readonly=True),
@@ -328,7 +328,7 @@ class cash_request(osv.osv):
         """
         - Computes all automatic fields of the Cash Request
           if the date of the Cash Request is today's date (else raises an error)
-        - Changes the state of the cash req. to Validated
+        - Changes the state of the cash req. to Open
         """
         if context is None:
             context = {}
@@ -339,7 +339,7 @@ class cash_request(osv.osv):
             self._generate_commitments(cr, uid, cash_request_id, context=context)
             self._generate_past_transfers(cr, uid, cash_request_id, context=context)
             if cash_req['state'] != 'done':
-                self.write(cr, uid, cash_request_id, {'state': 'validated'}, context=context)
+                self.write(cr, uid, cash_request_id, {'state': 'open'}, context=context)
         return True
 
     def set_to_done(self, cr, uid, ids, context=None):

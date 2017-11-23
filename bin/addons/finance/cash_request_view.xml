@@ -76,7 +76,7 @@
                                 <group colspan="4" col="4">
                                     <label string="" colspan="2"/>
                                     <button name="set_to_done" type="object" string="Done" icon="terp-camera_test"
-                                            attrs="{'invisible': [('state', '!=', 'validated')]}"/>
+                                            attrs="{'invisible': [('state', '!=', 'open')]}"/>
                                 </group>
                             </page>
                             <page string="Banking">
