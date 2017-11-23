@@ -398,7 +398,7 @@ class stock_picking(osv.osv):
                             remote_partner = self.pool.get('so.po.common').get_partner_id(cr, uid, source, context=context)
                             if sol_id and remote_partner:
                                 pol_id = self.pool.get('purchase.order.line').search(cr, uid, [
-                                    ('order_id.partner_id', '=', remote_partner[0]),
+                                    ('order_id.partner_id', '=', remote_partner),
                                     ('sync_linked_sol', 'ilike', '%%/%s' % sol_id),
                                 ], context=context)
                                 if pol_id:
