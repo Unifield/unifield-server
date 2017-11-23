@@ -398,8 +398,13 @@ class physical_inventory_select_products(osv.osv_memory):
         inventory_id = read_single(self._name, wizard_id, "inventory_id")
         product_ids = read_single(self._name, wizard_id, "products_preview")
 
-        # '4' is the code for 'add a single id'
-        vals = {'product_ids': [(4, product_id) for product_id in product_ids]}
+        # Redo a search to force order according to default order
+        previously_selected_product_ids = read_single("physical.inventory", inventory_id, "product_ids")
+        product_ids = previously_selected_product_ids + product_ids
+        product_ids = self.pool.get("product.product").search(cr, uid, [("id", 'in', product_ids)], context=context)
+
+        # '6' is the code for 'replace all'
+        vals = {'product_ids': [(6, 0, product_ids)]}
         write('physical.inventory', inventory_id, vals)
 
 
