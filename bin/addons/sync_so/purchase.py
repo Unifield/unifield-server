@@ -60,6 +60,11 @@ class purchase_order_line_sync(osv.osv):
         partner_ref = '%s.%s' % (source, sol_dict['order_id']['name'])
         po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', partner_ref)], context=context)
         if not po_ids:
+            # If FO was split during SLL migration the PO is not split
+            if partner_ref[-2] == '-' and partner_ref[-1] in ['1', '2', '3']:
+                po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', partner_ref[:-2]), ('split_during_sll_mig', '=', True)], context=context)
+
+        if not po_ids:
             raise Exception, "Cannot find the parent PO with partner ref %s" % partner_ref
 
         # retrieve data:
@@ -609,5 +614,24 @@ class purchase_order_sync(osv.osv):
                 logger.is_quantity_modified |= ('product_qty' in line_changes)
                 logger.is_product_price_modified |= \
                     ('price_unit' in line_changes)
+
+    def create_split_po(self, cr, uid, source, so_info, context=None):
+        # deprecated used only to manage SLL migration
+
+        so_po_common = self.pool.get('so.po.common')
+        po_id = so_po_common.get_original_po_id(cr, uid, source, so_info, context)
+        if not po_id:
+            message = 'Received message to split po %s, but PO not found' % (so_info.name, )
+            self._logger.info(message)
+            return message
+
+        original_po = self.browse(cr, uid, po_id, context=context)
+        if original_po.name[-2] == '-' and original_po.name[-1] in ['1', '2', '3']:
+            message = "The PO split " + original_po.name + " exists already in the system, linked to " + so_info.name + " at " + source + ". The message is ignored."
+            self._logger.info(message)
+            return message
+
+        self.write(cr, uid, [po_id], {'split_during_sll_mig': True})
+        return True
 
 purchase_order_sync()

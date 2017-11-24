@@ -129,8 +129,14 @@ class so_po_common(osv.osv_memory):
             context = {}
         context.update({'active_test': False})
         po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', so_ref)], context=context)
+
+        # SLL migration
+        if not po_ids and so_ref[-2] == '-' and so_ref[-1] in ['1', '2', '3']:
+            po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', so_ref[:-2]), ('split_during_sll_mig', '=', True)], context=context)
+
         if po_ids and po_ids[0]:
             return po_ids[0]
+
         return False
 
     def get_in_id_from_po_id(self, cr, uid, po_id, context):
