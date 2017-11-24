@@ -275,7 +275,7 @@ msgstr "Confirmer le mot de passe:"
 
 #: controllers/database.py:173
 msgid "You must avoid all accents, space or special characters."
-msgstr "Les accents , espaces et caractères spéciaux ne sont pas autorisés ."
+msgstr "Les accents, espaces et caractères spéciaux ne sont pas autorisés ."
 
 #: controllers/database.py:174
 msgid "Bad database name"
@@ -648,7 +648,7 @@ msgstr ""
 "données. Il met en relation, améliore et\n"
 "                    gère les processus dans les domaines des ventes, de la "
 "finance, de la logistique,\n"
-"                    de la gestion de projets , la production, les services, "
+"                    de la gestion de projets, la production, les services, "
 "la gestion de la relation client, etc.\n"
 "                    "
 

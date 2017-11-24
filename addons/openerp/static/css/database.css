@@ -69,3 +69,27 @@ select.selectfield {
     text-align: right;
     padding: 0 5px 0 0;
 }
+
+.instance_creation_progress {
+    width: 20%;
+    margin-left: 40%;
+    margin-top: 2em;
+    margin-bottom: 2em;
+    border: solid 1px lightslategrey;
+}
+
+.instance_creation_progress .progressbar {
+    background-color: #4CAF50;
+    text-align: center;
+    font-size: 15px;
+    line-height: 2;
+}
+
+.auto_creation_resume {
+    text-align: center;
+}
+
+.auto_instance_text {
+    font-size: 1.5em;
+    margin: 3em;
+}

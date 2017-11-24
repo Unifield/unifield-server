@@ -20,11 +20,13 @@
 ###############################################################################
 import re
 import os
+import sys
 
 import cherrypy
 from openerp.utils import rpc
 
 from openobject import tools
+from openobject import paths
 from openobject.tools import expose, redirect
 import openobject
 
@@ -55,7 +57,8 @@ def get_db_list():
         dblist = rpc.session.listdb()
         result['tz_offset'] = rpc.session.gateway.execute_noauth('db', 'check_timezone')
     except:
-        message = _("Could not connect to server")
+        pass
+        #message = _("Could not connect to server")
 
     dbfilter = cherrypy.request.app.config['openerp-web'].get('dblist.filter')
     if dbfilter:
@@ -93,6 +96,14 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
 
     url = rpc.session.connection_string
     url = str(url[:-1])
+
+    config_file_name = 'uf_auto_install.conf'
+    if sys.platform == 'win32':
+        config_file_path = os.path.join(paths.root(), '..', 'UFautoInstall', config_file_name)
+    else:
+        config_file_path = os.path.join(paths.root(), '..', 'unifield-server', 'UFautoInstall', config_file_name)
+    if os.path.exists(config_file_path):
+        raise redirect('/openerp/database/auto_create')
 
     result = get_db_list()
     dblist = result['dblist']

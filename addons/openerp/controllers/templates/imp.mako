@@ -4,7 +4,7 @@
     <title>Import Data</title>
 
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/impex.css"/>
-    <link rel="stylesheet" type="text/css" href="/openerp/static/css/database.css"/>
+    <link rel="stylesheet" type="text/css" href="/openerp/static/css/database.css?v=7.0"/>
 
     <script type="text/javascript">
         function import_results(detection) {

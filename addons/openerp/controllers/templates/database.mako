@@ -8,7 +8,7 @@
     <script type="text/javascript" src="/openerp/static/javascript/openerp/openerp.ui.waitbox.js"></script>
     
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/waitbox.css"/>
-    <link rel="stylesheet" type="text/css" href="/openerp/static/css/database.css"/>
+    <link rel="stylesheet" type="text/css" href="/openerp/static/css/database.css?v=7.0"/>
 
     <script type="text/javascript">
         function on_create() {
