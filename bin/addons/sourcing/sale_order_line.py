@@ -1595,7 +1595,18 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     # No AD on sourcing line if it comes from IR:
                     anal_dist = False
                     if not sourcing_line.procurement_request:
-                        anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context)
+                        distib_to_copy = False
+                        if sourcing_line.analytic_distribution_id:
+                            distib_to_copy = sourcing_line.analytic_distribution_id.id
+                        elif sourcing_line.order_id.analytic_distribution_id:
+                            distib_to_copy = sourcing_line.order_id.analytic_distribution_id.id
+                        else:
+                            raise osv.except_osv(
+                                _('Warning'),
+                                _('AD missing on line %s, FO %s') % (sourcing_line.line_number, sourcing_line.order_id.name),
+                            )
+
+                        anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distib_to_copy, {}, context=context)
                     # attach PO line:
                     pol_values = {
                         'order_id': po_to_use,
@@ -1637,7 +1648,18 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         self.pool.get('purchase.order').infolog(cr, uid, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
                     anal_dist = False
                     if not sourcing_line.procurement_request:
-                        anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context)
+                        distrib = False
+                        if sourcing_line.analytic_distribution_id:
+                            distrib = sourcing_line.analytic_distribution_id.id
+                        elif sourcing_line.order_id.analytic_distribution_id:
+                            distrib = sourcing_line.order_id.analytic_distribution_id.id
+                        else:
+                            raise osv.except_osv(
+                                _('Warning'),
+                                _('AD missing on line %s, FO %s') % (sourcing_line.line_number, sourcing_line.order_id.name),
+                            )
+
+                        anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distrib, {}, context=context)
                     # attach new RfQ line:
                     rfq_line_values = {
                         'order_id': rfq_to_use,
