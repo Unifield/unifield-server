@@ -466,6 +466,11 @@ class wizard_import_in_simulation_screen(osv.osv):
                 # this line is a move line data
                 nb_line += 1
                 for nb, x in enumerate(LINES_COLUMNS):
+                    if x[1] == 'line_number' and row.cells[nb].data:
+                        try:
+                            int(row.cells[nb].data)
+                        except:
+                            error.append(_('Line %s, column %s, line number expected, found %s, expected: integer value') % (index, nb+1, row.cells[nb]))
                     if x[2] == 'mandatory' and not row.cells[nb]:
                         error.append(_('Line %s, column %s, value %s is mandatory') % (index, nb+1, x[0]))
 
