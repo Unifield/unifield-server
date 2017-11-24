@@ -572,7 +572,7 @@
                             <field name="address_id" invisible="1" />
                             <field name="backorder_id" readonly="1"/>
                             <field name="reason_type_id" widget="selection"
-                                   domain="[('incoming_ok', '=', True)]" 
+                                   domain="[('incoming_ok', '=', True)]"
                                    attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="order_category"/>
                             <field name="change_reason"/>

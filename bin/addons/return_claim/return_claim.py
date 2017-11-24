@@ -1020,13 +1020,17 @@ class return_claim(osv.osv):
         product_line_data = claim_info.product_line_ids_return_claim
 
         sale_id = sale_obj.search(cr, uid, [('client_order_ref', 'ilike', claim_info.po_id_return_claim.name)],
-                                      limit=1, order='id', context=context)[0]
-        subtype = 'standard' if claim_info.picking_id_return_claim.shipment_ref \
-                                and 'OUT' in claim_info.picking_id_return_claim.shipment_ref else 'picking'
+                                  limit=1, order='id', context=context)[0]
         # fetch the original picking, ticket or out
-        origin_pick_id = pick_obj.search(cr, uid, [('sale_id', '=', sale_id), ('type', '=', 'out'),
-                                                   ('subtype', '=', subtype), ('backorder_id', '=', False)],
-                                         limit=1, context=context)[0]
+        origin_pick_ids = pick_obj.search(cr, uid, [('sale_id', '=', sale_id), ('type', '=', 'out'),
+                                                    ('subtype', '=', 'picking'), ('backorder_id', '=', False)],
+                                          limit=1, context=context)
+        if len(origin_pick_ids) > 0:
+            origin_pick_id = origin_pick_ids[0]
+        else:
+            origin_pick_id = pick_obj.search(cr, uid, [('sale_id', '=', sale_id), ('type', '=', 'out'),
+                                                       ('subtype', '=', 'standard'), ('backorder_id', '=', False)],
+                                             limit=1, context=context)[0]
 
         event_values = {
            'type_claim_event': event_data.type_claim_event,
@@ -1288,6 +1292,7 @@ class claim_event(osv.osv):
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
         picking_tools = self.pool.get('picking.tools')
+        get_object_reference = self.pool.get('ir.model.data').get_object_reference
         # event picking object
         event_picking = obj.event_picking_id_claim_event
         # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
@@ -1354,6 +1359,10 @@ class claim_event(osv.osv):
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
 
+        # change the reason type of the picking to loss/damage
+        loss_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_damage')[1]
+        pick_obj.write(cr, uid, [event_picking.id], ({'reason_type_id': loss_id}), context=context)
+
         context.update({'keep_prodlot': False, 'keepPoLine': False})
 
         return True
@@ -1371,6 +1380,7 @@ class claim_event(osv.osv):
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
         picking_tools = self.pool.get('picking.tools')
+        get_object_reference = self.pool.get('ir.model.data').get_object_reference
         # event picking object
         event_picking = obj.event_picking_id_claim_event
         # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
@@ -1436,6 +1446,10 @@ class claim_event(osv.osv):
             # check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
+
+        # change the reason type of the picking to loss/damage
+        loss_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_damage')[1]
+        pick_obj.write(cr, uid, [event_picking.id], ({'reason_type_id': loss_id}), context=context)
 
         context.update({'keep_prodlot': False, 'keepPoLine': False})
 

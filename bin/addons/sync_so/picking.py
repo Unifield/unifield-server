@@ -1149,17 +1149,20 @@ class stock_picking(osv.osv):
             context = {}
 
         sale_obj = self.pool.get('sale.order')
+        sol_obj = self.pool.get('sale.order.line')
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
         partner_obj = self.pool.get('res.partner')
         partner_adress_obj = self.pool.get('res.partner.address')
         pricelist_obj = self.pool.get('product.pricelist')
+        sp_com_obj = self.pool.get('so.po.common')
 
         po_info = stock_picking.purchase_id
         lines = stock_picking.move_lines
         partner_id = partner_obj.search(cr, uid, [('name', '=', source)], limit=1, context=context)[0]
         partner_type = partner_obj.read(cr, uid, partner_id, ['partner_type'], context=context)['partner_type']
         partner_address_id = partner_adress_obj.search(cr, uid, [('partner_id', '=', partner_id)], limit=1, context=context)[0]
+        po_analytic_distrib = sp_com_obj.get_analytic_distribution_id(cr, uid, po_info.to_dict(), context)
 
         fo_data = {
             'client_order_ref': source + '.' + po_info.name,
@@ -1179,23 +1182,40 @@ class stock_picking(osv.osv):
             'stock_take_date': po_info.stock_take_date,
             'claim_name_goods_return': source + '.' + stock_picking.claim_name,
             'pricelist_id': pricelist_obj.search(cr, uid, [('name', '=', po_info.pricelist_id.name)], limit=1, context=context)[0],
-            'order_line': [(0, 0, {
-                'name': x.name,
-                'line_number': x.line_number,
-                'product_id': product_obj.search(cr, uid, [('name', '=', x.product_id.name)], limit=1, context=context)[0],
-                'product_uom_qty': x.product_qty,
-                'product_uom': uom_obj.search(cr, uid, [('name', '=', x.product_uom.name)], limit=1, context=context)[0],
-                'price_unit': x.price_unit,
-                'order_partner_id': partner_id,
-                'comment': x.comment,
-                'in_name_goods_return': source + '.' + stock_picking.name,
-                'date_planned': po_info.delivery_requested_date,
-                'stock_take_date': po_info.stock_take_date,
-            }) for x in lines],
+            'analytic_distribution_id': po_analytic_distrib,
         }
 
         fo_id = sale_obj.create(cr, uid, fo_data, context=context)
         fo_name = sale_obj.read(cr, uid, fo_id, ['name'], context=context)['name']
+
+        # Create FO Lines
+        for line in lines:
+            line_product = product_obj.search(cr, uid, [('name', '=', line.product_id.name)], limit=1, context=context)
+            line_uom = uom_obj.search(cr, uid, [('name', '=', line.product_uom.name)], limit=1, context=context)
+            # Search the analytic distribution of the original SO line
+            original_sol_analytic_distrib_id = False
+            original_sol_id = sol_obj.search(cr, uid, [('sync_linked_pol', '=', line.purchase_line_id.sync_local_id)],
+                                             limit=1, context=context)
+            if len(original_sol_id) > 0:
+                original_sol_analytic_distrib_id = sol_obj.browse(cr, uid, original_sol_id[0],
+                                                                  fields_to_fetch=['analytic_distribution_id'],
+                                                                  context=context).analytic_distribution_id.id
+            fo_line_data = {
+                'order_id': fo_id,
+                'name': line.name,
+                'line_number': line.line_number,
+                'product_id': line_product[0] or False,
+                'product_uom_qty': line.product_qty,
+                'product_uom': line_uom[0] or False,
+                'price_unit': line.price_unit,
+                'order_partner_id': partner_id,
+                'comment': line.comment,
+                'in_name_goods_return': source + '.' + stock_picking.name,
+                'date_planned': po_info.delivery_requested_date,
+                'stock_take_date': po_info.stock_take_date,
+                'analytic_distribution_id': original_sol_analytic_distrib_id or po_analytic_distrib or False,
+            }
+            sol_obj.create(cr, uid, fo_line_data, context=context)
 
         message = _('IN %s processed to FO %s by Push Flow at %s.' % (stock_picking.name, fo_name, source))
         self._logger.info(message)

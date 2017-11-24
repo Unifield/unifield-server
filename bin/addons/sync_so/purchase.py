@@ -113,7 +113,7 @@ class purchase_order_line_sync(osv.osv):
             if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:
                 # in case of FO from missing/replacement claim
                 pol_values['line_number'] = sol_dict['line_number']
-                pol_values['origin'] = pol_values['sync_linked_sol']
+                pol_values['origin'] = self.pool.get('purchase.order').browse(cr, uid, po_ids[0], context=context).origin
                 pol_values['from_synchro_return_goods'] = True
             # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)
             # so we have to create this new PO line:
