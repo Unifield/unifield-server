@@ -120,7 +120,7 @@
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
         # Create the rule
-        fields = ['confirmed_delivery_date', 'date_planned', 'default_code', 'name', 'notes', 'price_unit', 'product_qty', 'product_uom', 'line_number', 'state']
+        fields = ['confirmed_delivery_date', 'date_planned', 'default_code', 'name', 'notes', 'price_unit', 'product_qty', 'product_uom', 'line_number', 'state_to_display']
         
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'purchase.order.line'), ('name', 'in', fields)], context=context)
         field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'purchase.order.line'), ('name', '=', 'line_number')], context=context)
