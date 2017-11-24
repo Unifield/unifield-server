@@ -15915,10 +15915,11 @@ msgstr "Liste de prix d'achat par défaut"
 msgid "Filter on my documents"
 msgstr "Filter on my documents"
 
-#. modules: import_data, product_nomenclature
+#. modules: import_data, product_nomenclature, purchase
 #: code:addons/import_data/res_partner.py:22
 #: code:addons/product_nomenclature/product_nomenclature.py:254
 #: code:addons/product_nomenclature/product_nomenclature.py:444
+#: code:addons/purchase/purchase_order.py:568
 #, python-format
 msgid "Filter not implemented on %s"
 msgstr "Filtre non mis en oeuvre sur %s"

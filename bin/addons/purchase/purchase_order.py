@@ -565,7 +565,7 @@ class purchase_order(osv.osv):
         if not args:
             return []
         if args[0][1] != '=' or len(args[0]) < 3:
-            raise osv.except_osv(_('Error'), _('Filter not implemented on field %') % (name, ))
+            raise osv.except_osv(_('Error'), _('Filter not implemented on %s') % (name, ))
         operator = args[0][2] is True and 'in' or 'not in'
         po_ids = set()
         pol_ids = pol_obj.search(cr, uid, [('state', '=', 'confirmed')], context=context)
