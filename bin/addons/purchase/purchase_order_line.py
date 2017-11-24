@@ -1372,6 +1372,32 @@ class purchase_order_line(osv.osv):
             }
         return {}
 
+    def on_change_origin(self, cr, uid, ids, origin, linked_sol_id=False, partner_type='external', context=None):
+        '''
+        Check if the origin is a known FO/IR
+        '''
+        res = {}
+        if not linked_sol_id and origin:
+            sale_id = self.pool.get('sale.order').search(cr, uid, [
+                ('name', '=', origin),
+                ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p']),
+            ], limit=1, order='NO_ORDER', context=context)
+            if not sale_id:
+                res['warning'] = {
+                    'title': _('Warning'),
+                    'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line') % origin,
+                }
+                res['value'] = {
+                    'display_sync_ref': False,
+                    'instance_sync_order_ref': '',
+                }
+            else:
+                res['value'] = {
+                    'display_sync_ref': True,
+                }
+
+        return res
+
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
                              partner_id, date_order=False, fiscal_position=False, date_planned=False,
                              name=False, price_unit=False, notes=False, state=False, old_price_unit=False,
