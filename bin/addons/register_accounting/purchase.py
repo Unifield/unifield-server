@@ -78,14 +78,15 @@ class purchase_order(osv.osv):
             LEFT JOIN purchase_invoice_rel as pir ON (po.id = pir.purchase_id)
             LEFT JOIN account_invoice as inv ON (pir.invoice_id = inv.id AND inv.state not in ('draft', 'cancel'))
             LEFT JOIN product_pricelist as prod ON (po.pricelist_id = prod.id AND prod.currency_id = %s)
-            WHERE po.state in ('confirmed_wait', 'approved')
-            AND po.pricelist_id = prod.id
+            LEFT JOIN purchase_order_line as pol ON (po.id = pol.order_id)
+            WHERE po.pricelist_id = prod.id
             AND NOT (po.order_type = 'regular' AND po.partner_type in ('internal', 'esc'))
-            AND po.order_type in ('regular', 'purchase_list', 'direct')
+            AND po.order_type in ('regular', 'purchase_list')
             AND po.partner_id = %s
             AND po.rfq_ok != TRUE
+            AND pol.state in ('confirmed', 'done')
             GROUP BY po.id, po.amount_total
-            HAVING COALESCE(po.amount_total - sum(inv.amount_total), 10) != 0"""
+            HAVING COALESCE(sum(pol.price_unit * pol.product_qty) - sum(inv.amount_total), 10) != 0;"""
             cr.execute(sql, (c_id, p_id))
             sql_res = cr.fetchall()
             # Transform result

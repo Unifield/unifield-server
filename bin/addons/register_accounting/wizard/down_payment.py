@@ -45,7 +45,7 @@ class wizard_down_payment(osv.osv_memory):
     def check_register_line_and_po(self, cr, uid, absl_id, po_id, context=None):
         """
         Verify that register line amount is not superior to
-        (PO total_amount - all used down payments - open/paid invoices).
+        (total of the PO lines Confirmed or Closed - all used down payments - open/paid invoices).
         Check partner on register line AND PO (should be equal)
         """
         # Some verifications
@@ -59,14 +59,17 @@ class wizard_down_payment(osv.osv_memory):
             po_id = po_id[0]
         # Prepare some values
         po_obj = self.pool.get('purchase.order')
-        po = po_obj.read(cr, uid, po_id, ['partner_id', 'down_payment_ids', 'amount_total'])
+        pol_obj = self.pool.get('purchase.order.line')
+        po = po_obj.read(cr, uid, po_id, ['partner_id', 'down_payment_ids', 'order_line'])
         absl = self.pool.get('account.bank.statement.line').browse(cr, uid, absl_id)
         # Verify that PO partner is the same as down payment partner
         if not absl.partner_id:
             raise osv.except_osv(_('Warning'), _('Third Party is mandatory for down payments!'))
         if po.get('partner_id', [False])[0] != absl.partner_id.id:
             raise osv.except_osv(_('Error'), _('Third party from Down payment and Purchase Order are different!'))
-        total = po.get('amount_total', 0.0)
+        total = 0.0
+        for pol in pol_obj.read(cr, uid, po['order_line'], ['state', 'price_unit', 'product_qty'], context=context):
+            total += pol['state'] in ('confirmed', 'done') and (pol['price_unit'] * pol['product_qty']) or 0.0
 
         absl_obj = self.pool.get('account.bank.statement.line')
         args = [('down_payment_id', '=', po_id)]
@@ -93,7 +96,7 @@ class wizard_down_payment(osv.osv_memory):
         if (total + total_amount) < -0.001:
             raise osv.except_osv(_('Warning'),
                                  _('Maximum amount should be: %s. Register' +
-                                   ' line amount is higher than (PO - ' +
+                                   ' line amount is higher than (PO confirmed amount - ' +
                                    'unexpended DPs - open/paid INV).')
                                  % (total + lines_amount))
         return True

@@ -44755,11 +44755,11 @@ msgstr "Guinée Bissau"
 #: code:addons/register_accounting/wizard/down_payment.py:95
 #, python-format
 msgid "Maximum amount should be: %s. Register' +\n"
-"                                   ' line amount is higher than (PO - ' +\n"
+"                                   ' line amount is higher than (PO confirmed amount - ' +\n"
 "                                   'unexpended DPs - open/paid INV)."
-msgstr "Maximum amount should be: %s. Register' +\n"
-"                                   ' line amount is higher than (PO - ' +\n"
-"                                   'unexpended DPs - open/paid INV)."
+msgstr "Le montant maximum devrait être : %s. Le montant de la ligne de registre' +\n"
+"                                   ' est plus élevé que (montant confirmé du BC - ' +\n"
+"                                   'acomptes non utilisés - factures ouvertes / payées)."
 
 #. module: sales_followup
 #: model:ir.model,name:sales_followup.model_sale_order_followup_from_menu
