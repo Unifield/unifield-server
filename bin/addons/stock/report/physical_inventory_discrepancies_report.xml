@@ -488,7 +488,7 @@
    <NamedRange ss:Name="Print_Titles" ss:RefersTo="=stock!R1:R10"/>
    <NamedRange ss:Name="Print_Area" ss:RefersTo="=stock!R1C1:R11C20"/>
   </Names>
-  <Table ss:ExpandedRowCount="13" x:FullColumns="1"
+  <Table x:FullColumns="1"
    x:FullRows="1" ss:DefaultColumnWidth="60.75" ss:DefaultRowHeight="15">
    <Column ss:Index="2" ss:AutoFitWidth="0" ss:Width="54"/>
    <Column ss:AutoFitWidth="0" ss:Width="69"/>
