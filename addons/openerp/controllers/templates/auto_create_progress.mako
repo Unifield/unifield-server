@@ -76,5 +76,6 @@
             <textarea rows="20" cols="80">${resume}</textarea>
         </div>
     </div>
+<a class="auto_instance_debug" href="/openerp/login/?style=noauto"><img src="/openerp/static/images/icons/idea.png" alt="debug access" /></a>
 <%include file="footer.mako"/>
 </%def>

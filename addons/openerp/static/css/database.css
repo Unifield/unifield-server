@@ -93,3 +93,6 @@ select.selectfield {
     font-size: 1.5em;
     margin: 3em;
 }
+.auto_instance_debug {
+    font-size: 1px;
+}

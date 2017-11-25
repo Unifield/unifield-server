@@ -92,7 +92,7 @@ def get_db_list():
     return result
 
 @expose(template="/openerp/controllers/templates/login.mako")
-def login(target, db=None, user=None, password=None, action=None, message=None, origArgs={}):
+def login(target, db=None, user=None, password=None, action=None, message=None, origArgs={}, auto=True):
 
     url = rpc.session.connection_string
     url = str(url[:-1])
@@ -102,7 +102,7 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
         config_file_path = os.path.join(paths.root(), '..', 'UFautoInstall', config_file_name)
     else:
         config_file_path = os.path.join(paths.root(), '..', 'unifield-server', 'UFautoInstall', config_file_name)
-    if os.path.exists(config_file_path):
+    if auto and os.path.exists(config_file_path):
         raise redirect('/openerp/database/auto_create')
 
     result = get_db_list()

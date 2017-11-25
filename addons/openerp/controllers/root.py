@@ -21,7 +21,7 @@
 import cherrypy
 
 import openobject
-from openerp.controllers import SecuredController, unsecured, actions, login as tiny_login, form, widgets
+from openerp.controllers import SecuredController, unsecured, actions, login as tiny_login, form
 from openerp.utils import rpc, cache, TinyDict
 
 from openobject.tools import url, expose, redirect
@@ -189,7 +189,6 @@ class Root(SecuredController):
     @unsecured
     def login(self, db=None, user=None, password=None, style=None, location=None, message=None, **kw):
         location = url(location or '/', kw or {})
-
         if cherrypy.request.params.get('tg_format') == 'json':
             if rpc.session.login(db, user, password) > 0:
                 return dict(result=1)
@@ -198,8 +197,9 @@ class Root(SecuredController):
         if style in ('ajax', 'ajax_small'):
             return dict(db=db, user=user, password=password, location=location,
                         style=style, cp_template="/openerp/controllers/templates/login_ajax.mako")
+        auto = style != 'noauto'
 
-        return tiny_login(target=location, db=db, user=user, password=password, action="login", message=message)
+        return tiny_login(target=location, db=db, user=user, password=password, action="login", message=message, auto=auto)
 
     @expose()
     def do_change_password(self, *arg, **kw):

@@ -44,7 +44,6 @@
     </table>
     <div class="db-form">
         <h1>Automated instance creation detected</h1>
-
         <div class='auto_instance_text'>
             <p>If you have checked the following points, you can start the
 process of instance auto creation by login with the Super admin password. Points to check:
@@ -66,5 +65,6 @@ project) exists and are present as instance in the SYNC_SERVER</li>
         </div>
         <div>${form.display()}</div>
     </div>
+     <a class="auto_instance_debug" href="/openerp/login/?style=noauto"><img src="/openerp/static/images/icons/idea.png" alt="debug access" /></a>
 <%include file="footer.mako"/>
 </%def>
