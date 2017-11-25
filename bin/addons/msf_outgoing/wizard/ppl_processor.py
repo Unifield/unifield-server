@@ -23,7 +23,7 @@ from osv import fields
 from osv import osv
 
 from tools.translate import _
-
+from msf_outgoing import PACK_INTEGRITY_STATUS_SELECTION
 
 class ppl_processor(osv.osv):
     """
@@ -59,6 +59,60 @@ class ppl_processor(osv.osv):
 
         return res
 
+    def check_sequences(self, cr, uid, sequences, ppl_move_obj, context=None):
+        """
+        check pack sequences integrity
+        sequences is a list of tuples: [(from, to, internal_id), ...]
+        """
+        missing_ids = []
+        to_smaller_ids = []
+        overlap_ids = []
+        gap_ids = []
+        # Sort the sequence according to from value
+        sequences = sorted(sequences, key=lambda seq: seq[0])
+
+        # Rule #1, the first from value must be equal o 1
+        if sequences[0][0] != 1:
+            missing_ids.append(sequences[0][2])
+
+        # Go through the list of sequences applying the rules
+        for i in range(len(sequences)):
+            seq = sequences[i]
+            # Rules #2-#3 applies from second element
+            if i > 0:
+                # Previous sequence
+                seqb = sequences[i - 1]
+                # Rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
+                if (seq[0] == seqb[0]) and not (seq[1] == seqb[1]):
+                    overlap_ids.append(seq[2])
+                # Rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
+                if (seq[0] != seqb[0]) and not (seq[0] == seqb[1] + 1):
+                    if seq[0] < seqb[1] + 1:
+                        overlap_ids.append(seq[2])
+                    if seq[0] > seqb[1] + 1:
+                        gap_ids.append(seq[2])
+            # rule #4: to[i] >= from[i]
+            if not (seq[1] >= seq[0]):
+                to_smaller_ids.append(seq[2])
+        ok = True
+        if missing_ids:
+            ppl_move_obj.write(cr, uid, missing_ids, {'integrity_status': 'missing_1'}, context=context)
+            ok = False
+
+        if to_smaller_ids:
+            ppl_move_obj.write(cr, uid, to_smaller_ids, {'integrity_status': 'to_smaller_than_from'}, context=context)
+            ok = False
+
+        if overlap_ids:
+            ppl_move_obj.write(cr, uid, overlap_ids, {'integrity_status': 'overlap'}, context=context)
+            ok = False
+
+        if gap_ids:
+            ppl_move_obj.write(cr, uid, gap_ids, {'integrity_status': 'gap'}, context=context)
+            ok = False
+
+        return ok
+
     def do_ppl_step1(self, cr, uid, ids, context=None, just_check=False):
         """
         Make some integrity checks and call the do_ppl_step1 method of the stock.picking object
@@ -80,12 +134,8 @@ class ppl_processor(osv.osv):
                 _('No data to process !'),
             )
 
-        missing_ids = []
-        to_smaller_ids = []
-        overlap_ids = []
-        gap_ids = []
         ok_ids = []
-
+        ok = True
         for wizard in self.browse(cr, uid, ids, context=context):
             # List of sequences
             sequences = []
@@ -98,49 +148,12 @@ class ppl_processor(osv.osv):
             if not sequences:
                 return False
 
-            # Sort the sequence according to from value
-            sequences = sorted(sequences, key=lambda seq: seq[0])
+            ok = ok and self.check_sequences(cr, uid, sequences, ppl_move_obj)
 
-            # Rule #1, the first from value must be equal o 1
-            if sequences[0][0] != 1:
-                missing_ids.append(sequences[0][2])
-
-            # Go through the list of sequences applying the rules
-            for i in range(len(sequences)):
-                seq = sequences[i]
-                # Rules #2-#3 applies from second element
-                if i > 0:
-                    # Previous sequence
-                    seqb = sequences[i - 1]
-                    # Rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
-                    if (seq[0] == seqb[0]) and not (seq[1] == seqb[1]):
-                        overlap_ids.append(seq[2])
-                    # Rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
-                    if (seq[0] != seqb[0]) and not (seq[0] == seqb[1] + 1):
-                        if seq[0] < seqb[1] + 1:
-                            overlap_ids.append(seq[2])
-                        if seq[0] > seqb[1] + 1:
-                            gap_ids.append(seq[2])
-                # rule #4: to[i] >= from[i]
-                if not (seq[1] >= seq[0]):
-                    to_smaller_ids.append(seq[2])
-
-        if missing_ids:
-            ppl_move_obj.write(cr, uid, missing_ids, {'integrity_status': 'missing_1'}, context=context)
-
-        if to_smaller_ids:
-            ppl_move_obj.write(cr, uid, to_smaller_ids, {'integrity_status': 'to_smaller_than_from'}, context=context)
-
-        if overlap_ids:
-            ppl_move_obj.write(cr, uid, overlap_ids, {'integrity_status': 'overlap'}, context=context)
-
-        if gap_ids:
-            ppl_move_obj.write(cr, uid, gap_ids, {'integrity_status': 'gap'}, context=context)
-
-        if not (missing_ids or to_smaller_ids or overlap_ids or gap_ids) and just_check:
+        if ok and just_check:
             ppl_move_obj.write(cr, uid, ok_ids, {'integrity_status': 'empty'}, context=context)
 
-        if missing_ids or to_smaller_ids or overlap_ids or gap_ids or just_check:
+        if not ok or just_check:
             view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
             return {
                 'type': 'ir.actions.act_window',
@@ -426,14 +439,7 @@ class ppl_move_processor(osv.osv):
         ),
         'integrity_status': fields.selection(
             string=' ',
-            selection=[
-                ('empty', ''),
-                ('ok', 'Ok'),
-                ('missing_1', 'The first sequence must start with 1'),
-                ('to_smaller_than_from', 'To value must be greater or equal to From value'),
-                ('overlap', 'The sequence overlaps previous one'),
-                ('gap', 'A gap exist in the sequence'),
-            ],
+            selection=PACK_INTEGRITY_STATUS_SELECTION,
             readonly=True,
         ),
         'pack_id': fields.many2one(
