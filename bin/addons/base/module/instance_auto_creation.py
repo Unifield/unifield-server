@@ -24,6 +24,7 @@ import time
 import pooler
 import uuid
 import ConfigParser
+import shutil
 
 import tools
 import threading
@@ -294,9 +295,10 @@ class instance_auto_creation(osv.osv):
                 instance_name = config_dict['instance'].get('instance_name') or cr.dbname
                 # find the parent_id:
                 oc = config_dict['instance'].get('oc').lower()
+                instance_identifier = str(uuid.uuid1())
                 data = {
                     'name': instance_name,
-                    'identifier': str(uuid.uuid1()),
+                    'identifier': instance_identifier,
                     'oc': oc,
                     'parent': config_dict['instance'].get('parent_instance'),
                 }
@@ -325,6 +327,12 @@ class instance_auto_creation(osv.osv):
                 wizard.validate(cr, uid, wizard_id)
                 self.write(cr, 1, creation_id,
                            {'state': 'instance_registered'}, context=context)
+
+                if config_dict['instance'].get('auto_valid') and config_dict['instance'].get('sync_host') in ('localhost', '127.0.0.1'):
+                    proxy = pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
+                    ent_ids = proxy.search([('name', '=', instance_name), ('identifier', '=', instance_identifier)])
+                    proxy.validate_action(ent_ids)
+
 
             # create a cron job to check that the registration has been validated on the server side
             cron_obj = pool.get('ir.cron')
@@ -529,9 +537,9 @@ class instance_auto_creation(osv.osv):
                     # skip account.installer if no parent_name providen (typically: HQ instance)
                     if model == 'msf_instance.setup':
                         instance_id = self.pool.get('msf.instance').search(cr,
-                                                                           uid, [('code', '=', config_dict['reconfigure']['prop_instance_code'])])
+                                                                           uid, [('code', '=', config_dict['instance']['prop_instance_code'])])
                         if not instance_id:
-                            error_message = ('No prop. instance \'%s\' found. Please check it has been created on the HQ and sync, then restart the auto creation process from scratch.') % config_dict['reconfigure']['prop_instance_code']
+                            error_message = ('No prop. instance \'%s\' found. Please check it has been created on the HQ and sync, then restart the auto creation process from scratch.') % config_dict['instance']['prop_instance_code']
                             raise osv.except_osv(_("Error!"), error_message)
                         else:
                             instance_id = instance_id[0]
@@ -601,11 +609,11 @@ class instance_auto_creation(osv.osv):
 
             # company configuration
             instance_id = self.pool.get('msf.instance').search(cr,
-                                                               uid, [('code', '=', config_dict['reconfigure']['prop_instance_code'])])
+                                                               uid, [('code', '=', config_dict['instance']['prop_instance_code'])])
             company_obj = self.pool.get('res.company')
             company_id = company_obj.search(cr, uid, [('instance_id', '=', instance_id)])
             if len(company_id) != 1:
-                raise osv.except_osv(_("Error!"), 'There should be one and only one company with proprietary instance \'%s\', found %d.' % (config_dict['reconfigure']['prop_instance_code'], len(instance_partner_id)))
+                raise osv.except_osv(_("Error!"), 'There should be one and only one company with proprietary instance \'%s\', found %d.' % (config_dict['instance']['prop_instance_code'], len(instance_partner_id)))
 
             vals = {
                 'schedule_range': float(config_dict['company']['scheduler_range_days']),
@@ -651,10 +659,13 @@ class instance_auto_creation(osv.osv):
                        {'state': 'done'}, context=context)
             time.sleep(6)  # before to delete to let the web get the last
             # informations
-            # delete the auto configuration folder
-            config_file_path = os.path.join(tools.config['root_path'], '..', 'UFautoInstall')
-            import shutil
-            shutil.rmtree(config_file_path)
+            # rename auto configuration folder
+            config.set('instance', 'sync_pwd', '')
+            config.set('instance', 'admin_password', '')
+            config_fp = open(config_file_path, 'wb')
+            config.write(config_fp)
+            config_fp.close()
+            shutil.move(config_file_path, "%s-%s" % (config_file_path, time.strftime('%Y%m%d-%H%M')))
 
         except Exception as e:
             self.write(cr, 1, creation_id,
