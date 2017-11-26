@@ -58,9 +58,21 @@ class purchase_order_line_sync(osv.osv):
         wf_service = netsvc.LocalService("workflow")
         sol_dict = sol_info.to_dict()
 
+        po_ids = []
         # search for the parent purchase.order:
-        partner_ref = '%s.%s' % (source, sol_dict['order_id']['name'])
-        po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', partner_ref)], context=context)
+        if sol_dict['in_name_goods_return']:
+            # FO claim updated, update orignal PO
+            in_name = sol_dict['in_name_goods_return'].split('.')
+            in_name.pop(0)
+            in_name = '.'.join(in_name)
+            pick_id = pick_obj.search(cr, uid, [('name', '=', in_name)], context=context)
+            if pick_id:
+                po_id = pick_obj.read(cr, uid, pick_id[0], ['purchase_id'], context=context)['purchase_id'][0]
+                if po_id:
+                    po_ids = [po_id]
+        else:
+            partner_ref = '%s.%s' % (source, sol_dict['order_id']['name'])
+            po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', partner_ref)], context=context)
         if not po_ids:
             raise Exception, "Cannot find the parent PO with partner ref %s" % partner_ref
 

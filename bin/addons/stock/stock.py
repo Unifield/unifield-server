@@ -1135,6 +1135,14 @@ class stock_picking(osv.osv):
         intermission = False
         payment_term_id = False
         partner =  picking.address_id and picking.address_id.partner_id
+
+        if picking.partner_id.partner_type == 'internal':
+            return False, False
+        
+        if picking.claim:
+            # don't invoice claim
+            return False, False
+
         if not partner:
             raise osv.except_osv(_('Error, no partner !'),
                                  _('Please put a partner on the picking list if you want to generate invoice.'))

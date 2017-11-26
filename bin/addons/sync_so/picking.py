@@ -320,6 +320,16 @@ class stock_picking(osv.osv):
             shipment_ref = pick_dict.get('name', False) # the case of OUT
             if shipment_ref and 'OUT' not in shipment_ref:
                 shipment_ref = False
+        if not po_id and pick_dict.get('sale_id') and pick_dict.get('sale_id', {}).get('claim_name_goods_return'):
+            po_sync_name = pick_dict.get('sale_id', {}).get('client_order_ref')
+            if po_sync_name:
+                po_split_name = po_sync_name.split('.')
+                po_split_name.pop(0)
+                po_name = '.'.join(po_split_name)
+                po_ids = po_obj.search(cr, uid, [('name', '=', po_name)], context=context)
+                if po_ids:
+                    po_id = po_ids[0]
+            
         if not po_id and not pick_dict.get('claim', False):
             # UF-1830: Check if the PO exist, if not, and in restore mode, send a warning and create a message to remove the ref on the partner document
             if context.get('restore_flag'):
