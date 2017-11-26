@@ -38,8 +38,9 @@
                         <group col="4" colspan="4">
                             <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                             <field name="type_return_claim"
-                                attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
+                                attrs="{'readonly': ['|', ('state', 'in', ('draft_progress', 'done')), ('contains_event_return_claim', '=', True)]}" />
                             <field name="category_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                            <field name="origin_claim" readonly="1" />
                         </group>
                         <group col="2" colspan="1">
                                 <field name="creation_date_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
@@ -51,11 +52,12 @@
                                 <field name="picking_id_return_claim"
                                     domain="[('state', '=', 'done'), '|', '&amp;', ('type', 'in', ['out', 'in']), ('subtype', '=', 'standard'), '&amp;', '&amp;', ('type', '=', 'out'), ('subtype', '=', 'picking'), ('backorder_id', '!=', False)]"
                                     on_change="on_change_origin(picking_id_return_claim,context)"
-                                    attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
+                                    attrs="{'readonly': ['|', ('state', 'in', ('draft_progress', 'done')), ('contains_event_return_claim', '=', True)]}" />
                                 <field name="po_so_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
                                 <field name="partner_id_return_claim"
-                                    attrs="{'readonly': ['|', ('state', '=', 'done'), ('contains_event_return_claim', '=', True)]}" />
+                                    attrs="{'readonly': ['|', ('state', 'in', ('draft_progress', 'done')), ('contains_event_return_claim', '=', True)]}" />
                                 <field name="order_line_number_return_claim" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                                <field name="goods_expected" readonly="1" attrs="{'invisible': [('goods_expected', '=', False)]}" />
                                 <field name="description_return_claim" colspan="4" />
                             </page>
                             <page string="Events">
@@ -154,8 +156,20 @@
                             <field name="fake_state_return_claim" invisible="True" />
                         </group>
                         <group col="7" colspan="2">
-                            <!-- <button name="process_next_event" string="Process Next Event" type="object" icon="gtk-go-forward" attrs="{'readonly': [('contains_event_return_claim', '=', False)]}" /> -->
-                            <button name="close_claim" string="Close Claim" type="object" icon="gtk-close" attrs="{'invisible': [('state', '=', 'done')]}" />
+                            <field name="has_missing_events" invisible="True" />
+                            <field name="original_pick_partner_external_or_esc" invisible="True" />
+                            <field name="is_forwarded" invisible="True" />
+                            <button name="claim_to_external_partner" string="Forward Claim to External Supplier" icon="gtk-go-forward" type="object"
+                                    attrs="{'invisible': ['|', '|', '|', ('state', 'not in', ['in_progress', 'done']), ('origin_claim', '=', False),
+                                    ('is_forwarded', '=', True), ('original_pick_partner_external_or_esc', '=', False)]}"/>
+                            <field name="prevent_stock_discrepancies"
+                                   attrs="{'invisible': ['&amp;', '|', '|', ('state', '!=', 'draft_progress'),
+                                   ('type_return_claim', '!=', 'customer'), ('has_missing_events', '=', False), ('prevent_stock_discrepancies', '=', False)],
+                                           'readonly': [('state', '!=', 'draft_progress')]}"/>
+                            <button name="validate_draft_progress_claim" string="Validate Claim" icon="terp-check" type="object"
+                                    attrs="{'invisible': [('state', '!=', 'draft_progress')]}"/>
+                            <button name="close_claim" string="Close Claim" type="object" icon="gtk-close"
+                                    attrs="{'invisible': [('state', '!=', 'in_progress')]}" />
                         </group>
                     </form>
                 </field>
@@ -182,7 +196,8 @@
                 <field name="arch" type="xml">
                     <search string="Search Claim">
                         <filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" separator="1" />
-                        <filter icon="terp-camera_test" name="completed" string="In Progress" domain="[('state','=', 'in_progress')]" separator="1" />
+                        <filter icon="terp-document-new" name="draft_progress" string="Draft - in Progress" domain="[('state','=','draft_progress')]" separator="1" />
+                        <filter icon="terp-check" name="completed" string="Validated - In Progress" domain="[('state','=', 'in_progress')]" separator="1" />
                         <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
                         <separator orientation="vertical" />
                         <filter icon="terp-personal" name="supplier" string="Supplier" domain="[('type_return_claim','=','supplier')]" separator="1" />
@@ -191,6 +206,11 @@
                         <separator orientation="vertical" />
                         <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[]" context="{'active_test': False}" separator="1" />
                         <separator orientation="vertical" />
+                        <field name="name" />
+                        <field name="type_return_claim" />
+                        <newline />
+                        <field name="partner_id_return_claim" select="1" />
+                        <field name="creation_date_return_claim" />
                         <field name="state" select="1" />
                         <newline />
                         <group expand="0" string="Group By..." colspan="4" col="10">

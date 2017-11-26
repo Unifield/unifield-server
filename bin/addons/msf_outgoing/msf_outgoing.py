@@ -1948,7 +1948,7 @@ class stock_picking(osv.osv):
         obj = self.browse(cr, uid, copy_id, context=context)
         if not context.get('allow_copy', False):
             if obj.subtype == 'picking' and default.get('subtype', 'picking') == 'picking':
-                if not obj.backorder_id:
+                if not obj.backorder_id or obj.claim:
                     # draft, new ref
                     default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket'),
                                    origin=False,
@@ -1959,7 +1959,7 @@ class stock_picking(osv.osv):
                     # if the corresponding draft picking ticket is done, we do not allow copy
                     if obj.backorder_id and obj.backorder_id.state == 'done':
                         raise osv.except_osv(_('Error !'), _('Corresponding Draft picking ticket is Closed. This picking ticket cannot be copied.'))
-                    if obj.backorder_id:
+                    if obj.backorder_id and not obj.backorder_id.claim:
                         raise osv.except_osv(_('Error !'), _('You cannot duplicate a Picking Ticket linked to a Draft Picking Ticket.'))
                     # picking ticket, use draft sequence, keep other fields
                     base = obj.name
@@ -3046,6 +3046,12 @@ class stock_picking(osv.osv):
 
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
+            # in case of return claim
+            if '-return' in obj.name:
+                new_name += '-return'
+            elif '-surplus' in obj.name:
+                new_name += '-surplus'
+
             if context.get('rw_backorder_name', False):
                 new_name = context.get('rw_backorder_name')
                 del context['rw_backorder_name']
@@ -3152,7 +3158,8 @@ class stock_picking(osv.osv):
                         move_obj.update_linked_documents(cr, uid, move.id, new_move_id, context=context)
 
                     # Set the stock move to done with 0.00 qty
-                    if move.id in keep_move and keep_move[move.id]:
+                    if (move.id in keep_move and keep_move[move.id])\
+                            or ('return' in move.picking_id.name or 'surplus' in move.picking_id.name):
                         m_st = move.state
                     else:
                         m_st = 'done'
@@ -3257,6 +3264,11 @@ class stock_picking(osv.osv):
 
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
+            # in case of return claim
+            if '-return' in out.name:
+                new_name += '-return'
+            elif '-surplus' in out.name:
+                new_name += '-surplus'
 
             # change subtype and name
             default_vals = {'name': new_name,
@@ -3390,6 +3402,11 @@ class stock_picking(osv.osv):
                     'location_id': line.location_id and line.location_id.id,
                 }
 
+                if wizard.register_a_claim and wizard.claim_replacement_picking_expected:
+                    values.update({
+                        'purchase_line_id': move.purchase_line_id and move.purchase_line_id.id or False,
+                    })
+
                 if quantity < move.product_qty and move_data[move.id]['original_qty'] > move_data[move.id]['processed_qty']:
                     # Create a new move
                     new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
@@ -3467,14 +3484,23 @@ class stock_picking(osv.osv):
 
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, new_picking_id, context=context)
-                # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
-                wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
-                # Then we finish the good picking
-                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'return'):
+
+                if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
+                    move_ids = move_obj.search(cr, uid, [('picking_id', '=', new_picking_id)])
+                    move_obj.action_cancel(cr, uid, move_ids, context=context)
+                    self.action_cancel(cr, uid, [new_picking_id], context=context)
+                    # check the OUT availability
+                    out_domain = [('backorder_id', '=', new_picking_id), ('type', '=', 'out')]
+                    out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
+                    self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
+                else:
+                    # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
+                    wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
+                    # Then we finish the picking
                     self.action_move(cr, uid, [new_picking_id])
                     wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_done', cr)
-                    # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
-                    self._hook_create_sync_messages(cr, uid, new_picking_id, context)
+                # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
+                self._hook_create_sync_messages(cr, uid, new_picking_id, context)
 
                 wf_service.trg_write(uid, 'stock.picking', picking.id, cr)
                 delivered_pack_id = new_picking_id
@@ -3489,16 +3515,25 @@ class stock_picking(osv.osv):
                 ))
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, picking.id, context=context)
-                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'return'):
+
+                if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
+                    move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking.id)])
+                    move_obj.action_cancel(cr, uid, move_ids, context=context)
+                    self.action_cancel(cr, uid, [picking.id], context=context)
+                    # check the OUT availability
+                    out_domain = [('backorder_id', '=', picking.id), ('type', '=', 'out')]
+                    out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
+                    self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
+                else:
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
-                    update_vals = {'state':'done', 'date_done':time.strftime('%Y-%m-%d %H:%M:%S')}
+                    update_vals = {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}
                     if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                         update_vals.update({'already_replicated': False})
                     self.write(cr, uid, picking.id, update_vals)
 
-                    # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
-                    self._hook_create_sync_messages(cr, uid, [picking.id], context)
+                # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
+                self._hook_create_sync_messages(cr, uid, [picking.id], context)
 
                 delivered_pack_id = picking.id
 

@@ -231,6 +231,7 @@ class stock_location(osv.osv):
     def _hook_chained_location_get(self, cr, uid, context={}, *args, **kwargs):
         return kwargs.get('result', None)
 
+    ##################### TODO Remove ##################################
     def chained_location_get(self, cr, uid, location, partner=None, product=None, context=None):
         """ Finds chained location
         @param location: Location id
@@ -615,6 +616,12 @@ class stock_picking(osv.osv):
         return res
 
     def create(self, cr, user, vals, context=None):
+        if vals.get('type', False) and vals['type'] == 'in' \
+                and not vals.get('from_wkf', False) and not vals.get('from_wkf_sourcing', False):
+            reason_type = self.pool.get('stock.reason.type').browse(cr, user, vals.get('reason_type_id', False), context=context)
+            if reason_type and reason_type.name == 'Damage':
+                raise osv.except_osv(_('Error'), _('You can not create an Incoming Shipment from scratch with %s reason type')
+                                     % (reason_type.name,))
         if 'type' in vals and (('name' not in vals) or (vals.get('name')=='/')):
             seq_obj_name =  'stock.picking.' + vals['type']
             vals['name'] = self.pool.get('ir.sequence').get(cr, user, seq_obj_name)
@@ -664,6 +671,7 @@ class stock_picking(osv.osv):
             select=True, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'company_id': fields.many2one('res.company', 'Company', required=True, select=True),
         'claim': fields.boolean('Claim'),
+        'claim_name': fields.char(string='Name of the claim', size=512),
     }
     _defaults = {
         'name': lambda self, cr, uid, context: '/',
@@ -725,6 +733,10 @@ class stock_picking(osv.osv):
         if context is None:
             context = {}
         default = default.copy()
+        default.update({
+            'claim': False,
+            'claim_name': '',
+        })
         picking_obj = self.read(cr, uid, id, ['name', 'type'], context=context)
         move_obj = self.pool.get('stock.move')
         if ('name' not in default) or (picking_obj['name'] == '/'):
@@ -949,7 +961,7 @@ class stock_picking(osv.osv):
         self.log_picking(cr, uid, ids, context=context)
         return True
 
-    def action_move(self, cr, uid, ids, context=None):
+    def action_move(self, cr, uid, ids, return_goods=None, context=None):
         """ Changes move state to assigned.
         @return: True
         """
@@ -963,7 +975,7 @@ class stock_picking(osv.osv):
                     todo.append(move.id)
             if len(todo):
                 move_obj.action_done(cr, uid, todo,
-                                     context=context)
+                                     return_goods=return_goods, context=context)
         return True
 
     def get_currency_id(self, cr, uid, picking):
@@ -2294,14 +2306,19 @@ class stock_move(osv.osv):
         pickid = kwargs['picking']
         picking_obj = self.pool.get('stock.picking')
         wf_service = netsvc.LocalService("workflow")
-        wf_service.trg_validate(uid, 'stock.picking', pickid, 'button_confirm', cr)
-        wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_assign', cr)
-        # Make the stock moves available
-        picking_obj.action_assign(cr, uid, [pickid], context=context)
+        if kwargs['return_goods']:
+            # Cancel the INT in case of Claim return/surplus processed from IN
+            wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_cancel', cr)
+            picking_obj.action_cancel(cr, uid, [pickid], context=context)
+        else:
+            wf_service.trg_validate(uid, 'stock.picking', pickid, 'button_confirm', cr)
+            wf_service.trg_validate(uid, 'stock.picking', pickid, 'action_assign', cr)
+            # Make the stock moves available
+            picking_obj.action_assign(cr, uid, [pickid], context=context)
         picking_obj.log_picking(cr, uid, [pickid], context=context)
         return
 
-    def create_chained_picking(self, cr, uid, moves, context=None):
+    def create_chained_picking(self, cr, uid, moves, return_goods=None, context=None):
         res_obj = self.pool.get('res.company')
         location_obj = self.pool.get('stock.location')
         move_obj = self.pool.get('stock.move')
@@ -2323,7 +2340,7 @@ class stock_move(osv.osv):
                 if old_ptype != picking.type:
                     picking_vals['name'] = seq_obj.get(cr, uid, 'stock.picking.' + old_ptype)
                 if ptype == 'internal':
-                    picking_vals['associate_pick_name'] = new_pick_name # save the INT name into this original IN
+                    picking_vals['associate_pick_name'] = new_pick_name  # save the INT name into this original IN
                 if picking_vals:
                     picking_obj.write(cr, uid, [picking.id], picking_vals, context=context)
             else:
@@ -2337,7 +2354,7 @@ class stock_move(osv.osv):
                              'date_moved': time.strftime('%Y-%m-%d'),
                              'picking_id': pickid,
                              'state': 'waiting',
-                             'company_id': company_id or res_obj._company_default_get(cr, uid, 'stock.company', context=context)  ,
+                             'company_id': company_id or res_obj._company_default_get(cr, uid, 'stock.company', context=context),
                              'move_history_ids': [],
                              'date': (datetime.strptime(move.date, '%Y-%m-%d %H:%M:%S') + relativedelta(days=delay or 0)).strftime('%Y-%m-%d'),
                              'move_history_ids2': [],
@@ -2354,7 +2371,7 @@ class stock_move(osv.osv):
 
                 new_moves.append(self.browse(cr, uid, [new_id])[0])
             if pickid:
-                self._create_chained_picking_internal_request(cr, uid, context=context, picking=pickid)
+                self._create_chained_picking_internal_request(cr, uid, context=context, picking=pickid, return_goods=return_goods)
         if new_moves:
             new_moves += self.create_chained_picking(cr, uid, new_moves, context)
         return new_moves
@@ -2663,7 +2680,7 @@ class stock_move(osv.osv):
         result = move.move_dest_id.id and (move.state != 'done')
         return result
 
-    def action_done(self, cr, uid, ids, context=None):
+    def action_done(self, cr, uid, ids, return_goods=None, context=None):
         """ Makes the move done and if all moves are done, it will finish the picking.
         @return:
         """
@@ -2715,7 +2732,7 @@ class stock_move(osv.osv):
                 vals.update({'prodlot_id': prodlot_id})
             if vals:
                 self.write(cr, uid, [move.id], vals)
-            if move.state not in ('confirmed','done','assigned'):
+            if move.state not in ('confirmed', 'done', 'assigned'):
                 todo.append(move.id)
 
         if todo:
@@ -2733,11 +2750,11 @@ class stock_move(osv.osv):
             if pick['state'] != 'done' and pick['type'] == 'in':
                 pick_id_to_write.add(pick['id'])
         if pick_id_to_write:
-            self.pool.get('stock.picking').write(cr, uid,
-                                                 list(pick_id_to_write), {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+            self.pool.get('stock.picking').write(cr, uid, list(pick_id_to_write),
+                                                 {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
 
         moves = self.browse(cr, uid, move_ids, context=context)
-        self.create_chained_picking(cr, uid, moves, context)
+        self.create_chained_picking(cr, uid, moves, return_goods, context)
 
         return True
 

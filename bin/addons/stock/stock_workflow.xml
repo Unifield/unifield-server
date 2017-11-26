@@ -97,7 +97,7 @@
             <field name="act_from" ref="act_assigned"/>
             <field name="act_to" ref="act_cancel"/>
 			 <field name="condition">allow_cancel()</field>
-            <field name="signal">button_cancel</field>
+            <field name="signal">button_cancenetsvc.LocalService("workflow").trg_validate(uid, 'stock.picking', event_picking_id, 'convert_to_picking_ticket', cr)l</field>
         </record>
         <record id="trans_confirmed_cancel" model="workflow.transition">
             <field name="act_from" ref="act_confirmed"/>

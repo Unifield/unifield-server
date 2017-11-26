@@ -21,10 +21,8 @@
 
 from osv import fields, osv
 from tools.translate import _
-import decimal_precision as dp
 import time
 
-import netsvc
 
 class add_event(osv.osv_memory):
     '''
@@ -72,7 +70,7 @@ class add_event(osv.osv_memory):
                 'claim_picking_id': fields.many2one('stock.picking', string='Claim Origin', readonly=True),
                 'creation_date': fields.date(string='Creation Date', required=True),
                 'event_type': fields.selection(_get_types, string='Event Type', required=True),
-                'replacement_picking_expected_partial_picking': fields.boolean(string='Replacement expected?'),
+                'replacement_picking_expected_partial_picking': fields.boolean(string='Replacement expected ?'),
                 # functions
                 'dest_location_id': fields.function(_vals_get_claim, method=True, string='Associated Location', type='many2one', relation='stock.location', readonly=True, multi='get_vals_claim'),
                 }
@@ -117,7 +115,7 @@ class add_event(osv.osv_memory):
             if not obj.event_type:
                 raise osv.except_osv(_('Warning !'), _('You need to specify an event type.'))
             # reset replacement if not return
-            if obj.event_type != 'return':
+            if obj.event_type not in ('accept', 'scrap', 'return'):
                 replacement = False
             else:
                 replacement = obj.replacement_picking_expected_partial_picking
@@ -129,7 +127,7 @@ class add_event(osv.osv_memory):
                             'replacement_picking_expected_claim_event': replacement,
                             }
             # create event
-            event_id = event_obj.create(cr, uid, event_values, context=context)
+            event_obj.create(cr, uid, event_values, context=context)
 #        return {'type': 'ir.actions.act_window_close'}
         return {'type': 'ir.actions.act_window',
                 'res_model': 'return.claim',
