@@ -140,7 +140,6 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                 return self.pool.get('stock.move').browse(self.cr, self.uid, [x[0] for x in data]), dict(data)
         return [], {}
 
-
     def cancel_in_line(self, po_id, prod_id):
         self.cr.execute('''select
                                 move.product_uom,
@@ -155,12 +154,12 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                         )
         return self.cr.fetchall()
 
-
-
     def _get_lines(self, order_id, only_bo=False):
         '''
         Get all lines for an order
         '''
+        pol_obj = self.pool.get('purchase.order.line')
+        move_obj = self.pool.get('stock.move')
         keys = []
 
         if not isinstance(order_id, int):
@@ -177,13 +176,22 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             cdd = False
             from_stock = line.type == 'make_to_stock'
             cancel_in_moves = []
-            if line.procurement_id and line.procurement_id.purchase_id:
-                po_name = line.procurement_id.purchase_id.name
-                cdd = line.procurement_id.purchase_id.delivery_confirmed_date
-                cancel_in_moves = self.cancel_in_line(line.procurement_id.purchase_id.id, line.product_id.id)
-            if not cdd and line.order_id.delivery_confirmed_date:
-                cdd = line.order_id.delivery_confirmed_date
+            linked_po_line_id = pol_obj.search(self.cr, self.uid, [('linked_sol_id', '=', line.id)])
+            linked_po_line = False
+            linked_move = False
+            if len(linked_po_line_id) > 0:
+                linked_po_line = pol_obj.browse(self.cr, self.uid, linked_po_line_id[0])
+                linked_move_id = move_obj.browse(self.cr, self.uid, [('purchase_line_id', '=', linked_po_line.id)])
+                if len(linked_move_id) > 0:
+                    linked_move = move_obj.browse(self.cr, self.uid, linked_move_id[0])
 
+            if linked_po_line:
+                po_name = linked_po_line.order_id.name
+                cdd = line.delivery_confirmed_date
+                if linked_po_line.product_id:
+                    cancel_in_moves = self.cancel_in_line(linked_po_line.order_id.id, line.product_id.id)
+            else:
+                cdd = line.delivery_confirmed_date
 
             # fetch the move in case the line doesn't have move_ids
             # if no move found for this line, it's set to False
@@ -191,12 +199,10 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
             current_line_state = line.state
             if line.order_id.state == 'cancel':
                 current_line_state = 'cancel'
-            elif line.procurement_id.purchase_id and line.procurement_id.purchase_id.state == 'cancel':
+            elif linked_po_line and linked_po_line.state == 'cancel':
+                    current_line_state = 'cancel'
+            elif linked_move and linked_move.state == 'cancel':
                 current_line_state = 'cancel'
-            elif line.procurement_id.move_id and \
-                    (line.procurement_id.move_id.state == 'cancel' or line.procurement_id.move_id.picking_id.state == 'cancel'):
-                current_line_state = 'cancel'
-
 
             # cancel IN at line level: qty on IR line is adjusted
             # cancel all IN: qty on IR is untouched
@@ -344,7 +350,7 @@ class ir_follow_up_location_report_parser(report_sxw.rml_parse):
                             if data.get('first_line'):
                                 fl_index = m_index
                             m_index += 1
-            elif line_moves and (len(line.move_ids) == 0 and line.procurement_id.move_id):
+            elif line_moves and (len(line.move_ids) == 0 and linked_move_id):
                 for line_move in line_moves:
                     if line_move.state == 'cancel' or line_move.picking_id.state == 'cancel':
                         current_line_state = 'cancel'
