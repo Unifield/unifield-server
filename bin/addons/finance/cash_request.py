@@ -101,6 +101,8 @@ class cash_request(osv.osv):
                                               string='Past Transfers', readonly=True),
         'current_instance_level': fields.function(_get_current_instance_level, method=True, type='char',
                                                   string='Current Instance Level', store=False, readonly=True),
+        'payable_ids': fields.one2many('cash.request.payable', 'cash_request_id', 'Payables', required=True,
+                                       readonly=True),
     }
 
     def _check_buffer(self, cr, uid, ids):
@@ -272,6 +274,26 @@ class cash_request(osv.osv):
                 commitment_obj.create(cr, uid, vals, context=context)
         return True
 
+    def _generate_payables(self, cr, uid, cash_req_id, context=None):
+        """
+        Generates data for the Payables Tab of the Cash Request
+        """
+        if context is None:
+            context = {}
+        payable_obj = self.pool.get('cash.request.payable')
+        cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['instance_ids'], context=context)
+        # delete previous payables for this cash request
+        old_payable_ids = payable_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)],
+                                             order='NO_ORDER', context=context)
+        payable_obj.unlink(cr, uid, old_payable_ids, context=context)
+        # create new cash req. payables
+        instances = cash_req.instance_ids
+        for inst in instances:
+            vals = {'instance_id': inst.id,
+                    'cash_request_id': cash_req.id}
+            payable_obj.create(cr, uid, vals, context=context)
+        return True
+
     def _generate_past_transfers(self, cr, uid, cash_req_id, context=None):
         """
         Generates data for the Transfers Follow-up Tab of the Cash Request:
@@ -351,6 +373,7 @@ class cash_request(osv.osv):
             cash_req = self.read(cr, uid, cash_request_id, ['request_date', 'state'], context=context)
             if cash_req['request_date'] != datetime.today().strftime('%Y-%m-%d'):
                 raise osv.except_osv(_('Error'), _('The date of the Cash Request must be the date of the day.'))
+            self._generate_payables(cr, uid, cash_request_id, context=context)
             self._generate_commitments(cr, uid, cash_request_id, context=context)
             self._generate_past_transfers(cr, uid, cash_request_id, context=context)
             if cash_req['state'] != 'done':
@@ -777,4 +800,100 @@ class cash_request_recap_expense(osv.osv):
 
 
 cash_request_recap_expense()
+
+
+class cash_request_payable(osv.osv):
+    _name = 'cash.request.payable'
+    _rec_name = 'cash_request_id'
+    _description = 'Payables for Cash Request'
+
+    def _aml_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Gets the ids of the JIs matching all the following criteria:
+        - booked on accounts with Internal Type Payables (exclude Donations)
+        - posted
+        - not fully reconciled
+        - booked in the period of the cash request or before
+        - for a given Prop. Instance (=> instance_id of the cash_request_payable)
+        """
+        if context is None:
+            context = {}
+        result = {}
+        aml_obj = self.pool.get('account.move.line')
+        acc_obj = self.pool.get('account.account')
+        cash_req_obj = self.pool.get('cash.request')
+        for cr_payable in self.browse(cr, uid, ids, fields_to_fetch=['cash_request_id', 'instance_id'], context=context):
+            acc_domain = [('type', '=', 'payable'), ('type_for_register', '!=', 'donation')]
+            account_ids = acc_obj.search(cr, uid, acc_domain, order='NO_ORDER', context=context)
+            cash_req_id = cr_payable.cash_request_id.id
+            cash_req = cash_req_obj.browse(cr, uid, cash_req_id, fields_to_fetch=['month_period_id'], context=context)
+            period = cash_req.month_period_id
+            aml_domain = [('account_id', 'in', account_ids),
+                          ('move_id.state', '=', 'posted'),
+                          ('reconcile_id', '=', False),
+                          ('date', '<=', period.date_stop),
+                          ('instance_id', '=', cr_payable.instance_id.id)]
+            result[cr_payable.id] = aml_obj.search(cr, uid, aml_domain, order='NO_ORDER', context=context)
+        return result
+
+    def _debit_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Computes the total functional debit amount based on the entries from _aml_compute
+        """
+        if context is None:
+            context = {}
+        result = {}
+        aml_obj = self.pool.get('account.move.line')
+        for cr_payable in self.browse(cr, uid, ids, fields_to_fetch=['account_move_line_ids'], context=context):
+            aml_ids = [aml.id for aml in cr_payable.account_move_line_ids]
+            amls = aml_obj.browse(cr, uid, aml_ids, fields_to_fetch=['debit'], context=context)
+            result[cr_payable.id] = sum([aml.debit or 0.0 for aml in amls])
+        return result
+
+    def _credit_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Computes the total functional debit amount based on the entries from _aml_compute
+        """
+        if context is None:
+            context = {}
+        result = {}
+        aml_obj = self.pool.get('account.move.line')
+        for cr_payable in self.browse(cr, uid, ids, fields_to_fetch=['account_move_line_ids'], context=context):
+            aml_ids = [aml.id for aml in cr_payable.account_move_line_ids]
+            amls = aml_obj.browse(cr, uid, aml_ids, fields_to_fetch=['credit'], context=context)
+            result[cr_payable.id] = sum([aml.credit or 0.0 for aml in amls])
+        return result
+
+    def _balance_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Computes the total functional balance (debit - credit)
+        """
+        if context is None:
+            context = {}
+        result = {}
+        for cr_payable_id in ids:
+            cr_payable = self.browse(cr, uid, cr_payable_id, fields_to_fetch=['debit', 'credit'], context=context)
+            debit = cr_payable.debit or 0.0
+            credit = cr_payable.credit or 0.0
+            result[cr_payable_id] = debit - credit
+        return result
+
+    _columns = {
+        'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
+        'instance_id': fields.many2one('msf.instance', 'Instance', required=True,
+                                       domain=[('level', 'in', ['coordo', 'project'])]),
+        'account_move_line_ids': fields.function(_aml_compute, method=True, relation='account.move.line',
+                                                 type='many2many', string='Account Move Lines'),
+        'debit': fields.function(_debit_compute, method=True, string='Debit', type='float',
+                                 digits_compute=dp.get_precision('Account'), readonly=True, store=True),
+        'credit': fields.function(_credit_compute, method=True, string='Credit', type='float',
+                                  digits_compute=dp.get_precision('Account'), readonly=True, store=True),
+        'balance': fields.function(_balance_compute, method=True, string='Balance in functional currency', type='float',
+                                   digits_compute=dp.get_precision('Account'), readonly=True),
+    }
+
+    _order = 'instance_id'
+
+
+cash_request_payable()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

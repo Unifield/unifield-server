@@ -91,6 +91,16 @@
                                 <field name="swift_code"/>
                                 <field name="bank_address"/>
                             </page>
+                            <page string="Payables" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                                <field name="payable_ids" nolabel="1">
+                                    <tree string="Payables">
+                                        <field name="instance_id"/>
+                                        <field name="debit" sum="Total Debit"/>
+                                        <field name="credit" sum="Total Credit"/>
+                                        <field name="balance" sum="Total Balance"/>
+                                    </tree>
+                                </field>
+                            </page>
                             <page string="Commitment" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                 <separator colspan="4" string="Commitment"/>
                                 <field name="commitment_ids" nolabel="1">
