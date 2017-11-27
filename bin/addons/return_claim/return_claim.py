@@ -1516,10 +1516,15 @@ class claim_event(osv.osv):
         pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
         # update the picking again - strange bug on runbot, the type was internal again...
         pick_obj.write(cr, uid, [event_picking_id], picking_values, context=context)
+        # the destination location of the processed IN/INT moves must be the source of the PICK moves
+        for i, move in enumerate(event_picking.move_lines):
+            move_values_set_loc = move_values
+            # set the same line number as the original move
+            move_values_set_loc.update({'location_id': origin_picking.move_lines[i].location_dest_id.id})
+            # get the move values according to claim type
+            move_obj.write(cr, uid, move.id, move_values_set_loc, context=context)
         # update the destination location for each move
         move_ids = [move.id for move in event_picking.move_lines]
-        # get the move values according to claim type
-        move_obj.write(cr, uid, move_ids, move_values, context=context)
         # confirm the moves but not the pick to be able to convert to OUT
         move_obj.action_confirm(cr, uid, move_ids, context=context)
         # do we need replacement?
@@ -1620,17 +1625,21 @@ class claim_event(osv.osv):
         }
         move_values = {'type': 'out',
                        'reason_type_id': context['common']['rt_goods_return'],
-                       'location_id': context['common']['input_id'],
                        'location_dest_id': data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1],
                        }
         # update the picking
         pick_obj.write(cr, uid, [event_picking.id], picking_values, context=context)
         # update the picking again - strange bug on runbot, the type was internal again...
         pick_obj.write(cr, uid, [event_picking.id], picking_values, context=context)
+        # the destination location of the processed IN/INT moves must be the source of the PICK moves
+        for i, move in enumerate(event_picking.move_lines):
+            move_values_set_loc = move_values
+            # set the same line number as the original move
+            move_values_set_loc.update({'location_id': origin_picking.move_lines[i].location_dest_id.id})
+            # get the move values according to claim type
+            move_obj.write(cr, uid, move.id, move_values_set_loc, context=context)
         # update the destination location for each move
         move_ids = [move.id for move in event_picking.move_lines]
-        # get the move values according to claim type
-        move_obj.write(cr, uid, move_ids, move_values, context=context)
         # confirm the moves but not the pick to be able to convert to OUT
         move_obj.action_confirm(cr, uid, move_ids, context=context)
 
@@ -1679,6 +1688,9 @@ class claim_event(osv.osv):
             move_values_with_line_numbers = move_values
             # set the same line number as the original move
             move_values_with_line_numbers.update({'line_number': original_line_numbers[i]})
+            # force po line id if there is none in the event_picking
+            if not move.purchase_line_id:
+                move_values_with_line_numbers.update({'purchase_line_id': origin_picking.move_lines[i].purchase_line_id.id})
             # get the move values according to claim type
             move_obj.write(cr, uid, move.id, move_values_with_line_numbers, context=context)
         # check availability of replacement picking
