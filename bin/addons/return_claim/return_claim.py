@@ -1509,7 +1509,6 @@ class claim_event(osv.osv):
         }
         move_values = {'type': 'out',
                        'reason_type_id': context['common']['rt_goods_return'],
-                       'location_id': context['common']['input_id'],
                        'location_dest_id': data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1],
                        }
         # update the picking
