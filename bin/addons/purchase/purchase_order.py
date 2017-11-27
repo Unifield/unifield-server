@@ -549,6 +549,32 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _get_fake(self, cr, uid, ids, name, arg, context=None):
+        """
+        Fake method for 'has_confirmed_line' field
+        """
+        res = {}
+        for po_id in ids:
+            res[po_id] = False
+        return res
+
+    def _search_has_confirmed_line(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain corresponding to POs having at least one line being exactly in Confirmed state
+        """
+        if context is None:
+            context = {}
+        pol_obj = self.pool.get('purchase.order.line')
+        if not args:
+            return []
+        if args[0][1] != '=' or len(args[0]) < 3:
+            raise osv.except_osv(_('Error'), _('Filter not implemented on %s') % (name, ))
+        operator = args[0][2] is True and 'in' or 'not in'
+        po_ids = set()
+        pol_ids = pol_obj.search(cr, uid, [('state', '=', 'confirmed')], context=context)
+        for pol in pol_obj.browse(cr, uid, pol_ids, fields_to_fetch=['order_id'], context=context):
+            po_ids.add(pol.order_id.id)
+        return [('id', operator, list(po_ids))]
 
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
@@ -687,8 +713,10 @@ class purchase_order(osv.osv):
 
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select=1),
         'commitment_ids': fields.one2many('account.commitment', 'purchase_id', string="Commitment Vouchers", readonly=True),
-
-
+        'has_confirmed_line': fields.function(_get_fake, type='boolean', method=True, store=False,
+                                              fnct_search=_search_has_confirmed_line,
+                                              string='Has a confirmed line',
+                                              help='Only used to SEARCH for POs with at least one line in Confirmed state'),
     }
     _defaults = {
         'po_confirmed': lambda *a: False,
