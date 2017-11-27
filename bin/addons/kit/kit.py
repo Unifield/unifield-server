@@ -301,6 +301,10 @@ class composition_kit(osv.osv):
         return context
 
     def assert_available_stock(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        assert isinstance(ids, list)
 
         for kit in self.browse(cr, uid, ids, context=context):
 

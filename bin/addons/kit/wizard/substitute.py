@@ -69,10 +69,14 @@ class substitute(osv.osv_memory):
 
         return True or False
         '''
+        if context is None:
+            context = {}
+
+        kit_obj = self.pool.get('composition.kit')
 
         for obj in self.browse(cr, uid, ids, context=context):
 
-            obj.kit_id.assert_available_stock()
+            kit_obj.assert_available_stock(cr, uid, [obj.kit_id.id], context=context)
 
             for item in obj.replacement_item_ids:
                 # integrity is not met
