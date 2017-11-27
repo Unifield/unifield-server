@@ -2426,10 +2426,6 @@ class sale_order_line(osv.osv):
             if line.original_line_id:
                 cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
-        else:
-            minus_qty = line.product_uom_qty - qty_diff
-            # Update the line and the procurement
-            self.write(cr, uid, [line.id], {'product_uom_qty': minus_qty, 'product_uos_qty': minus_qty}, context=context)
 
         so_to_cancel_id = False
         if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
