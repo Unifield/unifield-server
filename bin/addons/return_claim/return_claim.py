@@ -832,6 +832,8 @@ class return_claim(osv.osv):
         'product_line_ids_return_claim': fields.one2many(
             'claim.product.line',
             'claim_id_claim_product_line',
+            readonly=True,
+            states={'draft': [('readonly', False)]},
             string='Products',
         ),
         # Functions
