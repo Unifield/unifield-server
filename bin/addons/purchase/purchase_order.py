@@ -550,7 +550,10 @@ class purchase_order(osv.osv):
         return res
 
     def _get_fake(self, cr, uid, ids, name, arg, context=None):
-        res = []
+        """
+        Fake method for 'has_confirmed_line' field
+        """
+        res = {}
         for po_id in ids:
             res[po_id] = False
         return res
@@ -713,7 +716,7 @@ class purchase_order(osv.osv):
         'has_confirmed_line': fields.function(_get_fake, type='boolean', method=True, store=False,
                                               fnct_search=_search_has_confirmed_line,
                                               string='Has a confirmed line',
-                                              help='Used to get POs with at least one line in Confirmed state'),
+                                              help='Only used to SEARCH for POs with at least one line in Confirmed state'),
     }
     _defaults = {
         'po_confirmed': lambda *a: False,
