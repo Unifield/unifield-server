@@ -31,6 +31,19 @@ class cash_request(osv.osv):
     _name = 'cash.request'
     _description = 'Cash Request'
 
+    def _get_current_instance_level(self, cr, uid, ids, name, args, context=None):
+        """
+        Returns a String with the level of the current instance (section, coordo, project)
+        """
+        if context is None:
+            context = {}
+        levels = {}
+        company = self._get_company(cr, uid, context=context)
+        level = company.instance_id and company.instance_id.level or ''
+        for cash_req_id in ids:
+            levels[cash_req_id] = level
+        return levels
+
     _columns = {
         'name': fields.char(size=128, string='Name', readonly=True, required=True),
         'prop_instance_id': fields.many2one('msf.instance', 'Proprietary instance', readonly=True, required=True,
@@ -86,6 +99,8 @@ class cash_request(osv.osv):
         'past_transfer_ids': fields.many2many('account.move.line', 'cash_request_account_move_line_rel',
                                               'cash_request_id', 'account_move_line_id',
                                               string='Past Transfers', readonly=True),
+        'current_instance_level': fields.function(_get_current_instance_level, method=True, type='char',
+                                                  string='Current Instance Level', store=False, readonly=True),
     }
 
     def _check_buffer(self, cr, uid, ids):

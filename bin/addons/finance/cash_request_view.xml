@@ -17,6 +17,7 @@
                                 <separator colspan="4" string="Settings"/>
                                 <group colspan="4" col="4">
                                     <field name="id" invisible="1"/>
+                                    <field name="current_instance_level" invisible="1"/>
                                     <field name="name"/>
                                     <field name="state"/>
                                     <field name="request_date"/>
@@ -42,36 +43,38 @@
                                         </tree>
                                     </field>
                                 </group>
-                                <separator colspan="4" string="Recap"/>
-                                <button name="compute_recap_and_total" type="object"
-                                        string="Compute recap lines &amp; total to transfer" icon="gtk-refresh"
-                                        attrs="{'invisible': [('state', '=', 'done')]}"/>
-                                <group colspan="4" col="2">
-                                    <field name="recap_mission_ids" nolabel="1">
-                                        <tree string="Recap Mission">
-                                            <field name="instance_id"/>
-                                            <field name="liquidity_amount" sum="Total Liquidity"/>
-                                            <field name="payable_amount" sum="Total Payable"/>
-                                            <field name="commitment_amount" sum="Total Commitment"/>
-                                            <field name="expense_amount" sum="Total Expenses"/>
-                                            <field name="total" sum="Grand Total"/>
-                                        </tree>
-                                    </field>
-                                </group>
-                                <group colspan="4" col="6">
-                                    <field name="transfer_to_come"/>
-                                    <field name="security_envelope"/>
-                                    <field name="buffer"/>
-                                </group>
-                                <field name="total_to_transfer"/>
-                                <field name="consolidation_currency_name" nolabel="1"/>
-                                <group colspan="4" col="2">
-                                    <field name="total_to_transfer_line_ids" nolabel="1">
-                                        <tree string="Split per currencies">
-                                            <field name="currency_id"/>
-                                            <field name="amount"/>
-                                        </tree>
-                                    </field>
+                                <group colspan="4" col="4" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                                    <separator colspan="4" string="Recap"/>
+                                    <button name="compute_recap_and_total" type="object"
+                                            string="Compute recap lines &amp; total to transfer" icon="gtk-refresh"
+                                            attrs="{'invisible': [('state', '=', 'done')]}"/>
+                                    <group colspan="4" col="2">
+                                        <field name="recap_mission_ids" nolabel="1">
+                                            <tree string="Recap Mission">
+                                                <field name="instance_id"/>
+                                                <field name="liquidity_amount" sum="Total Liquidity"/>
+                                                <field name="payable_amount" sum="Total Payable"/>
+                                                <field name="commitment_amount" sum="Total Commitment"/>
+                                                <field name="expense_amount" sum="Total Expenses"/>
+                                                <field name="total" sum="Grand Total"/>
+                                            </tree>
+                                        </field>
+                                    </group>
+                                    <group colspan="4" col="6">
+                                        <field name="transfer_to_come"/>
+                                        <field name="security_envelope"/>
+                                        <field name="buffer"/>
+                                    </group>
+                                    <field name="total_to_transfer"/>
+                                    <field name="consolidation_currency_name" nolabel="1"/>
+                                    <group colspan="4" col="2">
+                                        <field name="total_to_transfer_line_ids" nolabel="1">
+                                            <tree string="Split per currencies">
+                                                <field name="currency_id"/>
+                                                <field name="amount"/>
+                                            </tree>
+                                        </field>
+                                    </group>
                                 </group>
                                 <group colspan="4" col="4">
                                     <label string="" colspan="2"/>
@@ -79,7 +82,7 @@
                                             attrs="{'invisible': [('state', '!=', 'open')]}"/>
                                 </group>
                             </page>
-                            <page string="Banking">
+                            <page string="Banking" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                 <separator colspan="4" string="Banking references"/>
                                 <field name="journal_name"/>
                                 <field name="journal_code"/>
@@ -88,7 +91,7 @@
                                 <field name="swift_code"/>
                                 <field name="bank_address"/>
                             </page>
-                            <page string="Commitment">
+                            <page string="Commitment" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                 <separator colspan="4" string="Commitment"/>
                                 <field name="commitment_ids" nolabel="1">
                                     <tree string="Engagement Entries in func. currency">
@@ -100,7 +103,7 @@
                             </page>
                             <page string="Planned Expense">
                                 <separator colspan="4" string="Planned expense for the coming period"/>
-                                <group colspan="4" col="2">
+                                <group colspan="4" col="2" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                     <field name="recap_expense_ids" nolabel="1">
                                         <tree string="Recap Planned Expenses in func. currency">
                                             <field name="instance_id"/>
@@ -131,7 +134,7 @@
                                     </field>
                                 </group>
                             </page>
-                            <page string="Transfers Follow-up">
+                            <page string="Transfers Follow-up" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                 <field name="past_transfer_ids" nolabel="1">
                                     <tree string="Past Transfers">
                                         <field name="instance_id"/>
