@@ -88,13 +88,13 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
                 if field_name.startswith('s_v_vals'):
                     with_valuation = split_stock = True
 
-                msr_obj.check_new_product_and_create_export(cr, uid,
-                        [report_id], {}, csv=file_format=='csv',
-                        xls=file_format=='xls', with_valuation=with_valuation,
-                        split_stock=split_stock,
-                        all_products=not display_only_in_stock,  # no need to generate both on demand
-                        display_only_in_stock=display_only_in_stock,
-                        context=context)
+                msr_obj._get_export(cr, uid, report_id, {},
+                    csv=file_format=='csv', xls=file_format=='xls',
+                with_valuation=with_valuation,
+                split_stock=split_stock,
+                all_products=not display_only_in_stock,
+                display_only_in_stock=display_only_in_stock,
+                context=context)
 
         if store_in_db:
             # then get the attachment in the old way : in the database
