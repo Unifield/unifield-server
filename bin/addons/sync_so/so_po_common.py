@@ -22,6 +22,7 @@
 from osv import osv
 from sync_common import xmlid_to_sdref
 from lxml import etree
+import re
 
 class so_po_common(osv.osv_memory):
     _name = "so.po.common"
@@ -30,6 +31,12 @@ class so_po_common(osv.osv_memory):
     # exact copy-pasted from @msf_outgoing/msf_outgoing.py, class stock_picking 
     CENTRAL_PLATFORM= "central_platform"
     REMOTE_WAREHOUSE="remote_warehouse"
+
+    def migrate_ref(self, ref):
+        m = re.match('(.*/(FO|PO)[0-9-]+)_([0-9]+)$', ref)
+        if m:
+            return '%s/%s' % (m.group(1), m.group(3))
+        return False
 
     def rw_view_remove_buttons(self, cr, uid, res, view_type, instance_type):
         rw_type = self.pool.get('stock.picking')._get_usb_entity_type(cr, uid)
@@ -656,7 +663,7 @@ class so_po_common(osv.osv_memory):
             if line_dict.get('source_sync_line_id'):
                 values['original_purchase_line_id'] = line_dict['source_sync_line_id']
                 if not line_dict.get('sync_linked_pol') and 'PO' in line_dict['source_sync_line_id']:
-                    values['sync_linked_pol'] = line_dict['source_sync_line_id'].replace('_', '/')
+                    values['sync_linked_pol'] = self.migrate_ref(line_dict['source_sync_line_id'])
 
             line_ids = False
             sync_order_line_db_id = False
@@ -664,7 +671,7 @@ class so_po_common(osv.osv_memory):
                 sync_order_line_db_id = line.sync_order_line_db_id
                 values['sync_order_line_db_id'] = sync_order_line_db_id
                 if not line_dict.get('sync_linked_sol') and  'FO' in line_dict.get('sync_order_line_db_id'):
-                    values['sync_linked_sol'] = sync_order_line_db_id.replace('_', '/')
+                    values['sync_linked_sol'] = self.migrate_ref(sync_order_line_db_id)
 
                 line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', po_id)], context=context)
                 lines_to_split = self.pool.get('purchase.order.line.to.split').search(cr, uid, [('new_sync_order_line_db_id', '=', sync_order_line_db_id), ('splitted', '=', False)], context=context)
@@ -682,30 +689,10 @@ class so_po_common(osv.osv_memory):
             if po_id: # this case is for update the PO
                 # look for the correct PO line for updating the value - corresponding to the SO line
                 if not line_ids:
-                    line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', po_id)], context=context)
-
-                """# Split PO lines that are canceled at other side
-                if line_dict.get('cancel_split_ok') and line_ids:
-                    pol = self.pool.get('purchase.order.line').read(cr, uid, line_ids[0], ['line_number', 'product_qty'], context=context)
-                    pol_qty = pol['product_qty']
-
-                    for sp in split_cancel_line.get(pol['line_number'], []):
-                        if sp == pol_qty:
-                            continue
-                        split_obj = self.pool.get('split.purchase.order.line.wizard')
-                        split_id = split_obj.create(cr, uid, {
-                            'purchase_line_id': line_ids[0],
-                            'original_qty': pol_qty,
-                            'old_line_qty': pol_qty - sp,
-                            'new_line_qty': sp,
-                        }, context=context)
-                        split_obj.split_line(cr, uid, [split_id], context=context)
-                        pol_qty -= sp
-
-                    if pol_qty == pol['product_qty']:
-                        continue
-                """
-
+                    domain = [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', po_id)]
+                    if values.get('sync_linked_sol'):
+                        domain = ['|', ('sync_linked_sol', '=', values['sync_linked_sol'])] + domain
+                    line_ids = self.pool.get('purchase.order.line').search(cr, uid, domain, context=context)
             elif so_id:
                 # look for the correct PO line for updating the value - corresponding to the SO line
                 line_ids = self.pool.get('sale.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', so_id)], context=context)

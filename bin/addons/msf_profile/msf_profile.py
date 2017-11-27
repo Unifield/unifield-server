@@ -140,7 +140,11 @@ class patch_scripts(osv.osv):
             self._logger.warn("PO id:%d, confirm %d lines" % (po_id, len(po_ids)))
             pol_ids = pol_obj.search(cr, uid, [('state', '=', 'confirmed'), ('order_id', '=', po_id)])
             if pol_ids:
-                pol_obj.action_confirmed(cr, uid, pol_ids)
+                try:
+                    pol_obj.action_confirmed(cr, uid, pol_ids)
+                except Exception, e:
+                    # TODO LOG HERE OPEEVENT
+                    raise
 
         # so
         cr.execute("update sale_order set state=state_moved0")
@@ -185,7 +189,11 @@ class patch_scripts(osv.osv):
         # so partially confirmed: we must generate next doc on sourced line
         for to_source_id in to_source_ids:
             self._logger.warn("Source FO line %s" % (to_source_id,))
-            self.pool.get('sale.order.line').source_line(cr, uid, [to_source_id])
+            try:
+                self.pool.get('sale.order.line').source_line(cr, uid, [to_source_id])
+            except Exception, e:
+                # TODO log EVENET
+                raise
 
 
         # set FO as sourced if PO line is draft
@@ -206,48 +214,6 @@ class patch_scripts(osv.osv):
         create_date = [x[0] for x in cr.fetchall()]
         if create_date:
             cr.execute("update ir_model_data set sync_date=%s where module='sd' and model in ('purchase.order', 'sale.order', 'sale.order.line', 'purchase.order.line')", (create_date[0],))
-
-        # doesn't work
-        # msg are sent for old PO/SO/SOL/POL
-        #cr.execute("select identifier,create_date from sync_client_message_to_send  where identifier like '%/purchase_order/%' or identifier like '%/sale_order/%' order by id")
-        #so = {}
-        #po = {}
-        #for x in cr.fetchall():
-        #    m = re.match(".*/([0-9]+)_[0-9]+$", x[0])
-        #    if not m:
-        #        continue
-        #    obj_id = int(m.group(1))
-        #    if '/purchase_order/' in x[0]:
-        #        dict_to_up = po
-        #    else:
-        #        dict_to_up = so
-        #    if obj_id not in dict_to_up or dict_to_up[obj_id] < x[1]:
-        #        dict_to_up[obj_id] = x[1]
-
-        #for so_id, date in so.iteritems():
-        #    cr.execute('''select id from sale_order_line
-        #        where order_id =%s
-        #    ''', (so_id,))
-        #    sol_ids = [x[0] for x in cr.fetchall()]
-        #    sol_ids.append(0)
-        #    cr.execute("""update ir_model_data set sync_date=%s
-        #        where module='sd' and
-        #            ( model='sale.order' and res_id=%s or model='sale.order.line' and res_id in %s)
-        #    """, (date, so_id, tuple(sol_ids))
-        #    )
-
-        #for po_id, date in po.iteritems():
-        #    cr.execute('''select id from purchase_order_line
-        #        where order_id = %s
-        #    ''', (po_id,))
-        #    pol_ids = [x[0] for x in cr.fetchall()]
-        #    pol_ids.append(0)
-        #    cr.execute("""update ir_model_data set sync_date=%s
-        #        where module='sd' and
-        #            ( model='purchase.order' and res_id=%s or model='purchase.order.line' and res_id in %s)
-        #    """, (date, po_id, tuple(pol_ids))
-        #    )
-        #"""
 
         # Set sync id on POL/SOL
         cr.execute("update purchase_order_line set sync_linked_sol=regexp_replace(sync_order_line_db_id,'/FO([0-9-]+)_([0-9]+)$', '/FO\\1/\\2') where sync_order_line_db_id ~ '/FO([0-9-]+)_([0-9]+)$' ")
