@@ -605,7 +605,7 @@ class Entity(osv.osv):
         to_remove = ['ir.ui.view', 'ir.model.fields', 'ir.sequence']
         for f in to_remove:
             if f in model_set:
-                model_set.remove(f) 
+                model_set.remove(f)
 
         return model_set
 

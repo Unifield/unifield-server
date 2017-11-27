@@ -32,6 +32,18 @@
         </Borders>
         <Protection />
     </Style>
+    <Style ss:ID="sheader">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+   <Interior ss:Color="#BFBFBF" ss:Pattern="Solid"/>
+   <NumberFormat/>
+   <Protection/>
+    </Style>
     <Style ss:ID="line">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
         <Borders>
@@ -53,6 +65,32 @@
    <NumberFormat ss:Format="Short Date"/>
    <Protection ss:Protected="0" />
   </Style>
+  <Style ss:ID="s67">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+   <Interior ss:Color="#FABF8F" ss:Pattern="Solid"/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s64">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+   <Interior ss:Color="#F79646" ss:Pattern="Solid"/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
 </Styles>
 ## ==================================== we loop over the incoming_shipment "objects" == incoming_shipment  ====================================================
 % for o in objects:
@@ -66,8 +104,6 @@
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 % endfor
 <Column ss:AutoFitWidth="1" ss:Width="250" />
-
-
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Freight')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -96,21 +132,57 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Message ESC header')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
     </Row>
+
+   <Row>
+    <Cell ss:StyleID="s64"/>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">${_('Qty of parcels*')}</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">${_('From parcel*')}</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">${_('To parcel*')}</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">${_('Weight*')}</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">${_('Volume')}</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">${_('Height')}</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">${_('Length')}</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">${_('Width')}</Data></Cell>
+    <Cell ss:StyleID="s64"/>
+    <Cell ss:StyleID="s64"/>
+    <Cell ss:StyleID="s64"/>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">${_('ESC Message 1')}</Data></Cell>
+    <Cell ss:StyleID="s64"><Data ss:Type="String">${_('ESC Message 2')}</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="s67"><Data ss:Type="String">#</Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number"></Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number"></Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number"></Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number"></Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number"></Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number"></Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number"></Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="Number"></Data></Cell>
+    <Cell ss:StyleID="s67"/>
+    <Cell ss:StyleID="s67"/>
+    <Cell ss:StyleID="s67"/>
+    <Cell ss:StyleID="s67"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="s67"><Data ss:Type="String"></Data></Cell>
+   </Row>
+
+
     
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number')}</Data></Cell>    
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ext. Reference')}</Data></Cell>    
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code*')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Qty*')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product UoM')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price Unit')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Batch')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Expiry date')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Packing List')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 1')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 2')}</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Line number*')}</Data></Cell>    
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Ext. Reference')}</Data></Cell>    
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Product Code*')}</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Product Qty*')}</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Product UoM')}</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Price Unit')}</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Batch')}</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Expiry date')}</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Qty. p.p.')}</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('Packing List')}</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('ESC Message 1')}</Data></Cell>
+        <Cell ss:StyleID="sheader" ><Data ss:Type="String">${_('ESC Message 2')}</Data></Cell>
     </Row>
     % for line in o.move_lines:
     <Row>
@@ -128,6 +200,7 @@
         % else:
         <Cell ss:StyleID="line" ></Cell>
         % endif
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>

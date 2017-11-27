@@ -520,6 +520,7 @@
                     <notebook colspan="4">
                         <page string="Order Line">
                             <field name="tender_line_id" invisible="1"/>
+                            <field name="linked_sol_id" invisible="1"/>
                             <field name="to_correct_ok" readonly="1" invisible="1"/>
                             <field name="show_msg_ok" readonly="1" invisible="1"/>
                             <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
@@ -575,7 +576,7 @@
                             <field name="from_fo" invisible="1"/>
                             <field name="tender_id" invisible="1"/>
                             <group colspan="2" col="3">
-                                <field name="origin" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}" string="Source Document"/>
+                                <field name="origin" on_change="on_change_origin(origin, linked_sol_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}" string="Source Document"/>
                                 <field name="select_fo" on_change="on_change_select_fo(select_fo)" nolabel="1" domain="['|', ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p']), ('procurement_request', '=', True)]" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}"/>
                                 <field name="customer_ref" string="Customer ref" widget="char"/>
                                 <field name="display_sync_ref" invisible="1"/>

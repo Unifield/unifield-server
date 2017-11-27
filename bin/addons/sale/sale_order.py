@@ -2326,14 +2326,14 @@ class sale_order_line(osv.osv):
             lines_to_log.append((
                 line.id,
                 line.line_number,
-                line.order_id.procurement_request and 'Internal request' or 'Field orer',
+                line.order_id.procurement_request and 'Internal request' or 'Field order',
                 line.order_id.id,
                 line.order_id.name,
             ))
 
         """Allows to delete sales order lines in draft,cancel states"""
         for rec in self.browse(cr, uid, ids, context=context):
-            if rec.state not in ['draft', 'cancel'] and not context.get('call_unlink', False):
+            if rec.state not in ['draft', 'validated', 'cancel'] and not context.get('call_unlink', False):
                 raise osv.except_osv(_('Invalid action !'), _('Cannot delete a sales order line which is %s !') %(rec.state,))
 
         res = super(sale_order_line, self).unlink(cr, uid, ids, context=context)

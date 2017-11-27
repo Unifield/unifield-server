@@ -34,7 +34,9 @@ import csv
 import codecs
 import cStringIO
 import base64
+from msf_field_access_rights.osv_override import _get_instance_level
 from xlwt import Workbook, easyxf, Borders
+from datetime import datetime
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
@@ -263,11 +265,8 @@ class stock_mission_report(osv.osv):
             column_count += 1
 
     def xls_write_row(self, sheet, cell_list, row_count, style):
-        column_count = 0
-        for column in cell_list:
+        for column_count, column in enumerate(cell_list):
             sheet.write(row_count, column_count, _(column), style)
-            column_count += 1
-
 
     def write_report_in_database(self, cr, uid, file_name, data):
         # write the report in the DB
@@ -287,101 +286,61 @@ class stock_mission_report(osv.osv):
                                      })
             del data
 
-    def generate_csv_files(self, cr, uid, request_result, report_id, report_type,
-                           attachments_path, header, write_attachment_in_db, product_values):
-
-        file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.csv')
+    def generate_export_file(self, cr, uid, request_result, report_id, report_type,
+                             attachments_path, header, write_attachment_in_db,
+                             product_values, file_type='xls'):
+        file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id,
+                                                         report_type + '.' + file_type)
         if not write_attachment_in_db:
-            csv_file = open(os.path.join(attachments_path, file_name), 'wb')
+            export_file = open(os.path.join(attachments_path, file_name), 'wb')
         else:
-            csv_file = cStringIO.StringIO()
-        writer = UnicodeWriter(csv_file, dialect=excel_semicolon)
-
-        # write headers of the csv file
-        header_row = [_(column_name) for column_name, colum_property in header]
-        writer.writerow(header_row)
-
-        for row in request_result:
-            try:
-                product_amc = 0.00
-                reviewed_consumption = 0.00
-                if row['product_id'] in product_values and product_values[row['product_id']]:
-                    if product_values[row['product_id']].get('product_amc', False):
-                        product_amc = product_values[row['product_id']]['product_amc']
-                    if product_values[row['product_id']].get('product_consumption', False):
-                        reviewed_consumption = product_values[row['product_id']]['reviewed_consumption']
-
-                data_list = []
-                data_list_append = data_list.append
-                for columns_name, property_name in header:
-                    if property_name == 'product_amc':
-                        data_list_append(product_amc)
-                    elif property_name == 'product_consumption':
-                        data_list_append(reviewed_consumption)
-                    elif 'qty' in property_name:
-                        data_list_append(eval(row.get(property_name, False)))
-                    else:
-                        data_list_append(row.get(property_name, False))
-
-                writer.writerow(data_list)
-            except Exception, e:
-                logging.getLogger('Mission stock report').warning("""An error is occurred when generate the mission stock report file : %s\n""" % e, exc_info=True)
-
-        if not write_attachment_in_db:
-            # delete previous reports in DB if any
-            ir_attachment_obj = self.pool.get('ir.attachment')
-            attachment_ids = ir_attachment_obj.search(cr, uid, [('datas_fname', '=',
-                                                                 file_name)])
-            if attachment_ids:
-                ir_attachment_obj.unlink(cr, uid, attachment_ids)
-        else:
-            self.write_report_in_database(cr, uid, file_name, csv_file)
-        # close file
-        csv_file.close()
-
-    def generate_xls_files(self, cr, uid, request_result, report_id, report_type,
-                           attachments_path, header, write_attachment_in_db, product_values):
-
-        # write the headers
-        borders = Borders()
-        borders.left = Borders.THIN
-        borders.right = Borders.THIN
-        borders.top = Borders.THIN
-        borders.bottom = Borders.THIN
-
-        header_style = easyxf("""
-                font: height 220;
-                font: name Calibri;
-                pattern: pattern solid, fore_colour tan;
-                align: wrap on, vert center, horiz center;
-            """)
-        header_style.borders = borders
-        # this style is done to be the same than previous mako configuration
-        row_style = easyxf("""
-                font: height 220;
-                font: name Calibri;
-                align: wrap on, vert center, horiz center;
-            """)
-        row_style.borders = borders
-
-        book = Workbook()
-        sheet = book.add_sheet('Sheet 1')
-        sheet.row_default_height = 60*20
-
-        sheet.write(0, 0, _("Generating instance"), row_style)
-        instance_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.name
-        sheet.write(0, 1, instance_name, row_style)
-        sheet.write(1, 0, _("Instance selection"), row_style)
-        report_name = self.read(cr, uid, report_id, ['name'])['name']
-        sheet.write(1, 1, report_name, row_style)
+            export_file = cStringIO.StringIO()
 
         header_row = [_(column_name) for column_name, colum_property in header]
-        self.xls_write_header(sheet, header_row, header_style)
+        if file_type == 'csv':
+            writer = UnicodeWriter(export_file, dialect=excel_semicolon)
+            # write headers of the csv file
+            writer.writerow(header_row)
 
-        # tab header bigger height:
-        sheet.row(2).height_mismatch = True
-        sheet.row(2).height = 45*20
+        if file_type == 'xls':
+            # write the headers
+            borders = Borders()
+            borders.left = Borders.THIN
+            borders.right = Borders.THIN
+            borders.top = Borders.THIN
+            borders.bottom = Borders.THIN
 
+            header_style = easyxf("""
+                    font: height 220;
+                    font: name Calibri;
+                    pattern: pattern solid, fore_colour tan;
+                    align: wrap on, vert center, horiz center;
+                """)
+            header_style.borders = borders
+            # this style is done to be the same than previous mako configuration
+            row_style = easyxf("""
+                    font: height 220;
+                    font: name Calibri;
+                    align: wrap on, vert center, horiz center;
+                """)
+            row_style.borders = borders
+
+            book = Workbook()
+            sheet = book.add_sheet('Sheet 1')
+            sheet.row_default_height = 60*20
+
+            sheet.write(0, 0, _("Generating instance"), row_style)
+            instance_name = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.name
+            sheet.write(0, 1, instance_name, row_style)
+            sheet.write(1, 0, _("Instance selection"), row_style)
+            report_name = self.read(cr, uid, report_id, ['name'])['name']
+            sheet.write(1, 1, report_name, row_style)
+
+            self.xls_write_header(sheet, header_row, header_style)
+
+            # tab header bigger height:
+            sheet.row(2).height_mismatch = True
+            sheet.row(2).height = 45*20
 
         # write the lines
         row_count = 3
@@ -407,18 +366,16 @@ class stock_mission_report(osv.osv):
                     else:
                         data_list_append(row.get(property_name, False))
 
-                self.xls_write_row(sheet, data_list, row_count, row_style)
-                #sheet.row(row_count).height_mismatch = True
-                #sheet.row(row_count).height = 60*20 # to fit the previous hardcoded mako configuration
+                if file_type == 'xls':
+                    self.xls_write_row(sheet, data_list, row_count, row_style)
+                else:
+                    writer.writerow(data_list)
                 row_count += 1
             except Exception, e:
-                logging.getLogger('MSR').warning("""An error is occurred when generate the mission stock report xls file : %s\n""" % e, exc_info=True)
-        file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.xls')
-        if not write_attachment_in_db:
-            xls_file = open(os.path.join(attachments_path, file_name), 'wb')
-        else:
-            xls_file = cStringIO.StringIO()
-        book.save(xls_file)
+                logging.getLogger('MSR').warning("""An error is occurred when generate the mission stock report %s file : %s\n""" % (file_type, e), exc_info=True)
+
+        if file_type == 'xls':
+            book.save(export_file)
 
         if not write_attachment_in_db:
             # delete previous reports in DB if any
@@ -428,9 +385,9 @@ class stock_mission_report(osv.osv):
             if attachment_ids:
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
         else:
-            self.write_report_in_database(cr, uid, file_name, xls_file)
+            self.write_report_in_database(cr, uid, file_name, export_file)
         # close file
-        xls_file.close()
+        export_file.close()
 
     def background_update(self, cr, uid, ids, context=None):
         """
@@ -452,12 +409,14 @@ class stock_mission_report(osv.osv):
                 logging.getLogger('MSR').info("""____________________ Another process is progress, this request is ignore: %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
                 return
 
+            start_date = datetime.now()
             logging.getLogger('MSR').info("""____________________ Start the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
             msr_in_progress._delete_all(cr, uid, context)  # delete previously generated before to start
             self.update(cr, uid, ids=[], context=context)
             msr_in_progress._delete_all(cr, uid, context)
             cr.commit()
-            logging.getLogger('MSR').info("""____________________ Finished the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
+            finish_time = datetime.now()
+            logging.getLogger('MSR').info("""____________________ Finished the update process of MSR, at %s. (duration = %s)""" % (time.strftime('%Y-%m-%d %H:%M:%S'), str(finish_time-start_date)))
         except Exception as e:
             cr.rollback()
             logging.getLogger('MSR').error("""____________________ Error while running the update process of MSR, at %s - Error: %s""" % (time.strftime('%Y-%m-%d %H:%M:%S'), str(e)), exc_info=True)
@@ -475,10 +434,30 @@ class stock_mission_report(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # delete all previous reports
+        self.delete_previous_reports_attachments(cr, uid, self.search(cr, uid, []))
+
         msr_in_progress = self.pool.get('msr_in_progress')
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
 
-        report_ids = self.search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
+        instance_level = _get_instance_level(self, cr, uid)
+        if instance_level == 'project':
+            # on project we want to pregenerate only local_reports
+            report_ids = self.search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
+        else:
+            if instance_level == 'hq':
+                # on HQ we want to pregenerate HQ and Coordo MSR
+                search_level = ('section', 'coordo')
+            else:
+                # on Coordo we want to pregenerate Coordo and Project MSR
+                search_level = ('coordo', 'poject')
+            instance_obj = self.pool.get('msf.instance')
+            instance_ids = instance_obj.search(cr, uid,
+                                               [('level', 'in', search_level)],
+                                               context=context)
+            report_ids = self.search(cr, uid, [('full_view', '=', False),
+                                               ('instance_id', 'in', instance_ids)],
+                                     context=context)
         full_report_ids = self.search(cr, uid, [('full_view', '=', True)], context=context)
 
         # Create a local report if no exist
@@ -554,9 +533,14 @@ class stock_mission_report(osv.osv):
 
         return True
 
-    def check_new_product_and_create_export(self, cr, uid, report_ids, product_values, context=None):
+    def check_new_product_and_create_export(self, cr, uid, report_ids, product_values,
+                                            csv=True, xls=True, with_valuation=True,
+                                            split_stock=True, context=None):
         if context is None:
             context = {}
+        if isinstance(report_ids, (int, long)):
+            report_ids = [report_ids]
+
         logger = logging.getLogger('MSR')
 
         line_obj = self.pool.get('stock.mission.report.line')
@@ -591,7 +575,7 @@ class stock_mission_report(osv.osv):
                     }, context=context)
 
                 # Don't update lines for full view or non local reports
-                if not report['local_report']:
+                if _get_instance_level(self, cr, uid) not in ('coordo', 'hq') and not report['local_report']:
                     continue
 
                 msr_in_progress = self.pool.get('msr_in_progress')
@@ -599,18 +583,21 @@ class stock_mission_report(osv.osv):
                 if msr_in_progress._already_processed(cr, uid, report['id'], context):
                     continue
 
-                logger.info("""___ updating the report lines of the report: %s, at %s (this may take very long time!)""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
-                if context.get('update_full_report'):
-                    full_view = self.search(cr, uid, [('full_view', '=', True)])
-                    if full_view:
-                        line_obj.update_full_view_line(cr, uid, context=context)
-                elif not report['full_view']:
-                    # Update all lines
-                    self.update_lines(cr, uid, [report['id']])
+                if report['local_report'] or report['full_view']:
+                    logger.info("""___ updating the report lines of the report: %s, at %s (this may take very long time!)""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
+                    if context.get('update_full_report'):
+                        full_view = self.search(cr, uid, [('full_view', '=', True)])
+                        if full_view:
+                            line_obj.update_full_view_line(cr, uid, context=context)
+                    elif not report['full_view']:
+                        # Update all lines
+                        self.update_lines(cr, uid, [report['id']])
 
                 logger.info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
                 self._get_export(cr, uid, report['id'], product_values,
-                                 context=context)
+                                 csv=csv, xls=xls,
+                                 with_valuation=with_valuation,
+                                 split_stock=split_stock, context=context)
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
@@ -808,7 +795,8 @@ class stock_mission_report(osv.osv):
                 except:
                     pass
 
-    def _get_export(self, cr, uid, ids, product_values, context=None):
+    def _get_export(self, cr, uid, ids, product_values, csv=True, xls=True,
+                    with_valuation=True, split_stock=True, context=None):
         '''
         Get the CSV files of the stock mission report.
         This method generates 4 files (according to option set) :
@@ -827,10 +815,12 @@ class stock_mission_report(osv.osv):
         attachment_obj = self.pool.get('ir.attachment')
         try:
             attachments_path = attachment_obj.get_root_path(cr, uid)
-        except:
-            logger.warning("___ attachments_path %s doesn't exists. The report will be stored in the database" % attachments_path)
+        except osv.except_osv, e:
+            logger.warning("___ %s The report will be stored in the database." % e.value)
 
         write_attachment_in_db = False
+        # for MSR reports, the migration is ignored, if the path is defined and
+        # usable, it is used, migration done or not.
         if attachment_obj.store_data_in_db(cr, uid,
                                            ignore_migration=True):
             write_attachment_in_db = True
@@ -841,24 +831,35 @@ class stock_mission_report(osv.osv):
             cr.execute(GET_EXPORT_REQUEST, (lang, report_id))
             request_result = cr.dictfetchall()
 
-            logger.info('___ Start CSV and XLS generation...')
-            for report_type in HEADER_DICT.keys():
-                params = {
-                    'report_id': report_id,
-                    'report_type': report_type,
-                    'attachments_path': attachments_path,
-                    'header': HEADER_DICT[report_type],
-                    'write_attachment_in_db': write_attachment_in_db,
-                    'product_values': product_values,}
+            if split_stock and with_valuation:
+                report_type = 's_v_vals'
+            elif split_stock and not with_valuation:
+                report_type = 's_nv_vals'
+            elif not split_stock and with_valuation:
+                report_type = 'ns_v_vals'
+            elif not split_stock and not with_valuation:
+                report_type = 'ns_nv_vals'
 
-                # generate CSV file
-                self.generate_csv_files(cr, uid, request_result, **params)
+            params = {
+                'report_id': report_id,
+                'report_type': report_type,
+                'attachments_path': attachments_path,
+                'header': HEADER_DICT[report_type],
+                'write_attachment_in_db': write_attachment_in_db,
+                'product_values': product_values,}
 
-                # generate XLS files
-                self.generate_xls_files(cr, uid, request_result, **params)
+            # generate CSV file
+            if csv:
+                logger.info('___ Start CSV generation...')
+                self.generate_export_file(cr, uid, request_result, file_type='csv', **params)
 
-                self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
-            logger.info('___ CSV & XLS generation finished !')
+            # generate XLS files
+            if xls:
+                logger.info('___ Start XLS generation...')
+                self.generate_export_file(cr, uid, request_result, file_type='xls', **params)
+
+            self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
+            logger.info('___ CSV/XLS generation finished !')
             del request_result
             del product_values
         return True

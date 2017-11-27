@@ -1594,7 +1594,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                     # No AD on sourcing line if it comes from IR:
                     anal_dist = False
-                    if not sourcing_line.procurement_request:
+                    if not sourcing_line.order_id.procurement_request:
                         anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context)
                     # attach PO line:
                     pol_values = {

@@ -27,8 +27,8 @@
                 <button name="update" string="Update (in background)" type="object" colspan="4" icon="gtk-remove" />
                 <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
                 <button name="open_products_view" string="Open report" type="object" icon="gtk-go-forward" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
-                <button name="open_xls_file" string="Open XLS file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': ['|', ('processed_state', '!=', 'done'), ('export_ok', '=', False)]}" />
-                <button name="open_csv_file" string="Open CSV file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': ['|', ('processed_state', '!=', 'done'), ('export_ok', '=', False)]}" />
+                <button name="open_xls_file" string="Open XLS file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
+                <button name="open_csv_file" string="Open CSV file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
             </form>
         </field>
     </record>

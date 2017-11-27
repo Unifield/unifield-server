@@ -3650,6 +3650,7 @@ class stock_picking(osv.osv):
                     'composition_list_id': line.composition_list_id and line.composition_list_id.id,
                     'pt_created': True,
                     'backmove_id': line.move_id.id,
+                    'pack_info_id': line.move_id.pack_info_id and line.move_id.pack_info_id.id or False,
                 }
                 context['keepLineNumber'] = True
                 move_obj.copy(cr, uid, line.move_id.id, cp_values, context=context)
@@ -3861,6 +3862,7 @@ class stock_picking(osv.osv):
                     'asset_id': line.asset_id and line.asset_id.id,
                     'composition_list_id': line.composition_list_id and line.composition_list_id.id,
                     'original_qty_partial': orig_qty,
+                    'pack_info_id': line.move_id.pack_info_id and line.move_id.pack_info_id.id or False,
                 }
 
                 # Update or create the validate picking ticket line
@@ -5116,6 +5118,8 @@ class pack_family_memory(osv.osv):
     dynamic memory object for pack families
     '''
     _name = 'pack.family.memory'
+    _order = 'sale_order_id, from_pack, id'
+
     _auto = False
     def init(self, cr):
         tools.sql.drop_view_if_exists(cr, 'pack_family_memory')
@@ -5198,7 +5202,7 @@ class pack_family_memory(osv.osv):
             if num_of_packs:
                 values['amount'] = pf_memory['total_amount'] / num_of_packs
             values['total_weight'] = pf_memory['weight'] * num_of_packs
-            values['total_volume'] = (pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0
+            values['total_volume'] = round((pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0, 4)
             values['fake_state'] = pf_memory['state']
 
             result[pf_memory['id']] = values
