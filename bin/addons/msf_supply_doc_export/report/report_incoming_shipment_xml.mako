@@ -12,6 +12,17 @@
         <field name="note">${o.note or ''}</field>
         <field name="message_esc"></field>
         <field name="move_lines">
+          <record>
+            <field name="parcel_from"></field>
+            <field name="parcel_to"></field>
+            <field name="parcel_qty"></field>
+            <field name="total_weight"></field>
+            <field name="total_volume"></field>
+            <field name="total_height"></field>
+            <field name="total_length"></field>
+            <field name="total_width"></field>
+            <field name="message_esc1"></field>
+            <field name="message_esc2"></field>
         % for l in o.move_lines:
             <record>
                 <field name="line_number">${l.line_number or ''}</field>
@@ -39,6 +50,7 @@
                 <field name="message_esc2"></field>
             </record>
         % endfor
+           </record>
         </field>
     </record>
     % endfor

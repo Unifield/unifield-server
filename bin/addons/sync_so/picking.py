@@ -328,7 +328,7 @@ class stock_picking(osv.osv):
         po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
 
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-        in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
+        in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned', 'shipped'], context)
         if in_id:
             in_name = self.read(cr, uid, in_id, ['name'], context=context)['name']
             in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
@@ -398,7 +398,7 @@ class stock_picking(osv.osv):
                             remote_partner = self.pool.get('so.po.common').get_partner_id(cr, uid, source, context=context)
                             if sol_id and remote_partner:
                                 pol_id = self.pool.get('purchase.order.line').search(cr, uid, [
-                                    ('order_id.partner_id', '=', remote_partner[0]),
+                                    ('order_id.partner_id', '=', remote_partner),
                                     ('sync_linked_sol', 'ilike', '%%/%s' % sol_id),
                                 ], context=context)
                                 if pol_id:
@@ -588,63 +588,6 @@ class stock_picking(osv.osv):
 
         elif context.get('restore_flag'):
             # UF-1830: Create a message to remove the invalid reference to the inexistent document
-            shipment_ref = pick_dict['name']
-            so_po_common.create_invalid_recovery_message(cr, uid, source, shipment_ref, context)
-            return "Recovery: the reference to " + shipment_ref + " at " + source + " will be set to void."
-
-        raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
-
-    def cancel_stock_move_of_pick_cancel_in(self, cr, uid, source, out_info, context=None):
-        '''
-        ' UTP-872: Cancel only a few move lines of a closed PICK ticket in Coordo will also need to cancel the relevant lines at the IN
-        '''
-        if not context:
-            context = {}
-        self._logger.info("+++ Cancel the relevant IN at %s due to the cancel of some specific move of the Pick ticket at supplier %s" % (cr.dbname, source))
-
-        so_po_common = self.pool.get('so.po.common')
-        po_obj = self.pool.get('purchase.order')
-        pick_dict = out_info.to_dict()
-
-        # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
-        so_ref = source + "." + pick_dict['origin']
-        po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
-        if po_id:
-            # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-            in_id = so_po_common.get_in_id_from_po_id(cr, uid, po_id, context)
-            if in_id:
-                # Cancel the IN object to have all lines cancelled, but the IN object remained as closed, so the update of state is done right after
-                incoming = self.pool.get('stock.picking').browse(cr, uid, in_id, context=context)
-                self.pool.get('stock.move').action_cancel(cr, uid, [move.id for move in incoming.move_lines], context=context)
-                self.write(cr, uid, in_id, {'state': 'done'}, context) # UTP-872: reset state of the IN to become closed
-
-                name = self.browse(cr, uid, in_id, context).name
-                message = "The IN " + name + " is canceled by sync as its partner " + out_info.name + " got canceled at " + source
-                self._logger.info(message)
-                return message
-            else:
-                po = po_obj.browse(cr, uid, [po_id], context=context)[0]
-                if po.fo_sync_date > pick_dict['date_cancel']:
-                    message = "The message is ignored as the stock move has been canceled before update of the PO"
-                    self._logger.info(message)
-                    return message
-
-                if len(po.order_line) == 0:
-                    message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
-                    self._logger.info(message)
-                    return message
-
-                # UTP-872: If there is no IN corresponding to the give OUT/SHIP/PICK, then check if the PO has any line
-                # if it has no line, then no need to raise error, because PO without line does not generate any IN
-                # still try to check whether this IN has already been manually processed
-                in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po.name, ['done'], context)
-                if in_id:
-                    message = "The IN linked to " + po.name + " has been closed already, this message is thus ignored!"
-                    self._logger.info(message)
-                    return message
-        elif context.get('restore_flag'):
-            # UF-1830: Create a message to remove the invalid reference to the inexistent document
-            so_po_common = self.pool.get('so.po.common')
             shipment_ref = pick_dict['name']
             so_po_common.create_invalid_recovery_message(cr, uid, source, shipment_ref, context)
             return "Recovery: the reference to " + shipment_ref + " at " + source + " will be set to void."

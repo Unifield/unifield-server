@@ -149,6 +149,7 @@ class sale_order_line(osv.osv):
                 'resourced_original_line': sol.id, 
                 'resourced_original_remote_line': sol.sync_linked_pol,
                 'resourced_at_state': sol.state,
+                'is_line_split': False,
             }, context=context)
             wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 
@@ -501,7 +502,9 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
+        context.pop('no_check_line')
 
         # generate sync message:
         return_info = {}
@@ -523,7 +526,9 @@ class sale_order_line(osv.osv):
 
         resourced_sol = self.create_resource_line(cr, uid, ids, context=context)
 
+        context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
+        context.pop('no_check_line')
 
         # generate sync message for original FO line:
         return_info = {}

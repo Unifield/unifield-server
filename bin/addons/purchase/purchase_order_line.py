@@ -395,6 +395,7 @@ class purchase_order_line(osv.osv):
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
+        'original_line_id': fields.many2one('purchase.order.line', string='Original line', help='ID of the original line before split'),
         'linked_sol_id': fields.many2one('sale.order.line', string='Linked FO line', help='Linked Sale Order line in case of PO line from sourcing', readonly=True),
         'sync_linked_sol': fields.char(size=256, string='Linked FO line at synchro'),
         # UTP-972: Use boolean to indicate if the line is a split line
@@ -1322,9 +1323,8 @@ class purchase_order_line(osv.osv):
                 'old_line_qty': pol.product_qty - cancel_qty,
                 'new_line_qty': cancel_qty,
             }, context=context)
-            context.update({'return_new_line_id': True})
+            context.update({'return_new_line_id': True, 'keepLineNumber': True})
             new_po_line = split_obj.split_line(cr, uid, [split_id], context=context)
-            context.pop('return_new_line_id')
 
             # udpate linked FO lines if has:
             self.write(cr, uid, [new_po_line], {'origin': pol.origin}, context=context) # otherwise not able to link with FO
@@ -1371,6 +1371,32 @@ class purchase_order_line(osv.osv):
                 }
             }
         return {}
+
+    def on_change_origin(self, cr, uid, ids, origin, linked_sol_id=False, partner_type='external', context=None):
+        '''
+        Check if the origin is a known FO/IR
+        '''
+        res = {}
+        if not linked_sol_id and origin:
+            sale_id = self.pool.get('sale.order').search(cr, uid, [
+                ('name', '=', origin),
+                ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p']),
+            ], limit=1, order='NO_ORDER', context=context)
+            if not sale_id:
+                res['warning'] = {
+                    'title': _('Warning'),
+                    'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line') % origin,
+                }
+                res['value'] = {
+                    'display_sync_ref': False,
+                    'instance_sync_order_ref': '',
+                }
+            else:
+                res['value'] = {
+                    'display_sync_ref': True,
+                }
+
+        return res
 
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
                              partner_id, date_order=False, fiscal_position=False, date_planned=False,
