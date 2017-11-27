@@ -73,20 +73,24 @@ class purchase_order(osv.osv):
             # Create SQL request
             c_id = args[0][2].get('currency_id', False)
             p_id = args[0][2].get('partner_id', False)
-            sql = """SELECT po.id
-            FROM purchase_order as po
-            LEFT JOIN purchase_invoice_rel as pir ON (po.id = pir.purchase_id)
-            LEFT JOIN account_invoice as inv ON (pir.invoice_id = inv.id AND inv.state not in ('draft', 'cancel'))
-            LEFT JOIN product_pricelist as prod ON (po.pricelist_id = prod.id AND prod.currency_id = %s)
-            LEFT JOIN purchase_order_line as pol ON (po.id = pol.order_id)
-            WHERE po.pricelist_id = prod.id
-            AND NOT (po.order_type = 'regular' AND po.partner_type in ('internal', 'esc'))
-            AND po.order_type in ('regular', 'purchase_list')
-            AND po.partner_id = %s
-            AND po.rfq_ok != TRUE
-            AND pol.state in ('confirmed', 'done')
-            GROUP BY po.id, po.amount_total
-            HAVING COALESCE(sum(pol.price_unit * pol.product_qty) - sum(inv.amount_total), 10) != 0;"""
+            sql = """SELECT po.id 
+            FROM purchase_order as po 
+            LEFT JOIN purchase_invoice_rel as pir ON (po.id = pir.purchase_id) 
+            LEFT JOIN (select pir.purchase_id, sum(inv.amount_total) as inv_total 
+                       from purchase_invoice_rel pir, account_invoice as inv 
+                       where pir.invoice_id = inv.id AND inv.state not in ('draft', 'cancel') 
+                       group by pir.purchase_id) inv on inv.purchase_id = po.id 
+            LEFT JOIN product_pricelist as prod ON (po.pricelist_id = prod.id AND prod.currency_id = %s) 
+            LEFT JOIN (select pol1.order_id, sum(pol1.price_unit * pol1.product_qty) as total 
+                       from purchase_order_line pol1 
+                       where pol1.state in ('confirmed', 'done') group by pol1.order_id) pol on pol.order_id=po.id 
+            WHERE po.pricelist_id = prod.id 
+            AND NOT (po.order_type = 'regular' AND po.partner_type in ('internal', 'esc')) 
+            AND po.order_type in ('regular', 'purchase_list') 
+            AND po.partner_id = %s AND po.rfq_ok != TRUE 
+            GROUP BY po.id, po.name 
+            HAVING abs(COALESCE(sum(pol.total) - sum(inv.inv_total), 10)) > 0.001;
+            """
             cr.execute(sql, (c_id, p_id))
             sql_res = cr.fetchall()
             # Transform result
