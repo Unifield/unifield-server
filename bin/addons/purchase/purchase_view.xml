@@ -174,7 +174,7 @@
                                 <field name="canceled_end" invisible="1"/>
                                 <field name="partner_id" on_change="onchange_partner_id(partner_id,date_order,est_transport_lead_time,context)" context="{'search_default_supplier':1}" domain="[('supplier', '=', True), ('id', '!=', company_id), ('check_partner_po', '=', {'order_type':order_type, 'partner_id': partner_id, 'split_po': related_sourcing_id}), ('partner_not_int', 'in', {'type':'po', 'ids':[active_id]})]" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
                                 <field name="partner_type"/>
-                                <field name="partner_address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"/>
+                                <field name="partner_address_id" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft'])]}" widget="char"/>
                                 <field name="internal_type" string="Zone"/>
                                 <field name="customer_ref" widget="char"/>
