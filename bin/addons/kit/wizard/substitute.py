@@ -21,10 +21,9 @@
 
 from osv import fields, osv
 from tools.translate import _
-import time
 import netsvc
 import decimal_precision as dp
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # xml parser
 from lxml import etree
@@ -37,13 +36,13 @@ class substitute(osv.osv_memory):
     substitute wizard
     '''
     _name = "substitute"
-    
+
     def validate_item_mirror(self, cr, uid, ids, context=None):
         '''
         integrity must be OK
-        
+
         'integrity_status_func_substitute_item'
-        
+
         return True or False
         '''
         # Some verifications
@@ -51,25 +50,33 @@ class substitute(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         for obj in self.browse(cr, uid, ids, context=context):
             for item in obj.composition_item_ids:
                 # integrity is not met
                 if item.integrity_status_func_substitute_item != 'empty':
                     return False
-        
+
         return True
-    
+
     def validate_item_from_stock(self, cr, uid, ids, context=None):
         '''
         both integrity and availability must be OK
-        
+
         'availability_status_func_substitute_item'
         'integrity_status_func_substitute_item'
-        
+
         return True or False
         '''
+        if context is None:
+            context = {}
+
+        kit_obj = self.pool.get('composition.kit')
+
         for obj in self.browse(cr, uid, ids, context=context):
+
+            kit_obj.assert_available_stock(cr, uid, [obj.kit_id.id], context=context)
+
             for item in obj.replacement_item_ids:
                 # integrity is not met
                 if item.integrity_status_func_substitute_item != 'empty':
@@ -77,9 +84,9 @@ class substitute(osv.osv_memory):
                 # availability is not met - we use the hidden one, used for testing with fixed selection values
                 if item.availability_status_hidden_func_substitute_item != 'available':
                     return False
-                
+
         return True
-    
+
     def check_integrity(self, cr, uid, ids, context=None):
         '''
         simply refresh the wizard - line level fields.function are recomputed
@@ -89,22 +96,22 @@ class substitute(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # kit ids
         kit_ids = context['active_ids']
         # simple refresh the wizard, as availability is now a function at line level
         return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, w_type='update', context=context)
-    
+
     def _check_integrity(self, cr, uid, ids, context=None):
         '''
         call both integrity validation methods
         '''
         return self.validate_item_mirror(cr, uid, ids, context=context) and self.validate_item_from_stock(cr, uid, ids, context=context)
-    
+
     def _create_picking(self, cr, uid, ids, obj, date, context=None):
         '''
         create internal picking object
-        
+
         name of picking according to actual step
         '''
         # objects
@@ -132,7 +139,7 @@ class substitute(osv.osv_memory):
                        }
         pick_id = pick_obj.create(cr, uid, pick_values, context=context)
         return pick_id
-    
+
     def _handle_compo_item(self, cr, uid, ids, obj, item, items_to_stock_ids, pick_id, context=None):
         '''
         handle compo item, creating movement and integrity checks
@@ -244,7 +251,7 @@ class substitute(osv.osv_memory):
                        }
         move_obj.create(cr, uid, move_values, context=context)
         return True
-    
+
     def _validate_internal_picking(self, cr, uid, ids, pick_id, context=None):
         '''
         confirm and validate the internal picking
@@ -259,7 +266,7 @@ class substitute(osv.osv_memory):
         pick_obj.action_move(cr, uid, [pick_id])
         wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_done', cr)
         return True
-    
+
     def do_substitute(self, cr, uid, ids, context=None):
         '''
         substitute method, no check on products availability is performed
@@ -271,7 +278,7 @@ class substitute(osv.osv_memory):
         data_tools_obj = self.pool.get('data.tools')
         # load default data
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
-        
+
         # date is today
         date = context['common']['date']
         # default company id
@@ -356,7 +363,7 @@ class substitute(osv.osv_memory):
         # take care to pass KIT ids not wizard ones !
         res = kit_obj.do_substitute(cr, uid, kit_ids, context=context)
         return res
-    
+
     def do_de_kitting(self, cr, uid, ids, context=None):
         '''
         check if confirmation wizard is needed
@@ -368,7 +375,7 @@ class substitute(osv.osv_memory):
             ids = [ids]
         # objects
         item_obj = self.pool.get('substitute.item')
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             # we check the availability of selected src location for processed product - uom_id is false, we take the default one from kit product
             res = item_obj.common_on_change(cr, uid, ids, obj.source_location_id.id, obj.product_id_substitute.id, obj.lot_id_substitute.id, uom_id=False, result=None, context=context)
@@ -376,36 +383,12 @@ class substitute(osv.osv_memory):
             available_qty = res['value']['qty_substitute_item']
             if available_qty < 1.0:
                 # we display the back button - hide close button
-                return self.confirmation_de_kitting(cr, uid, ids, context=dict(context, display_back_confirm=True, display_close_confirm=False))
+                raise osv.except_osv(_("Error"),
+                                     _("The Kit \'%s\' is not available from selected source location \'%s\'"
+                                       %(obj.product_id_substitute.name, obj.source_location_id.name)))
             else:
                 return self._do_de_kitting(cr, uid, ids, context=context)
-    
-    def confirmation_de_kitting(self, cr, uid, ids, context=None):
-        '''
-        open confirmation wizard
-        '''
-        # objects
-        wiz_obj = self.pool.get('wizard')
-        
-        # to de kitting
-        for obj in self.browse(cr, uid, ids, context=context):
-            # data
-            name = _("The Kit \'%s\' is not available from selected source location \'%s\'. Are you sure you want to process the Dekitting?")%(obj.product_id_substitute.name, obj.source_location_id.name)
-            model = 'confirm'
-            step = context.get('step', 'default')
-            question = 'The Kit \'%s\' is not available from selected source location \'%s\'. Are you sure you want to process the Dekitting?'
-            clazz = 'substitute'
-            func = '_do_de_kitting'
-            args = [ids]
-            kwargs = {}
-            # open the selected wizard - context['active_ids']
-            res = wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, step=step, context=dict(context, question=question,
-                                                                                                    callback={'clazz': clazz,
-                                                                                                              'func': func,
-                                                                                                              'args': args,
-                                                                                                              'kwargs': kwargs}))
-        return res
-    
+
     def _do_de_kitting(self, cr, uid, ids, context=None):
         '''
         de-kitting method
@@ -418,7 +401,7 @@ class substitute(osv.osv_memory):
         data_tools_obj = self.pool.get('data.tools')
         # load default data
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
-        
+
         # date is today
         date = context['common']['date']
         # default company id
@@ -473,9 +456,9 @@ class substitute(osv.osv_memory):
             move_obj.create(cr, uid, move_values, context=context)
             # confirm - force availability and validate the internal picking
             self._validate_internal_picking(cr, uid, ids, pick_id, context=context)
-        
+
         return {'type': 'ir.actions.act_window_close'}
-        
+
     def check_availability(self, cr, uid, ids, context=None):
         '''
         simply refresh the wizard - line level fields.function are recomputed
@@ -485,12 +468,12 @@ class substitute(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         # kit ids
         kit_ids = context['active_ids']
         # simple refresh the wizard, as availability is now a function at line level
         return self.pool.get('wizard').open_wizard(cr, uid, kit_ids, w_type='update', context=context)
-    
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
         remove items from stock for de-kitting
@@ -521,7 +504,7 @@ class substitute(osv.osv_memory):
             root.set('hide_new_button', 'False')
             root.set('hide_delete_button', 'False')
             result['fields']['composition_item_ids']['views']['tree']['arch'] = etree.tostring(root)
-            
+
         if view_type == 'form' and context.get('step', False) == 'de_kitting':
             # load the xml tree
             root = etree.fromstring(result['arch'])
@@ -534,9 +517,9 @@ class substitute(osv.osv_memory):
                 for field in fields:
                     field.set('invisible', 'True')
             result['arch'] = etree.tostring(root)
-        
+
         return result
-        
+
     _columns = {'wizard_id': fields.integer(string='Wizard Id', readonly=True),
                 'kit_id': fields.many2one('composition.kit', string='Substitute Items from Composition List', readonly=True),
                 'step_substitute': fields.char(string='Step', size=1024, readonly=True),
@@ -549,13 +532,13 @@ class substitute(osv.osv_memory):
                 # o2m
                 'replacement_item_ids': fields.one2many('substitute.item', 'wizard_id', string='Replacement items'),
                 }
-    
+
     _defaults = {'kit_id': lambda s, cr, uid, c: c.get('kit_id', False), # from _get_new_context
                  'step_substitute': lambda s, cr, uid, c: c.get('step', False), # comes from open_wizard function
                  'product_id_substitute': lambda s, cr, uid, c: c.get('product_id', False), # from _get_new_context
                  'lot_id_substitute': lambda s, cr, uid, c: c.get('prodlot_id', False), # from _get_new_context
-#                 'destination_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
-#                 'source_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
+                 #                 'destination_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
+                 #                 'source_location_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock') and obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1] or False,
                  }
 
 substitute()
@@ -566,7 +549,7 @@ class substitute_item(osv.osv_memory):
     substitute items
     '''
     _name = 'substitute.item'
-    
+
     def _common_update(self, cr, uid, vals, context=None):
         '''
         common function for values update during create and write
@@ -599,16 +582,16 @@ class substitute_item(osv.osv_memory):
             else:
                 # product is False, exp and lot are set to False - asset set to False
                 vals.update(lot_id_substitute_item=False, exp_substitute_item=False, asset_id_substitute_item=False)
-        
+
         return vals
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         force writing of expired_date which is readonly for batch management products
         '''
         vals = self._common_update(cr, uid, vals, context=context)
         return super(substitute_item, self).create(cr, uid, vals, context=context)
-        
+
     def write(self, cr, uid, ids, vals, context=None):
         '''
         force writing of expired_date which is readonly for batch management products
@@ -617,7 +600,7 @@ class substitute_item(osv.osv_memory):
             return True
         vals = self._common_update(cr, uid, vals, context=context)
         return super(substitute_item, self).write(cr, uid, ids, vals, context=context)
-    
+
     def common_on_change(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, result=None, context=None):
         '''
         commmon qty computation
@@ -629,7 +612,7 @@ class substitute_item(osv.osv_memory):
         if not product_id or not location_id:
             result.setdefault('value', {}).update({'qty_substitute_item': 0.0})
             return result
-        
+
         # objects
         loc_obj = self.pool.get('stock.location')
         prod_obj = self.pool.get('product.product')
@@ -650,7 +633,7 @@ class substitute_item(osv.osv_memory):
                                                'uom_id_substitute_item': uom_id,
                                                })
         return result
-    
+
     def change_lot(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
         '''
         prod lot changes, update the expiry date
@@ -665,14 +648,14 @@ class substitute_item(osv.osv_memory):
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
         return result
-    
+
     def change_expiry(self, cr, uid, ids, expiry_date, product_id, type_check, location_id, prodlot_id, uom_id, context=None):
         '''
         expiry date changes, find the corresponding internal prod lot
         '''
         prodlot_obj = self.pool.get('stock.production.lot')
         result = {'value':{}}
-        
+
         if expiry_date and product_id:
             prod_ids = prodlot_obj.search(cr, uid, [('life_date', '=', expiry_date),
                                                     ('type', '=', 'internal'),
@@ -681,7 +664,7 @@ class substitute_item(osv.osv_memory):
                 if type_check == 'in':
                     # the corresponding production lot will be created afterwards
                     result['warning'] = {'title': _('Info'),
-                                     'message': _('The selected Expiry Date does not exist in the system. It will be created during validation process.')}
+                                         'message': _('The selected Expiry Date does not exist in the system. It will be created during validation process.')}
                     # clear prod lot
                     result['value'].update(lot_id_substitute_item=False)
                 else:
@@ -702,7 +685,7 @@ class substitute_item(osv.osv_memory):
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
         return result
-    
+
     def on_change_location_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
         """ 
         location changes
@@ -711,7 +694,7 @@ class substitute_item(osv.osv_memory):
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
         return result
-    
+
     def on_change_product_id(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
         '''
         the product changes, set the hidden flag if necessary
@@ -749,16 +732,16 @@ class substitute_item(osv.osv_memory):
             res = self.pool.get('product.uom')._change_round_up_qty(cr, uid, uom_id, qty, 'qty_substitute_item', result=res)
 
         return res
-    
+
     def _validate_item_from_stock(self, cr, uid, id, context=None):
         '''
         validate the from stock objects for lot and expiry date
-        
+
         - lot AND expiry date are mandatory for batch management products
         - expiry date is mandatory for perishable products
-        
+
         return corresponding key error for selection
-        
+
         from stock and mirror need different validation function
         '''
         # objects
@@ -802,16 +785,16 @@ class substitute_item(osv.osv_memory):
         else:
             if item.asset_id_substitute_item:
                 result = 'not_asset_needed'
-        
+
         # we return the found result
         return result
-    
+
     def validate_item(self, cr, uid, id, context=None):
         '''
         validation interface to allow modifying behavior in inherited classes
         '''
         return self._validate_item_from_stock(cr, uid, id, context=context)
-    
+
     def _vals_get_substitute_item(self, cr, uid, ids, fields, arg, context=None):
         '''
         multi fields function method
@@ -821,7 +804,7 @@ class substitute_item(osv.osv_memory):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
@@ -841,9 +824,9 @@ class substitute_item(osv.osv_memory):
             result[obj.id].update({'availability_status_func_substitute_item': (compute_avail['value']['qty_substitute_item'] >= obj.qty_substitute_item and 'Available (%.2f %s)' or 'Not Enough Available (%.2f %s)')%(compute_avail['value']['qty_substitute_item'], obj.uom_id_substitute_item.name)})
             # availability_status_hidden_func_substitute_item
             result[obj.id].update({'availability_status_hidden_func_substitute_item': compute_avail['value']['qty_substitute_item'] >= obj.qty_substitute_item and 'available' or 'not_available'})
-            
+
         return result
-    
+
     _columns = {'wizard_id': fields.many2one('substitute', string='Substitute wizard'),
                 'location_id_substitute_item': fields.many2one('stock.location', string='Source Location', required=True, domain=[('usage', '=', 'internal')]),
                 'module_substitute_item': fields.char(string='Module', size=1024),
@@ -863,11 +846,11 @@ class substitute_item(osv.osv_memory):
                 'availability_status_hidden_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', selection=SELECTION_AVAILABLE, string='Hidden availability', multi='get_vals_substitute_item', store=False, readonly=True),
                 'integrity_status_func_substitute_item': fields.function(_vals_get_substitute_item, method=True, type='selection', selection=INTEGRITY_STATUS_SELECTION, string=' ', multi='get_vals_substitute_item', store=False, readonly=True),
                 }
-    
+
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist
                  'type_check': 'out',
-                 }
-    
+    }
+
 substitute_item()
 
 
@@ -878,7 +861,7 @@ class substitute_item_mirror(osv.osv_memory):
     '''
     _name = 'substitute.item.mirror'
     _inherit = 'substitute.item'
-    
+
     def _common_update(self, cr, uid, vals, context=None):
         '''
         common function for values update during create and write
@@ -928,13 +911,13 @@ class substitute_item_mirror(osv.osv_memory):
             else:
                 # product is False, mirror, exp and lot are set to False - why set lot_id to False? it is not used in mirror...
                 vals.update(lot_mirror=False, lot_id_substitute_item=False, exp_substitute_item=False, asset_id_substitute_item=False)
-        
+
         return vals
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         force writing of expired_date which is readonly for batch management products
-        
+
         is it really needed as product is readonly?
         - the product does not change, so no problem with readonly which was not readonly
         - when we write sth in readonly field (as batch name for perishable), it will anyway
@@ -943,17 +926,17 @@ class substitute_item_mirror(osv.osv_memory):
         '''
         #vals = self._common_update(cr, uid, vals, context=context)
         return super(substitute_item_mirror, self).create(cr, uid, vals, context=context)
-        
+
     def write(self, cr, uid, ids, vals, context=None):
         '''
         force writing of expired_date which is readonly for batch management products
-        
+
         is it really needed as product is readonly?
         - the product does not change, so no problem with readonly which was not readonly
         - when we write sth in readonly field (as batch name for perishable), it will anyway
           not work because product_id is not sent (readonly)
         I would say no, this is of no use.
-        
+
         product_id is readonly, we're getting into trouble over. write forced for lot with perishable will simply not work.
         there is however not fonctional issue about this point. as the name of the lot is not used for perishable when processing the screen.
         '''
@@ -961,11 +944,11 @@ class substitute_item_mirror(osv.osv_memory):
             return True
         #vals = self._common_update(cr, uid, vals, context=context)
         return super(substitute_item_mirror, self).write(cr, uid, ids, vals, context=context)
-    
+
     def change_lot(self, cr, uid, ids, location_id, product_id, prodlot_id, uom_id=False, context=None):
         '''
         prod lot changes, update the expiry date
-        
+
         only available for batch management products
         '''
         prodlot_obj = self.pool.get('stock.production.lot')
@@ -981,18 +964,18 @@ class substitute_item_mirror(osv.osv_memory):
         else:
             result['value'].update(exp_substitute_item=False)
         return result
-    
+
     def change_expiry(self, cr, uid, ids, expiry_date, product_id, type_check, location_id, prodlot_id, uom_id, context=None):
         '''
         expiry date changes, find the corresponding internal prod lot
-        
+
         only available for perishable products
         '''
         # objects
         prodlot_obj = self.pool.get('stock.production.lot')
         prod_obj = self.pool.get('product.product')
         result = {'value':{}}
-        
+
         if product_id:
             if expiry_date:
                 # product management type
@@ -1010,7 +993,7 @@ class substitute_item_mirror(osv.osv_memory):
                     if prod_ids:
                         prodlot_id = prod_ids[0]
                         result['value'].update(exp_substitute_item=prodlot_obj.browse(cr, uid, prodlot_id, context=context).life_date)
-                        
+
                 elif perishable:
                     # if the product is perishable
                     prod_ids = prodlot_obj.search(cr, uid, [('life_date', '=', expiry_date),
@@ -1020,7 +1003,7 @@ class substitute_item_mirror(osv.osv_memory):
                         if type_check == 'in':
                             # the corresponding production lot will be created afterwards
                             result['warning'] = {'title': _('Info'),
-                                             'message': _('The selected Expiry Date does not exist in the system. It will be created during validation process.')}
+                                                 'message': _('The selected Expiry Date does not exist in the system. It will be created during validation process.')}
                             # clear prod lot
                             result['value'].update(lot_mirror=False)
                         else:
@@ -1043,16 +1026,16 @@ class substitute_item_mirror(osv.osv_memory):
                                    exp_substitute_item=False,
                                    )
         return result
-    
+
     def _validate_item_mirror(self, cr, uid, id, context=None):
         '''
         validate the mirror objects for lot and expiry date
-        
+
         - lot AND expiry date are mandatory for batch management products
         - expiry date is mandatory for perishable products
-        
+
         return True or False
-        
+
         from stock and mirror need different validation function
         '''
         # objects
@@ -1102,21 +1085,21 @@ class substitute_item_mirror(osv.osv_memory):
         else:
             if item.asset_id_substitute_item:
                 result = 'not_asset_needed'
-                
+
         # return the corresponding integrity problem
         return result
-    
+
     def validate_item(self, cr, uid, id, context=None):
         '''
         validation interface to allow modifying behavior in inherited classes
         '''
         return self._validate_item_mirror(cr, uid, id, context=context)
-    
+
     _columns = {'item_id_mirror': fields.integer(string='Id of original Item', readonly=True),
                 'kit_id_mirror': fields.many2one('composition.kit', string='Kit', readonly=True),
                 'lot_mirror': fields.char(string='Batch Nb', size=1024),
                 }
-    
+
     _defaults = {'item_id_mirror': False,
                  'type_check': 'in',
                  }
