@@ -47,7 +47,7 @@
           <para style="table_item_header">UoM</para>
         </td>
         <td>
-          <para style="table_item_header">Quantity counted</para>
+          <para style="table_item_header">Counted Quantity</para>
         </td>
         <td>
           <para style="table_item_header">Batch number</para>
@@ -59,10 +59,10 @@
           <para style="table_item_header">Specification</para>
         </td>
         <td>
-          <para style="table_item_header">BN managment</para>
+          <para style="table_item_header">BN Management</para>
         </td>
         <td>
-          <para style="table_item_header">ED managment</para>
+          <para style="table_item_header">ED Management</para>
         </td>
       </tr>
     </blockTable>
@@ -135,7 +135,7 @@
           <para style="table_item_header">UoM</para>
         </td>
         <td>
-          <para style="table_item_header">Quantity counted</para>
+          <para style="table_item_header">Counted Quantity</para>
         </td>
         <td>
           <para style="table_item_header">Batch number</para>
@@ -147,10 +147,10 @@
           <para style="table_item_header">Specification</para>
         </td>
         <td>
-          <para style="table_item_header">BN managment</para>
+          <para style="table_item_header">BN Management</para>
         </td>
         <td>
-          <para style="table_item_header">ED managment</para>
+          <para style="table_item_header">ED Management</para>
         </td>
       </tr>
     </blockTable>

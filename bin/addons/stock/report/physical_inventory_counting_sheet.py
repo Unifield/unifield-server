@@ -50,7 +50,7 @@ class CountingSheetParser(report_sxw.rml_parse):
             # ['Stock Valuation', 'float', self.compute_stock_value],
         ]
 
-SpreadsheetReport('report.physical_inventory_counting_sheet_xls', 'physical.inventory', 'addons/stock/report/physical_inventory_counting_sheet.xml', parser=CountingSheetParser)
+SpreadsheetReport('report.physical_inventory_counting_sheet_xls', 'physical.inventory', 'addons/stock/report/physical_inventory_counting_sheet.mako', parser=CountingSheetParser)
 
 report_sxw.report_sxw(
     'report.physical_inventory_counting_sheet_pdf',

@@ -8,6 +8,7 @@
             name="physical_inventory_counting_sheet_xls"
             report_type="webkit"
             menu="False"
+            file="stock/report/physical_inventory_counting_sheet.mako"
             />
         <report
             id="physical_inventory_counting_sheet_pdf"
@@ -25,6 +26,8 @@
             name="physical_inventory_discrepancies_report_xls"
             report_type="webkit"
             menu="False"
+            file="stock/report/physical_inventory_discrepancies_report.mako"
             />
+
     </data>
 </openerp>

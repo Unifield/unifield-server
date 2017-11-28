@@ -27,9 +27,9 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
     _description = "Generate counting sheet from selected products"
 
     _columns = {
-        'inventory_id': fields.many2one('physical.inventory', 'Inventory', readonly=True),
-        'prefill_bn': fields.boolean('Prefill Batch Numbers'),
-        'prefill_ed': fields.boolean('Prefill Expiry Dates'),
+        'inventory_id': fields.many2one('physical.inventory', _('Inventory'), readonly=True),
+        'prefill_bn': fields.boolean(_('Prefill Batch Numbers')),
+        'prefill_ed': fields.boolean(_('Prefill Expiry Dates')),
     }
 
     _defaults = {

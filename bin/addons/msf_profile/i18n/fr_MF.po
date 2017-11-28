@@ -4672,6 +4672,8 @@ msgstr "Certificat de Don Gratuit"
 #: report:msf.freight_manifest:0
 #: report:lot.stock.overview:0
 #: report:lot.stock.overview_all:0
+#: view:physical.inventory:0
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:634
 msgid "Value"
 msgstr "Valeur"
 
@@ -6070,6 +6072,7 @@ msgstr ""
 
 #. module: product_list
 #: view:product.list.add.products:0
+#: view:physical.inventory.select.products:0
 msgid "Add products"
 msgstr "Ajouter des produits"
 
@@ -6346,6 +6349,9 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:stock.production.lot.revision,description:0
 #: report:stock.card.report:0
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:294
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:452
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:781
+#: report:physical_inventory_counting_sheet_pdf:0
 #, python-format
 msgid "Description"
 msgstr "Description"
@@ -6393,6 +6399,11 @@ msgstr "Description"
 #: field:report.stock.move,categ_id:0
 #: view:threshold.value:0
 #: field:threshold.value,nomen_manda_2:0
+#: code:addons/stock/physical_inventory.py:1263
+#: code:addons/stock/wizard/physical_inventory_select_products.py:67
+#: field:physical.inventory.discrepancy,nomen_manda_2:0
+#: field:physical.inventory.select.products,nomen_manda_2:0
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:775
 msgid "Family"
 msgstr "Famille"
 
@@ -6781,6 +6792,7 @@ msgstr "Incoming Shipment Excel Export"
 
 #. module: stock
 #: model:ir.actions.act_window,help:stock.action_inventory_form
+#: model:ir.actions.act_window,help:stock.action_physical_inventory
 msgid ""
 "Periodical Inventories are used to count the number of products available "
 "per location. You can use it once a year when you do the general inventory "
@@ -8938,6 +8950,8 @@ msgstr "Créer Menu Tableau"
 #: report:internal.move:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:573
 #: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:192
+#: code:addons/stock/physical_inventory.py:1127
+#: field:physical.inventory.counting,quantity:0
 #, python-format
 msgid "Quantity"
 msgstr "Quantité"
@@ -9163,6 +9177,8 @@ msgstr ""
 #: selection:wizard.import.invoice.line,state:0
 #: selection:mission.stock.wizard,processed_state:0
 #: selection:hr.payroll.validation,state:0
+#: code:addons/stock/physical_inventory.py:17
+#: selection:physical.inventory,state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -11042,6 +11058,8 @@ msgstr "Yearly closure"
 #: selection:international.transport.cost.report,order_state:0
 #: view:local.transport.cost.report:0
 #: selection:local.transport.cost.report,order_state:0
+#: code:addons/stock/physical_inventory.py:21
+#: selection:physical.inventory,state:0
 #, python-format
 msgid "Confirmed"
 msgstr "Confirmé"
@@ -14357,6 +14375,9 @@ msgstr "Question"
 #. modules: reason_types_moves, specific_rules
 #: field:stock.inventory.line,reason_type_id:0
 #: field:initial.stock.inventory.line,reason_type_id:0
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:817
+#: code:addons/stock/physical_inventory.py:1281
+#: field:physical.inventory.discrepancy,reason_type_id:0
 msgid "Adjustment type"
 msgstr "Type d'Ajustement"
 
@@ -14488,6 +14509,8 @@ msgstr "La colonne '%s' n'a pas été trouvée dans le fichier."
 #: field:account.direct.invoice.wizard.line,company_id:0
 #: field:sale.followup.multi.wizard,company_id:0
 #: field:stock.picking,company_id2:0
+#: code:addons/stock/physical_inventory.py:117
+#: field:physical.inventory,company_id:0
 msgid "Company"
 msgstr "Company"
 
@@ -16372,6 +16395,9 @@ msgstr "Nombre de Colis"
 #: code:addons/stock/wizard/stock_change_product_qty.py:107
 #: model:ir.actions.act_window,name:stock.action_inventory_form
 #: model:ir.ui.menu,name:stock.menu_action_inventory_form
+#: model:ir.actions.act_window,name:stock.action_physical_inventory
+#: model:ir.ui.menu,name:stock.menu_action_physical_inventory
+#: view:physical.inventory:0
 #, python-format
 msgid "Physical Inventories"
 msgstr "Inventaires physiques"
@@ -17093,6 +17119,7 @@ msgstr "Annuler le lettrage des Ecritures"
 #: view:threshold.value:0
 #: view:international.transport.cost.report:0
 #: view:local.transport.cost.report:0
+#: view:physical.inventory:0
 msgid "Group By..."
 msgstr "Grouper Par..."
 
@@ -20560,6 +20587,8 @@ msgstr ""
 
 #. module: base
 #: view:partner.wizard.ean.check:0
+#: code:addons/stock/wizard/physical_inventory_import.py:94
+#: selection:physical.inventory.import.line.wizard,action:0
 msgid "Ignore"
 msgstr "Ignorer"
 
@@ -22027,6 +22056,8 @@ msgstr "Product category MSFID \"%s\" not found"
 #: report:msf.freight_manifest:0
 #: report:addons/sales_followup/report/sale_follow_up_report_xls.mako:221
 #: report:sales.follow.up.report_pdf:0
+#: code:addons/stock/physical_inventory.py:1261
+#: field:physical.inventory.discrepancy,product_uom_id:0
 msgid "UOM"
 msgstr "UdM"
 
@@ -22287,6 +22318,8 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: field:res.country.restriction.memory,name:0
 #: field:unifield.setup.configuration,name:0
 #: report:addons/account/report/account_liquidity_balance.mako:162
+#: code:addons/stock/physical_inventory.py:102
+#: field:physical.inventory,name:0
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -22646,6 +22679,13 @@ msgstr "Unités Logistiques"
 #: field:real.average.consumption.line,expiry_date:0
 #: report:order.type.donation.certificate:0
 #: report:order.type.gift.certificate:0
+#: code:addons/stock/physical_inventory.py:1123
+#: code:addons/stock/physical_inventory.py:1271
+#: field:physical.inventory.counting,expiry_date:0
+#: field:physical.inventory.discrepancy,expiry_date:0
+#: report:physical_inventory_counting_sheet_pdf:0
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:463
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:801
 msgid "Expiry date"
 msgstr "Date d'expiration"
 
@@ -24015,6 +24055,8 @@ msgstr ""
 #. modules: specific_rules, stock
 #: field:initial.stock.inventory,move_ids:0
 #: field:stock.inventory,move_ids:0
+#: code:addons/stock/physical_inventory.py:115
+#: field:physical.inventory,move_ids:0
 msgid "Created Moves"
 msgstr "Mouvements Créés"
 
@@ -24432,6 +24474,7 @@ msgstr "To be defined"
 
 #. module: stock
 #: view:stock.inventory:0
+#: view:physical.inventory:0
 msgid "Posted Inventory"
 msgstr "Inventaire Comptabilisé"
 
@@ -24680,6 +24723,7 @@ msgstr "Benin"
 #: field:sale.order,split_type_sale_order:0
 #: field:purchase.order.line,order_type:0
 #: field:purchase.order.line,po_state:0
+#: field:physical.inventory.discrepancy,move_id:0
 msgid "unknown"
 msgstr "inconnu"
 
@@ -26047,6 +26091,8 @@ msgstr "Stopped products"
 #: field:pricelist.partnerinfo,comment:0
 #: field:tender.line,comment:0
 #: field:sync_client.version,comment:0
+#: code:addons/stock/physical_inventory.py:1282
+#: field:physical.inventory.discrepancy,comment:0
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -31245,6 +31291,8 @@ msgstr "Coût Unitaire pour cette ligne de produits"
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:521
 #: view:purchase.order:0
 #: field:tender,creation_date:0
+#: code:addons/stock/physical_inventory.py:103
+#: field:physical.inventory,date:0
 msgid "Creation Date"
 msgstr "Date de création"
 
@@ -31879,6 +31927,10 @@ msgstr "Operator '%s' not suported"
 #: view:sync.client.register_entity:0
 #: field:sync.client.register_entity,message:0
 #: selection:sync.client.register_entity,state:0
+#: code:addons/stock/wizard/physical_inventory_import.py:12
+#: code:addons/stock/wizard/physical_inventory_import.py:101
+#: field:physical.inventory.import.line.wizard,message:0
+#: field:physical.inventory.import.wizard,message:0
 msgid "Message"
 msgstr "Message"
 
@@ -32791,6 +32843,8 @@ msgstr "International"
 #: field:purchase.report,user_id:0
 #: view:account.bank.statement:0
 #: field:stock.journal,user_id:0
+#: code:addons/stock/physical_inventory.py:104
+#: field:physical.inventory,responsible:0
 msgid "Responsible"
 msgstr "Responsable"
 
@@ -36125,6 +36179,7 @@ msgstr "Vue originale"
 #: model:process.transition.action,name:sale.process_transition_action_validate0
 #: view:stock.cost.reevaluation:0
 #: view:sync.client.child_entity:0
+#: view:physical.inventory.import.wizard:0
 msgid "Validate"
 msgstr "Valider"
 
@@ -37392,6 +37447,8 @@ msgstr "2-Spécifique"
 #: field:account.target.costcenter,parent_id:0
 #: field:msf.instance,parent_id:0
 #: field:sync.client.entity_manager,parent:0
+#: code:addons/stock/wizard/physical_inventory_import.py:99
+#: field:physical.inventory.import.line.wizard,parent_id:0
 msgid "Parent"
 msgstr "Parent"
 
@@ -37558,6 +37615,7 @@ msgstr "Currency is missing!"
 
 #. module: base
 #: selection:publisher_warranty.contract.wizard,state:0
+#: view:physical.inventory:0
 msgid "Finished"
 msgstr "Terminé"
 
@@ -39458,6 +39516,15 @@ msgstr "Have account changed?"
 #: selection:stock.location,usage:0
 #: selection:report.batch.recall,location_type:0
 #: model:ir.model,name:sync_so.model_stock_inventory
+#: code:addons/stock/physical_inventory.py:1107
+#: code:addons/stock/physical_inventory.py:1255
+#: code:addons/stock/stock.py:3077
+#: code:addons/stock/wizard/physical_inventory_generate_counting_sheet.py:30
+#: code:addons/stock/wizard/physical_inventory_select_products.py:37
+#: field:physical.inventory.counting,inventory_id:0
+#: field:physical.inventory.discrepancy,inventory_id:0
+#: field:physical.inventory.generate.counting.sheet,inventory_id:0
+#: field:physical.inventory.select.products,inventory_id:0
 #, python-format
 msgid "Inventory"
 msgstr "Inventaire"
@@ -39665,6 +39732,7 @@ msgstr "Sur Plusieurs Documents"
 #: report:account.partner.balance:0
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
+#: view:physical.inventory:0
 #, python-format
 msgid "Date"
 msgstr "Date"
@@ -42187,6 +42255,7 @@ msgstr "Montant maximum de l'ajustement"
 #. module: account
 #: selection:account.payment.term.line,value:0
 #: selection:account.tax.template,type:0
+#: view:physical.inventory:0
 msgid "Percent"
 msgstr "Pourcent"
 
@@ -42840,6 +42909,10 @@ msgstr "De confirmé à attribué."
 #: view:stock.move:0
 #: view:stock.picking:0
 #: view:stock.production.lot:0
+#: view:physical.inventory:0
+#: report:physical_inventory_counting_sheet_pdf:0
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:455
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:784
 #, python-format
 msgid "UoM"
 msgstr "UdM"
@@ -46034,6 +46107,9 @@ msgstr "Account is required!"
 
 #. module: sale
 #: report:msf.report_reception_in:0
+#: view:physical.inventory:0
+#: field:physical.inventory.counting,is_kc:0
+#: view:physical.inventory.select.products:0
 msgid "KC"
 msgstr "GF"
 
@@ -46880,6 +46956,8 @@ msgstr "Effacer les Identités (ID's)"
 #: field:stock.cost.reevaluation,nomen_manda_0:0
 #: field:stock.inventory,nomen_manda_0:0
 #: field:threshold.value,nomen_manda_0:0
+#: code:addons/stock/wizard/physical_inventory_select_products.py:65
+#: field:physical.inventory.select.products,nomen_manda_0:0
 msgid "Main Type"
 msgstr "Type Principal"
 
@@ -47048,6 +47126,8 @@ msgstr "Sync order line DB ID"
 #: selection:purchase.order.line,order_state:0
 #: selection:stock.forecast.line,state:0
 #: selection:sync.client.child_entity,state:0
+#: code:addons/stock/physical_inventory.py:20
+#: selection:physical.inventory,state:0
 #, python-format
 msgid "Validated"
 msgstr "Validé"
@@ -47237,6 +47317,9 @@ msgstr "Paie - Importation"
 #: code:addons/account/wizard/account_report_aged_partner_balance.py:57
 #: code:addons/stock/stock.py:2600
 #: code:addons/stock/stock.py:3020
+#: code:addons/stock/physical_inventory.py:1090
+#: code:addons/stock/stock.py:2637
+#: code:addons/stock/stock.py:3109
 #, python-format
 msgid "UserError"
 msgstr "Erreur Utilisateur"
@@ -49235,6 +49318,7 @@ msgstr "Expiry date will be created (with its internal batch).\n"
 #: view:initial.stock.inventory:0
 #: view:stock.cost.reevaluation:0
 #: view:stock.inventory:0
+#: view:physical.inventory:0
 msgid "Set to Draft"
 msgstr "Passer sous statut Brouillon"
 
@@ -51184,6 +51268,8 @@ msgstr ""
 
 #. module: stock
 #: view:stock.inventory:0
+#: model:ir.model,name:stock.model_physical_inventory
+#: view:physical.inventory:0
 msgid "Physical Inventory"
 msgstr "Inventaire Physique"
 
@@ -51224,6 +51310,8 @@ msgstr "Justification / Notes"
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:479
 #: code:addons/supplier_catalogue/supplier_catalogue.py:590
 #: code:addons/supplier_catalogue/wizard/catalogue_import_lines.py:45
+#: code:addons/stock/physical_inventory.py:645
+#: code:addons/stock/physical_inventory.py:822
 #, python-format
 msgid "Nothing to import."
 msgstr "Rien à importer."
@@ -52378,6 +52466,9 @@ msgstr "Prix Historiques"
 #: field:stock.move.in.processor,dg_check:0
 #: field:stock.move.processor,dg_check:0
 #: field:validate.move.processor,dg_check:0
+#: view:physical.inventory:0
+#: field:physical.inventory.counting,is_dg:0
+#: view:physical.inventory.select.products:0
 msgid "DG"
 msgstr "DG"
 
@@ -54167,6 +54258,7 @@ msgstr "Month 10"
 #. modules: specific_rules, stock
 #: view:initial.stock.inventory:0
 #: view:stock.inventory:0
+#: view:physical.inventory:0
 msgid "Confirm Inventory"
 msgstr "Confirmer l'inventaire"
 
@@ -54194,6 +54286,8 @@ msgstr "Impossible de traiter quantité %d pour produit %s !"
 #: selection:process.transition.action,state:0
 #: field:stock.move.split.lines,action:0
 #: field:sync.client.log_sale_purchase,action_type:0
+#: code:addons/stock/wizard/physical_inventory_import.py:102
+#: field:physical.inventory.import.line.wizard,action:0
 msgid "Action"
 msgstr "Action"
 
@@ -55839,6 +55933,8 @@ msgstr "publisher_warranty.contract.wizard"
 #: field:stock.move.consume,product_uom:0
 #: field:stock.move.scrap,product_uom:0
 #: field:tender.line,product_uom:0
+#: code:addons/stock/physical_inventory.py:1112
+#: field:physical.inventory.counting,product_uom_id:0
 msgid "Product UOM"
 msgstr "UdM du Produit"
 
@@ -57938,6 +58034,8 @@ msgstr "Vérification du fichier…"
 #: selection:international.transport.cost.report,order_state:0
 #: view:local.transport.cost.report:0
 #: selection:local.transport.cost.report,order_state:0
+#: code:addons/stock/physical_inventory.py:22
+#: selection:physical.inventory,state:0
 #, python-format
 msgid "Closed"
 msgstr "Clôturé"
@@ -60147,6 +60245,8 @@ msgstr "Solde de clôture basé sur la Caisse"
 #: field:stock.inventory,nomen_manda_3:0
 #: view:threshold.value:0
 #: field:threshold.value,nomen_manda_3:0
+#: code:addons/stock/wizard/physical_inventory_select_products.py:68
+#: field:physical.inventory.select.products,nomen_manda_3:0
 msgid "Root"
 msgstr "Origine"
 
@@ -64654,6 +64754,8 @@ msgstr "Albania"
 #: field:stock.forecast.line,reference:0
 #: view:stock.move:0
 #: field:threshold.value,name:0
+#: code:addons/stock/physical_inventory.py:101
+#: field:physical.inventory,ref:0
 #, python-format
 msgid "Reference"
 msgstr "Référence"
@@ -66612,6 +66714,13 @@ msgstr "ZAMBIAN KWACHA"
 #: view:ocp.export.wizard:0
 #: view:ocp.matching.export.wizard:0
 #: view:liquidity.balance.wizard:0
+#: view:physical.inventory.import.wizard:0
+#: view:physical.inventory.select.products:0
+#: view:stock.inventory.line.split:0
+#: view:stock.move.consume:0
+#: view:stock.move.scrap:0
+#: view:stock.move.split:0
+#: view:stock.picking:0
 msgid "Cancel"
 msgstr "Annuler"
 
@@ -67832,6 +67941,11 @@ msgstr "Zone - Stock"
 #: view:threshold.value:0
 #: field:threshold.value,location_id:0
 #: field:allocation.stock.setup,error_location_ids:0
+#: code:addons/stock/physical_inventory.py:112
+#: field:physical.inventory,location_id:0
+#: report:physical_inventory_counting_sheet_pdf:0
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:401
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:598
 msgid "Location"
 msgstr "Zone"
 
@@ -70625,6 +70739,7 @@ msgstr ""
 #. modules: specific_rules, stock
 #: view:initial.stock.inventory:0
 #: view:stock.inventory:0
+#: view:physical.inventory:0
 msgid "Cancel Inventory"
 msgstr "Annuler Inventaire"
 
@@ -72454,6 +72569,8 @@ msgstr "Date Justificatif"
 #: field:threshold.value,line_ids:0
 #: field:threshold.value,product_ids:0
 #: view:restrictive.country.setup:0
+#: view:physical.inventory:0
+#: view:physical.inventory.select.products:0
 #, python-format
 msgid "Products"
 msgstr "Produits"
@@ -75020,6 +75137,7 @@ msgstr "Imported notes"
 #: view:sale.open.invoice:0
 #: view:sale.order.change.currency:0
 #: view:sale.order.followup:0
+#: view:physical.inventory.import.wizard:0
 msgid "Close"
 msgstr "Fermer"
 
@@ -77391,6 +77509,12 @@ msgstr "Date Prévue de Colisage"
 #: field:restrictive.country.setup,error:0
 #: field:restrictive.country.setup,error_msg:0
 #: selection:mission.stock.wizard,processed_state:0
+#: code:addons/stock/physical_inventory.py:645
+#: code:addons/stock/physical_inventory.py:822
+#: code:addons/stock/stock.py:527
+#: code:addons/stock/stock.py:1114
+#: code:addons/stock/stock.py:1319
+#: code:addons/stock/stock.py:1329
 #, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -80537,6 +80661,11 @@ msgstr "# de lignes importées"
 #: field:wizard.simu.import.po.line,initial_unit_price:0
 #: field:account.direct.invoice.wizard.line,price_unit:0
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:117
+#: code:addons/stock/physical_inventory.py:1113
+#: code:addons/stock/physical_inventory.py:1266
+#: field:physical.inventory.counting,standard_price:0
+#: field:physical.inventory.discrepancy,standard_price:0
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:787
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -81230,6 +81359,8 @@ msgstr "Valeur totale"
 #: view:purchase.order:0
 #: view:tender:0
 #: selection:tender,state:0
+#: code:addons/stock/physical_inventory.py:23
+#: selection:physical.inventory,state:0
 #, python-format
 msgid "Cancelled"
 msgstr "Annulé"
@@ -83699,6 +83830,13 @@ msgstr "Identification du Lot de Production"
 #: field:stock.move.tracking,prodlot_id:0
 #: view:stock.inventory.line.split:0
 #: view:stock.move.split:0
+#: code:addons/stock/physical_inventory.py:1122
+#: code:addons/stock/physical_inventory.py:1270
+#: field:physical.inventory.counting,batch_number:0
+#: field:physical.inventory.discrepancy,batch_number:0
+#: report:physical_inventory_counting_sheet_pdf:0
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:799
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:461
 msgid "Batch number"
 msgstr "Numéro de Lot"
 
@@ -86173,6 +86311,9 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:export.report.inconsistencies,state:0
 #: field:export.report.stopped.products,state:0
 #: field:wizard.import.invoice.line,state:0
+#: code:addons/stock/physical_inventory.py:116
+#: view:physical.inventory:0
+#: field:physical.inventory,state:0
 msgid "State"
 msgstr "État"
 
@@ -87114,6 +87255,10 @@ msgstr "Send a test email"
 #: field:threshold.value.line,product_id:0
 #: model:ir.model,name:transport_mgmt.model_product_product
 #: model:ir.model,name:unifield_setup.model_product_product
+#: code:addons/stock/physical_inventory.py:1110
+#: code:addons/stock/physical_inventory.py:1259
+#: field:physical.inventory.counting,product_id:0
+#: field:physical.inventory.discrepancy,product_id:0
 msgid "Product"
 msgstr "Produit"
 
@@ -87560,6 +87705,7 @@ msgstr "Mouvement de stock correspondant"
 #: view:wizard.register.import.errors:0
 #: view:product.template:0
 #: code:addons/stock_override/stock.py:1509
+#: code:addons/stock/physical_inventory.py:868
 #, python-format
 msgid "Information"
 msgstr "Information"
@@ -88751,6 +88897,8 @@ msgstr "Nelle Qtté"
 #: code:addons/account/report/account_profit_loss.py:198
 #: code:addons/account/report/account_profit_loss.py:203
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
+#: code:addons/stock/wizard/physical_inventory_select_products.py:54
+#: selection:physical.inventory.select.products,second_filter:0
 #, python-format
 msgid "All"
 msgstr "Tous(tes)"
@@ -92061,6 +92209,10 @@ msgstr "Date - Début de Contrat"
 #: field:automated.import.job,file_to_import:0
 #: view:wizard.import.invoice.line:0
 #: field:wizard.import.invoice.line,file:0
+#: code:addons/stock/physical_inventory.py:120
+#: code:addons/stock/physical_inventory.py:121
+#: field:physical.inventory,file_to_import:0
+#: field:physical.inventory,file_to_import2:0
 msgid "File to import"
 msgstr "Fichier à importer"
 
@@ -94903,6 +95055,8 @@ msgstr "La Destination %s n'est pas active à cette date: %s"
 #: field:sale.order,details:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:549
 #: field:tender,details:0
+#: code:addons/stock/wizard/physical_inventory_import.py:13
+#: field:physical.inventory.import.wizard,line_ids:0
 msgid "Details"
 msgstr "Détails"
 
@@ -95863,6 +96017,7 @@ msgstr "XML non valide pour la Vue Architecture!"
 #: view:purchase.order.line.unlink.wizard:0
 #: view:tender.cancel.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: view:physical.inventory.select.products:0
 msgid "Actions"
 msgstr "Actions"
 
@@ -98984,6 +99139,8 @@ msgstr "Asia/Aden"
 
 #. module: stock
 #: code:addons/stock/stock.py:3021
+#: code:addons/stock/physical_inventory.py:1091
+#: code:addons/stock/stock.py:3110
 #, python-format
 msgid ""
 "You can not cancel inventory which has any account move with posted state."
@@ -99040,6 +99197,8 @@ msgstr "Posting date wrong format for date: %s: %s"
 #: field:stock.inventory,nomen_manda_1:0
 #: view:threshold.value:0
 #: field:threshold.value,nomen_manda_1:0
+#: code:addons/stock/wizard/physical_inventory_select_products.py:66
+#: field:physical.inventory.select.products,nomen_manda_1:0
 msgid "Group"
 msgstr "Groupe"
 
@@ -100421,6 +100580,7 @@ msgstr "Actif/Inactif"
 #: view:stock.production.lot:0
 #: view:stock.tracking:0
 #: view:stock.move:0
+#: view:physical.inventory:0
 msgid "Stock Moves"
 msgstr "Mouvements de Stock"
 
@@ -107643,3 +107803,1008 @@ msgid "Creating Debit Note lines by file import is not allowed."
 msgstr ""
 "La création de lignes d'une Note de Débit via l'import d'un fichier n'est "
 "pas autorisée."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:458
+#, python-format
+msgid " (no batch number / expiry date)"
+msgstr " (sans numéro de lot / date d'expiration)"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:483
+#, python-format
+msgid " Ignore line or count as 0 ?"
+msgstr " Ignorer la ligne, ou compter comme 0 ?"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:456
+#, python-format
+msgid " with Batch number '%s' and Expiry date '%s'"
+msgstr " avec le Numéro de lot '%s' et la Date d'Expiration '%s'"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "1 months"
+msgstr "1 mois"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "10 months"
+msgstr "10 mois"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "11 months"
+msgstr "11 mois"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "12 months"
+msgstr "12 mois"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "2 months"
+msgstr "2 mois"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "3 months"
+msgstr "3 mois"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "4 months"
+msgstr "4 mois"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "5 months"
+msgstr "5 mois"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "6 months"
+msgstr "6 mois"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "7 months"
+msgstr "7 mois"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "8 months"
+msgstr "8 mois"
+
+#. module: stock
+#: selection:physical.inventory.select.products,recent_moves_months:0
+#: selection:physical.inventory.select.products,recent_moves_months_fullinvo:0
+msgid "9 months"
+msgstr "9 mois"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:480
+#, python-format
+msgid "A line for %s was expected but not found."
+msgstr "Un ligne pour %s était attendue mais n'a pas été trouvée."
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Absolute value"
+msgstr "Valeur absolue"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:131
+#: field:physical.inventory,discrepancy_lines_absvalue:0
+#, python-format
+msgid "Absolute value of discrepancies"
+msgstr "Valeur absolue des différences"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:130
+#: field:physical.inventory,inventory_lines_absvalue:0
+#, python-format
+msgid "Absolute value of inventory"
+msgstr "Valeur absolue de l'inventaire"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:55
+#: selection:physical.inventory.select.products,second_filter:0
+#, python-format
+msgid "All from a family"
+msgstr "Tous les produits d'une famille"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:56
+#: selection:physical.inventory.select.products,second_filter:0
+#, python-format
+msgid "All from a product list"
+msgstr "Tous les produits d'une liste"
+
+#. module: stock
+#: view:physical.inventory:0
+#: field:physical.inventory.counting,is_bn:0
+msgid "BN"
+msgstr "NL"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:467
+#: report:physical_inventory_counting_sheet_pdf:0
+msgid "BN Management"
+msgstr "Gestion du NL"
+
+#. module: stock
+#: view:physical.inventory:0
+#: view:physical.inventory.select.products:0
+msgid "BN mandatory"
+msgstr "NL obligatoire"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:737
+#, python-format
+msgid "Batch number is required"
+msgstr "Le numéro de lot est requis"
+
+#. module: stock
+#: view:physical.inventory:0
+#: field:physical.inventory.counting,is_cs:0
+#: view:physical.inventory.select.products:0
+msgid "CS"
+msgstr "SC"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:638
+#: code:addons/stock/physical_inventory.py:818
+#, python-format
+msgid "Cell %s%d: %s"
+msgstr "Cellule %s%d: %s"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Close Inventory"
+msgstr "Clore l'inventaire"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:819
+msgid "Comments / actions (in case of discrepancy)"
+msgstr "Commentaires / actions (en case de différence)"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:988
+#, python-format
+msgid "Confirmation errors"
+msgstr "Erreurs de confirmation"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:60
+#: field:physical.inventory.select.products,cs:0
+#, python-format
+msgid "Controlled substances"
+msgstr "Substance contrôlée"
+
+#. module: stock
+#: view:physical.inventory.import.wizard:0
+msgid "Count all as 0"
+msgstr "Tout compter comme 0"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_import.py:95
+#: selection:physical.inventory.import.line.wizard,action:0
+#, python-format
+msgid "Count as 0"
+msgstr "Compter comme 0"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:19
+#: selection:physical.inventory,state:0
+#, python-format
+msgid "Counted"
+msgstr "Compté"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1276
+#: field:physical.inventory.discrepancy,counted_qty:0
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:458
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:796
+#: report:physical_inventory_counting_sheet_pdf:0
+#, python-format
+msgid "Counted Quantity"
+msgstr "Quantité comptée"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:18
+#: selection:physical.inventory,state:0
+#, python-format
+msgid "Counting"
+msgstr "En cours de comptage"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Counting line"
+msgstr "Ligne de comptage"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:110
+#: view:physical.inventory:0
+#: field:physical.inventory,counting_line_ids:0
+#, python-format
+msgid "Counting lines"
+msgstr "Lignes de comptage"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Counting sheet"
+msgstr "Feuille de comptage"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:803
+#, python-format
+msgid "Counting sheet succefully imported."
+msgstr "La feuille de comptage a bien été importée"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1114
+#: code:addons/stock/physical_inventory.py:1267
+#: field:physical.inventory.counting,currency_id:0
+#: field:physical.inventory.discrepancy,currency_id:0
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:790
+#, python-format
+msgid "Currency"
+msgstr "Devise"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:61
+#: field:physical.inventory.select.products,dg:0
+#, python-format
+msgid "Dangerous goods"
+msgstr "Substance dangereuse"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:105
+#: field:physical.inventory,date_done:0
+#, python-format
+msgid "Date done"
+msgstr "Date terminé"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Discrepancies"
+msgstr "Différences"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:803
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:813
+msgid "Discrepancy"
+msgstr "Différence"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1277
+#: field:physical.inventory.discrepancy,discrepancy_qty:0
+#, python-format
+msgid "Discrepancy Quantity"
+msgstr "Quantité de différence"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1278
+#: field:physical.inventory.discrepancy,discrepancy_value:0
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:815
+#, python-format
+msgid "Discrepancy Value"
+msgstr "Valeur des différences"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1128
+#: field:physical.inventory.counting,discrepancy:0
+#, python-format
+msgid "Discrepancy found"
+msgstr "Différence trouvée"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Discrepancy line"
+msgstr "Ligne de différence"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:108
+#: field:physical.inventory,discrepancy_line_ids:0
+#, python-format
+msgid "Discrepancy lines"
+msgstr "Ligne de différences"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Discrepancy report"
+msgstr "Rapport de différences"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:869
+#, python-format
+msgid "Discrepancy report succefully imported."
+msgstr "Le rapport de différence a bien été importé."
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:805
+msgid "Discrepancy value"
+msgstr "Valeur des différences"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Do you confirm that you have finished the inventory ?"
+msgstr "Confirmez-vous avoir terminé l'inventaire ?"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Do you confirm that you want confirm the inventory ?"
+msgstr "Êtes-vous sur de vouloir confirmer l'inventaire ?"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Do you confirm that you want to cancel the inventory ?"
+msgstr "Confirmez-vous vouloir annuler l'inventaire ?"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Do you confirm that you want to close the inventory ?"
+msgstr "Confirmez-vous vouloir clôre cet inventaire ?"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:758
+#, python-format
+msgid "Duplicate line (same product, batch number and expiry date)"
+msgstr "Ligne dupliquée (même produit, numéro de lot et date d'expiration)"
+
+#. module: stock
+#: view:physical.inventory:0
+#: field:physical.inventory.counting,is_ed:0
+msgid "ED"
+msgstr "DE"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:469
+#: report:physical_inventory_counting_sheet_pdf:0
+msgid "ED Management"
+msgstr "Gestion DE"
+
+#. module: stock
+#: view:physical.inventory:0
+#: view:physical.inventory.select.products:0
+msgid "ED mandatory"
+msgstr "DE obligatoire"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1186
+#, python-format
+msgid "Enter a valid quantity."
+msgstr "Entrez une quantité valide."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:751
+#, python-format
+msgid "Expiry date %s is not valide"
+msgstr "La date d'expiration %s n'est pas valide"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:753
+#, python-format
+msgid "Expiry date is required"
+msgstr "La date d'expiration est requise"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Export XLS discrepancy report"
+msgstr "Exporter le rapport de différences en XLS"
+
+#. module: stock
+#: model:ir.actions.report.xml,name:stock.physical_inventory_counting_sheet_pdf
+#: view:physical.inventory:0
+msgid "Export pdf counting sheet"
+msgstr "Exporter la feuille de comptage en PDF"
+
+#. module: stock
+#: model:ir.actions.report.xml,name:stock.physical_inventory_counting_sheet_xls
+#: view:physical.inventory:0
+msgid "Export xls counting sheet"
+msgstr "Exporter la feuille de comptage en XLS"
+
+#. module: stock
+#: model:ir.actions.report.xml,name:stock.physical_inventory_report_xls
+msgid "Export xls inventory report"
+msgstr "Exporter le rapport d'inventaire en XLS"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Finish Counting"
+msgstr "Finir le comptage"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:50
+#: field:physical.inventory.select.products,first_filter:0
+#, python-format
+msgid "First filter"
+msgstr "Premier filtre"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:38
+#: field:physical.inventory.select.products,full_inventory:0
+#, python-format
+msgid "Full Inventory"
+msgstr "Inventaire complet"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:119
+#: field:physical.inventory,full_inventory:0
+#: view:physical.inventory.select.products:0
+#, python-format
+msgid "Full inventory"
+msgstr "Inventaire complet"
+
+#. module: stock
+#: view:physical.inventory:0
+#: view:physical.inventory.generate.counting.sheet:0
+msgid "Generate Counting Sheet"
+msgstr "Générer feuille de comptage"
+
+#. module: stock
+#: view:physical.inventory.generate.counting.sheet:0
+msgid "Generate counting sheet"
+msgstr "Générer la feuille de comptage"
+
+#. module: stock
+#: model:ir.model,name:stock.model_physical_inventory_generate_counting_sheet
+msgid "Generate counting sheet from selected products"
+msgstr "Générer la feuille de comptage à partir des produits sélectionnés"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Generate discrepancies"
+msgstr "Générer les différences"
+
+#. module: stock
+#: report:physical_inventory_counting_sheet_pdf:0
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:352
+msgid "INVENTORY COUNTING SHEET"
+msgstr "FEUILLE DE COMPTAGE D'INVENTAIRE"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:502
+msgid "INVENTORY REPORT"
+msgstr "RAPPORT D'INVENTAIRE"
+
+#. module: stock
+#: view:physical.inventory.import.wizard:0
+msgid "Ignore all"
+msgstr "Tout ignorer"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1290
+#: field:physical.inventory.discrepancy,ignored:0
+#, python-format
+msgid "Ignored"
+msgstr "Ignoré"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Import XLS discrepancy report"
+msgstr "Importer le rapport de différence en XLS"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Import xls counting sheet"
+msgstr "Importer la feuille de comptage en XLS"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:794
+#: code:addons/stock/physical_inventory.py:862
+#, python-format
+msgid "Importation errors"
+msgstr "Erreurs d'importation"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:701
+#, python-format
+msgid "Invalid line number"
+msgstr "Numéro de ligne invalide"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1064
+#, python-format
+msgid "Inventory '%s' is validated."
+msgstr "L'inventaire '%s' est validé."
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:369
+#: report:physical_inventory_counting_sheet_pdf:0
+msgid "Inventory counter name"
+msgstr "Nom du compteur pour l'inventaire"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:375
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:590
+#: report:physical_inventory_counting_sheet_pdf:0
+msgid "Inventory date"
+msgstr "Date d'inventaire"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:421
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:586
+#: report:physical_inventory_counting_sheet_pdf:0
+msgid "Inventory name"
+msgstr "Nom de l'inventaire"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:395
+#: report:physical_inventory_counting_sheet_pdf:0
+msgid "Inventory reference"
+msgstr "Référence d'inventaire"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:664
+msgid "Inventory resp Name"
+msgstr "Nom du resp de l'inventaire"
+
+#. module: stock
+#: report:physical_inventory_counting_sheet_pdf:0
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:449
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:778
+msgid "Item code"
+msgstr "Code produit"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:57
+#: selection:physical.inventory.select.products,second_filter:0
+#, python-format
+msgid "KC/CS/DG"
+msgstr "GF/SC/DG"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:59
+#: field:physical.inventory.select.products,kc:0
+#, python-format
+msgid "Keep cool items"
+msgstr "Articles sensibles à la température"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1126
+#: code:addons/stock/physical_inventory.py:1274
+#: field:physical.inventory.counting,line_no:0
+#: field:physical.inventory.discrepancy,line_no:0
+#: report:physical_inventory_counting_sheet_pdf:0
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:447
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:773
+#, python-format
+msgid "Line #"
+msgstr "Ligne #"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:640
+#, python-format
+msgid "Line %d: %s"
+msgstr "Ligne %d: %s"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:983
+#, python-format
+msgid "Line %d: Adjustement type missing"
+msgstr "Ligne %d: Le type d'ajustement n'est pas renseigné"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_import.py:100
+#: field:physical.inventory.import.line.wizard,line_id:0
+#, python-format
+msgid "Line ID"
+msgstr "Ligne ID"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:697
+#, python-format
+msgid ""
+"Line number is duplicate. If you added a line, please keep the line number "
+"empty."
+msgstr ""
+"Line number is duplicate. If you added a line, please keep the line number "
+"empty."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:669
+#, python-format
+msgid "Location is different to inventory location"
+msgstr "L'emplacement est différent de l'emplacement de cet inventaire"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:42
+#: field:physical.inventory.select.products,recent_moves_months:0
+#: field:physical.inventory.select.products,recent_moves_months_fullinvo:0
+#, python-format
+msgid "Moved in the last"
+msgstr "Avec mouvement dans les"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1183
+#, python-format
+msgid "Negative quantity is not allowed."
+msgstr "Les quantités négatives ne sont pas autorisées."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:125
+#: field:physical.inventory,discrepancy_lines_number:0
+#, python-format
+msgid "Number of discrepancy lines"
+msgstr "Nombre de lignes avec différences"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:124
+#: field:physical.inventory,inventory_lines_number:0
+#, python-format
+msgid "Number of inventory lines"
+msgstr "Nombre de ligne d'inventaire"
+
+#. module: stock
+#: view:physical.inventory:0
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:632
+msgid "Number of lines"
+msgstr "Nombre de lignes"
+
+#. module: stock
+#: view:physical.inventory.select.products:0
+msgid "Partial inventory"
+msgstr "Inventaire partiel"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:132
+#: field:physical.inventory,discrepancy_lines_percent_absvalue:0
+#, python-format
+msgid "Percent of absolute value of discrepancies"
+msgstr "Poucentage de différence en valeur absolue"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:126
+#: field:physical.inventory,discrepancy_lines_percent:0
+#, python-format
+msgid "Percent of lines with discrepancies"
+msgstr "Pourcentage de lignes avec différences"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:129
+#: field:physical.inventory,discrepancy_lines_percent_value:0
+#, python-format
+msgid "Percent of value of discrepancies"
+msgstr "Valeur des différences en pourcentage"
+
+#. module: stock
+#: model:ir.model,name:stock.model_physical_inventory_counting
+msgid "Physical Inventory Counting Line"
+msgstr "Ligne de comptage d'inventaire physique"
+
+#. module: stock
+#: model:ir.model,name:stock.model_physical_inventory_discrepancy
+msgid "Physical Inventory Discrepancy Line"
+msgstr "Ligne de différence d'inventaire physique"
+
+#. module: stock
+#: model:ir.model,name:stock.model_physical_inventory_line
+msgid "Physical Inventory Line"
+msgstr "Ligne d'inventaire physique"
+
+#. module: stock
+#: model:ir.model,name:stock.model_physical_inventory_import_line_wizard
+msgid "Physical inventory import line wizard"
+msgstr "Assistant d'importation de ligne d'inventaire physique"
+
+#. module: stock
+#: model:ir.model,name:stock.model_physical_inventory_import_wizard
+msgid "Physical inventory import wizard"
+msgstr "Assistant d'import d'inventaire physique"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_generate_counting_sheet.py:31
+#: field:physical.inventory.generate.counting.sheet,prefill_bn:0
+#, python-format
+msgid "Prefill Batch Numbers"
+msgstr "Préremplir les Numéros de Lot"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_generate_counting_sheet.py:32
+#: field:physical.inventory.generate.counting.sheet,prefill_ed:0
+#, python-format
+msgid "Prefill Expiry Dates"
+msgstr "Préremplir les dates d'expiration"
+
+#. module: stock
+#: view:physical.inventory.select.products:0
+msgid "Preview"
+msgstr "Aperçu"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:710
+#, python-format
+msgid "Product %s not found"
+msgstr "Produit %s introuvable"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:62
+#: field:physical.inventory.select.products,product_list:0
+#, python-format
+msgid "Product List"
+msgstr "List de produit"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:107
+#: field:physical.inventory,product_ids:0
+#, python-format
+msgid "Product selection"
+msgstr "Selection des produits"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1131
+#: field:physical.inventory.counting,prod_lot_id:0
+#, python-format
+msgid "Production Lot"
+msgstr "Numéro de lot"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Products Selection"
+msgstr "Sélection des produits"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:48
+#: selection:physical.inventory.select.products,first_filter:0
+#, python-format
+msgid "Products currently in stock at location"
+msgstr "Produits actuellement en stock à l'emplacement"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:73
+#: field:physical.inventory.select.products,products_preview:0
+#, python-format
+msgid "Products preview"
+msgstr "Prévisualisation des produits"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:49
+#: selection:physical.inventory.select.products,first_filter:0
+#, python-format
+msgid "Products with recent movement at location"
+msgstr "Produits avec de récents mouvements à cet emplacement"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:726
+#, python-format
+msgid "Quantity %s is negative"
+msgstr "La quantité %s est négative"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:730
+#, python-format
+msgid "Quantity %s is not valide"
+msgstr "La quantité %s est invalide"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:478
+#, python-format
+msgid "Quantity for line %s, %s is incorrect."
+msgstr "La quantité pour la ligne %s, %s est incorrecte."
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Recount"
+msgstr "Recompter"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:673
+#, python-format
+msgid "Reference is different to inventory reference"
+msgstr "La réference est différente de la réference de cet inventaire"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:687
+#, python-format
+msgid ""
+"Reference is different to inventory reference, You should have exactly 9 columns in this order:\n"
+"Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Date*, Specification*, BN Management*, , ED Management*"
+msgstr ""
+"La référence est différente de la réference dans l'inventaire, Vous devez avoir exactement 9 colonnes dans cet ordre:\n"
+"Ligne #, Code produit*, Description du produit*, UdM*, Quantité*, Lot*, Date d'expiration*, Spécification*, Gestion du NL*, , Gestion de la DE*"
+
+#. module: stock
+#: view:physical.inventory.select.products:0
+msgid "Refresh"
+msgstr "Rafraîchir"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Search Physical Inventory"
+msgstr "Cherche des inventaires physiques"
+
+#. module: stock
+#: code:addons/stock/wizard/physical_inventory_select_products.py:58
+#: field:physical.inventory.select.products,second_filter:0
+#, python-format
+msgid "Second filter"
+msgstr "Second filtre"
+
+#. module: stock
+#: view:physical.inventory.select.products:0
+msgid "Select Products"
+msgstr "Selectionner des produits"
+
+#. module: stock
+#: model:ir.model,name:stock.model_physical_inventory_select_products
+msgid "Select product to consider for inventory, using filters"
+msgstr ""
+"Sélectionner les produits à considérer pour l'inventaire, grâce à des "
+"filtres"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Set as full inventory"
+msgstr "Set as full inventory"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Setting as 'full inventory' is irreversible. Do you confirm ?"
+msgstr "Définir comme 'inventaire complet' est irréversible. Confirmez-vous ?"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:668
+msgid "Signature of responsible"
+msgstr "Signature du responsable"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_counting_sheet.mako:465
+#: report:physical_inventory_counting_sheet_pdf:0
+msgid "Specification"
+msgstr "Spécification"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1094
+#, python-format
+msgid "The Physical inventory id:%s (%s) has been cancelled"
+msgstr "L'inventaire physique %s (%s) a été annulé"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1135
+#: sql_constraint:physical.inventory.counting:0
+#, python-format
+msgid "The line product, batch number and expiry date must be unique!"
+msgstr ""
+"L'ensemble produit, numéro de lot et date d'expiration doit être unique!"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1275
+#: field:physical.inventory.discrepancy,theoretical_qty:0
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:793
+#, python-format
+msgid "Theoretical Quantity"
+msgstr "Quantité théorique"
+
+#. module: stock
+#: view:physical.inventory.select.products:0
+msgid ""
+"This is a full inventory. All products currently in stock and all products "
+"with movements in the last X months will be added."
+msgstr ""
+"Il s'agit d'un inventaire complet. Tous les produits actuellement en stock "
+"et les produits avec des mouvements ces X derniers mois seront ajoutés."
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:636
+msgid "Total Absolute value"
+msgstr "Valeur totale absolue"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1286
+#: field:physical.inventory.discrepancy,total_product_counted_qty:0
+#, python-format
+msgid "Total Counted Quantity for product"
+msgstr "Quantitée totale comptée pour ce produit"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1287
+#: field:physical.inventory.discrepancy,total_product_counted_value:0
+#, python-format
+msgid "Total Counted Value for product"
+msgstr "Valeur totale comptée pour ce produit"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1289
+#: field:physical.inventory.discrepancy,total_product_discrepancy_value:0
+#, python-format
+msgid "Total Discrepancy Value for product"
+msgstr "Valeur totale des différences pour ce produit"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1288
+#: field:physical.inventory.discrepancy,total_product_discrepancy_qty:0
+#, python-format
+msgid "Total Discrepancy for product"
+msgstr "Différence totale pour le produit"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:809
+msgid "Total QTY  after  INV"
+msgstr "Quantité totale après inventaire"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:807
+msgid "Total QTY  before INV"
+msgstr "Quantité totale avant inventaire"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:1285
+#: field:physical.inventory.discrepancy,total_product_theoretical_qty:0
+#, python-format
+msgid "Total Theoretical Quantity for product"
+msgstr "Quantité théorique totale pour le produit"
+
+#. module: stock
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:811
+msgid "Total Value after INV"
+msgstr "Valeur totale après inventaire"
+
+#. module: stock
+#: view:physical.inventory:0
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:654
+msgid "Total at the end"
+msgstr "Total à la fin"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:127
+#: field:physical.inventory,inventory_lines_value:0
+#, python-format
+msgid "Total value of inventory"
+msgstr "Valeur totale de l'inventaire"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:841
+#, python-format
+msgid "Unknown adjustment type %s"
+msgstr "Type d'ajustement inconnu %s"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:851
+#, python-format
+msgid "Unknown line no %s"
+msgstr "Ligne no %s inconnue"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:719
+#, python-format
+msgid "UoM %s unknown"
+msgstr "Unité %s inconnue"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:128
+#: field:physical.inventory,discrepancy_lines_value:0
+#, python-format
+msgid "Value of discrepancies"
+msgstr "Valeur des différences"
+
+#. module: stock
+#: view:physical.inventory:0
+#: report:addons/stock/report/physical_inventory_discrepancies_report.mako:684
+msgid "With discrepancies"
+msgstr "Avec différences"
+
+#. module: stock
+#: field:physical.inventory.discrepancy,location_id:0
+msgid "location_id"
+msgstr "location_id"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:454
+#, python-format
+msgid "product '%s'"
+msgstr "produit '%s'"

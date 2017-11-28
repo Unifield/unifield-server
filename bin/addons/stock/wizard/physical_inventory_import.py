@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from osv import fields, osv
+from tools.translate import _
 
 
 class PhysicalInventoryImportWizard(osv.osv_memory):
@@ -8,8 +9,8 @@ class PhysicalInventoryImportWizard(osv.osv_memory):
     _description = "Physical inventory import wizard"
 
     _columns = {
-        'message': fields.text('Message', readonly=True),
-        'line_ids': fields.one2many('physical.inventory.import.line.wizard', 'parent_id', string='Details')
+        'message': fields.text(_('Message'), readonly=True),
+        'line_ids': fields.one2many('physical.inventory.import.line.wizard', 'parent_id', string=_('Details'))
     }
 
     def action_close(self, cr, uid, ids, context=None):
@@ -90,15 +91,15 @@ class PhysicalInventoryImportLineWizard(osv.osv_memory):
     _description = "Physical inventory import line wizard"
 
     ACTION_LIST = [
-        ('ignore', 'Ignore'),
-        ('count', 'Count as 0'),
+        ('ignore', _('Ignore')),
+        ('count', _('Count as 0')),
     ]
 
     _columns = {
-        'parent_id': fields.many2one('physical.inventory.import.wizard', string='Parent'),
-        'line_id': fields.integer('Line ID', readonly=True),
-        'message': fields.text('Message', readonly=True),
-        'action': fields.selection(ACTION_LIST, string='Action')
+        'parent_id': fields.many2one('physical.inventory.import.wizard', string=_('Parent')),
+        'line_id': fields.integer(_('Line ID'), readonly=True),
+        'message': fields.text(_('Message'), readonly=True),
+        'action': fields.selection(ACTION_LIST, string=_('Action'))
     }
 
 

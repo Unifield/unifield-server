@@ -34,43 +34,43 @@ class physical_inventory_select_products(osv.osv_memory):
 
     _columns = {
 
-        'inventory_id': fields.many2one('physical.inventory', 'Inventory', readonly=True),
-        'full_inventory': fields.boolean('Full Inventory'),
+        'inventory_id': fields.many2one('physical.inventory', _('Inventory'), readonly=True),
+        'full_inventory': fields.boolean(_('Full Inventory')),
 
         # If this is a full inventory, we'll add products in stock at that
         # location + products with recent moves at that location
-        'recent_moves_months_fullinvo': fields.selection(MOVED_IN_LAST_X_MONTHS, "Moved in the last", select=True),
+        'recent_moves_months_fullinvo': fields.selection(MOVED_IN_LAST_X_MONTHS, _("Moved in the last"), select=True),
 
         # For partial inventories :
 
         # First filter is to select products either in stock, or with recent
         # moves at that location
-        'first_filter': fields.selection((('in_stock', "Products currently in stock at location"),
-                                          ('recent_movements', "Products with recent movement at location")),
-                                         "First filter", select=True),
+        'first_filter': fields.selection((('in_stock', _("Products currently in stock at location")),
+                                          ('recent_movements', _("Products with recent movement at location"))),
+                                          _("First filter"), select=True),
         'recent_moves_months': fields.selection(MOVED_IN_LAST_X_MONTHS, "Moved in the last", select=True),
 
         # Second filter is to select a family / product list / 'special care' products
-        'second_filter': fields.selection((('all', "All"),
-                                           ('family', "All from a family"),
-                                           ('productlist', "All from a product list"),
-                                           ('specialcare', "KC/CS/DG")),
-                                          "Second filter", select=True),
-        'kc': fields.boolean('Keep cool items'),
-        'cs': fields.boolean('Controlled substances'),
-        'dg': fields.boolean('Dangerous goods'),
-        'product_list': fields.many2one('product.list', 'Product List', select=True),
+        'second_filter': fields.selection((('all', _("All")),
+                                           ('family', _("All from a family")),
+                                           ('productlist', _("All from a product list")),
+                                           ('specialcare', _("KC/CS/DG"))),
+                                           _("Second filter"), select=True),
+        'kc': fields.boolean(_('Keep cool items')),
+        'cs': fields.boolean(_('Controlled substances')),
+        'dg': fields.boolean(_('Dangerous goods')),
+        'product_list': fields.many2one('product.list', _('Product List'), select=True),
 
         # mandatory nomenclature levels
-        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', readonly=False, select=1),
-        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', readonly=False, select=1),
-        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', readonly=False, select=1),
-        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', readonly=False, select=1),
+        'nomen_manda_0': fields.many2one('product.nomenclature', _('Main Type'), readonly=False, select=1),
+        'nomen_manda_1': fields.many2one('product.nomenclature', _('Group'), readonly=False, select=1),
+        'nomen_manda_2': fields.many2one('product.nomenclature', _('Family'), readonly=False, select=1),
+        'nomen_manda_3': fields.many2one('product.nomenclature', _('Root'), readonly=False, select=1),
 
         # Finally, we want to give the user some feedback about what's going
         # to be imported
         'products_preview': fields.many2many('product.product', 'products_preview_rel', 'product_id',
-                                             'physical_inventory_select_products_id', string="Products preview",
+                                             'physical_inventory_select_products_id', string=_("Products preview"),
                                              readonly=True),
     }
 

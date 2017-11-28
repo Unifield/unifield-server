@@ -349,7 +349,7 @@
    <Column ss:Index="9" ss:AutoFitWidth="0" ss:Width="75.75"/>
    <Column ss:Index="10" ss:AutoFitWidth="0" ss:Width="75.75"/>
    <Row ss:Height="31.5">
-    <Cell ss:Index="2" ss:MergeAcross="6" ss:StyleID="s51"><Data ss:Type="String">INVENTORY COUNTING SHEET</Data><NamedCell
+       <Cell ss:Index="2" ss:MergeAcross="6" ss:StyleID="s51"><Data ss:Type="String">${_('INVENTORY COUNTING SHEET')}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="18.75" ss:StyleID="s16">
@@ -366,13 +366,13 @@
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0">
-    <Cell ss:Index="2" ss:StyleID="s19"><Data ss:Type="String">Inventory counter Name</Data><NamedCell
+    <Cell ss:Index="2" ss:StyleID="s19"><Data ss:Type="String">${_('Inventory counter name')}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s20"><Data ss:Type="String">${objects[0].responsible or ''}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s19"><Data ss:Type="String">Inventory date</Data><NamedCell
+    <Cell ss:StyleID="s19"><Data ss:Type="String">${_('Inventory date')}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="m2667643071564"><NamedCell
       ss:Name="Print_Titles"/><Data ss:Type="DateTime">${ to_excel(objects[0].date) }</Data></Cell>
@@ -392,13 +392,13 @@
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:Height="15.75">
-    <Cell ss:MergeAcross="1" ss:StyleID="m2667643071544"><Data ss:Type="String">Inventory reference</Data><NamedCell
+    <Cell ss:MergeAcross="1" ss:StyleID="m2667643071544"><Data ss:Type="String">${_('Inventory reference')}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s20"><Data ss:Type="String">${objects[0].ref}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s19"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s22"><Data ss:Type="String">Location</Data><NamedCell
+    <Cell ss:StyleID="s22"><Data ss:Type="String">${_('Location')}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="m2667643071524"><Data ss:Type="String">${objects[0].location_id and objects[0].location_id.name or ''}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
@@ -418,7 +418,7 @@
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:Height="15.75">
-    <Cell ss:Index="2" ss:StyleID="s24"><Data ss:Type="String">Inventory name </Data><NamedCell
+    <Cell ss:Index="2" ss:StyleID="s24"><Data ss:Type="String">${_('Inventory name')} </Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s20"><Data ss:Type="String">${objects[0].name or ''}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
@@ -444,29 +444,29 @@
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="31.875" ss:StyleID="s23">
-    <Cell ss:StyleID="s34"><Data ss:Type="String">Line #</Data><NamedCell
+    <Cell ss:StyleID="s34"><Data ss:Type="String">${_('Line #')}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s35"><Data ss:Type="String">Item  code</Data><NamedCell
+    <Cell ss:StyleID="s35"><Data ss:Type="String">${_('Item code')}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s35"><Data ss:Type="String">Description</Data><NamedCell
+    <Cell ss:StyleID="s35"><Data ss:Type="String">${_('Description')}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s36"><Data ss:Type="String">UoM</Data><NamedCell
+    <Cell ss:StyleID="s36"><Data ss:Type="String">${_('UoM')}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s37"><Data ss:Type="String">Quantity counted</Data><NamedCell
+    <Cell ss:StyleID="s37"><Data ss:Type="String">${_('Counted Quantity')}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="_FilterDatabase"/><NamedCell
       ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s38"><Data ss:Type="String">Batch number</Data><NamedCell
+    <Cell ss:StyleID="s38"><Data ss:Type="String">${_('Batch number')}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s39"><Data ss:Type="String">Expiry date</Data><NamedCell
+    <Cell ss:StyleID="s39"><Data ss:Type="String">${_('Expiry date')}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s39"><Data ss:Type="String">Specification</Data><NamedCell
+    <Cell ss:StyleID="s39"><Data ss:Type="String">${_('Specification')}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s40"><Data ss:Type="String">BN Management</Data><NamedCell
+    <Cell ss:StyleID="s40"><Data ss:Type="String">${_('BN Management')}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
-    <Cell ss:StyleID="s41"><Data ss:Type="String">ED Management</Data><NamedCell
+    <Cell ss:StyleID="s41"><Data ss:Type="String">${_('ED Management')}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
    </Row>
 % for index,item in enumerate(objects[0].counting_line_ids):

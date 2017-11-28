@@ -98,27 +98,27 @@ class PhysicalInventory(osv.osv):
 
 
     _columns = {
-        'ref': fields.char('Reference', size=64, readonly=True),
-        'name': fields.char('Name', size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'responsible': fields.char('Responsible', size=128, required=False),
-        'date_done': fields.datetime('Date done', readonly=True),
+        'ref': fields.char(_('Reference'), size=64, readonly=True),
+        'name': fields.char(_('Name'), size=64, required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'date': fields.datetime(_('Creation Date'), required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'responsible': fields.char(_('Responsible'), size=128, required=False),
+        'date_done': fields.datetime(_('Date done'), readonly=True),
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
-                                        'product_id', 'inventory_id', string="Product selection"),
-        'discrepancy_line_ids': fields.one2many('physical.inventory.discrepancy', 'inventory_id', 'Discrepancy lines',
+                                        'product_id', 'inventory_id', string=_("Product selection")),
+        'discrepancy_line_ids': fields.one2many('physical.inventory.discrepancy', 'inventory_id', _('Discrepancy lines'),
                                     states={'closed': [('readonly', True)]}),
-        'counting_line_ids': fields.one2many('physical.inventory.counting', 'inventory_id', 'Counting lines',
+        'counting_line_ids': fields.one2many('physical.inventory.counting', 'inventory_id', _('Counting lines'),
                                              states={'closed': [('readonly', True)]}),
-        'location_id': fields.many2one('stock.location', 'Location', required=True, readonly=True,
+        'location_id': fields.many2one('stock.location', _('Location'), required=True, readonly=True,
                                        states={'draft': [('readonly', False)]}),
         'move_ids': fields.many2many('stock.move', 'physical_inventory_move_rel', 'inventory_id', 'move_id',
-                                     'Created Moves', readonly=True),
-        'state': fields.selection(PHYSICAL_INVENTORIES_STATES, 'State', readonly=True, select=True),
-        'company_id': fields.many2one('res.company', 'Company', readonly=True, select=True, required=True,
+                                     _('Created Moves'), readonly=True),
+        'state': fields.selection(PHYSICAL_INVENTORIES_STATES, _('State'), readonly=True, select=True),
+        'company_id': fields.many2one('res.company', _('Company'), readonly=True, select=True, required=True,
                                       states={'draft': [('readonly', False)]}),
-        'full_inventory': fields.boolean('Full inventory', readonly=True),
-        'file_to_import': fields.binary(string='File to import', filters='*.xml'),
-        'file_to_import2': fields.binary(string='File to import', filters='*.xml'),
+        'full_inventory': fields.boolean(_('Full inventory'), readonly=True),
+        'file_to_import': fields.binary(string=_('File to import'), filters='*.xml'),
+        'file_to_import2': fields.binary(string=_('File to import'), filters='*.xml'),
 
         # Total for product
         'inventory_lines_number':             fields.function(_inventory_totals, multi="inventory_total", method=True, type='integer', string=_("Number of inventory lines")),
@@ -451,11 +451,11 @@ class PhysicalInventory(osv.osv):
         def read_many(model, ids, columns):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)
         def product_identity_str(line):
-            str_ = "product '%s'" % line["product_id"][1]
+            str_ = _("product '%s'") % line["product_id"][1]
             if line["batch_number"] or line["expiry_date"]:
-                str_ += " with Batch number '%s' and Expiry date '%s'"  % (line["batch_number"] or '', line["expiry_date"] or '')
+                str_ += _(" with Batch number '%s' and Expiry date '%s'") % (line["batch_number"] or '', line["expiry_date"] or '')
             else:
-                str_ += " (no batch number / expiry date)"
+                str_ += _(" (no batch number / expiry date)")
             return str_
 
         discrepancy_line_ids = read_single("physical.inventory", inventory_id, 'discrepancy_line_ids')
@@ -475,12 +475,12 @@ class PhysicalInventory(osv.osv):
                 continue
             anomaly = False
             if line["counted_qty"] == False:
-                anomaly = "Quantity for line %s, %s is incorrect." % (line["line_no"], product_identity_str(line))
+                anomaly = _("Quantity for line %s, %s is incorrect.") % (line["line_no"], product_identity_str(line))
             if line["counted_qty"] < 0.0:
-                anomaly = "A line for %s was expected but not found." % product_identity_str(line)
+                anomaly = _("A line for %s was expected but not found.") % product_identity_str(line)
 
             if anomaly:
-                anomalies.append({"message": anomaly + " Ignore line or count as 0 ?",
+                anomalies.append({"message": anomaly + _(" Ignore line or count as 0 ?"),
                                   "line_id": line["id"]})
 
         if anomalies:
@@ -635,9 +635,9 @@ class PhysicalInventory(osv.osv):
 
         def add_error(message, file_row, file_col=None):
             if file_col is not None:
-                _msg = 'Cell %s%d: %s' % (chr(0x41 + file_col), file_row + 1, message)
+                _msg = _('Cell %s%d: %s') % (chr(0x41 + file_col), file_row + 1, message)
             else:
-                _msg = 'Line %d: %s' % (file_row + 1, message)
+                _msg = _('Line %d: %s') % (file_row + 1, message)
             counting_sheet_errors.append(_msg)
 
         inventory_rec = self.browse(cr, uid, ids, context=context)[0]
@@ -684,7 +684,7 @@ class PhysicalInventory(osv.osv):
 
             # Check number of columns
             if len(row) != 10:
-                add_error(_("""_(Reference is different to inventory reference, You should have exactly 9 columns in this order:
+                add_error(_("""Reference is different to inventory reference, You should have exactly 9 columns in this order:
 Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Date*, Specification*, BN Management*, , ED Management*"""), row_index)
                 break
 
@@ -694,11 +694,11 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 try:
                     line_no = int(line_no)
                     if line_no in line_list:
-                        add_error("""Line number is duplicate. If you added a line, please keep the line number empty.""", row_index, 0)
+                        add_error(_("""Line number is duplicate. If you added a line, please keep the line number empty."""), row_index, 0)
                     line_list.append(line_no)
                 except ValueError:
                     line_no = None
-                    add_error("""Invalid line number""", row_index, 0)
+                    add_error(_("""Invalid line number"""), row_index, 0)
 
             # Check product_code
             product_code = row.cells[1].data
@@ -707,7 +707,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             if len(product_ids) == 1:
                 product_id = product_ids[0]
             else:
-                add_error("""Product %s not found""" % product_code, row_index, 1)
+                add_error(_("""Product %s not found""") % product_code, row_index, 1)
 
             # Check UoM
             product_uom_id = False
@@ -716,25 +716,25 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             if len(product_uom_ids) == 1:
                 product_uom_id = product_uom_ids[0]
             else:
-                add_error("""UoM %s unknown""" % product_uom, row_index, 3)
+                add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
 
             # Check quantity
             quantity = row.cells[4].data
             try:
                 quantity = counting_obj.quantity_validate(cr, quantity)
             except NegativeValueError:
-                add_error('Quantity %s is negative' % quantity, row_index, 4)
+                add_error(_('Quantity %s is negative') % quantity, row_index, 4)
                 quantity = 0.0
             except ValueError:
                 quantity = 0.0
-                add_error('Quantity %s is not valide' % quantity, row_index, 4)
+                add_error(_('Quantity %s is not valide') % quantity, row_index, 4)
 
             product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable'])
 
             # Check batch number
             batch_name = row.cells[5].data
             if not batch_name and product_info['batch_management'] and float(quantity or 0) > 0:
-                add_error('Batch number is required', row_index, 5)
+                add_error(_('Batch number is required'), row_index, 5)
 
             # Check expiry date
             expiry_date = row.cells[6].data
@@ -748,14 +748,14 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                     else:
                         raise ValueError()
                 except ValueError:
-                    add_error("""Expiry date %s is not valide""" % expiry_date, row_index, 6)
+                    add_error(_("""Expiry date %s is not valide""") % expiry_date, row_index, 6)
             if not expiry_date and product_info['perishable'] and float(quantity or 0) > 0:
-                add_error('Expiry date is required', row_index, 6)
+                add_error(_('Expiry date is required'), row_index, 6)
 
             # Check duplicate line (Same product_id, batch_number, expirty_date)
             item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
             if item in line_items:
-                add_error("""Duplicate line (same product, batch number and expiry date)""", row_index)
+                add_error(_("""Duplicate line (same product, batch number and expiry date)"""), row_index)
             else:
                 line_items.append(item)
 
@@ -791,7 +791,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         if counting_sheet_errors:
             # Errors found, open message box for exlain
             self.write(cr, uid, ids, {'file_to_import': False}, context=context)
-            result = wizard_obj.message_box(cr, uid, title='Importation errors', message='\n'.join(counting_sheet_errors))
+            result = wizard_obj.message_box(cr, uid, title=_('Importation errors'), message='\n'.join(counting_sheet_errors))
         else:
             # No error found. Write counting lines on Inventory
             vals = {
@@ -800,7 +800,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 'counting_line_ids': counting_sheet_lines
             }
             self.write(cr, uid, ids, vals, context=context)
-            result = wizard_obj.message_box(cr, uid, title='Information', message='Counting sheet succefully imported.')
+            result = wizard_obj.message_box(cr, uid, title='Information', message=_('Counting sheet succefully imported.'))
         context['import_in_progress'] = False
 
         return result
@@ -815,7 +815,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         discrepancy_report_errors = []
 
         def add_error(message, file_row, file_col):
-            discrepancy_report_errors.append('Cell %s%d: %s' % (chr(0x41 + file_col), file_row + 1, message))
+            discrepancy_report_errors.append(_('Cell %s%d: %s') % (chr(0x41 + file_col), file_row + 1, message))
 
         inventory_rec = self.browse(cr, uid, ids, context=context)[0]
         if not inventory_rec.file_to_import2:
@@ -838,7 +838,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 if reason_ids:
                     adjustment_type = reason_ids[0]
                 else:
-                    add_error('Unknown adjustment type %s' % adjustment_type, row_index, 18)
+                    add_error(_('Unknown adjustment type %s') % adjustment_type, row_index, 18)
                     adjustment_type = False
 
             comment = row.cells[19].data
@@ -848,7 +848,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             if line_ids:
                 line_no = line_ids[0]
             else:
-                add_error('Unknown line no %s' % line_no, row_index, 0)
+                add_error(_('Unknown line no %s') % line_no, row_index, 0)
                 line_no = False
 
             discrepancy_report_lines.append((1, line_no, {'reason_type_id': adjustment_type, 'comment': comment}))
@@ -859,14 +859,14 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         if discrepancy_report_errors:
             # Errors found, open message box for exlain
             self.write(cr, uid, ids, {'file_to_import2': False}, context=context)
-            result = wizard_obj.message_box(cr, uid, title='Importation errors',
+            result = wizard_obj.message_box(cr, uid, title=_('Importation errors'),
                                             message='\n'.join(discrepancy_report_errors))
         else:
             # No error found. update comment and reason for discrepancies lines on Inventory
             vals = {'file_to_import2': False, 'discrepancy_line_ids': discrepancy_report_lines}
             self.write(cr, uid, ids, vals, context=context)
-            result = wizard_obj.message_box(cr, uid, title='Information',
-                                            message='Discrepancy report succefully imported.')
+            result = wizard_obj.message_box(cr, uid, title=_('Information'),
+                                            message=_('Discrepancy report succefully imported.'))
         context['import_in_progress'] = False
 
         return result
@@ -980,12 +980,12 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             errors = []
             for line in line_read:
                 if not line['ignored'] and not line['reason_type_id']:
-                    errors.append('Line %d: Adjustement type missing' % line['line_no'])
+                    errors.append(_('Line %d: Adjustement type missing') % line['line_no'])
 
             if errors:
                 # Errors found, open message box for exlain
                 wizard_obj = self.pool.get('physical.inventory.import.wizard')
-                return wizard_obj.message_box(cr, uid, title='Confirmation errors', message='\n'.join(errors))
+                return wizard_obj.message_box(cr, uid, title=_('Confirmation errors'), message='\n'.join(errors))
 
 
             def get_prodlot_id(bn, ed):
@@ -1061,7 +1061,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 move_ids.append(move_id)
                 discrepancy_to_move[line_id] = move_id
 
-            message = _('Inventory') + " '" + inv['name'] + "' " + _("is validated.")
+            message = _("Inventory '%s' is validated.") % inv['name']
             self.log(cr, uid, inv['id'], message)
             self.write(cr, uid, [inv['id']], {'state': 'confirmed', 'move_ids': [(6, 0, move_ids)]})
             for line_id, move_id in discrepancy_to_move.items():
@@ -1091,7 +1091,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                                                  _('You can not cancel inventory which has any account move with posted state.'))
                         account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
-            self.infolog(cr, uid, "The Physical inventory id:%s (%s) has been cancelled" % (inv.id, inv.name))
+            self.infolog(cr, uid, _("The Physical inventory id:%s (%s) has been cancelled") % (inv.id, inv.name))
         return {}
 
 
@@ -1111,7 +1111,7 @@ class PhysicalInventoryCounting(osv.osv):
                                       domain=[('type', '<>', 'service')]),
         'product_uom_id': fields.many2one('product.uom', _('Product UOM'), required=True),
         'standard_price': fields.float(_("Unit Price"), readonly=True),
-        'currency_id': fields.many2one('res.currency', "Currency", readonly=True),
+        'currency_id': fields.many2one('res.currency', _("Currency"), readonly=True),
         'is_bn': fields.related('product_id', 'batch_management', string='BN', type='boolean', readonly=True),
         'is_ed': fields.related('product_id', 'perishable', string='ED', type='boolean', readonly=True),
         'is_kc': fields.related('product_id', 'is_kc', string='KC', type='boolean', readonly=True),
@@ -1125,10 +1125,10 @@ class PhysicalInventoryCounting(osv.osv):
         # Specific to inventory
         'line_no': fields.integer(string=_('Line #'), readonly=True),
         'quantity': fields.char(_('Quantity'), size=15),
-        'discrepancy': fields.boolean('Discrepancy found', readonly=True),
+        'discrepancy': fields.boolean(_('Discrepancy found'), readonly=True),
 
         # Actual batch number id, filled after the inventory switches to done
-        'prod_lot_id': fields.many2one('stock.production.lot', 'Production Lot', readonly=True)
+        'prod_lot_id': fields.many2one('stock.production.lot', _('Production Lot'), readonly=True)
     }
 
     _sql_constraints = [
@@ -1180,10 +1180,10 @@ class PhysicalInventoryCounting(osv.osv):
                 quantity = self.quantity_validate(cr, quantity)
             except NegativeValueError:
                 return {'value': {'quantity': False},
-                        'warning': {'title': 'warning', 'message': 'Negative quantity is not permit.'}}
+                        'warning': {'title': 'warning', 'message': _('Negative quantity is not allowed.')}}
             except ValueError:
                 return {'value': {'quantity': False},
-                        'warning': {'title': 'warning', 'message': 'Enter a valid quantity.'}}
+                        'warning': {'title': 'warning', 'message': _('Enter a valid quantity.')}}
         return {'value': {'quantity': quantity}}
 
     def on_change_product_id(self, cr, uid, ids, product_id, uom=False):
@@ -1252,19 +1252,19 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
     _columns = {
         # Link to inventory
-        'inventory_id': fields.many2one('physical.inventory', 'Inventory', ondelete='cascade'),
+        'inventory_id': fields.many2one('physical.inventory', _('Inventory'), ondelete='cascade'),
         'location_id': fields.related('inventory_id', 'location_id', type='many2one', relation='stock.location',  string='location_id', readonly=True),
 
         # Product
-        'product_id': fields.many2one('product.product', 'Product', required=True),
+        'product_id': fields.many2one('product.product', _('Product'), required=True),
 
-        'product_uom_id': fields.many2one('product.uom', 'UOM', required=True, readonly=True),
+        'product_uom_id': fields.many2one('product.uom', _('UOM'), required=True, readonly=True),
 
-        'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', string="Family",
+        'nomen_manda_2': fields.related('product_id', 'nomen_manda_2', string=_("Family"),
                                          relation="product.nomenclature", type='many2one', readonly=True),
 
         'standard_price': fields.float(_("Unit Price"), readonly=True),
-        'currency_id': fields.many2one('res.currency', "Currency", readonly=True),
+        'currency_id': fields.many2one('res.currency', _("Currency"), readonly=True),
 
         # BN / ED
         'batch_number': fields.char(_('Batch number'), size=30, readonly=True),
@@ -1272,22 +1272,22 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # Count
         'line_no': fields.integer(string=_('Line #'), readonly=True),
-        'theoretical_qty': fields.float('Theoretical Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True),
-        'counted_qty': fields.float('Counted Quantity', digits_compute=dp.get_precision('Product UoM')),
+        'theoretical_qty': fields.float(_('Theoretical Quantity'), digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'counted_qty': fields.float(_('Counted Quantity'), digits_compute=dp.get_precision('Product UoM')),
         'discrepancy_qty': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Quantity")),
         'discrepancy_value': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Value")),
 
         # Discrepancy analysis
-        'reason_type_id': fields.many2one('stock.reason.type', string='Adjustment type', select=True),
-        'comment': fields.char(size=128, string='Comment'),
+        'reason_type_id': fields.many2one('stock.reason.type', string=_('Adjustment type'), select=True),
+        'comment': fields.char(size=128, string=_('Comment')),
 
         # Total for product
-        'total_product_theoretical_qty': fields.float('Total Theoretical Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True),
-        'total_product_counted_qty': fields.float('Total Counted Quantity for product', digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'total_product_theoretical_qty': fields.float(_('Total Theoretical Quantity for product'), digits_compute=dp.get_precision('Product UoM'), readonly=True),
+        'total_product_counted_qty': fields.float(_('Total Counted Quantity for product'), digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'total_product_counted_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Counted Value for product")),
         'total_product_discrepancy_qty': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy for product")),
         'total_product_discrepancy_value': fields.function(_total_product_qty_and_values, multi="total_product", method=True, type='float', string=_("Total Discrepancy Value for product")),
-        'ignored': fields.boolean('Ignored', readonly=True),
+        'ignored': fields.boolean(_('Ignored'), readonly=True),
         'move_id': fields.integer(readonly=True)
     }
 
