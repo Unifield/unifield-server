@@ -306,7 +306,6 @@ class purchase_order_sync(osv.osv):
         return res
 
     _columns = {
-        'sended_by_supplier': fields.boolean('Sended by supplier', readonly=True),
         'push_fo': fields.boolean('The Push FO case', readonly=False),
         'from_sync': fields.boolean('Updated by synchronization', readonly=False),
         'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
@@ -319,7 +318,6 @@ class purchase_order_sync(osv.osv):
 
     _defaults = {
         'push_fo': False,
-        'sended_by_supplier': True,
         'po_updated_by_sync': False,
         'is_validated_and_synced': False,
     }
