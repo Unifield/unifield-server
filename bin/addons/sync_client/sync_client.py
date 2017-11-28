@@ -950,20 +950,18 @@ class Entity(osv.osv):
     def create_message(self, cr, uid, context=None):
         context = context or {}
         messages = self.pool.get(context.get('message_to_send_model', 'sync.client.message_to_send'))
-
-        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        uuid = self.pool.get('sync.client.entity').get_entity(cr, uid).identifier
-
-        res = proxy.get_message_rule(uuid, self._hardware_id)
-        if res and not res[0]: raise Exception, res[1]
-        check_md5(res[2], res[1], _('method get_message_rule'))
-        self.pool.get('sync.client.message_rule').save(cr, uid, res[1], context=context)
-
         rule_obj = self.pool.get("sync.client.message_rule")
 
+        to_update = {}
         messages_count = 0
         for rule in rule_obj.browse(cr, uid, rule_obj.search(cr, uid, [('type', '!=', 'USB')], context=context), context=context):
-            messages_count += messages.create_from_rule(cr, uid, rule, None, context=context)
+            generated_ids, ignored_ids = messages.create_from_rule(cr, uid, rule, None, context=context)
+            messages_count += len(generated_ids)
+            to_update.setdefault(rule.model, []).extend(generated_ids + ignored_ids)
+
+        for model, ids in to_update.iteritems():
+            if ids:
+                cr.execute('update ir_model_data set sync_date=NOW() where model=%s and res_id in %s', (model, tuple(ids)))
         return messages_count
 
     @sync_subprocess('msg_push_send')
@@ -1009,6 +1007,12 @@ class Entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
 
         entity = self.get_entity(cr, uid, context=context)
+
+        res = proxy.get_message_rule(entity.identifier, self._hardware_id)
+        if res and not res[0]: raise Exception, res[1]
+        check_md5(res[2], res[1], _('method get_message_rule'))
+        self.pool.get('sync.client.message_rule').save(cr, uid, res[1], context=context)
+
         if recover:
             proxy.message_recover_from_seq(entity.identifier, self._hardware_id, entity.message_last)
 

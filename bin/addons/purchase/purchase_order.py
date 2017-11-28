@@ -717,8 +717,10 @@ class purchase_order(osv.osv):
                                               fnct_search=_search_has_confirmed_line,
                                               string='Has a confirmed line',
                                               help='Only used to SEARCH for POs with at least one line in Confirmed state'),
+        'split_during_sll_mig': fields.boolean('PO split at Coordo during SLL migration'),
     }
     _defaults = {
+        'split_during_sll_mig': False,
         'po_confirmed': lambda *a: False,
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
@@ -1041,7 +1043,7 @@ class purchase_order(osv.osv):
         # if the copy comes from the button duplicate
         if context.get('from_button'):
             default.update({'is_a_counterpart': False})
-        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, 'po_confirmed': False})
+        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, 'po_confirmed': False, 'split_during_sll_mig': False})
         if not context.get('keepOrigin', False):
             default.update({'origin': False})
 
