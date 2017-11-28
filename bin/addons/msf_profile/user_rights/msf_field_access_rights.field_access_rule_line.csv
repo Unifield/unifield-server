@@ -63,7 +63,6 @@ PO Coordo,return_claim.field_product_product_picking_ids,FALSE,FALSE,FALSE,msf_p
 PO Coordo,transport_mgmt.field_purchase_order_picking_transport_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/63
 PO Coordo,purchase.field_purchase_order_po_from_fo,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/64
 PO Coordo,purchase.field_purchase_order_po_from_ir,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/65
-PO Coordo,purchase.field_purchase_order_po_updated_by_sync,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/66
 PO Coordo,product.field_product_product_pricelist_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/67
 PO Coordo,sale.field_sale_order_priority,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/68
 PO Coordo,sale.field_sale_order_product_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/69
@@ -71,7 +70,6 @@ PO Coordo,sync_so.field_purchase_order_push_fo,FALSE,FALSE,FALSE,msf_profile/fie
 PO Coordo,msf_order_date.field_sale_order_ready_to_ship_date,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/71
 PO Coordo,msf_order_date.field_sale_order_receipt_date,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/72
 PO Coordo,tender_flow.field_purchase_order_rfq_ok,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/73
-PO Coordo,sync_so.field_purchase_order_sended_by_supplier,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/74
 PO Coordo,order_line_number.field_sale_order_sequence_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/75
 PO Coordo,msf_order_date.field_sale_order_shipment_date,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/76
 PO Coordo,transport_mgmt.field_purchase_order_shipment_transport_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/77
@@ -154,7 +152,6 @@ PO Project,return_claim.field_product_product_picking_ids,FALSE,FALSE,FALSE,msf_
 PO Project,transport_mgmt.field_purchase_order_picking_transport_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/155
 PO Project,purchase.field_purchase_order_po_from_fo,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/156
 PO Project,purchase.field_purchase_order_po_from_ir,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/157
-PO Project,purchase.field_purchase_order_po_updated_by_sync,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/158
 PO Project,product.field_product_product_pricelist_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/159
 PO Project,sale.field_sale_order_priority,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/160
 PO Project,sale.field_sale_order_product_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/161
@@ -162,7 +159,6 @@ PO Project,sync_so.field_purchase_order_push_fo,FALSE,FALSE,FALSE,msf_profile/fi
 PO Project,msf_order_date.field_sale_order_ready_to_ship_date,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/163
 PO Project,msf_order_date.field_sale_order_receipt_date,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/164
 PO Project,tender_flow.field_purchase_order_rfq_ok,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/165
-PO Project,sync_so.field_purchase_order_sended_by_supplier,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/166
 PO Project,order_line_number.field_sale_order_sequence_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/167
 PO Project,msf_order_date.field_sale_order_shipment_date,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/168
 PO Project,transport_mgmt.field_purchase_order_shipment_transport_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/169
@@ -245,7 +241,6 @@ PO HQ,return_claim.field_product_product_picking_ids,FALSE,FALSE,FALSE,msf_profi
 PO HQ,transport_mgmt.field_purchase_order_picking_transport_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/247
 PO HQ,purchase.field_purchase_order_po_from_fo,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/248
 PO HQ,purchase.field_purchase_order_po_from_ir,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/249
-PO HQ,purchase.field_purchase_order_po_updated_by_sync,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/250
 PO HQ,product.field_product_product_pricelist_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/251
 PO HQ,sale.field_sale_order_priority,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/252
 PO HQ,sale.field_sale_order_product_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/253
@@ -253,7 +248,6 @@ PO HQ,sync_so.field_purchase_order_push_fo,FALSE,FALSE,FALSE,msf_profile/field_a
 PO HQ,msf_order_date.field_sale_order_ready_to_ship_date,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/255
 PO HQ,msf_order_date.field_sale_order_receipt_date,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/256
 PO HQ,tender_flow.field_purchase_order_rfq_ok,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/257
-PO HQ,sync_so.field_purchase_order_sended_by_supplier,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/258
 PO HQ,order_line_number.field_sale_order_sequence_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/259
 PO HQ,msf_order_date.field_sale_order_shipment_date,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/260
 PO HQ,transport_mgmt.field_purchase_order_shipment_transport_ids,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/261
@@ -338,7 +332,6 @@ Field Order HQ,sale.field_sale_order_product_id,FALSE,FALSE,FALSE,msf_profile/fi
 Field Order HQ,sale.field_sale_order_project_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/341
 Field Order HQ,msf_order_date.field_sale_order_ready_to_ship_date,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/342
 Field Order HQ,msf_order_date.field_sale_order_receipt_date,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/343
-Field Order HQ,sync_so.field_sale_order_received,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/344
 Field Order HQ,procurement_request.field_sale_order_requestor,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/345
 Field Order HQ,order_line_number.field_sale_order_sequence_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/346
 Field Order HQ,msf_order_date.field_sale_order_shipment_date,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/347
