@@ -134,10 +134,10 @@
                             </html>
                         </group>
                         <field name="name"/>
-                        <field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                        <field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p'])]}"/>
                         <field name="invoiced" attrs="{'invisible':[('state', 'in', ('draft','validated', 'draft_p', 'validated_p'))]}" readonly="1"/>
                         <newline/>
-                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"/>
                         <field name="partner_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'validated'])]}"/>
                         <field name="shipped" attrs="{'invisible':[('state', 'in', ('draft','validated', 'draft_p', 'validated_p'))]}" readonly="1"/>
                         <field name="shipped_rate" invisible="True"/>
@@ -146,7 +146,7 @@
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': ['|', ('push_fo', '=', True), ('state', 'not in', ['draft', 'validated'])]}"/>
                         <field name="priority" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
                         <newline/>
-                        <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                        <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p'])]}"/>
                         <field name="details"/>
                         <newline/>
                     </group>
