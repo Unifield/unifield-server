@@ -216,11 +216,14 @@ class product_product(osv.osv):
                             order='NO_ORDER', context=context)
             else:
                 location_ids = context['location']
-        elif context.get('location_category', False):
+        elif context.get('location_category', False) and context.get('location_usage', False):
             location_category = context.get('location_category')
+            location_usage = context.get('location_usage')
             assert isinstance(location_category, list)
+            assert isinstance(location_usage, list)
             location_ids = stock_location_obj.search(cr, uid,
-                        [('location_category','in', location_category)],
+                        [('location_category','in', location_category),
+                         ('usage', 'in', location_usage)],
                         order='NO_ORDER', context=context)
         else:
             location_ids = []

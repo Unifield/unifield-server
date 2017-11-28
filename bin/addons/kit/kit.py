@@ -312,6 +312,7 @@ class composition_kit(osv.osv):
                 request_context = context.copy()
                 request_context.update({ 'states': ('done',),
                                          'what': ('in', 'out'),
+                                         'location_usage': ['internal'],
                                          'location_category': ['stock', 'consumption_unit'] })
                 return self.pool.get("product.product").get_product_available(cr, uid, [id_], context=request_context)[id_]
 
