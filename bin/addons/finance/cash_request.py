@@ -25,6 +25,7 @@ from datetime import datetime
 import time
 import decimal_precision as dp
 from tools.translate import _
+import register_accounting
 
 
 class cash_request(osv.osv):
@@ -990,6 +991,25 @@ class cash_request_liquidity(osv.osv):
         """
         return self.pool.get('account.journal').get_journal_type(cr, uid, context=context)
 
+    def _balance_functional_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Gets the functional balance by using the conversion method from the Liquidity Position report
+        """
+        if context is None:
+            context = {}
+        result = {}
+        fields_list = ['booking_currency_id', 'calculated_balance_booking', 'period_id']
+        for liq in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
+            liquidity_pos_report = register_accounting.report.report_liquidity_position \
+                .report_liquidity_position3(cr, uid, 'fakereport', context=context)
+            balance_amount = 0.0
+            if liquidity_pos_report and liq.booking_currency_id and liq.calculated_balance_booking and liq.period_id:
+                balance_amount = liquidity_pos_report.getConvert(liq.booking_currency_id.id,
+                                                                 liq.calculated_balance_booking,
+                                                                 report_period=liq.period_id) or 0.0
+            result[liq.id] = balance_amount
+        return result
+
     _columns = {
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
         'instance_id': fields.many2one('msf.instance', 'Proprietary instance', required=True,
@@ -1008,9 +1028,18 @@ class cash_request_liquidity(osv.osv):
                                      type='many2one', string='Period'),
         'opening_balance': fields.related('register_id', 'balance_start', string='Opening Balance in register currency',
                                           type='float', readonly=True),
-        'calculated_balance': fields.related('register_id', 'msf_calculated_balance',
-                                             string='Calculated Balance in register currency', type='float',
-                                             readonly=True),
+        'calculated_balance_booking': fields.related('register_id', 'msf_calculated_balance',
+                                                     string='Calculated Balance in register currency', type='float',
+                                                     readonly=True),
+        'booking_currency_id': fields.related('register_id', 'currency', string='Register Currency', type='many2one',
+                                              relation='res.currency'),
+        'calculated_balance_functional': fields.function(_balance_functional_compute, method=True,
+                                                         string='Calculated Balance in functional currency',
+                                                         type='float', digits_compute=dp.get_precision('Account'),
+                                                         readonly=True, store=True),
+        'functional_currency_id': fields.related('cash_request_id', 'consolidation_currency_id',
+                                                 string='Functional Currency', type='many2one', relation='res.currency',
+                                                 store=False),
     }
 
     _order = 'type, instance_id'

@@ -67,15 +67,17 @@ class report_liquidity_position3(report_sxw.rml_parse):
     def getPeriod(self):
         return self.pool.get('account.period').browse(self.cr, self.uid, self.period_id, context={'lang': self.localcontext.get('lang')})
 
-    def getConvert(self, cur_id, amount):
+    def getConvert(self, cur_id, amount, report_period=None):
         '''
         Returns the amount converted from the currency whose id is in parameter into the functional currency
         '''
         currency = self.pool.get('res.currency').browse(self.cr, self.uid, cur_id)
         rate = 1
         # get the correct exchange rate according to the report period
+        if not report_period:
+            report_period = self.getPeriod()
         self.cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s "
-                        "ORDER BY name DESC LIMIT 1", (cur_id, self.getPeriod().date_stop))
+                        "ORDER BY name DESC LIMIT 1;", (cur_id, report_period.date_stop))
         if self.cr.rowcount != 0:
             rate = self.cr.fetchone()[0]
         converted_amount = amount / rate

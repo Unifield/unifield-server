@@ -103,9 +103,12 @@
                                             <field name="journal_name"/>
                                             <field name="status"/>
                                             <field name="period_id"/>
-                                            <field name="opening_balance"/>
-                                            <field name="calculated_balance"/>
-                                            <field name="cashbox_balance"/>
+                                            <field name="opening_balance" sum="Total Opening Balance"/>
+                                            <field name="calculated_balance_booking" sum="Total Calculated Balance Booking"/>
+                                            <field name="cashbox_balance" sum="Total Cashbox Balance"/>
+                                            <field name="booking_currency_id"/>
+                                            <field name="calculated_balance_functional" sum="Total Calculated Balance Functional"/>
+                                            <field name="functional_currency_id"/>
                                         </tree>
                                     </field>
                                 </group>
@@ -118,9 +121,12 @@
                                             <field name="journal_name"/>
                                             <field name="status"/>
                                             <field name="period_id"/>
-                                            <field name="opening_balance"/>
-                                            <field name="calculated_balance"/>
-                                            <field name="bank_statement_balance"/>
+                                            <field name="opening_balance" sum="Total Opening Balance"/>
+                                            <field name="calculated_balance_booking" sum="Total Calculated Balance Booking"/>
+                                            <field name="bank_statement_balance" sum="Total Bank Statement Balance"/>
+                                            <field name="booking_currency_id"/>
+                                            <field name="calculated_balance_functional" sum="Total Calculated Balance Functional"/>
+                                            <field name="functional_currency_id"/>
                                         </tree>
                                     </field>
                                 </group>
