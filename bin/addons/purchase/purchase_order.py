@@ -617,7 +617,6 @@ class purchase_order(osv.osv):
         'po_from_fo': fields.function(_po_from_x, method=True, type='boolean', string='Is PO from FO ?', multi='po_from_x'),
         'canceled_end': fields.boolean(string='Canceled End', readonly=True),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
-        'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
         'origin': fields.text('Source Document', help="Reference of the document that generated this purchase order request."),
         # UF-2267: Store also the parent PO as reference in the sourced PO
         'parent_order_name': fields.many2one('purchase.order', string='Parent PO name', help='If the PO is created from a re-source FO, this field contains the relevant original PO name'),

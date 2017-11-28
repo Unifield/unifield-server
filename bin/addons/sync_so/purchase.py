@@ -308,7 +308,6 @@ class purchase_order_sync(osv.osv):
     _columns = {
         'push_fo': fields.boolean('The Push FO case', readonly=False),
         'from_sync': fields.boolean('Updated by synchronization', readonly=False),
-        'po_updated_by_sync': fields.boolean('PO updated by sync', readonly=False),
         'fo_sync_date': fields.datetime(string='FO sync. date', readonly=True),
         'is_validated_and_synced': fields.function(
             _is_validated_and_synced, method=True,
@@ -318,7 +317,6 @@ class purchase_order_sync(osv.osv):
 
     _defaults = {
         'push_fo': False,
-        'po_updated_by_sync': False,
         'is_validated_and_synced': False,
     }
 
@@ -404,7 +402,7 @@ class purchase_order_sync(osv.osv):
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
-        default.update({'active': True, 'split_po' : False, 'push_fo' : False, 'po_updated_by_sync': False})
+        default.update({'active': True, 'split_po' : False, 'push_fo' : False})
         return super(purchase_order_sync, self).copy(cr, uid, id, default, context=context)
 
 
@@ -525,7 +523,6 @@ class purchase_order_sync(osv.osv):
 
         partner_ref = source + "." + so_info.name
         header_result['partner_ref'] = partner_ref
-        header_result['po_updated_by_sync'] = True
 
         # UTP-952: If the partner is section or intermission, remove the AD
         partner_type = so_po_common.get_partner_type(cr, uid, source, context)
