@@ -848,26 +848,6 @@ class stock_mission_report(osv.osv):
             logger.warning("___ %s The report will be stored in the database." % e.value)
 
 
-        # TODO: remove me at integration
-        if not product_values:
-            product_values = {}
-            product_obj = self.pool.get('product.product')
-            cr.execute("""SELECT id FROM product_product
-                    WHERE id IN (SELECT product_id FROM stock_move)""")
-            product_amc_ids = [x[0] for x in cr.fetchall()]
-
-            # XXX the following read is the part where 95 % of the time of this method is spent
-            for prod in product_obj.read(cr, uid, product_amc_ids, ['product_amc'], context=context):
-                product_values[prod['id']] = {'reviewed_consumption': 0, 'product_amc': prod['product_amc']}
-            # B
-            cr.execute("""SELECT id FROM product_product
-                    WHERE id IN (SELECT name FROM monthly_review_consumption_line)""")
-
-            product_reviewed_ids = [x[0] for x in cr.fetchall()]
-            for prod in product_obj.read(cr, uid, product_reviewed_ids, ['reviewed_consumption'], context=context):
-                product_values.setdefault(prod['id'], {}).update({'reviewed_consumption': prod['reviewed_consumption']})
-
-
         write_attachment_in_db = False
         # for MSR reports, the migration is ignored, if the path is defined and
         # usable, it is used, migration done or not.
