@@ -313,7 +313,7 @@ class composition_kit(osv.osv):
                 request_context.update({ 'states': ('done',),
                                          'what': ('in', 'out'),
                                          'location_category': ['stock', 'consumption_unit'] })
-                return self.pool.get("product.product").get_product_available(cr, uid, [id_], context=request_context)
+                return self.pool.get("product.product").get_product_available(cr, uid, [id_], context=request_context)[id_]
 
             # For kits with a batch, take the stock of the batch
             # Otherwise, take the global stock of the product
