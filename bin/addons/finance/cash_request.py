@@ -322,7 +322,7 @@ class cash_request(osv.osv):
         if context is None:
             context = {}
         recap_mission_obj = self.pool.get('recap.mission')
-        fields_list = ['instance_ids', 'commitment_ids', 'recap_expense_ids']
+        fields_list = ['instance_ids', 'commitment_ids', 'recap_expense_ids', 'payable_ids']
         cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=fields_list, context=context)
         # delete previous recap mission lines for this cash request
         old_lines = recap_mission_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
