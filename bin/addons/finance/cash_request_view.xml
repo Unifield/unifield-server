@@ -93,6 +93,38 @@
                                 <field name="swift_code"/>
                                 <field name="bank_address"/>
                             </page>
+                            <page string="Liquidity Position" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                                <!-- CASH -->
+                                <group colspan="4" col="2">
+                                    <field name="liquidity_cash_ids" nolabel="1">
+                                        <tree string="Cash">
+                                            <field name="instance_id"/>
+                                            <field name="journal_code"/>
+                                            <field name="journal_name"/>
+                                            <field name="status"/>
+                                            <field name="period_id"/>
+                                            <field name="opening_balance"/>
+                                            <field name="calculated_balance"/>
+                                            <field name="cashbox_balance"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                                <!-- BANK -->
+                                <group colspan="4" col="2">
+                                    <field name="liquidity_bank_ids" nolabel="1">
+                                        <tree string="Bank">
+                                            <field name="instance_id"/>
+                                            <field name="journal_code"/>
+                                            <field name="journal_name"/>
+                                            <field name="status"/>
+                                            <field name="period_id"/>
+                                            <field name="opening_balance"/>
+                                            <field name="calculated_balance"/>
+                                            <field name="bank_statement_balance"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
                             <page string="Payables" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                 <field name="payable_ids" nolabel="1">
                                     <tree string="Payables">

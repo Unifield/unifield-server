@@ -103,6 +103,12 @@ class cash_request(osv.osv):
                                                   string='Current Instance Level', store=False, readonly=True),
         'payable_ids': fields.one2many('cash.request.payable', 'cash_request_id', 'Payables', required=True,
                                        readonly=True),
+        'liquidity_bank_ids': fields.one2many('cash.request.liquidity.bank', 'cash_request_id',
+                                              'Liquidity Position Bank', required=True, readonly=True),
+        'liquidity_cash_ids': fields.one2many('cash.request.liquidity.cash', 'cash_request_id',
+                                              'Liquidity Position Cash', required=True, readonly=True),
+        'liquidity_cheque_ids': fields.one2many('cash.request.liquidity.cheque', 'cash_request_id',
+                                                'Liquidity Position Cheque', required=True, readonly=True),
     }
 
     def _check_buffer(self, cr, uid, ids):
@@ -224,6 +230,9 @@ class cash_request(osv.osv):
             'total_to_transfer_line_ids': [],
             'recap_mission_ids': [],
             'payable_ids': [],
+            'liquidity_bank_ids': [],
+            'liquidity_cash_ids': [],
+            'liquidity_cheque_ids': [],
         })
         return super(cash_request, self).copy(cr, uid, cash_req_id, default, context=context)
 
@@ -293,6 +302,45 @@ class cash_request(osv.osv):
             vals = {'instance_id': inst.id,
                     'cash_request_id': cash_req.id}
             payable_obj.create(cr, uid, vals, context=context)
+        return True
+
+    def _generate_liquidity(self, cr, uid, cash_req_id, context=None):
+        """
+        Generates data for the Liquidity Position Tab of the Cash Request
+        """
+        if context is None:
+            context = {}
+        liq_cash_obj = self.pool.get('cash.request.liquidity.cash')
+        liq_bank_obj = self.pool.get('cash.request.liquidity.bank')
+        liq_cheque_obj = self.pool.get('cash.request.liquidity.cheque')
+        period_obj = self.pool.get('account.period')
+        reg_obj = self.pool.get('account.bank.statement')
+        cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['request_date', 'instance_ids'], context=context)
+        # delete previous liquidity data for this cash request
+        old_liq_cash_ids = liq_cash_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
+        liq_cash_obj.unlink(cr, uid, old_liq_cash_ids, context=context)
+        old_liq_bank_ids = liq_bank_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
+        liq_bank_obj.unlink(cr, uid, old_liq_bank_ids, context=context)
+        old_liq_cheque_ids = liq_cheque_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
+        liq_cheque_obj.unlink(cr, uid, old_liq_cheque_ids, context=context)
+        # create new cash req. liquidity data
+        period_ids = period_obj.get_period_from_date(cr, uid, cash_req.request_date, context=context)
+        period_id = period_ids and period_ids[0] or False
+        instances = cash_req.instance_ids
+        for inst in instances:
+            # bank and cash registers
+            for regtype in ['bank', 'cash']:
+                reg_domain = [('instance_id', '=', inst.id),
+                              ('period_id', '=', period_id),
+                              ('journal_id.type', '=', regtype)]
+                reg_ids = reg_obj.search(cr, uid, reg_domain, order='NO_ORDER', context=context)
+                for reg_id in reg_ids:
+                    vals = {'instance_id': inst.id,
+                            'register_id': reg_id,
+                            'cash_request_id': cash_req.id}
+                    liq_obj = (regtype == 'bank' and liq_bank_obj) or (regtype == 'cash' and liq_cash_obj) or False
+                    if liq_obj:
+                        liq_obj.create(cr, uid, vals, context=context)
         return True
 
     def _generate_past_transfers(self, cr, uid, cash_req_id, context=None):
@@ -380,6 +428,7 @@ class cash_request(osv.osv):
                 raise osv.except_osv(_('Error'), _('The date of the Cash Request must be the date of the day.'))
             self._generate_payables(cr, uid, cash_request_id, context=context)
             self._generate_commitments(cr, uid, cash_request_id, context=context)
+            self._generate_liquidity(cr, uid, cash_request_id, context=context)
             self._generate_past_transfers(cr, uid, cash_request_id, context=context)
             if cash_req['state'] != 'done':
                 self.write(cr, uid, cash_request_id, {'state': 'open'}, context=context)
@@ -914,4 +963,93 @@ class cash_request_payable(osv.osv):
 
 
 cash_request_payable()
+
+
+class cash_request_liquidity(osv.osv):
+    _name = 'cash.request.liquidity'
+    _rec_name = 'cash_request_id'
+    _description = 'Liquidity Position for Cash Request'
+
+    def _period_id_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Gets the period corresponding to the date of the Cash Request linked to the cash_request_liquidity
+        """
+        if context is None:
+            context = {}
+        result = {}
+        period_obj = self.pool.get('account.period')
+        for liq_id in ids:
+            cash_req = self.browse(cr, uid, liq_id, fields_to_fetch=['cash_request_id'], context=context).cash_request_id
+            period_ids = period_obj.get_period_from_date(cr, uid, cash_req.request_date, context=context)
+            result[liq_id] = period_ids and period_ids[0] or False
+        return result
+
+    def _get_journal_type(self, cr, uid, context=None):
+        """
+        Returns a list of tuples containing the different Journal Types
+        """
+        return self.pool.get('account.journal').get_journal_type(cr, uid, context=context)
+
+    _columns = {
+        'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary instance', required=True,
+                                       domain=[('level', 'in', ['coordo', 'project'])]),
+        'register_id': fields.many2one('account.bank.statement', 'Register', required=True),
+        'type': fields.related('register_id', 'journal_id', 'type', string='Register Type', type='selection',
+                               selection=_get_journal_type, readonly=True, store=True),
+        'journal_code': fields.related('register_id', 'journal_id', 'code', string='Journal Code', type='char',
+                                       readonly=True),
+        'journal_name': fields.related('register_id', 'journal_id', 'code', string='Journal Code', type='char',
+                                       readonly=True),
+        'status': fields.related('register_id', 'state', string='Status', readonly=True, type='selection',
+                                 selection=[('draft', 'Draft'), ('open', 'Open'),
+                                            ('partial_close', 'Partial Close'), ('confirm', 'Closed')]),
+        'period_id': fields.function(_period_id_compute, method=True, relation='account.period',
+                                     type='many2one', string='Period'),
+        'opening_balance': fields.related('register_id', 'balance_start', string='Opening Balance in register currency',
+                                          type='float', readonly=True),
+        'calculated_balance': fields.related('register_id', 'msf_calculated_balance',
+                                             string='Calculated Balance in register currency', type='float',
+                                             readonly=True),
+    }
+
+    _order = 'type, instance_id'
+
+
+cash_request_liquidity()
+
+
+class cash_request_liquidity_cash(osv.osv):
+    _name = 'cash.request.liquidity.cash'
+    _inherit = 'cash.request.liquidity'
+
+    _columns = {
+        'cashbox_balance': fields.related('register_id', 'balance_end_cash',
+                                          string='Cash Box Balance in register currency', type='float', readonly=True),
+    }
+
+cash_request_liquidity_cash()
+
+
+class cash_request_liquidity_bank(osv.osv):
+    _name = 'cash.request.liquidity.bank'
+    _inherit = 'cash.request.liquidity'
+
+    _columns = {
+        'bank_statement_balance': fields.related('register_id', 'balance_end_real',
+                                                 string='Bank Statement Balance in register currency', type='float',
+                                                 readonly=True),
+    }
+
+cash_request_liquidity_bank()
+
+class cash_request_liquidity_cheque(osv.osv):
+    _name = 'cash.request.liquidity.cheque'
+    _inherit = 'cash.request.liquidity'
+
+    _columns = {
+        'status': fields.char(size=64, string='Status', readonly=True),  # can be Not Created if the cheque reg. of the month is not created yet
+    }
+
+cash_request_liquidity_cheque()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
