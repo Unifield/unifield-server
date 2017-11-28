@@ -24,7 +24,6 @@ import tools
 
 import traceback
 import logging
-from sync_common import sync_log
 
 from tools.safe_eval import safe_eval as eval
 
@@ -51,7 +50,7 @@ class dict_to_obj(object):
 class local_message_rule(osv.osv):
 
     _name = 'sync.client.message_rule'
-    
+
     _columns = {
         'name' : fields.char('Rule name', size=64, readonly=True),
         'server_id' : fields.integer('Server ID'),
@@ -64,6 +63,7 @@ class local_message_rule(osv.osv):
         'destination_name': fields.char('Fields to extract destination', size=256, required=True),
         'active' : fields.boolean('Active', select=True),
         'type' : fields.char('Group Type', size=256),
+        'wait_while': fields.text('Wait while', required=False, help='Wait during specified domain to send the message'),
     }
 
     _logger = logging.getLogger('sync.client')
@@ -79,7 +79,7 @@ class local_message_rule(osv.osv):
             if not vals.get('model'):
                 vals['active'] = False
             elif not self.pool.get('ir.model').search(cr, uid, [('model', '=',
-                vals['model'])], limit=1, order='NO_ORDER', context=context):
+                                                                 vals['model'])], limit=1, order='NO_ORDER', context=context):
                 self._logger.error("The following rule doesn't apply to your database and has been disabled. Reason: model %s does not exists!\n%s" % (vals['model'], vals))
                 continue #do not save the rule if there is no valid model
             elif 'active' not in vals:
@@ -111,7 +111,7 @@ class local_message_rule(osv.osv):
             return self.browse(cr, uid, rules, context=context)[0]
         return False
 
-    def _manual_create_sync_message(self, cr, uid, model_name, res_id, return_info, rule_method, logger, context=None):
+    def _manual_create_sync_message(self, cr, uid, model_name, res_id, return_info, rule_method, logger, check_identifier=True, context=None):
         if context is None:
             context ={}
         if True:
@@ -121,12 +121,10 @@ class local_message_rule(osv.osv):
 
             rule = self.get_rule_by_remote_call(cr, uid, rule_method, context)
             if not rule:
-                logger.info("Sorry, there is no message rule found for the method %s." % (rule_method)) 
                 return
 
             model_obj = self.pool.get(model_name)
-            if res_id not in model_obj.search(cr, uid, eval(rule.domain),
-                    order='NO_ORDER', context=context):
+            if res_id not in model_obj.search(cr, uid, eval(rule.domain), order='NO_ORDER', context=context):
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")
@@ -142,16 +140,16 @@ class local_message_rule(osv.osv):
                 return
             # Still create the message if an existing message was already in the system, as the return action could be repeat
             xml_id = identifiers[res_id]
-            if msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)],
-                    limit=1, order='NO_ORDER', context=context):
+            if check_identifier and msg_to_send_obj.search(cr, uid, [('identifier', '=', xml_id)], limit=1, order='NO_ORDER', context=context):
                 return
             data = {
-                    'identifier' : xml_id,
-                    'remote_call': rule.remote_call,
-                    'arguments': arguments,
-                    'destination_name': partner_name,
-                    'sent' : False,
-                    'generate_message' : True,
+                'identifier' : xml_id,
+                'remote_call': rule.remote_call,
+                'arguments': arguments,
+                'destination_name': partner_name,
+                'sent' : False,
+                'res_object': '%s,%s' % (model_name, res_id),
+                'generate_message' : True,
             }
             msg_to_send_obj.create(cr, uid, data, context=context)
             logger.info("A manual message for the method: %s, created for the object: %s " % (rule_method, sale_name)) 
@@ -166,37 +164,37 @@ class local_message_rule(osv.osv):
         usb_entity = pick_obj._get_usb_entity_type(cr, uid)
         if usb_entity == pick_obj.REMOTE_WAREHOUSE or not rule_method or not res_id:
             partner_name = 'fake'
-            
+
             full_method = model_name + "." + rule_method
             rule = self.get_rule_by_remote_call(cr, uid, full_method, context)
             if not rule:
                 logger.info("Sorry, there is no RW message rule found for the method %s." % (full_method)) 
                 return
-    
+
             model_obj = self.pool.get(model_name)
             msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
-    
+
             arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, destination=False, context=context)
             temp = arguments[0] 
             temp['picking'] = return_info
             arguments = [temp]
-            
+
             pick_name = ''
             if 'name' in arguments[0]:
                 pick_name = arguments[0]['name']
-            
+
             identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [res_id], rule.server_id, context=context)
             if not identifiers:
                 return
             # Still create the message if an existing message was already in the system, as the return action could be repeat
             xml_id = identifiers[res_id]
             data = {
-                    'identifier' : xml_id,
-                    'remote_call': rule.remote_call,
-                    'arguments': arguments,
-                    'destination_name': partner_name,
-                    'sent' : False,
-                    'generate_message' : True,
+                'identifier' : xml_id,
+                'remote_call': rule.remote_call,
+                'arguments': arguments,
+                'destination_name': partner_name,
+                'sent' : False,
+                'generate_message' : True,
             }
             msg_to_send_obj.create(cr, uid, data, context=context)
             logger.info("A manual RW message for the method: %s, created for the object: %s " % (full_method, pick_name)) 
@@ -210,7 +208,6 @@ class message_to_send(osv.osv):
     _rec_name = 'identifier'
 
     _columns = {
-
         'identifier' : fields.char('Identifier', size=128, readonly=True),
         'sent' : fields.boolean('Sent ?', readonly=True),
         'generate_message' : fields.boolean("Generate By system", readonly=True),
@@ -218,8 +215,10 @@ class message_to_send(osv.osv):
         'arguments':fields.text('Arguments of the method', required = True, readonly=True),
         'destination_name':fields.char('Destination Name', size=256, required = True, readonly=True),
         'sent_date' : fields.datetime('Sent Date', readonly=True),
+        'res_object': fields.char('Res object', size=256, readonly=True),
+        'waiting': fields.boolean('Waiting ?', readonly=True, help='Is the message waiting to be send'),
     }
-    
+
     _defaults = {
         'generate_message' : True,
     }
@@ -250,8 +249,8 @@ class message_to_send(osv.osv):
 
         # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
         obj_ids = [obj_id for obj_id in obj_ids_temp if not \
-                self.search(cr, uid, [('identifier', '=',
-                    identifiers[obj_id])], context=context)]
+                   self.search(cr, uid, [('identifier', '=',
+                                          identifiers[obj_id])], context=context)]
 
         dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
@@ -282,29 +281,29 @@ class message_to_send(osv.osv):
 
     def create_message(self, cr, uid, identifier, remote_call, arguments, destination_name, sent=False, context=None):
         data = {
-                'identifier' : identifier,
-                'remote_call': remote_call,
-                'arguments': arguments,
-                'destination_name': destination_name,
-                'sent' : sent,
-                'generate_message' : False,
+            'identifier' : identifier,
+            'remote_call': remote_call,
+            'arguments': arguments,
+            'destination_name': destination_name,
+            'sent' : sent,
+            'generate_message' : False,
         }
         ids = self.search(cr, uid, [('identifier', '=', identifier)], context=context)
         if not ids:
             ids = [self.create(cr, uid, data, context=context)]
         return ids[0]
         #else:
-            #sync_log(self, "Message %s already exist" % identifier)
+        #sync_log(self, "Message %s already exist" % identifier)
 
     # SP-135: Manually generate a message if there is a modification on the relevant object
     def modify_manual_message(self, cr, uid, existing_message_id, identifier, remote_call, arguments, destination_name, context=None):
         data = {
-                'identifier' : identifier,
-                'remote_call': remote_call,
-                'arguments': arguments,
-                'generate_message': True,   # set this message as generated by the system, it will not cause the resume synch event
-                'destination_name': destination_name,
-                'sent' : False,
+            'identifier' : identifier,
+            'remote_call': remote_call,
+            'arguments': arguments,
+            'generate_message': True,   # set this message as generated by the system, it will not cause the resume synch event
+            'destination_name': destination_name,
+            'sent' : False,
         }
         self.write(cr, uid, existing_message_id, data, context=context)
 
@@ -315,23 +314,35 @@ class message_to_send(osv.osv):
         packet = []
 
         for message in self.browse(cr, uid,
-                self.search(cr, uid, [('sent', '=', False)],
-                    limit=max_size, order='id asc', context=context),
-                context=context):
+                                   self.search(cr, uid, [('sent', '=', False)],
+                                               limit=max_size, order='id asc', context=context),
+                                   context=context):
+            if message.res_object:
+                res_model, res_id = message.res_object.split(',')
+                res_id = int(res_id)
+                rule = self.pool.get('sync.client.message_rule').get_rule_by_remote_call(cr, uid, message.remote_call, context=context)
+                if rule and rule.wait_while: 
+                    domain = eval(rule.wait_while)
+                    if res_id in self.pool.get(res_model).search(cr, uid, domain, context=context):
+                        self.write(cr, uid, [message.id], {'waiting': True}, context=context)
+                        continue
+
+            if message.waiting:
+                self.write(cr, uid, [message.id], {'waiting': False}, context=context)
             packet.append({
                 'id' : message.identifier,
                 'call' : message.remote_call,
                 'dest' : message.destination_name,
                 'args' : message.arguments,
             })
-            
+
         return packet
 
 
     def packet_sent(self, cr, uid, packet, context=None):
         message_uuids = [data['id'] for data in packet]
         ids = self.search(cr, uid, [('identifier', 'in', message_uuids)],
-                order='NO_ORDER', context=context)
+                          order='NO_ORDER', context=context)
         if ids:
             self.write(cr, uid, ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
 
@@ -354,32 +365,31 @@ class message_received(osv.osv):
         'execution_date' :fields.datetime('Execution Date', readonly=True),
         'create_date' :fields.datetime('Receive Date', readonly=True),
         'editable' : fields.boolean("Set editable"),
+        'rule_sequence': fields.integer('Sequence of the linked rule', required=True),
     }
 
     _logger = logging.getLogger('sync.client')
 
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+
+        vals['rule_sequence'] = False
+        parent_rule = self.pool.get('sync.client.message_rule').search(cr, uid, [('remote_call', '=', vals['remote_call'])], context=context)
+        if parent_rule:
+            vals['rule_sequence'] = self.pool.get('sync.client.message_rule').read(cr, uid, parent_rule, ['sequence_number'], context=context)[0]['sequence_number']
+
+        return super(message_received, self).create(cr, uid, vals, context=context)
+
     def unfold_package(self, cr, uid, package, context=None):
         for data in package:
-            ids = self.search(cr, uid, [('identifier', '=', data['id'])],
-                    order='NO_ORDER', context=context)
-            if ids:
-                sync_log(self, 'Message %s already in the database' % data['id'])
-                # SP-135/UF-1617: Write the message if there is modification, and set the "run" to false to be executed next time
-                self.write(cr, uid, ids, {
-                    'identifier' : data['id'],
-                    'remote_call' : data['call'],
-                    'arguments' : data['args'],
-                    'sequence' : data['sequence'],
-                    'run' : False, # SP-135: set the message to become not run, so it will be rerun if there is a modif from server
-                    'source' : data['source'] }, context=context)
-                continue
             self.create(cr, uid, {
                 'identifier' : data['id'],
                 'remote_call' : data['call'],
                 'arguments' : data['args'],
                 'sequence' : data['sequence'],
                 'source' : data['source'] }, context=context)
-            
+
             entity_obj = self.pool.get( "sync.client.entity")
             entity = entity_obj.get_entity(cr, uid, context=context)
             entity_obj.write(cr, uid, entity.id, {'message_last' :data['sequence']}, context=context)
@@ -401,13 +411,14 @@ class message_received(osv.osv):
     def execute(self, cr, uid, ids=None, context=None):
         # scope the context of message executions and loggers
         context = dict((context or {}),
-            changes={},
-            sync_message_execution=True,
-            sale_purchase_logger={})
+                       changes={},
+                       sync_message_execution=True,
+                       sale_purchase_logger={})
         context['lang'] = 'en_US'
-        # get all ids if not specified
+
         if ids is None:
-            ids = self.search(cr, uid, [('run','=',False)], order='id asc', context=context)
+            ids = self.search(cr, uid, [('run','=',False)], order='rule_sequence, id', context=context)
+
         if not ids: return 0
 
         execution_date = fields.datetime.now()

@@ -48,16 +48,20 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
 
     def create(self, cr, uid, ids, data, context=None):
 
-        report_id = data.get('report_id', None)
-        field_name = data.get('field_name', '')
+        file_name = data.get('file_name')
         file_format = data.get('file_format', '')
         display_only_in_stock = data.get('display_only_in_stock', False)
 
         assert isinstance(display_only_in_stock, bool)
 
-        if display_only_in_stock:
-            field_name += '_only_stock'
-        file_name = mission_stock.STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, field_name + '.%s' % file_format)
+
+        if not file_name:
+            report_id = data.get('report_id', None)
+            field_name = data.get('field_name', '')
+            if display_only_in_stock:
+                field_name += '_only_stock'
+            file_name = mission_stock.STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, field_name + '.%s' % file_format)
+            file_name = mission_stock.STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, field_name + '.%s' % file_format)
 
         # get the attachment_path
         pool = pooler.get_pool(cr.dbname)
@@ -65,7 +69,7 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
         attachments_path = attachment_obj.get_root_path(cr, uid, check=False)
 
         store_in_db = attachment_obj.store_data_in_db(cr, uid,
-                ignore_migration=True)
+                                                      ignore_migration=True)
 
         create_missing_report = False
         if store_in_db:
@@ -79,17 +83,17 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
                 create_missing_report = True
         if create_missing_report:
                 # if the requeted attachment don't exists, create it
-                msr_obj = pool.get('stock.mission.report')
-                with_valuation = split_stock = False
-                if field_name.startswith('ns_v_vals'):
-                    with_valuation = True
-                if field_name.startswith('s_nv_vals'):
-                    split_stock = True
-                if field_name.startswith('s_v_vals'):
-                    with_valuation = split_stock = True
+            msr_obj = pool.get('stock.mission.report')
+            with_valuation = split_stock = False
+            if field_name == 'ns_v_vals':
+                with_valuation = True
+            if field_name == 's_nv_vals':
+                split_stock = True
+            if field_name == 's_v_vals':
+                with_valuation = split_stock = True
 
-                msr_obj._get_export(cr, uid, report_id, {},
-                    csv=file_format=='csv', xls=file_format=='xls',
+            msr_obj._get_export(cr, uid, report_id, {},
+                csv=file_format=='csv', xls=file_format=='xls',
                 with_valuation=with_valuation,
                 split_stock=split_stock,
                 all_products=not display_only_in_stock,

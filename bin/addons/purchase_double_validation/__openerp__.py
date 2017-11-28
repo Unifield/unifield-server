@@ -31,9 +31,8 @@
     'website': 'http://www.openerp.com',
     'init_xml': [],
     'update_xml': [
-	   'purchase_double_validation_workflow.xml',
-	   'purchase_double_validation_installer.xml'
-	    ],
+        'purchase_double_validation_installer.xml'
+    ],
     'demo_xml': [],
     'installable': True,
     'active': False,

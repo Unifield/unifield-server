@@ -117,15 +117,6 @@
             </field>
         </record>
 
-        <delete id="base.action_partner_sms_send" model="ir.actions.act_window" />
-        <delete id="base.action_partner_mass_mail" model="ir.actions.act_window" />
-        <delete id="base.action_translation" model="ir.actions.act_window" />
-        <delete id="account.account_overdue" model="ir.actions.report.xml" />
-        <delete id="base.res_partner_address_report" model="ir.actions.report.xml" />
-        <delete id="base.act_res_partner_event" model="ir.actions.act_window" />
-        <delete id="account.act_account_invoice_partner_relation" model="ir.actions.act_window" />
-        <delete id="account.action_analytic_open" model="ir.actions.act_window" />
-
         <act_window
             context="{'search_default_partner_id': [active_id]}"
             id="act_res_partner_2_sale_order"

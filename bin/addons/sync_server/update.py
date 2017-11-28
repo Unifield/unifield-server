@@ -30,8 +30,7 @@ pp = pprint.PrettyPrinter(indent=4)
 import logging
 from tools.safe_eval import safe_eval as eval
 import threading
-import time
-from sync_common import add_sdref_column, translate_column, fancy_integer
+from sync_common import add_sdref_column, fancy_integer
 
 class SavePullerCache(object):
     def __init__(self, model):
@@ -58,7 +57,6 @@ class SavePullerCache(object):
             return
         with self.__lock__:
             cache, self.__cache__ = self.__cache__, type(self.__cache__)()
-        todo = {}
         for entity_id, updates in cache:
             for update_id in updates:
                 self.__model__.pool.get('sync.server.puller_logs').create(cr, uid, {
@@ -83,9 +81,9 @@ class puller_ids_rel(osv.osv):
 
     _columns = {
         'update_id' : fields.many2one('sync.server.update',
-            required=True, string="Update", select=1),
+                                      required=True, string="Update", select=1),
         'entity_id' : fields.many2one('sync.server.entity',
-            required=True, string="Instance", select=1),
+                                      required=True, string="Instance", select=1),
         'create_date' : fields.datetime('Pull Date'),
     }
 
@@ -157,13 +155,13 @@ class update(osv.osv):
             if len(arg) > 2 and arg[0] == 'fancy_puller_ids':
                 if ';' not in arg[2]:
                     entity_id = server_entity_obj.search(cr, uid,
-                        [('name', '=', arg[2])]) or None
+                                                         [('name', '=', arg[2])]) or None
                     if entity_id:
                         res.append(('puller_ids', '=', entity_id))
                 else:
                     list_of_pullers = arg[2].split(';')
                     list_of_ids = server_entity_obj.search(cr, uid,
-                        [('name', 'in', tuple(list_of_pullers))])
+                                                           [('name', 'in', tuple(list_of_pullers))])
                     if list_of_ids:
                         res.append(('puller_ids', 'in', list_of_ids))
         return res
@@ -182,12 +180,12 @@ class update(osv.osv):
         'fields': fields.text("Fields"),
         'values': fields.text("Values"),
         'create_date': fields.datetime('Synchro Date/Time', readonly=True,
-            select=True),
+                                       select=True),
         'puller_ids': fields.one2many('sync.server.puller_logs', 'update_id', string="Pulled by"),
         'fancy_puller_ids': fields.function(_get_puller_ids,
-            fnct_search=_src_puller_ids, method=True,
-            string="Pulled by", type='char', store=False, readonly=True,
-            internal=True),
+                                            fnct_search=_src_puller_ids, method=True,
+                                            string="Pulled by", type='char', store=False, readonly=True,
+                                            internal=True),
         'is_deleted' : fields.boolean('Is deleted?', select=True),
         'force_recreation' : fields.boolean('Force record recreation'),
         'handle_priority': fields.boolean('Handle Priority'),
@@ -224,12 +222,12 @@ class update(osv.osv):
         return True
 
     def search_web(self, cr, uid, args=None, offset=0, limit=None, order=None,
-            context=None, count=False):
+                   context=None, count=False):
         return self.exact_search_web(cr, uid, args, offset, limit,
-                order, context=context, count=count)
+                                     order, context=context, count=count)
 
     def search_with_puller_ids(self, cr, uid, args, puller_ids_arg, offset=0,
-            limit=None, order=None, count=False, context=None):
+                               limit=None, order=None, count=False, context=None):
         '''
         in case some puller_ids are in the args, a special threament is
         required to merge the requests in one. This id done inside this method
@@ -294,10 +292,10 @@ class update(osv.osv):
                     new_args.append(sub_domain)
         if puller_ids_arg and len(puller_ids_arg[0])>2:
             return self.search_with_puller_ids(cr, uid, new_args,
-                    puller_ids_arg, offset, limit, order, count, context)
+                                               puller_ids_arg, offset, limit, order, count, context)
 
         return super(update, self).search(cr, uid, new_args, offset, limit,
-                    order, context=context, count=count)
+                                          order, context=context, count=count)
 
     def unfold_package(self, cr, uid, entity, packet, context=None):
         """
@@ -332,34 +330,34 @@ class update(osv.osv):
             assert 'owner' in update, "Packet field 'owner' absent"
             # Get the id of the owner or 0 if absent from sync.server.entity list
             owner = self.pool.get('sync.server.entity').search(cr, uid,
-                    [('name','=',update['owner'])])
+                                                               [('name','=',update['owner'])])
             owner = owner[0] if owner else False
 
             if safe_create({
-                        'session_id': packet['session_id'],
-                        'rule_id': packet['rule_id'],
-                        'source': entity.id,
-                        'model': packet['model'],
-                        'sdref' : update['sdref'],
-                        'version': update['version'],
-                        'fields': packet['fields'],
-                        'values': update['values'],
-                        'owner': owner,
-                        'handle_priority': update['handle_priority'],
-                        'force_recreation' : update['force_recreation'],
-                    }):
+                'session_id': packet['session_id'],
+                'rule_id': packet['rule_id'],
+                'source': entity.id,
+                'model': packet['model'],
+                'sdref' : update['sdref'],
+                'version': update['version'],
+                'fields': packet['fields'],
+                'values': update['values'],
+                'owner': owner,
+                'handle_priority': update['handle_priority'],
+                'force_recreation' : update['force_recreation'],
+            }):
                 normal_updates_count += 1
 
         delete_updates_count = 0
         for sdref in packet['unload']:
             if safe_create({
-                        'source': entity.id,
-                        'model': packet['model'],
-                        'session_id': packet['session_id'],
-                        'rule_id': packet['rule_id'],
-                        'sdref' : sdref,
-                        'is_deleted' : True,
-                    }):
+                'source': entity.id,
+                'model': packet['model'],
+                'session_id': packet['session_id'],
+                'rule_id': packet['rule_id'],
+                'sdref' : sdref,
+                'is_deleted' : True,
+            }):
                 delete_updates_count += 1
 
         self._logger.info("::::::::[%s] Inserted %d new updates: %d normal(s) and %d delete(s)"
@@ -403,7 +401,7 @@ class update(osv.osv):
             @return : int : sequence number
         """
         return int(self.pool.get('ir.sequence').get(cr, uid, 'sync.server.update'))
-    
+
     def get_last_sequence(self, cr, uid, context=None):
         """
             Get the id of the last sequence number in the database
@@ -418,7 +416,7 @@ class update(osv.osv):
             return 0
         seq = self.browse(cr, uid, ids, context=context)[0].sequence
         return seq
-    
+
     def get_update_to_send(self,cr, uid, entity, update_ids, recover=False, context=None):
         """
             Called by get_package during the client instance pull process.
@@ -454,7 +452,7 @@ class update(osv.osv):
                     privates = []
                 else:
                     privates = self.pool.get('sync.server.entity')._get_ancestor(cr, uid, update.owner.id, context=context) + \
-                               [update.owner.id]
+                        [update.owner.id]
             else:
                 privates = []
             if (update.rule_id.direction == 'up' and update.source.id in children) or \
@@ -462,7 +460,7 @@ class update(osv.osv):
                (update.rule_id.direction == 'bidirectional') or \
                (entity.id in privates) or \
                (recover and entity.id == update.source.id):
-                
+
                 source_rules_ids = self.pool.get('sync_server.sync_rule')._get_groups_per_rule(cr, uid, update.source, context)
                 s_group = source_rules_ids.get(update.rule_id.id, [])
                 if any(group.id in s_group for group in entity.group_ids):
@@ -470,7 +468,7 @@ class update(osv.osv):
 
         return update_to_send
 
-    def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
+    def get_package(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, init_sync=False, context=None):
         """
             Called by XML RPC get_update method to give a list of updates to pull to the client instance.
 
@@ -495,11 +493,6 @@ class update(osv.osv):
                      - A dict that format a packet for the client
         """
         self.pool.get('sync.server.entity').set_activity(cr, uid, entity, _('Pulling updates...'))
-        restrict_oc_version = entity.version == 1
-        if not restrict_oc_version and offset == (0, 0):
-            self._logger.info("::::::::[%s] Set entity version = 1" % (entity.name,))
-            self.pool.get('sync.server.entity').write(cr, 1, [entity.id], {'version': 1})
-            restrict_oc_version = True
         top = entity
         while top.parent_id:
             top = top.parent_id
@@ -514,7 +507,7 @@ class update(osv.osv):
         if not rules:
             return None
 
-        if not recover and last_seq == 0:
+        if not recover and init_sync:
             # first sync get only master data
             cr.execute("select id from sync_server_sync_rule where id in (" + ','.join(map(str, rules)) + ") and master_data='t'");
             rules = [x[0] for x in cr.fetchall()]
@@ -540,10 +533,7 @@ class update(osv.osv):
 
         ## Recover add own client updates to the list
         if not recover:
-            if restrict_oc_version:
-                base_query += " AND sync_server_update.source in (%s)" % (tree_str,)
-            else:
-                base_query += " AND sync_server_update.source != %s" % entity.id
+            base_query += " AND sync_server_update.source in (%s)" % (tree_str,)
 
         base_query += " AND sync_server_update.id > %s ORDER BY id ASC, sequence ASC OFFSET %s LIMIT %s"
 
@@ -554,7 +544,7 @@ class update(osv.osv):
         offset_increment = 0
         packet_size = 0
 
-        self._logger.info("::::::::[%s] Data pull get package:: last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, last_seq, max_seq, '/'.join(map(str, offset)), max_size))
+        self._logger.info("::::::::[%s] Data pull get package:: init sync = %s, last_seq = %s, max_seq = %s, offset = %s, max_size = %s" % (entity.name, init_sync, last_seq, max_seq, '/'.join(map(str, offset)), max_size))
 
         while not ids or packet_size < max_size:
             query = base_query % (offset[0], offset[1], max_size)
@@ -574,10 +564,10 @@ class update(osv.osv):
                 #  if they behave the same way (same model, same rule, same source,
                 #  same sequence, update type)
                 if not updates_master or updates_master[-1].model != update.model or \
-                    updates_master[-1].rule_id.id != update.rule_id.id or \
-                    updates_master[-1].source.id != update.source.id or \
-                    updates_master[-1].sequence != update.sequence or \
-                    updates_master[-1].is_deleted != update.is_deleted:
+                        updates_master[-1].rule_id.id != update.rule_id.id or \
+                        updates_master[-1].source.id != update.source.id or \
+                        updates_master[-1].sequence != update.sequence or \
+                        updates_master[-1].is_deleted != update.is_deleted:
                     updates_master.append(update)
                     updates_to_send.append([update])
                 else:
@@ -647,7 +637,7 @@ class update(osv.osv):
         self._logger.info("::::::::[%s] Data pull :: %s updates" % (entity.name, sum(map(lambda x : len(x.get('unload', [])) + len(x.get('load', [])), data_packages))))
         return data_packages
 
-    
+
     def get_additional_forced_field(self, update): 
         fields = eval(update.fields)
         forced_values = eval(update.rule_id.forced_values or '{}')

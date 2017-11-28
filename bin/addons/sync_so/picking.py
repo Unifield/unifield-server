@@ -89,7 +89,7 @@ class stock_picking(osv.osv):
     _inherit = "stock.picking"
     _logger = logging.getLogger('------sync.stock.picking')
 
-    def format_data(self, cr, uid, data, context=None):
+    def format_data(self, cr, uid, data, source, context=None):
         '''
         we format the data, gathering ids corresponding to objects
         '''
@@ -99,7 +99,14 @@ class stock_picking(osv.osv):
 
         # product
         product_name = data['product_id']['name']
-        product_id = self.pool.get('so.po.common').get_product_id(cr, uid, data['product_id'], context=context)
+
+        default_code = False
+        if data.get('product_id', {}).get('default_code'):
+            partner_type = self.pool.get('so.po.common').get_partner_type(cr, uid, source, context)
+            if partner_type in ['section', 'intermission']:
+                default_code = data['product_id']['default_code']
+
+        product_id = self.pool.get('so.po.common').get_product_id(cr, uid, data['product_id'], default_code, context=context)
         if not product_id:
             product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
             if not product_ids:
@@ -203,6 +210,7 @@ class stock_picking(osv.osv):
                   'quantity': data['product_qty'] or 0.0,
                   'note': data['note'],
                   'comment': data.get('comment'),
+                  'sale_line_id': data.get('sale_line_id', False) and data['sale_line_id'].get('id', False) or False,
                   }
         return result
 
@@ -218,7 +226,7 @@ class stock_picking(osv.osv):
                     # aggregate according to line number
                     line_dic = result.setdefault(line.get('line_number'), {})
                     # set the data
-                    line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, context=context))
+                    line_dic.setdefault('data', []).append(self.format_data(cr, uid, line, source, context=context))
                     # set the flag to know if the data has already been processed (partially or completely) in Out side
                     line_dic.update({'out_processed':  line_dic.setdefault('out_processed', False) or line['processed_stock_move']})
 
@@ -320,7 +328,7 @@ class stock_picking(osv.osv):
         po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
 
         # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-        in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned'], context)
+        in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['assigned', 'shipped'], context)
         if in_id:
             in_name = self.read(cr, uid, in_id, ['name'], context=context)['name']
             in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
@@ -384,6 +392,17 @@ class stock_picking(osv.osv):
                         #US-1294: Now search all moves of the given IN and line number
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
                         move_ids = move_obj.search(cr, uid, search_move, order='product_qty ASC', context=context)
+                        if not move_ids:
+                            # SLL edit, if move cannot be found, then use sync_linked_sol to find it:
+                            sol_id = data.get('sale_line_id', False) and int(data['sale_line_id'].split('/')[-1]) or False
+                            remote_partner = self.pool.get('so.po.common').get_partner_id(cr, uid, source, context=context)
+                            if sol_id and remote_partner:
+                                pol_id = self.pool.get('purchase.order.line').search(cr, uid, [
+                                    ('order_id.partner_id', '=', remote_partner),
+                                    ('sync_linked_sol', 'ilike', '%%/%s' % sol_id),
+                                ], context=context)
+                                if pol_id:
+                                    move_ids = move_obj.search(cr, uid, [('purchase_line_id', 'in', pol_id)], context=context)
                         if not move_ids:
                             #US-1294: absolutely no moves -> probably they are closed, just show the error message then ignore
                             closed_in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['done', 'cancel'], context)
@@ -575,63 +594,6 @@ class stock_picking(osv.osv):
 
         raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
 
-    def cancel_stock_move_of_pick_cancel_in(self, cr, uid, source, out_info, context=None):
-        '''
-        ' UTP-872: Cancel only a few move lines of a closed PICK ticket in Coordo will also need to cancel the relevant lines at the IN
-        '''
-        if not context:
-            context = {}
-        self._logger.info("+++ Cancel the relevant IN at %s due to the cancel of some specific move of the Pick ticket at supplier %s" % (cr.dbname, source))
-
-        wf_service = netsvc.LocalService("workflow")
-        so_po_common = self.pool.get('so.po.common')
-        po_obj = self.pool.get('purchase.order')
-        pick_dict = out_info.to_dict()
-
-        # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
-        so_ref = source + "." + pick_dict['origin']
-        po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
-        if po_id:
-            # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-            in_id = so_po_common.get_in_id_from_po_id(cr, uid, po_id, context)
-            if in_id:
-                # Cancel the IN object to have all lines cancelled, but the IN object remained as closed, so the update of state is done right after
-                wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
-                self.write(cr, uid, in_id, {'state': 'done'}, context) # UTP-872: reset state of the IN to become closed
-
-                name = self.browse(cr, uid, in_id, context).name
-                message = "The IN " + name + " is canceled by sync as its partner " + out_info.name + " got canceled at " + source
-                self._logger.info(message)
-                return message
-            else:
-                po = po_obj.browse(cr, uid, [po_id], context=context)[0]
-                if po.fo_sync_date > pick_dict['date_cancel']:
-                    message = "The message is ignored as the stock move has been canceled before update of the PO"
-                    self._logger.info(message)
-                    return message
-
-                if len(po.order_line) == 0:
-                    message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
-                    self._logger.info(message)
-                    return message
-
-                # UTP-872: If there is no IN corresponding to the give OUT/SHIP/PICK, then check if the PO has any line
-                # if it has no line, then no need to raise error, because PO without line does not generate any IN
-                # still try to check whether this IN has already been manually processed
-                in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po.name, ['done'], context)
-                if in_id:
-                    message = "The IN linked to " + po.name + " has been closed already, this message is thus ignored!"
-                    self._logger.info(message)
-                    return message
-        elif context.get('restore_flag'):
-            # UF-1830: Create a message to remove the invalid reference to the inexistent document
-            so_po_common = self.pool.get('so.po.common')
-            shipment_ref = pick_dict['name']
-            so_po_common.create_invalid_recovery_message(cr, uid, source, shipment_ref, context)
-            return "Recovery: the reference to " + shipment_ref + " at " + source + " will be set to void."
-
-        raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
-
 
     def closed_in_confirms_dpo_reception(self, cr, uid, source, out_info, context=None):
         if not context:
@@ -794,43 +756,6 @@ class stock_picking(osv.osv):
         return message
 
 
-    #US-838: This method is no more use, the message will do nothing.
-    def create_batch_number(self, cr, uid, source, out_info, context=None):
-        if not context:
-            context = {}
-        self._logger.info("+++ Create batch number that comes with the SHIP/OUT from %s - This message is deprecated." % source)
-
-        batch_obj = self.pool.get('stock.production.lot')
-
-        batch_dict = out_info.to_dict()
-        error_message = "Create Batch Number: Something go wrong with this message, invalid instance reference"
-
-        batch_dict['partner_name'] = source
-
-        existing_bn = batch_obj.search(cr, uid, [('xmlid_name', '=', batch_dict['xmlid_name']), ('partner_name', '=', source)], context=context)
-        if existing_bn:  # existed already, then don't need to create a new one
-            message = "Create Batch Number: the given BN exists already at local instance, no new BN will be created"
-            self._logger.info(message)
-            error_message = False
-            return message
-
-        error_message = "Create Batch Number: Invalid reference to the product or product does not exist"
-        if batch_dict.get('product_id'):
-            rec_id = self.pool.get('so.po.common').get_product_id(cr, uid, out_info.product_id, context=context)
-            if rec_id:
-                batch_dict['product_id'] = rec_id
-                error_message = False
-
-        # If error message exists --> cannot create the BN
-        if error_message:
-            self._logger.info(error_message)
-            raise Exception, error_message
-
-        batch_obj.create(cr, uid, batch_dict, context=context)
-        message = "The new BN " + batch_dict['name'] + ", " + source + " has been created"
-        self._logger.info(message)
-        return message
-
     # US-838: Retrieve batch object, if not found then create new
     def retrieve_batch_number(self, cr, uid, product_id, batch_dict, context=None):
         if not context:
@@ -873,8 +798,12 @@ class stock_picking(osv.osv):
             self._logger.info(message)
             return message
 
+        default_code = False
+        if asset_dict.get('product_id', {}).get('default_code') and self.pool.get('so.po.common').get_partner_type(cr, uid, source, context) in ['section', 'intermission']:
+            default_code = asset_dict['product_id']['default_code']
+
         if asset_dict.get('product_id'):
-            rec_id = self.pool.get('so.po.common').get_product_id(cr, uid, out_info.product_id, context=context)
+            rec_id = self.pool.get('so.po.common').get_product_id(cr, uid, out_info.product_id, default_code, context=context)
             if rec_id:
                 asset_dict['product_id'] = rec_id
             else:
@@ -1097,6 +1026,13 @@ class stock_picking(osv.osv):
             invoice_result = super(stock_picking, self).action_invoice_create(cr, uid, ids,
                                                                               journal_id=journal_id, group=group, type=type, context=context)
         return invoice_result
+
+    def create_batch_number(self, *a, **b):
+        """
+        deprecated
+        """
+        return True
+
 stock_picking()
 
 class shipment(osv.osv):

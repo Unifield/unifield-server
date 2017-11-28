@@ -1,9 +1,0 @@
--
-  Print the Fully Report for all bank statement
--
-  !python {model: account.bank.statement}: |
-    abs_ids = self.search(cr, uid, [], context={})
-    # Launch report
-    from tools import test_reports
-    ctx = {'from_yml': True} #, 'lang': 'en_MF'} # add lang en_MF in case you test module with option_test_module
-    report_res = test_reports.try_report_action(cr, uid, 'fully_report', 'account.bank.statement', active_ids=abs_ids, wiz_data=False, context=ctx, our_module='register_accounting')

@@ -10,8 +10,9 @@
             <field name="inherit_id" ref="account.view_account_journal_form"/>
             <field name="arch" type="xml">
                 <form string="Account Journal" position="replace">
-                    <form string="Account Journal" hide_duplicate_button="1">
+                    <form string="Account Journal" hide_duplicate_button="1" noteditable="is_current_instance==False">
                         <group colspan="4" col="6">
+                            <field name="is_current_instance" invisible="1"/>
                             <field name="has_entries" invisible="1"/>
                             <field name="name" select="1"/>
                             <field name="code" select="1"
@@ -34,6 +35,14 @@
                             <field name="analytic_journal_id" domain="[('is_current_instance','=',True)]"
                                    attrs="{'required': [('type', 'not in', ('situation', 'stock'))],
                                            'readonly': [('has_entries', '=', True)]}"/>
+                            <field name="bank_account_name"
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                            <field name="bank_account_number"
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                            <field name="bank_swift_code"
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
+                            <field name="bank_address"
+                                   attrs="{'invisible': [('type', '!=', 'bank')]}"/>
                             <field name="bank_journal_id"
                                    attrs="{'invisible': [('type', '!=', 'cheque')],
                                            'required': [('type', '=', 'cheque')],

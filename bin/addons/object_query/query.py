@@ -67,9 +67,9 @@ class object_query(osv.osv):
                                           'query_id', 'field_id', string='Search Fields'),
         'selection_data': fields.one2many('object.query.selection_data', 'query_id', 'Values'),
         'group_by_ids': fields.many2many('ir.model.fields', 'query_fields_group',
-                                          'query_id', 'field_id', string='Group by fields'),
+                                         'query_id', 'field_id', string='Group by fields'),
         'result_simple_ids': fields.many2many('ir.model.fields', 'result_simple_rel', 'query_id', 'field_id',
-                                      string='Result fields'),
+                                              string='Result fields'),
         'result_ids': fields.one2many('object.query.result.fields', 'object_id',
                                       string='Result order'),
         'model_ids': fields.function(_get_model_ids, method=True, type='many2many',
@@ -156,7 +156,7 @@ class object_query(osv.osv):
                 export_obj.unlink(cr, uid, query.export_id.id)
 
             export_id = export_obj.create(cr, uid, {'name': query.name,
-                                        'resource': query.object_id.model_id.model,})
+                                                    'resource': query.object_id.model_id.model,})
             self.write(cr, uid, [query.id], {'export_id': export_id})
 
             forced_values = []
@@ -237,14 +237,14 @@ class object_query(osv.osv):
 
             search_view_data = {'name': 'query.search.%s.%s' %(query.object_id.model_id.model, query.id),
                                 'model': query.object_id.model_id.model,
-                                'priority': 250,
+                                'priority': 2500 + query.id,
                                 'type': 'search',
                                 'arch': search_arch,
                                 'xmd_id': 'object_query.query_search_%s_%s' %(query.object_id.model_id.model, query.id)}
 
             tree_view_data = {'name': 'query.tree.%s.%s' %(query.object_id.model_id.model, query.id),
                               'model': query.object_id.model_id.model,
-                              'priority': 250,
+                              'priority': 2500 + query.id,
                               'type': 'tree',
                               'arch': tree_arch,
                               'xmd_id': 'object_query.query_tree_%s_%s' %(query.object_id.model_id.model, query.id)}
@@ -271,7 +271,7 @@ class object_query(osv.osv):
                     'view_type': 'form',
                     'domain': domain,
                     'context': default_search
-                }
+                    }
 
         return {'type': 'ir.actions.act_window_close'}
 
@@ -314,15 +314,15 @@ class object_query(osv.osv):
 
     def open_wizard(self, cr, uid, ids, context=None):
         return {
-                'name': 'Search Values',
-                'type': 'ir.actions.act_window',
-                'res_model': 'object.query.wizard.values',
-                'target': 'new',
-                'view_mode': 'form',
-                'view_type': 'form',
-                'res_id': [],
-                'context': {'disable_cache': time.time(), 'query_id': ids[0]}
-                }
+            'name': 'Search Values',
+            'type': 'ir.actions.act_window',
+            'res_model': 'object.query.wizard.values',
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': [],
+            'context': {'disable_cache': time.time(), 'query_id': ids[0]}
+        }
 
     def unlink(self, cr, uid, ids, context=None):
         if isinstance(ids, (long, int)):
@@ -554,9 +554,9 @@ class ir_fields(osv.osv):
                                        method=True,
                                        type='boolean', string='Is function ?'),
         'is_unsearchable': fields.function(_is_function,
-                                       fnct_search=_search_function,
-                                       method=True,
-                                       type='boolean', string='Is searchable ?'),
+                                           fnct_search=_search_function,
+                                           method=True,
+                                           type='boolean', string='Is searchable ?'),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -591,7 +591,7 @@ class ir_fields(osv.osv):
                 args.append(('id', 'not in', ids_to_remove))
 
         return super(ir_fields, self).search(cr, uid, args, offset, limit,
-                order, context, count)
+                                             order, context, count)
 
 ir_fields()
 

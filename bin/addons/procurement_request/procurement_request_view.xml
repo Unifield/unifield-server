@@ -2,35 +2,6 @@
 <openerp>
     <data>
     
-        <!-- Add required fields on standard sale order view -->
-        <record id="sale_order_form_view_required" model="ir.ui.view">
-            <field name="name">sale.order.form.view.required</field>
-            <field name="model">sale.order</field>
-            <field name="type">form</field>
-            <field name="inherit_id" ref="sale.view_order_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='partner_invoice_id']" position="replace">
-                       <field domain="[('partner_id','=',partner_id)]" name="partner_order_id" required="1" />
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='partner_order_id']" position="replace">
-                        <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" required="1" />
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='partner_shipping_id']" position="replace">
-                        <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" required="1" />
-                    </xpath>
-                    <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='pricelist_id']" position="replace">
-                        <field domain="[('type','=','sale'), ('in_search', '=', partner_type)]" name="pricelist_id"
-                            on_change="pricelist_id_change(pricelist_id)"
-                            required="1" />
-                    </xpath>
-                    <xpath expr="/form//field[@name='order_line']/form//field[@name='type']" position="attributes">
-                        <attribute name="on_change">requested_type_change(product_id, type)</attribute>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-    
         <record id="procurement_request_form_view" model="ir.ui.view">
             <field name="name">procurement.request.form.view</field>
             <field name="model">sale.order</field>
@@ -38,7 +9,8 @@
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <form string="Internal Request">
-                    <group colspan="6" attrs="{'invisible': [('state', '!=', 'validated')]}">
+                    <field name="sourcing_trace_ok" invisible="1" />
+                    <group colspan="6" attrs="{'invisible': [('state', 'not in', ['validated', 'validated_p'])]}">
                         <html>
                             <p style="text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
                                WARNING: This document has already been validated, are you sure you wish to modify after validation?
@@ -47,12 +19,12 @@
                     </group>
                     <group col="6" colspan="4" name="header">
                         <field name="name" />
-                        <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
-                        <field name="warehouse_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
-                        <field name="requestor" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
-                        <field name="location_requestor_id" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
-                        <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
-                        <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
+                        <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="warehouse_id" widget="selection"  attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="requestor" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="location_requestor_id" required="1" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
+                        <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                         <field name="functional_currency_id" />
                         <field name="categ" on_change="onchange_categ(categ)" />
                         <group colspan="2" col="3">
@@ -63,12 +35,16 @@
                         <field name="fo_to_resource" invisible="1" />
                         <field name="parent_order_name" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
                     </group>
+
                     <notebook colspan="5">
                         <page string="Products">
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
-                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
-                                <tree string="Products" editable="top" >
-                                    <field name="product_id" on_change="requested_product_id_change(product_id, comment, parent.categ)" 
+                            <field name="order_line" mode="tree,form" colspan="4" nolabel="1"
+                                on_change="order_line_change(order_line)"
+                                filter_selector="[('Hide cancelled', ('state', 'not in', ['cancel', 'cancel_r'])), ('Show all', ''), ('Show cancelled only', ('state', 'in', ['cancel', 'cancel_r']))]"
+                                o2m_selectable="2">
+                                <tree string="Products" editable="top" noteditable="fake_state not in ['draft', 'validated']" button_attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}">
+                                    <field name="product_id" on_change="requested_product_id_change(product_id, comment, parent.categ)"
                                     context="available_for_restriction='consumption',search_default_not_restricted=1"
                                     attrs="{'required': [('product_ok', '=', False)]}" />
                                     <field name="comment" string="Comment instead of the product" on_change="comment_change(comment,product_id,nomen_manda_0)"
@@ -87,14 +63,18 @@
                                     <button name="open_order_line_to_correct" 
                                     string="Configurator" 
                                     type="object" 
-                                    attrs="{'invisible': ['|', ('product_id_ok', '=', True), ('state', 'not in', ['draft', 'validated'])]}"
+                                    attrs="{'invisible': ['|', ('product_id_ok', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"
                                     icon="terp-go-week" />
                                     <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
-                                    <field name="cost_price" string="Cost Price (FC)" />
+                                    <field name="original_changed" readonly="1"/>
+                                    <button name="button_view_changed" string="View Current/Original" type="object" icon="terp-stock_zoom"
+                                            attrs="{'invisible': [('original_changed', '=', False)]}"/>
+                                    <field name="price_unit"/>
                                     <field name="notes" />
+                                    <field name="display_resourced_orig_line" />
                                     <field name="display_confirm_button" invisible="1" />
                                     <field name="type" on_change="requested_type_change(product_id, type)"
-                                           attrs="{'readonly': [('fake_state', 'not in', ['draft', 'validated']), ('display_confirm_button', '=', False)]}"
+                                           attrs="{'readonly': [('fake_state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('display_confirm_button', '=', False)]}"
                                     />
                                     <field name="my_company_id" invisible="1" />
                                     <!-- utp-357: the supplier will be selected in the sourcing tool -->
@@ -103,15 +83,18 @@
                                         attrs="{'readonly': [('type', '=', 'make_to_stock')]}"
                                         domain="[('supplier', '=', True), ('id', '!=', my_company_id), ('check_partner_ir', '=', True)]"
                                         />
-                                    <field name="fake_state" invisible="1" />
+                                    <field name="fake_state" invisible="1"/>
+                                    <field name="state_to_display"/>
                                     <field name="stock_take_date"/>
                                     <field name="price_subtotal" sum="Total"/>
                                     <button name="open_split_wizard"
                                         type="object"
                                         string="Split Line"
                                         icon="terp-stock_effects-object-colorize"
-                                        attrs="{'invisible': [('fake_state', 'in', ('confirmed', 'cancel', 'done', 'exception'))]}"
+                                        attrs="{'invisible': [('fake_state', 'in', ('confirmed', 'cancel', 'cancel_r', 'done', 'exception'))]}"
                                         />
+                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" header="True"
+                                            attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                 </tree>
                                 <form>
                                    <field name="product_id" colspan="4" />
@@ -126,9 +109,8 @@
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
-                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,validated" context="{'noraise': True}" />
-                                <button name="procurement_validate" icon="terp-check" string="Validate" states="draft" />
-                                <button name="procurement_confirm" icon="gtk-execute" string="Confirm" states="validated" confirm="You are about to confirm the Internal Request without going through the sourcing tool. Are you sure?" />
+                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" />
+                                <button name="validate_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('no_line', '=', True)]}" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">
@@ -142,6 +124,9 @@
                         </page>
                         <page string="Notes">
                             <field name="notes" nolabel="1" />
+                        </page>
+                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
+                            <field name="sourcing_trace" colspan="4" nolabel="1" />
                         </page>
                     </notebook>
                 </form>
@@ -176,9 +161,9 @@
             <field name="arch" type="xml">
                 <search string="Internal Requests">
                     <group string="Filters" expand="1">
-                        <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', '=', 'draft')]" />
-                        <filter name="state_valid" string="Validated" icon="terp-camera_test" domain="[('state', '=', 'validated')]" />
-                        <filter name="state_proc_progress" string="Confirmed" icon="terp-stage" domain="[('state', 'in', ('progress', 'manual_progress'))]" />
+                        <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', 'in', ['draft','draft_p'])]" />
+                        <filter name="state_valid" string="Validated" icon="terp-camera_test" domain="[('state', 'in', ['validated','validated_p'])]" />
+                        <filter name="state_proc_progress" string="Confirmed" icon="terp-stage" domain="[('state', 'in', ('confirmed', 'confirmed_p'))]" />
                         <filter name="state_done" string="Closed" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
                         <separator orientation="vertical" />
                         <field name="name" />

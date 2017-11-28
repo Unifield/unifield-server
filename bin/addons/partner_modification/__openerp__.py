@@ -32,7 +32,7 @@
     "description": """
     Modification of patner with new lead times
     """,
-    'test': ['test/partner_modification.yml'],
+    'test': [],
     'update_xml': [
         'partner_modification_view.xml',
     ],

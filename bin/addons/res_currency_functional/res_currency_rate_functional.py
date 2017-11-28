@@ -20,18 +20,17 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 class res_currency_rate_functional(osv.osv):
     _inherit = "res.currency.rate"
-    
+
     _columns = {
         'rate': fields.float('Rate', digits=(12,6), required=True,
-            help='The rate of the currency to the functional currency'),
+                             help='The rate of the currency to the functional currency'),
     }
 
     def refresh_move_lines(self, cr, uid, ids, date=None, currency=None):
-        cur_obj = self.pool.get('res.currency')
-        account_obj = self.pool.get('account.account')
         move_line_obj = self.pool.get('account.move.line')
         if currency is None:
             currency_obj = self.read(cr, uid, ids, ['currency_id'])[0]
@@ -39,7 +38,7 @@ class res_currency_rate_functional(osv.osv):
         move_line_search_params = [('currency_id', '=', currency), ('is_revaluated_ok', '=', False)]
         if date is not None:
             move_line_search_params.append(('date', '>=', date))
-        
+
         move_line_ids = move_line_obj.search(cr, uid, move_line_search_params)
         move_line_obj.update_amounts(cr, uid, move_line_ids)
         move_ids = []
@@ -90,28 +89,56 @@ class res_currency_rate_functional(osv.osv):
         currency_id = vals.get('currency_id', False)
         self.refresh_analytic_lines(cr, uid, [res_id], date=vals['name'], currency=currency_id, context=context)
         return res_id
-    
+
     def write(self, cr, uid, ids, vals, context=None):
         """
         This method is used to re-compute all account move lines when a currency is modified.
         """
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        old_rates = {}
+        for rate_id in ids:
+            old_rates[rate_id] = {}
+            rate = self.read(cr, uid, rate_id, ['rate', 'name'], context=context)
+            old_rates[rate_id]['rate'] = rate['rate']
+            old_rates[rate_id]['date'] = rate['name']
         res = super(res_currency_rate_functional, self).write(cr, uid, ids, vals, context)
         if 'name' in vals:
-            self.refresh_move_lines(cr, uid, ids, date=vals['name'])
-            # Also update analytic move line that don't come from a move (engagement journal lines)
-            for rate in self.browse(cr, uid, ids, context=context):
-                currency_id = rate.currency_id and rate.currency_id.id or False
-                self.refresh_analytic_lines(cr, uid, ids, date=vals['name'], currency=currency_id, context=context)
+            for r_id in ids:
+                date_changed = vals['name'] != old_rates[r_id]['date']
+                # check if the rate has changed (rates in Unifield have an accuracy of 6 digits after the comma)
+                rate_changed = 'rate' in vals and abs(vals['rate'] - old_rates[r_id]['rate']) > 10**-7
+                if date_changed or rate_changed:
+                    date_for_recompute = vals['name']
+                    if date_changed:
+                        # use the earliest date for the re-computation
+                        date_for_recompute = old_rates[r_id]['date'] < vals['name'] and old_rates[r_id]['date'] or vals['name']
+                    self.refresh_move_lines(cr, uid, [r_id], date=date_for_recompute)
+                    # Also update analytic move lines that don't come from a move (engagement journal lines)
+                    rate = self.browse(cr, uid, r_id, fields_to_fetch=['currency_id'], context=context)
+                    currency_id = rate.currency_id and rate.currency_id.id or False
+                    self.refresh_analytic_lines(cr, uid, [r_id], date=date_for_recompute, currency=currency_id, context=context)
         return res
-    
+
     def unlink(self, cr, uid, ids, context=None):
         """
         This method is used to re-compute all account move lines when a currency is modified.
         """
         res = True
-        for currency in self.read(cr, uid, ids, ['currency_id']):
+        period_obj = self.pool.get('account.period')
+        if context is None:
+            context = {}
+        for currency in self.read(cr, uid, ids, ['currency_id', 'name'], context=context):
+            period_ids = period_obj.get_period_from_date(cr, uid, currency['name'], context=context)
+            if period_ids:
+                period = period_obj.read(cr, uid, period_ids[0], ['state', 'name'], context=context)
+                if period['state'] != 'created':
+                    raise osv.except_osv(_('Error'),
+                                         _("You can't delete this FX rate as the period \"%s\" isn't in Draft state.") % period['name'])
             res = res & super(res_currency_rate_functional, self).unlink(cr, uid, ids, context)
             if currency['currency_id']:
                 currency_id = currency['currency_id'][0]

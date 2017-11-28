@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data noupdate="1">
-
         <record id="req_link_purchase_order" model="res.request.link">
             <field name="name">Purchase Order</field>
             <field name="object">purchase.order</field>
@@ -32,11 +31,48 @@
             <field eval="'product.pricelist,'+str(list0)" name="value"/>
         </record>
         
-        <function
-            eval="('default',False,'warehouse_id', [('purchase.order', False)], ref('stock.warehouse0'), True, False, False, False, True)"
-            id="purchase_default_set"
-            model="ir.values"
-            name="set"/>
-        
+    </data>
+
+    <data noupdate="0">
+        <record id="pol_state_cancel" model="purchase.order.line.state">
+            <field name="name">cancel</field>
+            <field name="sequence">1000</field>
+        </record>
+        <record id="pol_state_cancel_r" model="purchase.order.line.state">
+            <field name="name">cancel_r</field>
+            <field name="sequence">1001</field>
+        </record>
+        <record id="pol_state_draft" model="purchase.order.line.state">
+            <field name="name">draft</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="pol_state_validated_n" model="purchase.order.line.state">
+            <field name="name">validated_n</field>
+            <field name="sequence">15</field>
+        </record>
+        <record id="pol_state_validated" model="purchase.order.line.state">
+            <field name="name">validated</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="pol_state_sourced_sy" model="purchase.order.line.state">
+            <field name="name">sourced_sy</field>
+            <field name="sequence">40</field>
+        </record>
+        <record id="pol_state_sourced_v" model="purchase.order.line.state">
+            <field name="name">sourced_v</field>
+            <field name="sequence">50</field>
+        </record>
+        <record id="pol_state_sourced_n" model="purchase.order.line.state">
+            <field name="name">sourced_n</field>
+            <field name="sequence">60</field>
+        </record>
+        <record id="pol_state_confirmed" model="purchase.order.line.state">
+            <field name="name">confirmed</field>
+            <field name="sequence">70</field>
+        </record>
+        <record id="pol_state_done" model="purchase.order.line.state">
+            <field name="name">done</field>
+            <field name="sequence">80</field>
+        </record>
     </data>
 </openerp>

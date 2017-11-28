@@ -36,18 +36,18 @@ class import_commitment_wizard(osv.osv_memory):
 
     def import_csv_commitment_lines(self, cr, uid, ids, context=None):
         def check_date_not_in_hq_closed_period(pool, cr, uid, dt, line_index,
-                context=None):
+                                               context=None):
             domain = [
                 ('date_start', '<=', dt),
                 ('date_stop', '>=', dt),
                 ('state', '=', 'done'),  # hq-closed
             ]
             count = pool.get('account.period').search(cr, uid, domain,
-                count=True, context=context)
+                                                      count=True, context=context)
             if count and count > 0:
                 msg_tpl = _("Line %d: No posting and/or document date set." \
-                    " So today date should be used by default. But today is" \
-                    " in a HQ-Closed period. Import aborted.")
+                            " So today date should be used by default. But today is" \
+                            " in a HQ-Closed period. Import aborted.")
                 raise osv.except_osv(_('Error'), msg_tpl % (line_index, ))
             return True
 
@@ -85,7 +85,7 @@ class import_commitment_wizard(osv.osv_memory):
                     # retrieve values
                     try:
                         description, reference, document_date, date, account_code, destination, \
-                        cost_center, funding_pool, third_party,  booking_amount, booking_currency = line
+                            cost_center, funding_pool, third_party,  booking_amount, booking_currency = line
                     except ValueError, e:
                         raise osv.except_osv(_('Error'), raise_msg_prefix + _('Unknown format.'))
 
@@ -95,7 +95,7 @@ class import_commitment_wizard(osv.osv_memory):
                             # 1st use of default posting/doc date from now
                             now = time.strftime('%Y-%m-%d')
                             check_date_not_in_hq_closed_period(self.pool, cr,
-                                uid, now, sequence_number, context=context)
+                                                               uid, now, sequence_number, context=context)
                         line_date = now  # now by default
                     else:
                         try:
@@ -111,7 +111,7 @@ class import_commitment_wizard(osv.osv_memory):
                             # 1st use of default posting/doc date from now
                             now = time.strftime('%Y-%m-%d')
                             check_date_not_in_hq_closed_period(self.pool, cr,
-                                uid, now, sequence_number, context=context)
+                                                               uid, now, sequence_number, context=context)
                         line_document_date = now  # now by default
                     else:
                         try:
@@ -138,7 +138,7 @@ class import_commitment_wizard(osv.osv_memory):
                     else:
                         # try to get default account destination by default
                         account_br = self.pool.get('account.account').browse(cr,
-                            uid, account_ids[0])
+                                                                             uid, account_ids[0])
                         if account_br.default_destination_id:
                             vals['destination_id'] = account_br.default_destination_id.id
                             dest_id = [vals['destination_id']]
@@ -174,12 +174,9 @@ class import_commitment_wizard(osv.osv_memory):
                     if third_party:
                         vals.update({'imported_partner_txt': third_party})
                         # Search if 3RD party exists as partner
-                        partner_ids = self.pool.get('res.partner').search(cr, uid, [('&'), ('name', '=', third_party), ('partner_type', '=', 'esc')])
-                        if not len(partner_ids) > 0:
+                        partner_domain = [('name', '=', third_party), ('partner_type', '=', 'esc'), ('active', 'in', ['t', 'f'])]
+                        if not self.pool.get('res.partner').search_exist(cr, uid, partner_domain, context=context):
                             raise osv.except_osv(_('Error'), raise_msg_prefix + (_('No ESC partner found for code %s !') % (third_party)))
-                    # UFTP-60: Third party is not mandatory
-#                    else:
-#                        raise osv.except_osv(_('Error'), _('No third party found!'))
                     # currency
                     if booking_currency:
                         currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_currency), ('active', 'in', [False, True])])
@@ -214,18 +211,18 @@ class import_commitment_wizard(osv.osv_memory):
 
                     # Check AJI consistency
                     no_compat = analytic_obj.check_dest_cc_fp_compatibility(cr,
-                        uid, False,
-                        dest_id=dest_id[0], cc_id=cc_id[0], fp_id=fp_id[0],
-                        from_import=True,
-                        from_import_general_account_id=account_ids[0],
-                        from_import_posting_date=line_date,
-                        context=context)
+                                                                            uid, False,
+                                                                            dest_id=dest_id[0], cc_id=cc_id[0], fp_id=fp_id[0],
+                                                                            from_import=True,
+                                                                            from_import_general_account_id=account_ids[0],
+                                                                            from_import_posting_date=line_date,
+                                                                            context=context)
                     if no_compat:
                         no_compat = no_compat[0]
                         # no compatible AD
                         msg = _("Dest / Cost Center / Funding Pool are not" \
-                            " compatible for entry name:'%s', ref:'%s'" \
-                            " reason: '%s'")
+                                " compatible for entry name:'%s', ref:'%s'" \
+                                " reason: '%s'")
                         raise osv.except_osv(_('Error'), msg % (
                             vals.get('name', ''), vals.get('ref', ''),
                             no_compat[2] or '', )
@@ -241,9 +238,9 @@ class import_commitment_wizard(osv.osv_memory):
 
         # US-97: go to tree with intl engagements as default
         action = self.pool.get('ir.actions.act_window').for_xml_id(cr, uid,
-            'analytic_distribution',
-            'action_engagement_line_tree',
-            context=context)
+                                                                   'analytic_distribution',
+                                                                   'action_engagement_line_tree',
+                                                                   context=context)
         if action:
             if action.get('context', False):
                 action['context'] = action['context'].replace(
@@ -267,7 +264,7 @@ class int_commitment_clear_wizard(osv.osv_memory):
             ('code', '=', 'ENGI'),
         ]
         journal_ids = self.pool.get('account.analytic.journal').search(cr, uid,
-            domain, context=context)
+                                                                       domain, context=context)
         if not journal_ids:
             return False
 
@@ -276,7 +273,7 @@ class int_commitment_clear_wizard(osv.osv_memory):
             ('journal_id', 'in', journal_ids),
         ]
         res_ids = self.pool.get('account.analytic.line').search(cr, uid, domain,
-            context=context, count=count)
+                                                                context=context, count=count)
         return res_ids
 
     _columns = {
@@ -291,7 +288,7 @@ class int_commitment_clear_wizard(osv.osv_memory):
         to_del_ids = self._get_to_del_ids(cr, uid, context=context, count=False)
         if to_del_ids:
             self.pool.get('account.analytic.line').unlink(cr, uid, to_del_ids,
-                context=context)
+                                                          context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 int_commitment_clear_wizard()
@@ -304,14 +301,14 @@ class int_commitment_export_wizard(osv.osv_memory):
     _csv_filename_pattern = 'Intl_Commitments_%s.csv'
     _csv_delimiter = ','
     _csv_header = ['Description', 'Ref', 'Document Date', 'Posting Date',
-        'General Account', 'Destination', 'Cost Center' , 'Funding Pool',
-        'Third Party', 'Booking Amount', 'Booking Currency', ]
+                   'General Account', 'Destination', 'Cost Center' , 'Funding Pool',
+                   'Third Party', 'Booking Amount', 'Booking Currency', ]
 
     _columns = {
         'data': fields.binary('File', readonly=True),
         'name': fields.char('File Name', 128, readonly=True),
         'state': fields.selection((('choose','choose'), ('get','get'), ),
-            readonly=True, invisible=True),
+                                  readonly=True, invisible=True),
     }
 
     _defaults = {
@@ -322,13 +319,13 @@ class int_commitment_export_wizard(osv.osv_memory):
         aal_obj = self.pool.get('account.analytic.line')
 
         instance_name = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0].company_id.instance_id.name or ''
+                                                          context=context)[0].company_id.instance_id.name or ''
         file_name = self._csv_filename_pattern % (instance_name, )
 
         # csv prepare and header
         csv_buffer = StringIO.StringIO()
         csv_writer = csv.writer(csv_buffer, delimiter=self._csv_delimiter,
-            quoting=csv.QUOTE_MINIMAL)
+                                quoting=csv.QUOTE_MINIMAL)
         csv_writer.writerow(self._csv_header)
 
         # data lines

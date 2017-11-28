@@ -48,6 +48,123 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF7.0 patches
+    def post_sll(self, cr, uid, *a, **b):
+        cr.drop_index_if_exists('ir_ui_view', 'ir_ui_view_model_type_priority')
+        cr.drop_constraint_if_exists('ir_ui_view', 'ir_ui_view_unique_view')
+        cr.execute('CREATE UNIQUE INDEX ir_ui_view_model_type_priority ON ir_ui_view (priority, type, model) WHERE inherit_id IS NULL')
+        cr.execute("delete from ir_ui_view where name='aaa' and model='aaa' and priority=5")
+        return True
+
+    def us_3306(self, cr, uid, *a, **b):
+        '''setup currency rate constraint
+        '''
+        cr.execute("SELECT conname, pg_catalog.pg_get_constraintdef(oid, true) as condef FROM pg_constraint where conname='res_currency_rate_rate_unique';")
+        if not cr.fetchone():
+            # delete the double indonesian rupiah currency
+            currency_id = self.pool.get('res.currency').search(cr, uid,
+                                                               [('name', '=', 'IDR'),
+                                                                ('active', 'in', ('t', 'f'))])
+            if currency_id:
+                # remove the first rate added
+                rate_obj = self.pool.get('res.currency.rate')
+                rate_id = rate_obj.search(cr, uid,
+                                          [('currency_id', '=', currency_id[0]),
+                                           ('name', '=', '2014-01-01')], order='id',
+                                          limit=1)
+                if rate_id:
+                    cr.execute('delete from res_currency_rate where id = %s', (rate_id[0],))
+                    imd_obj = self.pool.get('ir.model.data')
+                    imd_ids = imd_obj.search(cr, uid, [('model', '=', 'res.currency.rate'), ('res_id', '=', rate_id[0])])
+                    imd_obj.unlink(cr, uid, imd_ids)
+                cr.commit()
+
+                # add the constraint
+                try:
+                    cr.execute("""
+                        ALTER TABLE "%s" ADD CONSTRAINT "%s" %s
+                        """ % ('res_currency_rate', 'res_currency_rate_rate_unique',
+                               'unique(name, currency_id)'))
+                except:
+                    self._logger.warn('Unable to set unique constraint on currency rate')
+                    cr.rollback()
+        return True
+
+    def us_2676(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'section':
+            cr.execute('''update ir_model_data set last_modification=NOW(), touched='[''code'']' where model='account.analytic.journal' and res_id in
+                (select id from account_analytic_journal where code='ENGI')
+            ''')
+        return True
+
+    def us_3345_remove_space_in_employee_name(self, cr, uid, *a, **b):
+        """
+        Removes spaces at the beginning and end of employee name
+        """
+        sql_resource_table = """
+            UPDATE resource_resource SET name = TRIM(name) WHERE id IN (SELECT resource_id FROM hr_employee);
+            """
+        sql_employee_table = """
+            UPDATE hr_employee SET name_resource = TRIM(name_resource);
+            """
+        cr.execute(sql_resource_table)
+        cr.execute(sql_employee_table)
+
+    def us_3756_remove_space_partner(self, cr, uid, *a, **b):
+        cr.execute('UPDATE res_partner SET name = TRIM(name)')
+        return True
+
+    def set_stock_level(self, cr, uid, *a, **b):
+        done = {}
+        cr.execute("delete from stock_mission_report_line_location where location_id is not null");
+        cr.execute("select distinct m.product_id, m.location_id, m.location_dest_id, t.uom_id from stock_move m, product_template t, product_product p where m.product_id = p.id and t.id = p.product_tmpl_id and m.state='done'")
+        prod_obj = self.pool.get('product.product')
+        for x in cr.fetchall():
+            for loc in (x[1], x[2]):
+                key = (x[0], loc)
+                if key in done:
+                    continue
+                av = prod_obj.get_product_available(cr, uid, [x[0]], context={'states': ('done',), 'what': ('in', 'out'), 'location': loc})
+                cr.execute("""insert into stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date, uom_id)
+                    values (%s, %s, %s, NOW(), %s) RETURNING id
+                """, (loc, x[0], av[x[0]], x[3]))
+                created_id = cr.fetchone()[0]
+                cr.execute("select create_ir_model_data(%s)", (created_id, ))
+                done[key] = True
+        # reset stock mission report line
+        cr.execute('truncate mission_move_rel')
+        fields_to_reset = ['in_pipe_coor_val', 'in_pipe_coor_qty', 'in_pipe_val', 'in_pipe_qty',
+                           'secondary_val', 'cu_qty', 'wh_qty', 'cu_val', 'stock_val', 'central_qty',
+                           'cross_qty', 'cross_val', 'secondary_qty', 'central_val', 'internal_qty'
+                           ]
+        if self.pool.get('sync.client.entity'):
+            cr.execute("""update ir_model_data set touched='[''wh_qty'']', last_modification=NOW()
+                where
+                    module='sd' and model='stock.mission.report.line' and
+                    res_id in (
+                        select id from stock_mission_report_line where 
+                        """ + ' OR '.join(['%s!=0'%x for x in fields_to_reset]) + """
+                    )
+            """)
+
+        cr.execute("""
+            update stock_mission_report_line set
+              """ + ' , '.join(['%s=0'%x for x in fields_to_reset])+ """
+            where mission_report_id in
+            (
+                select id from stock_mission_report where full_view='f' and export_ok='t'
+            )
+        """)
+
+    # OLD patches
     def us_3048_patch(self, cr, uid, *a, **b):
         '''
         some protocol are now removed from possible protocols
@@ -185,7 +302,8 @@ class patch_scripts(osv.osv):
                 AND state not in ('done', 'cancel', 'delivered');
             """, (internal_partner_id, internal_partner_id, address_id, intermission_partner_id) )
 
-        self._logger.warn("Following documents have been updated with internal partner: %s" % ", ".join(updated_doc))
+        if updated_doc:
+            self._logger.warn("Following documents have been updated with internal partner: %s" % ", ".join(updated_doc))
 
         return True
 
@@ -309,7 +427,7 @@ class patch_scripts(osv.osv):
                                                ('domain', '!=', False)])
             if search_result:
                 obj_action.unlink(cr, uid, search_result)
-                self._logger.warn('%d Track changes action deleted' % (len(search_result),))
+                self._logger.info('%d Track changes action deleted' % (len(search_result),))
                 # call subscribe on all rule to recreate the Trach changes action
                 rule_obj = self.pool.get('audittrail.rule')
                 rules_ids = rule_obj.search(cr, uid, [])
@@ -1041,7 +1159,7 @@ class patch_scripts(osv.osv):
             logger.warn('Execute US-1527 script')
             self.another_other_translation_fix(cr, uid, *a, **b)
         else:
-            logger.warn('Do not execute US-1527 script')
+            logger.info('Do not execute US-1527 script')
         return True
 
     def another_other_translation_fix(self, cr, uid, *a, **b):

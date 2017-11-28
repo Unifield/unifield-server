@@ -434,6 +434,10 @@ class update_received(osv.osv,fv_formatter):
     def execute_update(self, cr, uid, ids=None, priorities=None, context=None):
         context = dict(context or {}, sync_update_execution=True)
         context['lang'] = 'en_US'
+
+        # force user to user_sync
+        uid = self.pool.get('res.users')._get_sync_user_id(cr)
+
         local_entity = self.pool.get('sync.client.entity').get_entity(
             cr, uid, context=context)
 

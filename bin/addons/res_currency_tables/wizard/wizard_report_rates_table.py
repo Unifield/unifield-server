@@ -21,8 +21,6 @@
 from osv import osv, fields
 from tools.translate import _
 
-import datetime
-from dateutil.relativedelta import relativedelta
 
 class wizard_report_rates_table(osv.osv_memory):
     _name = "wizard.report.rates.table"
@@ -30,6 +28,11 @@ class wizard_report_rates_table(osv.osv_memory):
     _columns = {
         'start_period_id': fields.many2one('account.period', 'Start period', required=True, domain=[('special','=',False)]),
         'end_period_id': fields.many2one('account.period', 'End period', required=True, domain=[('special','=',False)]),
+        'export_all': fields.boolean('Export all currencies'),
+    }
+
+    _defaults = {
+        'export_all': lambda *a: False,
     }
 
     def button_create_report(self, cr, uid, ids, context=None):
@@ -39,8 +42,8 @@ class wizard_report_rates_table(osv.osv_memory):
         data['model'] = context.get('active_model', 'ir.ui.menu')
         data['form'] = {}
         if 'active_model' in context \
-            and context['active_model'] == 'res.currency.table' \
-            and len(data['ids']) > 0:
+                and context['active_model'] == 'res.currency.table' \
+                and len(data['ids']) > 0:
             # add parameters
             data['form'].update({'currency_table_id': data['ids'][0]})
         else:
@@ -51,8 +54,10 @@ class wizard_report_rates_table(osv.osv_memory):
             else:
                 data['form'].update({'start_date': wizard.start_period_id.date_start})
                 data['form'].update({'end_date': wizard.end_period_id.date_start})
+        export_all = wizard and wizard.export_all or False
+        data['form'].update({'export_all': export_all})
         return {'type': 'ir.actions.report.xml', 'report_name': 'msf.rates.table', 'datas': data}
-        
+
 
 wizard_report_rates_table()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

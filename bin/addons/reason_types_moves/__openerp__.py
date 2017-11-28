@@ -45,7 +45,6 @@ stock moves.
     "demo_xml": [
     ],
     "test": [
-        "test/chained_location.yml",
     ],
     "installable": True,
     "active": False,

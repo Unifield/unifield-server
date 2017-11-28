@@ -69,7 +69,6 @@ EVENT_TYPE_DESTINATION = {'accept': 'stock.stock_location_stock',  # move to sto
                           }
 
 
-
 class return_claim(osv.osv):
     '''
     claim class

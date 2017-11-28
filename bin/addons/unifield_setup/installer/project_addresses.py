@@ -111,7 +111,7 @@ class project_addresses(osv.osv_memory):
         assert len(ids) == 1, "We should only get one object from the form"
         payload = self.browse(cr, uid, ids[0], context=context)
         if not getattr(payload, 'company_id', None):
-            raise ValueError('Case where no default main company is setup ' 
+            raise ValueError('Case where no default main company is setup '
                              'not handled yet')
 
         # TODO: quick fix
