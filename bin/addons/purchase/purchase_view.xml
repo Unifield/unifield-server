@@ -308,8 +308,8 @@
                                 <separator string="Invoice Control" colspan="2"/>
                                 <field name="invoice_method" attrs="{'invisible': [('order_type', 'in', ['donation_exp', 'donation_st', 'in_kind', 'loan'])]}"/>
                                 <field name="unallocation_ok" attrs="{'readonly': ['|', ('cross_docking_ok', '=', True), ('allocation_setup', '!=', 'mixed')]}"/>
-                                <field name="fiscal_position" widget="selection"/>
-                                <field name="invoice_address_id" domain="[('inv_address', 'in', [company_id])]" context="contact_display='partner_address'" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'confirmed'])]}"/>
+                                <field name="fiscal_position" widget="selection" attrs="{'readonly': [('state', 'in', ['confirmed', 'confirmed_p', 'done', 'cancel'])]}"/>
+                                <field name="invoice_address_id" domain="[('inv_address', 'in', [company_id])]" context="contact_display='partner_address'" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'in', ['confirmed', 'confirmed_p', 'done', 'cancel'])]}"/>
                             </group>
                             <separator string="Invoices" colspan="4"/>
                             <newline/>
