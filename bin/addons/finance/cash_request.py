@@ -1052,9 +1052,32 @@ class cash_request_liquidity_cash(osv.osv):
     _name = 'cash.request.liquidity.cash'
     _inherit = 'cash.request.liquidity'
 
+    def _cashbox_balance_functional_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Gets the cash balance in func. currency by using the conversion method from the Liquidity Position report
+        """
+        if context is None:
+            context = {}
+        result = {}
+        fields_list = ['booking_currency_id', 'cashbox_balance_booking', 'period_id']
+        for liq in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
+            liquidity_pos_report = register_accounting.report.report_liquidity_position \
+                .report_liquidity_position3(cr, uid, 'fakereport', context=context)
+            balance_amount = 0.0
+            if liquidity_pos_report and liq.booking_currency_id and liq.cashbox_balance_booking and liq.period_id:
+                balance_amount = liquidity_pos_report.getConvert(liq.booking_currency_id.id,
+                                                                 liq.cashbox_balance_booking,
+                                                                 report_period=liq.period_id) or 0.0
+            result[liq.id] = balance_amount
+        return result
+
     _columns = {
-        'cashbox_balance': fields.related('register_id', 'balance_end_cash',
-                                          string='Cash Box Balance in register currency', type='float', readonly=True),
+        'cashbox_balance_booking': fields.related('register_id', 'balance_end_cash',
+                                                  string='Cash Box Balance in register currency', type='float', readonly=True),
+        'cashbox_balance_functional': fields.function(_cashbox_balance_functional_compute, method=True,
+                                                      string='Cash Box Balance in functional currency',
+                                                      type='float', digits_compute=dp.get_precision('Account'),
+                                                      readonly=True, store=True),
     }
 
 cash_request_liquidity_cash()
@@ -1064,10 +1087,33 @@ class cash_request_liquidity_bank(osv.osv):
     _name = 'cash.request.liquidity.bank'
     _inherit = 'cash.request.liquidity'
 
+    def _bank_statement_balance_functional_compute(self, cr, uid, ids, name, args, context=None):
+        """
+        Gets the bank statement balance in func. currency by using the conversion method from the Liquidity Position report
+        """
+        if context is None:
+            context = {}
+        result = {}
+        fields_list = ['booking_currency_id', 'bank_statement_balance_booking', 'period_id']
+        for liq in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
+            liquidity_pos_report = register_accounting.report.report_liquidity_position \
+                .report_liquidity_position3(cr, uid, 'fakereport', context=context)
+            balance_amount = 0.0
+            if liquidity_pos_report and liq.booking_currency_id and liq.bank_statement_balance_booking and liq.period_id:
+                balance_amount = liquidity_pos_report.getConvert(liq.booking_currency_id.id,
+                                                                 liq.bank_statement_balance_booking,
+                                                                 report_period=liq.period_id) or 0.0
+            result[liq.id] = balance_amount
+        return result
+
     _columns = {
-        'bank_statement_balance': fields.related('register_id', 'balance_end_real',
-                                                 string='Bank Statement Balance in register currency', type='float',
-                                                 readonly=True),
+        'bank_statement_balance_booking': fields.related('register_id', 'balance_end_real',
+                                                         string='Bank Statement Balance in register currency', type='float',
+                                                         readonly=True),
+        'bank_statement_balance_functional': fields.function(_bank_statement_balance_functional_compute, method=True,
+                                                             string='Bank Statement Balance in functional currency',
+                                                             type='float', digits_compute=dp.get_precision('Account'),
+                                                             readonly=True, store=True),
     }
 
 cash_request_liquidity_bank()
