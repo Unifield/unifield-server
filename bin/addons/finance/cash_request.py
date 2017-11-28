@@ -330,16 +330,20 @@ class cash_request(osv.osv):
         # create new lines
         instances = cash_req.instance_ids
         for inst in instances:
+            commitment_amount = expense_amount = payable_amount = 0.0
             # Commitment lines
-            commitment_amount = expense_amount = 0.0
             for cl in cash_req.commitment_ids:
                 commitment_amount += cl.instance_id.id == inst.id and cl.total_commitment or 0.0
             # Foreseen expenses
             for rexp in cash_req.recap_expense_ids:
                 expense_amount += rexp.instance_id.id == inst.id and rexp.expense_total or 0.0
+            # Payables
+            for payable in cash_req.payable_ids:
+                payable_amount += payable.instance_id.id == inst.id and payable.balance or 0.0
             recap_mission_vals = {'instance_id': inst.id,
                                   'commitment_amount': commitment_amount,
                                   'expense_amount': expense_amount,
+                                  'payable_amount': payable_amount,
                                   'cash_request_id': cash_req.id}
             recap_mission_obj.create(cr, uid, recap_mission_vals, context=context)
 
@@ -864,7 +868,7 @@ class cash_request_payable(osv.osv):
 
     def _credit_compute(self, cr, uid, ids, name, args, context=None):
         """
-        Computes the total functional debit amount based on the entries from _aml_compute
+        Computes the total functional credit amount based on the entries from _aml_compute
         """
         if context is None:
             context = {}
@@ -878,7 +882,8 @@ class cash_request_payable(osv.osv):
 
     def _balance_compute(self, cr, uid, ids, name, args, context=None):
         """
-        Computes the total functional balance (debit - credit)
+        Computes the total functional balance: credit - debit. Note that this will make the balance positive
+        for the most current use cases (on the contrary to the Trial Balance for instance)
         """
         if context is None:
             context = {}
@@ -887,7 +892,7 @@ class cash_request_payable(osv.osv):
             cr_payable = self.browse(cr, uid, cr_payable_id, fields_to_fetch=['debit', 'credit'], context=context)
             debit = cr_payable.debit or 0.0
             credit = cr_payable.credit or 0.0
-            result[cr_payable_id] = debit - credit
+            result[cr_payable_id] = credit - debit
         return result
 
     _columns = {
