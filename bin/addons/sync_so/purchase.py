@@ -53,12 +53,26 @@ class purchase_order_line_sync(osv.osv):
         '''
         if context is None:
             context = {}
+        pick_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
         wf_service = netsvc.LocalService("workflow")
         sol_dict = sol_info.to_dict()
 
+        po_ids = []
         # search for the parent purchase.order:
-        partner_ref = '%s.%s' % (source, sol_dict['order_id']['name'])
-        po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', partner_ref)], context=context)
+        if sol_dict['in_name_goods_return']:
+            # FO claim updated, update orignal PO
+            in_name = sol_dict['in_name_goods_return'].split('.')
+            in_name.pop(0)
+            in_name = '.'.join(in_name)
+            pick_id = pick_obj.search(cr, uid, [('name', '=', in_name)], context=context)
+            if pick_id:
+                po_id = pick_obj.read(cr, uid, pick_id[0], ['purchase_id'], context=context)['purchase_id'][0]
+                if po_id:
+                    po_ids = [po_id]
+        else:
+            partner_ref = '%s.%s' % (source, sol_dict['order_id']['name'])
+            po_ids = self.pool.get('purchase.order').search(cr, uid, [('partner_ref', '=', partner_ref)], context=context)
         if not po_ids:
             # If FO was split during SLL migration the PO is not split
             if partner_ref[-2] == '-' and partner_ref[-1] in ['1', '2', '3']:
@@ -113,11 +127,23 @@ class purchase_order_line_sync(osv.osv):
                 pol_values['original_line_id'] = orig_pol[0]
                 pol_values['line_number'] = orig_pol_info.line_number
                 if orig_pol_info.linked_sol_id:
-                    pol_values['origin'] =  orig_pol_info.origin
+                    pol_values['origin'] = orig_pol_info.origin
+            if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:
+                # in case of FO from missing/replacement claim
+                pol_values['line_number'] = sol_dict['line_number']
+                pol_values['origin'] = self.pool.get('purchase.order').browse(cr, uid, po_ids[0], context=context).origin
+                pol_values['from_synchro_return_goods'] = True
             # case of PO line doesn't exists, so created in FO (COO) and pushed back in PO (PROJ)
             # so we have to create this new PO line:
             pol_values['set_as_sourced_n'] = True if not sol_dict.get('resourced_original_line') else False
             new_pol = self.create(cr, uid, pol_values, context=context)
+            if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:  # update the stock moves PO line id
+                in_name = sol_dict['in_name_goods_return'].split('.')[-1]
+                pick_id = pick_obj.search(cr, uid, [('name', '=', in_name)], limit=1, context=context)[0]
+                move_ids = move_obj.search(cr, uid, [('picking_id', '=', pick_id),
+                                                     ('line_number', '=', pol_values['line_number'])], context=context)
+                move_obj.write(cr, uid, move_ids, ({'purchase_line_id': new_pol}), context=context)
+
             pol_updated = new_pol
         else: # regular update
             pol_updated = pol_id[0]
@@ -134,7 +160,7 @@ class purchase_order_line_sync(osv.osv):
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'sourced_sy', cr)
         elif sol_dict['state'] == 'validated':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'validated', cr)
-        elif sol_dict['state'] ==  'confirmed':
+        elif sol_dict['state'] == 'confirmed':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'confirmed', cr)
         elif sol_dict['state'] == 'cancel':
             wf_service.trg_validate(uid, 'purchase.order.line', pol_updated, 'cancel', cr)

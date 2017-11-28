@@ -484,7 +484,7 @@ class purchase_order_line(osv.osv):
                 # PO nomen (PROJ) => FO (nomen COO)
                 raise osv.except_osv(_('Error'), _('Line %s: Please choose a product before confirming the line') % pol.line_number)
 
-            if pol.order_type != 'direct':
+            if pol.order_type != 'direct' and not pol.from_synchro_return_goods:
                 # create incoming shipment (IN):
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
                     ('purchase_id', '=', pol.order_id.id),
