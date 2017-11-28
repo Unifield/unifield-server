@@ -583,7 +583,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'manually_corrected': fields.function(_get_manually_corrected, method=True, type='boolean', string='Manually corrected'),
         'is_a_counterpart': fields.boolean('Counterpart?', help="This field is only for indicating that the order is a counterpart"),
-        'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
         'fo_to_resource': fields.boolean(string='FO created to resource FO in exception', readonly=True),
         'parent_order_name': fields.char(size=64, string='Parent order name', help='In case of this FO is created to re-source a need, this field contains the name of the initial FO (before split).'),
         'sourced_references': fields.one2many(
