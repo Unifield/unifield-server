@@ -36,7 +36,7 @@ import cStringIO
 import base64
 from msf_field_access_rights.osv_override import _get_instance_level
 from xlwt import Workbook, easyxf, Borders
-from datetime import datetime,timedelta
+from datetime import datetime
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
@@ -293,6 +293,13 @@ class stock_mission_report(osv.osv):
         in_stock = display_only_in_stock and '_only_stock' or ''
         file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id,
                                                          report_type + in_stock + '.' + file_type)
+
+        if display_only_in_stock:
+            ignore_if_null = []
+            for num, x in enumerate(header):
+                if x[1].endswith('qty'):
+                    ignore_if_null.append(num)
+
         if not write_attachment_in_db:
             export_file = open(os.path.join(attachments_path, file_name), 'wb')
         else:
@@ -370,8 +377,14 @@ class stock_mission_report(osv.osv):
 
                 # remove the 5 firsts column are they are not stock qty
                 # and check if there is any other value than 0 on this last columns
-                if display_only_in_stock and not any(data_list[5:]):
-                    continue
+                if display_only_in_stock:
+                    ignore_line = True
+                    for x in ignore_if_null:
+                        if data_list[x]:
+                            ignore_line = False
+                            break
+                    if ignore_line:
+                        continue
 
                 if file_type == 'xls':
                     self.xls_write_row(sheet, data_list, row_count, row_style)
@@ -586,6 +599,7 @@ class stock_mission_report(osv.osv):
 
                 # Don't update lines for full view or non local reports
                 if _get_instance_level(self, cr, uid) not in ('coordo', 'hq') and not report['local_report']:
+                    # to check
                     continue
 
                 msr_in_progress = self.pool.get('msr_in_progress')
@@ -833,6 +847,27 @@ class stock_mission_report(osv.osv):
         except osv.except_osv, e:
             logger.warning("___ %s The report will be stored in the database." % e.value)
 
+
+        # TODO: remove me at integration
+        if not product_values:
+            product_values = {}
+            product_obj = self.pool.get('product.product')
+            cr.execute("""SELECT id FROM product_product
+                    WHERE id IN (SELECT product_id FROM stock_move)""")
+            product_amc_ids = [x[0] for x in cr.fetchall()]
+
+            # XXX the following read is the part where 95 % of the time of this method is spent
+            for prod in product_obj.read(cr, uid, product_amc_ids, ['product_amc'], context=context):
+                product_values[prod['id']] = {'reviewed_consumption': 0, 'product_amc': prod['product_amc']}
+            # B
+            cr.execute("""SELECT id FROM product_product
+                    WHERE id IN (SELECT name FROM monthly_review_consumption_line)""")
+
+            product_reviewed_ids = [x[0] for x in cr.fetchall()]
+            for prod in product_obj.read(cr, uid, product_reviewed_ids, ['reviewed_consumption'], context=context):
+                product_values.setdefault(prod['id'], {}).update({'reviewed_consumption': prod['reviewed_consumption']})
+
+
         write_attachment_in_db = False
         # for MSR reports, the migration is ignored, if the path is defined and
         # usable, it is used, migration done or not.
@@ -979,15 +1014,10 @@ class stock_mission_report_line(osv.osv):
 
     def xmlid_code_migration(self, cr, ids):
         cr.execute('UPDATE stock_mission_report_line l set xmlid_code = (select xmlid_code from product_product p where p.id=l.product_id)')
-        print 'UPDATE stock_mission_report_line l set xmlid_code = (select xmlid_code from product_product p where p.id=l.product_id)'
-        print cr.statusmessage
         return True
 
     def is_migration(self, cr, ids):
         cr.execute('UPDATE stock_mission_report_line l set international_status = (select international_status from product_product p where p.id=l.product_id)')
-        print 'UPDATE stock_mission_report_line l set international_status = (select international_status from product_product p where p.id=l.product_id)'
-        print cr.statusmessage
-
         return True
 
     _columns = {
