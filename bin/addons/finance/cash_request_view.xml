@@ -9,7 +9,9 @@
                 <field name="arch" type="xml">
                     <!-- creation/duplication allowed in coordo / edition allowed in coordo and project (see fields_view_get) -->
                     <form string="Cash Request" noteditable="state=='done'"
-                          hide_new_button="1" hide_duplicate_button="1" hide_edit_button="1">
+                          hide_new_button="PROP_INSTANCE_HIDE_BUTTON"
+                          hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"
+                          hide_edit_button="PROP_INSTANCE_HIDE_BUTTON">
                         <notebook colspan="4">
                             <page string="Main Tab">
                                 <button name="generate_cash_request" type="object" string="Generate" icon="gtk-execute"
@@ -180,7 +182,7 @@
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
                     <!-- creation allowed in coordo / edition allowed in coordo and project (see fields_view_get) -->
-                    <tree hide_new_button="1" hide_edit_button="1">
+                    <tree hide_new_button="PROP_INSTANCE_HIDE_BUTTON" hide_edit_button="PROP_INSTANCE_HIDE_BUTTON">
                         <field name="name"/>
                         <field name="request_date"/>
                         <field name="month_period_id"/>

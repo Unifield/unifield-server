@@ -451,7 +451,11 @@ class cash_request(osv.osv):
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
-        Allows the creation/duplication at coordo level, and the edition at coordo and project
+        Handles the creation/duplication/edition rights according to the instance level:
+        - in coordo: all allowed
+        - in HQ: all blocked
+        - in project: only edition allowed
+        Note: the deletion depends on the state and is not handled here.
         """
         if context is None:
             context = {}
@@ -462,11 +466,19 @@ class cash_request(osv.osv):
         if view_type in ['form', 'tree']:
             if level == 'coordo':
                 res['arch'] = res['arch']\
-                    .replace('hide_new_button="1"', '')\
-                    .replace('hide_duplicate_button="1"', '')\
-                    .replace('hide_edit_button="1"', '')
-            elif level in ('coordo', 'project'):
-                res['arch'] = res['arch'].replace('hide_edit_button="1"', '')
+                    .replace('hide_new_button="PROP_INSTANCE_HIDE_BUTTON"', '')\
+                    .replace('hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"', '')\
+                    .replace('hide_edit_button="PROP_INSTANCE_HIDE_BUTTON"', '')
+            elif level == 'project':
+                res['arch'] = res['arch'] \
+                    .replace('hide_new_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_new_button="1"') \
+                    .replace('hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_duplicate_button="1"') \
+                    .replace('hide_edit_button="PROP_INSTANCE_HIDE_BUTTON"', '')
+            else:
+                res['arch'] = res['arch'] \
+                    .replace('hide_new_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_new_button="1"') \
+                    .replace('hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_duplicate_button="1"') \
+                    .replace('hide_edit_button="PROP_INSTANCE_HIDE_BUTTON"', 'hide_edit_button="1"')
         return res
 
     def unlink(self, cr, uid, ids, context=None):
