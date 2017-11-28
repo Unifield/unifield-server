@@ -144,10 +144,10 @@
                         <field name="push_fo" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': ['|', ('push_fo', '=', True), ('state', 'not in', ['draft', 'validated'])]}"/>
-                        <field name="priority" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
+                        <field name="priority" attrs="{'readonly': [('state', 'in', ['sourced_p', 'confirmed', 'confirmed_p', 'done', 'cancel'])]}"/>
                         <newline/>
                         <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p'])]}"/>
-                        <field name="details"/>
+                        <field name="details" attrs="{'readonly': [('state', 'in', ['sourced_p', 'confirmed', 'confirmed_p', 'done', 'cancel'])]}"/>
                         <newline/>
                     </group>
                     <field name="parent_order_name" readonly="True" attrs="{'invisible': [('parent_order_name', '=', False)]}"/>
