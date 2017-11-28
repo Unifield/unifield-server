@@ -731,10 +731,11 @@ class return_claim(osv.osv):
                     ('subtype', '=', 'standard'),
                     ('origin', 'like', obj.picking_id_return_claim.origin),
                 ]
-                original_in_id = pick_obj.search(cr, uid, in_domain, order='id asc', limit=1, context=context)[0]
-                original_in = pick_obj.browse(cr, uid, original_in_id, fields_to_fetch=['partner_id'], context=context)
-                if original_in.partner_id.partner_type in ('external', 'esc'):
-                    result[obj.id].update({'original_pick_partner_external_or_esc': True})
+                original_in_id = pick_obj.search(cr, uid, in_domain, order='id asc', limit=1, context=context)
+                if len(original_in_id) > 0:
+                    original_in = pick_obj.browse(cr, uid, original_in_id[0], fields_to_fetch=['partner_id'], context=context)
+                    if original_in.partner_id and original_in.partner_id.partner_type in ('external', 'esc'):
+                        result[obj.id].update({'original_pick_partner_external_or_esc': True})
 
         return result
 

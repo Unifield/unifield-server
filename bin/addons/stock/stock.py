@@ -2345,7 +2345,7 @@ class stock_move(osv.osv):
                 # Need to check name of old picking because it always considers picking as "OUT" when created from Sale Order
                 old_ptype = location_obj.picking_type_get(cr, uid, picking.move_lines[0].location_id, picking.move_lines[0].location_dest_id)
                 picking_vals = {}
-                if old_ptype != picking.type:
+                if old_ptype != picking.type and not picking.claim:
                     picking_vals['name'] = seq_obj.get(cr, uid, 'stock.picking.' + old_ptype)
                 if ptype == 'internal':
                     picking_vals['associate_pick_name'] = new_pick_name  # save the INT name into this original IN

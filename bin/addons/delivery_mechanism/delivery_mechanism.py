@@ -1323,23 +1323,23 @@ class stock_picking(osv.osv):
                     picking_obj.write(cr, uid, backorder_id, ({'backorder_id': picking_dict['id']}), context=context)
                 self._claim_registration(cr, uid, wizard, backorder_id, context=context)
 
-                wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
-                # Then we finish the good picking
-                if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
-                    # To cancel the created INT
-                    self.action_move(cr, uid, [backorder_id], return_goods=True, context=context)
-                    # check the OUT availability
-                    out_domain = [('backorder_id', '=', backorder_id), ('type', '=', 'out')]
-                    out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
-                    self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
-                else:
-                    self.action_move(cr, uid, [backorder_id], context=context)
                 # Cancel missing IN instead of processing
                 if wizard.register_a_claim and wizard.claim_type == 'missing':
                     move_ids = move_obj.search(cr, uid, [('picking_id', '=', backorder_id)])
                     move_obj.action_cancel(cr, uid, move_ids, context=context)
                     self.action_cancel(cr, uid, [backorder_id], context=context)
                 else:
+                    wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
+                    # Then we finish the good picking
+                    if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
+                        # To cancel the created INT
+                        self.action_move(cr, uid, [backorder_id], return_goods=True, context=context)
+                        # check the OUT availability
+                        out_domain = [('backorder_id', '=', backorder_id), ('type', '=', 'out')]
+                        out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
+                        self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
+                    else:
+                        self.action_move(cr, uid, [backorder_id], context=context)
                     wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_done', cr)
                 wf_service.trg_write(uid, 'stock.picking', picking_id, cr)
                 prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
@@ -1365,21 +1365,21 @@ class stock_picking(osv.osv):
                         self.write(cr, uid, [picking_id], {'state': 'shipped'}, context=context)
                     return picking_id
                 else:
-                    if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
-                        # To cancel the created INT
-                        self.action_move(cr, uid, [picking_id], return_goods=True, context=context)
-                        # check the OUT availability
-                        out_domain = [('backorder_id', '=', picking_id), ('type', '=', 'out')]
-                        out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
-                        self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
-                    else:
-                        self.action_move(cr, uid, [picking_id], context=context)
                     # Cancel missing IN instead of processing
                     if wizard.register_a_claim and wizard.claim_type == 'missing':
                         move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking_id)])
                         move_obj.action_cancel(cr, uid, move_ids, context=context)
                         self.action_cancel(cr, uid, [picking_id], context=context)
                     else:
+                        if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
+                            # To cancel the created INT
+                            self.action_move(cr, uid, [picking_id], return_goods=True, context=context)
+                            # check the OUT availability
+                            out_domain = [('backorder_id', '=', picking_id), ('type', '=', 'out')]
+                            out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
+                            self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
+                        else:
+                            self.action_move(cr, uid, [picking_id], context=context)
                         wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_done', cr)
 
                     if picking_dict['purchase_id']:

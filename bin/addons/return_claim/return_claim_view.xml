@@ -160,7 +160,7 @@
                             <field name="original_pick_partner_external_or_esc" invisible="True" />
                             <field name="is_forwarded" invisible="True" />
                             <button name="claim_to_external_partner" string="Forward Claim to External Supplier" icon="gtk-go-forward" type="object"
-                                    attrs="{'invisible': ['|', '|', '|', ('state', 'not in', ['in_progress', 'done']), ('origin_claim', '=', False),
+                                    attrs="{'invisible': ['|', '|', '|', ('state', '!=', 'in_progress'), ('origin_claim', '=', False),
                                     ('is_forwarded', '=', True), ('original_pick_partner_external_or_esc', '=', False)]}"/>
                             <field name="prevent_stock_discrepancies"
                                    attrs="{'invisible': ['&amp;', '|', '|', ('state', '!=', 'draft_progress'),

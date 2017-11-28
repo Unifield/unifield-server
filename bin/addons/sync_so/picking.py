@@ -342,7 +342,6 @@ class stock_picking(osv.osv):
         if shipment_ref:
             shipment_ref = source + "." + shipment_ref
 
-
         if po_id:
             po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
             in_name_goods_return = False

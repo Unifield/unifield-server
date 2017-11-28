@@ -689,6 +689,8 @@ class shipment(osv.osv):
                 new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
                 if picking_obj._get_usb_entity_type(cr, uid) == picking_obj.CENTRAL_PLATFORM:
                     picking_obj.write(cr, uid, [new_packing_id], {'already_replicated': True}, context=context)
+                if picking.claim:
+                    picking_obj.write(cr, uid, [new_packing_id], ({'claim': True}), context=context)
 
                 # Reset context
                 context.update({
@@ -1302,6 +1304,8 @@ class shipment(osv.osv):
                                                                      'shipment_id': shipment.id, }, context=dict(context, keepLineNumber=True, keep_prodlot=True, allow_copy=True,))
 
                 pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
+                if packing.claim:
+                    pick_obj.write(cr, uid, [new_packing_id], ({'claim': True}), context=context)
                 new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
 
                 if new_packing.move_lines and pick_obj._get_usb_entity_type(cr, uid) == pick_obj.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
@@ -3647,6 +3651,8 @@ class stock_picking(osv.osv):
                 'allow_copy': True,
             })
             new_picking_id = self.copy(cr, uid, picking.id, copy_data, context=context)
+            if picking.claim:
+                self.write(cr, uid, new_picking_id, ({'claim': True}), context=context)
             if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                 self.write(cr, uid, new_picking_id, {'already_replicated': False}, context=context)
 
@@ -3854,6 +3860,8 @@ class stock_picking(osv.osv):
             })
 
             new_ppl_id = self.copy(cr, uid, picking.id, cp_vals, context=context)
+            if picking.claim:
+                self.write(cr, uid, new_ppl_id, ({'claim': True}), context=context)
             if update_replicated_flag:
                 self.write(cr, uid, new_ppl_id, {'already_replicated': False}, context=context)
 
@@ -4203,6 +4211,8 @@ class stock_picking(osv.osv):
             context['offline_synchronization'] = False
             # Create the packing with pack_values and the updated context
             new_packing_id = self.copy(cr, uid, picking.id, pack_values, context=context)
+            if picking.claim:
+                self.write(cr, uid, new_packing_id, ({'claim': True}), context=context)
             if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
                 self.write(cr, uid, new_packing_id, {'already_replicated': False}, context=context)
 
