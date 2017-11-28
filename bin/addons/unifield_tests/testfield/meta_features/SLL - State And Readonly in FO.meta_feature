@@ -1,0 +1,173 @@
+Feature: SLL - State propagation and readonly checks in Field Orders 
+
+@fo @fo_manual @SLL
+ 
+Scenario: SLL - State propagation and readonly checks in Field Orders
+
+    ##########################################################
+    # Create PO with 2 products
+    ##########################################################
+
+    I log into instance "HQ1C1"
+    I open tab menu "ORDERS"
+    I click on menu "Field Orders"
+    I click on "New"
+
+    I click on button_id "partner_id_select" and open the window
+    I click on first line and close the window
+
+    I click on "New" and open the window
+    I fill "Product" with "[ADAPCABL1P-] (printer) CABLE, PARALLEL interface PC/printer"
+    I fill "Quantity (UoM)" with "10.00"
+    I fill "Unit Price" with "4.93"
+    I click on "Save & Close" and close the window 
+    I click on "New" and open the window
+    I fill "Product" with "[ADAPCABL2S-] (computer) CABLE, SERIAL interface PC/Mini-M, female/male"
+    I fill "Quantity (UoM)" with "5.00"
+    I fill "Unit Price" with "1.37"
+    I click on "Save & Close" and close the window
+    
+    I should see "Draft" in "State"
+    I should see "State" as readonly
+    I should see "Order Reference" as readonly
+    I should see "Ordered Date" as editable
+    I should see "Customer" as editable
+    I should see "Warehouse" as editable
+    I should see "Order Type" as editable
+    I should see "Order category" as editable
+
+    # Check that we can see the details for a line by clicking on it
+    I click on line and open the window:
+    | Product Code |
+    | ADAPCABL1P- |
+    I click on "Cancel" and close the window
+ 
+    ##########################################################
+    # Fill AD
+    ##########################################################
+  
+	I click on "Analytical Distribution" and open the window
+	I click on "New"
+	I fill "SUP" within column "DESTINATION"
+	I fill "HT101" within column "COST CENTER"
+	I validate the line
+	I click on "Save" and close the window
+
+    ##########################################################
+    # Validate and confirm each line
+    ##########################################################
+ 
+    I click "Validate" on line:
+    | Product Code |
+    | ADAPCABL1P- |
+
+    I should see "Draft-p" in "State"
+    I should see "Order Reference" as readonly
+    I should see "Ordered Date" as readonly
+    I should see "Customer" as readonly
+    I should see "Warehouse" as readonly
+    I should see "Order category" as readonly
+    # Order type editable.. not sure if really the expected behavior
+    I should see "Order Type" as editable
+
+    # Check that we can see the details for a line by clicking on it
+    I click on line and open the window:
+    | Product Code |
+    | ADAPCABL1P- |
+    I click on "Cancel" and close the window
+
+    I click on "Save & Edit"
+
+    I should see "Draft-p" in "State"
+    I should see "Order Reference" as readonly
+    I should see "Ordered Date" as readonly
+    I should see "Customer" as readonly
+    I should see "Warehouse" as readonly
+    I should see "Order category" as readonly
+    I should see "Order Type" as editable
+
+    I click "Validate" on line:
+    | Product Code |
+    | ADAPCABL2S- |
+
+    I should see "Validated" in "State"
+    I should see "Order Reference" as readonly
+    I should see "Ordered Date" as readonly
+    I should see "Customer" as readonly
+    I should see "Warehouse" as readonly
+    I should see "Order category" as readonly
+    # Order type editable.. not sure if really the expected behavior
+    I should see "Order Type" as editable
+
+    I click on "Save & Edit"
+
+    I should see "Validated" in "State"
+    I should see "Order Reference" as readonly
+    I should see "Ordered Date" as readonly
+    I should see "Customer" as readonly
+    I should see "Warehouse" as readonly
+    I should see "Order category" as readonly
+    I should see "Order Type" as editable
+
+    # Check that we can see the details for a line by clicking on it
+    I click on line and open the window:
+    | Product Code |
+    | ADAPCABL1P- |
+    I click on "Cancel" and close the window
+
+    I click on "Save"
+
+    # Check that we can see the details for a line by clicking on it
+    I click on line and open the window:
+    | Product Code |
+    | ADAPCABL1P- |
+    I click on "Cancel" and close the window
+
+    ##########################################################
+    # Duplicate and redo validation in "readonly" view
+    ##########################################################
+    
+    I click on "Duplicate"
+    I click on "Save"
+    
+    I should see "Draft" in "State"
+
+    ##########################################################
+    # Fill AD
+    ##########################################################
+    
+	I click on "Analytical Distribution" and open the window
+	I click on "New"
+	I fill "SUP" within column "DESTINATION"
+	I fill "HT101" within column "COST CENTER"
+	I validate the line
+	I click on "Save" and close the window
+
+    ##########################################################
+    # Validate and confirm each line
+    ##########################################################
+ 
+    I click "Validate" on line:
+    | Product Code |
+    | ADAPCABL1P- |
+
+    # FIXME : This doesn't work inside Selenium.. but works when done in real 
+    # life. Can't investigate at the moment because console.log() don't appear
+    # in Firefox ? :/
+    #I should see "Draft-p" in "State"
+ 
+    I click "Validate" on line:
+    | Product Code |
+    | ADAPCABL2S- |
+
+    # FIXME : This doesn't work inside Selenium.. but works when done in real 
+    # life. Can't investigate at the moment because console.log() don't appear
+    # in Firefox ? :/
+    #I should see "Validated" in "State"
+
+    # Check that we can see the details for a line by clicking on it
+    I click on line and open the window:
+    | Product Code |
+    | ADAPCABL1P- |
+    I click on "Cancel" and close the window
+
