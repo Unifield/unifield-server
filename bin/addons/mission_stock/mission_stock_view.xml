@@ -142,15 +142,15 @@
                 <field name="in_pipe_coor_val" invisible="not context.get('with_valuation')" / -->
                 <field name="stock_qty" invisible="not context.get('split_stock')" />
                 <field name="central_qty" invisible="not context.get('split_stock')" />
-      <field name="wh_qty" invisible="context.get('split_stock')" />
+                <field name="wh_qty" invisible="context.get('split_stock')" />
                 <field name="cross_qty" />
                 <!-- <field name="cross_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="secondary_qty" />
                 <!-- <field name="secondary_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="cu_qty" />
                 <!-- <field name="cu_val" invisible="not context.get('with_valuation')" /> -->
-                <field name="product_amc" />
-                <field name="product_consumption" />
+                <field name="product_amc" invisible="context.get('hide_amc_fmc')"/>
+                <field name="product_consumption" invisible="context.get('hide_amc_fmc')" />
                 <field name="in_pipe_qty" />
                 <field name="categ_id" invisible="1" />
                 <field name="type" invisible="1" />

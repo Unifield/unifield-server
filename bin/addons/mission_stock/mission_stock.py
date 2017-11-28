@@ -1079,13 +1079,17 @@ class stock_mission_report(osv.osv):
             elif not split_stock and not with_valuation:
                 report_type = 'ns_nv_vals'
 
+            report = self.browse(cr, uid, report_id, fields_to_fetch=['full_view'], context=context)
+            hide_amc_fmc = report.full_view and (self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.level in ['section', 'coordo'])
+
             params = {
                 'report_id': report_id,
                 'report_type': report_type,
                 'attachments_path': attachments_path,
-                'header': HEADER_DICT[report_type],
+                'header': tuple(x for x in HEADER_DICT[report_type] if x[0] not in ('AMC', 'FMC')) if hide_amc_fmc else HEADER_DICT[report_type],
                 'write_attachment_in_db': write_attachment_in_db,
-                'product_values': product_values,}
+                'product_values': product_values,
+            }
 
             # generate CSV file
             if csv:

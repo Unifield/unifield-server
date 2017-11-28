@@ -169,6 +169,7 @@ class mission_stock_wizard(osv.osv_memory):
             'mission_report_id': wiz_id.report_id.id,
             'with_valuation': wiz_id.with_valuation == 'true' and True or False,
             'split_stock': wiz_id.split_stock == 'true' and True or False,
+            'hide_amc_fmc': wiz_id.report_id.full_view and (self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.level in ['section', 'coordo']),
         })
 
         return {'type': 'ir.actions.act_window',
