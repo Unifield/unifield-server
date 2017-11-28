@@ -308,7 +308,6 @@ class purchase_order_sync(osv.osv):
     _columns = {
         'push_fo': fields.boolean('The Push FO case', readonly=False),
         'from_sync': fields.boolean('Updated by synchronization', readonly=False),
-        'fo_sync_date': fields.datetime(string='FO sync. date', readonly=True),
         'is_validated_and_synced': fields.function(
             _is_validated_and_synced, method=True,
             type='boolean',
