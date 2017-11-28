@@ -66,6 +66,8 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
                                                       ignore_migration=True)
 
         create_missing_report = False
+        if data.get('file_name') and data['file_name'] == 'consolidate_mission_stock.xls':
+            file_name = 'consolidate_mission_stock.xls'
         if store_in_db:
             attachment_ids = attachment_obj.search(cr, uid, [('datas_fname', '=', file_name)],
                                                    context=context)
@@ -75,7 +77,7 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
             path = os.path.join(attachments_path, file_name)
             if not os.path.exists(path):
                 create_missing_report = True
-        if create_missing_report:
+        if create_missing_report and file_name != 'consolidate_mission_stock.xls':
                 # if the requeted attachment don't exists, create it
             msr_obj = pool.get('stock.mission.report')
             with_valuation = split_stock = False
