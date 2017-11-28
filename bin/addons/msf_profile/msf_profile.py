@@ -31,6 +31,7 @@ from threading import Lock
 import time
 import xmlrpclib
 import netsvc
+import traceback
 #import re
 
 from msf_field_access_rights.osv_override import _get_instance_level
@@ -142,9 +143,10 @@ class patch_scripts(osv.osv):
             if pol_ids:
                 try:
                     pol_obj.action_confirmed(cr, uid, pol_ids)
-                except Exception, e:
-                    # TODO LOG HERE OPEEVENT
-                    raise
+                except Exception:
+                    error = "Confirmed wait trigger fails on po_id %s, %s" % (po_id, tools.ustr(traceback.format_exc()))
+                    self._logger.warn(error)
+                    netsvc.ops_event(cr.dbname, kind='SLL_MIG', dat=error)
 
         # so
         cr.execute("update sale_order set state=state_moved0")
@@ -191,9 +193,10 @@ class patch_scripts(osv.osv):
             self._logger.warn("Source FO line %s" % (to_source_id,))
             try:
                 self.pool.get('sale.order.line').source_line(cr, uid, [to_source_id])
-            except Exception, e:
-                # TODO log EVENET
-                raise
+            except Exception:
+                error = "Confirmed wait trigger fails on po_id %s, %s" % (po_id, tools.ustr(traceback.format_exc()))
+                self._logger.warn(error)
+                netsvc.ops_event(cr.dbname, kind='SLL_MIG', dat=error)
 
 
         # set FO as sourced if PO line is draft
