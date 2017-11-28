@@ -40,7 +40,6 @@ class sale_order_line_sync(osv.osv):
         return ret
 
     _columns = {
-        'source_sync_line_id': fields.text(string='Sync DB id of the PO origin line'),
         'sync_local_id': fields.function(_get_sync_local_id, type='char', method=True, string='ID', help='for internal use only'),
         'sync_linked_pol': fields.char(size=256, string='Linked purchase order line at synchro', select=1),
         'resourced_original_remote_line': fields.char(size=256, string='Orig customer PO line', select=1, help='INTERNAL USE: id of the remote cancelled and resourced line, the parent of the current line. Usefull to fill the field resourced_original_line in the other instance'),
@@ -166,7 +165,7 @@ class sale_order_sync(osv.osv):
         # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
         order_line = []
         for line in header_result['order_line']:
-            line[2].update({'confirmed_delivery_date': False, 'source_sync_line_id': line[2]['sync_order_line_db_id']})
+            line[2].update({'confirmed_delivery_date': False})
             order_line.append((0, 0, line[2]))
         header_result['order_line'] = order_line
 

@@ -503,9 +503,6 @@ class so_po_common(osv.osv_memory):
         if partner_type not in ['section', 'intermission'] and src_values.get('analytic_distribution_id'):
             res['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, src_values, context)
 
-        if src_values.get('source_sync_line_id'):
-            res['original_purchase_line_id'] = src_values['source_sync_line_id']
-
         return res
 
 
@@ -643,9 +640,6 @@ class so_po_common(osv.osv_memory):
             # UTP-952: set empty AD for lines if the partner is intermission or section
             if partner_type not in ['section', 'intermission'] and line_dict.get('analytic_distribution_id'):
                 values['analytic_distribution_id'] = self.get_analytic_distribution_id(cr, uid, line_dict, context)
-
-            if line_dict.get('source_sync_line_id'):
-                values['original_purchase_line_id'] = line_dict['source_sync_line_id']
 
             line_ids = False
             sync_order_line_db_id = False
