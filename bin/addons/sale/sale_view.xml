@@ -325,7 +325,7 @@
                             <group colspan="4" col="4" name="date">
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
-                                    <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p'])]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)"/>
+                                    <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)"/>
                                     <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                                 </group>
                                 <group colspan="2" col="3">
