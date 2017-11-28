@@ -223,6 +223,7 @@ class cash_request(osv.osv):
             'planned_expense_ids': [],
             'total_to_transfer_line_ids': [],
             'recap_mission_ids': [],
+            'payable_ids': [],
         })
         return super(cash_request, self).copy(cr, uid, cash_req_id, default, context=context)
 
