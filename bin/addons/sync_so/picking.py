@@ -346,7 +346,7 @@ class stock_picking(osv.osv):
             po_name = po_obj.browse(cr, uid, po_id, context=context)['name']
             in_name_goods_return = False
             for move_line in pick_dict['move_lines']:
-                if move_line['sale_line_id']['in_name_goods_return']:
+                if move_line.get('sale_line_id', {}).get('in_name_goods_return'):
                     in_name_goods_return = move_line['sale_line_id']['in_name_goods_return'].split(".")[-1]
             if in_name_goods_return:
                 # search for the right IN in case of synchro of multiple missing/replacement IN
