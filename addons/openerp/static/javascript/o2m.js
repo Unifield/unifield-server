@@ -199,7 +199,7 @@ One2Many.prototype = {
             jQuery('table.one2many[id$="'+this.name+'"]').addClass('m2o_readonly');
             if(btn){btn.style.display='none';}
             
-            //MochiKit.Base.map(function (el) {el.style.visibility='hidden';},MochiKit.Selector.findChildElements(grid,['.selector']));
+            MochiKit.Base.map(function (el) {el.style.visibility='hidden';},MochiKit.Selector.findChildElements(grid,['.selector']));
             edit.value= 0;
 
             // Not disabling clicks on line dynamically (in browser) to be
