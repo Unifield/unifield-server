@@ -1413,25 +1413,6 @@ class monthly_review_consumption_line(osv.osv):
 
         return res
 
-    def _update_mission_stock(self, cr, uid, ids, context=None):
-        # get all product_ids
-        p_ids = {}
-        for x in self.read(cr, uid, ids, ['name'], context=context):
-            p_ids[x['name'][0]] = True
-
-        # get all related stock_mission lines
-        sml_obj = self.pool.get('stock.mission.report.line')
-        sml_ids = sml_obj.search(cr, uid, [('mission_report_id.full_view', '=', False), ('mission_report_id.local_report', '=', True), ('product_id', 'in', p_ids.keys())], context=context)
-        sml_by_product = {}
-        for x in sml_obj.read(cr, uid, sml_ids, ['product_id', 'product_consumption'], context=context):
-            sml_by_product[x['product_id'][0]] = {'id': x['id'], 'reviewed_consumption': x['product_consumption']}
-
-        for prod in self.pool.get('product.product').read(cr, uid, sml_by_product.keys(), ['reviewed_consumption'], context=context):
-            if prod['reviewed_consumption'] != sml_by_product[prod['id']]['reviewed_consumption']:
-                sml_obj.write(cr, 1, sml_by_product[prod['id']]['id'], {'product_consumption': prod['reviewed_consumption']}, context=context)
-
-        return True
-
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
@@ -1444,12 +1425,7 @@ class monthly_review_consumption_line(osv.osv):
             vals.update({'last_reviewed': time.strftime('%Y-%m-%d'),
                          'last_reviewed2': time.strftime('%Y-%m-%d')})
 
-        created_id = super(monthly_review_consumption_line, self).create(cr, uid, vals, context=context)
-
-        if created_id and vals.get('valid_ok'):
-            self._update_mission_stock(cr, uid, [created_id], context=context)
-
-        return created_id
+        return super(monthly_review_consumption_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
@@ -1475,9 +1451,6 @@ class monthly_review_consumption_line(osv.osv):
         if vals.get('valid_ok') and not vals.get('last_reviewed'):
             vals.update({'last_reviewed': time.strftime('%Y-%m-%d'),
                          'last_reviewed2': time.strftime('%Y-%m-%d')})
-
-        if vals.get('valid_ok'):
-            self._update_mission_stock(cr, uid, ids, context=context)
 
         return super(monthly_review_consumption_line, self).write(cr, uid, ids, vals, context=context)
 

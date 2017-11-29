@@ -13,24 +13,5 @@
             <field eval="'background_update'" name="function"/>
             <field eval="'(False,)'" name="args"/>
         </record>
-
-        <record forcecreate="True" id="ir_cron_stock_mission_update_amc" model="ir.cron">
-            <field name="name">Update AMC stock mission</field>
-            <field eval="True" name="active"/>
-            <field name="user_id" ref="base.user_root"/>
-            <field name="interval_number">1</field>
-            <field name="interval_type">months</field>
-            <field name="numbercall">-1</field>
-            <field eval="False" name="doall"/>
-            <field name="nextcall" eval="(DateTime.now()+relativedelta.relativedelta(months=1, day=1)).strftime('%Y-%m-%d 23:00:00')" />
-            <field eval="'stock.mission.report'" name="model"/>
-            <field eval="'background_amc_update'" name="function"/>
-            <field eval="'(False,)'" name="args"/>
-        </record>
-
-        <record forcecreate="True" id="ir_config_parameter_update_amc" model="ir.config_parameter">
-            <field name="key">background_amc_update</field>
-            <field name="value" eval="time.strftime('%Y-%m-%d')" />
-        </record>
     </data>
 </openerp>
