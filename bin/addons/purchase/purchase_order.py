@@ -210,7 +210,7 @@ class purchase_order(osv.osv):
         :return: A dictionnary with the purchase.order ID as keys and the number of Purchase
                  order lines for each of them as value
         """
-        pol_obj = self.pool.get('sale.order.line')
+        pol_obj = self.pool.get('purchase.order.line')
 
         if context is None:
             context =  {}
