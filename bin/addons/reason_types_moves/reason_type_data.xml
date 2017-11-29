@@ -105,6 +105,7 @@
             <field name="name">Damage</field>
             <field name="code">4</field>
             <field name="parent_id" ref="reason_type_loss" />
+            <field name="incoming_ok">True</field>
             <field name="internal_ok">True</field>
         </record>
         

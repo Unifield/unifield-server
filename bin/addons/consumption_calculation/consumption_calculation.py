@@ -1413,6 +1413,25 @@ class monthly_review_consumption_line(osv.osv):
 
         return res
 
+    def _update_mission_stock(self, cr, uid, ids, context=None):
+        # get all product_ids
+        p_ids = {}
+        for x in self.read(cr, uid, ids, ['name'], context=context):
+            p_ids[x['name'][0]] = True
+
+        # get all related stock_mission lines
+        sml_obj = self.pool.get('stock.mission.report.line')
+        sml_ids = sml_obj.search(cr, uid, [('mission_report_id.full_view', '=', False), ('mission_report_id.local_report', '=', True), ('product_id', 'in', p_ids.keys())], context=context)
+        sml_by_product = {}
+        for x in sml_obj.read(cr, uid, sml_ids, ['product_id', 'product_consumption'], context=context):
+            sml_by_product[x['product_id'][0]] = {'id': x['id'], 'reviewed_consumption': x['product_consumption']}
+
+        for prod in self.pool.get('product.product').read(cr, uid, sml_by_product.keys(), ['reviewed_consumption'], context=context):
+            if prod['reviewed_consumption'] != sml_by_product[prod['id']]['reviewed_consumption']:
+                sml_obj.write(cr, 1, sml_by_product[prod['id']]['id'], {'product_consumption': prod['reviewed_consumption']}, context=context)
+
+        return True
+
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
@@ -1425,7 +1444,12 @@ class monthly_review_consumption_line(osv.osv):
             vals.update({'last_reviewed': time.strftime('%Y-%m-%d'),
                          'last_reviewed2': time.strftime('%Y-%m-%d')})
 
-        return super(monthly_review_consumption_line, self).create(cr, uid, vals, context=context)
+        created_id = super(monthly_review_consumption_line, self).create(cr, uid, vals, context=context)
+
+        if created_id and vals.get('valid_ok'):
+            self._update_mission_stock(cr, uid, [created_id], context=context)
+
+        return created_id
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
@@ -1451,6 +1475,9 @@ class monthly_review_consumption_line(osv.osv):
         if vals.get('valid_ok') and not vals.get('last_reviewed'):
             vals.update({'last_reviewed': time.strftime('%Y-%m-%d'),
                          'last_reviewed2': time.strftime('%Y-%m-%d')})
+
+        if vals.get('valid_ok'):
+            self._update_mission_stock(cr, uid, ids, context=context)
 
         return super(monthly_review_consumption_line, self).write(cr, uid, ids, vals, context=context)
 
@@ -1775,6 +1802,27 @@ class product_product(osv.osv):
 
         return res
 
+    def _get_domain_compute_amc(self, cr, uid, context=None):
+        # Get all reason types
+        get_object_reference = self.pool.get('ir.model.data').get_object_reference
+        loan_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        donation_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
+        donation_exp_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
+        loss_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+        discrepancy_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+
+        # Update the domain
+        domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id))]
+
+        # Add locations filters in domain if locations are passed in context
+        locations = self.pool.get('stock.location').search(cr, uid,
+                                                           [('usage', 'in', ('internal', 'customer'))], context=context,
+                                                           order='NO_ORDER')
+        domain.append(('location_id', 'in', locations))
+        domain.append(('location_dest_id', 'in', locations))
+
+        return domain
+
     def compute_amc(self, cr, uid, ids, context=None):
         '''
         Compute the Average Monthly Consumption with this formula :
@@ -1802,28 +1850,16 @@ class product_product(osv.osv):
         if context.get('to_date', False):
             to_date = context.get('to_date')
 
-        # Get all reason types
         get_object_reference = self.pool.get('ir.model.data').get_object_reference
-        loan_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
-        donation_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
-        donation_exp_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
-        loss_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-        discrepancy_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
 
-        # Update the domain
-        domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
+        domain = self._get_domain_compute_amc(cr, uid, context)
+        domain.append(('product_id', 'in', ids))
 
         if to_date:
             domain.append(('date', '<=', to_date))
         if from_date:
             domain.append(('date', '>=', from_date))
 
-        locations = self.pool.get('stock.location').search(cr, uid,
-                                                           [('usage', 'in', ('internal', 'customer'))], context=context,
-                                                           order='NO_ORDER')
-        # Add locations filters in domain if locations are passed in context
-        domain.append(('location_id', 'in', locations))
-        domain.append(('location_dest_id', 'in', locations))
 
         # Search all real consumption line included in the period
         # If no period found, take all stock moves

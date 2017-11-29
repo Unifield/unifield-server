@@ -96,6 +96,7 @@ class sale_order(osv.osv):
             'active': True,
             'sourcing_trace': '',
             'sourcing_trace_ok': False,
+            'claim_name_goods_return': '',
         })
 
         if not context.get('keepClientOrder', False):
@@ -593,6 +594,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
+        'claim_name_goods_return': fields.char(string='Customer Claim Name', help='Name of the claim that created the IN-replacement/-missing which created the FO', size=512),
     }
 
     _defaults = {
@@ -1955,6 +1957,8 @@ class sale_order_line(osv.osv):
         'soq_updated': fields.boolean(string='SoQ updated', readonly=True),
         'set_as_sourced_n': fields.boolean(string='Sourced-n line', help='Line created in a further PO, so we have to create it back in the flow'), # used for wkf transition
         'modification_comment': fields.char('Modification Comment', size=1024),
+        # to prevent PO line and IN creation after synchro of FO created by replacement/missing IN
+        'in_name_goods_return': fields.char(string='To find the right IN after synchro of FO created by replacement/missing IN', size=256),
     }
     _order = 'sequence, id desc'
     _defaults = {
@@ -2069,6 +2073,7 @@ class sale_order_line(osv.osv):
             'created_by_po_line': False,
             'created_by_rfq': False,
             'created_by_rfq_line': False,
+            'in_name_goods_return': '',
         })
 
         return super(sale_order_line, self).copy(cr, uid, id, default, context)
@@ -2426,10 +2431,6 @@ class sale_order_line(osv.osv):
             if line.original_line_id:
                 cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
-        else:
-            minus_qty = line.product_uom_qty - qty_diff
-            # Update the line and the procurement
-            self.write(cr, uid, [line.id], {'product_uom_qty': minus_qty, 'product_uos_qty': minus_qty}, context=context)
 
         so_to_cancel_id = False
         if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:

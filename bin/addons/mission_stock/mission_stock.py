@@ -35,8 +35,11 @@ import codecs
 import cStringIO
 import base64
 from msf_field_access_rights.osv_override import _get_instance_level
-from xlwt import Workbook, easyxf, Borders
 from datetime import datetime
+from xlwt import Workbook, easyxf, Borders, add_palette_colour
+import tempfile
+import shutil
+from mx.DateTime import DateFrom, RelativeDateTime
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
@@ -119,7 +122,10 @@ GET_EXPORT_REQUEST = '''SELECT
         trim(to_char(l.cu_qty, '999999999999.999')) as l_cu_qty,
         trim(to_char(pt.standard_price, '999999999999.999')) as pt_standard_price,
         rc.name as rc_name,
-        trim(to_char((l.internal_qty * pt.standard_price), '999999999999.999')) as l_internal_qty_pt_price
+        trim(to_char((l.internal_qty * pt.standard_price), '999999999999.999')) as l_internal_qty_pt_price,
+        l.product_amc as product_amc,
+        l.product_consumption as product_consumption,
+        mission_report_id
     FROM stock_mission_report_line l
          LEFT JOIN product_product pp ON l.product_id = pp.id
          LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
@@ -127,8 +133,8 @@ GET_EXPORT_REQUEST = '''SELECT
          LEFT JOIN res_currency rc ON pp.currency_id = rc.id
          LEFT JOIN ir_translation trans ON trans.res_id = pt.id AND
              trans.name='product.template,name' AND lang = %s
-    WHERE l.mission_report_id = %s
-    ORDER BY l.default_code'''
+    WHERE l.mission_report_id in %s
+    ORDER BY l.default_code, l.mission_report_id'''
 
 class excel_semicolon(csv.excel):
     delimiter = CSV_DELIMITER
@@ -182,6 +188,7 @@ class stock_mission_report(osv.osv):
     _name = 'stock.mission.report'
     _description = 'Mission stock report'
 
+    logger = logging.getLogger('MSR') 
     def _get_local_report(self, cr, uid, ids, field_name, args, context=None):
         '''
         Check if the mission stock report is a local report or not
@@ -258,6 +265,12 @@ class stock_mission_report(osv.osv):
 
         return res
 
+    def xls_write_styled_header(self, sheet, cell_list):
+        column_count = 0
+        for style, column in cell_list:
+            sheet.write(3, column_count, _(column), style)
+            column_count += 1
+
     def xls_write_header(self, sheet, cell_list, style):
         column_count = 0
         for column in cell_list:
@@ -267,6 +280,8 @@ class stock_mission_report(osv.osv):
     def xls_write_row(self, sheet, cell_list, row_count, style):
         for column_count, column in enumerate(cell_list):
             sheet.write(row_count, column_count, _(column), style)
+        sheet.row(row_count).height = 60*20
+
 
     def write_report_in_database(self, cr, uid, file_name, data):
         # write the report in the DB
@@ -276,12 +291,12 @@ class stock_mission_report(osv.osv):
         if attachment_ids:
             # overwrite existing
             ir_attachment_obj.write(cr, uid, attachment_ids[0],
-                                    {'datas': base64.encodestring(data.getvalue())})
+                                    {'datas': base64.encodestring(data)})
         else:
             ir_attachment_obj.create(cr, uid,
                                      {
                                          'name': file_name,
-                                         'datas': base64.encodestring(data.getvalue()),
+                                         'datas': base64.encodestring(data),
                                          'datas_fname': file_name,
                                      })
             del data
@@ -346,22 +361,10 @@ class stock_mission_report(osv.osv):
         row_count = 3
         for row in request_result:
             try:
-                product_amc = 0.00
-                reviewed_consumption = 0.00
-                if row['product_id'] in product_values and product_values[row['product_id']]:
-                    if product_values[row['product_id']].get('product_amc', False):
-                        product_amc = product_values[row['product_id']]['product_amc']
-                    if product_values[row['product_id']].get('product_consumption', False):
-                        reviewed_consumption = product_values[row['product_id']]['reviewed_consumption']
-
                 data_list = []
                 data_list_append = data_list.append
                 for columns_name, property_name in header:
-                    if property_name == 'product_amc':
-                        data_list_append(product_amc)
-                    elif property_name == 'product_consumption':
-                        data_list_append(reviewed_consumption)
-                    elif 'qty' in property_name:
+                    if 'qty' in property_name:
                         data_list_append(eval(row.get(property_name, False)))
                     else:
                         data_list_append(row.get(property_name, False))
@@ -385,9 +388,238 @@ class stock_mission_report(osv.osv):
             if attachment_ids:
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
         else:
-            self.write_report_in_database(cr, uid, file_name, export_file)
+            self.write_report_in_database(cr, uid, file_name, export_file.getvalue())
         # close file
         export_file.close()
+
+    def generate_full_xls(self, cr, uid, xls_name):
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        instance_obj = self.pool.get('msf.instance')
+        instance_ids = instance_obj.search(cr, uid, [])
+        uom_obj = self.pool.get('product.uom')
+
+        instance_dict = {}
+        for x in instance_obj.read(cr, uid, instance_ids, ['name']):
+            instance_dict[x['id']] = x['name']
+
+
+        instance_loc = {}
+        cr.execute('select distinct remote_location_name, remote_instance_id from stock_mission_report_line_location where remote_instance_id is not null order by remote_location_name')
+        for x in cr.fetchall():
+            instance_loc.setdefault(x[1], []).append(x[0])
+
+        all_instances = instance_loc.keys()
+        all_instances.insert(0, local_instance.id)
+        cr.execute("""
+            select distinct location.name from
+            stock_mission_report_line_location l,
+            stock_location location
+            where
+                location.id=l.location_id and
+                remote_instance_id is null and
+                location.usage = 'internal'
+            order by location.name
+        """)
+        for x in cr.fetchall():
+            instance_loc.setdefault(local_instance.id, []).append(x[0])
+
+        borders = Borders()
+        borders.left = Borders.THIN
+        borders.right = Borders.THIN
+        borders.top = Borders.THIN
+        borders.bottom = Borders.THIN
+
+        header_style = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                pattern: pattern solid, fore_colour tan;
+                align: wrap on, vert center, horiz center;
+            """)
+        header_style.borders = borders
+        # this style is done to be the same than previous mako configuration
+        row_style = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                align: wrap on, vert center, horiz center;
+            """)
+
+        book = Workbook()
+        add_palette_colour("custom_colour_1", 0x21)
+        book.set_colour_RGB(0x21, 255, 255, 0)
+        add_palette_colour("custom_colour_2", 0x22)
+        book.set_colour_RGB(0x22, 92, 208, 50)
+        header_style1 = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                pattern: pattern solid, fore_colour custom_colour_1;
+                align: wrap on, vert center, horiz center;
+            """)
+        header_style1.borders = borders
+        header_style2 = easyxf("""
+                font: height 220;
+                font: name Calibri;
+                pattern: pattern solid, fore_colour custom_colour_2;
+                align: wrap on, vert center, horiz center;
+            """)
+        header_style2.borders = borders
+
+        header_styles = [header_style1, header_style2]
+        row_style.borders = borders
+
+        sheet = book.add_sheet('Sheet 1')
+        sheet.row_default_height = 60*20
+
+        sheet.write(0, 0, _("Generating instance"), row_style)
+        instance_name = local_instance.name
+        sheet.write(0, 1, instance_name, row_style)
+        sheet.col(0).width=5000
+        sheet.write(1, 0, _("Instance selection"), row_style)
+        report_name = 'All loc'
+        sheet.write(1, 1, report_name, row_style)
+        sheet.col(1).width=5000
+
+        sheet.set_horz_split_pos(4)
+        sheet.set_vert_split_pos(5)
+        sheet.panes_frozen = True
+        sheet.remove_splits = True
+
+        fixed_data = [
+            ('Reference', 'default_code'),
+            ('Name', 'pt_name'),
+            ('UoM', 'pu_name'),
+            ('Cost Price', 'pt_standard_price'),
+            ('Func. Cur.', 'rc_name')
+        ]
+        repeated_data = [
+            ('Instance stock', 'l_internal_qty'),
+            ('Instance stock val.', 'l_internal_qty_pt_price'),
+            ('Stock Qty.', 'l_stock_qty'),
+            ('Unallocated Stock Qty.', 'l_central_qty'),
+            ('Cross-Docking Qty.', 'l_cross_qty'),
+            ('Secondary Stock Qty.', 'l_secondary_qty'),
+            ('Internal Cons. Unit Qty.', 'l_cu_qty'),
+            ('AMC', 'product_amc'),
+            ('FMC', 'product_consumption'),
+            ('In Pipe Qty', 'l_in_pipe_qty')
+        ]
+
+        header_row = []
+        i = 0
+        for x in fixed_data:
+            header_row.append((header_styles[i], _(x[0])))
+
+        begin = len(fixed_data)
+        for inst_id in all_instances:
+            max_size = begin + len(repeated_data) + len(instance_loc.get(inst_id, [])) - 1
+            sheet.write_merge(2, 2, begin, max_size, instance_dict[inst_id], style=header_styles[i])
+            begin = max_size + 1
+            i = 1 - i
+
+        i = 0
+        for inst_id in all_instances:
+            for x in repeated_data:
+                header_row.append((header_styles[i], _(x[0])))
+            for x in instance_loc.get(inst_id, []):
+                header_row.append((header_styles[i], x))
+            i = 1 - i
+
+        self.xls_write_styled_header(sheet, header_row)
+
+        # tab header bigger height:
+        sheet.row(2).height_mismatch = True
+        sheet.row(0).height = 45*20
+        sheet.row(1).height = 45*20
+        sheet.row(2).height = 45*20
+        sheet.row(3).height_mismatch = True
+        sheet.row(3).height = 45*20
+
+
+        report_id_by_instance_id = {}
+        r_ids = self.search(cr, uid, [('full_view', '=', False)])
+        for x in self.read(cr, uid, r_ids, ['instance_id']):
+            report_id_by_instance_id[x['instance_id'][0]] = x['id']
+
+        cr.execute(GET_EXPORT_REQUEST, ('en_MF', tuple(r_ids)))
+
+        cr1 = pooler.get_db(cr.dbname).cursor()
+        cr1.execute('''select p.default_code as default_code, location.name as local_location_name, l.remote_location_name as remote_location_name, l.remote_instance_id as remote_instance_id, l.quantity as quantity, l.uom_id as sml_uom, t.uom_id as product_uom from
+            stock_mission_report_line_location l
+            inner join product_product p on p.id = l.product_id
+            inner join product_template t on t.id = p.product_tmpl_id
+            left join stock_location location on location.id = l.location_id
+            where
+                (location.usage = 'internal' or location.id is null)
+            order by p.default_code''')
+
+        p_code = False
+        last_stock_level_line = cr1.dictfetchone()
+        row_count = 4
+        data = {}
+        srl = cr.dictfetchone()
+        while srl:
+            if not p_code or p_code == srl['default_code']:
+                data[srl['mission_report_id']] = srl
+                p_code = srl['default_code']
+            else:
+                stock_level_data = {}
+                while last_stock_level_line and last_stock_level_line['default_code'] == p_code:
+                    instance_id = last_stock_level_line['remote_instance_id'] or local_instance.id
+                    location_name = last_stock_level_line['remote_location_name'] or last_stock_level_line['local_location_name']
+                    qty = last_stock_level_line['quantity']
+                    if last_stock_level_line['sml_uom'] != last_stock_level_line['product_uom']:
+                        qty = uom_obj._compute_qty(cr, uid, last_stock_level_line['sml_uom'], last_stock_level_line['quantity'], last_stock_level_line['product_uom'])
+                    if abs(qty) < 0.0001:
+                        qty = 0
+                    stock_level_data.setdefault(instance_id, {}).update({location_name: qty})
+                    last_stock_level_line = cr1.dictfetchone()
+                to_write = []
+                for name, key in fixed_data:
+                    to_write.append(data.get(report_id_by_instance_id[local_instance.id], {}).get(key))
+                for inst_id in all_instances:
+                    for name, key in repeated_data:
+                        num = data.get(report_id_by_instance_id[inst_id], {}).get(key)
+                        if not num or num == '.000':
+                            num = None
+                        to_write.append(num)
+                    for x in instance_loc.get(inst_id, []):
+                        to_write.append(stock_level_data.get(inst_id, {}).get(x) or None)
+
+                self.xls_write_row(sheet, to_write, row_count, row_style)
+                row_count += 1
+
+
+                data = {srl['mission_report_id']: srl}
+                p_code = srl['default_code']
+            srl = cr.dictfetchone()
+
+
+        xls_file = tempfile.NamedTemporaryFile(delete=False)
+        book.save(xls_file)
+        file_name = xls_file.name
+        xls_file.close()
+        self.save_file(cr, uid, file_name, xls_name)
+        os.remove(file_name)
+        cr1.close(True)
+        return True
+
+    def save_file(self, cr, uid, file_name, name):
+        attachments_path = None
+        attachment_obj = self.pool.get('ir.attachment')
+        try:
+            attachments_path = attachment_obj.get_root_path(cr, uid)
+        except:
+            self.logger.warning("___ attachments_path %s doesn't exists. The report will be stored in the database" % attachments_path)
+
+        fd = open(file_name, 'rb')
+        write_attachment_in_db = attachment_obj.store_data_in_db(cr, uid, ignore_migration=True)
+        if write_attachment_in_db:
+            fd.seek(0)
+            self.write_report_in_database(cr, uid, name, fd.read())
+        else:
+            dest_path = os.path.join(attachments_path, name)
+            shutil.copy(fd.name, dest_path)
+        fd.close()
+
 
     def background_update(self, cr, uid, ids, context=None):
         """
@@ -513,7 +745,7 @@ class stock_mission_report(osv.osv):
 
         logging.getLogger('MSR').info("""___ Number of MSR lines to be updated: %s, at %s""" % (len(product_reviewed_ids) + len(product_amc_ids), time.strftime('%Y-%m-%d %H:%M:%S')))
 
-        product_values = dict.fromkeys(product_ids, None)
+        product_values = dict.fromkeys(product_ids, {})
 
         # Update the final dict with this results
         for product_dict in product_amc_result:
@@ -546,6 +778,8 @@ class stock_mission_report(osv.osv):
         line_obj = self.pool.get('stock.mission.report.line')
         self.write(cr, uid, report_ids, {'export_state': 'in_progress',
                                          'export_error_msg': False}, context=context)
+
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
             try:
                 self.write(cr, uid, report['id'], {'report_ok': False},
@@ -572,6 +806,8 @@ class stock_mission_report(osv.osv):
                         'state_ud': prod_state_ud,
                         'international_status_code': prod_creator,
                         'product_state': prod_state or '',
+                        'product_amc': product_values.get(product, {}).get('product_amc', 0),
+                        'product_consumption': product_values.get(product, {}).get('reviewed_consumption', 0),
                     }, context=context)
 
                 # Don't update lines for full view or non local reports
@@ -598,6 +834,9 @@ class stock_mission_report(osv.osv):
                                  csv=csv, xls=xls,
                                  with_valuation=with_valuation,
                                  split_stock=split_stock, context=context)
+
+                if instance_id.level == 'coordo' and not report['full_view']:
+                    self.generate_full_xls(cr, uid, 'consolidate_mission_stock.xls')
 
                 msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
                 msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
@@ -828,7 +1067,7 @@ class stock_mission_report(osv.osv):
         for report_id in ids:
             logger.info('___ Start export SQL request...')
             lang = context.get('lang')
-            cr.execute(GET_EXPORT_REQUEST, (lang, report_id))
+            cr.execute(GET_EXPORT_REQUEST, (lang, (report_id, )))
             request_result = cr.dictfetchall()
 
             if split_stock and with_valuation:
@@ -840,13 +1079,17 @@ class stock_mission_report(osv.osv):
             elif not split_stock and not with_valuation:
                 report_type = 'ns_nv_vals'
 
+            report = self.browse(cr, uid, report_id, fields_to_fetch=['full_view'], context=context)
+            hide_amc_fmc = report.full_view and (self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.level in ['section', 'coordo'])
+
             params = {
                 'report_id': report_id,
                 'report_type': report_type,
                 'attachments_path': attachments_path,
-                'header': HEADER_DICT[report_type],
+                'header': tuple(x for x in HEADER_DICT[report_type] if x[0] not in ('AMC', 'FMC')) if hide_amc_fmc else HEADER_DICT[report_type],
                 'write_attachment_in_db': write_attachment_in_db,
-                'product_values': product_values,}
+                'product_values': product_values,
+            }
 
             # generate CSV file
             if csv:
@@ -863,6 +1106,51 @@ class stock_mission_report(osv.osv):
             del request_result
             del product_values
         return True
+
+    def background_amc_update(self, cr, uid, *a, **b):
+        KEY = 'background_amc_update'
+        config = self.pool.get('ir.config_parameter')
+        move_obj = self.pool.get('stock.move')
+        mission_line_obj = self.pool.get('stock.mission.report.line')
+
+        previous = config.get_param(cr, uid, KEY)
+        if not previous:
+            previous = time.strftime('%Y-%m-%d')
+
+
+        from_date = (DateFrom(previous) + RelativeDateTime(months=-3, day=1)).strftime('%Y-%m-%d')
+        to_date = (DateFrom(previous) + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d')
+
+        self.logger.info("___ MSR AMC: Start update products previous update %s" % (previous,))
+
+        domain = self.pool.get('product.product')._get_domain_compute_amc(cr, uid)
+        domain.append(('date', '<=', to_date))
+        domain.append(('date', '>=', from_date))
+        p_ids = []
+
+        # get all products with move in the past 3 months since the last AMC update date
+        for move in  move_obj.read_group(cr, uid, domain, ['product_id'], ['product_id']):
+            if move['product_id']:
+                p_ids.append(move['product_id'][0])
+
+        if not p_ids:
+            self.logger.info("___ MSR AMC: no product to update")
+            return True
+
+        mission_lines_ids = mission_line_obj.search(cr, uid, [('mission_report_id.full_view', '=', False), ('mission_report_id.local_report', '=', True), ('product_id', 'in', p_ids)])
+        mission_dict = {}
+        for mission_line in mission_line_obj.read(cr, uid, mission_lines_ids, ['product_id']):
+            mission_dict[mission_line['product_id'][0]] = mission_line['id']
+
+        self.logger.info("___ MSR AMC: update %d products" % (len(mission_dict.keys()), ))
+
+        for product in self.pool.get('product.product').read(cr, uid, mission_dict.keys(), ['product_amc']):
+            mission_line_obj.write(cr, uid, mission_dict[product['id']], {'product_amc': product['product_amc']})
+
+        config.set_param(cr, uid, KEY, time.strftime('%Y-%m-%d'))
+        self.logger.info("___ MSR AMC: Stop")
+        return True
+
 
 stock_mission_report()
 
@@ -884,7 +1172,7 @@ class UnicodeWriter:
         self.encoder = codecs.getincrementalencoder(encoding)()
 
     def writerow(self, row):
-        self.writer.writerow([not isinstance(s, (int, long, float)) and s.encode("utf-8") or s for s in row])
+        self.writer.writerow([not isinstance(s, (int, long, float, type(None))) and s.encode("utf-8") or s for s in row])
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
         data = data.decode("utf-8")
@@ -898,6 +1186,170 @@ class UnicodeWriter:
     def writerows(self, rows):
         for row in rows:
             self.writerow(row)
+
+class stock_mission_report_line_location(osv.osv):
+    '''
+    Local instance records are managed only by psql trigger
+    '''
+    _name = 'stock.mission.report.line.location'
+    _description = 'Stock level by product/location'
+    _order = 'id'
+
+
+    def init(self, cr):
+        #super(stock_mission_report_line_location, self).init(cr)
+
+        # psql function to trigger sync updates on stock.mission.report.line.location
+        cr.execute('''CREATE OR REPLACE FUNCTION update_ir_model_data(id integer) RETURNS void AS $$
+        BEGIN
+            UPDATE ir_model_data set last_modification=NOW(), touched='[''quantity'']' where res_id = $1 AND module='sd' AND model='stock.mission.report.line.location';
+        END;
+        $$ LANGUAGE plpgsql;
+        ''')
+
+        # psql function to create stock.mission.report.line.location entry in ir_model_data
+        cr.execute("""CREATE OR REPLACE FUNCTION create_ir_model_data(id integer) RETURNS void AS $$
+        DECLARE
+            instance_id varchar;
+            query varchar;
+        BEGIN
+            SELECT identifier INTO instance_id FROM sync_client_entity LIMIT 1;
+            EXECUTE format('INSERT INTO ir_model_data (name, module, model, touched, last_modification, res_id) VALUES (%L||''/stock_mission_report_line_location/''||%L, ''sd'', ''stock.mission.report.line.location'', ''[''''quantity'''']'', NOW(), %L)', instance_id, $1,$1);
+        END;
+        $$ LANGUAGE plpgsql;
+        """)
+
+        # psql function to convert uom
+        cr.execute('''CREATE OR REPLACE FUNCTION stock_qty(qty numeric, from_uom integer, to_uom integer) RETURNS numeric AS $$
+        DECLARE
+            from_uom_factor numeric;
+            to_uom_factor numeric;
+        BEGIN
+            IF $2 = $3 THEN
+               RETURN $1;
+            END IF;
+
+            SELECT factor INTO from_uom_factor FROM product_uom WHERE id = $2;
+            SELECT factor INTO to_uom_factor FROM product_uom WHERE id = $3;
+            RETURN  $1 * to_uom_factor / from_uom_factor;
+        END;
+        $$ LANGUAGE plpgsql;
+        ''')
+
+        # psql function get default uom
+        cr.execute('''CREATE OR REPLACE FUNCTION get_ref_uom(product integer) RETURNS integer AS $$
+        DECLARE
+           uom_id integer;
+        BEGIN
+           SELECT t.uom_id INTO uom_id FROM product_product p, product_template t
+              WHERE p.product_tmpl_id = t.id AND p.id = $1;
+            RETURN uom_id;
+        END;
+        $$ LANGUAGE plpgsql;
+        ''')
+
+        # psql function to update stock level
+        cr.execute('''CREATE OR REPLACE FUNCTION update_stock_level()
+  RETURNS trigger AS $stock_move$
+  DECLARE
+    changes_on_done boolean := false;
+    t_id integer;
+  BEGIN
+
+  changes_on_done := TG_OP = 'UPDATE' AND OLD.state = 'done' AND NEW.state = 'done' AND
+      (OLD.product_qty != NEW.product_qty OR OLD.product_id!=NEW.product_id OR OLD.location_id != NEW.location_id OR OLD.location_dest_id != NEW.location_dest_id or OLD.product_uom != NEW.product_uom);
+
+  -- stock.move deleted or state changed from done to something else: decrease stock
+  IF TG_OP = 'DELETE' OR ( TG_OP = 'UPDATE' AND OLD.state='done' AND NEW.state != 'done') OR changes_on_done THEN
+     IF OLD.state = 'done' THEN
+          UPDATE stock_mission_report_line_location SET quantity = quantity-stock_qty(OLD.product_qty, OLD.product_uom, uom_id), last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_dest_id RETURNING id INTO t_id;
+          PERFORM update_ir_model_data(t_id);
+          UPDATE stock_mission_report_line_location SET quantity = quantity+stock_qty(OLD.product_qty, OLD.product_uom, uom_id), last_mod_date=NOW() WHERE product_id=OLD.product_id AND location_id=OLD.location_id RETURNING id INTO t_id;
+          PERFORM update_ir_model_data(t_id);
+     END IF;
+  END IF;
+
+  -- new done stock move or state changed to done
+  IF TG_OP in ('UPDATE', 'INSERT') AND NEW.state = 'done' AND (TG_OP = 'INSERT' OR COALESCE(OLD.state, 'draft') != 'done' OR changes_on_done) THEN
+        UPDATE stock_mission_report_line_location SET quantity = quantity+stock_qty(NEW.product_qty, NEW.product_uom, uom_id), last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_dest_id RETURNING id INTO t_id;
+        IF NOT FOUND THEN
+            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date, uom_id) VALUES (NEW.location_dest_id, NEW.product_id, stock_qty(NEW.product_qty, NEW.product_uom, get_ref_uom(NEW.product_id)), NOW(), get_ref_uom(NEW.product_id)) RETURNING id INTO t_id;
+            PERFORM create_ir_model_data(t_id);
+        ELSE
+            PERFORM update_ir_model_data(t_id);
+        END IF;
+
+        UPDATE stock_mission_report_line_location SET quantity = quantity-stock_qty(NEW.product_qty, NEW.product_uom, uom_id), last_mod_date=NOW() WHERE product_id=NEW.product_id AND location_id=NEW.location_id RETURNING id INTO t_id;
+        IF NOT FOUND THEN
+            INSERT INTO stock_mission_report_line_location (location_id, product_id, quantity, last_mod_date, uom_id) VALUES (NEW.location_id, NEW.product_id, -stock_qty(NEW.product_qty, NEW.product_uom, get_ref_uom(NEW.product_id)), NOW(), get_ref_uom(NEW.product_id)) RETURNING id INTO t_id;
+            PERFORM create_ir_model_data(t_id);
+        ELSE
+            PERFORM update_ir_model_data(t_id);
+        END IF;
+  END IF;
+
+  RETURN NEW;
+  END;
+  $stock_move$
+  LANGUAGE plpgsql;
+''')
+
+        cr.execute("SELECT tgname FROM pg_trigger WHERE  tgname = 'update_stock_move'")
+        if not cr.fetchone():
+            cr.execute("CREATE TRIGGER update_stock_move AFTER INSERT OR UPDATE OR DELETE ON stock_move FOR EACH ROW EXECUTE PROCEDURE update_stock_level()")
+        # TODO TRUNCATE: remove all lines
+
+    def _get_instance_loc(self, cr, uid, ids, field_name, args, context=None):
+        # compute instance and location name to generate sync updates
+        if not ids:
+            return {}
+        res = {}
+        for id in ids:
+            res[id] = {
+                'instance_id': False,
+                'location_name': False,
+            }
+
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id
+        cr.execute('''select line.id, loc.name from stock_mission_report_line_location line, stock_location loc
+            where line.location_id = loc.id and line.id in %s''', (tuple(ids), ))
+
+        for x in cr.fetchall():
+            res[x[0]] = {
+                'instance_id': instance_id,
+                'location_name': x[1],
+            }
+
+        return res
+
+    def _set_instance_loc(self, cr, uid, id, name=None, value=None, fnct_inv_arg=None, context=None):
+        # set instance and location name to process received updates
+        cr.execute('update stock_mission_report_line_location set remote_'+name+'=%s where id=%s', (value or 'NULL', id))
+        return True
+
+    _columns = {
+        'location_id': fields.many2one('stock.location', 'Location', select=1),
+        'product_id': fields.many2one('product.product', 'Product', select=1, required=1),
+        'quantity': fields.float('Quantity', required=True, digits=(16,4)),
+        'uom_id': fields.many2one('product.uom', 'UoM', required=True),
+        'last_mod_date': fields.datetime('Last modification date'),
+
+        'instance_id': fields.function(_get_instance_loc, string='Instance', type='many2one', relation='msf.instance', multi='instance_loc', method=1, fnct_inv=_set_instance_loc),
+        'location_name': fields.function(_get_instance_loc, string='Location Name', type='varchar', multi='instance_loc', method=1, fnct_inv=_set_instance_loc),
+
+        'remote_instance_id': fields.many2one('msf.instance', 'Instance', select=1),
+        'remote_location_name': fields.char('Location', size=128, select=1),
+        # TODO
+        # batch
+    }
+
+    _sql_constraints = [
+        ('loc_prod_uniq', 'unique(location_id, product_id)', '(Location, Product) must be unique'),
+    ]
+
+
+stock_mission_report_line_location()
+
 
 class stock_mission_report_line(osv.osv):
     _name = 'stock.mission.report.line'
@@ -1015,8 +1467,11 @@ class stock_mission_report_line(osv.osv):
         'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
         'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
-        'product_amc': fields.related('product_id', 'product_amc', type='float', string='AMC'),
-        'reviewed_consumption': fields.related('product_id', 'reviewed_consumption', type='float', string='FMC'),
+        #'product_amc': fields.related('product_id', 'product_amc', type='float', string='AMC'),
+        #'reviewed_consumption': fields.related('product_id', 'reviewed_consumption', type='float', string='FMC'),
+        'product_amc': fields.float('AMC'),
+        'product_consumption': fields.float('FMC'),
+
         'currency_id': fields.related('product_id', 'currency_id', type='many2one', relation='res.currency', string='Func. cur.'),
         'cost_price': fields.related('product_id', 'standard_price', type='float', string='Cost price'),
         'uom_id': fields.related('product_id', 'uom_id', type='many2one', relation='product.uom', string='UoM',

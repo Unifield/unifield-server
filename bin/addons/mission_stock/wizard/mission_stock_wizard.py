@@ -93,7 +93,8 @@ class mission_stock_wizard(osv.osv_memory):
                                             ('done', 'Done'),
                                             ('error', 'Error')
                                             ], string="Processing", readonly=True),
-        'export_error_msg': fields.text('Error message', readonly=True)
+        'export_error_msg': fields.text('Error message', readonly=True),
+        'instance_level': fields.char('Instance Level', size=64),
     }
 
     _defaults = {
@@ -126,6 +127,7 @@ class mission_stock_wizard(osv.osv_memory):
             res['export_error_msg'] = report.export_error_msg
             res['processed_state'] = progress_state
 
+        res['instance_level'] = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
         return res
 
     def report_change(self, cr, uid, ids, report_id, context=None):
@@ -167,6 +169,7 @@ class mission_stock_wizard(osv.osv_memory):
             'mission_report_id': wiz_id.report_id.id,
             'with_valuation': wiz_id.with_valuation == 'true' and True or False,
             'split_stock': wiz_id.split_stock == 'true' and True or False,
+            'hide_amc_fmc': wiz_id.report_id.full_view and (self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.level in ['section', 'coordo']),
         })
 
         return {'type': 'ir.actions.act_window',
@@ -220,6 +223,15 @@ report when the last update field will be filled. Thank you for your comprehensi
 
     def open_csv_file(self, cr, uid, ids, context=None):
         return self.open_file(cr, uid, ids, file_format='csv', context=context)
+
+    def open_consolidated_xls(self, cr, uid, ids, context=None):
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'stock.mission.report_xls',
+            'datas': {'file_name': 'consolidate_mission_stock.xls', 'file_format': 'xls'},
+            'nodestroy': True,
+            'context': context,
+        }
 
     def open_file(self, cr, uid, ids, file_format='xls', context=None):
         '''

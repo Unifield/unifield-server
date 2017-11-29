@@ -20,7 +20,7 @@
                             <field name="claim_picking_id" invisible="True" />
                             <field name="event_type" on_change="on_change_event_type(event_type,claim_partner_id,claim_type,claim_picking_id,context)" />
                             <field name="replacement_picking_expected_partial_picking"
-                                attrs="{'readonly': [('event_type', '!=', 'return')]}" />
+                                attrs="{'readonly': [('event_type', 'not in', ('accept', 'scrap', 'return'))]}" />
                         </group>
                     </page>
                 </notebook>

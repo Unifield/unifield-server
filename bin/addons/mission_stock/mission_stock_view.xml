@@ -23,12 +23,16 @@
                     <separator colspan="4" string="Errors"/>
                     <field name="export_error_msg" colspan="4" />
                 </group>
+                <field name="instance_level" invisible="1" />
                 <separator colspan="4" string="Actions" />
                 <button name="update" string="Update (in background)" type="object" colspan="4" icon="gtk-remove" />
                 <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
                 <button name="open_products_view" string="Open report" type="object" icon="gtk-go-forward" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
                 <button name="open_xls_file" string="Open XLS file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
                 <button name="open_csv_file" string="Open CSV file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
+                <group colspan="2" attrs="{'invisible': [('instance_level', '!=', 'coordo')]}">
+                    <button name="open_consolidated_xls" string="Open Consolidated XLS file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': ['|', ('processed_state', '!=', 'done'), ('export_ok', '=', False)]}" />
+                </group>
             </form>
         </field>
     </record>
@@ -138,15 +142,15 @@
                 <field name="in_pipe_coor_val" invisible="not context.get('with_valuation')" / -->
                 <field name="stock_qty" invisible="not context.get('split_stock')" />
                 <field name="central_qty" invisible="not context.get('split_stock')" />
-      <field name="wh_qty" invisible="context.get('split_stock')" />
+                <field name="wh_qty" invisible="context.get('split_stock')" />
                 <field name="cross_qty" />
                 <!-- <field name="cross_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="secondary_qty" />
                 <!-- <field name="secondary_val" invisible="not context.get('with_valuation')" /> -->
                 <field name="cu_qty" />
                 <!-- <field name="cu_val" invisible="not context.get('with_valuation')" /> -->
-                <field name="product_amc" />
-                <field name="reviewed_consumption" />
+                <field name="product_amc" invisible="context.get('hide_amc_fmc')"/>
+                <field name="product_consumption" invisible="context.get('hide_amc_fmc')" />
                 <field name="in_pipe_qty" />
                 <field name="categ_id" invisible="1" />
                 <field name="type" invisible="1" />
