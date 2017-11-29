@@ -1004,6 +1004,7 @@ class cash_request_liquidity(osv.osv):
                 .report_liquidity_position3(cr, uid, 'fakereport', context=context)
             balance_amount = 0.0
             if liquidity_pos_report and liq.booking_currency_id and liq.calculated_balance_booking and liq.period_id:
+                # note: report_period param must be a period browse period
                 balance_amount = liquidity_pos_report.getConvert(liq.booking_currency_id.id,
                                                                  liq.calculated_balance_booking,
                                                                  report_period=liq.period_id) or 0.0
@@ -1019,27 +1020,27 @@ class cash_request_liquidity(osv.osv):
                                selection=_get_journal_type, readonly=True, store=True),
         'journal_code': fields.related('register_id', 'journal_id', 'code', string='Journal Code', type='char',
                                        readonly=True),
-        'journal_name': fields.related('register_id', 'journal_id', 'code', string='Journal Code', type='char',
+        'journal_name': fields.related('register_id', 'journal_id', 'name', string='Journal Name', type='char',
                                        readonly=True),
         'status': fields.related('register_id', 'state', string='Status', readonly=True, type='selection',
                                  selection=[('draft', 'Draft'), ('open', 'Open'),
                                             ('partial_close', 'Partial Close'), ('confirm', 'Closed')]),
         'period_id': fields.function(_period_id_compute, method=True, relation='account.period',
-                                     type='many2one', string='Period'),
+                                     type='many2one', string='Period', readonly=True),
         'opening_balance': fields.related('register_id', 'balance_start', string='Opening Balance in register currency',
                                           type='float', readonly=True),
         'calculated_balance_booking': fields.related('register_id', 'msf_calculated_balance',
                                                      string='Calculated Balance in register currency', type='float',
                                                      readonly=True),
         'booking_currency_id': fields.related('register_id', 'currency', string='Register Currency', type='many2one',
-                                              relation='res.currency'),
+                                              relation='res.currency', readonly=True),
         'calculated_balance_functional': fields.function(_balance_functional_compute, method=True,
                                                          string='Calculated Balance in functional currency',
                                                          type='float', digits_compute=dp.get_precision('Account'),
                                                          readonly=True, store=True),
         'functional_currency_id': fields.related('cash_request_id', 'consolidation_currency_id',
                                                  string='Functional Currency', type='many2one', relation='res.currency',
-                                                 store=False),
+                                                 store=False, readonly=True),
     }
 
     _order = 'type, instance_id'
@@ -1049,6 +1050,10 @@ cash_request_liquidity()
 
 
 class cash_request_liquidity_cash(osv.osv):
+    """
+    Class used in particular for display purpose in the Cash Request (not possible to display the same fields
+    three times for cash / bank / cheque in the same form)...
+    """
     _name = 'cash.request.liquidity.cash'
     _inherit = 'cash.request.liquidity'
 
@@ -1065,6 +1070,7 @@ class cash_request_liquidity_cash(osv.osv):
                 .report_liquidity_position3(cr, uid, 'fakereport', context=context)
             balance_amount = 0.0
             if liquidity_pos_report and liq.booking_currency_id and liq.cashbox_balance_booking and liq.period_id:
+                # note: report_period param must be a period browse period
                 balance_amount = liquidity_pos_report.getConvert(liq.booking_currency_id.id,
                                                                  liq.cashbox_balance_booking,
                                                                  report_period=liq.period_id) or 0.0
@@ -1084,6 +1090,10 @@ cash_request_liquidity_cash()
 
 
 class cash_request_liquidity_bank(osv.osv):
+    """
+    Class used in particular for display purpose in the Cash Request (not possible to display the same fields
+    three times for cash / bank / cheque in the same form)...
+    """
     _name = 'cash.request.liquidity.bank'
     _inherit = 'cash.request.liquidity'
 
@@ -1119,11 +1129,35 @@ class cash_request_liquidity_bank(osv.osv):
 cash_request_liquidity_bank()
 
 class cash_request_liquidity_cheque(osv.osv):
+    """
+    Class used in particular for display purpose in the Cash Request (not possible to display the same fields
+    three times for cash / bank / cheque in the same form)...
+    """
     _name = 'cash.request.liquidity.cheque'
     _inherit = 'cash.request.liquidity'
 
+    def _get_cheque_reg_status(self, cr, uid, ids, name, args, context=None):
+        """
+        Returns a String with the status of the cheque register:
+        - classical register state if the reg. if the one of the Cash Req. period
+        - "Not Created" if the register of the month doesn't exist yet
+        """
+        if context is None:
+            context = {}
+        result = {}
+        period_obj = self.pool.get('account.period')
+        for liq in self.browse(cr, uid, ids, fields_to_fetch=['cash_request_id', 'register_id'], context=context):
+            period_ids = period_obj.get_period_from_date(cr, uid, liq.cash_request_id.request_date, context=context)
+            if period_ids and period_ids[0] == liq.register_id.period_id.id:
+                state = liq.register_id.state
+            else:
+                state = _('Not Created')
+            result[liq.id] = state
+        return result
+
     _columns = {
-        'status': fields.char(size=64, string='Status', readonly=True),  # can be Not Created if the cheque reg. of the month is not created yet
+        'status': fields.function(_get_cheque_reg_status,  # can be "Not Created" if the cheque reg. of the month is not created yet
+                                  method=True, type='char', size=64, string='Status', store=True, readonly=True),
     }
 
 cash_request_liquidity_cheque()
