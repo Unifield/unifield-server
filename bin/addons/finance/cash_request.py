@@ -341,7 +341,9 @@ class cash_request(osv.osv):
                             'cash_request_id': cash_req.id}
                     liq_obj = (regtype == 'bank' and liq_bank_obj) or (regtype == 'cash' and liq_cash_obj) or False
                     if liq_obj:
-                        liq_obj.create(cr, uid, vals, context=context)
+                        liq_id = liq_obj.create(cr, uid, vals, context=context)
+                        # do a write on the Calculated bal. in book. curr. to trigger the computation of the balance in func. curr.
+                        liq_obj.write(cr, uid, liq_id, {'calculated_balance_booking': 0.0}, context=context)
         return True
 
     def _generate_past_transfers(self, cr, uid, cash_req_id, context=None):
@@ -548,6 +550,40 @@ class cash_request(osv.osv):
             if cash_req.state != 'draft':
                 raise osv.except_osv(_('Error'), _('Cash Requests can only be deleted in Draft state.'))
         return super(cash_request, self).unlink(cr, uid, ids, context=context)
+
+    def display_details_cash(self, cr, uid, ids, context=None):
+        """
+        Opens a wizard with the details of Liquidity Cash to enable filtering
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        liq_obj = self.pool.get('cash.request.liquidity.cash')
+        model_data_obj = self.pool.get('ir.model.data')
+        cash_req = self.browse(cr, uid, ids[0], fields_to_fetch=['liquidity_cash_ids'], context=context)
+        liq_ids = [l.id for l in cash_req.liquidity_cash_ids]
+        domain = [('id', 'in', liq_ids)]
+        module_name = 'finance'
+        tree_view = 'view_cash_request_liquidity_cash_tree'
+        tree_view_id = model_data_obj.get_object_reference(cr, uid, module_name, tree_view)
+        tree_view_id = tree_view_id and tree_view_id[1] or False
+        search_view = 'view_cash_request_liquidity_cash_search'
+        search_view_id = model_data_obj.get_object_reference(cr, uid, module_name, search_view)
+        search_view_id = search_view_id and search_view_id[1] or False
+        return {
+            'name': _('Liquidity Position - Cash'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'cash.request.liquidity.cash',
+            'target': 'new',
+            'view_type': 'form',
+            'view_mode': 'tree',
+            'view_id': [tree_view_id],
+            'search_view_id': [search_view_id],
+            'context': context,
+            'domain': domain,
+        }
+        return True
 
 
 cash_request()
@@ -998,14 +1034,14 @@ class cash_request_liquidity(osv.osv):
         if context is None:
             context = {}
         result = {}
-        fields_list = ['booking_currency_id', 'calculated_balance_booking', 'period_id']
+        fields_list = ['register_id', 'calculated_balance_booking', 'period_id']
         for liq in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
             liquidity_pos_report = register_accounting.report.report_liquidity_position \
                 .report_liquidity_position3(cr, uid, 'fakereport', context=context)
             balance_amount = 0.0
-            if liquidity_pos_report and liq.booking_currency_id and liq.calculated_balance_booking and liq.period_id:
+            if liquidity_pos_report and liq.register_id and liq.calculated_balance_booking and liq.period_id:
                 # note: report_period param must be a period browse period
-                balance_amount = liquidity_pos_report.getConvert(liq.booking_currency_id.id,
+                balance_amount = liquidity_pos_report.getConvert(liq.register_id.currency.id,
                                                                  liq.calculated_balance_booking,
                                                                  report_period=liq.period_id) or 0.0
             result[liq.id] = balance_amount
@@ -1028,16 +1064,12 @@ class cash_request_liquidity(osv.osv):
         'period_id': fields.function(_period_id_compute, method=True, relation='account.period',
                                      type='many2one', string='Period', readonly=True),
         'opening_balance': fields.related('register_id', 'balance_start', string='Opening Balance in register currency',
-                                          type='float', readonly=True),
+                                          type='float', readonly=True, store=True),
         'calculated_balance_booking': fields.related('register_id', 'msf_calculated_balance',
                                                      string='Calculated Balance in register currency', type='float',
-                                                     readonly=True),
+                                                     readonly=True, store=True),
         'booking_currency_id': fields.related('register_id', 'currency', string='Register Currency', type='many2one',
-                                              relation='res.currency', readonly=True),
-        'calculated_balance_functional': fields.function(_balance_functional_compute, method=True,
-                                                         string='Calculated Balance in functional currency',
-                                                         type='float', digits_compute=dp.get_precision('Account'),
-                                                         readonly=True, store=True),
+                                              relation='res.currency', readonly=True, store=True),
         'functional_currency_id': fields.related('cash_request_id', 'consolidation_currency_id',
                                                  string='Functional Currency', type='many2one', relation='res.currency',
                                                  store=False, readonly=True),
@@ -1064,27 +1096,43 @@ class cash_request_liquidity_cash(osv.osv):
         if context is None:
             context = {}
         result = {}
-        fields_list = ['booking_currency_id', 'cashbox_balance_booking', 'period_id']
+        fields_list = ['register_id', 'cashbox_balance_booking', 'period_id']
         for liq in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
             liquidity_pos_report = register_accounting.report.report_liquidity_position \
                 .report_liquidity_position3(cr, uid, 'fakereport', context=context)
             balance_amount = 0.0
-            if liquidity_pos_report and liq.booking_currency_id and liq.cashbox_balance_booking and liq.period_id:
+            if liquidity_pos_report and liq.register_id and liq.cashbox_balance_booking and liq.period_id:
                 # note: report_period param must be a period browse period
-                balance_amount = liquidity_pos_report.getConvert(liq.booking_currency_id.id,
+                balance_amount = liquidity_pos_report.getConvert(liq.register_id.currency.id,
                                                                  liq.cashbox_balance_booking,
                                                                  report_period=liq.period_id) or 0.0
             result[liq.id] = balance_amount
         return result
 
+    def _balance_functional_compute_from_cash(self, cr, uid, ids, name, args, context=None):
+        """
+        Calls the method from cash.request.liquidity
+        (if called directly the fields used would be seen as not existing on the browse records handled)
+        """
+        return self._balance_functional_compute(cr, uid, ids, name, args, context=None)
+
     _columns = {
         'cashbox_balance_booking': fields.related('register_id', 'balance_end_cash',
-                                                  string='Cash Box Balance in register currency', type='float', readonly=True),
+                                                  string='Cash Box Balance in register currency', type='float',
+                                                  readonly=True, store=True),
         'cashbox_balance_functional': fields.function(_cashbox_balance_functional_compute, method=True,
                                                       string='Cash Box Balance in functional currency',
                                                       type='float', digits_compute=dp.get_precision('Account'),
                                                       readonly=True, store=True),
+        'calculated_balance_functional': fields.function(_balance_functional_compute_from_cash, method=True,
+                                                         string='Calculated Balance in functional currency',
+                                                         type='float', digits_compute=dp.get_precision('Account'),
+                                                         readonly=True,
+                                                         store={
+                                                             'cash.request.liquidity.cash': (lambda self, cr, uid, ids, c=None: ids, ['calculated_balance_booking'], 10),
+                                                         }),
     }
+
 
 cash_request_liquidity_cash()
 
@@ -1104,29 +1152,45 @@ class cash_request_liquidity_bank(osv.osv):
         if context is None:
             context = {}
         result = {}
-        fields_list = ['booking_currency_id', 'bank_statement_balance_booking', 'period_id']
+        fields_list = ['register_id', 'bank_statement_balance_booking', 'period_id']
         for liq in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
             liquidity_pos_report = register_accounting.report.report_liquidity_position \
                 .report_liquidity_position3(cr, uid, 'fakereport', context=context)
             balance_amount = 0.0
-            if liquidity_pos_report and liq.booking_currency_id and liq.bank_statement_balance_booking and liq.period_id:
-                balance_amount = liquidity_pos_report.getConvert(liq.booking_currency_id.id,
+            if liquidity_pos_report and liq.register_id and liq.bank_statement_balance_booking and liq.period_id:
+                balance_amount = liquidity_pos_report.getConvert(liq.register_id.currency.id,
                                                                  liq.bank_statement_balance_booking,
                                                                  report_period=liq.period_id) or 0.0
             result[liq.id] = balance_amount
         return result
 
+    def _balance_functional_compute_from_bank(self, cr, uid, ids, name, args, context=None):
+        """
+        Calls the method from cash.request.liquidity
+        (if called directly the fields used would be seen as not existing on the browse records handled)
+        """
+        return self._balance_functional_compute(cr, uid, ids, name, args, context=None)
+
     _columns = {
         'bank_statement_balance_booking': fields.related('register_id', 'balance_end_real',
                                                          string='Bank Statement Balance in register currency', type='float',
-                                                         readonly=True),
+                                                         readonly=True, store=True),
         'bank_statement_balance_functional': fields.function(_bank_statement_balance_functional_compute, method=True,
                                                              string='Bank Statement Balance in functional currency',
                                                              type='float', digits_compute=dp.get_precision('Account'),
                                                              readonly=True, store=True),
+        'calculated_balance_functional': fields.function(_balance_functional_compute_from_bank, method=True,
+                                                         string='Calculated Balance in functional currency',
+                                                         type='float', digits_compute=dp.get_precision('Account'),
+                                                         readonly=True,
+                                                         store={
+                                                             'cash.request.liquidity.bank': (lambda self, cr, uid, ids, c=None: ids, ['calculated_balance_booking'], 10),
+                                                         }),
     }
 
+
 cash_request_liquidity_bank()
+
 
 class cash_request_liquidity_cheque(osv.osv):
     """
@@ -1159,6 +1223,7 @@ class cash_request_liquidity_cheque(osv.osv):
         'status': fields.function(_get_cheque_reg_status,  # can be "Not Created" if the cheque reg. of the month is not created yet
                                   method=True, type='char', size=64, string='Status', store=True, readonly=True),
     }
+
 
 cash_request_liquidity_cheque()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -96,7 +96,10 @@
                             <page string="Liquidity Position" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                 <!-- CASH -->
                                 <group colspan="4" col="2">
-                                    <field name="liquidity_cash_ids" nolabel="1">
+                                    <button name="display_details_cash" type="object" colspan="1"
+                                            string="Cash - See details for subtotals" icon="terp-stock_zoom"/>
+                                    <label string="" colspan="1"/>
+                                    <field name="liquidity_cash_ids" nolabel="1" colspan="2">
                                         <tree string="Cash">
                                             <field name="instance_id"/>
                                             <field name="journal_code"/>
@@ -258,5 +261,48 @@
             <menuitem action="action_cash_request_tree" id="menu_action_cash_request_tree"
                       parent="account.menu_finance_periodical_processing"
                       sequence="12"/>
+
+            <!-- CASH REQUEST LIQUIDITY CASH - TREE VIEW -->
+            <record id="view_cash_request_liquidity_cash_tree" model="ir.ui.view">
+                <field name="name">cash.request.liquidity.cash.tree</field>
+                <field name="model">cash.request.liquidity.cash</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree>
+                        <field name="instance_id"/>
+                        <field name="journal_code"/>
+                        <field name="journal_name"/>
+                        <field name="status"/>
+                        <field name="period_id"/>
+                        <field name="opening_balance" sum="Total Opening Balance"/>
+                        <field name="calculated_balance_booking" sum="Total Calculated Balance Booking"/>
+                        <field name="cashbox_balance_booking" sum="Total Cashbox Balance Booking"/>
+                        <field name="booking_currency_id"/>
+                        <field name="calculated_balance_functional" sum="Total Calculated Balance Functional"/>
+                        <field name="cashbox_balance_functional" sum="Total Cashbox Balance Functional"/>
+                        <field name="functional_currency_id"/>
+                    </tree>
+                </field>
+            </record>
+
+            <!-- CASH REQUEST LIQUIDITY CASH - SEARCH VIEW -->
+            <record id="view_cash_request_liquidity_cash_search" model="ir.ui.view">
+                <field name="name">cash.request.liquidity.cash.search</field>
+                <field name="model">cash.request.liquidity.cash</field>
+                <field name="type">search</field>
+                <field name="arch" type="xml">
+                    <search>
+                        <group col="4" colspan="8">
+                            <field name="instance_id"/>
+                            <field name="booking_currency_id"/>
+                        </group>
+                        <newline/>
+                        <group expand="1" string="Group By..." col="4" colspan="8">
+                            <filter string="Proprietary Instance" icon="terp-stage" context="{'group_by': 'instance_id'}"/>
+                            <filter string="Currency" icon="terp-dolar" context="{'group_by': 'booking_currency_id'}"/>
+                        </group>
+                    </search>
+                </field>
+            </record>
        </data>
 </openerp>
