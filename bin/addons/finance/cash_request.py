@@ -551,39 +551,59 @@ class cash_request(osv.osv):
                 raise osv.except_osv(_('Error'), _('Cash Requests can only be deleted in Draft state.'))
         return super(cash_request, self).unlink(cr, uid, ids, context=context)
 
-    def display_details_cash(self, cr, uid, ids, context=None):
+    def display_details(self, cr, uid, ids, regtype='cash', context=None):
         """
-        Opens a wizard with the details of Liquidity Cash to enable filtering
+        Opens a wizard with the details of Liquidity Positions to enable filtering
         """
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        liq_obj = self.pool.get('cash.request.liquidity.cash')
-        model_data_obj = self.pool.get('ir.model.data')
-        cash_req = self.browse(cr, uid, ids[0], fields_to_fetch=['liquidity_cash_ids'], context=context)
-        liq_ids = [l.id for l in cash_req.liquidity_cash_ids]
-        domain = [('id', 'in', liq_ids)]
-        module_name = 'finance'
-        tree_view = 'view_cash_request_liquidity_cash_tree'
-        tree_view_id = model_data_obj.get_object_reference(cr, uid, module_name, tree_view)
-        tree_view_id = tree_view_id and tree_view_id[1] or False
-        search_view = 'view_cash_request_liquidity_cash_search'
-        search_view_id = model_data_obj.get_object_reference(cr, uid, module_name, search_view)
-        search_view_id = search_view_id and search_view_id[1] or False
-        return {
-            'name': _('Liquidity Position - Cash'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'cash.request.liquidity.cash',
-            'target': 'new',
-            'view_type': 'form',
-            'view_mode': 'tree',
-            'view_id': [tree_view_id],
-            'search_view_id': [search_view_id],
-            'context': context,
-            'domain': domain,
-        }
+        if regtype in ['cash', 'bank']:
+            if regtype == 'cash':
+                liq_obj = self.pool.get('cash.request.liquidity.cash')
+                search_view = 'view_cash_request_liquidity_cash_search'
+                tree_view = 'view_cash_request_liquidity_cash_tree'
+                res_model = 'cash.request.liquidity.cash'
+                view_name = _('Liquidity Position - Cash')
+            else:
+                liq_obj = self.pool.get('cash.request.liquidity.bank')
+                search_view = 'view_cash_request_liquidity_bank_search'
+                tree_view = 'view_cash_request_liquidity_bank_tree'
+                res_model = 'cash.request.liquidity.bank'
+                view_name = _('Liquidity Position - Bank')
+            model_data_obj = self.pool.get('ir.model.data')
+            fields_list = ['liquidity_cash_ids', 'liquidity_bank_ids']
+            cash_req = self.browse(cr, uid, ids[0], fields_to_fetch=fields_list, context=context)
+            if regtype == 'cash':
+                liq_ids = [l.id for l in cash_req.liquidity_cash_ids]
+            else:
+                liq_ids = [l.id for l in cash_req.liquidity_bank_ids]
+            domain = [('id', 'in', liq_ids)]
+            module_name = 'finance'
+            tree_view_id = model_data_obj.get_object_reference(cr, uid, module_name, tree_view)
+            tree_view_id = tree_view_id and tree_view_id[1] or False
+            search_view_id = model_data_obj.get_object_reference(cr, uid, module_name, search_view)
+            search_view_id = search_view_id and search_view_id[1] or False
+            return {
+                'name': view_name,
+                'type': 'ir.actions.act_window',
+                'res_model': res_model,
+                'target': 'new',
+                'view_type': 'form',
+                'view_mode': 'tree',
+                'view_id': [tree_view_id],
+                'search_view_id': [search_view_id],
+                'context': context,
+                'domain': domain,
+            }
         return True
+
+    def display_details_cash(self, cr, uid, ids, context=None):
+        return self.display_details(cr, uid, ids, regtype='cash', context=context)
+
+    def display_details_bank(self, cr, uid, ids, context=None):
+        return self.display_details(cr, uid, ids, regtype='bank', context=context)
 
 
 cash_request()

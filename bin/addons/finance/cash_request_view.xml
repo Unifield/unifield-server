@@ -1,4 +1,9 @@
 <?xml version="1.0"?>
+
+<!DOCTYPE CASHREQUEST [
+    <!ENTITY liquidity_position_search SYSTEM "./cash_request_liquidity_position_search.xml">
+]>
+
 <openerp>
       <data>
             <!-- CASH REQUEST - FORM VIEW -->
@@ -118,7 +123,10 @@
                                 </group>
                                 <!-- BANK -->
                                 <group colspan="4" col="2">
-                                    <field name="liquidity_bank_ids" nolabel="1">
+                                    <button name="display_details_bank" type="object" colspan="1"
+                                            string="Bank - See details for subtotals" icon="terp-stock_zoom"/>
+                                    <label string="" colspan="1"/>
+                                    <field name="liquidity_bank_ids" nolabel="1" colspan="2">
                                         <tree string="Bank">
                                             <field name="instance_id"/>
                                             <field name="journal_code"/>
@@ -285,24 +293,42 @@
                 </field>
             </record>
 
+            <!-- CASH REQUEST LIQUIDITY BANK - TREE VIEW -->
+            <record id="view_cash_request_liquidity_bank_tree" model="ir.ui.view">
+                <field name="name">cash.request.liquidity.bank.tree</field>
+                <field name="model">cash.request.liquidity.bank</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree>
+                        <field name="instance_id"/>
+                        <field name="journal_code"/>
+                        <field name="journal_name"/>
+                        <field name="status"/>
+                        <field name="period_id"/>
+                        <field name="opening_balance" sum="Total Opening Balance"/>
+                        <field name="calculated_balance_booking" sum="Total Calculated Balance Booking"/>
+                        <field name="bank_statement_balance_booking" sum="Total Bank Statement Balance Booking"/>
+                        <field name="booking_currency_id"/>
+                        <field name="calculated_balance_functional" sum="Total Calculated Balance Functional"/>
+                        <field name="bank_statement_balance_functional" sum="Total Bank Statement Balance Functional"/>
+                        <field name="functional_currency_id"/>
+                    </tree>
+                </field>
+            </record>
+
             <!-- CASH REQUEST LIQUIDITY CASH - SEARCH VIEW -->
             <record id="view_cash_request_liquidity_cash_search" model="ir.ui.view">
                 <field name="name">cash.request.liquidity.cash.search</field>
                 <field name="model">cash.request.liquidity.cash</field>
                 <field name="type">search</field>
-                <field name="arch" type="xml">
-                    <search>
-                        <group col="4" colspan="8">
-                            <field name="instance_id"/>
-                            <field name="booking_currency_id"/>
-                        </group>
-                        <newline/>
-                        <group expand="1" string="Group By..." col="4" colspan="8">
-                            <filter string="Proprietary Instance" icon="terp-stage" context="{'group_by': 'instance_id'}"/>
-                            <filter string="Currency" icon="terp-dolar" context="{'group_by': 'booking_currency_id'}"/>
-                        </group>
-                    </search>
-                </field>
+                &liquidity_position_search;
+            </record>
+            <!-- CASH REQUEST LIQUIDITY BANK - SEARCH VIEW -->
+            <record id="view_cash_request_liquidity_bank_search" model="ir.ui.view">
+                <field name="name">cash.request.liquidity.bank.search</field>
+                <field name="model">cash.request.liquidity.bank</field>
+                <field name="type">search</field>
+                &liquidity_position_search;
             </record>
        </data>
 </openerp>
