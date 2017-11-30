@@ -762,6 +762,9 @@ class recap_mission(osv.osv):
 
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Instance code / Place of payment', required=True),
+        'instance_level': fields.related('instance_id', 'level', string='Instance level', readonly=True, store=True,
+                                         type='selection',
+                                         selection=[('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')]),
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', required=True, ondelete='cascade'),
         'commitment_amount': fields.float('Commitment', digits_compute=dp.get_precision('Account')),
         'liquidity_amount': fields.float('Cash available in mission', digits_compute=dp.get_precision('Account')),
@@ -771,7 +774,7 @@ class recap_mission(osv.osv):
                                  digits_compute=dp.get_precision('Account'), store=True),
     }
 
-    _order = 'instance_id'
+    _order = 'instance_level, instance_id'
 
 
 recap_mission()
@@ -815,6 +818,11 @@ class cash_request_expense(osv.osv):
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
         'prop_instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True, readonly=True,
                                             domain=[('level', 'in', ['coordo', 'project'])]),
+        'prop_instance_level': fields.related('instance_id', 'level', string='Instance level', readonly=True,
+                                              store=True, type='selection',
+                                              selection=[('section', 'Section'),
+                                                         ('coordo', 'Coordo'),
+                                                         ('project', 'Project')]),
         'consumer_instance_id': fields.many2one('msf.instance', 'Instance Consumer', required=True,
                                                 domain=[('level', 'in', ['coordo', 'project'])]),
         'is_local_expense': fields.boolean(string='Local Expense'),
@@ -838,7 +846,7 @@ class cash_request_expense(osv.osv):
         'prop_instance_id': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.id,
     }
 
-    _order = 'prop_instance_id'
+    _order = 'prop_instance_level, prop_instance_id'
 
 
 cash_request_expense()
@@ -939,6 +947,9 @@ class cash_request_recap_expense(osv.osv):
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
         'instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True, readonly=True,
                                        domain=[('level', 'in', ['coordo', 'project'])]),
+        'instance_level': fields.related('instance_id', 'level', string='Instance level', readonly=True, store=True,
+                                         type='selection',
+                                         selection=[('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')]),
         'expense_total': fields.function(_expense_total_compute, method=True, string='Planned Expenses for the period M',
                                          type='float', digits_compute=dp.get_precision('Account'), readonly=True, store=True),
         'budget_expense_m': fields.function(_budgeted_expense_m_compute, method=True,
@@ -955,7 +966,7 @@ class cash_request_recap_expense(osv.osv):
                                              digits_compute=dp.get_precision('Account'), readonly=True, store=True),
     }
 
-    _order = 'instance_id'
+    _order = 'instance_level, instance_id'
 
 
 cash_request_recap_expense()
@@ -1042,6 +1053,9 @@ class cash_request_payable(osv.osv):
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
         'instance_id': fields.many2one('msf.instance', 'Instance', required=True,
                                        domain=[('level', 'in', ['coordo', 'project'])]),
+        'instance_level': fields.related('instance_id', 'level', string='Instance level', readonly=True, store=True,
+                                         type='selection',
+                                         selection=[('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')]),
         'account_move_line_ids': fields.function(_aml_compute, method=True, relation='account.move.line',
                                                  type='many2many', string='Account Move Lines'),
         'debit': fields.function(_debit_compute, method=True, string='Debit', type='float',
@@ -1052,7 +1066,7 @@ class cash_request_payable(osv.osv):
                                    digits_compute=dp.get_precision('Account'), readonly=True),
     }
 
-    _order = 'instance_id'
+    _order = 'instance_level, instance_id'
 
 
 cash_request_payable()
@@ -1107,6 +1121,9 @@ class cash_request_liquidity(osv.osv):
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
         'instance_id': fields.many2one('msf.instance', 'Proprietary instance', required=True,
                                        domain=[('level', 'in', ['coordo', 'project'])]),
+        'instance_level': fields.related('instance_id', 'level', string='Instance level', readonly=True, store=True,
+                                         type='selection',
+                                         selection=[('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')]),
         'register_id': fields.many2one('account.bank.statement', 'Register', required=True),
         'type': fields.related('register_id', 'journal_id', 'type', string='Register Type', type='selection',
                                selection=_get_journal_type, readonly=True, store=True),
@@ -1131,7 +1148,7 @@ class cash_request_liquidity(osv.osv):
                                                  store=False, readonly=True),
     }
 
-    _order = 'type, instance_id'
+    _order = 'type, instance_level, instance_id'
 
 
 cash_request_liquidity()
@@ -1402,6 +1419,8 @@ class cash_request_liquidity_total(osv.osv):
         'amount_functional': fields.float('Grand Total Functional Currency',
                                           digits_compute=dp.get_precision('Account')),
     }
+
+    _order = 'booking_currency_id'
 
 
 cash_request_liquidity_total()
