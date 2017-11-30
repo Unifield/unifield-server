@@ -134,17 +134,17 @@
                             </html>
                         </group>
                         <field name="name"/>
-                        <field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p'])]}"/>
-                        <field name="invoiced" attrs="{'invisible':[('state', 'in', ('draft','validated', 'draft_p', 'validated_p'))]}" readonly="1"/>
+                        <field name="date_order" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
+                        <field name="invoiced" attrs="{'invisible':[('state', 'in', ('draft', 'draft_p', 'validated', 'validated_p'))]}" readonly="1"/>
                         <newline/>
-                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"/>
-                        <field name="partner_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'validated'])]}"/>
-                        <field name="shipped" attrs="{'invisible':[('state', 'in', ('draft','validated', 'draft_p', 'validated_p'))]}" readonly="1"/>
+                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
+                        <field name="partner_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                        <field name="shipped" attrs="{'invisible':[('state', 'in', ('draft', 'draft_p', 'validated', 'validated_p'))]}" readonly="1"/>
                         <field name="shipped_rate" invisible="True"/>
                         <field name="push_fo" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': ['|', ('push_fo', '=', True), ('state', 'not in', ['draft', 'validated'])]}"/>
-                        <field name="priority" attrs="{'readonly': [('state', 'in', ['validated_p', 'sourced_p', 'confirmed', 'confirmed_p', 'done', 'cancel'])]}"/>
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p'])]}"/>
+                        <field name="priority" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <newline/>
                         <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         <field name="details" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
@@ -179,13 +179,13 @@
                                 <field name="internal_type" string="Zone"/>
                                 <field name="customer_ref" widget="char"/>
                                 <group colspan="2" col="3">
-                                    <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ('draft', 'draft_p' 'validated', 'validated_p'))]}"/>
-                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated', 'validated_p'))]}"/>
+                                    <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="no_line" invisible="1"/>
-                                    <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'not in', ['draft', 'draft_p'])]}" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"/>
-                                    <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                    <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"/>
+                                    <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 </group>
                                 <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                             </group>
@@ -196,8 +196,8 @@
                                 <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': False}"/>
                                 <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object"/>
                             </group>
-                            <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_n', 'validated_p'])]}"/>
-                            <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_n', 'validated_p'])]}"/>
+                            <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_p'])]}"/>
+                            <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', 'not in', ['validated', 'validated_p'])]}"/>
                             <field name="order_line" colspan="4" nolabel="1" mode="tree,form"
                                 context="{'purchase_id': active_id, 'partner_type': partner_type, 'categ': categ, 'pricelist_id': pricelist_id, 'rfq_ok': False, 'from_fo': po_from_fo or po_from_ir or False}"
                                 on_change="order_line_change(order_line)"
@@ -281,18 +281,18 @@
                                     <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}"/>
                                 </group>
                                 <group colspan="2" col="3">
-                                    <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"/>
-                                    <button colspan="1" name="update_date" string="Apply to all lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated', 'validated_p'))]}"/>
+                                    <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
+                                    <button colspan="1" name="update_date" string="Apply to all lines" type="object" context="{'field_name': 'confirmed', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced_p'])]}"/>
                                 </group>
-                                <field name="transport_type" on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" attrs="{'readonly': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}"/>
-                                <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}"/>
-                                <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'in', ['split', 'sourced'])], 'invisible': [('partner_type', '=', 'external')]}"/>
-                                <field name="shipment_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'in', ['split', 'sourced'])], 'invisible': [('partner_type', '=', 'external')]}"/>
+                                <field name="transport_type" on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])], 'invisible': [('partner_type', '=', 'external')]}"/>
+                                <field name="shipment_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])], 'invisible': [('partner_type', '=', 'external')]}"/>
                                 <field name="arrival_date" attrs="{'readonly': ['|', ('shipped_rate', '!=', 0.0), ('state', '=', 'done')], 'invisible': [('internal_type', '!=', 'international')]}"/>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Delivery" colspan="2"/>
-                                <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}" on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('partner_type', '=', 'internal')]"/>
+                                <field name="dest_partner_id" attrs="{'invisible': [('order_type', '!=', 'direct')], 'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="on_change_dest_partner_id(dest_partner_id)" domain="[('id', '!=', company_id), ('partner_type', '=', 'internal')]"/>
                                 <field name="dest_address_id" domain="[('dest_address', '=', dest_partner_id)]" attrs="{'required': [('order_type', '=', 'direct')], 'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 <field name="cross_docking_ok" attrs="{'readonly':['|', '|', '|', ('unallocation_ok', '=', True), ('order_type', '=', 'direct'), ('allocation_setup', '=', 'unallocated'), ('state', '!=', 'draft')]}" on_change="onchange_cross_docking_ok(cross_docking_ok, warehouse_id, categ)"/>
                                 <field name="location_id" domain="[('usage', '=', 'internal')]" readonly="1" on_change="onchange_location_id(location_id,categ)"/>
