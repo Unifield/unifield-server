@@ -155,6 +155,8 @@
                                             <field name="journal_name"/>
                                             <field name="status"/>
                                             <field name="period_id"/>
+                                            <field name="bank_journal_code"/>
+                                            <field name="bank_journal_name"/>
                                             <field name="pending_cheque_amount_booking" sum="Total Pending Cheques Booking"/>
                                             <field name="booking_currency_id"/>
                                             <field name="pending_cheque_amount_functional" sum="Total Pending Cheques Functional"/>

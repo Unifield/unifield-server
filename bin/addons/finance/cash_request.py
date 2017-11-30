@@ -1293,6 +1293,10 @@ class cash_request_liquidity_cheque(osv.osv):
     _columns = {
         'status': fields.function(_get_cheque_reg_status,  # can be "Not Created" if the cheque reg. of the month is not created yet
                                   method=True, type='char', size=64, string='Status', store=True, readonly=True),
+        'bank_journal_code': fields.related('register_id', 'journal_id', 'bank_journal_id', 'code',
+                                            string='Bank Journal Code', type='char', readonly=True),
+        'bank_journal_name': fields.related('register_id', 'journal_id', 'bank_journal_id', 'name',
+                                            string='Bank Journal Name', type='char', readonly=True),
         'pending_cheque_amount_booking': fields.float('Pending cheque amount in register currency',
                                                       digits_compute=dp.get_precision('Account')),
         'pending_cheque_amount_functional': fields.float('Pending cheque amount in functional currency',
