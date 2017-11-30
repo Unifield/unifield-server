@@ -114,9 +114,9 @@
                                             <field name="journal_name"/>
                                             <field name="status"/>
                                             <field name="period_id"/>
-                                            <field name="opening_balance" sum="Total Opening Balance"/>
-                                            <field name="calculated_balance_booking" sum="Total Calculated Balance Booking"/>
-                                            <field name="cashbox_balance_booking" sum="Total Cashbox Balance Booking"/>
+                                            <field name="opening_balance"/>
+                                            <field name="calculated_balance_booking"/>
+                                            <field name="cashbox_balance_booking"/>
                                             <field name="booking_currency_id"/>
                                             <field name="calculated_balance_functional" sum="Total Calculated Balance Functional"/>
                                             <field name="cashbox_balance_functional" sum="Total Cashbox Balance Functional"/>
@@ -136,9 +136,9 @@
                                             <field name="journal_name"/>
                                             <field name="status"/>
                                             <field name="period_id"/>
-                                            <field name="opening_balance" sum="Total Opening Balance"/>
-                                            <field name="calculated_balance_booking" sum="Total Calculated Balance Booking"/>
-                                            <field name="bank_statement_balance_booking" sum="Total Bank Statement Balance Booking"/>
+                                            <field name="opening_balance"/>
+                                            <field name="calculated_balance_booking"/>
+                                            <field name="bank_statement_balance_booking"/>
                                             <field name="booking_currency_id"/>
                                             <field name="calculated_balance_functional" sum="Total Calculated Balance Functional"/>
                                             <field name="bank_statement_balance_functional" sum="Total Bank Statement Balance Functional"/>
@@ -160,7 +160,7 @@
                                             <field name="period_id"/>
                                             <field name="bank_journal_code"/>
                                             <field name="bank_journal_name"/>
-                                            <field name="pending_cheque_amount_booking" sum="Total Pending Cheques Booking"/>
+                                            <field name="pending_cheque_amount_booking"/>
                                             <field name="booking_currency_id"/>
                                             <field name="pending_cheque_amount_functional" sum="Total Pending Cheques Functional"/>
                                             <field name="functional_currency_id"/>
