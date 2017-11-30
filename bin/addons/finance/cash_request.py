@@ -185,7 +185,7 @@ class cash_request(osv.osv):
         instance_obj = self.pool.get('msf.instance')
         mission = self._get_mission(cr, uid, context=context)
         instance_ids = instance_obj.search(cr, uid, [('mission', '=', mission), ('level', '!=', 'section')],
-                                           order='level, code', context=context)  # coordo first
+                                           order='level asc, code asc', context=context)  # coordo first
         return instance_ids
 
     _defaults = {
@@ -385,7 +385,7 @@ class cash_request(osv.osv):
             context = {}
         recap_mission_obj = self.pool.get('recap.mission')
         fields_list = ['instance_ids', 'commitment_ids', 'recap_expense_ids', 'payable_ids', 'liquidity_cash_ids',
-                       'liquidity_bank_ids', 'liquidity_cheques_ids']
+                       'liquidity_bank_ids', 'liquidity_cheque_ids']
         cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=fields_list, context=context)
         # delete previous recap mission lines for this cash request
         old_lines = recap_mission_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
