@@ -1507,6 +1507,7 @@ class claim_event(osv.osv):
                                                               'prefix': '', 'padding': 2}, context=context),
             'claim': True,
             'claim_name': obj.return_claim_id_claim_event.name,
+            'already_shipped': False,
         }
         move_values = {'type': 'out',
                        'reason_type_id': context['common']['rt_goods_return'],
@@ -1622,6 +1623,7 @@ class claim_event(osv.osv):
                                                               'prefix': '', 'padding': 2}, context=context),
             'claim': True,
             'claim_name': obj.return_claim_id_claim_event.name,
+            'already_shipped': False,
         }
         move_values = {'type': 'out',
                        'reason_type_id': context['common']['rt_goods_return'],
