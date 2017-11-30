@@ -110,6 +110,8 @@ class cash_request(osv.osv):
                                               'Liquidity Position Cash', required=True, readonly=True),
         'liquidity_cheque_ids': fields.one2many('cash.request.liquidity.cheque', 'cash_request_id',
                                                 'Liquidity Position Cheque', required=True, readonly=True),
+        'liquidity_total_ids': fields.one2many('cash.request.liquidity.total', 'cash_request_id',
+                                               'Liquidity Position Total', required=True, readonly=True),
     }
 
     def _check_buffer(self, cr, uid, ids):
@@ -234,6 +236,7 @@ class cash_request(osv.osv):
             'liquidity_bank_ids': [],
             'liquidity_cash_ids': [],
             'liquidity_cheque_ids': [],
+            'liquidity_total_ids': [],
         })
         return super(cash_request, self).copy(cr, uid, cash_req_id, default, context=context)
 
@@ -314,6 +317,7 @@ class cash_request(osv.osv):
         liq_cash_obj = self.pool.get('cash.request.liquidity.cash')
         liq_bank_obj = self.pool.get('cash.request.liquidity.bank')
         liq_cheque_obj = self.pool.get('cash.request.liquidity.cheque')
+        liq_total_obj = self.pool.get('cash.request.liquidity.total')
         period_obj = self.pool.get('account.period')
         reg_obj = self.pool.get('account.bank.statement')
         cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=['request_date', 'instance_ids'], context=context)
@@ -324,6 +328,8 @@ class cash_request(osv.osv):
         liq_bank_obj.unlink(cr, uid, old_liq_bank_ids, context=context)
         old_liq_cheque_ids = liq_cheque_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
         liq_cheque_obj.unlink(cr, uid, old_liq_cheque_ids, context=context)
+        old_liq_total_ids = liq_total_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
+        liq_total_obj.unlink(cr, uid, old_liq_total_ids, context=context)
         # create new cash req. liquidity data
         period_ids = period_obj.get_period_from_date(cr, uid, cash_req.request_date, context=context)
         period_id = period_ids and period_ids[0] or False
@@ -345,7 +351,9 @@ class cash_request(osv.osv):
                         # do a write on the Calculated bal. in book. curr. to trigger the computation of the balance in func. curr.
                         liq_obj.write(cr, uid, liq_id, {'calculated_balance_booking': 0.0}, context=context)
             # pending cheques
-            liq_cheque_obj.create_liquidity_cheque_for_cash_request(cr, uid, cash_req_id, period_id, inst.id, context=context)
+            liq_cheque_obj.create_liquidity_cheque(cr, uid, cash_req_id, period_id, inst.id, context=context)
+        # Grand Total for all instances together
+        liq_total_obj.create_liquidity_grand_total(cr, uid, cash_req_id, context=context)
         return True
 
     def _generate_past_transfers(self, cr, uid, cash_req_id, context=None):
@@ -1233,7 +1241,7 @@ class cash_request_liquidity_cheque(osv.osv):
     _name = 'cash.request.liquidity.cheque'
     _inherit = 'cash.request.liquidity'
 
-    def create_liquidity_cheque_for_cash_request(self, cr, uid, cash_request_id, period_id, instance_id, context=None):
+    def create_liquidity_cheque(self, cr, uid, cash_request_id, period_id, instance_id, context=None):
         """"
         This method creates the cash_request_liquidity_cheques corresponding to the criteria in parameter.
         It is based on the method get_pending_cheques_ids() from the registers to get the data to take into account.
@@ -1316,4 +1324,71 @@ class cash_request_liquidity_cheque(osv.osv):
 
 
 cash_request_liquidity_cheque()
+
+
+class cash_request_liquidity_total(osv.osv):
+    _name = 'cash.request.liquidity.total'
+    _rec_name = 'cash_request_id'
+    _description = 'Liquidity Position Grand Total per Currency for Cash Request'
+
+    def create_liquidity_grand_total(self, cr, uid, cash_request_id, context=None):
+        """"
+        This method creates the cash_request_liquidity_totals corresponding for the Cash Request in parameter.
+        It sums the liquidity values per currencies.
+        """
+        if context is None:
+            context = {}
+        result = {}
+        cash_req_obj = self.pool.get('cash.request')
+        fields_list = ['liquidity_cash_ids', 'liquidity_bank_ids', 'liquidity_cheque_ids']
+        cash_req = cash_req_obj.browse(cr, uid, cash_request_id, fields_to_fetch=fields_list, context=context)
+        # Cash amounts
+        for cash in cash_req.liquidity_cash_ids:
+            if cash.booking_currency_id.id not in result:
+                result[cash.booking_currency_id.id] = {}
+                result[cash.booking_currency_id.id]['amount_booking'] = 0.0
+                result[cash.booking_currency_id.id]['amount_functional'] = 0.0
+            result[cash.booking_currency_id.id]['amount_booking'] += cash.calculated_balance_booking or 0.0
+            result[cash.booking_currency_id.id]['amount_functional'] += cash.calculated_balance_functional or 0.0
+        # Bank amounts
+        for bank in cash_req.liquidity_bank_ids:
+            if bank.booking_currency_id.id not in result:
+                result[bank.booking_currency_id.id] = {}
+                result[bank.booking_currency_id.id]['amount_booking'] = 0.0
+                result[bank.booking_currency_id.id]['amount_functional'] = 0.0
+            result[bank.booking_currency_id.id]['amount_booking'] += bank.calculated_balance_booking or 0.0
+            result[bank.booking_currency_id.id][
+                'amount_functional'] += bank.calculated_balance_functional or 0.0
+        # Cheque amounts
+        for cheque in cash_req.liquidity_cheque_ids:
+            if cheque.booking_currency_id.id not in result:
+                result[cheque.booking_currency_id.id] = {}
+                result[cheque.booking_currency_id.id]['amount_booking'] = 0.0
+                result[cheque.booking_currency_id.id]['amount_functional'] = 0.0
+            result[cheque.booking_currency_id.id]['amount_booking'] += cheque.pending_cheque_amount_booking or 0.0
+            result[cheque.booking_currency_id.id]['amount_functional'] += cheque.pending_cheque_amount_functional or 0.0
+        # Creation of one entry per currency
+        for curr in result:
+            vals = {
+                'cash_request_id': cash_request_id,
+                'booking_currency_id': curr,
+                'amount_booking': result[curr]['amount_booking'],
+                'amount_functional': result[curr]['amount_functional'],
+            }
+            self.create(cr, uid, vals, context=context)
+
+    _columns = {
+        'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
+        'booking_currency_id': fields.many2one('res.currency', 'Booking Currency', required=True, readonly=True),
+        'functional_currency_id': fields.related('cash_request_id', 'consolidation_currency_id',
+                                                 string='Functional Currency', type='many2one', relation='res.currency',
+                                                 store=False, readonly=True),
+        'amount_booking': fields.float('Grand Total Register Currency',
+                                       digits_compute=dp.get_precision('Account')),
+        'amount_functional': fields.float('Grand Total Functional Currency',
+                                          digits_compute=dp.get_precision('Account')),
+    }
+
+
+cash_request_liquidity_total()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

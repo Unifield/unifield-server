@@ -167,6 +167,18 @@
                                         </tree>
                                     </field>
                                 </group>
+                                <!-- GRAND TOTAL -->
+                                <separator colspan="4" string="Grand Total per Currency"/>
+                                <group colspan="4" col="2">
+                                    <field name="liquidity_total_ids" nolabel="1">
+                                        <tree string="Grand Total">
+                                            <field name="amount_booking"/>
+                                            <field name="booking_currency_id"/>
+                                            <field name="amount_functional" sum="Grand Total Functional"/>
+                                            <field name="functional_currency_id"/>
+                                        </tree>
+                                    </field>
+                                </group>
                             </page>
                             <!-- PAYABLES TAB -->
                             <page string="Payables" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
