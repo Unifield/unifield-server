@@ -489,6 +489,7 @@ class purchase_order_line(osv.osv):
         'original_currency_id': fields.many2one('res.currency', 'Original Currency'),
         'modification_comment': fields.char('Modification Comment', size=1024),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
+        'from_synchro_return_goods': fields.boolean(string='PO Line created by synch of IN replacement/missing'),
 
         # finance
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -1325,6 +1326,8 @@ class purchase_order_line(osv.osv):
             }, context=context)
             context.update({'return_new_line_id': True, 'keepLineNumber': True})
             new_po_line = split_obj.split_line(cr, uid, [split_id], context=context)
+            context.pop('return_new_line_id')
+            context.pop('keepLineNumber')
 
             # udpate linked FO lines if has:
             self.write(cr, uid, [new_po_line], {'origin': pol.origin}, context=context) # otherwise not able to link with FO

@@ -50,13 +50,35 @@
                     <separator colspan="4" string="Move lines" />
                     <field name="move_ids" mode="tree"
                         colspan="4" nolabel="1" />
+                    <group colspan="4" col="4" name="claim">
+                        <separator string="Register a Claim to the Supplier for selected products." colspan="4" />
+                        <notebook colspan="4">
+                            <page string="Claim">
+                                <field name="register_a_claim" on_change="onchange_register_a_claim(register_a_claim, onchange_dest_type)"/>
+                                <field name="claim_in_has_partner_id" invisible="True"/>
+                                <field name="claim_partner_id"
+                                       attrs="{'required': [('register_a_claim', '=', True)]}"
+                                       readonly="1"
+                                       context="{'search_default_supplier': True}"/>
+                                <field name="claim_type"
+                                       attrs="{'readonly': [('register_a_claim', '=', False)]}"
+                                       on_change="onchange_claim_type(claim_type)"/>
+                                <field name="claim_replacement_picking_expected"
+                                       attrs="{'invisible': [('claim_type', 'not in', ('accept', 'scrap', 'quarantine', 'return', 'missing'))],
+                                               'readonly': [('claim_type', 'not in', ('accept', 'scrap', 'quarantine', 'return'))]}"/>
+                            </page>
+                            <page string="Claim Description">
+                                <field name="claim_description" colspan="4" nolabel="True"/>
+                            </page>
+                        </notebook>
+                    </group>
                     <group colspan="8" col="8" name="actions">
                         <separator string="Actions" colspan="8" />
                         <field name="dest_type"
                             on_change="onchange_dest_type(dest_type, picking_id)"
                             />
                         <field name="direct_incoming"
-                            attrs="{'invisible': [('dest_type', 'not in', ['default', 'to_stock'])]}"
+                            attrs="{'invisible': [('dest_type', 'not in', ['default', 'to_stock'])], 'readonly': [('register_a_claim', '=', True)]}"
                             />
                         <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
                         <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />

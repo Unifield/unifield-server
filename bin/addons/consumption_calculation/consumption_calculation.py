@@ -1775,6 +1775,27 @@ class product_product(osv.osv):
 
         return res
 
+    def _get_domain_compute_amc(self, cr, uid, context=None):
+        # Get all reason types
+        get_object_reference = self.pool.get('ir.model.data').get_object_reference
+        loan_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        donation_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
+        donation_exp_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
+        loss_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+        discrepancy_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+
+        # Update the domain
+        domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id))]
+
+        # Add locations filters in domain if locations are passed in context
+        locations = self.pool.get('stock.location').search(cr, uid,
+                                                           [('usage', 'in', ('internal', 'customer'))], context=context,
+                                                           order='NO_ORDER')
+        domain.append(('location_id', 'in', locations))
+        domain.append(('location_dest_id', 'in', locations))
+
+        return domain
+
     def compute_amc(self, cr, uid, ids, context=None):
         '''
         Compute the Average Monthly Consumption with this formula :
@@ -1802,28 +1823,16 @@ class product_product(osv.osv):
         if context.get('to_date', False):
             to_date = context.get('to_date')
 
-        # Get all reason types
         get_object_reference = self.pool.get('ir.model.data').get_object_reference
-        loan_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
-        donation_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
-        donation_exp_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
-        loss_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-        discrepancy_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
 
-        # Update the domain
-        domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
+        domain = self._get_domain_compute_amc(cr, uid, context)
+        domain.append(('product_id', 'in', ids))
 
         if to_date:
             domain.append(('date', '<=', to_date))
         if from_date:
             domain.append(('date', '>=', from_date))
 
-        locations = self.pool.get('stock.location').search(cr, uid,
-                                                           [('usage', 'in', ('internal', 'customer'))], context=context,
-                                                           order='NO_ORDER')
-        # Add locations filters in domain if locations are passed in context
-        domain.append(('location_id', 'in', locations))
-        domain.append(('location_dest_id', 'in', locations))
 
         # Search all real consumption line included in the period
         # If no period found, take all stock moves
