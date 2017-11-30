@@ -344,6 +344,8 @@ class cash_request(osv.osv):
                         liq_id = liq_obj.create(cr, uid, vals, context=context)
                         # do a write on the Calculated bal. in book. curr. to trigger the computation of the balance in func. curr.
                         liq_obj.write(cr, uid, liq_id, {'calculated_balance_booking': 0.0}, context=context)
+            # pending cheques
+            liq_cheque_obj.create_liquidity_cheque_for_cash_request(cr, uid, cash_req_id, period_id, inst.id, context=context)
         return True
 
     def _generate_past_transfers(self, cr, uid, cash_req_id, context=None):
@@ -1220,20 +1222,69 @@ class cash_request_liquidity_cheque(osv.osv):
     _name = 'cash.request.liquidity.cheque'
     _inherit = 'cash.request.liquidity'
 
+    def create_liquidity_cheque_for_cash_request(self, cr, uid, cash_request_id, period_id, instance_id, context=None):
+        """"
+        This method creates the cash_request_liquidity_cheques corresponding to the criteria in parameter.
+        It is based on the method get_pending_cheques_ids() from the registers to get the data to take into account.
+        """
+        if context is None:
+            context = {}
+        period_obj = self.pool.get('account.period')
+        journal_obj = self.pool.get('account.journal')
+        reg_obj = self.pool.get('account.bank.statement')
+        aml_obj = self.pool.get('account.move.line')
+        period = period_obj.browse(cr, uid, period_id, fields_to_fetch=['date_start', 'date_stop'], context=context)
+        period_ids = period_obj.search(cr, uid, [('date_start', '<=', period.date_start)], order='NO_ORDER', context=context)
+        cheque_j_domain = [('type', '=', 'cheque'), ('instance_id', '=', instance_id)]
+        cheque_j_ids = journal_obj.search(cr, uid, cheque_j_domain, order='NO_ORDER', context=context)
+        journal_fields_list = ['default_debit_account_id', 'default_credit_account_id']
+        for cheque_j in journal_obj.browse(cr, uid, cheque_j_ids, fields_to_fetch=journal_fields_list, context=context):
+            reg_domain = [('journal_id', '=', cheque_j.id), ('period_id', 'in', period_ids)]
+            reg_ids = reg_obj.search(cr, uid, reg_domain, order='NO_ORDER', context=context)
+            if reg_ids:
+                account_ids = [cheque_j.default_debit_account_id.id, cheque_j.default_credit_account_id.id]
+                aml_ids = reg_obj.get_pending_cheque_ids(cr, uid, reg_ids, account_ids, period.date_stop)
+                aml_fields_list = ['debit_currency', 'credit_currency', 'debit', 'credit']
+                amls = aml_obj.browse(cr, uid, aml_ids, fields_to_fetch=aml_fields_list, context=context)
+                amount_book_currency = amount_func_currency = 0.0
+                for aml in amls:
+                    amount_book_currency += aml.debit_currency - aml.credit_currency or 0.0
+                    amount_func_currency += aml.debit - aml.credit or 0.0
+                # get the most recent register for this journal (used in particular to determine the reg. status)
+                most_recent_date = most_recent_reg = False
+                for reg in reg_obj.browse(cr, uid, reg_ids, fields_to_fetch=['period_id'], context=context):
+                    if not most_recent_reg:
+                        most_recent_date = reg.period_id.date_stop
+                        most_recent_reg = reg
+                        continue
+                    if reg.period_id.date_stop > most_recent_date:
+                        most_recent_date = reg.period_id.date_stop
+                        most_recent_reg = reg
+                if most_recent_reg:
+                    vals = {
+                        'cash_request_id': cash_request_id,
+                        'instance_id': instance_id,
+                        'register_id': most_recent_reg.id,
+                        'pending_cheque_amount_booking': amount_book_currency,
+                        'pending_cheque_amount_functional': amount_func_currency,
+                    }
+                    self.create(cr, uid, vals, context=context)
+
     def _get_cheque_reg_status(self, cr, uid, ids, name, args, context=None):
         """
         Returns a String with the status of the cheque register:
-        - classical register state if the reg. if the one of the Cash Req. period
+        - classical register state Value if the reg. if the one of the Cash Req. period
         - "Not Created" if the register of the month doesn't exist yet
         """
         if context is None:
             context = {}
         result = {}
         period_obj = self.pool.get('account.period')
+        reg_obj = self.pool.get('account.bank.statement')
         for liq in self.browse(cr, uid, ids, fields_to_fetch=['cash_request_id', 'register_id'], context=context):
             period_ids = period_obj.get_period_from_date(cr, uid, liq.cash_request_id.request_date, context=context)
             if period_ids and period_ids[0] == liq.register_id.period_id.id:
-                state = liq.register_id.state
+                state = dict(reg_obj._columns['state'].selection).get(liq.register_id.state) or ''
             else:
                 state = _('Not Created')
             result[liq.id] = state
@@ -1242,6 +1293,10 @@ class cash_request_liquidity_cheque(osv.osv):
     _columns = {
         'status': fields.function(_get_cheque_reg_status,  # can be "Not Created" if the cheque reg. of the month is not created yet
                                   method=True, type='char', size=64, string='Status', store=True, readonly=True),
+        'pending_cheque_amount_booking': fields.float('Pending cheque amount in register currency',
+                                                      digits_compute=dp.get_precision('Account')),
+        'pending_cheque_amount_functional': fields.float('Pending cheque amount in functional currency',
+                                                         digits_compute=dp.get_precision('Account')),
     }
 
 

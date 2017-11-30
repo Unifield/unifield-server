@@ -143,6 +143,25 @@
                                         </tree>
                                     </field>
                                 </group>
+                                <!-- CHEQUE -->
+                                <group colspan="4" col="2">
+                                    <button name="display_details_cheque" type="object" colspan="1"
+                                            string="Pending Cheques - See details for subtotals" icon="terp-stock_zoom"/>
+                                    <label string="" colspan="1"/>
+                                    <field name="liquidity_cheque_ids" nolabel="1" colspan="2">
+                                        <tree string="Pending Cheques">
+                                            <field name="instance_id"/>
+                                            <field name="journal_code"/>
+                                            <field name="journal_name"/>
+                                            <field name="status"/>
+                                            <field name="period_id"/>
+                                            <field name="pending_cheque_amount_booking" sum="Total Pending Cheques Booking"/>
+                                            <field name="booking_currency_id"/>
+                                            <field name="pending_cheque_amount_functional" sum="Total Pending Cheques Functional"/>
+                                            <field name="functional_currency_id"/>
+                                        </tree>
+                                    </field>
+                                </group>
                             </page>
                             <page string="Payables" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                 <field name="payable_ids" nolabel="1">
