@@ -1272,21 +1272,21 @@ class cash_request_liquidity_cheque(osv.osv):
 
     def _get_cheque_reg_status(self, cr, uid, ids, name, args, context=None):
         """
-        Returns a String with the status of the cheque register:
-        - classical register state Value if the reg. if the one of the Cash Req. period
+        Returns a String with the status of the cheque register, based on the Liquidity Pos. Report method:
+        - classical register state Value if the reg. is the one of the Cash Req. period
         - "Not Created" if the register of the month doesn't exist yet
         """
         if context is None:
             context = {}
         result = {}
         period_obj = self.pool.get('account.period')
-        reg_obj = self.pool.get('account.bank.statement')
+        liquidity_pos_report = register_accounting.report.report_liquidity_position \
+            .report_liquidity_position3(cr, uid, 'fakereport', context=context)
         for liq in self.browse(cr, uid, ids, fields_to_fetch=['cash_request_id', 'register_id'], context=context):
             period_ids = period_obj.get_period_from_date(cr, uid, liq.cash_request_id.request_date, context=context)
-            if period_ids and period_ids[0] == liq.register_id.period_id.id:
-                state = dict(reg_obj._columns['state'].selection).get(liq.register_id.state) or ''
-            else:
-                state = _('Not Created')
+            state = ''
+            if liquidity_pos_report and period_ids:
+                state = liquidity_pos_report.getRegisterState(liq.register_id, report_period_id=period_ids[0])
             result[liq.id] = state
         return result
 

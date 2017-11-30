@@ -188,15 +188,17 @@ class report_liquidity_position3(report_sxw.rml_parse):
         reg_data = self.getRegisters()[reg_type]['registers']
         return sum([line['opening_balance'] or 0.0 for line in reg_data if line['currency'] == cur])
 
-    def getRegisterState(self, reg):
+    def getRegisterState(self, reg, report_period_id=None):
         '''
         Returns the register state (String) for the period of the report.
         If the register doesn't exist for this period, returns 'Not Created'.
         '''
         pool = pooler.get_pool(self.cr.dbname)
         reg_obj = pool.get('account.bank.statement')
+        if not report_period_id:
+            report_period_id = self.period_id
         reg_for_selected_period_id = reg_obj.search(self.cr, self.uid, [('name', '=', reg.name),
-                                                                        ('period_id', '=', self.period_id)])
+                                                                        ('period_id', '=', report_period_id)])
         if reg_for_selected_period_id:
             reg_for_selected_period = reg_obj.browse(self.cr, self.uid, reg_for_selected_period_id)[0]
             # get the value from the selection field ("Closed" instead of "confirm", etc.)
