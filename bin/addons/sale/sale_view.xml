@@ -1043,7 +1043,7 @@
                     <field name="sourcing_start" />
                     <field name="sourcing_stop" />
                     <field name="sourcing" />
-                    <field name="error" attrs="{'invisible': [('error', '=', False)}" />
+                    <field name="error" attrs="{'invisible': [('error', '=', False)]}" />
                 </tree>
             </field>
         </record>
