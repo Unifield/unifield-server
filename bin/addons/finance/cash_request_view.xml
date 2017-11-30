@@ -18,6 +18,7 @@
                           hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"
                           hide_edit_button="PROP_INSTANCE_HIDE_BUTTON">
                         <notebook colspan="4">
+                            <!-- MAIN TAB -->
                             <page string="Main Tab">
                                 <button name="generate_cash_request" type="object" string="Generate" icon="gtk-execute"
                                         attrs="{'invisible': [('state', '=', 'done')]}"/>
@@ -89,6 +90,7 @@
                                             attrs="{'invisible': [('state', '!=', 'open')]}"/>
                                 </group>
                             </page>
+                            <!-- BANKING TAB -->
                             <page string="Banking" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                 <separator colspan="4" string="Banking references"/>
                                 <field name="journal_name"/>
@@ -98,6 +100,7 @@
                                 <field name="swift_code"/>
                                 <field name="bank_address"/>
                             </page>
+                            <!-- LIQUIDITY POSITION TAB -->
                             <page string="Liquidity Position" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                 <!-- CASH -->
                                 <group colspan="4" col="2">
@@ -165,6 +168,7 @@
                                     </field>
                                 </group>
                             </page>
+                            <!-- PAYABLES TAB -->
                             <page string="Payables" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                 <field name="payable_ids" nolabel="1">
                                     <tree string="Payables">
@@ -175,6 +179,7 @@
                                     </tree>
                                 </field>
                             </page>
+                            <!-- COMMITMENT TAB -->
                             <page string="Commitment" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                 <separator colspan="4" string="Commitment"/>
                                 <field name="commitment_ids" nolabel="1">
@@ -185,6 +190,7 @@
                                     </tree>
                                 </field>
                             </page>
+                            <!-- PLANNED EXPENSE TAB -->
                             <page string="Planned Expense">
                                 <separator colspan="4" string="Planned expense for the coming period"/>
                                 <group colspan="4" col="2" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
@@ -218,6 +224,7 @@
                                     </field>
                                 </group>
                             </page>
+                            <!-- TRANSFERS FOLLOW-UP TAB -->
                             <page string="Transfers Follow-up" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
                                 <field name="past_transfer_ids" nolabel="1">
                                     <tree string="Past Transfers">
@@ -337,6 +344,28 @@
                 </field>
             </record>
 
+            <!-- CASH REQUEST LIQUIDITY CHEQUE - TREE VIEW -->
+            <record id="view_cash_request_liquidity_cheque_tree" model="ir.ui.view">
+                <field name="name">cash.request.liquidity.cheque.tree</field>
+                <field name="model">cash.request.liquidity.cheque</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree>
+                        <field name="instance_id"/>
+                        <field name="journal_code"/>
+                        <field name="journal_name"/>
+                        <field name="status"/>
+                        <field name="period_id"/>
+                        <field name="bank_journal_code"/>
+                        <field name="bank_journal_name"/>
+                        <field name="pending_cheque_amount_booking" sum="Total Pending Cheques Booking"/>
+                        <field name="booking_currency_id"/>
+                        <field name="pending_cheque_amount_functional" sum="Total Pending Cheques Functional"/>
+                        <field name="functional_currency_id"/>
+                    </tree>
+                </field>
+            </record>
+
             <!-- CASH REQUEST LIQUIDITY CASH - SEARCH VIEW -->
             <record id="view_cash_request_liquidity_cash_search" model="ir.ui.view">
                 <field name="name">cash.request.liquidity.cash.search</field>
@@ -348,6 +377,13 @@
             <record id="view_cash_request_liquidity_bank_search" model="ir.ui.view">
                 <field name="name">cash.request.liquidity.bank.search</field>
                 <field name="model">cash.request.liquidity.bank</field>
+                <field name="type">search</field>
+                &liquidity_position_search;
+            </record>
+            <!-- CASH REQUEST LIQUIDITY CHEQUE - SEARCH VIEW -->
+            <record id="view_cash_request_liquidity_cheque_search" model="ir.ui.view">
+                <field name="name">cash.request.liquidity.cheque.search</field>
+                <field name="model">cash.request.liquidity.cheque</field>
                 <field name="type">search</field>
                 &liquidity_position_search;
             </record>

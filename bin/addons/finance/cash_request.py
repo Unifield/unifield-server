@@ -561,26 +561,34 @@ class cash_request(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if regtype in ['cash', 'bank']:
+        if regtype in ['cash', 'bank', 'cheque']:
             if regtype == 'cash':
                 liq_obj = self.pool.get('cash.request.liquidity.cash')
                 search_view = 'view_cash_request_liquidity_cash_search'
                 tree_view = 'view_cash_request_liquidity_cash_tree'
                 res_model = 'cash.request.liquidity.cash'
                 view_name = _('Liquidity Position - Cash')
-            else:
+            elif regtype == 'bank':
                 liq_obj = self.pool.get('cash.request.liquidity.bank')
                 search_view = 'view_cash_request_liquidity_bank_search'
                 tree_view = 'view_cash_request_liquidity_bank_tree'
                 res_model = 'cash.request.liquidity.bank'
                 view_name = _('Liquidity Position - Bank')
+            else:
+                liq_obj = self.pool.get('cash.request.liquidity.cheque')
+                search_view = 'view_cash_request_liquidity_cheque_search'
+                tree_view = 'view_cash_request_liquidity_cheque_tree'
+                res_model = 'cash.request.liquidity.cheque'
+                view_name = _('Liquidity Position - Pending Cheques')
             model_data_obj = self.pool.get('ir.model.data')
-            fields_list = ['liquidity_cash_ids', 'liquidity_bank_ids']
+            fields_list = ['liquidity_cash_ids', 'liquidity_bank_ids', 'liquidity_cheque_ids']
             cash_req = self.browse(cr, uid, ids[0], fields_to_fetch=fields_list, context=context)
             if regtype == 'cash':
                 liq_ids = [l.id for l in cash_req.liquidity_cash_ids]
-            else:
+            elif regtype == 'bank':
                 liq_ids = [l.id for l in cash_req.liquidity_bank_ids]
+            else:
+                liq_ids = [l.id for l in cash_req.liquidity_cheque_ids]
             domain = [('id', 'in', liq_ids)]
             module_name = 'finance'
             tree_view_id = model_data_obj.get_object_reference(cr, uid, module_name, tree_view)
@@ -606,6 +614,9 @@ class cash_request(osv.osv):
 
     def display_details_bank(self, cr, uid, ids, context=None):
         return self.display_details(cr, uid, ids, regtype='bank', context=context)
+
+    def display_details_cheque(self, cr, uid, ids, context=None):
+        return self.display_details(cr, uid, ids, regtype='cheque', context=context)
 
 
 cash_request()
