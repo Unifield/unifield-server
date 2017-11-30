@@ -384,7 +384,8 @@ class cash_request(osv.osv):
         if context is None:
             context = {}
         recap_mission_obj = self.pool.get('recap.mission')
-        fields_list = ['instance_ids', 'commitment_ids', 'recap_expense_ids', 'payable_ids']
+        fields_list = ['instance_ids', 'commitment_ids', 'recap_expense_ids', 'payable_ids', 'liquidity_cash_ids',
+                       'liquidity_bank_ids', 'liquidity_cheques_ids']
         cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=fields_list, context=context)
         # delete previous recap mission lines for this cash request
         old_lines = recap_mission_obj.search(cr, uid, [('cash_request_id', '=', cash_req.id)], order='NO_ORDER', context=context)
@@ -392,7 +393,7 @@ class cash_request(osv.osv):
         # create new lines
         instances = cash_req.instance_ids
         for inst in instances:
-            commitment_amount = expense_amount = payable_amount = 0.0
+            commitment_amount = expense_amount = payable_amount = liquidity_amount = 0.0
             # Commitment lines
             for cl in cash_req.commitment_ids:
                 commitment_amount += cl.instance_id.id == inst.id and cl.total_commitment or 0.0
@@ -402,10 +403,21 @@ class cash_request(osv.osv):
             # Payables
             for payable in cash_req.payable_ids:
                 payable_amount += payable.instance_id.id == inst.id and payable.balance or 0.0
+            # Liquidity amounts
+            # Cash
+            for cash in cash_req.liquidity_cash_ids:
+                liquidity_amount += cash.instance_id.id == inst.id and cash.calculated_balance_functional or 0.0
+            # Bank
+            for bank in cash_req.liquidity_bank_ids:
+                liquidity_amount += bank.instance_id.id == inst.id and bank.calculated_balance_functional or 0.0
+            # Pending Cheques
+            for cheque in cash_req.liquidity_cheque_ids:
+                liquidity_amount += cheque.instance_id.id == inst.id and cheque.pending_cheque_amount_functional or 0.0
             recap_mission_vals = {'instance_id': inst.id,
                                   'commitment_amount': commitment_amount,
                                   'expense_amount': expense_amount,
                                   'payable_amount': payable_amount,
+                                  'liquidity_amount': liquidity_amount,
                                   'cash_request_id': cash_req.id}
             recap_mission_obj.create(cr, uid, recap_mission_vals, context=context)
 
@@ -1333,7 +1345,7 @@ class cash_request_liquidity_total(osv.osv):
 
     def create_liquidity_grand_total(self, cr, uid, cash_request_id, context=None):
         """"
-        This method creates the cash_request_liquidity_totals corresponding for the Cash Request in parameter.
+        This method creates the cash_request_liquidity_totals for the Cash Request in parameter.
         It sums the liquidity values per currencies.
         """
         if context is None:
@@ -1357,8 +1369,7 @@ class cash_request_liquidity_total(osv.osv):
                 result[bank.booking_currency_id.id]['amount_booking'] = 0.0
                 result[bank.booking_currency_id.id]['amount_functional'] = 0.0
             result[bank.booking_currency_id.id]['amount_booking'] += bank.calculated_balance_booking or 0.0
-            result[bank.booking_currency_id.id][
-                'amount_functional'] += bank.calculated_balance_functional or 0.0
+            result[bank.booking_currency_id.id]['amount_functional'] += bank.calculated_balance_functional or 0.0
         # Cheque amounts
         for cheque in cash_req.liquidity_cheque_ids:
             if cheque.booking_currency_id.id not in result:
