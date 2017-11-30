@@ -709,13 +709,16 @@ class cash_request_commitment(osv.osv):
 
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Instance Code', required=True),
+        'instance_level': fields.related('instance_id', 'level', string='Instance level', readonly=True, store=True,
+                                         type='selection',
+                                         selection=[('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')]),
         'period_id': fields.many2one('account.period', 'Period', required=True),
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', required=True, ondelete='cascade'),
         'total_commitment': fields.function(_total_commitment_compute, method=True, string='Total', type='float',
                                             digits_compute=dp.get_precision('Account'), store=True),
     }
 
-    _order = 'instance_id'
+    _order = 'instance_level, instance_id'
 
 
 cash_request_commitment()
