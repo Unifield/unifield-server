@@ -768,19 +768,34 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 'product_uom_id': product_uom_id,
             }
 
+            # If a line number was given, check that there's no conflict in
+            # terms of product/BN/ED uniqueness
+            if line_no:
+                conflict_line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
+                                                                  ('line_no', '!=', line_no),
+                                                                  ('product_id', '=', product_id),
+                                                                  ('batch_number', '=', batch_name),
+                                                                  ('expiry_date', '=', expiry_date)])
+
+                if conflict_line_ids:
+                    add_error("""A line for the same product, batch number and expiry date already exists with a different line number.""", row_index)
+
             # Check if line exist
             if line_no:
-                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no)])
+                existing_line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
+                                                                  ('line_no', '=', line_no)])
             else:
-                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
-                                                         ('product_id', '=', product_id),
-                                                         ('batch_number', '=', batch_name),
-                                                         ('expiry_date', '=', expiry_date)])
-                if line_ids:
+                existing_line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
+                                                                  ('product_id', '=', product_id),
+                                                                  ('batch_number', '=', batch_name),
+                                                                  ('expiry_date', '=', expiry_date)])
+                # If we found an existing line, we don't want to override the
+                # line_no
+                if existing_line_ids:
                     del data["line_no"]
 
-            if len(line_ids) > 0:
-                counting_sheet_lines.append((1, line_ids[0], data))
+            if len(existing_line_ids) > 0:
+                counting_sheet_lines.append((1, existing_line_ids[0], data))
             else:
                 counting_sheet_lines.append((0, 0, data))
 
