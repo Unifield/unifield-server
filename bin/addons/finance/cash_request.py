@@ -819,7 +819,7 @@ class cash_request_expense(osv.osv):
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
         'prop_instance_id': fields.many2one('msf.instance', 'Prop. Instance', required=True, readonly=True,
                                             domain=[('level', 'in', ['coordo', 'project'])]),
-        'prop_instance_level': fields.related('instance_id', 'level', string='Instance level', readonly=True,
+        'prop_instance_level': fields.related('prop_instance_id', 'level', string='Instance level', readonly=True,
                                               store=True, type='selection',
                                               selection=[('section', 'Section'),
                                                          ('coordo', 'Coordo'),
