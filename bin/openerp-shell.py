@@ -1,0 +1,362 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+##############################################################################
+#
+#    OpenERP, Open Source Management Solution
+#    Copyright (C) 2004-2009 Tiny SPRL (<http://tiny.be>).
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as
+#    published by the Free Software Foundation, either version 3 of the
+#    License, or (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+"""
+OpenERP - Server
+OpenERP is an ERP+CRM program for small and medium businesses.
+
+The whole source code is distributed under the terms of the
+GNU Public Licence.
+
+(c) 2003-TODAY, Fabien Pinckaers - OpenERP s.a.
+"""
+
+import updater
+updater.do_update()
+
+#----------------------------------------------------------
+# python imports
+#----------------------------------------------------------
+import logging
+import os
+import signal
+import sys
+import threading
+import traceback
+import time
+
+import release
+__author__ = release.author
+__version__ = release.version
+
+if os.name == 'posix':
+    import pwd
+    # We DON't log this using the standard logger, because we might mess
+    # with the logfile's permissions. Just do a quick exit here.
+    if pwd.getpwuid(os.getuid())[0] == 'root' :
+        sys.stderr.write("Attempted to run OpenERP server as root. This is not good, aborting.\n")
+        sys.exit(1)
+
+#----------------------------------------------------------
+# get logger
+#----------------------------------------------------------
+import netsvc
+logger = logging.getLogger('server')
+
+# Log an operations.event. In the contexts we are called, we don't
+# have a open cr. We need to look in pooler.pool_dic to find the
+# list of DBs that have already been opened and upgraded.
+# We ignore all errors because logging events is best
+# effort.
+def ops_event(what, dbname=None):
+    for db in pooler.pool_dic.keys():
+        cr = None
+        if dbname is not None and db != dbname:
+            continue
+        try:
+            c, pool = pooler.get_db_and_pool(db, upgrade_modules=False)
+            cr = c.cursor()
+            oe = pool.get('operations.event')
+            oe.create(cr, 1, { 'kind': what })
+            cr.commit()
+        except:
+            pass
+        finally:
+            if cr is not None:
+                cr.close()
+                cr = None
+
+#-----------------------------------------------------------------------
+# import the tools module so that the commandline parameters are parsed
+#-----------------------------------------------------------------------
+import tools
+updater.update_path()
+logger.info("OpenERP version - %s", release.version)
+logger.info("sys.path %s", ' '.join(sys.path))
+for name, value in [('addons_path', tools.config['addons_path']),
+                    ('database hostname', tools.config['db_host'] or 'localhost'),
+                    ('database port', tools.config['db_port'] or '5432'),
+                    ('database user', tools.config['db_user'])]:
+    logger.info("%s - %s", name, value)
+updater.do_pg_update()
+
+# Don't allow if the connection to PostgreSQL done by postgres user
+if tools.config['db_user'] == 'postgres':
+    logger.error("Connecting to the database as 'postgres' user is forbidden, as it present major security issues. Shutting down.")
+    sys.exit(1)
+
+
+if not tools.config['db_name']:
+    print "Usage: ./unifield-shell.py -d dbname"
+    sys.exit(-1)
+
+#----------------------------------------------------------
+# init net service
+#----------------------------------------------------------
+logger.info('initialising distributed objects services')
+
+#---------------------------------------------------------------
+# connect to the database and initialize it with base if needed
+#---------------------------------------------------------------
+import pooler
+
+#----------------------------------------------------------
+# import basic modules
+# (the asserts are to silence pyflakes warnings)
+#----------------------------------------------------------
+import osv; assert osv
+import workflow; assert workflow
+import report; assert report
+import service; assert service
+
+#----------------------------------------------------------
+# import addons
+#----------------------------------------------------------
+import addons; assert addons
+
+#----------------------------------------------------------
+# Load and update databases if requested
+#----------------------------------------------------------
+
+import service.http_server
+import updater
+
+if not ( tools.config["stop_after_init"] or \
+         tools.config["translate_in"] or \
+         tools.config["translate_out"] ):
+    service.http_server.init_servers()
+    service.http_server.init_xmlrpc()
+    service.http_server.init_static_http()
+
+    import service.netrpc_server
+    service.netrpc_server.init_servers()
+
+if tools.config['db_name']:
+    for dbname in tools.config['db_name'].split(','):
+        ops_event('commandline-update', dbname)
+        db,pool = pooler.get_db_and_pool(dbname, update_module=tools.config['init'] or tools.config['update'], pooljobs=False)
+        cr = db.cursor()
+        try:
+            if tools.config["test_file"]:
+                logger.info('loading test file %s', tools.config["test_file"])
+                tools.convert_yaml_import(cr, 'base', open(tools.config["test_file"]), {}, 'test', True)
+                cr.rollback()
+            pool.get('ir.cron')._poolJobs(db.dbname)
+        finally:
+            cr.close()
+
+#----------------------------------------------------------
+# translation stuff
+#----------------------------------------------------------
+if tools.config["translate_out"]:
+    if tools.config["language"]:
+        msg = "language %s" % (tools.config["language"],)
+    else:
+        msg = "new language"
+    logger.info('writing translation file for %s to %s', msg, tools.config["translate_out"])
+
+    fileformat = os.path.splitext(tools.config["translate_out"])[-1][1:].lower()
+    buf = open(tools.config["translate_out"], "w")
+    dbname = tools.config['db_name']
+    cr = pooler.get_db(dbname).cursor()
+    try:
+        tools.trans_export(tools.config["language"], tools.config["translate_modules"] or ["all"], buf, fileformat, cr)
+    finally:
+        cr.close()
+        buf.close()
+
+    logger.info('translation file written successfully')
+    sys.exit(0)
+
+if tools.config["translate_in"]:
+    context = {'overwrite': tools.config["overwrite_existing_translations"]}
+    dbname = tools.config['db_name']
+    cr = pooler.get_db(dbname).cursor()
+    try:
+        tools.trans_load(cr,
+                         tools.config["translate_in"],
+                         tools.config["language"],
+                         context=context)
+        tools.trans_update_res_ids(cr)
+    finally:
+        cr.commit()
+        cr.close()
+    sys.exit(0)
+
+#----------------------------------------------------------------------------------
+# if we don't want the server to continue to run after initialization, we quit here
+#----------------------------------------------------------------------------------
+if tools.config["stop_after_init"]:
+    sys.exit(0)
+
+
+#----------------------------------------------------------
+# Launch Servers
+#----------------------------------------------------------
+
+LST_SIGNALS = ['SIGINT', 'SIGTERM']
+
+SIGNALS = dict(
+    [(getattr(signal, sign), sign) for sign in LST_SIGNALS]
+)
+
+netsvc.quit_signals_received = 0
+
+def handler(signum, frame):
+    """
+    :param signum: the signal number
+    :param frame: the interrupted stack frame or None
+    """
+    netsvc.quit_signals_received += 1
+    if netsvc.quit_signals_received > 1:
+        sys.stderr.write("Forced shutdown.\n")
+        os._exit(0)
+
+def dumpstacks(signum, frame):
+    # code from http://stackoverflow.com/questions/132058/getting-stack-trace-from-a-running-python-application#answer-2569696
+    # modified for python 2.5 compatibility
+    thread_map = dict(threading._active, **threading._limbo)
+    id2name = dict([(threadId, thread.getName()) for threadId, thread in thread_map.items()])
+    code = []
+    for threadId, stack in sys._current_frames().items():
+        code.append("\n# Thread: %s(%d)" % (id2name[threadId], threadId))
+        for filename, lineno, name, line in traceback.extract_stack(stack):
+            code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
+            if line:
+                code.append("  %s" % (line.strip()))
+    logging.getLogger('dumpstacks').info("\n".join(code))
+
+for signum in SIGNALS:
+    signal.signal(signum, handler)
+
+if os.name == 'posix':
+    signal.signal(signal.SIGQUIT, dumpstacks)
+
+def quit(restart=False, db_name=''):
+    if restart:
+        time.sleep(updater.restart_delay)
+    netsvc.Agent.quit()
+    netsvc.Server.quitAll()
+    if tools.config['pidfile']:
+        os.unlink(tools.config['pidfile'])
+    logger = logging.getLogger('shutdown')
+    logger.info("Initiating OpenERP Server shutdown")
+    logger.info("Hit CTRL-C again or send a second signal to immediately terminate the server...")
+
+    ops_event('shutdown')
+    logging.shutdown()
+
+    # manually join() all threads before calling sys.exit() to allow a second signal
+    # to trigger _force_quit() in case some non-daemon threads won't exit cleanly.
+    # threading.Thread.join() should not mask signals (at least in python 2.5)
+    for thread in threading.enumerate():
+        if thread != threading.currentThread() and not thread.isDaemon():
+            while thread.isAlive():
+                # need a busyloop here as thread.join() masks signals
+                # and would present the forced shutdown
+                thread.join(0.05)
+                time.sleep(0.05)
+                time.sleep(1)
+                if os.name == 'nt':
+                    try:
+                        logger.info("Killing", thread.getName())
+                        thread._Thread__stop()
+                    except:
+                        logger.info(str(thread.getName()) + ' could not be terminated')
+
+    if not restart:
+        sys.exit(0)
+    elif os.name == 'nt':
+        sys.exit(1) # require service restart
+    else:
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+
+#-----------------------------------------------------------
+#-----------------------------------------------------------
+
+class Shell():
+
+    def __init__(self):
+
+        self.dbname = tools.config['db_name']
+
+        db, pool = pooler.get_db_and_pool(self.dbname)
+
+        self.db = db
+        self.cr = db.cursor()
+        self.pool = pool
+
+        assert self.db is not None, "DB couldnt be loaded ?"
+        assert self.pool is not None, "Pool couldnt be loaded ?"
+        assert self.cr is not None, "Pool couldnt be loaded ?"
+
+    def run(self):
+
+        cr = self.cr
+        uid = 1
+        context = {}
+
+        print "\n" * 3
+        print "--------------------"
+        print "In this context, you can use the ORM as you would usually do"
+        print "from within 'real code'. E.g. : "
+        print ""
+        print " self.pool.get('some.module')._columns "
+        print ""
+        print " self.pool.get('some.module').create(cr, uid, ...) "
+        print ""
+        print "If your cursor ends up in a weird state, you can cr.rollback()"
+        print "--------------------"
+        print "\n" * 3
+
+        try:
+            from IPython import embed
+            embed()
+        except ImportError:
+            print "--------------------"
+            print "You don't have IPython installed."
+            print "Consider installing it as it is way better than the standard shell."
+            print "Falling back on the standard shell."
+            import readline  # will allow Up/Down/History in the console
+            import code
+            vars = globals().copy()
+            vars.update(locals())
+            shell = code.InteractiveConsole(vars)
+            shell.interact()
+
+def run_shell():
+    try:
+        s = Shell()
+        s.run()
+    except:
+        print "Exception raised"
+    finally:
+        print "Exiting"
+        try:
+           s.cr.close()
+        except:
+           pass
+
+run_shell()
+quit(restart=updater.restart_required)
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
