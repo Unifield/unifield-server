@@ -616,6 +616,11 @@ class cash_request(osv.osv):
             tree_view_id = tree_view_id and tree_view_id[1] or False
             search_view_id = model_data_obj.get_object_reference(cr, uid, module_name, search_view)
             search_view_id = search_view_id and search_view_id[1] or False
+            # update context for the "Group By..." functionality
+            context.update({'group_by_no_leaf': 1,
+                            'group_by': [],
+                            'search_default_group_booking_currency_id': 1,
+                            })
             return {
                 'name': view_name,
                 'type': 'ir.actions.act_window',

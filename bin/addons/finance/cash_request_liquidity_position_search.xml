@@ -6,9 +6,11 @@
         </group>
         <newline/>
         <group expand="1" string="Group By..." col="4" colspan="8">
-            <filter string="Proprietary Instance" icon="terp-stage" context="{'group_by': 'instance_id'}" domain="[]"/>
+            <filter string="Proprietary Instance" name="group_instance_id"
+                    icon="terp-stage" context="{'group_by': 'instance_id'}" domain="[]"/>
             <separator orientation="vertical"/>
-            <filter string="Currency" icon="terp-dolar" context="{'group_by': 'booking_currency_id'}" domain="[]"/>
+            <filter string="Currency" name="group_booking_currency_id"
+                    icon="terp-dolar" context="{'group_by': 'booking_currency_id'}" domain="[]"/>
         </group>
     </search>
 </field>

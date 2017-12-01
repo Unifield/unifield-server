@@ -318,7 +318,7 @@
                 <field name="model">cash.request.liquidity.cash</field>
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
-                    <tree>
+                    <tree noteditable="1" hide_delete_button="1">
                         <field name="instance_id"/>
                         <field name="journal_code"/>
                         <field name="journal_name"/>
@@ -341,7 +341,7 @@
                 <field name="model">cash.request.liquidity.bank</field>
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
-                    <tree>
+                    <tree noteditable="1" hide_delete_button="1">
                         <field name="instance_id"/>
                         <field name="journal_code"/>
                         <field name="journal_name"/>
@@ -364,7 +364,7 @@
                 <field name="model">cash.request.liquidity.cheque</field>
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
-                    <tree>
+                    <tree noteditable="1" hide_delete_button="1">
                         <field name="instance_id"/>
                         <field name="journal_code"/>
                         <field name="journal_name"/>
