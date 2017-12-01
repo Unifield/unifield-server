@@ -14,12 +14,17 @@ Scenario: SLL - State propagation and readonly checks in Internal Requests
     I click on "New"
 
     I should see "Draft" in "Order State"
-    I should see "Order State" as readonly
     I should see "Order Reference" as readonly
     I should see "Ordered Date" as editable
-    I should see "Requestor" as editable
     I should see "Warehouse" as editable
+    I should see "Requestor" as editable
+    I should see "Location Requestor" as editable
+    I should see "Requested Date" as editable
+    I should see "Origin" as editable
+    I should see "Functional Currency" as readonly
     I should see "Order category" as editable
+    I should see "Date of Stock Take" as editable
+    I should see "Order State" as readonly
 
     I click on button_id "location_requestor_id_select" and open the window
     I click on first line and close the window
@@ -37,6 +42,7 @@ Scenario: SLL - State propagation and readonly checks in Internal Requests
     I validate the line
 
     I click on "Save & Edit"
+    I store "Order Reference" in "IR_REFERENCE"
 
     ##########################################################
     # Validate first line
@@ -47,22 +53,33 @@ Scenario: SLL - State propagation and readonly checks in Internal Requests
     | [ADAPCABL1P-] (printer) CABLE, PARALLEL interface PC/printer |
 
     I should see "Draft-p" in "Order State"
-    I should see "Order State" as readonly
     I should see "Order Reference" as readonly
     I should see "Ordered Date" as editable
-    I should see "Requestor" as editable
     I should see "Warehouse" as editable
+    I should see "Requestor" as editable
+    I should see "Location Requestor" as editable
+    I should see "Requested Date" as editable
+    I should see "Origin" as editable
+    I should see "Functional Currency" as readonly
     I should see "Order category" as readonly
+    I should see "Date of Stock Take" as editable
+    I should see "Order State" as readonly
+
 
     I click on "Save & Edit"
 
     I should see "Draft-p" in "Order State"
-    I should see "Order State" as readonly
     I should see "Order Reference" as readonly
     I should see "Ordered Date" as editable
-    I should see "Requestor" as editable
     I should see "Warehouse" as editable
+    I should see "Requestor" as editable
+    I should see "Location Requestor" as editable
+    I should see "Requested Date" as editable
+    I should see "Origin" as editable
+    I should see "Functional Currency" as readonly
     I should see "Order category" as readonly
+    I should see "Date of Stock Take" as editable
+    I should see "Order State" as readonly
 
     I click on "Save"
 
@@ -77,17 +94,105 @@ Scenario: SLL - State propagation and readonly checks in Internal Requests
     | [ADAPCABL2S-] (computer) CABLE, SERIAL interface PC/Mini-M, female/male |
 
     I should see "Validated" in "Order State"
-    I should see "Order State" as readonly
     I should see "Order Reference" as readonly
     I should see "Ordered Date" as editable
-    I should see "Requestor" as editable
     I should see "Warehouse" as editable
+    I should see "Requestor" as editable
+    I should see "Location Requestor" as editable
+    I should see "Requested Date" as editable
+    I should see "Origin" as editable
+    I should see "Functional Currency" as readonly
     I should see "Order category" as readonly
+    I should see "Date of Stock Take" as editable
+    I should see "Order State" as readonly
+
+    I click on "Save & Edit"
+
+    I should see "Validated" in "Order State"
+    I should see "Order Reference" as readonly
+    I should see "Ordered Date" as editable
+    I should see "Warehouse" as editable
+    I should see "Requestor" as editable
+    I should see "Location Requestor" as editable
+    I should see "Requested Date" as editable
+    I should see "Origin" as editable
+    I should see "Functional Currency" as readonly
+    I should see "Order category" as readonly
+    I should see "Date of Stock Take" as editable
+    I should see "Order State" as readonly
+
+
+    ##########################################################
+    # Souce 1 line (Validated-p)
+    ##########################################################
+    I click on menu "Orders Sourcing Tool"
+    I fill "Order" with "{{IR_REFERENCE}}"
+    I click on "Search"
+    I click "Edit" on line:
+        | PRODUCT                                                                 |
+        | [ADAPCABL2S-] (computer) CABLE, SERIAL interface PC/Mini-M, female/male |
+    I fill "ITCompany" within column "SUPPLIER"
+    I validate the line
+    I click "Source Line" on line:
+        | PRODUCT                                                                 |
+        | [ADAPCABL2S-] (computer) CABLE, SERIAL interface PC/Mini-M, female/male |
+
+    I click on menu "Internal Requests"
+    I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+    I should see "Validated-p" in "Order State"
+    I should see "Order Reference" as readonly
+    I should see "Ordered Date" as readonly
+    I should see "Warehouse" as readonly
+    I should see "Requestor" as readonly
+    I should see "Location Requestor" as readonly
+    I should see "Requested Date" as readonly
+    I should see "Origin" as readonly
+    I should see "Functional Currency" as readonly
+    I should see "Order category" as readonly
+    I should see "Date of Stock Take" as readonly
+    I should see "Order State" as readonly
+
+
+    ##########################################################
+    # Souce 2nd line (Sourced)
+    ##########################################################
+    I click on menu "Orders Sourcing Tool"
+    I fill "Order" with "{{IR_REFERENCE}}"
+    I click on "Search"
+    I click "Edit" on line:
+        | PRODUCT                                                                 |
+        | [ADAPCABL1P-] (printer) CABLE, PARALLEL interface PC/printer            |
+    I fill "ITCompany" within column "SUPPLIER"
+    I validate the line
+    I click "Source Line" on line:
+        | PRODUCT                                                                 |
+        | [ADAPCABL1P-] (printer) CABLE, PARALLEL interface PC/printer            |
+
+    I click on menu "Internal Requests"
+    I click "Edit" on line:
+        | ORDER REFERENCE    |
+        | *{{IR_REFERENCE}}* |
+
+    I should see "Sourced" in "Order State"
+    I should see "Order Reference" as readonly
+    I should see "Ordered Date" as readonly
+    I should see "Warehouse" as readonly
+    I should see "Requestor" as readonly
+    I should see "Location Requestor" as readonly
+    I should see "Requested Date" as readonly
+    I should see "Origin" as readonly
+    I should see "Functional Currency" as readonly
+    I should see "Order category" as readonly
+    I should see "Date of Stock Take" as readonly
+    I should see "Order State" as readonly
 
     I click on "Save"
 
     ##########################################################
-    # Create another PO with same 2 products
+    # Create another IR with same 2 products
     ##########################################################
 
     I click on "Duplicate"
