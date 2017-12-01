@@ -87,7 +87,8 @@
                                 <group colspan="4" col="4">
                                     <label string="" colspan="2"/>
                                     <button name="set_to_done" type="object" string="Done" icon="terp-camera_test"
-                                            attrs="{'invisible': [('state', '!=', 'open')]}"/>
+                                            attrs="{'invisible': [('state', '!=', 'open')]}"
+                                            confirm='Have you clicked on "Compute recap lines &amp; total to transfer" to get the accurate Total to transfer?'/>
                                 </group>
                             </page>
                             <!-- BANKING TAB -->
