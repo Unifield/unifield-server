@@ -13,7 +13,7 @@
                 <field name="type">form</field>
                 <field name="arch" type="xml">
                     <!-- creation/duplication allowed in coordo / edition allowed in coordo and project (see fields_view_get) -->
-                    <form string="Cash Request" noteditable="state=='done'"
+                    <form string="Cash Request"
                           hide_new_button="PROP_INSTANCE_HIDE_BUTTON"
                           hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"
                           hide_edit_button="PROP_INSTANCE_HIDE_BUTTON">
@@ -28,12 +28,12 @@
                                     <field name="current_instance_level" invisible="1"/>
                                     <field name="name"/>
                                     <field name="state"/>
-                                    <field name="request_date"/>
-                                    <field name="month_period_id"/>
+                                    <field name="request_date" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                    <field name="month_period_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
                                     <field name="mission"/>
                                     <field name="prop_instance_id"/>
-                                    <field name="transfer_account_id"/>
-                                    <field name="bank_journal_id"/>
+                                    <field name="transfer_account_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                    <field name="bank_journal_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
                                     <field name="transfer_currency_ids">
                                         <tree string="Currencies" editable="bottom">
                                             <field name="currency_id"/>
@@ -69,9 +69,9 @@
                                         </field>
                                     </group>
                                     <group colspan="4" col="6">
-                                        <field name="transfer_to_come"/>
-                                        <field name="security_envelope"/>
-                                        <field name="buffer"/>
+                                        <field name="transfer_to_come" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                        <field name="security_envelope" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                        <field name="buffer" attrs="{'readonly': [('state', '=', 'done')]}"/>
                                     </group>
                                     <field name="total_to_transfer"/>
                                     <field name="consolidation_currency_name" nolabel="1"/>
