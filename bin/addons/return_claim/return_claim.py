@@ -2208,6 +2208,7 @@ class claim_product_line(osv.osv):
             result.setdefault('value', {})['hidden_asset_claim_product_line'] = asset_check
             kit_check = product_obj.type == 'product' and product_obj.subtype == 'kit'
             result.setdefault('value', {})['hidden_kit_claim_product_line'] = kit_check
+            result.setdefault('value', {})['price_unit_claim_product_line'] = product_obj.product_tmpl_id.standard_price
 
         # compute qty
         result = self.common_on_change(cr, uid, ids, location_id, product_id, prodlot_id, uom_id, result=result, context=context)
