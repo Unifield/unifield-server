@@ -26,7 +26,7 @@
                         <field name="delivery_requested_date" required="1" string="Requested date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                         <field name="origin" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" />
                         <field name="functional_currency_id" />
-                        <field name="categ" on_change="onchange_categ(categ)" />
+                        <field name="categ" on_change="onchange_categ(categ)" /> <!-- RO state!=draft set on _column, same on IR -->
                         <group colspan="2" col="3">
                             <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}" />
                             <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent"

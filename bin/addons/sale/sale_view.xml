@@ -108,25 +108,25 @@
                 <form string="Sales Order" noteditable="import_in_progress==True" hide_delete_button="1">
                     <group col="4" colspan="4">
                         <field name="name" required="1"/>
-                        <field name="date_order" attrs="{'readonly': [('state_hidden_sale_order', 'not in', ['draft'])]}" on_change="onchange_date_order(partner_id,date_order,est_transport_lead_time,context)"/>
+                        <field name="date_order" readonly="1" />
                         <field name="invoiced" string="Invoiced" invisible="1"/>
-                        <field name="warehouse_id" required="1"/>
-                        <field name="client_order_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p'])]}"/>
+                        <field name="warehouse_id" required="1" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="client_order_ref" readonly="1" />
                         <field name="shipped" invisible="1"/>
                         <field name="internal_type" invisible="1"/>
                         <field name="picked_rate" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
                         <field name="fo_created_by_po_sync" invisible="1"/>
-                        <field name="order_type" attrs="{'readonly': [('fo_created_by_po_sync', '=', True), ('state', '=', 'draft')]}" on_change="onchange_order_type(order_type, partner_id)"/>
+                        <field name="order_type" attrs="{'readonly': ['|', ('fo_created_by_po_sync', '=', True), ('state', 'in', ['done', 'cancel'])]}" on_change="onchange_order_type(order_type, partner_id)"/>
                         <field name="sourcing_trace_ok" invisible="1"/>
-                        <field name="priority"/>
-                        <field name="categ" on_change="onchange_categ(categ)"/>
+                        <field name="priority" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                        <field name="categ" on_change="onchange_categ(categ)"/> <!-- RO state!=draft set on _column, same on IR -->
                         <group colspan="2" col="2">
                             <field name="fo_to_resource" invisible="1"/>
                             <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')], 'readonly': ['|', ('state', 'not in', ['draft', 'draft_p', 'validated', 'validated_p']), ('order_type', '!=', 'loan')]}"/>
                             <field name="parent_order_name" readonly="True" attrs="{'invisible': [('fo_to_resource', '=', False)]}"/>
                         </group>
-                        <field name="details"/>
+                        <field name="details" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <field name="noinvoice" invisible="1"/>
                     </group>
                     <group colspan="4" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
@@ -142,19 +142,19 @@
                     <notebook colspan="5">
                         <page string="Sales Order">
                             <field name="company_id2" invisible="1"/>
-                            <field name="partner_id" on_change="onchange_partner_id(partner_id,order_type,date_order,est_transport_lead_time,context)" context="{'search_default_customer':1}" domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]"/>
+                            <field name="partner_id" on_change="onchange_partner_id(partner_id,order_type,date_order,est_transport_lead_time,context)" context="{'search_default_customer':1}" domain="[('customer','=',True), ('id', '!=', company_id2), ('check_partner_so', '=', {'order_type':order_type, 'partner_id': partner_id})]"/> <!-- RO if state!=draft set on _columns -->
                             <field name="partner_type"/>
-                            <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" required="1"/>
-                            <field domain="[('partner_id','=',partner_id)]" name="partner_order_id" required="1"/>
-                            <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" required="1"/>
+                            <field domain="[('partner_id','=',partner_id)]" name="partner_invoice_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
+                            <field domain="[('partner_id','=',partner_id)]" name="partner_order_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
+                            <field domain="[('partner_id','=',partner_id)]" name="partner_shipping_id" required="1"/> <!-- RO if state not in draft, draft_p, validated : _columns -->
                             <group colspan="2" col="3">
                                 <field name="no_line" invisible="1"/>
-                                <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'not in', ['draft', 'validated'])]}" domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]"/>
-                                <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'not in', ['draft', 'validated'])]}"/>
+                                <field name="pricelist_id" string="Currency" colspan="2" attrs="{'readonly': ['|', ('no_line', '=', False), ('state', 'not in', ['draft'])]}" domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]"/>
+                                <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                             </group>
                             <group colspan="2" col="3">
-                                <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft'])]}"/>
-                                <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'confirmed'))]}"/>
+                                <field name="stock_take_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
+                                <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ('draft', 'draft_p', 'validated'))]}"/>
                             </group>
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                             <newline/>
@@ -326,7 +326,7 @@
                                 <separator colspan="4" string="Dates"/>
                                 <group colspan="2" col="3">
                                     <field name="delivery_requested_date" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="onchange_requested_date(partner_id,date_order,delivery_requested_date,est_transport_lead_time,context)"/>
-                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'requested', 'type': 'sale.order'}" icon="gtk-indent" attrs="{'invisible': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                                 </group>
                                 <group colspan="2" col="3">
                                     <field name="delivery_confirmed_date" attrs="{'readonly': [('state', 'in', ['cancel','done'])]}"/>
@@ -335,7 +335,7 @@
                                 <field name="transport_type" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="onchange_transport_type(partner_id,transport_type,delivery_requested_date,context)"/>
                                 <field name="est_transport_lead_time" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}" on_change="onchange_transport_lt(delivery_requested_date,est_transport_lead_time,context)"/>
                                 <field name="ready_to_ship_date" attrs="{'readonly': ['|', ('shipped', '=', True), ('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
-                                <field name="shipment_date"/>
+                                <field name="shipment_date" readonly="1"/>
                             </group>
                         </page>
                         <page string="Other Information">
@@ -344,20 +344,20 @@
                                 <field name="intl_customer_ok" invisible="1"/>
                                 <field name="incoterm" attrs="{'invisible': [('intl_customer_ok', '=', False)]}" widget="selection"/>
                                 <field name="picking_policy" required="True" invisible="1"/>
-                                <field name="order_policy" on_change="shipping_policy_change(order_policy)"/>
+                                <field name="order_policy" on_change="shipping_policy_change(order_policy)"/> <!-- RO on _columns -->
                                 <field name="invoice_quantity" readonly="1"/>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="References" colspan="2"/>
                                 <field name="user_id" attrs="{'readonly': [('state', '!=', 'state')]}"/>
-                                <field groups="base.group_extended" name="origin" attrs="{'readonly': [('state', '!=', 'state')]}"/>
+                                <field name="origin" readonly="1" />
                             </group>
-                            <group colspan="2" col="2" groups="base.group_extended">
+                            <group colspan="2" col="2">
                                 <group colspan="2" col="2" attrs="{'invisible': [('vat_ok', '=', False)]}">
                                     <separator string="Conditions" colspan="2"/>
                                 </group>
-                                <field name="payment_term" widget="selection" attrs="{'readonly': [('state', '!=', 'state')]}" invisible="1"/>
-                                <field name="fiscal_position" widget="selection" attrs="{'readonly': [('state', '!=', 'state')], 'invisible': [('vat_ok', '=', False)]}"/>
+                                <field name="payment_term" widget="selection"  invisible="1"/>
+                                <field name="fiscal_position" widget="selection" readonly="1" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
                                 <field name="company_id" widget="selection" groups="base.group_multi_company"/>
                             </group>
                             <group colspan="2" col="2" groups="base.group_extended">
@@ -380,7 +380,7 @@
                         <field name="amount_untaxed" sum="Untaxed amount" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
                         <field name="amount_tax" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
                         <field name="amount_total"/>
-                        <button name="button_dummy" states="draft" string="Compute" type="object" icon="gtk-execute"/>
+                        <button name="button_dummy" states="draft,draft_p" string="Compute" type="object" icon="gtk-execute"/>
                         <newline/>
                         <field name="functional_currency_id" readonly="1"/>
                         <field name="functional_amount_untaxed" attrs="{'invisible': [('vat_ok', '=', False)]}"/>

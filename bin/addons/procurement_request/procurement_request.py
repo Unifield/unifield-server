@@ -306,8 +306,8 @@ class procurement_request(osv.osv):
                                                  domain=[('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], help='You can only select an internal location'),
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
-        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
-        'origin': fields.char(size=512, string='Origin', states={'draft': [('readonly', False)]}, readonly=True),
+        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
+        'origin': fields.char(size=512, string='Origin', readonly=True),
         'notes': fields.text(string='Notes'),
         'order_ids': fields.one2many(
             'procurement.request.sourcing.document',
