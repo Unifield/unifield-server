@@ -569,7 +569,7 @@ class cash_request(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for cash_req in self.browse(cr, uid, ids, fields_to_fetch=['state']):
+        for cash_req in self.browse(cr, uid, ids, fields_to_fetch=['state'], context=context):
             if cash_req.state != 'draft':
                 raise osv.except_osv(_('Error'), _('Cash Requests can only be deleted in Draft state.'))
         return super(cash_request, self).unlink(cr, uid, ids, context=context)
