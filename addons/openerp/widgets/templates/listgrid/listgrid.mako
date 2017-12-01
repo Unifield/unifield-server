@@ -384,6 +384,11 @@
                            jQuery('table[id=${name}_grid] tr.grid-row').each(function(index, row) {
                                if (! jQuery(row).hasClass('noteditable')) {
                                jQuery(row).click(function(event) {
+                                   if (jQuery('table[id=${name}]').hasClass("readonlyfield")
+                                   &&  jQuery(row).hasClass("inline_editors"))
+                                   {
+                                       return;
+                                   }
                                    if (!jQuery(event.target).is(':input, img, option, a.listImage-container, td.m2o_coplition')) {
                                        var record_id = parseInt(jQuery(row).attr('record'), 10) || -1;
                                        listgridValidation('${name}','${o2m or 0}', record_id);
