@@ -54,7 +54,7 @@ class cash_request(osv.osv):
         'month_period_id': fields.many2one('account.period', 'Month', required=True,
                                            domain=[('date_stop', '>=', time.strftime('%Y-%m-%d')), ('special', '=', False)]),
         'fiscalyear_id': fields.related('month_period_id', 'fiscalyear_id', string='Fiscal Year', type='many2one',
-                                        relation='account.fiscalyear', states={'done': [('readonly', True)]}),
+                                        relation='account.fiscalyear', readonly=True),
         'request_date': fields.date('Request Date', required=True),
         'consolidation_currency_id': fields.many2one('res.currency', 'Consolidation Currency',
                                                      required=True, readonly=True),
