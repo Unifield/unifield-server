@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+        <!-- Sequences for physical.inventory -->
+        <record id="seq_type_physical_inventory" model="ir.sequence.type">
+            <field name="name">Physical inventory</field>
+            <field name="code">physical.inventory</field>
+        </record>
+        <record id="seq_physical_inventory" model="ir.sequence">
+            <field name="name">Physical inventory</field>
+            <field name="code">physical.inventory</field>
+            <field name="prefix">%(y)s/%(hqcode)s/%(instance)s/PI</field>
+            <field name="padding">5</field>
+            <field name="implementation">psql</field>
+        </record>
+    </data>
+</openerp>

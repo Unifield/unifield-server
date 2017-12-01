@@ -144,8 +144,20 @@ def create_product(oerp, newprod):
         newprod.update(get_nom_info(oerp, ['LOG', 'A - Administration', 'ADAP - Data Processing', 'MISC - Miscellaneous']))
         oerp.get('product.product').create(newprod)
 
+def activate_partner(oerp, partner_name):
+    p_ids = oerp.get('res.partner').search([('name', '=', '%s_%s' % (DB_PREFIX, partner_name)), ('active', 'in', ['t', 'f']), ('partner_type', 'in', ['intermission', 'section'])])
+    if p_ids:
+        oerp.get('res.partner').write(p_ids, {'active': True})
+
 #### Intermission ####
 dbs = oerp.db.list()
+if '%s_HQ2C1' % DB_PREFIX in dbs:
+    oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ2C1' % DB_PREFIX)
+    activate_partner(oerp, 'HQ1C1')
+    oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1' % DB_PREFIX)
+    activate_partner(oerp, 'HQ2C1')
+
+
 if '%s_HQ1C2' % DB_PREFIX in dbs:
     l = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C2' % DB_PREFIX)
     reset_po(oerp)
@@ -155,15 +167,14 @@ if '%s_HQ1C2' % DB_PREFIX in dbs:
         stock_wiz = oerp.get('stock.location.configuration.wizard')
         w_id = stock_wiz.create({'location_usage': 'stock', 'location_name': extra})
         stock_wiz.confirm_creation(w_id)
-    p_ids = oerp.get('res.partner').search([('name', '=', '%s_HQ1C1' % DB_PREFIX), ('active', 'in', ['t', 'f']), ('partner_type', '=', 'intermission')])
-    oerp.get('res.partner').write(p_ids, {'active': True})
+
+    activate_partner(oerp, 'HQ1C1')
 
     create_product(oerp, newprod)
 
     l = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1' % DB_PREFIX)
     reset_po(oerp)
-    p_ids = oerp.get('res.partner').search([('name', '=', '%s_HQ1C2' % DB_PREFIX), ('active', 'in', ['t', 'f']), ('partner_type', '=', 'intermission')])
-    oerp.get('res.partner').write(p_ids, {'active': True})
+    activate_partner(oerp, 'HQ1C2')
     create_product(oerp, newprod)
 
     loc_o = oerp.get('stock.location')

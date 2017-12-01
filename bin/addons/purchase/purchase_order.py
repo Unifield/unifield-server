@@ -159,7 +159,7 @@ class purchase_order(osv.osv):
             amount_total = 0.00
             amount_received = 0.00
             for line in order.order_line:
-                if line.state == 'cancel':
+                if line.state in ['cancel', 'cancel_r']:
                     continue
 
                 amount_total += line.product_qty
@@ -549,6 +549,32 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _get_fake(self, cr, uid, ids, name, arg, context=None):
+        """
+        Fake method for 'has_confirmed_line' field
+        """
+        res = {}
+        for po_id in ids:
+            res[po_id] = False
+        return res
+
+    def _search_has_confirmed_line(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain corresponding to POs having at least one line being exactly in Confirmed state
+        """
+        if context is None:
+            context = {}
+        pol_obj = self.pool.get('purchase.order.line')
+        if not args:
+            return []
+        if args[0][1] != '=' or len(args[0]) < 3:
+            raise osv.except_osv(_('Error'), _('Filter not implemented on %s') % (name, ))
+        operator = args[0][2] is True and 'in' or 'not in'
+        po_ids = set()
+        pol_ids = pol_obj.search(cr, uid, [('state', '=', 'confirmed')], context=context)
+        for pol in pol_obj.browse(cr, uid, pol_ids, fields_to_fetch=['order_id'], context=context):
+            po_ids.add(pol.order_id.id)
+        return [('id', operator, list(po_ids))]
 
     _columns = {
         'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
@@ -687,10 +713,14 @@ class purchase_order(osv.osv):
 
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select=1),
         'commitment_ids': fields.one2many('account.commitment', 'purchase_id', string="Commitment Vouchers", readonly=True),
-
-
+        'has_confirmed_line': fields.function(_get_fake, type='boolean', method=True, store=False,
+                                              fnct_search=_search_has_confirmed_line,
+                                              string='Has a confirmed line',
+                                              help='Only used to SEARCH for POs with at least one line in Confirmed state'),
+        'split_during_sll_mig': fields.boolean('PO split at Coordo during SLL migration'),
     }
     _defaults = {
+        'split_during_sll_mig': False,
         'po_confirmed': lambda *a: False,
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
@@ -1013,7 +1043,7 @@ class purchase_order(osv.osv):
         # if the copy comes from the button duplicate
         if context.get('from_button'):
             default.update({'is_a_counterpart': False})
-        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, 'po_confirmed': False})
+        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, 'po_confirmed': False, 'split_during_sll_mig': False})
         if not context.get('keepOrigin', False):
             default.update({'origin': False})
 
@@ -1021,6 +1051,8 @@ class purchase_order(osv.osv):
             default['date_confirm'] = False
         if not default.get('related_sourcing_id', False):
             default['related_sourcing_id'] = False
+        if not 'rfq_state' in default:
+            default['rfq_state'] = 'draft'
 
         new_id = super(purchase_order, self).copy(cr, uid, p_id, default, context=context)
         if new_id:
@@ -1146,78 +1178,69 @@ class purchase_order(osv.osv):
         # open the selected wizard
         return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
 
-    def inv_line_create(self, cr, uid, account_id, order_line):
-        return (0, False, {
-            'name':order_line.name,
-            'account_id': account_id,
-            'price_unit': order_line.price_unit or 0.0,
-            'quantity': order_line.product_qty,
-            'product_id': order_line.product_id.id or False,
-            'uos_id': order_line.product_uom.id or False,
-            'invoice_line_tax_id': [(6, 0, [x.id for x in order_line.taxes_id])],
-            'account_analytic_id': order_line.account_analytic_id.id or False,
-            'order_line_id': order_line.id,
-        })
+    def action_invoice_get_or_create(self, cr, uid, ids, context=None):
+        inv_obj = self.pool.get('account.invoice')
+        ana_obj = self.pool.get('analytic.distribution')
 
-    def action_invoice_create(self, cr, uid, ids, *args):
-        res = False
+        single = True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            single = False
+
+        po_to_inv = {}
+        inv_ids = inv_obj.search(cr, uid, [('state', '=', 'draft'), ('main_purchase_id', 'in', ids)], context=context)
+        for inv in inv_obj.read(cr, uid, inv_ids, ['main_purchase_id'], context=context):
+            po_to_inv[inv['main_purchase_id'][0]] = inv['id']
 
         for o in self.browse(cr, uid, ids):
-            il = []
-            todo = []
-            for ol in o.order_line:
-                todo.append(ol.id)
-                if ol.product_id:
-                    a = ol.product_id.product_tmpl_id.property_account_expense.id
-                    if not a:
-                        a = ol.product_id.categ_id.property_account_expense_categ.id
-                    if not a:
-                        raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (id:%d)') % (ol.product_id.name, ol.product_id.id,))
+            if o.id not in po_to_inv:
+                inv_data = {
+                    'name': o.partner_ref or o.name,
+                    'reference': o.partner_ref or o.name,
+                    'account_id': o.partner_id.property_account_payable.id,
+                    'type': 'in_invoice',
+                    'partner_id': o.partner_id.id,
+                    'currency_id': o.pricelist_id.currency_id.id,
+                    'address_invoice_id': o.partner_address_id.id,
+                    'address_contact_id': o.partner_address_id.id,
+                    'origin': o.name,
+                    'fiscal_position': o.fiscal_position.id or o.partner_id.property_account_position.id,
+                    'payment_term': o.partner_id.property_payment_term and o.partner_id.property_payment_term.id or False,
+                    'company_id': o.company_id.id,
+                    'main_purchase_id': o.id,
+                    'purchase_ids': [(4, o.id)],
+                }
+
+                if o.analytic_distribution_id:
+                    distrib_id = ana_obj.copy(cr, uid, o.analytic_distribution_id.id, {})
+                    ana_obj.create_funding_pool_lines(cr, uid, [distrib_id])
+                    inv_data['analytic_distribution_id'] = distrib_id
+
+                if o.order_type == 'in_kind':
+                    inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind'), ('is_current_instance', '=', True)])
+                    if not inkind_journal_ids:
+                        raise osv.except_osv(_('Error'), _('No In-kind Donation journal found!'))
+                    inv_data['journal_id'] = inkind_journal_ids[0]
+                    inv_data['is_inkind_donation'] = True
                 else:
-                    a = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
-                fpos = o.fiscal_position or False
-                a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
-                il.append(self.inv_line_create(cr, uid, a, ol))
+                    journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])
+                    if not journal_ids:
+                        raise osv.except_osv(_('Error !'),
+                                             _('There is no purchase journal defined for this company: "%s" (id:%d)') % (o.company_id.name, o.company_id.id))
+                    inv_data['journal_id'] = journal_ids[0]
+                    if o.order_type == 'purchase_list':
+                        inv_data['purchase_list'] = 1
 
-            a = o.partner_id.property_account_payable.id
 
-            # US-268: Pick the correct journal of the current instance, could have many same journal but for different instances
-            journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])
-            if not journal_ids:
-                raise osv.except_osv(_('Error !'),
-                                     _('There is no purchase journal defined for this company: "%s" (id:%d)') % (o.company_id.name, o.company_id.id))
-            inv = {
-                'name': o.partner_ref or o.name,
-                'reference': o.partner_ref or o.name,
-                'account_id': a,
-                'type': 'in_invoice',
-                'partner_id': o.partner_id.id,
-                'currency_id': o.pricelist_id.currency_id.id,
-                'address_invoice_id': o.partner_address_id.id,
-                'address_contact_id': o.partner_address_id.id,
-                'journal_id': len(journal_ids) and journal_ids[0] or False,
-                'origin': o.name,
-                'invoice_line': il,
-                'fiscal_position': o.fiscal_position.id or o.partner_id.property_account_position.id,
-                'payment_term': o.partner_id.property_payment_term and o.partner_id.property_payment_term.id or False,
-                'company_id': o.company_id.id,
-            }
-            if o.order_type == 'purchase_list':
-                inv['purchase_list'] = 1
-            elif o.order_type == 'in_kind':
-                inkind_journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind'), ('is_current_instance', '=', True)])
-                if not inkind_journal_ids:
-                    raise osv.except_osv(_('Error'), _('No In-kind Donation journal found!'))
-                inv['journal_id'] = inkind_journal_ids[0]
-                inv['is_inkind_donation'] = True
+                po_to_inv[o.id] = self.pool.get('account.invoice').create(cr, uid, inv_data, {'type':'in_invoice', 'journal_type': 'purchase'})
+                inv_obj.fetch_analytic_distribution(cr, uid, [po_to_inv[o.id]])
+                self.infolog(cr, uid, 'Invoice on order (id:%d) created for PO %s' % (po_to_inv[o.id], o.name))
+            else:
+                self.infolog(cr, uid, 'Invoice on order (id:%d) already exists for PO %s' % (po_to_inv[o.id], o.name))
+            #self.pool.get('account.invoice').button_compute(cr, uid, [inv_id], {'type':'in_invoice'}, set_total=True)
+            #self.pool.get('purchase.order.line').write(cr, uid, todo, {'invoiced':True})
+        return single and po_to_inv.values()[0] or po_to_inv
 
-            inv_id = self.pool.get('account.invoice').create(cr, uid, inv, {'type':'in_invoice', 'journal_type': 'purchase'})
-            self.pool.get('account.invoice').button_compute(cr, uid, [inv_id], {'type':'in_invoice'}, set_total=True)
-            self.pool.get('account.invoice').fetch_analytic_distribution(cr, uid, [inv_id])
-            self.pool.get('purchase.order.line').write(cr, uid, todo, {'invoiced':True})
-            self.write(cr, uid, [o.id], {'invoice_ids': [(4, inv_id)]})
-            res = inv_id
-        return res
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
@@ -1574,7 +1597,7 @@ class purchase_order(osv.osv):
 
         # check if the current PO was created from scratch :
         if order_type == 'direct':
-            if not self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', 'in', ids), ('linked_sol_id', '=', False)]):
+            if not self.pool.get('purchase.order.line').search_exist(cr, uid, [('order_id', 'in', ids), ('linked_sol_id', '!=', False)]):
                 order_type_value = self.read(cr, uid, ids, ['order_type'])
                 order_type_value = order_type_value[0].get('order_type', 'regular') if order_type_value else 'regular'
                 return {
@@ -2004,8 +2027,8 @@ class purchase_order(osv.osv):
             'price_unit': pol.price_unit,
             'date': pol.confirmed_delivery_date,
             'date_expected': pol.confirmed_delivery_date or pol.date_planned,
-            'line_number': pol.line_number,
             'comment': pol.comment,
+            'line_number': pol.line_number,
         }
 
         if incoming.reason_type_id:
@@ -2034,28 +2057,20 @@ class purchase_order(osv.osv):
             return False
 
         # compute source location:
-        input_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
-        input_loc = self.pool.get('stock.location').browse(cr, uid, input_id, context=context)
+        src_location = pol.order_id.location_id
 
         # compute destination location:
         dest = pol.order_id.location_id.id
         if pol.product_id.type == 'service_recep' and not pol.order_id.cross_docking_ok:
             # service with reception are directed to Service Location
             dest = self.pool.get('stock.location').get_service_location(cr, uid)
-        elif self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=pol.product_id, context=context):
+        elif pol.product_id.type == 'consu':
+            dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
+        elif pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage != 'customer':
+            dest = pol.linked_sol_id.order_id.location_requestor_id.id
+        elif self.pool.get('stock.location').chained_location_get(cr, uid, src_location, product=pol.product_id, context=context):
             # if input location has a chained location then use it
-            dest = self.pool.get('stock.location').chained_location_get(cr, uid, input_loc, product=pol.product_id, context=context)[0].id
-        else:
-            sol = pol.linked_sol_id
-            if sol:
-                if not (sol.order_id and sol.order_id.procurement_request):
-                    pass
-                elif pol.product_id.type == 'service_recep':
-                    dest = self.pool.get('stock.location').get_service_location(cr, uid)
-                elif pol.product_id.type == 'consu':
-                    dest = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
-                elif sol.order_id.location_requestor_id.usage != 'customer':
-                    dest = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_input')[1]
+            dest = self.pool.get('stock.location').chained_location_get(cr, uid, src_location, product=pol.product_id, context=context)[0].id
 
         values = {
             'name': ''.join((pol.order_id.name, ': ', (pol.name or ''))),
@@ -2064,7 +2079,7 @@ class purchase_order(osv.osv):
             'product_uos_qty': pol.product_qty,
             'product_uom': pol.product_uom.id,
             'product_uos': pol.product_uom.id,
-            'location_id': input_id,
+            'location_id': src_location.id,
             'location_dest_id': dest,
             'picking_id': internal.id,
             'move_dest_id': pol.move_dest_id.id,
@@ -2384,6 +2399,7 @@ class purchase_order(osv.osv):
 
         # update price lists
         self.update_supplier_info(cr, uid, ids, context=context)
+
         # copy the po with rfq_ok set to False
         data = self.read(cr, uid, ids[0], ['name', 'amount_total'], context=context)
         if not data.get('amount_total', 0.00):
@@ -2391,7 +2407,9 @@ class purchase_order(osv.osv):
                 _('Error'),
                 _('Generation of PO aborted because no price defined on lines.'),
             )
+        context.update({'generate_po_from_rfq': True})
         new_po_id = self.copy(cr, uid, ids[0], {'name': False, 'rfq_ok': False, 'origin': data['name']}, context=dict(context,keepOrigin=True))
+        context.pop('generate_po_from_rfq')
         # Remove lines with 0.00 as unit price
         no_price_line_ids = line_obj.search(cr, uid, [
             ('order_id', '=', new_po_id),
@@ -2402,9 +2420,6 @@ class purchase_order(osv.osv):
         data = self.read(cr, uid, new_po_id, ['name'], context=context)
         # log message describing the previous action
         self.log(cr, uid, new_po_id, _('The Purchase Order %s has been generated from Request for Quotation.')%data['name'])
-        # close the current po
-        wf_service = netsvc.LocalService("workflow")
-        wf_service.trg_validate(uid, 'purchase.order', ids[0], 'rfq_done', cr)
 
         return new_po_id
 
@@ -2506,6 +2521,22 @@ class purchase_order(osv.osv):
                 to_process.append(po.id)
         self._finish_commitment(cr, uid, to_process, context=context)
         return super(purchase_order, self).action_done(cr, uid, ids, context=context)
+
+
+    def continue_sourcing(self, cr, uid, ids, context=None):
+        '''
+        On RfQ updated continue sourcing process (create PO)
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.generate_po_from_rfq(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, {'rfq_state': 'done'}, context=context)
+
+        return True
+
 
     def add_audit_line(self, cr, uid, order_id, old_state, new_state, context=None):
         """

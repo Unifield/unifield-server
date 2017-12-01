@@ -259,15 +259,8 @@ class purchase_order_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             changed = False
-            if line.modification_comment\
-                    or (line.original_qty and line.original_price and line.original_uom and line.original_currency_id):
-                if line.modification_comment or line.product_qty != line.original_qty \
-                        or line.price_unit != line.original_price or line.product_uom != line.original_uom\
-                        or line.currency_id != line.original_currency_id:
-                    changed = True
-            elif line.original_qty and line.original_uom and not line.original_price:  # From IR
-                if line.original_qty != line.product_qty or line.original_uom.id != line.product_uom.id:
-                    changed = True
+            if line.modification_comment or (line.original_qty and line.product_qty != line.original_qty):
+                changed = True
 
             res[line.id] = changed
         return res
@@ -402,6 +395,7 @@ class purchase_order_line(osv.osv):
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
+        'original_line_id': fields.many2one('purchase.order.line', string='Original line', help='ID of the original line before split'),
         'linked_sol_id': fields.many2one('sale.order.line', string='Linked FO line', help='Linked Sale Order line in case of PO line from sourcing', readonly=True),
         'sync_linked_sol': fields.char(size=256, string='Linked FO line at synchro'),
         # UTP-972: Use boolean to indicate if the line is a split line
@@ -488,13 +482,14 @@ class purchase_order_line(osv.osv):
         # not replacing the po_state from sale_followup - should ?
         'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
         'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
-
+        'original_product': fields.many2one('product.product', 'Original Product'),
         'original_qty': fields.float('Original Qty'),
         'original_price': fields.float('Original Price'),
-        'original_uom': fields.many2one('product.uom', 'Original UOM'),
+        'original_uom': fields.many2one('product.uom', 'Original UoM'),
         'original_currency_id': fields.many2one('res.currency', 'Original Currency'),
         'modification_comment': fields.char('Modification Comment', size=1024),
         'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
+        'from_synchro_return_goods': fields.boolean(string='PO Line created by synch of IN replacement/missing'),
 
         # finance
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -1058,6 +1053,8 @@ class purchase_order_line(osv.osv):
         if vals.get('linked_sol_id'):
             sol_comment = self.pool.get('sale.order.line').read(cr, uid, vals.get('linked_sol_id'), ['comment'], context=context)['comment']
             vals.update({'comment': sol_comment})
+            #if not product_id and not vals.get('name'):  # US-3530
+            #    vals.update({'name': 'None'})
 
         # add the database Id to the sync_order_line_db_id
         po_line_id = super(purchase_order_line, self).create(cr, uid, vals, context=context)
@@ -1121,17 +1118,21 @@ class purchase_order_line(osv.osv):
             default = {}
 
         # do not copy canceled purchase.order.line:
-        pol = self.browse(cr, uid, p_id, fields_to_fetch=['state'], context=context)
+        pol = self.browse(cr, uid, p_id, fields_to_fetch=['state', 'order_id', 'linked_sol_id'], context=context)
         if pol.state in ['cancel', 'cancel_r']:
             return False
 
         default.update({'state': 'draft', 'move_ids': [], 'invoiced': 0, 'invoice_lines': [], 'commitment_line_ids': []})
 
-        for field in ['origin', 'move_dest_id', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol']:
+        for field in ['origin', 'move_dest_id', 'original_product', 'original_qty', 'original_price', 'original_uom', 'original_currency_id', 'modification_comment', 'sync_linked_sol']:
             if field not in default:
-                default[field]= False
+                default[field] = False
 
         default.update({'sync_order_line_db_id': False, 'set_as_sourced_n': False, 'set_as_validated_n': False, 'linked_sol_id': False, 'link_so_id': False})
+
+        # from RfQ line to PO line: grab the linked sol if has:
+        if pol.order_id.rfq_ok and context.get('generate_po_from_rfq', False):
+            default.update({'linked_sol_id': pol.linked_sol_id.id})
 
         if not context.get('keepDateAndDistrib'):
             if 'confirmed_delivery_date' not in default:
@@ -1323,9 +1324,10 @@ class purchase_order_line(osv.osv):
                 'old_line_qty': pol.product_qty - cancel_qty,
                 'new_line_qty': cancel_qty,
             }, context=context)
-            context.update({'return_new_line_id': True})
+            context.update({'return_new_line_id': True, 'keepLineNumber': True})
             new_po_line = split_obj.split_line(cr, uid, [split_id], context=context)
             context.pop('return_new_line_id')
+            context.pop('keepLineNumber')
 
             # udpate linked FO lines if has:
             self.write(cr, uid, [new_po_line], {'origin': pol.origin}, context=context) # otherwise not able to link with FO
@@ -1372,6 +1374,32 @@ class purchase_order_line(osv.osv):
                 }
             }
         return {}
+
+    def on_change_origin(self, cr, uid, ids, origin, linked_sol_id=False, partner_type='external', context=None):
+        '''
+        Check if the origin is a known FO/IR
+        '''
+        res = {}
+        if not linked_sol_id and origin:
+            sale_id = self.pool.get('sale.order').search(cr, uid, [
+                ('name', '=', origin),
+                ('state', 'in', ['draft', 'draft_p', 'validated', 'validated_p', 'sourced', 'sourced_p']),
+            ], limit=1, order='NO_ORDER', context=context)
+            if not sale_id:
+                res['warning'] = {
+                    'title': _('Warning'),
+                    'message': _('The reference \'%s\' put in the Origin field doesn\'t match with a confirmed FO/IR sourced with a Non-ESC supplier. No FO/IR line will be created for this PO line') % origin,
+                }
+                res['value'] = {
+                    'display_sync_ref': False,
+                    'instance_sync_order_ref': '',
+                }
+            else:
+                res['value'] = {
+                    'display_sync_ref': True,
+                }
+
+        return res
 
     def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
                              partner_id, date_order=False, fiscal_position=False, date_planned=False,
@@ -1786,6 +1814,49 @@ class purchase_order_line(osv.osv):
         }
 
 
+    def generate_invoice(self, cr, uid, ids, context=None):
+        inv_ids = {}
+        inv_line = self.pool.get('account.invoice.line')
+        ana_obj = self.pool.get('analytic.distribution')
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.order_id.id not in inv_ids:
+                inv_ids[pol.order_id.id] = pol.order_id.action_invoice_get_or_create(context=context)
+
+
+            if pol.product_id:
+                account_id = pol.product_id.product_tmpl_id.property_account_expense.id
+                if not account_id:
+                    account_id = pol.product_id.categ_id.property_account_expense_categ.id
+                if not account_id:
+                    raise osv.except_osv(_('Error !'), _('There is no expense account defined for this product: "%s" (numer:%d)') % (pol.product_id.default_code, pol.line_number))
+            else:
+                account_id = self.pool.get('ir.property').get(cr, uid, 'property_account_expense_categ', 'product.category').id
+
+            fpos = pol.order_id.fiscal_position or False
+            account_id = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, account_id)
+
+            distrib_id = False
+            if pol.analytic_distribution_id:
+                distrib_id = ana_obj.copy(cr, uid, pol.analytic_distribution_id.id, {})
+                ana_obj.create_funding_pool_lines(cr, uid, [distrib_id])
+
+            inv_line.create(cr, uid, {
+                'name': pol.name,
+                'account_id': account_id,
+                'price_unit': pol.price_unit or 0.0,
+                'quantity': pol.product_qty,
+                'product_id': pol.product_id.id or False,
+                'uos_id': pol.product_uom.id or False,
+                'invoice_line_tax_id': [(6, 0, [x.id for x in pol.taxes_id])],
+                'account_analytic_id': pol.account_analytic_id.id or False,
+                'order_line_id': pol.id,
+                'invoice_id': inv_ids[pol.order_id.id],
+                'analytic_distribution_id': distrib_id,
+            }, context=context)
+
+        self.write(cr, uid, ids, {'invoiced': True}, context=context)
+        self.pool.get('account.invoice').button_compute(cr, uid, inv_ids.values(), {'type':'in_invoice'}, set_total=True)
 purchase_order_line()
 
 

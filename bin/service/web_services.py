@@ -27,7 +27,6 @@ import threading
 import time
 import sys
 import platform
-from tools.translate import _
 import addons
 import ir
 import netsvc
@@ -41,6 +40,7 @@ import datetime
 import csv
 import re
 from osv import osv
+from tools.translate import _
 from cStringIO import StringIO
 from tempfile import NamedTemporaryFile
 from updater import get_server_version
@@ -108,13 +108,15 @@ class db(netsvc.ExportService):
             params = params[1:]
             security.check_super_restoredb(passwd)
         elif method in [ 'create', 'get_progress', 'rename',
-                         'change_admin_password', 'migrate_databases' ]:
+                         'change_admin_password', 'migrate_databases',
+                         'instance_auto_creation']:
             passwd = params[0]
             params = params[1:]
             security.check_super(passwd)
         elif method in [ 'db_exist', 'list', 'list_lang', 'server_version',
                          'check_timezone', 'connected_to_prod_sync_server',
-                         'check_super_password_validity' ]:
+                         'check_super_password_validity',
+                         'creation_get_resume_progress']:
             # params = params
             # No security check for these methods
             pass
@@ -205,6 +207,49 @@ class db(netsvc.ExportService):
         create_thread.start()
         self.actions[id]['thread'] = create_thread
         return id
+
+    def exp_instance_auto_creation(self, db_name):
+        db, pool = pooler.get_db_and_pool(db_name)
+        cr = db.cursor()
+
+        creation_obj = pool.get('instance.auto.creation')
+        existing_auto_creation = creation_obj.search(cr, 1, [('dbname', '=', cr.dbname)])
+        if existing_auto_creation:
+            creation_id = existing_auto_creation[0]
+        else:
+            creation_id = creation_obj.create(cr, 1, {'dbname': cr.dbname})
+
+        create_thread = threading.Thread(target=creation_obj.background_install,
+                                         args=(cr, pool, 1, creation_id))
+        create_thread.start()
+        create_thread.join(1)
+
+    def exp_creation_get_resume_progress(self, db_name):
+        db, pool = pooler.get_db_and_pool(db_name)
+        cr = db.cursor()
+        try:
+            creation_obj = pool.get('instance.auto.creation')
+            creation_id = creation_obj.search(cr, 1, [('dbname', '=',
+                                                       cr.dbname)])
+            creation_id = creation_id and creation_id[0] or []
+            if not creation_id:
+                nb_state = len(pool.get('instance.auto.creation')._columns['state'].selection) - 1
+                percentage_per_step = 1/float(nb_state)
+                return _('Empty database creation in progress...\n'), percentage_per_step, 'draft', ''
+            res = creation_obj.read(cr, 1, creation_id, ['resume', 'progress',
+                                                         'state', 'error'])
+
+            # get the last sync_monitor informations:
+            monitor_obj = pool.get('sync.monitor')
+            monitor_id = monitor_obj.search(cr, 1, [], order='start desc', limit=1)
+            monitor_id = monitor_id and monitor_id[0] or False
+            monitor_status = ''
+            if monitor_id:
+                result = monitor_obj.read(cr, 1, monitor_id, ['status', 'error'])
+                monitor_status = 'Synchronisation status: %s : %s' % (result['status'], result['error'])
+        finally:
+            cr.close()
+        return res['resume'], res['progress'], res['state'], res['error'], monitor_status
 
     def exp_check_super_password_validity(self, password):
         try:

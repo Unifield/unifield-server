@@ -313,6 +313,8 @@ class account_cash_statement(osv.osv):
         """
         When pressing 'Temp Posting' button then opening a wizard to select some account_bank_statement_line and change them into temp posting state.
         """
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
         domain = [('statement_id', '=', ids[0]), ('state', '=', 'draft')]
         if context is None:
             context = {}
@@ -340,6 +342,8 @@ class account_cash_statement(osv.osv):
         """
         When pressing 'Hard Posting' button then opening a wizard to select some account_bank_statement_line and change them into hard posting state.
         """
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
         domain = [('statement_id', '=', ids[0]), ('state', 'in', ['draft','temp'])]
         if context is None:
             context = {}

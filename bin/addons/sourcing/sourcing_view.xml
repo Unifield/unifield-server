@@ -3,27 +3,6 @@
 	<data>
 
 
-        <record id="view_internal_request_form" model="ir.ui.view">
-            <field name="name">view.internal.request.form</field>
-            <field name="model">sale.order</field>
-            <field name="type">form</field>
-            <field name="priority" eval="500" />
-            <field name="inherit_id" ref="procurement_request.procurement_request_form_view" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form" position="inside">
-                        <field name="sourcing_trace_ok" invisible="1" />
-                    </xpath>
-
-                    <xpath expr="/form//notebook" position="inside">
-                        <page string="Sourcing Logs" attrs="{'invisible': [('sourcing_trace_ok', '=', False)]}">
-                            <field name="sourcing_trace" colspan="4" nolabel="1" />
-                        </page>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
 		<record id="sourcing_line_normal_form_view" model="ir.ui.view">
 			<field name="name">sale.order.line.sourcing.form</field>
 			<field name="model">sale.order.line</field>
@@ -107,12 +86,8 @@
 			<field name="priority" eval="99" />
 			<field name="arch" type="xml">
 				<search string="Sourcing Line">
-				
-					<!-- <filter name="need_sourcing" string="Need Sourcing" icon="gtk-indent" domain="[('display_confirm_button', '=', True)]" /> -->
-                    <filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('need_sourcing', '=', True)]" />
-                    <filter name="in_progress" string="In Progress" icon="gtk-refresh" domain="[('in_progress', '=', True)]" />
-					<filter name="sourced" string="Sourced" icon="terp-camera_test" 
-					domain="['|', ('order_id.procurement_request', '=', True), ('order_id.split_type_sale_order', '!=', 'original_sale_order'), '|', ('type', '=', 'make_to_stock'), ('procurement_id.state', '!=', 'confirmed')]" />
+                    <filter name="need_sourcing" string="Need Sourcing" icon="terp-stock_zoom" domain="[('state', '=', 'validated')]" />
+					<filter name="sourced" string="Sourced" icon="terp-camera_test" domain="[('state', 'not in', ['draft', 'validated', 'cancel', 'cancel_r'])]" />
 					<separator orientation="vertical"/>
 					<field name="order_id" string="Order" />
 					<field name="priority" />

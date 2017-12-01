@@ -346,6 +346,9 @@ internal_move_xls('report.internal.move.xls', 'stock.picking', 'addons/msf_suppl
 
 class incoming_shipment_xls(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
+        if not context:
+            context = {}
+        context['lang'] = 'en_MF'
         super(incoming_shipment_xls, self).__init__(cr, uid, name, context=context)
 
 SpreadsheetReport('report.incoming.shipment.xls', 'stock.picking', 'addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako', parser=incoming_shipment_xls)

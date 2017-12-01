@@ -114,13 +114,29 @@ def find(path):
 
 def rmtree(files, path=None, verbose=False):
     """Python free rmtree"""
+    #  OpenERPServerService.exe can't be deleted if Windows Service MAnager uses it
+    backup_trash = 'backup-trash'
     if path is None and isinstance(files, basestring):
         path, files = files, find(files)
     for f in reversed(files):
         target = os.path.join(path, f) if path is not None else f
         if os.path.isfile(target) or os.path.islink(target):
             warn("unlink", target)
-            os.unlink( target )
+            try:
+                os.unlink(target)
+            except:
+                warn('Except on target %s, %s' % (target, target.endswith('OpenERPServerService.exe')))
+                if target.endswith('OpenERPServerService.exe'):
+                    if not os.path.isdir(backup_trash):
+                        os.makedirs(backup_trash)
+                    index = 0
+                    newname = os.path.join(backup_trash, '%s-%s' % (os.path.basename(target), index))
+                    while os.path.isfile(newname):
+                        index += 1
+                        newname = os.path.join(backup_trash, '%s-%s' % (os.path.basename(target), index))
+                    os.rename(target, newname)
+                else:
+                    raise
         elif os.path.isdir(target):
             warn("rmdir", target)
             os.rmdir( target )
@@ -174,6 +190,7 @@ def process_deletes(update_dir, webpath):
     if not os.path.exists(delfile):
         return
 
+    deleted = []
     with open(delfile) as f:
         for line in f:
             line = line.strip()
@@ -182,7 +199,7 @@ def process_deletes(update_dir, webpath):
                 dest = os.path.join(webpath, 'backup', line[4:])
             else:
                 src = line
-                dest = os.path.join('backup', line)                
+                dest = os.path.join('backup', line)
 
             destdir = os.path.dirname(dest)
             if not os.path.exists(destdir):
@@ -191,8 +208,13 @@ def process_deletes(update_dir, webpath):
             if os.path.exists(src):
                 warn("Delete: %s" % src)
                 os.rename(src, dest)
+                deleted.append(line)
             else:
                 warn("File to delete %s not found." % src)
+    return deleted
+
+def is_webfile(f):
+    return re.match("^web[\\\/](.*)", f)
 
 def do_update():
     """Real update of the server (before normal OpenERP execution).
@@ -209,13 +231,13 @@ def do_update():
             warn(lock_file, 'removed')
         ## Now, update
         revisions = []
-        files = None
+        files = []
+        deleted_files = []
         try:
             ## Revisions that going to be installed
             revisions = parse_version_file(new_version_file)
             os.unlink(new_version_file)
             ## Explore .update directory
-            files = find(update_dir)
 
             ## Prepare backup directory
             if not os.path.exists('backup'):
@@ -255,12 +277,13 @@ def do_update():
             webupdated = False
             ## Update Files
             warn("Updating...")
+            files = find(update_dir)
             for f in files:
                 # The delete list is handled last.
                 if f == 'delete.txt':
                     continue
 
-                webfile = re.match("^web[\\\/](.*)", f)
+                webfile = is_webfile(f)
                 warn("Filename : `%s'" % (f))
                 if webfile:
                     target = os.path.join(update_dir, f)
@@ -298,25 +321,26 @@ def do_update():
                         os.rename(target, f)
 
             # Read and apply the deleted.txt file.
-            process_deletes(update_dir, webpath)
+            deleted_files = process_deletes(update_dir, webpath)
 
             # Clean out the PYC files so that they can be recompiled
             # by the (potentially) updated pythonXX.dll.
             for d in [ '.', webpath ]:
-                for root, dirs, files in os.walk(d):
-                    for file in files:
+                for root, dirs, o_files in os.walk(d):
+                    for file in o_files:
                         if file.endswith('.pyc'):
                             file = os.path.join(root, file)
                             warn('Purge pyc: %s' % file)
                             os.unlink(file)
 
+            shutil.copy(server_version_file, 'backup')
+            files.append(server_version_file)
             add_versions([(x['md5sum'], x['date'],
                            x['name']) for x in revisions])
             warn("Update successful.")
             warn("Revisions added: ", ", ".join([x['md5sum'] for x in revisions]))
             ## No database update here. I preferred to set modules to update just after the preparation
             ## The reason is, when pool is populated, it will starts by upgrading modules first
-
             #Restart web server
             if webupdated and os.name == "nt":
                 try:
@@ -330,12 +354,21 @@ def do_update():
             warn("Update failure!")
             warn(unicode(e))
             ## Restore backup and purge .update
-            if files:
-                warn("Restoring...")
-                for f in reversed(files):
-                    target = os.path.join('backup', f)
+            if files or deleted_files:
+                warn("Restoring... ")
+                for f in reversed(files + deleted_files):
+                    if is_webfile(f):
+                        f = os.path.join(webpath, webfile.group(1))
+                        target = os.path.join(webbackup, webfile.group(1))
+                    else:
+                        target = os.path.join('backup', f)
                     if os.path.isfile(target) or os.path.islink(target):
                         warn("`%s' -> `%s'" % (target, f))
+                        if os.path.isfile(f):
+                            os.remove(f)
+                        dest_dir = os.path.dirname(f)
+                        if dest_dir and not os.path.isdir(dest_dir):
+                            os.makedirs(dest_dir)
                         os.rename(target, f)
                 warn("Purging...")
                 Try(lambda:rmtree(update_dir))

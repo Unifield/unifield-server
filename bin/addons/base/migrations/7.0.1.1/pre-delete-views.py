@@ -4,6 +4,7 @@ def migrate(cr, version):
 
     cr.execute("update ir_module_module set state='uninstalled' where name='sale_override'")
     cr.execute("delete from ir_ui_view where id in (select res_id from ir_model_data where module='sale_override' and model='ir.ui.view')")
+    cr.execute("delete from ir_ui_menu where id in (select res_id from ir_model_data where model='ir.ui.menu' and module='sale_override')")
     cr.execute("update ir_module_module set state='to upgrade' where name='msf_button_access_rights'")
 
     # WKF
@@ -12,6 +13,8 @@ def migrate(cr, version):
 
     # set required values
     #cr.execute("update sync_client_message_received set rule_sequence = 0")
+    cr.execute("update ir_ui_view set priority=2500+id where priority=250 and type='tree' and name like 'query.tree%'")
+    cr.execute("update ir_ui_view set priority=2500+id where type='search' and name like 'query.search%'")
     cr.drop_index_if_exists('ir_ui_view', 'ir_ui_view_model_type_priority')
     cr.drop_constraint_if_exists('ir_ui_view', 'ir_ui_view_unique_view')
     cr.execute("create unique index ir_ui_view_model_type_priority on ir_ui_view(id)")

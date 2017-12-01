@@ -284,14 +284,10 @@ class stock_picking(osv.osv):
     def _check_reason_type(self, cr, uid, ids, context=None):
         """
         Do not permit user to create/write a OUT from scratch with some reason types:
-         - GOODS RETURN
+         - GOODS RETURN UNIT
          - GOODS REPLACEMENT
         """
         res = True
-        try:
-            rt_return_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
-        except ValueError:
-            rt_return_id = 0
         try:
             rt_replacement_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
         except ValueError:
@@ -303,7 +299,7 @@ class stock_picking(osv.osv):
 
         for sp in self.read(cr, uid, ids, ['purchase_id', 'sale_id', 'type', 'reason_type_id'], context=context):
             if not sp['purchase_id'] and not sp['sale_id'] and sp['type'] == 'out' and sp['reason_type_id']:
-                if sp['reason_type_id'][0] in [rt_return_id, rt_replacement_id, rt_return_unit_id]:
+                if sp['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id]:
                     return False
         return res
 
@@ -424,14 +420,10 @@ class stock_move(osv.osv):
     def _check_reason_type(self, cr, uid, ids, context=None):
         """
         Do not permit user to create/write a OUT from scratch with some reason types:
-         - GOODS RETURN
+         - GOODS RETURN UNIT
          - GOODS REPLACEMENT
         """
         res = True
-        try:
-            rt_return_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
-        except ValueError:
-            rt_return_id = 0
         try:
             rt_replacement_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
         except ValueError:
@@ -441,10 +433,9 @@ class stock_move(osv.osv):
         except ValueError:
             rt_return_unit_id = 0
 
-
         for sm in self.read(cr, uid, ids, ['reason_type_id', 'picking_id']):
             if sm['reason_type_id'] and sm['picking_id']:
-                if sm['reason_type_id'][0] in [rt_return_id, rt_replacement_id, rt_return_unit_id]:
+                if sm['reason_type_id'][0] in [rt_replacement_id, rt_return_unit_id]:
                     pick = self.pool.get('stock.picking').read(cr, uid, sm['picking_id'][0], ['purchase_id', 'sale_id', 'type'], context=context)
                     if not pick['purchase_id'] and not pick['sale_id'] and pick['type'] == 'out':
                         return False

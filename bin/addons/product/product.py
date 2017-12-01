@@ -93,6 +93,14 @@ class product_uom(osv.osv):
             del(data['factor_inv'])
         return super(product_uom, self).create(cr, uid, data, context)
 
+    def one_reference_by_categ(self, cr, uid, ids, context=None):
+        cr.execute("""select count(*), category_id from product_uom where uom_type='reference' group by category_id""")
+        for x in cr.fetchall():
+            if x[0] != 1:
+                categ = self.pool.get('product.uom.categ').read(cr, uid, x[1], context=context)
+                raise osv.except_osv(_('Error !'), _('UoM Categ %s, must have one and only one UoM reference, found: %s') % (categ['name'], x[0]))
+        return True
+
     _columns = {
         'name': fields.char('Name', size=64, required=True, translate=True),
         'category_id': fields.many2one('product.uom.categ', 'UoM Category', required=True, ondelete='cascade',
@@ -119,6 +127,10 @@ class product_uom(osv.osv):
         'rounding': 0.01,
         'uom_type': 'reference',
     }
+
+    _constraints = [
+        (one_reference_by_categ, 'You must have one and only one reference by UoM Category', [])
+    ]
 
     _sql_constraints = [
         ('factor_gt_zero', 'CHECK (factor!=0)', 'The conversion ratio for a unit of measure cannot be 0!'),

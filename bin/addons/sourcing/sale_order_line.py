@@ -439,74 +439,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return []
 
-    def _search_need_sourcing(self, cr, uid, obj, name, args, context=None):
-        """
-        Returns all field order lines that need to be sourced according to the
-        domain given in args.
-
-        :param cr: Cursor to the database
-        :param uid: ID of the user that runs the method
-        :param obj: Object on which the search is
-        :param field_name: Name of the field on which the search is
-        :param args: The domain
-        :param context: Context of the call
-
-        :return A list of tuples that allows the system to return the list
-                 of matching field order lines
-        :rtype list
-        """
-        if context is None:
-            context = {}
-
-        if not args:
-            return []
-
-        # Put procurement_request = True in context to get FO and IR
-        context['procurement_request'] = True
-
-        if args[0][1] != '=' or not args[0][2]:
-            raise osv.except_osv(_('Error !'), _('Filter not implemented'))
-
-        return [('state', '=', 'validated')]
-
-    def _search_in_progress(self, cr, uid, obj, name, args, context=None):
-        """
-        Returns all field order lines that are sourcing in progress according to
-        the domain given in args.
-
-        :param cr: Cursor to the database
-        :param uid: ID of the user that runs the method
-        :param obj: Object on which the search is
-        :param field_name: Name of the field on which the search is
-        :param args: The domain
-        :param context: Context of the call
-
-        :return A list of tuples that allows the system to return the list
-                 of matching field order lines
-        :rtype list
-        """
-        if context is None:
-            context = {}
-
-        if not args:
-            return []
-
-        # Put procurement_request = True in context to get FO and IR
-        context['procurement_request'] = True
-
-        if args[0][1] != '=' or not args[0][2]:
-            raise osv.except_osv(_('Error !'), _('Filter not implemented'))
-
-        return [
-            ('display_confirm_button', '=', False),
-            ('state', '!=', 'draft'),
-            ('sale_order_in_progress', '=', False),
-            '|', '&',
-            ('type', '=', 'make_to_order'),
-            ('procurement_id.state', '=', 'confirmed'),
-            ('sale_order_state', '=', 'validated'),
-        ]
-
     def _get_related_sourcing_ok(self, cr, uid, ids, field_name, args, context=None):
         """
         Return True or False to determine if the user could select a sourcing group on the OST for the line
@@ -623,20 +555,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             type='boolean',
             string='Display Button',
             multi='line_info',
-        ),
-        'need_sourcing': fields.function(
-            _get_fake,
-            method=True,
-            type='boolean',
-            string='Only for filtering',
-            fnct_search=_search_need_sourcing,
-        ),
-        'in_progress': fields.function(
-            _get_fake,
-            method=True,
-            type='boolean',
-            string='Only for filtering',
-            fnct_search=_search_in_progress,
         ),
         # UTP-392: if the FO is loan type, then the procurement method is only Make to Stock allowed
         'loan_type': fields.function(
@@ -1404,7 +1322,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             # common domain:
             domain = [
                 ('partner_id', '=', sourcing_line.supplier.id),
-                ('state', 'in', ['draft']),
+                ('rfq_state', 'in', ['draft']),
                 ('delivery_requested_date', '=', sourcing_line.date_planned),
                 ('rfq_ok', '=', True),
                 ('order_type', '=', 'regular'),
@@ -1611,6 +1529,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             'details': sol.order_id.details,
             'delivery_requested_date': sol.date_planned,
             # 'rfq_delivery_address': tender.delivery_address and tender.delivery_address.id or False,
+            'from_procurement': True,
         }
         context.update({'rfq_ok': True})
         new_rfq_id = self.pool.get('purchase.order').create(cr, uid, rfq_values, context=context)
@@ -1675,8 +1594,19 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                     # No AD on sourcing line if it comes from IR:
                     anal_dist = False
-                    if not sourcing_line.procurement_request:
-                        anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context)
+                    if not sourcing_line.order_id.procurement_request:
+                        distib_to_copy = False
+                        if sourcing_line.analytic_distribution_id:
+                            distib_to_copy = sourcing_line.analytic_distribution_id.id
+                        elif sourcing_line.order_id.analytic_distribution_id:
+                            distib_to_copy = sourcing_line.order_id.analytic_distribution_id.id
+                        else:
+                            raise osv.except_osv(
+                                _('Warning'),
+                                _('AD missing on line %s, FO %s') % (sourcing_line.line_number, sourcing_line.order_id.name),
+                            )
+
+                        anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distib_to_copy, {}, context=context)
                     # attach PO line:
                     pol_values = {
                         'order_id': po_to_use,
@@ -1701,6 +1631,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         pol_values['name'] = sourcing_line.comment
                     if sourcing_line.procurement_request:
                         pol_values.update({
+                            'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         })
@@ -1714,11 +1645,21 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         rfq_to_use = self.create_rfq_from_sourcing_line(cr, uid, sourcing_line.id, context=context)
                         # log new RfQ:
                         rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, context=context)
-                        self.pool.get('purchase.order').log(cr, uid, rfq_to_use, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
                         self.pool.get('purchase.order').infolog(cr, uid, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
                     anal_dist = False
                     if not sourcing_line.procurement_request:
-                        anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, sourcing_line.analytic_distribution_id.id, {}, context=context)
+                        distrib = False
+                        if sourcing_line.analytic_distribution_id:
+                            distrib = sourcing_line.analytic_distribution_id.id
+                        elif sourcing_line.order_id.analytic_distribution_id:
+                            distrib = sourcing_line.order_id.analytic_distribution_id.id
+                        else:
+                            raise osv.except_osv(
+                                _('Warning'),
+                                _('AD missing on line %s, FO %s') % (sourcing_line.line_number, sourcing_line.order_id.name),
+                            )
+
+                        anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distrib, {}, context=context)
                     # attach new RfQ line:
                     rfq_line_values = {
                         'order_id': rfq_to_use,
@@ -1735,11 +1676,12 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     if sourcing_line.procurement_request:
                         rfq_line_values.update({
+                            'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         })
                     self.pool.get('purchase.order.line').create(cr, uid, rfq_line_values, context=context)
-                    self.pool.get('purchase.order').update_source_document(cr, uid, po_to_use, sourcing_line.order_id.id, context=context)
+                    self.pool.get('purchase.order').update_source_document(cr, uid, rfq_to_use, sourcing_line.order_id.id, context=context)
 
                 elif sourcing_line.po_cft == 'cft':
                     tender_to_use = self.get_existing_tender(cr, uid, sourcing_line.id, context=context)
@@ -1763,6 +1705,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     if sourcing_line.procurement_request:
                         tender_values.update({
+                            'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
                             'original_uom': sourcing_line.original_uom.id,
                         })

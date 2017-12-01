@@ -34,7 +34,7 @@ class client_entity_group(osv.osv_memory):
     _columns = {
         'name':fields.char('Group Name', size=64, required=True, readonly=True),
         'type':fields.char('Group Type', size=64, readonly=True),
-        'entity_ids':fields.many2many('sync.client.register_entity','sync_entity_group_rel','group_id','entity_id', string="Instances"),         
+        'entity_ids':fields.many2many('sync.client.register_entity','sync_entity_group_rel','group_id','entity_id', string="Instances"),
         'oc': fields.selection(OC_LIST_TUPLE, 'Operational Center',
                                required=True),
 
@@ -80,10 +80,10 @@ class register_entity(osv.osv_memory):
         'max_size' : fields.integer("Max Packet Size"),
         'parent_id' : fields.many2one('sync_client.instance.temp', 'Parent Instance'),
         'email' : fields.char('Contact Email', size=256, required=True),
-        'identifier': fields.char('Identifier', size=64, readonly=True), 
+        'identifier': fields.char('Identifier', size=64, readonly=True),
         'oc':fields.selection(OC_LIST_TUPLE, 'Operational Center',
                               required=True),
-        'group_ids':fields.many2many('sync.client.entity_group','sync_entity_group_rel','entity_id','group_id',string="Groups"), 
+        'group_ids':fields.many2many('sync.client.entity_group','sync_entity_group_rel','entity_id','group_id',string="Groups"),
         'state':fields.selection([('register','Register'),('parents','Parents'),('groups','Groups'), ('message', 'Message')], 'State', required=True),
     }
 
@@ -105,6 +105,8 @@ class register_entity(osv.osv_memory):
     }
 
     def previous(self, cr, uid, ids, state, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         maping = {'parents' : 'register',
                   'groups' : 'parents',
                   'message' : 'groups'}
@@ -115,6 +117,8 @@ class register_entity(osv.osv_memory):
         return True
 
     def _get_default_entity(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
         if entity.parent:
             ids = self.pool.get('sync_client.instance.temp').search(cr, uid, [('name', '=', entity.parent)] , context=context)
@@ -123,6 +127,8 @@ class register_entity(osv.osv_memory):
         return False
 
     def next(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         res = proxy.get_entity(
             self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier,
@@ -135,6 +141,8 @@ class register_entity(osv.osv_memory):
         return True
 
     def group_state(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity_group")
         res = proxy.get_group_name(context)
         if res:
@@ -143,6 +151,8 @@ class register_entity(osv.osv_memory):
         return True
 
     def validate(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         for entity in self.browse(cr, uid, ids, context=context):
             data = {'name': entity.name,
@@ -160,9 +170,11 @@ class register_entity(osv.osv_memory):
         elif res and not res[0]:
             raise osv.except_osv(_('Error !'), res[1])
 
-        return True  
+        return True
 
     def save_value(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         cur = self.browse(cr, uid, ids, context=context)[0]
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
         data = {
@@ -177,8 +189,8 @@ class register_entity(osv.osv_memory):
 
     def generate_uuid(self, cr, uid, ids, context=None):
         uuid = self.pool.get('sync.client.entity').generate_uuid()
-        self.write(cr, uid, ids, {"identifier" : uuid}, context=context) 
-        return True 
+        self.write(cr, uid, ids, {"identifier" : uuid}, context=context)
+        return True
 
 register_entity()
 
@@ -188,7 +200,7 @@ class update_entity(osv.osv_memory):
     _name = "sync.client.update_entity"
 
     def get_update(self, cr, uid, ids, context=None):
-        entity_obj = self.pool.get('sync.client.entity') 
+        entity_obj = self.pool.get('sync.client.entity')
         entity = entity_obj.get_entity(cr, uid, context=context)
         uuid = entity.identifier
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
@@ -215,7 +227,7 @@ class instance_temp(osv.osv):
     _description = "Parent Instance"
 
     _columns = {
-        'name' : fields.char("Instance Name", size=64, required=True)      
+        'name' : fields.char("Instance Name", size=64, required=True)
     }
 
     def fetch(self, cr, uid):

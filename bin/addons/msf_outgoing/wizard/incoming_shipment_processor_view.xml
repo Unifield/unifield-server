@@ -9,11 +9,13 @@
             <field name="arch" type="xml">
                 <form string="Products to Process">
                     <field name="date" invisible="1" />
+                    <field name="linked_to_out"  invisible="1"/>
                     <field name="picking_id" invisible="1" />
                     <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" />
                     <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" />
                     <group name="import_file_lines" string="Import Lines" colspan="4">
                         <button name="launch_simulation" string="Import IN" icon="gtk-execute" colspan="1" type="object" />
+                        <button name="launch_simulation_pack" string="Import IN, process IN &amp; pick and pack" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible': [('linked_to_out', '!=', True)]}"/>
                     </group>
                     <field name="contains_dg" invisible="1" />
                     <field name="contains_kc" invisible="1" />
@@ -48,13 +50,35 @@
                     <separator colspan="4" string="Move lines" />
                     <field name="move_ids" mode="tree"
                         colspan="4" nolabel="1" />
+                    <group colspan="4" col="4" name="claim">
+                        <separator string="Register a Claim to the Supplier for selected products." colspan="4" />
+                        <notebook colspan="4">
+                            <page string="Claim">
+                                <field name="register_a_claim" on_change="onchange_register_a_claim(register_a_claim, onchange_dest_type)"/>
+                                <field name="claim_in_has_partner_id" invisible="True"/>
+                                <field name="claim_partner_id"
+                                       attrs="{'required': [('register_a_claim', '=', True)]}"
+                                       readonly="1"
+                                       context="{'search_default_supplier': True}"/>
+                                <field name="claim_type"
+                                       attrs="{'readonly': [('register_a_claim', '=', False)]}"
+                                       on_change="onchange_claim_type(claim_type)"/>
+                                <field name="claim_replacement_picking_expected"
+                                       attrs="{'invisible': [('claim_type', 'not in', ('accept', 'scrap', 'quarantine', 'return', 'missing'))],
+                                               'readonly': [('claim_type', 'not in', ('accept', 'scrap', 'quarantine', 'return'))]}"/>
+                            </page>
+                            <page string="Claim Description">
+                                <field name="claim_description" colspan="4" nolabel="True"/>
+                            </page>
+                        </notebook>
+                    </group>
                     <group colspan="8" col="8" name="actions">
                         <separator string="Actions" colspan="8" />
                         <field name="dest_type"
                             on_change="onchange_dest_type(dest_type, picking_id)"
                             />
                         <field name="direct_incoming"
-                            attrs="{'invisible': [('dest_type', 'not in', ['default', 'to_stock'])]}"
+                            attrs="{'invisible': [('dest_type', 'not in', ['default', 'to_stock'])], 'readonly': [('register_a_claim', '=', True)]}"
                             />
                         <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
                         <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
