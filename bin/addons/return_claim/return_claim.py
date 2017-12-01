@@ -1532,7 +1532,7 @@ class claim_event(osv.osv):
         # do we need replacement?
         if obj.replacement_picking_expected_claim_event:
             # we copy the event return picking
-            replacement_id = pick_obj.copy(cr, uid, obj.event_picking_id_claim_event.id, context=context)
+            replacement_id = pick_obj.copy(cr, uid, obj.event_picking_id_claim_event.id, context=dict(context, keepLineNumber=True))
             # we update the replacement picking object and lines
             replacement_values = {
                 'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in') + '-replacement',
