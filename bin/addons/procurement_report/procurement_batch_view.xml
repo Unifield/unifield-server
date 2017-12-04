@@ -97,9 +97,5 @@
 			<field name="view_mode">tree,form</field>
 			<field name="target" eval="False" />
 		</record>
-		<menuitem id="menu_procurement_batch"
-		action="action_procurement_batch_form"
-		sequence="99"
-		parent="procurement.menu_stock_sched" />
 	</data>
 </openerp>
