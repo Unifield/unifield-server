@@ -2380,7 +2380,6 @@ class sale_order_line(osv.osv):
 
         for sol in self.browse(cr, uid, ids, context=context):
             orig_qty = sol.product_uom_qty
-
             # create split to cancel:
             split_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, {
                 'sale_line_id': sol.id,
@@ -2388,9 +2387,9 @@ class sale_order_line(osv.osv):
                 'old_line_qty': sol.product_uom_qty - qty_to_cancel,
                 'new_line_qty': qty_to_cancel,
             }, context=context)
-
             context.update({'return_new_line_id': True})
             new_line_id = self.pool.get('split.sale.order.line.wizard').split_line(cr, uid, split_id, context=context)
+            context.update({'return_new_line_id': True})
             wf_service.trg_validate(uid, 'sale.order.line', new_line_id, signal, cr)
 
         return True
@@ -2463,7 +2462,6 @@ class sale_order_line(osv.osv):
                 cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
         else:
-            minus_qty = line.product_uom_qty - qty_diff
             # Update the line and the procurement
             self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, context=context)
 
