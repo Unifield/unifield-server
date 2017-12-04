@@ -131,6 +131,7 @@
                                         <field name="qty_claim_product_line" on_change="onchange_uom_qty(uom_id_claim_product_line, qty_claim_product_line)" />
                                         <field name="uom_id_claim_product_line" on_change="onchange_uom_qty(uom_id_claim_product_line, qty_claim_product_line)" />
                                         <field name="hidden_stock_available_claim_product_line" invisible="False" />
+                                        <field name="price_unit_claim_product_line" string="Price Unit" />
                                         <field name="stock_move_id_claim_product_line" invisible="True" />
                                         
                                         <field name="type_check" invisible="True" />
