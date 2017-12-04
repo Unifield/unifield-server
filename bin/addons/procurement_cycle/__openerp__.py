@@ -50,7 +50,6 @@
     'update_xml': [
         'procurement_view.xml',
         'procurement_data.xml',
-        'wizard/schedulers_all_view.xml',
         'security/ir.model.access.csv',
     ],
     'demo_xml': [
