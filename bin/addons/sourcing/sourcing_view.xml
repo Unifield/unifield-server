@@ -157,12 +157,6 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
         </record>
-
-        <menuitem
-            id="menu_action_po_automation_config"
-            action="action_po_automation_config"
-            parent="base.menu_sale_config_sales"
-            name="PO Automation" />
         
         <!-- Related sourcing group -->
         <record id="related_sourcing_search_view" model="ir.ui.view">

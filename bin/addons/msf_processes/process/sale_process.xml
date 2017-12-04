@@ -59,18 +59,6 @@
             <field eval="&quot;&quot;&quot;object.state == 'done'&quot;&quot;&quot;" name="model_states"/>
             <field eval="0" name="flow_start"/>
         </record>
-
-        <record id="sale.process_node_saleprocurement0" model="process.node">
-            <field name="menu_id" ref="procurement.menu_stock_procurement_action"/>
-            <!-- <field name="model_id" ref="procurement.model_procurement_order"/> -->
-            <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
-            <field eval="&quot;&quot;&quot;Sourcing&quot;&quot;&quot;" name="name"/>
-            <field eval="&quot;&quot;&quot;Sourcing subflow.&quot;&quot;&quot;" name="note"/>
-            <field name="process_id" ref="sale.process_process_salesprocess0"/>
-            <field name="subflow_id" ref="procurement.process_process_procurementprocess0"/>
-            <!-- <field eval="&quot;&quot;&quot;object.state == 'confirmed'&quot;&quot;&quot;" name="model_states"/> -->
-            <field eval="0" name="flow_start"/>
-        </record>
         
         <record id="sale.process_node_sale_tender" model="process.node">
             <field name="menu_id" ref="tender_flow.menu_tender"/>

@@ -48,7 +48,6 @@
                    "process/supplier_invoice_process.xml", #8
                    "process/purchase_process.xml", #9
                    "process/tender_process.xml", #10
-                   "process/procurement_process.xml", #11
                    "process/sale_process.xml", #12
                    ],
     "demo_xml": [],
