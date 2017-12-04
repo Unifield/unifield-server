@@ -82,7 +82,7 @@ Scenario: SLL - Intersection - Partially confirmed FO-external PO-IN/OUT-STV-SI(
     | Customer Reference |
     | *{{MYCODE}} |
     
-    I fill "Ordered Date" with "25/May/2017"
+    #I fill "Ordered Date" with "25/May/2017"
     I click on "Analytical Distribution" and open the window
     I click on "New"
     I fill "SUP" within column "Destination"
