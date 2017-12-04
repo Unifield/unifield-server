@@ -11,13 +11,7 @@
 		    target="new"
             key2="client_action_multi"
 		    id="procurement.action_compute_schedulers"/>
-		    
-		<menuitem action="procurement.action_compute_schedulers" 
-				  id="procurement.menu_stock_proc_schedulers" 
-				  parent="procurement.menu_stock_sched"
-				  string="POs Creation" 
-				  sequence="20" />
-				  
+		    		  
 		
     	<record id="procurement_rules_report_tree_view" model="ir.ui.view">
     		<field name="name">procurement.rules.report.tree.view</field>

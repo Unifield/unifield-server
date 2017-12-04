@@ -175,7 +175,6 @@
         <!-- REWORKING OF WAREHOUSE MENU ACCORDING TO UF-657 ERGONOMIC IMPROVEMENTS -->
         <menuitem id="stock.menu_traceability" name="Traceability" parent="stock.menu_stock_root" sequence="5"/>
         <menuitem id="stock.menu_stock_inventory_control" name="Inventory Control" parent="stock.menu_stock_root" sequence="6"/>
-        <menuitem id="procurement.menu_stock_sched" name="PO Creation" parent="stock.menu_stock_root" sequence="10"/>
         <menuitem id="stock.next_id_61" name="Reporting" parent="stock.menu_stock_root" sequence="8" />
 
         <!-- REWORKING OF TRACEABILITY MENU -->

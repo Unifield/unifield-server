@@ -127,7 +127,6 @@
                             <action name="%(action_picking_ticket_board)d" string="Picking Tickets" menu_ref="%(msf_outgoing.menu_action_picking_ticket)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
                             <action name="%(action_ppl_board)d" string="Pre-Packing Lists" menu_ref="%(msf_outgoing.menu_action_ppl)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
                             <action name="%(board_action_shipment)d" string="Shipments" menu_ref="%(msf_outgoing.menu_action_shipment)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
-                            <action colspan="4" name="%(procurement.procurement_action_board)d" string="Procurements in Exception" width="510" menu_ref="%(procurement.menu_stock_sched)d,%(procurement.menu_stock_procurement_action)d"/>
                         </child1>
                     </hpaned>
                 </form>
@@ -145,7 +144,6 @@
                         <child1>
                             <action name="%(action_picking_tree_available)d" string="Incoming Shipments" menu_ref="%(stock.menu_action_picking_tree4)d,%(stock.menu_stock_warehouse_mgmt)d"/>
                             <action name="%(action_outgoing_product_board)d" string="Delivery Orders" menu_ref="%(stock.menu_action_picking_tree)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d"/>
-                            <action colspan="4" name="%(procurement.procurement_action_board)d" string="Procurements in Exception" width="510" menu_ref="%(procurement.menu_stock_sched)d,%(procurement.menu_stock_procurement_action)d"/>
                         </child1>
                     </hpaned>
                 </form>
