@@ -95,6 +95,9 @@ class split_sale_order_line_wizard(osv.osv_memory):
                     wf_service = netsvc.LocalService("workflow")
                     wf_service.trg_validate(uid, 'sale.order.line', new_line_id, 'validated', cr)
 
+        if context.get('return_new_line_id'):
+            return new_line_id
+
         return {'type': 'ir.actions.act_window_close'}
 
     def line_qty_change(self, cr, uid, ids, original_qty, new_line_qty, context=None):
