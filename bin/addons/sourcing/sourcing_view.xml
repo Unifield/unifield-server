@@ -134,15 +134,6 @@
 
 		<menuitem icon="STOCK_INDENT" action="sourcing_line_action" sequence="2"
 			id="menu_sourcing_line" parent="base.menu_sales" />
-			
-		<act_window name="Auto POs creation"
-		    res_model="procurement.purchase.compute.all"
-		    src_model="sale.order.line"
-		    view_mode="form"
-		    target="new"
-            key2="client_action_multi"
-            empty_ids="1"
-            id="action_compute_schedulers_sourcing"/>
 
         <!-- PO Automation -->
         <record id="po_automation_config_data" model="po.automation.config">
