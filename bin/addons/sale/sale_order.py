@@ -2366,6 +2366,37 @@ class sale_order_line(osv.osv):
 
         return True
 
+
+    def cancel_partial_qty(self, cr, uid, ids, qty_to_cancel, resource=False, context=None):
+        '''
+        cancel partially a SO line: create a split and cancel the split
+        '''
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        wf_service = netsvc.LocalService("workflow")
+        signal = 'cancel_r' if resource else 'cancel' 
+
+        for sol in self.browse(cr, uid, ids, context=context):
+            orig_qty = sol.product_uom_qty
+
+            # create split to cancel:
+            split_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, {
+                'sale_line_id': sol.id,
+                'original_qty': orig_qty,
+                'old_line_qty': sol.product_uom_qty - qty_to_cancel,
+                'new_line_qty': qty_to_cancel,
+            }, context=context)
+
+            context.update({'return_new_line_id': True})
+            new_line_id = self.pool.get('split.sale.order.line.wizard').split_line(cr, uid, split_id, context=context)
+            wf_service.trg_validate(uid, 'sale.order.line', new_line_id, signal, cr)
+
+        return True
+
+
+
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
         Check if there is restriction on lines
@@ -2431,12 +2462,14 @@ class sale_order_line(osv.osv):
             if line.original_line_id:
                 cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
+        else:
+            minus_qty = line.product_uom_qty - qty_diff
+            # Update the line and the procurement
+            self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, context=context)
 
         so_to_cancel_id = False
         if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
             so_to_cancel_id = order
-        else:
-            wf_service.trg_write(uid, 'sale.order', order, cr)
 
         return so_to_cancel_id
 
