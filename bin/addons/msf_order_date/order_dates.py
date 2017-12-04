@@ -656,7 +656,7 @@ class sale_order(osv.osv):
         # compute requested date and transport type
         res = common_onchange_partner_id(self, cr, uid, ids, part=part, order_type=order_type, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
         # reset confirmed date
-        res.setdefault('value', {}).update({'delivery_confirmed_date': datetime.now().strftime('%Y-%m-%d')})
+        res.setdefault('value', {}).update({'delivery_confirmed_date': False})
 
         if res.get('value', {}).get('pricelist_id') and part:
             if ids:

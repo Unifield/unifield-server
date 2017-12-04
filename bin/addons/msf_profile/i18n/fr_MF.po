@@ -100258,4 +100258,3 @@ msgstr "Import IN, écran de simulation"
 #: view:wizard.import.in.simulation.screen:0
 msgid "Import, pick & pack"
 msgstr "Importer, Pick et Colissage"
-
