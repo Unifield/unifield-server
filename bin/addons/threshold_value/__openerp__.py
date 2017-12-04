@@ -43,7 +43,6 @@
     'update_xml': [
         "threshold_value_data.xml",
         "threshold_value_view.xml",
-        "wizard/schedulers_all_view.xml",
         "security/ir.model.access.csv",
     ],
     'demo_xml': [
