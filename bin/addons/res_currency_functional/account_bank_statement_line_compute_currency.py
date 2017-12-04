@@ -50,7 +50,7 @@ class account_bank_statement_line_compute_currency(osv.osv):
         'currency_id': fields.related('statement_id', 'currency', type="many2one", relation="res.currency", string="Currency", store=False),
         'functional_in': fields.function(_compute, method=True, store=False, type='float', string='Func. In', multi='amount_in, amount_out'),
         'functional_out': fields.function(_compute, method=True, store=False, type='float', string='Func. Out', multi='amount_in, amount_out'),
-        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False),
+        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False, write_relate=False),
     }
     
 account_bank_statement_line_compute_currency()

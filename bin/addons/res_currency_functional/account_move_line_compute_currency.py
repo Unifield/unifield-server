@@ -49,7 +49,7 @@ class account_move_line_compute_currency(osv.osv):
     _columns = {
         'debit_currency': fields.float('Booking Out', digits_compute=dp.get_precision('Account')),
         'credit_currency': fields.float('Booking In', digits_compute=dp.get_precision('Account')),
-        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
+        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, write_relate=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
         'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
@@ -667,7 +667,7 @@ class account_move_line_compute_currency(osv.osv):
     _columns = {
         'debit_currency': fields.float('Book. Debit', digits_compute=dp.get_precision('Account')),
         'credit_currency': fields.float('Book. Credit', digits_compute=dp.get_precision('Account')),
-        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False),
+        'functional_currency_id': fields.related('account_id', 'company_id', 'currency_id', type="many2one", relation="res.currency", string="Func. Currency", store=False, write_relate=False),
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
         'account_type': fields.function(_get_line_account_type, type='char', size=64, method=True, string="Account Type",
