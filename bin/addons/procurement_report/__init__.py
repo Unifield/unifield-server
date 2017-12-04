@@ -25,6 +25,5 @@ import min_max_report
 import auto_supply_report
 import order_cycle_report
 import threshold_value_report
-import wizard
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

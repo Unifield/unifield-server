@@ -40,7 +40,6 @@
         'auto_supply_report_view.xml',
         'order_cycle_report_view.xml',
         'threshold_value_report_view.xml',
-        'wizard/schedulers_all_view.xml',
         'security/ir.model.access.csv',
     ],
     'demo_xml': [
