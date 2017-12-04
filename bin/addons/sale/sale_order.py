@@ -2463,7 +2463,7 @@ class sale_order_line(osv.osv):
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
         else:
             # Update the line and the procurement
-            self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, context=context)
+            self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource=False, context=context)
 
         so_to_cancel_id = False
         if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
