@@ -415,8 +415,8 @@ class audittrail_log_sequence(osv.osv):
     _name = 'audittrail.log.sequence'
     _rec_name = 'model'
     _columns = {
-        'model': fields.char(size=64, string='Model'),
-        'res_id': fields.integer(string='Res Id'),
+        'model': fields.char(size=64, string='Model', select=1),
+        'res_id': fields.integer(string='Res Id', select=1),
         'sequence': fields.many2one('ir.sequence', 'Logs Sequence', required=True, ondelete='cascade'),
     }
 
@@ -789,7 +789,7 @@ class audittrail_rule(osv.osv):
         log_seq_obj = self.pool.get('audittrail.log.sequence')
         log_sequence = log_seq_obj.search(cr, uid, [('model', '=', obj_name), ('res_id', '=', res_id)])
         if log_sequence:
-            log_seq = log_seq_obj.browse(cr, uid, log_sequence[0]).sequence
+            log_seq = log_seq_obj.browse(cr, uid, log_sequence[0], fields_to_fetch=['sequence']).sequence
             log = log_seq.get_id(code_or_id='id')
         else:
             # Create a new sequence
@@ -809,7 +809,7 @@ class audittrail_rule(osv.osv):
             }
             seq_id = seq_pool.create(cr, uid, seq)
             log_seq_obj.create(cr, uid, {'model': obj_name, 'res_id': res_id, 'sequence': seq_id})
-            log = seq_pool.browse(cr, uid, seq_id).get_id(code_or_id='id')
+            log = seq_pool.get_id(cr, uid, seq_id, code_or_id='id')
         return log
 
 audittrail_rule()
@@ -892,7 +892,7 @@ class audittrail_log_line(osv.osv):
         res = {}
         lang = self.pool.get('res.users').browse(cr, uid, uid, context=context).context_lang
 
-        for line in self.browse(cr, uid, ids, context=context):
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['field_id', 'object_id', 'fct_object_id', 'res_id', 'name', 'field_description'], context=context):
             res[line.id] = False
 
             # Translation of field name
@@ -903,7 +903,7 @@ class audittrail_log_line(osv.osv):
                                                  ('type', '=', 'field'),
                                                  ('src', '=', line.field_id.field_description)], context=context)
                 if tr_ids:
-                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], context=context).value
+                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], fields_to_fetch=['value'], context=context).value
 
             # Translation of one2many object if any
             if not res[line.id] and line.fct_object_id:
@@ -913,7 +913,7 @@ class audittrail_log_line(osv.osv):
                                                  ('type', '=', 'field'),
                                                  ('src', '=', line.field_id.field_description)], context=context)
                 if tr_ids:
-                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], context=context).value
+                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], fields_to_fetch=['value'], context=context).value
 
             # Translation of main object
             if not res[line.id] and (line.object_id or line.fct_object_id):
@@ -922,7 +922,7 @@ class audittrail_log_line(osv.osv):
                                                  ('type', '=', 'model'),
                                                  ('src', '=', line.name)], context=context)
                 if tr_ids:
-                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], context=context).value
+                    res[line.id] = tr_obj.browse(cr, uid, tr_ids[0], fields_to_fetch=['value'], context=context).value
 
             # No translation
             if not res[line.id]:

@@ -53,7 +53,7 @@ class ir_sequence(osv.osv):
                    + code_or_id + '=%s and active=%s', (sequence_id, True,))
         res = cr.dictfetchone()
         if res:
-            for line in self.browse(cr, uid, res['id'],
+            for line in self.browse(cr, uid, res['id'], fields_to_fetch=['fiscal_ids'],
                                     context=context).fiscal_ids:
                 if line.fiscalyear_id.id == context.get('fiscalyear_id', False):
                     return super(ir_sequence, self).get_id(cr, uid,
