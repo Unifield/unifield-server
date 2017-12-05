@@ -97,6 +97,7 @@ class account_move_line(osv.osv):
             ('corrected_line_id', '=', False),  # is a correction line if has a corrected line
             ('reversal_line_id', '=', False),  # is a reversal line if a reversed line
             ('is_downpayment', '=', False),  # US-738/UC4
+            ('period_id.number', '!=', 0),  # exclude IB entries
         ]
 
         # UFTP-358: do not allow to import an entry from November in an October
