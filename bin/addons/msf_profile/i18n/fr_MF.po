@@ -100258,3 +100258,42 @@ msgstr "Import IN, écran de simulation"
 #: view:wizard.import.in.simulation.screen:0
 msgid "Import, pick & pack"
 msgstr "Importer, Pick et Colissage"
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "\n"
+"                                    <img src=\"/openerp/static/images/stock/gtk-dialog-warning.png\" height=\"12\" width=\"12\"/>\n"
+"                                        You receive dangerous goods products, please refer to the appropriate procedure.\n"
+"                                    <img src=\"/openerp/static/images/stock/gtk-dialog-warning.png\" height=\"12\" width=\"12\"/>\n"
+"                                "
+msgstr "\n"
+"                                    <img src=\"/openerp/static/images/stock/gtk-dialog-warning.png\" height=\"12\" width=\"12\"/>\n"
+"                                        Vous recevez des produits dangereux, merci de vous référer à la procédure appropriée.\n"
+"                                    <img src=\"/openerp/static/images/stock/gtk-dialog-warning.png\" height=\"12\" width=\"12\"/>\n"
+"                                "
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "\n"
+"                                    <img src=\"/openerp/static/images/stock/gtk-dialog-warning.png\" height=\"12\" width=\"12\"/>\n"
+"                                        You receive heat sensitive products, please refer to the appropriate procedure.\n"
+"                                    <img src=\"/openerp/static/images/stock/gtk-dialog-warning.png\" height=\"12\" width=\"12\"/>\n"
+"                                "
+msgstr "\n"
+"                                    <img src=\"/openerp/static/images/stock/gtk-dialog-warning.png\" height=\"12\" width=\"12\"/>\n"
+"                                        Vous recevez des produits sensibles à la chaleur, merci de vous référer à la procédure appropriée.\n"
+"                                    <img src=\"/openerp/static/images/stock/gtk-dialog-warning.png\" height=\"12\" width=\"12\"/>\n"
+"                                "
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "\n"
+"                                    <img src=\"/openerp/static/images/stock/gtk-dialog-warning.png\" height=\"12\" width=\"12\"/>\n"
+"                                        You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure.\n"
+"                                    <img src=\"/openerp/static/images/stock/gtk-dialog-warning.png\" height=\"12\" width=\"12\"/>\n"
+"                                "
+msgstr "\n"
+"                                    <img src=\"/openerp/static/images/stock/gtk-dialog-warning.png\" height=\"12\" width=\"12\"/>\n"
+"                                        Vous recevez des produits dangereux et sensibles à la chaleur, merci de vous référer à la procédure appropriée.\n"
+"                                    <img src=\"/openerp/static/images/stock/gtk-dialog-warning.png\" height=\"12\" width=\"12\"/>\n"
+"                                "
