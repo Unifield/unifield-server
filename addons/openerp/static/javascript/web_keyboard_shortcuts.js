@@ -117,6 +117,7 @@ $.ctrlshift = function(key, callback, args) {
                            $newdiv1.remove();
                         }, 2000);
                      }
+                     return false;
                 });
             }
         }
