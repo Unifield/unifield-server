@@ -117,6 +117,7 @@ class PhysicalInventory(osv.osv):
         'company_id': fields.many2one('res.company', 'Company', readonly=True, select=True, required=True,
                                       states={'draft': [('readonly', False)]}),
         'full_inventory': fields.boolean('Full inventory', readonly=True),
+        'discrepancies_generated': fields.boolean('Discrepancies Generated', readonly=True),
         'file_to_import': fields.binary(string='File to import', filters='*.xml'),
         'file_to_import2': fields.binary(string='File to import', filters='*.xml'),
 
@@ -433,7 +434,7 @@ class PhysicalInventory(osv.osv):
         todo.extend(create_discrepancy_lines)
 
         # Do the actual write
-        write("physical.inventory", inventory_id, {'discrepancy_line_ids': todo})
+        write("physical.inventory", inventory_id, {'discrepancy_line_ids': todo, 'discrepancies_generated': True})
 
 
         self._update_total_product(cr, uid, inventory_id,
@@ -889,9 +890,6 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         """ Finish the inventory"""
         if context is None:
             context = {}
-        move_obj = self.pool.get('stock.move')
-        for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
-            move_obj.action_done(cr, uid, inv['move_ids'], context=context)
         self.write(cr, uid, ids, {'state': 'closed', 'date_done': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT)},
                    context=context)
         return {}
@@ -909,7 +907,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         return {}
 
     def action_confirm(self, cr, uid, ids, context=None):
-        """ Confirm the inventory and writes its finished date"""
+        """ Confirm the inventory, close the stock moves and writes its finished date"""
 
         if context is None:
             context = {}
@@ -923,6 +921,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         product_tmpl_obj = self.pool.get('product.template')
         prod_lot_obj = self.pool.get('stock.production.lot')
         picking_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
 
         product_dict = {}
         product_tmpl_dict = {}
@@ -1065,6 +1064,9 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             self.write(cr, uid, [inv['id']], {'state': 'confirmed', 'move_ids': [(6, 0, move_ids)]})
             for line_id, move_id in discrepancy_to_move.items():
                 inv_line_obj.write(cr, uid, [line_id], {'move_id': move_id}, context=context)
+
+            # Close the moves
+            move_obj.action_done(cr, uid, move_ids, context=context)
 
 
     def action_cancel_draft(self, cr, uid, ids, context=None):
