@@ -1077,7 +1077,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         field_id = field_ids and field_ids[0] or False
 
     if field_id:
-        field = field_pool.read(cr, uid, field_id)
+        field = field_pool.read(cr, uid, field_id, ['relation', 'ttype', 'name'])
         relation_model = field['relation']
         relation_model_pool = relation_model and pool.get(relation_model) or False
 
@@ -1128,7 +1128,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             res = False
             if values:
                 translation_obj = self.pool.get('ir.translation')
-                fct_object = model_pool.browse(cr, uid, model.id, context=context).model
+                fct_object = model_pool.browse(cr, uid, model.id, fields_to_fetch=['model'], context=context).model
                 sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
                 if field['name'] in sel:
                     res = dict(sel[field['name']]['selection']).get(values)

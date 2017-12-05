@@ -80,8 +80,7 @@ class extended_orm_delete_method:
             return True
 
         # we don't need to keep a track of all deleted objects
-        model_deleted_black_list = ['funding.pool.distribution.line',
-                                    ]
+        model_deleted_black_list = ['funding.pool.distribution.line', 'hr.contract.msf']
         if self._name in model_deleted_black_list or \
                 not self.pool.get('sync.client.entity') or  \
                 self._name.startswith('ir.') or\
