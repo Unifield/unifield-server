@@ -62,8 +62,8 @@ class cash_request(osv.osv):
                                                       string='Consolidation Currency Name', store=False, readonly=True),
         'transfer_account_id': fields.many2one('account.account', 'Transfer Account Code',
                                                domain=[('type', '=', 'other'), ('user_type_code', '=', 'cash')]),
-        'transfer_currency_ids': fields.one2many('transfer.currency', 'cash_request_id', 'Currency of Transfers',
-                                                 required=True,
+        'transfer_currency_ids': fields.one2many('cash.request.transfer.currency', 'cash_request_id',
+                                                 'Currency of Transfers', required=True,
                                                  states={'done': [('readonly', True)]}),
         'bank_journal_id': fields.many2one('account.journal', 'Bank', required=True, domain=[('type', '=', 'bank')]),
         'state': fields.selection(
@@ -91,9 +91,10 @@ class cash_request(osv.osv):
         'commitment_ids': fields.one2many('cash.request.commitment', 'cash_request_id', 'Commitments', readonly=True),
         'total_to_transfer': fields.float('Total Cash Request to transfer', digits_compute=dp.get_precision('Account'),
                                           readonly=True),
-        'total_to_transfer_line_ids': fields.one2many('total.transfer.line', 'cash_request_id',
+        'total_to_transfer_line_ids': fields.one2many('cash.request.total.transfer.line', 'cash_request_id',
                                                       'Lines of Total Cash Request to transfer', readonly=True),
-        'recap_mission_ids': fields.one2many('recap.mission', 'cash_request_id', 'Lines of Recap Mission', readonly=True),
+        'recap_mission_ids': fields.one2many('cash.request.recap.mission', 'cash_request_id', 'Lines of Recap Mission',
+                                             readonly=True),
         'planned_expense_ids': fields.one2many('cash.request.expense', 'cash_request_id', 'Planned expenses entries',
                                                required=True, states={'done': [('readonly', True)]}),
         'recap_expense_ids': fields.one2many('cash.request.recap.expense', 'cash_request_id', 'Recap Planned expenses',
@@ -384,7 +385,7 @@ class cash_request(osv.osv):
         """
         if context is None:
             context = {}
-        recap_mission_obj = self.pool.get('recap.mission')
+        recap_mission_obj = self.pool.get('cash.request.recap.mission')
         fields_list = ['instance_ids', 'commitment_ids', 'recap_expense_ids', 'payable_ids', 'liquidity_cash_ids',
                        'liquidity_bank_ids', 'liquidity_cheque_ids']
         cash_req = self.browse(cr, uid, cash_req_id, fields_to_fetch=fields_list, context=context)
@@ -489,7 +490,7 @@ class cash_request(osv.osv):
         """
         if context is None:
             context = {}
-        transfer_line_obj = self.pool.get('total.transfer.line')
+        transfer_line_obj = self.pool.get('cash.request.total.transfer.line')
         cur_obj = self.pool.get('res.currency')
         fields_list = ['buffer', 'transfer_to_come', 'security_envelope', 'request_date', 'consolidation_currency_id',
                        'transfer_currency_ids']
@@ -648,8 +649,8 @@ class cash_request(osv.osv):
 cash_request()
 
 
-class transfer_currency(osv.osv):
-    _name = 'transfer.currency'
+class cash_request_transfer_currency(osv.osv):
+    _name = 'cash.request.transfer.currency'
     _rec_name = 'cash_request_id'
     _description = 'Currency of Transfers for Cash Request'
 
@@ -680,7 +681,7 @@ class transfer_currency(osv.osv):
     ]
 
 
-transfer_currency()
+cash_request_transfer_currency()
 
 
 class cash_request_commitment(osv.osv):
@@ -730,8 +731,8 @@ class cash_request_commitment(osv.osv):
 cash_request_commitment()
 
 
-class total_transfer_line(osv.osv):
-    _name = 'total.transfer.line'
+class cash_request_total_transfer_line(osv.osv):
+    _name = 'cash.request.total.transfer.line'
     _rec_name = 'cash_request_id'
     _description = 'Line of Total to transfer for Cash Request'
 
@@ -744,11 +745,11 @@ class total_transfer_line(osv.osv):
     _order = 'currency_id'
 
 
-total_transfer_line()
+cash_request_total_transfer_line()
 
 
-class recap_mission(osv.osv):
-    _name = 'recap.mission'
+class cash_request_recap_mission(osv.osv):
+    _name = 'cash.request.recap.mission'
     _rec_name = 'cash_request_id'
     _description = 'Recap Mission Line for Cash Request'
 
@@ -783,7 +784,7 @@ class recap_mission(osv.osv):
     _order = 'instance_level, instance_id'
 
 
-recap_mission()
+cash_request_recap_mission()
 
 
 class cash_request_expense(osv.osv):
