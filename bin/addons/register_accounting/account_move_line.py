@@ -203,6 +203,20 @@ class account_move_line(osv.osv):
 
         return ids
 
+    def _get_lines_from_move(self, cr, uid, account_move_ids, context=None):
+        """
+        Returns the list of the JI ids from the JE whose ids are in parameter.
+        This method is used to trigger the computation of amount_residual_import_inv on the lines
+        (cf US-3827, this computation wasn't triggered if the user didn't click on Save at entry creation)
+        """
+        if context is None:
+            context = {}
+        aml_oj = self.pool.get('account.move.line')
+        res = []
+        if account_move_ids:
+            res = aml_oj.search(cr, uid, [('move_id', 'in', account_move_ids)], order='NO_ORDER', context=context)
+        return res
+
     def _get_linked_statement(self, cr, uid, ids, context=None):
         new_move = True
         r_move = {}
@@ -246,6 +260,7 @@ class account_move_line(osv.osv):
         'amount_residual_import_inv': fields.function(_amount_residual_import_inv, method=True, string='Residual Amount',
                                                       store={
                                                           'account.move.line': (_get_move_line_residual_import, ['amount_currency','reconcile_id','reconcile_partial_id','imported_invoice_line_ids'], 10),
+                                                          'account.move': (_get_lines_from_move, ['state'], 10),
                                                           'account.move.reconcile': (_get_reconciles, None, 10),
                                                           'account.bank.statement.line': (_get_linked_statement, None, 10),
                                                       }),
