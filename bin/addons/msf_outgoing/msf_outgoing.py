@@ -1668,7 +1668,6 @@ class shipment(osv.osv):
                 cr.execute('update stock_picking set already_shipped=\'t\' where id=%s' % packing.id)
 
                 # closing FO lines:
-                import pdb; pdb.set_trace()
                 for stock_move in packing.move_lines:
                     if stock_move.sale_line_id:
                         open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
