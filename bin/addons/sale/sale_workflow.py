@@ -156,6 +156,23 @@ class sale_order_line(osv.osv):
         return new_sol_id
 
 
+    def test_done(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for sol_id in ids:
+            open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
+                ('sale_line_id', '=', sol_id),
+                ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                ('type', '=', 'out'),
+                ('product_qty', '!=', 0.0),
+            ], context=context)
+
+        return not open_moves
+
+
     def action_done(self, cr, uid, ids, context=None):
         '''
         Workflow method called when SO line is done
