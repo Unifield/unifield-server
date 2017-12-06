@@ -436,6 +436,11 @@
                     <field name="partner_id" invisible="1"/>
                     <field name="employee_id" invisible="1"/>
                     <field name="transfer_journal_id" invisible="1"/>
+                    <field name="display_analytic_button" invisible="1"/>
+                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object"
+                            icon="terp-stock_symbol-selection" context="context"
+                            attrs="{'readonly': [('from_import_cheque_id', '!=', False)],
+                                    'invisible': [('display_analytic_button', '=', False)]}"/>
                     <field name="amount_in"/>
                     <field name="amount_out"/>
                     <field name="currency_id" invisible="1"/>
