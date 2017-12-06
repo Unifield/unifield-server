@@ -66,9 +66,6 @@ $.ctrlshift = function(key, callback, args) {
             else if (key == '40'){
                 class_to_parse = '.oe_button_pager[action="last"]';
             }
-            else if (key=='Q'){
-                class_to_parse = '.oe_form_button_close';
-            }
             if (class_to_parse != null){
                 //$('.oe_form_button_save')
                 $(class_to_parse).each(function() {
@@ -259,12 +256,5 @@ $.ctrlshift('40', function() {
     $('.oe_button_pager[action="last"]').each(function() {
         fake_click(this);
         return false;
-    });
-});
-
-//Close ('Q')
-$.ctrlshift('Q', function() {
-    $('.oe_form_button_close').each(function() {
-        fake_click(this);
     });
 });
