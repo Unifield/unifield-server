@@ -700,12 +700,17 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                     line_no = None
                     add_error("""Invalid line number""", row_index, 0)
 
-            # Check product_code
+            # Check product_code and type
             product_code = row.cells[1].data
             product_ids = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
             product_id = False
             if len(product_ids) == 1:
                 product_id = product_ids[0]
+                # Check if product is non-stockable
+                product_tmpl_type = product_obj.browse(cr, uid, product_id, fields_to_fetch=['product_tmpl_id'],
+                                                     context=context)['product_tmpl_id'].type
+                if product_tmpl_type in ('service_recep', 'consu'):
+                    add_error("""Impossible to import non-stockable product %s""" % product_code, row_index, 1)
             else:
                 add_error("""Product %s not found""" % product_code, row_index, 1)
 
@@ -822,7 +827,7 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
 
         discrepancy_report_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import2))
 
-        # product_obj = self.pool.get('product.product')
+        product_obj = self.pool.get('product.product')
         # product_uom_obj = self.pool.get('product.uom')
         # counting_obj = self.pool.get('physical.inventory.counting')
         reason_type_obj = self.pool.get('stock.reason.type')
@@ -831,6 +836,16 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         for row_index, row in enumerate(discrepancy_report_file.getRows()):
             if row_index < 10:
                 continue
+
+            product_code = row.cells[2].data
+            product_ids = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
+            if len(product_ids) == 1:
+                # Check if product is non-stockable
+                product_tmpl_type = product_obj.browse(cr, uid, product_ids[0], fields_to_fetch=['product_tmpl_id'],
+                                                       context=context)['product_tmpl_id'].type
+                if product_tmpl_type in ('service_recep', 'consu'):
+                    add_error("""Impossible to import non-stockable product %s""" % product_code, row_index, 2)
+
             adjustment_type = row.cells[18].data
             if adjustment_type:
                 reason_ids = reason_type_obj.search(cr, uid, [('name', '=like', adjustment_type)], context=context)
@@ -905,6 +920,24 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
     def action_validate(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+
+        # Check if a line contains a non-stockable product
+        for inv in self.browse(cr, uid, ids, context=context):
+            for product in inv.product_ids:
+                if product.product_tmpl_id.type in ('service_recep', 'consu'):
+                    raise osv.except_osv(_('Error'), _('Please remove non-stockable product %s to validate.')
+                                         % (product.default_code,))
+            for discrepancy_line in inv.discrepancy_line_ids:
+                if discrepancy_line.product_id.product_tmpl_id.type in ('service_recep', 'consu'):
+                    raise osv.except_osv(_('Error'),
+                                         _('Please remove non-stockable product %s from the discrepancy report to validate.')
+                                         % (discrepancy_line.product_id.default_code,))
+            for counting_line in inv.counting_line_ids:
+                if counting_line.product_id.product_tmpl_id.type in ('service_recep', 'consu'):
+                    raise osv.except_osv(_('Error'),
+                                         _('Please remove non-stockable product %s from the counting sheet to validate.')
+                                         % (counting_line.product_id.default_code,))
+
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         return {}
 

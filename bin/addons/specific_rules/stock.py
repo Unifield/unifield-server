@@ -131,6 +131,11 @@ class initial_stock_inventory(osv.osv):
                             self.pool.get('initial.stock.inventory.line').write(cr, uid, [inventory_line.id], {
                                 'prodlot_name': prodlot_obj.read(cr, uid, prodlot_ids[0], ['name'], context=context)['name'],
                             }, context=context)
+
+                # Check if product is non-stockable
+                if inventory_line.product_id.product_tmpl_id.type in ('service_recep', 'consu'):
+                    raise osv.except_osv(_('Error'), _('Please remove non-stockable product %s to validate.')
+                                         % (inventory_line.product_id.default_code,))
         
         return super(initial_stock_inventory, self).action_confirm(cr, uid, ids, context=context)
     

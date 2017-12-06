@@ -688,12 +688,16 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 except Exception:
                     to_correct_ok = True
 
-                # Product name
-                if not product_id:
+                if not product_id:  # Product name
                     to_correct_ok = True
                     product_error.append(line_num)
                     continue
-
+                else:  # Check if product is non-stockable
+                    product_tmpl_type = product_obj.browse(cr, uid, product_id, fields_to_fetch=['product_tmpl_id'],
+                                                         context=context)['product_tmpl_id'].type
+                    if product_tmpl_type in ('service_recep', 'consu'):
+                        comment += _('Impossible to import non-stockable products.')
+                        to_correct_ok = True
             # Average cost
             cost = row.cells[2].data
             if not cost:

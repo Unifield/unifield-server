@@ -100258,3 +100258,28 @@ msgstr "Import IN, écran de simulation"
 #: view:wizard.import.in.simulation.screen:0
 msgid "Import, pick & pack"
 msgstr "Importer, Pick et Colissage"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:933
+#, python-format
+msgid "Please remove non-stockable product %s from the discrepancy report to validate."
+msgstr "Veuillez supprimer le produit non stockable %s depuis le rapport de divergence pour pouvoir valider."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:938
+#, python-format
+msgid "Please remove non-stockable product %s from the counting sheet to validate."
+msgstr "Veuillez supprimer le produit non stockable %s depuis la feuille de comptage pour pouvoir valider."
+
+#. modules: specific_rules, stock
+#: code:addons/specific_rules/stock.py:137
+#: code:addons/stock/physical_inventory.py:928
+#, python-format
+msgid "Please remove non-stockable product %s to validate."
+msgstr "Veuillez supprimer le produit non stockable %s pour pouvoir valider."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:699
+#, python-format
+msgid "Impossible to import non-stockable products."
+msgstr "Impossible d'importer des produits non stockables."
