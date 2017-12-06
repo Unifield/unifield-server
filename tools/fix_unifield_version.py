@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/env python
 
 import sys
 import os
@@ -11,7 +11,7 @@ parser.add_argument("-c", "--config", metavar="rcfile", help="OpenERP config fil
 parser.add_argument("-r", "--db_user", metavar="db_user", help="specify the database user name")
 parser.add_argument("-w", "--db_password", metavar="db_password", help="specify the database password")
 parser.add_argument('--db_host', metavar='db_host', help='specify the database host')
-parser.add_argument('--db_port', metavar='db_port', help='specify the database port', type=int, default=5432)
+parser.add_argument('--db_port', metavar='db_port', help='specify the database port', type=int, default=os.environ.get('PGPORT', 5432))
 parser.add_argument('-y',  help='do not ask confirmation', action="store_true", default=False)
 parser.add_argument("dbs_name", help="comma separated list of dbs to fix")
 o = parser.parse_args()

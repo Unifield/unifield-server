@@ -324,7 +324,7 @@ class shipment_family_processor(osv.osv):
         'volume': fields.function(
             _get_pack_info,
             method=True,
-            string='Volume [dm³]',
+            string=u'Volume [dm³]',
             type='float',
             store=False,
             readonly=True,
@@ -415,7 +415,7 @@ class shipment_additional_line_processor(osv.osv):
         ),
         'volume': fields.float(
             digits=(16, 2),
-            string='Volume[dm³]'
+            string=u'Volume[dm³]'
         ),
         'weight': fields.float(
             digits=(16, 2),

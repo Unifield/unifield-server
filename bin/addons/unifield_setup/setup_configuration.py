@@ -24,26 +24,10 @@ from osv import fields
 
 from tools.translate import _
 
-import logging
-import tools
-from os import path
-
 
 # Class to save all configuration value
 class unifield_setup_configuration(osv.osv):
     _name = 'unifield.setup.configuration'
-
-    def init(self, cr):
-        """
-        Load setup_data.xml before self
-        """
-        if hasattr(super(unifield_setup_configuration, self), 'init'):
-            super(unifield_setup_configuration, self).init(cr)
-
-        logging.getLogger('init').info('HOOK: module unifield_setup: loading setup_data.xml')
-        pathname = path.join('unifield_setup', 'setup_data.xml')
-        file = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'unifield_setup', file, {}, mode='init', noupdate=False)
 
     def _check_uniqueness(self, cr, uid, ids, context=None):
         '''

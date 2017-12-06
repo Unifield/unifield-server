@@ -41,7 +41,8 @@
         'account_analytic_line_view.xml',
         'account_sequence.xml',
         'wizard/account_report_partner_balance_tree_view.xml', # uf-1715
-        'report.xml', # UFTP-312 about link deletions
+        'cash_request_data.xml',
+        'cash_request_view.xml',
     ],
     'test': [],
     'installable': True,

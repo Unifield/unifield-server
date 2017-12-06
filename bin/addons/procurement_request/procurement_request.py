@@ -25,7 +25,6 @@ from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
 
-from sale_override import SALE_ORDER_STATE_SELECTION
 from msf_order_date.order_dates import compute_rts
 
 
@@ -307,8 +306,8 @@ class procurement_request(osv.osv):
                                                  domain=[('location_category', '!=', 'transition'), '|', ('usage', '=', 'internal'), '&', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit')], help='You can only select an internal location'),
         'requestor': fields.char(size=128, string='Requestor', states={'draft': [('readonly', False)]}, readonly=True),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
-        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse', states={'draft': [('readonly', False)]}, readonly=True),
-        'origin': fields.char(size=512, string='Origin', states={'draft': [('readonly', False)]}, readonly=True),
+        'warehouse_id': fields.many2one('stock.warehouse', string='Warehouse'),
+        'origin': fields.char(size=512, string='Origin', readonly=True),
         'notes': fields.text(string='Notes'),
         'order_ids': fields.one2many(
             'procurement.request.sourcing.document',
@@ -353,7 +352,6 @@ class procurement_request(osv.osv):
             'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
         },
             multi='by_type', help="The amount of lines sourced from stock"),
-        'state': fields.selection(SALE_ORDER_STATE_SELECTION, 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
         'is_ir_from_po_cancel': fields.boolean('Is IR from a PO cancelled', invisible=True),  # UFTP-82: flagging we are in an IR and its PO is cancelled
     }
@@ -568,59 +566,6 @@ class procurement_request(osv.osv):
 
         return True
 
-    def confirm_procurement(self, cr, uid, ids, context=None):
-        '''
-        Confirmed the request
-        '''
-        if context is None:
-            context = {}
-
-        self.write(cr, uid, ids, {'state': 'progress'}, context=context)
-
-        for request in self.browse(cr, uid, ids, context=context):
-            if len(request.order_line) <= 0:
-                raise osv.except_osv(_('Error'), _('You cannot confirm an Internal request with no lines !'))
-            for line in request.order_line:
-                # for FO
-                if line.type == 'make_to_order' and not line.po_cft == 'cft':
-                    if not line.supplier:
-                        line_number = line.line_number
-                        request_name = request.name
-                        raise osv.except_osv(_('Error'), _('Please correct the line %s of the %s: the supplier is required for the procurement method "On Order" !') % (line_number, request_name))
-                    # an Internal Request without product can only have Internal, Intersection or Intermission partners.
-                    elif line.supplier and not line.product_id and line.order_id.procurement_request and line.supplier.partner_type not in ['internal', 'section', 'intermission', 'esc']:
-                        raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
-                        the supplier must be either in 'Internal', 'Inter-Section', 'Intermission' or 'ESC' type.
-                        """))
-            message = _("The internal request '%s' has been confirmed (nb lines: %s).") % (request.name, len(request.order_line))
-            proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')
-            context.update({'view_id': proc_view and proc_view[1] or False})
-            self.log(cr, uid, request.id, message, context=context)
-
-        self.action_ship_create(cr, uid, ids, context=context)
-
-        return True
-
-    def test_state_done(self, cr, uid, ids, mode, *args):
-        if not self.test_state(cr, uid, ids, mode, *args):
-            return False
-
-        for ir in self.browse(cr, uid, ids):
-            is_out = ir.location_requestor_id.usage == 'customer'
-            if not is_out:
-                return True
-
-            ir_lines = [x.id for x in ir.order_line]
-            out_move_ids = self.pool.get('stock.move').search(cr, uid, [
-                ('picking_id.type', '=', 'out'),
-                ('sale_line_id', 'in', ir_lines),
-                ('state', 'not in', ['done', 'cancel']),
-            ])
-            if out_move_ids:
-                return False
-
-        return True
-
     def procurement_done(self, cr, uid, ids, context=None):
         '''
         Creates all procurement orders according to lines
@@ -674,27 +619,6 @@ procurement_request()
 class procurement_request_line(osv.osv):
     _name = 'sale.order.line'
     _inherit = 'sale.order.line'
-
-    def _amount_line(self, cr, uid, ids, field_name, arg, context=None):
-        '''
-        Override the method to return 0.0 if the line is a procurement request line
-        '''
-        res = {}
-        new_ids = []
-        cur_obj = self.pool.get('res.currency')
-        curr_browse = self.pool.get('res.users').browse(cr, uid, [uid], context)[0].company_id.currency_id
-        for line in self.browse(cr, uid, ids):
-            if line.order_id.procurement_request:
-                subtotal = line.cost_price * line.product_uom_qty
-                res[line.id] = cur_obj.round(cr, uid, curr_browse.rounding, subtotal)
-                if line.cost_price > 0 and res[line.id] < 0.01:
-                    res[line.id] = 0.01
-            else:
-                new_ids.append(line.id)
-
-        res.update(super(procurement_request_line, self)._amount_line(cr, uid, new_ids, field_name, arg, context=context))
-
-        return res
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -760,11 +684,58 @@ class procurement_request_line(osv.osv):
                 res[pol['id']] = False
         return res
 
+    def _check_changed(self, cr, uid, ids, name, arg, context=None):
+        '''
+        Check if an original value has been changed
+        '''
+        if context is None:
+            context = {}
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            changed = False
+            if line.modification_comment or (line.original_qty and line.product_uom_qty != line.original_qty):
+                changed = True
+
+            res[line.id] = changed
+
+        return res
+
+    def button_view_changed(self, cr, uid, ids, context=None):
+        """
+        Launch wizard to display line information
+        """
+        if not context:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wiz_obj = self.pool.get('procurement.request.line.wizard')
+        cols = ['product_id', 'original_product', 'product_uom_qty', 'original_qty', 'price_unit',
+                'original_price', 'product_uom', 'original_uom', 'modification_comment']
+        sol = self.read(cr, uid, ids[0], cols, context=context)
+        wiz_id = wiz_obj.create(cr, uid, sol, context=context)
+
+        context.update({
+            'active_id': ids[0],
+            'active_ids': ids,
+        })
+
+        return {
+            'name': _('Original Data Internal Request Line'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'procurement.request.line.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
+        }
+
     _columns = {
         'cost_price': fields.float(string='Cost price', digits_compute=dp.get_precision('Sale Price Computation')),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
-        'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute=dp.get_precision('Sale Price')),
         'my_company_id': fields.many2one('res.company', 'Company', select=1),
         'supplier': fields.many2one('res.partner', 'Supplier', domain="[('id', '!=', my_company_id)]"),
         # openerp bug: eval invisible in p.o use the po line state and not the po state !
@@ -773,6 +744,11 @@ class procurement_request_line(osv.osv):
         'product_id_ok': fields.function(_get_product_id_ok, type="boolean", method=True, string='Product defined?', help='for if true the button "configurator" is hidden'),
         'product_ok': fields.boolean('Product selected'),
         'comment_ok': fields.boolean('Comment written'),
+        'original_product': fields.many2one('product.product', 'Original Product'),
+        'original_qty': fields.float('Original Qty'),
+        'original_price': fields.float('Original Price'),
+        'original_uom': fields.many2one('product.uom', 'Original UOM'),
+        'original_changed': fields.function(_check_changed, method=True, string='Changed', type='boolean'),
     }
 
     def _get_planned_date(self, cr, uid, c=None):
@@ -831,8 +807,14 @@ class procurement_request_line(osv.osv):
             res, test = product_obj._on_change_restriction_error(cr, uid, product_id, field_name='product_id', values={'value': vals['value']}, vals={'constraints': 'consumption'}, context=context)
             if test:
                 return res
-            vals['value'] = {'product_uom': product.uom_id.id, 'name': '[%s] %s' % (product.default_code, product.name),
-                             'type': product.procure_method, 'comment_ok': True, 'cost_price': product.standard_price, }
+            vals['value'] = {
+                'product_uom': product.uom_id.id,
+                'name': '[%s] %s' % (product.default_code, product.name),
+                'type': product.procure_method,
+                'comment_ok': True,
+                'cost_price': product.standard_price,
+                'price_unit': product.list_price,
+            }
             if vals['value']['type'] != 'make_to_stock':
                 vals['value'].update({'supplier': product.seller_ids and product.seller_ids[0].name.id})
             uom_val = uom_obj.read(cr, uid, [product.uom_id.id], ['category_id'])
@@ -892,42 +874,5 @@ class procurement_request_line(osv.osv):
 
 procurement_request_line()
 
-class purchase_order(osv.osv):
-    _name = 'purchase.order'
-    _inherit = 'purchase.order'
-
-    def _hook_action_picking_create_modify_out_source_loc_check(self, cr, uid, ids, context=None, *args, **kwargs):
-        '''
-        Please copy this to your module's method also.
-        This hook belongs to the action_picking_create method from purchase>purchase.py>purchase_order class
-
-        - allow to choose whether or not the source location of the corresponding outgoing stock move should
-        match the destination location of incoming stock move
-        '''
-        order_line = kwargs['order_line']
-        move_id = kwargs['move_id']
-        proc_obj = self.pool.get('procurement.order')
-        move_obj = self.pool.get('stock.move')
-        sale_line_obj = self.pool.get('sale.order.line')
-        po_line_obj = self.pool.get('purchase.order.line')
-        # If the line comes from an ISR and it's not splitted line,
-        # change the move_dest_id of this line (and their children)
-        # to match with the procurement ordre move destination
-        if order_line.move_dest_id and not order_line.is_line_split:  # UTP-972: Use the boolean for split line
-            proc_ids = proc_obj.search(cr, uid, [('move_id', '=', order_line.move_dest_id.id)], context=context)
-            so_line_ids = sale_line_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
-            po_line_ids = po_line_obj.search(cr, uid, [('move_dest_id', '=', order_line.move_dest_id.id)], context=context)
-            if so_line_ids and all(not line.order_id or (line.order_id.procurement_request and line.order_id.location_requestor_id.usage != 'customer') for line in sale_line_obj.browse(cr, uid, so_line_ids, context=context)):
-                for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
-                    if proc.move_id:
-                        move_obj.write(cr, uid, [proc.move_id.id], {'state': 'draft'}, context=context)
-                        move_obj.unlink(cr, uid, [proc.move_id.id], context=context)
-                    proc_obj.write(cr, uid, [proc.id], {'move_id': move_id}, context=context)
-                    # Update the move_dest_id of all children to avoid the system to deal with a deleted stock move
-                    po_line_obj.write(cr, uid, po_line_ids, {'move_dest_id': move_id}, context=context)
-
-        return super(purchase_order, self)._hook_action_picking_create_modify_out_source_loc_check(cr, uid, ids, context, *args, **kwargs)
-
-purchase_order()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -30,6 +30,7 @@ from osv import fields, osv
 import decimal_precision as dp
 from tools.translate import _
 
+
 def check_cycle(self, cr, uid, ids, context=None):
     """ climbs the ``self._table.parent_id`` chains for 100 levels or
     until it can't find any more parent(s)
@@ -668,6 +669,10 @@ class account_journal(osv.osv):
         'entry_posted': fields.boolean('Skip \'Draft\' State for Manual Entries', help='Check this box if you don\'t want new journal entries to pass through the \'draft\' state and instead goes directly to the \'posted state\' without any manual validation. \nNote that journal entries that are automatically created by the system are always skipping that state.'),
         'company_id': fields.many2one('res.company', 'Company', required=True, select=1, help="Company related to this journal"),
         'allow_date':fields.boolean('Check Date not in the Period', help= 'If set to True then do not accept the entry if the entry date is not into the period dates'),
+        'bank_account_number': fields.char('Bank Account Number', size=128, required=False),
+        'bank_account_name': fields.char('Bank Account Name', size=256, required=False),
+        'bank_swift_code': fields.char('Swift Code', size=32, required=False),
+        'bank_address': fields.text('Address', required=False),
     }
 
     _defaults = {
@@ -1207,6 +1212,8 @@ class account_move(osv.osv):
         'name': fields.char('Number', size=64, required=True),
         'ref': fields.char('Reference', size=64),
         'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}),
+        'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear',
+                                        string='Fiscal Year', store=False),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}),
         'state': fields.selection([('draft','Unposted'), ('posted','Posted')], 'State', required=True, readonly=True,
                                   help='All manually created new journal entry are usually in the state \'Unposted\', but you can set the option to skip that state on the related journal. In that case, they will be behave as journal entries automatically created by the system on document validation (invoices, bank statements...) and will be created in \'Posted\' state.'),
@@ -1378,6 +1385,30 @@ class account_move(osv.osv):
         })
         return super(account_move, self).copy(cr, uid, id, default, context)
 
+    def _track_liquidity_entries(self, cr, uid, move, context=None):
+        """
+        Create an "account.bank.statement.line.deleted"
+        to keep track of the deleted manual entries that were booked on Liquidity Journals
+        """
+        if context is None:
+            context = {}
+        reg_obj = self.pool.get('account.bank.statement')
+        deleted_regline_obj = self.pool.get('account.bank.statement.line.deleted')
+        period_obj = self.pool.get('account.period')
+        is_liquidity = move.journal_id.type in ['bank', 'cheque', 'cash']
+        if is_liquidity and move.status == 'manu' and not context.get('sync_update_execution', False):
+            period_ids = period_obj.get_period_from_date(cr, uid, move.date, context=context)  # exclude special periods by default
+            if period_ids:
+                reg_domain = [('journal_id', '=', move.journal_id.id), ('period_id', '=', period_ids[0])]
+                reg_ids = reg_obj.search(cr, uid, reg_domain, context=context, order='NO_ORDER', limit=1)
+                if reg_ids:
+                    vals = {
+                        'statement_id': reg_ids[0],
+                        'sequence': move.name,
+                        'instance_id': move.instance_id and move.instance_id.id or False,
+                    }
+                    deleted_regline_obj.create(cr, uid, vals, context=context)
+
     def unlink(self, cr, uid, ids, context=None, check=True):
         if context is None:
             context = {}
@@ -1393,6 +1424,7 @@ class account_move(osv.osv):
             context['period_id'] = move.period_id.id
             obj_move_line._update_check(cr, uid, line_ids, context)
             obj_move_line.unlink(cr, uid, line_ids, context=context, check=check) #ITWG-84: Pass also the check flag to the call
+            self._track_liquidity_entries(cr, uid, move, context=context)
             toremove.append(move.id)
         result = super(account_move, self).unlink(cr, uid, toremove, context)
         return result
@@ -1550,6 +1582,9 @@ class account_move(osv.osv):
                 if line.account_id.currency_id and line.currency_id:
                     if line.account_id.currency_id.id != line.currency_id.id and (line.account_id.currency_id.id != line.account_id.company_id.currency_id.id):
                         raise osv.except_osv(_('Error'), _("""Couldn't create move with currency different from the secondary currency of the account "%s - %s". Clear the secondary currency field of the account definition if you want to accept all currencies.""") % (line.account_id.code, line.account_id.name))
+
+                if context.get('from_web_menu') and not line.name:
+                    raise osv.except_osv(_('Error'), _('The Description is missing for one of the lines.'))
 
             # When clicking on "Save" for a MANUAL Journal Entry:
             # - Check that the period is open.
@@ -2344,6 +2379,25 @@ account_model_line()
 class account_subscription(osv.osv):
     _name = "account.subscription"
     _description = "Account Subscription"
+
+    def _get_has_unposted_entries(self, cr, uid, ids, name, arg, context=None):
+        """
+        Returns a dict with key = id of the subscription,
+        and value = True if an unposted JE is linked to one of the subscription lines, False otherwise
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = {}
+        for sub in self.browse(cr, uid, ids, fields_to_fetch=['lines_id'], context=context):
+            res[sub.id] = False
+            for subline in sub.lines_id:
+                if subline.move_id and subline.move_id.state == 'draft':  # draft = Unposted state
+                    res[sub.id] = True
+                    break
+        return res
+
     _columns = {
         'name': fields.char('Name', size=64, required=True),
         'ref': fields.char('Reference', size=16),
@@ -2355,7 +2409,9 @@ class account_subscription(osv.osv):
         'period_type': fields.selection([('day','days'),('month','month'),('year','year')], 'Period Type', required=True),
         'state': fields.selection([('draft','Draft'),('running','Running'),('done','Done')], 'State', required=True, readonly=True),
 
-        'lines_id': fields.one2many('account.subscription.line', 'subscription_id', 'Subscription Lines')
+        'lines_id': fields.one2many('account.subscription.line', 'subscription_id', 'Subscription Lines'),
+        'has_unposted_entries': fields.function(_get_has_unposted_entries, method=True, type='boolean',
+                                                store=False, string='Has unposted entries'),
     }
     _defaults = {
         'date_start': lambda *a: time.strftime('%Y-%m-%d'),
@@ -2390,7 +2446,39 @@ class account_subscription(osv.osv):
         self.write(cr, uid, ids, {'state':'draft'})
         return False
 
+    def delete_unposted(self, cr, uid, ids, context=None):
+        """
+        This method:
+        - searches for the unposted Journal Entries linked to the account subscription(s)
+        - deletes the unposted JEs, and the related JIs and AJIs
+        - deletes all the Subscription Lines not linked to a Posted JE
+        - triggers the "Compute" method on the subscription(s) to get the correct lines and state
+        """
+        if context is None:
+            context = {}
+        subline_obj = self.pool.get('account.subscription.line')
+        je_obj = self.pool.get('account.move')
+        subline_to_delete_ids = []
+        je_to_delete_ids = []
+        for sub in self.browse(cr, uid, ids, fields_to_fetch=['lines_id'], context=context):
+            for subline in sub.lines_id:
+                if not subline.move_id:
+                    # also deletes the sub. lines without JE (covers the case where frequency has been modified
+                    # => avoids having inconsistent lines at the end of the process)
+                    subline_to_delete_ids.append(subline.id)
+                elif subline.move_id.state == 'draft':  # draft = Unposted state
+                    subline_to_delete_ids.append(subline.id)
+                    je_to_delete_ids.append(subline.move_id.id)
+        subline_obj.unlink(cr, uid, subline_to_delete_ids, context=context)
+        je_obj.unlink(cr, uid, je_to_delete_ids, context=context)  # also deletes JIs / AJIs
+        # retrigger the creation of the subscription lines "to be generated"
+        # and recompute the state of the subscription accordingly (= "Running" if lines have been generated)
+        self.compute(cr, uid, ids, context=context)
+        return True
+
     def compute(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
         for sub in self.browse(cr, uid, ids, context=context):
             if sub.model_id and sub.model_id.has_any_bad_ad_line_exp_in:
                 # UFTP-103: block compute if recurring model has line with
@@ -2413,12 +2501,16 @@ class account_subscription(osv.osv):
             # create the subscription lines if they don't exist yet
             existing_sub_lines = sub.lines_id or []
             existing_dates = [l.date for l in existing_sub_lines]
-            for date_sub in [d for d in date_list if d not in existing_dates]:
+            dates_to_create = [d for d in date_list if d not in existing_dates]
+            for date_sub in dates_to_create:
                 self.pool.get('account.subscription.line').create(cr, uid, {
                     'date': date_sub,
                     'subscription_id': sub.id,
                 })
-        self.write(cr, uid, ids, {'state':'running'})
+            if dates_to_create:
+                self.write(cr, uid, sub.id, {'state': 'running'}, context=context)
+            else:  # all the subscription lines were already created => the account subscription can be marked as "Done"
+                self.write(cr, uid, sub.id, {'state': 'done'}, context=context)
         return True
 account_subscription()
 
@@ -2430,6 +2522,7 @@ class account_subscription_line(osv.osv):
         'date': fields.date('Date', required=True),
         'move_id': fields.many2one('account.move', 'Entry'),
     }
+    _order = 'date, id'
 
     def move_create(self, cr, uid, ids, context=None):
         tocheck = {}

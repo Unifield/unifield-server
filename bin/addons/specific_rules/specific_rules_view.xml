@@ -2,7 +2,6 @@
 <openerp>
 <data>
 
-        <delete model="ir.actions.act_window" id="stock.act_stock_product_location_open" />
 
         <record id="action_server_stock_by_location" model="ir.actions.server">
             <field name="name">Stock by Location</field>
@@ -58,39 +57,6 @@
                     <field name="life_time" attrs="{'required':[('short_shelf_life', '=', 'True')]}" />
                 </field>
             </data>
-            </field>
-        </record>
-
-        <record id="view_order_form" model="ir.ui.view">
-            <field name="name">sale.order.form</field>
-            <field name="model">sale.order</field>
-            <field name="type">form</field>
-            <field name="priority" eval="250" />
-            <field name="inherit_id" ref="sale.view_order_form" />
-            <field name="arch" type="xml">
-                <data>
-
-                    <xpath expr="//form[@string='Sales Order']//tree[@string='Sales Order Lines']/field[@name='product_uom']" position="after">
-                        <field name="kc_dg" />
-                    </xpath>
-
-                </data>
-            </field>
-        </record>
-
-        <record id="purchase_order_form" model="ir.ui.view">
-            <field name="name">purchase.order.form</field>
-            <field name="model">purchase.order</field>
-            <field name="type">form</field>
-            <field name="priority">30</field>
-            <field name="inherit_id" ref="purchase.purchase_order_form" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/form/notebook/page/field[@name='order_line']/tree/field[@name='product_uom']" position="after">
-                        <field name="kc_dg" />
-                    </xpath>
-
-                </data>
             </field>
         </record>
 
@@ -602,7 +568,6 @@
             </field>
         </record>
 
-        <delete id="stock.action_tracking_form" model="ir.actions.act_window" />
 
         <!-- Add on_change method on UoM field of Min/Max rule -->
         <record id="add_onchange_uom_stock_warehouse_orderpoint_view" model="ir.ui.view">

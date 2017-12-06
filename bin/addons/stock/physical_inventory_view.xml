@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <!-- Formulary -->
+        <record id="view_physical_inventory_form" model="ir.ui.view">
+            <field name="name">physical.inventory.form</field>
+            <field name="model">physical.inventory</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Physical Inventory" hide_delete_button="1">
+                    <field name="name" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                    <field name="ref"/>
+                    <field name="location_id" domain="[('usage','=','internal')]"
+                           attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                    <field name="date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                    <field name="responsible"/>
+                    <field name="date_done"/>
+                    <field name="full_inventory"/>
+                    <button colspan="2" name="set_full_inventory" states="draft" string="Set as full inventory" type="object"
+                        icon="gtk-about" 
+                        confirm="Setting as 'full inventory' is irreversible. Do you confirm ?" 
+                        attrs="{'invisible': [('full_inventory', '=', True)]}"/>
+                    <notebook colspan="4">
+                        <page string="Products" attrs="{'readonly': [('state', 'not in', ['draft'])]}">
+                            <button name="action_select_products" states="draft" string="Products Selection" type="object"
+                                    icon="gtk-add"/>
+                                <field colspan="4" name="product_ids" nolabel="1" 
+                                       attrs="{'readonly': ['|', ('full_inventory', '=', True), ('state', 'not in', ['draft'])]}">
+                                <tree string="Products" noteditable="1">
+                                    <field name="default_code"/>
+                                    <field name="name"/>
+                                    <field name="uom_id"/>
+                                    <field name="batch_management" string="BN mandatory"/>
+                                    <field name="perishable" string="ED mandatory"/>
+                                    <field name="is_kc" string="KC"/>
+                                    <field name="is_dg" string="DG"/>
+                                    <field name="is_cs" string="CS"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Counting sheet" attrs="{'invisible': [('state', 'in', ['draft'])], 'readonly': [('state', 'not in', ['counting', 'counted', 'validated'])]}">
+                            <group col="4" colspan="4"
+                                attrs="{'invisible': [('state', 'not in', ['counting', 'counted', 'validated'])]}">
+                                <button name="export_pdf_counting_sheet" string="Export pdf counting sheet"
+                                        type="object" colspan="2" icon="gtk-print"/>
+                                <button name="export_xls_counting_sheet" string="Export xls counting sheet"
+                                        type="object" colspan="2" icon="gtk-print"/>
+                                <field name="file_to_import" colspan="2"/>
+                                <button name="import_counting_sheet" string="Import xls counting sheet" type="object" colspan="2" icon="gtk-save"/>
+                            </group>
+                            <field colspan="4" name="counting_line_ids" nolabel="1" widget="one2many_list"
+                                attrs="{'readonly': [('state', 'not in', ['counting', 'counted', 'validated'])]}">
+                                <tree string="Counting lines" editable="bottom">
+                                    <field name="line_no"/>
+                                    <field name="product_id" on_change="on_change_product_id(product_id,product_uom)"/>
+                                    <field name="product_uom_id"/>
+                                    <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
+                                    <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
+                                    <field name="quantity" on_change="on_change_quantity(quantity)"/>
+                                    <field name="is_bn" string="BN"/>
+                                    <field name="is_ed" string="ED"/>
+                                    <field name="is_kc" string="KC"/>
+                                    <field name="is_dg" string="DG"/>
+                                    <field name="is_cs" string="CS"/>
+                                </tree>
+                                <form string="Counting line">
+                                    <field name="line_no"/>
+                                    <field name="product_id" on_change="on_change_product_id(product_id,product_uom)"/>
+                                    <field name="product_uom_id"/>
+                                    <field name="batch_number" attrs="{'readonly': [('is_bn', '=', False)],'required': [('is_bn', '=', True)] }"/>
+                                    <field name="expiry_date" attrs="{'readonly': [('is_ed', '=', False)],'required': [('is_ed', '=', True)] }"/>
+                                    <field name="quantity" on_change="on_change_quantity(quantity)"/>
+                                    <field name="is_bn" string="BN"/>
+                                    <field name="is_ed" string="ED"/>
+                                    <field name="is_kc" string="KC"/>
+                                    <field name="is_dg" string="DG"/>
+                                    <field name="is_cs" string="CS"/>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="Discrepancy report" attrs="{'invisible': [('state', 'in', ['draft','counting'])], 'readonly': [('state', 'not in', ['counted', 'validated', 'confirmed'])]}">
+                            <group col="4" colspan="4">
+                                <group col="4" colspan="4">
+                                    <label string="" />
+                                    <label string="Number of lines" />
+                                    <label string="Value" />
+                                    <label string="Absolute value" />
+                                </group>
+                                <group col="4" colspan="4">
+                                    <label string="Total at the end" />
+                                    <field name="inventory_lines_number" nolabel="1" />
+                                    <field name="inventory_lines_value" nolabel="1" />
+                                    <field name="inventory_lines_absvalue" nolabel="1" />
+                                </group>
+                                <group col="4" colspan="4">
+                                    <label string="With discrepancies" />
+                                    <field name="discrepancy_lines_number" nolabel="1" />
+                                    <field name="discrepancy_lines_value" nolabel="1" />
+                                    <field name="discrepancy_lines_absvalue" nolabel="1" />
+                                </group>
+                                <group col="4" colspan="4">
+                                    <label string="Percent" />
+                                    <field name="discrepancy_lines_percent" nolabel="1" />
+                                    <field name="discrepancy_lines_percent_value" nolabel="1" />
+                                    <field name="discrepancy_lines_percent_absvalue" nolabel="1" />
+                                </group>
+                            </group>
+                            <group col="4" colspan="4" attrs="{'invisible': [('state', 'not in', ['counted', 'validated'])]}">
+                                <button name="export_xls_discrepancy_report" string="Export XLS discrepancy report"
+                                    type="object" icon="gtk-print" colspan="4"/>
+                                <field name="file_to_import2" colspan="2"/>
+                                <button name="import_xls_discrepancy_report" string="Import XLS discrepancy report"
+                                    type="object" icon="gtk-save" colspan="2"/>
+                            </group>
+                            <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
+                                   filter_selector="[('Hide ignored', ('ignored', '!=', True)), ('Show all', ''), ('Show ignored only', ('ignored', '=', True))]">
+                               <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True"
+                                     colors="grey:ignored==True">
+                                    <field name="line_no" />
+                                    <field name="nomen_manda_2" />
+                                    <field name="product_id" />
+                                    <field name="product_uom_id" />
+                                    <field name="standard_price" />
+                                    <field name="currency_id" />
+                                    <field name="theoretical_qty" />
+                                    <field name="counted_qty" readonly="1" />
+                                    <field name="batch_number" />
+                                    <field name="expiry_date" />
+                                    <field name="discrepancy_qty" />
+                                    <field name="discrepancy_value" />
+                                    <field name="total_product_theoretical_qty" />
+                                    <field name="total_product_counted_qty" />
+                                    <field name="total_product_counted_value" />
+                                    <field name="total_product_discrepancy_qty" />
+                                    <field name="total_product_discrepancy_value" />
+                                    <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
+                                    <field name="comment" />
+                                    <field name="ignored" invisible="True"/>
+                                </tree>
+                                <form string="Discrepancy line">
+                                    <field name="line_no" />
+                                    <field name="nomen_manda_2" />
+                                    <field name="product_id" />
+                                    <field name="product_uom_id" />
+                                    <field name="standard_price" />
+                                    <field name="currency_id" />
+                                    <field name="theoretical_qty" />
+                                    <field name="counted_qty" readonly="1" />
+                                    <field name="batch_number" />
+                                    <field name="expiry_date" />
+                                    <field name="discrepancy_qty" />
+                                    <field name="discrepancy_value" />
+                                    <field name="total_product_theoretical_qty" />
+                                    <field name="total_product_counted_qty" />
+                                    <field name="total_product_counted_value" />
+                                    <field name="total_product_discrepancy_qty" />
+                                    <field name="total_product_discrepancy_value" />
+                                    <field name="reason_type_id" widget="selection" domain="[('is_inventory', '=', True)]" />
+                                    <field name="comment" />
+                                    <field name="ignored" invisible="True"/>
+                                </form>
+                            </field>
+                        </page>
+                        <page string="Posted Inventory" attrs="{'invisible': [('state', 'not in', ['confirmed', 'closed'])]}">
+                            <field colspan="2" name="move_ids" nolabel="1" widget="one2many_list"
+                                   context="{'inventory_id':active_id}">
+                                <tree string="Stock Moves">
+                                    <field name="product_id"/>
+                                    <field name="product_qty"
+                                           on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
+                                    <field name="product_uom" string="UoM"/>
+                                    <field name="prodlot_id"/>
+                                    <field name="reason_type_id" widget="selection"
+                                           domain="[('is_inventory', '=', True)]"/>
+                                    <field name="tracking_id"/>
+                                    <field name="location_id"/>
+                                    <field name="location_dest_id"/>
+                                    <field name="date" string="Date"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group col="2" colspan="2">
+                        <field name="state"/>
+                    </group>
+                    <group colspan="2">
+                        <button name="action_cancel_inventary" states="draft,counting,counted,validated" string="Cancel Inventory"
+                                type="object" icon="gtk-cancel" confirm="Do you confirm that you want to cancel the inventory ?"/>
+
+                        <button name="generate_counting_sheet" states="draft" string="Generate Counting Sheet"
+                                type="object" icon="gtk-go-forward"/>
+
+                        <button name="action_counted" states="counting" string="Finish Counting"
+                                type="object" icon="gtk-paste-v"/>
+
+                        <button name="generate_discrepancies" states="counted,validated" string="Generate discrepancies"
+                                type="object" icon="gtk-refresh"/>
+
+                        <button name="action_validate" states="counted" string="Finished"
+                                type="object" icon="gtk-apply" confirm="Do you confirm that you have finished the inventory ?"/>
+
+                        <button name="action_recount" states="validated" string="Recount"
+                                type="object" icon="gtk-undo"/>
+                        <button name="action_confirm" states="validated" string="Confirm Inventory"
+                                type="object" icon="gtk-jump-to" confirm="Do you confirm that you want confirm the inventory ?"/>
+
+                        <button name="action_done" states="confirmed" string="Close Inventory"
+                                type="object" icon="gtk-jump-to" confirm="Do you confirm that you want to close the inventory ?"/>
+
+                        <button name="action_cancel_draft" states="cancel" string="Set to Draft"
+                                type="object" icon="gtk-convert"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+        <!-- List -->
+        <record id="view_physical_inventory_tree" model="ir.ui.view">
+            <field name="name">physical.inventory.tree</field>
+            <field name="model">physical.inventory</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Physical Inventories" colors="grey:state in ('cancel')">
+                    <field name="ref"/>
+                    <field name="name"/>
+                    <field name="location_id"/>
+                    <field name="date"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+        <!-- Search -->
+        <record id="view_physical_inventory_search" model="ir.ui.view">
+            <field name="name">physical.inventory.search</field>
+            <field name="model">physical.inventory</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Physical Inventory">
+                    <group col="10" colspan="4">
+                        <field name="name"/>
+                        <field name="date"/>
+                        <field name="location_id" domain="[('usage','=','internal')]"/>
+                        <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By..." colspan="4" col="4" groups="base.group_extended">
+                        <filter string="State" icon="terp-stock_effects-object-colorize" domain="[]"
+                                context="{'group_by':'state'}"/>
+                        <filter string="Date" icon="terp-go-month" domain="[]" context="{'group_by':'date'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+        <!-- Action -->
+        <record id="action_physical_inventory" model="ir.actions.act_window">
+            <field name="name">Physical Inventories</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">physical.inventory</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_physical_inventory_tree"/>
+            <field name="context">{'full':'1'}</field>
+            <field name="search_view_id" ref="view_physical_inventory_search" />
+            <field name="help">Periodical Inventories are used to count the number of products available per location. You can use it once a year when you do the general inventory or whenever you need it, to correct the current stock level of a product.</field>
+        </record>
+        <!-- Menu -->
+        <menuitem action="action_physical_inventory" id="menu_action_physical_inventory" parent="menu_stock_inventory_control" sequence="23"/>
+    </data>
+</openerp>

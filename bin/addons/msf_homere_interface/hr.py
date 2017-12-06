@@ -51,7 +51,7 @@ class hr_employee(osv.osv):
         return res
 
     def _get_ex_allow_edition(self, cr, uid, ids, field_name=None, arg=None,
-        context=None):
+                              context=None):
         """
         US-94 do not allow to modify an already set identification id for expat
         """
@@ -145,10 +145,13 @@ class hr_employee(osv.osv):
     def create(self, cr, uid, vals, context=None):
         """
         Block creation for local staff if no 'from' in context
+        Remove space in the beginning and end of employee name
         """
         # Some verifications
         if not context:
             context = {}
+        if vals.get('name'):
+            vals['name'] = vals['name'].strip()
         allow_edition = False
         if 'employee_type' in vals and vals.get('employee_type') == 'local':
             # Search Payroll functionnality preference (activated or not)
@@ -176,6 +179,7 @@ class hr_employee(osv.osv):
         """
         Block write for local staff if no 'from' in context.
         Allow only analytic distribution changes (cost center, funding pool, free 1 and free 2)
+        Remove space in the beginning and end of employee name
         """
         if not ids:
             return True
@@ -191,6 +195,8 @@ class hr_employee(osv.osv):
         if setup and not setup.payroll_ok:
             allowed = True
         # Prepare some variable for process
+        if vals.get('name'):
+            vals['name'] = vals['name'].strip()
         if vals.get('employee_type', False):
             if vals.get('employee_type') == 'local':
                 local = True

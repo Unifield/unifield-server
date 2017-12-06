@@ -161,35 +161,7 @@ class account_cash_statement(osv.osv):
         return super(account_cash_statement, self).write(cr, uid, ids, vals,
                                                          context=context)
 
-    def button_open_cash(self, cr, uid, ids, context=None):
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids] # Calculate the starting balance
-
-        context['from_open'] = True
-        res = self._get_starting_balance(cr, uid, ids, context=context)
-        del context['from_open']
-        for rs in res:
-            self.write(cr, uid, [rs], res.get(rs)) # Verify that the starting balance is superior to 0 only if this register has prev_reg_id to False
-            register = self.browse(cr, uid, [rs], context=context)[0]
-            if register and not register.prev_reg_id:
-                if not register.balance_start > 0:
-                    return {'name' : "Open Empty CashBox Confirmation",
-                            'type' : 'ir.actions.act_window',
-                            'res_model' :"wizard.open.empty.cashbox",
-                            'target': 'new',
-                            'view_mode': 'form',
-                            'view_type': 'form',
-                            'context': {'active_id': ids[0],
-                                        'active_ids': ids
-                                        }
-                            }
-
-        # if the cashbox is valid for opening, just continue the method do open
-        return self.do_button_open_cash(cr, uid, ids, context)
-
-    def do_button_open_cash(self, cr, uid, ids, context=None):
+    def do_button_open_cash(self, cr, uid, ids, opening_balance=None, context=None):
         """
         when pressing 'Open CashBox' button : Open Cash Register and calculate the starting balance
         """
@@ -219,7 +191,11 @@ class account_cash_statement(osv.osv):
         # Give a Cash Register Name with the following composition :
         #+ Cash Journal Name
         if st.journal_id and st.journal_id.name:
-            return self.write(cr, uid, ids, {'state' : 'open', 'name': st.journal_id.name})
+            cash_reg_vals = {'state': 'open', 'name': st.journal_id.name}
+            # update Opening Balance
+            if opening_balance:
+                cash_reg_vals.update({'balance_start': opening_balance})
+            return self.write(cr, uid, ids, cash_reg_vals, context=context)
         else:
             return False
 
@@ -337,6 +313,8 @@ class account_cash_statement(osv.osv):
         """
         When pressing 'Temp Posting' button then opening a wizard to select some account_bank_statement_line and change them into temp posting state.
         """
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
         domain = [('statement_id', '=', ids[0]), ('state', '=', 'draft')]
         if context is None:
             context = {}
@@ -364,6 +342,8 @@ class account_cash_statement(osv.osv):
         """
         When pressing 'Hard Posting' button then opening a wizard to select some account_bank_statement_line and change them into hard posting state.
         """
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
         domain = [('statement_id', '=', ids[0]), ('state', 'in', ['draft','temp'])]
         if context is None:
             context = {}

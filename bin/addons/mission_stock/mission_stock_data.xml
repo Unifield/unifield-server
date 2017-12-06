@@ -1,22 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
-	<data noupdate="1">
-		
-	<!--	<record id="stock_mission_full_view" model="stock.mission.report">
-			<field name="name">Mission's full view</field>
-			<field name="full_view" eval="True" />
-			<field name="local_report" eval="False" />
-			<field name="instance_id" ref="msf_instance.instance_section" />
-		</record>
-		
-		<record id="stock_mission_local_instance" model="stock.mission.report">
-			<field name="name">MSF</field>
-			<field name="full_view" eval="False" />
-			<field name="local_report" eval="True" />
-			<field name="instance_id" ref="msf_instance.instance_section" />
-		</record>-->
-		
-		<record forcecreate="True" id="ir_cron_stock_mission_update_action" model="ir.cron">
+    <data noupdate="1">
+        <record forcecreate="True" id="ir_cron_stock_mission_update_action" model="ir.cron">
             <field name="name">Update stock mission</field>
             <field eval="True" name="active"/>
             <field name="user_id" ref="base.user_root"/>
@@ -28,6 +13,5 @@
             <field eval="'background_update'" name="function"/>
             <field eval="'(False,)'" name="args"/>
         </record>
-		
-	</data>
+    </data>
 </openerp>

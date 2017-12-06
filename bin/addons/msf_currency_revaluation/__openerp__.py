@@ -57,16 +57,15 @@ For FR
     "license": 'AGPL-3',
     "depends": ["base",
                 "account",
-            ],
+                ],
     "init_xml": [
-                 #"res_currency_view.xml",
-                 "account_view.xml",
-                 "wizard/wizard_currency_revaluation_view.xml"],
+        #"res_currency_view.xml",
+        "account_view.xml",
+        "wizard/wizard_currency_revaluation_view.xml"],
     "update_xml": [],
-    #"test": ["test/currency_revaluation.yml"],
     "demo_xml": [],
     "installable": True,
     "active": False,
-#    'certificate': 'certificate',
-}
+ #    'certificate': 'certificate',
+ }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

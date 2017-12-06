@@ -175,8 +175,6 @@
              <field name="target">new</field>
        </record>
        
-       <!-- delete standard menu and replace it -->
-       <delete model="ir.ui.menu" id="account.menu_account_partner_balance_report" />
 
        <menuitem icon="STOCK_PRINT"
             name="Partner Balance"

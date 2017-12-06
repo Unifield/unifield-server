@@ -20,6 +20,11 @@
             <field name="code">stock.picking.internal</field>
         </record>
 
+        <record id="seq_type_picking_system_internal" model="ir.sequence.type">
+            <field name="name">Picking SYS INT</field>
+            <field name="code">stock.picking.system.internal</field>
+        </record>
+
         <!--
             Sequences for pickings
         -->
@@ -48,20 +53,12 @@
             <field name="implementation">psql</field>
         </record>
 
-        <!--
-    Sequences from tracking numbers
-    -->
-        <record id="sequence_type_serial" model="ir.sequence.type">
-            <field name="name">Production Lots</field>
-            <field name="code">stock.lot.serial</field>
-        </record>
-        <record id="sequence_production_lots" model="ir.sequence">
-            <field name="name">Production Lots</field>
-            <field name="code">stock.lot.serial</field>
-            <field name="prefix"></field>
-            <field name="padding">7</field>
-            <field name="number_next">1</field>
-            <field name="number_increment">1</field>
+        <record id="seq_picking_system_internal" model="ir.sequence">
+            <field name="name">Picking SYS INT</field>
+            <field name="code">stock.picking.system.internal</field>
+            <field name="prefix">SYS-INT/</field>
+            <field name="padding">5</field>
+            <field name="implementation">psql</field>
         </record>
 
         <record id="sequence_type_tracking" model="ir.sequence.type">

@@ -39,6 +39,11 @@ def _check_xml(self, cr, uid, ids, context=None):
                 for error in relaxng.error_log:
                     logger.error(tools.ustr(error))
                 return False
+            for x in eview.xpath('//*[@attrs]'):
+                try:
+                    eval(x.attrib.get('attrs'))
+                except:
+                    logger.error('Unable to parse attrs %s on node %s' % (x.attrib.get('attrs'), x.attrib.get('name')))
         finally:
             frng.close()
     return True

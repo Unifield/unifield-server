@@ -70,6 +70,11 @@ class mission_stock_wizard(osv.osv_memory):
             [('true', 'Yes'), ('false', 'No')],
             string='Split the Warehouse stock qty. to Stock and Unallocated Stock.',
             required=True),
+        'display_only_in_stock': fields.selection(
+            [('true', 'Yes'), ('false', 'No')],
+            string='Display only products in stock',
+            required=True,
+        ),
         'last_update': fields.datetime(
             string='Last update',
             readonly=True,
@@ -93,12 +98,14 @@ class mission_stock_wizard(osv.osv_memory):
                                             ('done', 'Done'),
                                             ('error', 'Error')
                                             ], string="Processing", readonly=True),
-        'export_error_msg': fields.text('Error message', readonly=True)
+        'export_error_msg': fields.text('Error message', readonly=True),
+        'instance_level': fields.char('Instance Level', size=64),
     }
 
     _defaults = {
         'with_valuation': lambda *a: 'true',
         'split_stock': lambda *a: 'true',
+        'display_only_in_stock': lambda *a: 'false',
         'fname': lambda *a: 'Mission stock report',
         'processed_state': lambda *a: 'not_started',
         'export_error_msg': lambda *a: False,
@@ -126,6 +133,7 @@ class mission_stock_wizard(osv.osv_memory):
             res['export_error_msg'] = report.export_error_msg
             res['processed_state'] = progress_state
 
+        res['instance_level'] = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.level
         return res
 
     def report_change(self, cr, uid, ids, report_id, context=None):
@@ -165,16 +173,46 @@ class mission_stock_wizard(osv.osv_memory):
         c = context.copy()
         c.update({
             'mission_report_id': wiz_id.report_id.id,
-            'with_valuation': wiz_id.with_valuation == 'true' and True or False,
-            'split_stock': wiz_id.split_stock == 'true' and True or False,
+            'with_valuation': wiz_id.with_valuation == 'true',
+            'split_stock': wiz_id.split_stock == 'true',
+            'hide_amc_fmc': wiz_id.report_id.full_view and (self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.level in ['section', 'coordo']),
         })
+        display_only_in_stock =  wiz_id.display_only_in_stock == 'true'
+        if display_only_in_stock:
+            # the qty column are not depending on with_valuation but only on
+            # split_stock
+            if wiz_id.split_stock == 'true':
+                domain =[ '&',
+                          ('mission_report_id', '=', wiz_id.report_id.id),
+                          '|', '|', '|', '|', '|', '|', '|',
+                          ('internal_qty', '!=', 0),
+                          ('wh_qty', '!=', 0),
+                          ('cross_qty', '!=', 0),
+                          ('secondary_qty', '!=', 0),
+                          ('cu_qty', '!=', 0),
+                          ('in_pipe_qty', '!=', 0),
+                          ('stock_qty', '!=', 0),
+                          ('central_qty', '!=', 0)]
+            else:
+                # in case of split_stock is false, some fields are not
+                # displayed, so do not take into account this quantity
+                domain =[ '&',
+                          ('mission_report_id', '=', wiz_id.report_id.id),
+                          '|', '|', '|', '|',
+                          ('internal_qty', '!=', 0),
+                          ('cross_qty', '!=', 0),
+                          ('secondary_qty', '!=', 0),
+                          ('cu_qty', '!=', 0),
+                          ('in_pipe_qty', '!=', 0)]
+        else:
+            domain = [('mission_report_id', '=', wiz_id.report_id.id)]
 
         return {'type': 'ir.actions.act_window',
                 'name': '%s: %s' % (_('Stock mission report'), wiz_id.report_id.name),
                 'res_model': 'stock.mission.report.line',
                 'view_type': 'form',
                 'view_mode': 'tree,form',
-                'domain': [('mission_report_id', '=', wiz_id.report_id.id)],
+                'domain': domain,
                 'context': c,
                 'target': 'current'}
 
@@ -221,6 +259,15 @@ report when the last update field will be filled. Thank you for your comprehensi
     def open_csv_file(self, cr, uid, ids, context=None):
         return self.open_file(cr, uid, ids, file_format='csv', context=context)
 
+    def open_consolidated_xls(self, cr, uid, ids, context=None):
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'stock.mission.report_xls',
+            'datas': {'file_name': 'consolidate_mission_stock.xls', 'file_format': 'xls'},
+            'nodestroy': True,
+            'context': context,
+        }
+
     def open_file(self, cr, uid, ids, file_format='xls', context=None):
         '''
         Open the file
@@ -238,7 +285,7 @@ report when the last update field will be filled. Thank you for your comprehensi
         # add the requested field name and report_id to the datas
         # to be used later on in the stock_mission_report_xls_parser
         res = self.read(cr, uid, ids, ['with_valuation', 'split_stock',
-                                       'report_id'], context=context)
+                                       'report_id', 'display_only_in_stock'], context=context)
 
         field_name = None
         if res['split_stock'] == 'false' and res['with_valuation'] == 'false':
@@ -253,6 +300,7 @@ report when the last update field will be filled. Thank you for your comprehensi
         datas['field_name'] = field_name
         datas['report_id'] = res['report_id']
         datas['file_format'] = file_format
+        datas['display_only_in_stock'] = (res['display_only_in_stock'] == 'true')
 
         return {
             'type': 'ir.actions.report.xml',

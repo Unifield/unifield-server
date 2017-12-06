@@ -186,9 +186,6 @@
             </field>
         </record>
 
-    <!-- Delete payment lines link from invoices -->
-        <delete model="ir.actions.act_window" search="[('name', 'ilike', '%Payment Lines%')]"/>
-
     <!-- Add Split Invoice Button on invoices -->
         <record id="invoice_form_3" model="ir.ui.view">
             <field name="name">account.invoice.form.3</field>

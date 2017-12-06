@@ -1,0 +1,406 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE CASHREQUEST [
+    <!ENTITY liquidity_position_search SYSTEM "./cash_request_liquidity_position_search.xml">
+]>
+
+<openerp>
+      <data>
+            <!-- CASH REQUEST - FORM VIEW -->
+            <record id="view_cash_request_form" model="ir.ui.view">
+                <field name="name">cash.request.form</field>
+                <field name="model">cash.request</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <!-- creation/duplication allowed in coordo / edition allowed in coordo and project (see fields_view_get) -->
+                    <form string="Cash Request"
+                          hide_new_button="PROP_INSTANCE_HIDE_BUTTON"
+                          hide_duplicate_button="PROP_INSTANCE_HIDE_BUTTON"
+                          hide_edit_button="PROP_INSTANCE_HIDE_BUTTON">
+                        <notebook colspan="4">
+                            <!-- MAIN TAB -->
+                            <page string="Main Tab">
+                                <button name="generate_cash_request" type="object" string="Generate" icon="gtk-execute"
+                                        attrs="{'invisible': [('state', '=', 'done')]}"/>
+                                <separator colspan="4" string="Settings"/>
+                                <group colspan="4" col="4">
+                                    <field name="id" invisible="1"/>
+                                    <field name="current_instance_level" invisible="1"/>
+                                    <field name="name"/>
+                                    <field name="state"/>
+                                    <field name="request_date" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                    <field name="month_period_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                    <field name="mission"/>
+                                    <field name="prop_instance_id"/>
+                                    <field name="transfer_account_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                    <field name="bank_journal_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                    <field name="transfer_currency_ids">
+                                        <tree string="Currencies" editable="bottom">
+                                            <field name="currency_id"/>
+                                            <field name="percentage"/>
+                                        </tree>
+                                    </field>
+                                    <field name="consolidation_currency_id"/>
+                                </group>
+                                <group colspan="3" col="2">
+                                    <field name="instance_ids">
+                                        <tree string="Instances">
+                                            <field name="code"/>
+                                            <field name="name"/>
+                                            <field name="level"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                                <group colspan="4" col="4" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                                    <separator colspan="4" string="Recap"/>
+                                    <button name="compute_recap_and_total" type="object"
+                                            string="Compute recap lines &amp; total to transfer" icon="gtk-refresh"
+                                            attrs="{'invisible': [('state', '=', 'done')]}"/>
+                                    <group colspan="4" col="2">
+                                        <field name="recap_mission_ids" nolabel="1">
+                                            <tree string="Recap Mission">
+                                                <field name="instance_id"/>
+                                                <field name="liquidity_amount" sum="Total Liquidity"/>
+                                                <field name="payable_amount" sum="Total Payable"/>
+                                                <field name="commitment_amount" sum="Total Commitment"/>
+                                                <field name="expense_amount" sum="Total Expenses"/>
+                                                <field name="total" sum="Grand Total"/>
+                                            </tree>
+                                        </field>
+                                    </group>
+                                    <group colspan="4" col="6">
+                                        <field name="transfer_to_come" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                        <field name="security_envelope" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                        <field name="buffer" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                    </group>
+                                    <field name="total_to_transfer"/>
+                                    <field name="consolidation_currency_name" nolabel="1"/>
+                                    <group colspan="4" col="2">
+                                        <field name="total_to_transfer_line_ids" nolabel="1">
+                                            <tree string="Split per currencies">
+                                                <field name="currency_id"/>
+                                                <field name="amount"/>
+                                            </tree>
+                                        </field>
+                                    </group>
+                                </group>
+                                <group colspan="4" col="4">
+                                    <label string="" colspan="2"/>
+                                    <button name="set_to_done" type="object" string="Done" icon="terp-camera_test"
+                                            attrs="{'invisible': [('state', '!=', 'open')]}"
+                                            confirm='Have you clicked on "Compute recap lines &amp; total to transfer" to get the accurate Total to transfer?'/>
+                                </group>
+                            </page>
+                            <!-- BANKING TAB -->
+                            <page string="Banking" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                                <separator colspan="4" string="Banking references"/>
+                                <field name="journal_name"/>
+                                <field name="journal_code"/>
+                                <field name="account_name"/>
+                                <field name="account_number"/>
+                                <field name="swift_code"/>
+                                <field name="bank_address"/>
+                            </page>
+                            <!-- LIQUIDITY POSITION TAB -->
+                            <page string="Liquidity Position" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                                <!-- CASH -->
+                                <group colspan="4" col="2">
+                                    <button name="display_details_cash" type="object" colspan="1"
+                                            string="Cash - See details for subtotals" icon="terp-stock_zoom"/>
+                                    <label string="" colspan="1"/>
+                                    <field name="liquidity_cash_ids" nolabel="1" colspan="2">
+                                        <tree string="Cash">
+                                            <field name="instance_id"/>
+                                            <field name="journal_code"/>
+                                            <field name="journal_name"/>
+                                            <field name="status"/>
+                                            <field name="period_id"/>
+                                            <field name="opening_balance"/>
+                                            <field name="calculated_balance_booking"/>
+                                            <field name="cashbox_balance_booking"/>
+                                            <field name="booking_currency_id"/>
+                                            <field name="calculated_balance_functional" sum="Total Calculated Balance Functional"/>
+                                            <field name="cashbox_balance_functional" sum="Total Cashbox Balance Functional"/>
+                                            <field name="functional_currency_id"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                                <!-- BANK -->
+                                <group colspan="4" col="2">
+                                    <button name="display_details_bank" type="object" colspan="1"
+                                            string="Bank - See details for subtotals" icon="terp-stock_zoom"/>
+                                    <label string="" colspan="1"/>
+                                    <field name="liquidity_bank_ids" nolabel="1" colspan="2">
+                                        <tree string="Bank">
+                                            <field name="instance_id"/>
+                                            <field name="journal_code"/>
+                                            <field name="journal_name"/>
+                                            <field name="status"/>
+                                            <field name="period_id"/>
+                                            <field name="opening_balance"/>
+                                            <field name="calculated_balance_booking"/>
+                                            <field name="bank_statement_balance_booking"/>
+                                            <field name="booking_currency_id"/>
+                                            <field name="calculated_balance_functional" sum="Total Calculated Balance Functional"/>
+                                            <field name="bank_statement_balance_functional" sum="Total Bank Statement Balance Functional"/>
+                                            <field name="functional_currency_id"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                                <!-- CHEQUE -->
+                                <group colspan="4" col="2">
+                                    <button name="display_details_cheque" type="object" colspan="1"
+                                            string="Pending Cheques - See details for subtotals" icon="terp-stock_zoom"/>
+                                    <label string="" colspan="1"/>
+                                    <field name="liquidity_cheque_ids" nolabel="1" colspan="2">
+                                        <tree string="Pending Cheques">
+                                            <field name="instance_id"/>
+                                            <field name="journal_code"/>
+                                            <field name="journal_name"/>
+                                            <field name="status"/>
+                                            <field name="period_id"/>
+                                            <field name="bank_journal_code"/>
+                                            <field name="bank_journal_name"/>
+                                            <field name="pending_cheque_amount_booking"/>
+                                            <field name="booking_currency_id"/>
+                                            <field name="pending_cheque_amount_functional" sum="Total Pending Cheques Functional"/>
+                                            <field name="functional_currency_id"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                                <!-- GRAND TOTAL -->
+                                <separator colspan="4" string="Grand Total per Currency"/>
+                                <group colspan="4" col="2">
+                                    <field name="liquidity_total_ids" nolabel="1">
+                                        <tree string="Grand Total">
+                                            <field name="amount_booking"/>
+                                            <field name="booking_currency_id"/>
+                                            <field name="amount_functional" sum="Grand Total Functional"/>
+                                            <field name="functional_currency_id"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
+                            <!-- PAYABLES TAB -->
+                            <page string="Payables" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                                <field name="payable_ids" nolabel="1">
+                                    <tree string="Payables">
+                                        <field name="instance_id"/>
+                                        <field name="debit" sum="Total Debit"/>
+                                        <field name="credit" sum="Total Credit"/>
+                                        <field name="balance" sum="Total Balance"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <!-- COMMITMENT TAB -->
+                            <page string="Commitment" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                                <separator colspan="4" string="Commitment"/>
+                                <field name="commitment_ids" nolabel="1">
+                                    <tree string="Engagement Entries in func. currency">
+                                        <field name="instance_id"/>
+                                        <field name="total_commitment"
+                                               string="Total Engagement in Func. currency for the month to come"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <!-- PLANNED EXPENSE TAB -->
+                            <page string="Planned Expense">
+                                <separator colspan="4" string="Planned expense for the coming period"/>
+                                <group colspan="4" col="2" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                                    <field name="recap_expense_ids" nolabel="1">
+                                        <tree string="Recap Planned Expenses in func. currency">
+                                            <field name="instance_id"/>
+                                            <field name="expense_total"/>
+                                            <field name="budget_expense_m"/>
+                                            <field name="budget_expense_m1"/>
+                                            <field name="budget_expense_m2"/>
+                                            <field name="budget_expense_m3"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                                <group colspan="4" col="2">
+                                    <field name="planned_expense_ids" nolabel="1" context="{'mission': mission}">
+                                        <tree editable="bottom" string="Planned Expenses entries">
+                                            <field name="prop_instance_id"/>
+                                            <field name="consumer_instance_id"
+                                                   domain="[('level', 'in', ['coordo', 'project']), ('mission', '=', context.get('mission'))]"/>
+                                            <field name="is_local_expense"/>
+                                            <field name="account_id"/>
+                                            <field name="description"/>
+                                            <field name="is_budgeted"/>
+                                            <field name="quantity"/>
+                                            <field name="unit_price"/>
+                                            <field name="currency_id"/>
+                                            <field name="total_booking"/>
+                                            <field name="total_functional"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
+                            <!-- TRANSFERS FOLLOW-UP TAB -->
+                            <page string="Transfers Follow-up" attrs="{'invisible': [('current_instance_level', '==', 'project')]}">
+                                <field name="past_transfer_ids" nolabel="1">
+                                    <tree string="Past Transfers">
+                                        <field name="instance_id"/>
+                                        <field name="journal_id"/>
+                                        <field name="move_id"/>
+                                        <field name="name"/>
+                                        <field name="ref"/>
+                                        <field name="document_date"/>
+                                        <field name="date"/>
+                                        <field name="period_id"/>
+                                        <field name="account_id"/>
+                                        <field name="partner_txt"/>
+                                        <field name="debit_currency"/>
+                                        <field name="credit_currency"/>
+                                        <field name="currency_id"/>
+                                        <field name="debit"/>
+                                        <field name="credit"/>
+                                        <field name="functional_currency_id"/>
+                                        <field name="reconcile_txt"/>
+                                        <field name="state"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </form>
+                </field>
+            </record>
+
+            <!-- CASH REQUEST - TREE VIEW -->
+            <record id="view_cash_request_tree" model="ir.ui.view">
+                <field name="name">cash.request.tree</field>
+                <field name="model">cash.request</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <!-- creation allowed in coordo / edition allowed in coordo and project (see fields_view_get) -->
+                    <tree hide_new_button="PROP_INSTANCE_HIDE_BUTTON" hide_edit_button="PROP_INSTANCE_HIDE_BUTTON"
+                          colors="gray:state=='done';">
+                        <field name="name"/>
+                        <field name="request_date"/>
+                        <field name="month_period_id"/>
+                        <field name="state"/>
+                    </tree>
+                </field>
+            </record>
+
+            <!-- CASH REQUEST - SEARCH VIEW -->
+            <record id="view_cash_request_search" model="ir.ui.view">
+                <field name="name">cash.request.search</field>
+                <field name="model">cash.request</field>
+                <field name="type">search</field>
+                <field name="arch" type="xml">
+                    <search>
+                        <group col="6" colspan="4">
+                            <field name="prop_instance_id" string="Top Proprietary Instance"/>
+                            <field name="month_period_id" domain="[('special', '=', False)]"/> <!-- allow selecting any month -->
+                            <field name="fiscalyear_id"/>
+                        </group>
+                    </search>
+                </field>
+            </record>
+
+            <!-- CASH REQUEST - ENTRY IN MENU -->
+            <record id="action_cash_request_tree" model="ir.actions.act_window">
+                <field name="name">Cash Request</field>
+                <field name="res_model">cash.request</field>
+                <field name="view_type">form</field>
+                <field name="view_mode">tree,form</field>
+                <field name="context">{}</field>
+                <field name="search_view_id" ref="view_cash_request_search"/>
+            </record>
+            <menuitem action="action_cash_request_tree" id="menu_action_cash_request_tree"
+                      parent="account.menu_finance_periodical_processing"
+                      sequence="12"/>
+
+            <!-- CASH REQUEST LIQUIDITY CASH - TREE VIEW -->
+            <record id="view_cash_request_liquidity_cash_tree" model="ir.ui.view">
+                <field name="name">cash.request.liquidity.cash.tree</field>
+                <field name="model">cash.request.liquidity.cash</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree noteditable="1" hide_delete_button="1">
+                        <field name="instance_id"/>
+                        <field name="journal_code"/>
+                        <field name="journal_name"/>
+                        <field name="status"/>
+                        <field name="period_id"/>
+                        <field name="opening_balance" sum="Total Opening Balance"/>
+                        <field name="calculated_balance_booking" sum="Total Calculated Balance Booking"/>
+                        <field name="cashbox_balance_booking" sum="Total Cashbox Balance Booking"/>
+                        <field name="booking_currency_id"/>
+                        <field name="calculated_balance_functional" sum="Total Calculated Balance Functional"/>
+                        <field name="cashbox_balance_functional" sum="Total Cashbox Balance Functional"/>
+                        <field name="functional_currency_id"/>
+                    </tree>
+                </field>
+            </record>
+
+            <!-- CASH REQUEST LIQUIDITY BANK - TREE VIEW -->
+            <record id="view_cash_request_liquidity_bank_tree" model="ir.ui.view">
+                <field name="name">cash.request.liquidity.bank.tree</field>
+                <field name="model">cash.request.liquidity.bank</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree noteditable="1" hide_delete_button="1">
+                        <field name="instance_id"/>
+                        <field name="journal_code"/>
+                        <field name="journal_name"/>
+                        <field name="status"/>
+                        <field name="period_id"/>
+                        <field name="opening_balance" sum="Total Opening Balance"/>
+                        <field name="calculated_balance_booking" sum="Total Calculated Balance Booking"/>
+                        <field name="bank_statement_balance_booking" sum="Total Bank Statement Balance Booking"/>
+                        <field name="booking_currency_id"/>
+                        <field name="calculated_balance_functional" sum="Total Calculated Balance Functional"/>
+                        <field name="bank_statement_balance_functional" sum="Total Bank Statement Balance Functional"/>
+                        <field name="functional_currency_id"/>
+                    </tree>
+                </field>
+            </record>
+
+            <!-- CASH REQUEST LIQUIDITY CHEQUE - TREE VIEW -->
+            <record id="view_cash_request_liquidity_cheque_tree" model="ir.ui.view">
+                <field name="name">cash.request.liquidity.cheque.tree</field>
+                <field name="model">cash.request.liquidity.cheque</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree noteditable="1" hide_delete_button="1">
+                        <field name="instance_id"/>
+                        <field name="journal_code"/>
+                        <field name="journal_name"/>
+                        <field name="status"/>
+                        <field name="period_id"/>
+                        <field name="bank_journal_code"/>
+                        <field name="bank_journal_name"/>
+                        <field name="pending_cheque_amount_booking" sum="Total Pending Cheques Booking"/>
+                        <field name="booking_currency_id"/>
+                        <field name="pending_cheque_amount_functional" sum="Total Pending Cheques Functional"/>
+                        <field name="functional_currency_id"/>
+                    </tree>
+                </field>
+            </record>
+
+            <!-- CASH REQUEST LIQUIDITY CASH - SEARCH VIEW -->
+            <record id="view_cash_request_liquidity_cash_search" model="ir.ui.view">
+                <field name="name">cash.request.liquidity.cash.search</field>
+                <field name="model">cash.request.liquidity.cash</field>
+                <field name="type">search</field>
+                &liquidity_position_search;
+            </record>
+            <!-- CASH REQUEST LIQUIDITY BANK - SEARCH VIEW -->
+            <record id="view_cash_request_liquidity_bank_search" model="ir.ui.view">
+                <field name="name">cash.request.liquidity.bank.search</field>
+                <field name="model">cash.request.liquidity.bank</field>
+                <field name="type">search</field>
+                &liquidity_position_search;
+            </record>
+            <!-- CASH REQUEST LIQUIDITY CHEQUE - SEARCH VIEW -->
+            <record id="view_cash_request_liquidity_cheque_search" model="ir.ui.view">
+                <field name="name">cash.request.liquidity.cheque.search</field>
+                <field name="model">cash.request.liquidity.cheque</field>
+                <field name="type">search</field>
+                &liquidity_position_search;
+            </record>
+       </data>
+</openerp>

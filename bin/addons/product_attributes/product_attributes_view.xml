@@ -522,11 +522,6 @@
             </field>
         </record>
 
-        <delete id="product.action_product_price_list" model="ir.actions.act_window" />
-        <delete id="product.report_product_label" model="ir.actions.report.xml" />
-        <delete id="stock.report_product_history" model="ir.actions.report.xml" />
-        <delete id="procurement.act_make_procurement" model="ir.actions.act_window" />
-
         <act_window
             context="{}"
             domain="[('procurement_request', '=', False), '|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
@@ -543,20 +538,7 @@
             res_model="tender"
             src_model="product.product" />
 
-        <delete id="procurement.act_product_product_2_stock_warehouse_orderpoint" model="ir.actions.act_window" />
-        <delete id="stock.act_product_stock_move_futur_open" model="ir.actions.act_window" />
 
-        <delete id="purchase.action_purchase_line_product_tree" model="ir.actions.act_window" />
-
-        <act_window
-            context="{}"
-            domain="[('rfq_ok', '=', False), '|', ('product_id', 'in', active_ids), ('product_id', '=', active_id)]"
-            id="purchase.action_purchase_line_product_tree"
-            name="Purchases"
-            res_model="purchase.order"
-            src_model="product.product"
-            groups=""/>
-            
         <!-- Add a link to see all inactivated products -->
         <act_window
            context="{}"
@@ -566,10 +548,6 @@
            res_model="product.product"
            src_model="product.product" />
 
-
-
-<!--        <delete id="product.menu_products_category" model="ir.ui.menu" /> -->
-<!--        <delete id="product.menu_product_ul_form_action" model="ir.ui.menu" /> -->
 
         <record id="view_act_product_stock_move_open" model="ir.ui.view">
             <field name="name">Stock Moves</field>

@@ -341,7 +341,7 @@
                                 context="{'reason_type_id': reason_type_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
                                 on_change="onchange_move()"
                                 >
-                                <tree colors="grey:scrapped == True; red: inactive_product or to_correct_ok or expired_lot" string="Stock Moves" noteditable="fake_state=='assigned'" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
+                                <tree colors="grey:scrapped == True; red: inactive_product or to_correct_ok or expired_lot" string="Stock Moves" noteditable="fake_state=='assigned' or linked_incoming_move != False" hide_new_button="context.get('from_wkf')" hide_delete_button="context.get('from_wkf')">
                                     <field name="line_number"/>
                                     <field name="product_id" />
                                     <field name="comment" />
@@ -350,6 +350,7 @@
                                     <field name="product_uom" string="UoM"/>
                                     <field name="product_uos" invisible="1"/>
                                     <field name="scrapped" invisible="1"/>
+                                    <field name="linked_incoming_move" invisible="1"/>
                                     <field name="asset_id"/>
                                     <field name="prodlot_id"/>
                                     <field name="expired_date"/>
@@ -571,10 +572,11 @@
                             <field name="address_id" invisible="1" />
                             <field name="backorder_id" readonly="1"/>
                             <field name="reason_type_id" widget="selection"
-                                   domain="[('incoming_ok', '=', True)]" 
+                                   domain="[('incoming_ok', '=', True)]"
                                    attrs="{'readonly': ['|', ('from_wkf', '=', True), ('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="order_category"/>
                             <field name="change_reason"/>
+                            <field name="claim" readonly="1"/>
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" string="Creation Date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
@@ -583,6 +585,7 @@
                             <field name="min_date_manually" invisible="1" />
                             <field name="warehouse_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="shipment_ref" />
+                            <field name="claim_name" readonly="1" attrs="{'invisible': [('claim', '=', False)]}"/>
                         </group>
                     </group>
                    <field name="is_esc" invisible="1" />
@@ -617,11 +620,11 @@
                                     <field name="expired_date"/>
                                     <field name="location_dest_id"/>
                                     <field name="date" string="Actual Receipt Date"/>
-                                    <field name="state"/>
+                                    <field name="state_to_display"/>
                                     <field name="fake_state" invisible="1"/>
                                     <field name="kit_check" invisible="True"/>
                                     <button name="create_composition_list" type="object" string="Create Composition List" icon="gtk-justify-fill" attrs="{'invisible': ['|', ('fake_state', '!=', 'done'), ('kit_check', '=', False)]}"/>
-                                    <button name="in_action_confirm" states="draft,confirmed" string="Confirm" type="object" icon="gtk-apply"/>
+                                    <button name="in_action_confirm" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'confirmed'])]}" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
                                     <field name="kc_check" widget="null_boolean" />
@@ -735,7 +738,7 @@
                                     string="Cancel &amp; Resource"
                                     type="object"
                                     icon="gtk-cancel"
-                                    context="{'from_button': True}" 
+                                    context="{'from_button': True, 'do_resource': True}" 
                                     confirm="Warning, you are going to Cancel and Resource!"
                                     />
 
@@ -825,8 +828,6 @@
             </field>
         </record>
         
-        <delete model="ir.actions.act_window" id="stock.action_view_stock_fill_inventory" />
-        <delete model="ir.actions.act_window" id="stock.action_view_stock_merge_inventories" />
 
         <record id="purchase.stock_picking_in_inherit_purchase" model="ir.ui.view">
             <field name="name">Incoming Picking Inherited</field>

@@ -31,6 +31,9 @@ import sys
 import os
 import math
 import hashlib
+
+from random import random
+
 from psycopg2 import OperationalError
 from psycopg2.extensions import ISOLATION_LEVEL_REPEATABLE_READ, TransactionRollbackError
 
@@ -595,14 +598,14 @@ class Entity(osv.osv):
                     field_obj = get_field_obj(related_model, field)
                 else:
                     field_obj = get_field_obj(model, field)
-                if field_obj._type in ('many2one', 'many2many', 'one2many'):
+                if field_obj and field_obj._type in ('many2one', 'many2many', 'one2many'):
                     model_set.add(field_obj._obj)
 
         # specific cases to sync BAR and FAR
         to_remove = ['ir.ui.view', 'ir.model.fields', 'ir.sequence']
         for f in to_remove:
             if f in model_set:
-                model_set.remove(f) 
+                model_set.remove(f)
 
         return model_set
 
@@ -947,20 +950,18 @@ class Entity(osv.osv):
     def create_message(self, cr, uid, context=None):
         context = context or {}
         messages = self.pool.get(context.get('message_to_send_model', 'sync.client.message_to_send'))
-
-        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
-        uuid = self.pool.get('sync.client.entity').get_entity(cr, uid).identifier
-
-        res = proxy.get_message_rule(uuid, self._hardware_id)
-        if res and not res[0]: raise Exception, res[1]
-        check_md5(res[2], res[1], _('method get_message_rule'))
-        self.pool.get('sync.client.message_rule').save(cr, uid, res[1], context=context)
-
         rule_obj = self.pool.get("sync.client.message_rule")
 
+        to_update = {}
         messages_count = 0
         for rule in rule_obj.browse(cr, uid, rule_obj.search(cr, uid, [('type', '!=', 'USB')], context=context), context=context):
-            messages_count += messages.create_from_rule(cr, uid, rule, None, context=context)
+            generated_ids, ignored_ids = messages.create_from_rule(cr, uid, rule, None, context=context)
+            messages_count += len(generated_ids)
+            to_update.setdefault(rule.model, []).extend(generated_ids + ignored_ids)
+
+        for model, ids in to_update.iteritems():
+            if ids:
+                cr.execute('update ir_model_data set sync_date=NOW() where model=%s and res_id in %s', (model, tuple(ids)))
         return messages_count
 
     @sync_subprocess('msg_push_send')
@@ -1006,6 +1007,12 @@ class Entity(osv.osv):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
 
         entity = self.get_entity(cr, uid, context=context)
+
+        res = proxy.get_message_rule(entity.identifier, self._hardware_id)
+        if res and not res[0]: raise Exception, res[1]
+        check_md5(res[2], res[1], _('method get_message_rule'))
+        self.pool.get('sync.client.message_rule').save(cr, uid, res[1], context=context)
+
         if recover:
             proxy.message_recover_from_seq(entity.identifier, self._hardware_id, entity.message_last)
 
@@ -1061,11 +1068,14 @@ class Entity(osv.osv):
     def execute_message(self, cr, uid, context=None):
         context = context or {}
         logger = context.get('logger')
+        # force user to user_sync
+        uid = self.pool.get('res.users')._get_sync_user_id(cr)
+
         messages = self.pool.get(context.get('message_received_model', 'sync.client.message_received'))
 
         # Get the whole list of messages to execute
         # Warning: order matters
-        message_ids = messages.search(cr, uid, [('run','=',False)], order='id asc', context=context)
+        message_ids = messages.search(cr, uid, [('run','=',False)], order='rule_sequence, id', context=context)
         messages_count = len(message_ids)
         if messages_count == 0: return 0
 
@@ -1238,6 +1248,52 @@ class Entity(osv.osv):
             return "Last Sync: %s at %s, Not run upd: %s, Not run msg: %s" \
                 % (_(monitor.status_dict[last_log[0]]), last_log[1], last_log[2], last_log[3])
         return "Connected"
+
+    def update_nb_shortcut_used(self, cr, uid, nb_shortcut_used, context=None):
+        '''
+        if the current have used some shorcut, update his counter and last date of use accordingly
+        '''
+        if context is None:
+            context = {}
+        if not nb_shortcut_used:
+            return True
+        user_obj = self.pool.get('res.users')
+        current_date = datetime.now()
+        previous_nb_shortcut_used = user_obj.read(cr, uid, uid,
+                                                  ['nb_shortcut_used'],
+                                                  context=context)['nb_shortcut_used']
+        total_shortcut_used = previous_nb_shortcut_used + nb_shortcut_used
+        user_obj.write(cr, uid, uid, {'last_use_shortcut': current_date,
+                                      'nb_shortcut_used': total_shortcut_used,
+                                      }, context=context)
+        return True
+
+    def display_shortcut_message(self, cr, uid, context=None):
+        '''
+        return True if the message should be displayed, False otherwize.
+        random is used not display all the time the message, but 1 out of 10.
+        '''
+        if context is None:
+            context = {}
+        user_obj = self.pool.get('res.users')
+        result = user_obj.read(cr, uid, uid,
+                               ['nb_shortcut_used',
+                                'last_use_shortcut'],
+                               context=context)
+        if result['nb_shortcut_used'] and result['nb_shortcut_used'] > 100:
+            # once the user have used the shortcut a lot of times, do not
+            # bother him with warning message
+            return False
+        if not result['last_use_shortcut']:
+            # user have never used the shortcut
+            return random() < 0.1
+        last_date = result['last_use_shortcut']
+        last_date = datetime.strptime(last_date[:19],'%Y-%m-%d %H:%M:%S')
+        current_date = datetime.now()
+        if current_date - last_date > timedelta(days=1):
+            # the user didn't use the shortcut since long time
+            return random() < 0.1
+        return False
 
     def interrupt_sync(self, cr, uid, context=None):
         if self.is_syncing():
@@ -1596,12 +1652,14 @@ class Connection(osv.osv):
 
     def change_protocol(self, cr, uid, ids, host, proto, context=None):
         xmlrpc = 8069
-        xmlrpcs = 8071
+        xmlrpcs = 443
         netrpc = 8070
         if host in ('127.0.0.1', 'localhost'):
             xmlrpc = tools.config.get('xmlrpc_port')
-            xmlrpcs = tools.config.get('xmlrpcs_port')
             netrpc = tools.config.get('netrpc_port')
+            # For xmlrpcs, we keep the default value (443) because this does
+            # not make much sense anyway to have SSL over localhost (won't have
+            # a valid certificate)
         ports = {
             'xmlrpc': xmlrpc,
             'gzipxmlrpc': xmlrpc,

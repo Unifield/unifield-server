@@ -23,15 +23,14 @@
     "name": "Order Types",
     "version": "1.0",
     "depends": [
-                "sale", 
-                "purchase", 
-                "msf_partner",
-                "msf_order_date", 
-                "stock",
-                "product_expiry",
-                "purchase_double_validation",
-                "sale_override",
-                "purchase_override"],
+        "sale", 
+        "purchase", 
+        "msf_partner",
+        "msf_order_date", 
+        "stock",
+        "product_expiry",
+        "purchase_double_validation",
+        "purchase_override"],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Sales & Purchase",
@@ -55,7 +54,7 @@
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

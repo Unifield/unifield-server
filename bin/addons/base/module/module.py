@@ -52,7 +52,7 @@ class module_category(osv.osv):
                                              FROM ir_module_category \
                                             WHERE parent_id IN %(ids)s) \
                      GROUP BY category_id', {'ids': tuple(ids)}
-                    )
+                   )
         result = dict(cr.fetchall())
         for id in ids:
             cr.execute('select id from ir_module_category where parent_id=%s', (id,))
@@ -83,7 +83,7 @@ class module(osv.osv):
                 info['version'] = release.major_version + '.' + info['version']
         except Exception:
             cls.__logger.debug('Error when trying to fetch informations for '
-                                'module %s', name, exc_info=True)
+                               'module %s', name, exc_info=True)
         return info
 
     def _get_latest_version(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -115,7 +115,7 @@ class module(osv.osv):
             return res
 
         view_id = model_data_obj.search(cr,uid,[('module','in', mnames.keys()),
-            ('model','in',('ir.ui.view','ir.actions.report.xml','ir.ui.menu'))])
+                                                ('model','in',('ir.ui.view','ir.actions.report.xml','ir.ui.menu'))])
         for data_id in model_data_obj.browse(cr,uid,view_id,context):
             # We use try except, because views or menus may not exist
             try:
@@ -129,14 +129,14 @@ class module(osv.osv):
                     res_mod_dic['reports_by_module'].append(report_obj.browse(cr,uid,data_id.res_id).name)
                 elif key=='ir.ui.menu':
                     res_mod_dic['menus_by_module'].append(menu_obj.browse(cr,uid,data_id.res_id).complete_name)
-            except KeyError, e:
+            except KeyError:
                 self.__logger.warning(
-                            'Data not found for reference %s[%s:%s.%s]', data_id.model,
-                            data_id.res_id, data_id.model, data_id.name, exc_info=True)
+                    'Data not found for reference %s[%s:%s.%s]', data_id.model,
+                    data_id.res_id, data_id.model, data_id.name, exc_info=True)
                 pass
-            except Exception, e:
+            except Exception:
                 self.__logger.warning('Unknown error while browsing %s[%s]',
-                            data_id.model, data_id.res_id, exc_info=True)
+                                      data_id.model, data_id.res_id, exc_info=True)
                 pass
         for key, value in res.iteritems():
             for k, v in res[key].iteritems() :
@@ -158,13 +158,13 @@ class module(osv.osv):
         #   latest_version refer the installed version (the one in database)
         #   published_version refer the version available on the repository
         'installed_version': fields.function(_get_latest_version, method=True,
-            string='Latest version', type='char'),
+                                             string='Latest version', type='char'),
         'latest_version': fields.char('Installed version', size=64, readonly=True),
         'published_version': fields.char('Published Version', size=64, readonly=True),
 
         'url': fields.char('URL', size=128, readonly=True),
         'dependencies_id': fields.one2many('ir.module.module.dependency',
-            'module_id', 'Dependencies', readonly=True),
+                                           'module_id', 'Dependencies', readonly=True),
         'state': fields.selection([
             ('uninstallable','Not Installable'),
             ('uninstalled','Not Installed'),
@@ -175,14 +175,14 @@ class module(osv.osv):
         ], string='State', readonly=True, select=True),
         'demo': fields.boolean('Demo data'),
         'license': fields.selection([
-                ('GPL-2', 'GPL Version 2'),
-                ('GPL-2 or any later version', 'GPL-2 or later version'),
-                ('GPL-3', 'GPL Version 3'),
-                ('GPL-3 or any later version', 'GPL-3 or later version'),
-                ('AGPL-3', 'Affero GPL-3'),
-                ('Other OSI approved licence', 'Other OSI Approved Licence'),
-                ('Other proprietary', 'Other Proprietary')
-            ], string='License', readonly=True),
+            ('GPL-2', 'GPL Version 2'),
+            ('GPL-2 or any later version', 'GPL-2 or later version'),
+            ('GPL-3', 'GPL Version 3'),
+            ('GPL-3 or any later version', 'GPL-3 or later version'),
+            ('AGPL-3', 'Affero GPL-3'),
+            ('Other OSI approved licence', 'Other OSI Approved Licence'),
+            ('Other proprietary', 'Other Proprietary')
+        ], string='License', readonly=True),
         'menus_by_module': fields.function(_get_views, method=True, string='Menus', type='text', multi="meta", store=True),
         'reports_by_module': fields.function(_get_views, method=True, string='Reports', type='text', multi="meta", store=True),
         'views_by_module': fields.function(_get_views, method=True, string='Views', type='text', multi="meta", store=True),
@@ -217,7 +217,7 @@ class module(osv.osv):
         for mod in self.read(cr, uid, ids, ['state','name'], context):
             if mod['state'] in ('installed', 'to upgrade', 'to remove', 'to install'):
                 raise orm.except_orm(_('Error'),
-                        _('You try to remove a module that is installed or will be installed'))
+                                     _('You try to remove a module that is installed or will be installed'))
             mod_names.append(mod['name'])
         #Removing the entry from ir_model_data
         ids_meta = self.pool.get('ir.model.data').search(cr, uid, [('name', '=', 'module_meta_information'), ('module', 'in', mod_names)])
@@ -329,7 +329,7 @@ class module(osv.osv):
             i += 1
             if mod.state not in ('installed','to upgrade'):
                 raise orm.except_orm(_('Error'),
-                        _("Can not upgrade module '%s'. It is not installed.") % (mod.name,))
+                                     _("Can not upgrade module '%s'. It is not installed.") % (mod.name,))
             self.check_external_dependencies(mod.name, 'to upgrade')
             iids = depobj.search(cr, uid, [('name', '=', mod.name)], context=context)
             for dep in depobj.browse(cr, uid, iids, context=context):
@@ -440,11 +440,11 @@ class module(osv.osv):
             terp = self.get_module_info(mod.name)
             self.write(cr, uid, mod.id, self.get_values_from_terp(terp))
             cr.execute('DELETE FROM ir_module_module_dependency ' \
-                    'WHERE module_id = %s', (mod.id,))
+                       'WHERE module_id = %s', (mod.id,))
             self._update_dependencies(cr, uid, mod, terp.get('depends',
-                []))
+                                                             []))
             self._update_category(cr, uid, mod, terp.get('category',
-                'Uncategorized'))
+                                                         'Uncategorized'))
             # Import module
             zimp = zipimport.zipimporter(fname)
             zimp.load_module(mod.name)
@@ -530,8 +530,6 @@ class module(osv.osv):
                 if f:
                     logger.info('module %s: loading translation file (%s) for language %s', mod.name, iso_lang, lang)
                     tools.trans_load(cr, f, lang, verbose=False, context=context2)
-                elif iso_lang != 'en':
-                    logger.warning('module %s: no translation for language %s', mod.name, iso_lang)
         tools.trans_update_res_ids(cr)
 
     def check(self, cr, uid, ids, context=None):
@@ -557,16 +555,16 @@ class module(osv.osv):
         return [
             (module['name'], module['installed_version'])
             for module in self.browse(cr, uid,
-                self.search(cr, uid,
-                    [('web', '=', True),
-                     ('state', 'in', ['installed','to upgrade','to remove'])],
-                    context=context),
-                context=context)]
+                                      self.search(cr, uid,
+                                                  [('web', '=', True),
+                                                   ('state', 'in', ['installed','to upgrade','to remove'])],
+                                                  context=context),
+                                      context=context)]
     def _web_dependencies(self, cr, uid, module, context=None):
         for dependency in module.dependencies_id:
             (parent,) = self.browse(cr, uid, self.search(cr, uid,
-                [('name', '=', dependency.name)], context=context),
-                                 context=context)
+                                                         [('name', '=', dependency.name)], context=context),
+                                    context=context)
             if parent.web:
                 yield parent.name
             else:
@@ -633,7 +631,7 @@ class module(osv.osv):
         its final naming has to be managed by the client
         """
         modules = self.browse(cr, uid,
-            self.search(cr, uid, [('name', 'in', names)], context=context),
+                              self.search(cr, uid, [('name', 'in', names)], context=context),
                               context=context)
         if not modules: return []
         self.__logger.info('Sending web content of modules %s '
@@ -682,6 +680,6 @@ class module_dependency(osv.osv):
             ('to remove','To be removed'),
             ('to install','To be installed'),
             ('unknown', 'Unknown'),
-            ], string='State', readonly=True, select=True),
+        ], string='State', readonly=True, select=True),
     }
 module_dependency()

@@ -480,6 +480,16 @@ class entity(osv.osv):
         self._send_invalidation_email(cr, uid, entity, ids_to_validate, context=context)
         return (True, "Instance %s are now invalidated" % ", ".join(uuid_list))
 
+    def is_validated(self, cr, uid, uuid, context=None):
+        entity_pool = self.pool.get("sync.server.entity")
+        id = entity_pool.get(cr, uid, uuid=uuid)
+        if not id:
+            return (False, "Error: Instance does not exist in the server database")
+        entity = entity_pool.browse(cr, uid, id)[0]
+        if entity.state == 'validated':
+            return (True, "The instance is validated")
+        return (False, "The instance has not yet been validated by its parent")
+
     @check_validated
     def set_pg_version(self, cr, uid, entity, pg_version, context=None):
         self.write(cr, 1, entity.id, {'pgversion': pg_version}, context=context)

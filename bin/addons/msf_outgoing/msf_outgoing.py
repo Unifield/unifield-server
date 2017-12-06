@@ -689,6 +689,8 @@ class shipment(osv.osv):
                 new_packing_id = picking_obj.copy(cr, uid, picking.id, packing_data, context=context)
                 if picking_obj._get_usb_entity_type(cr, uid) == picking_obj.CENTRAL_PLATFORM:
                     picking_obj.write(cr, uid, [new_packing_id], {'already_replicated': True}, context=context)
+                if picking.claim:
+                    picking_obj.write(cr, uid, [new_packing_id], ({'claim': True}), context=context)
 
                 # Reset context
                 context.update({
@@ -1302,6 +1304,8 @@ class shipment(osv.osv):
                                                                      'shipment_id': shipment.id, }, context=dict(context, keepLineNumber=True, keep_prodlot=True, allow_copy=True,))
 
                 pick_obj.write(cr, uid, [new_packing_id], {'origin': packing.origin}, context=context)
+                if packing.claim:
+                    pick_obj.write(cr, uid, [new_packing_id], ({'claim': True}), context=context)
                 new_packing = pick_obj.browse(cr, uid, new_packing_id, context=context)
 
                 if new_packing.move_lines and pick_obj._get_usb_entity_type(cr, uid) == pick_obj.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
@@ -1663,6 +1667,10 @@ class shipment(osv.osv):
                 # UF-1617: set the flag to this packing object to indicate that the SHIP has been done, for synchronisation purpose
                 cr.execute('update stock_picking set already_shipped=\'t\' where id=%s' % packing.id)
 
+                # closing FO lines:
+                for stock_move in packing.move_lines:
+                    if stock_move.sale_line_id:
+                        wf_service.trg_validate(uid, 'sale.order.line', stock_move.sale_line_id.id, 'done', cr)
 
             # Create automatically the invoice
             self.shipment_create_invoice(cr, uid, shipment.id, context=context)
@@ -1711,7 +1719,7 @@ class shipment_additionalitems(osv.osv):
                 'quantity': fields.float(digits=(16, 2), string='Quantity', required=True),
                 'uom': fields.many2one('product.uom', string='UOM', required=True),
                 'comment': fields.char(string='Comment', size=1024),
-                'volume': fields.float(digits=(16, 2), string='Volume[dm³]'),
+                'volume': fields.float(digits=(16, 2), string=u'Volume[dm³]'),
                 'weight': fields.float(digits=(16, 2), string='Weight[kg]', required=True),
                 }
 
@@ -1765,18 +1773,6 @@ class ppl_customize_label(osv.osv):
     label preferences
     '''
     _name = 'ppl.customize.label'
-
-    def init(self, cr):
-        """
-        Load msf_outgoing_data.xml before self
-        """
-        if hasattr(super(ppl_customize_label, self), 'init'):
-            super(ppl_customize_label, self).init(cr)
-
-        logging.getLogger('init').info('HOOK: module msf_outgoing: loading data/msf_outgoing_data.xml')
-        pathname = path.join('msf_outgoing', 'data/msf_outgoing_data.xml')
-        file_to_open = tools.file_open(pathname)
-        tools.convert_xml_import(cr, 'msf_outgoing', file_to_open, {}, mode='init', noupdate=False)
 
     _columns = {'name': fields.char(string='Name', size=1024,),
                 'notes': fields.text(string='Notes'),
@@ -1956,7 +1952,7 @@ class stock_picking(osv.osv):
         obj = self.browse(cr, uid, copy_id, context=context)
         if not context.get('allow_copy', False):
             if obj.subtype == 'picking' and default.get('subtype', 'picking') == 'picking':
-                if not obj.backorder_id:
+                if not obj.backorder_id or obj.claim:
                     # draft, new ref
                     default.update(name=self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket'),
                                    origin=False,
@@ -1967,7 +1963,7 @@ class stock_picking(osv.osv):
                     # if the corresponding draft picking ticket is done, we do not allow copy
                     if obj.backorder_id and obj.backorder_id.state == 'done':
                         raise osv.except_osv(_('Error !'), _('Corresponding Draft picking ticket is Closed. This picking ticket cannot be copied.'))
-                    if obj.backorder_id:
+                    if obj.backorder_id and not obj.backorder_id.claim:
                         raise osv.except_osv(_('Error !'), _('You cannot duplicate a Picking Ticket linked to a Draft Picking Ticket.'))
                     # picking ticket, use draft sequence, keep other fields
                     base = obj.name
@@ -2345,7 +2341,7 @@ class stock_picking(osv.osv):
         return res
 
     _columns = {'flow_type': fields.selection([('full', 'Full'), ('quick', 'Quick')], readonly=True, states={'draft': [('readonly', False), ], }, string='Flow Type'),
-                'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing')], string='Subtype'),
+                'subtype': fields.selection([('standard', 'Standard'), ('picking', 'Picking'), ('ppl', 'PPL'), ('packing', 'Packing'), ('sysint', 'System Internal')], string='Subtype'),
                 'backorder_ids': fields.one2many('stock.picking', 'backorder_id', string='Backorder ids',),
                 'previous_step_id': fields.many2one('stock.picking', 'Previous step'),
                 'previous_step_ids': fields.one2many('stock.picking', 'previous_step_id', string='Previous Step ids',),
@@ -3054,6 +3050,12 @@ class stock_picking(osv.osv):
 
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.out')
+            # in case of return claim
+            if '-return' in obj.name:
+                new_name += '-return'
+            elif '-surplus' in obj.name:
+                new_name += '-surplus'
+
             if context.get('rw_backorder_name', False):
                 new_name = context.get('rw_backorder_name')
                 del context['rw_backorder_name']
@@ -3160,7 +3162,8 @@ class stock_picking(osv.osv):
                         move_obj.update_linked_documents(cr, uid, move.id, new_move_id, context=context)
 
                     # Set the stock move to done with 0.00 qty
-                    if move.id in keep_move and keep_move[move.id]:
+                    if (move.id in keep_move and keep_move[move.id])\
+                            or ('return' in move.picking_id.name or 'surplus' in move.picking_id.name):
                         m_st = move.state
                     else:
                         m_st = 'done'
@@ -3265,6 +3268,11 @@ class stock_picking(osv.osv):
 
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
+            # in case of return claim
+            if '-return' in out.name:
+                new_name += '-return'
+            elif '-surplus' in out.name:
+                new_name += '-surplus'
 
             # change subtype and name
             default_vals = {'name': new_name,
@@ -3398,6 +3406,11 @@ class stock_picking(osv.osv):
                     'location_id': line.location_id and line.location_id.id,
                 }
 
+                if wizard.register_a_claim and wizard.claim_replacement_picking_expected:
+                    values.update({
+                        'purchase_line_id': move.purchase_line_id and move.purchase_line_id.id or False,
+                    })
+
                 if quantity < move.product_qty and move_data[move.id]['original_qty'] > move_data[move.id]['processed_qty']:
                     # Create a new move
                     new_move_id = move_obj.copy(cr, uid, move.id, values, context=context)
@@ -3412,6 +3425,8 @@ class stock_picking(osv.osv):
                     # Update the original move
                     move_obj.write(cr, uid, [move.id], values, context=context)
                     processed_moves.append(move.id)
+                    if move.sale_line_id:
+                        wf_service.trg_validate(uid, 'sale.order.line', move.sale_line_id.id, 'done', cr)
 
             if not len(move_data):
                 pick_type = 'Internal picking'
@@ -3473,14 +3488,23 @@ class stock_picking(osv.osv):
 
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, new_picking_id, context=context)
-                # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
-                wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
-                # Then we finish the good picking
-                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'return'):
+
+                if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
+                    move_ids = move_obj.search(cr, uid, [('picking_id', '=', new_picking_id)])
+                    move_obj.action_cancel(cr, uid, move_ids, context=context)
+                    self.action_cancel(cr, uid, [new_picking_id], context=context)
+                    # check the OUT availability
+                    out_domain = [('backorder_id', '=', new_picking_id), ('type', '=', 'out')]
+                    out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
+                    self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
+                else:
+                    # We confirm the new picking after its name was possibly modified by custom code - so the link message (top message) is correct
+                    wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_confirm', cr)
+                    # Then we finish the picking
                     self.action_move(cr, uid, [new_picking_id])
                     wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_done', cr)
-                    # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
-                    self._hook_create_sync_messages(cr, uid, new_picking_id, context)
+                # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
+                self._hook_create_sync_messages(cr, uid, new_picking_id, context)
 
                 wf_service.trg_write(uid, 'stock.picking', picking.id, cr)
                 delivered_pack_id = new_picking_id
@@ -3495,16 +3519,25 @@ class stock_picking(osv.osv):
                 ))
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, picking.id, context=context)
-                if not wizard.register_a_claim or (wizard.register_a_claim and wizard.claim_type != 'return'):
+
+                if wizard.register_a_claim and wizard.claim_type in ('return', 'surplus'):
+                    move_ids = move_obj.search(cr, uid, [('picking_id', '=', picking.id)])
+                    move_obj.action_cancel(cr, uid, move_ids, context=context)
+                    self.action_cancel(cr, uid, [picking.id], context=context)
+                    # check the OUT availability
+                    out_domain = [('backorder_id', '=', picking.id), ('type', '=', 'out')]
+                    out_id = picking_obj.search(cr, uid, out_domain, order='id desc', limit=1, context=context)[0]
+                    self.pool.get('picking.tools').check_assign(cr, uid, out_id, context=context)
+                else:
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
-                    update_vals = {'state':'done', 'date_done':time.strftime('%Y-%m-%d %H:%M:%S')}
+                    update_vals = {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}
                     if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                         update_vals.update({'already_replicated': False})
                     self.write(cr, uid, picking.id, update_vals)
 
-                    # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
-                    self._hook_create_sync_messages(cr, uid, [picking.id], context)
+                # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
+                self._hook_create_sync_messages(cr, uid, [picking.id], context)
 
                 delivered_pack_id = picking.id
 
@@ -3618,6 +3651,8 @@ class stock_picking(osv.osv):
                 'allow_copy': True,
             })
             new_picking_id = self.copy(cr, uid, picking.id, copy_data, context=context)
+            if picking.claim:
+                self.write(cr, uid, new_picking_id, ({'claim': True}), context=context)
             if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                 self.write(cr, uid, new_picking_id, {'already_replicated': False}, context=context)
 
@@ -3656,6 +3691,7 @@ class stock_picking(osv.osv):
                     'composition_list_id': line.composition_list_id and line.composition_list_id.id,
                     'pt_created': True,
                     'backmove_id': line.move_id.id,
+                    'pack_info_id': line.move_id.pack_info_id and line.move_id.pack_info_id.id or False,
                 }
                 context['keepLineNumber'] = True
                 move_obj.copy(cr, uid, line.move_id.id, cp_values, context=context)
@@ -3824,6 +3860,8 @@ class stock_picking(osv.osv):
             })
 
             new_ppl_id = self.copy(cr, uid, picking.id, cp_vals, context=context)
+            if picking.claim:
+                self.write(cr, uid, new_ppl_id, ({'claim': True}), context=context)
             if update_replicated_flag:
                 self.write(cr, uid, new_ppl_id, {'already_replicated': False}, context=context)
 
@@ -3867,6 +3905,7 @@ class stock_picking(osv.osv):
                     'asset_id': line.asset_id and line.asset_id.id,
                     'composition_list_id': line.composition_list_id and line.composition_list_id.id,
                     'original_qty_partial': orig_qty,
+                    'pack_info_id': line.move_id.pack_info_id and line.move_id.pack_info_id.id or False,
                 }
 
                 # Update or create the validate picking ticket line
@@ -4172,6 +4211,8 @@ class stock_picking(osv.osv):
             context['offline_synchronization'] = False
             # Create the packing with pack_values and the updated context
             new_packing_id = self.copy(cr, uid, picking.id, pack_values, context=context)
+            if picking.claim:
+                self.write(cr, uid, new_packing_id, ({'claim': True}), context=context)
             if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False): # RW Sync - set the replicated to True for not syncing it again
                 self.write(cr, uid, new_packing_id, {'already_replicated': False}, context=context)
 
@@ -4497,8 +4538,6 @@ class stock_picking(osv.osv):
                 fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.original_so_id_sale_order.id, return_info, 'purchase.order.normal_fo_create_po', context=context)
             else:
                 fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.normal_fo_create_po', context=context)
-            fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.create_split_po', context=context)
-            fo_obj._manual_create_sync_picking_message(cr, uid, picking.sale_id.id, return_info, 'purchase.order.update_split_po', context=context)
 
     def action_cancel(self, cr, uid, ids, context=None):
         '''
@@ -4518,10 +4557,19 @@ class stock_picking(osv.osv):
             context = {}
         move_obj = self.pool.get('stock.move')
         obj_data = self.pool.get('ir.model.data')
-
+        wf_service = netsvc.LocalService("workflow")
 
         # check the state of the picking
         for picking in self.browse(cr, uid, ids, context=context):
+            # update PO line if needed:
+            # e.g.: 300 qty => received 250, then cancel 50 => need to update PO line at cancelation
+            if picking.type == 'in' and picking.purchase_id:
+                for stock_move in picking.move_lines:
+                    if stock_move.purchase_line_id:
+                        if not move_obj.search_exist(cr, uid, [('purchase_line_id', '=', stock_move.purchase_line_id.id), ('state', 'not in', ['cancel', 'cancel_r', 'done'])], context=context):
+                            # all in lines processed for this po line
+                            wf_service.trg_validate(uid, 'purchase.order.line', stock_move.purchase_line_id.id, 'done', cr)
+
             # if draft and shipment is in progress, we cannot cancel
             if picking.subtype == 'picking' and picking.state in ('draft',):
                 if self.has_picking_ticket_in_progress(cr, uid, [picking.id], context=context)[picking.id]:
@@ -4967,11 +5015,11 @@ class stock_move(osv.osv):
             Confirm or check the procurement order associated to the stock move
         '''
         pol_obj = self.pool.get('purchase.order.line')
-        proc_obj = self.pool.get('procurement.order')
         pick_obj = self.pool.get('stock.picking')
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
         solc_obj = self.pool.get('sale.order.line.cancel')
+        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -4999,7 +5047,6 @@ class stock_move(osv.osv):
                 continue
 
             pick_type = move.picking_id.type
-            pick_cancel = move.picking_id.change_reason
             pick_subtype = move.picking_id.subtype
             pick_state = move.picking_id.state
             subtype_ok = pick_type == 'out' and (pick_subtype == 'standard' or (pick_subtype == 'picking' and pick_state == 'draft'))
@@ -5009,21 +5056,33 @@ class stock_move(osv.osv):
                 pick_obj._create_sync_message_for_field_order(cr, uid, move.picking_id, context=context)
 
             if pick_type == 'in' and move.purchase_line_id:
+                # cancel the linked PO line partially or fully:
+                resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced or context.get('do_resource', False)
+                if move.purchase_line_id.product_qty - move.product_qty != 0:
+                    self.pool.get('purchase.order.line').cancel_partial_qty(cr, uid, [move.purchase_line_id.id], cancel_qty=move.product_qty, resource=resource, context=context)
+                else:
+                    signal = 'cancel_r' if resource else 'cancel'
+                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, signal, cr)
+
+                not_done_moves = self.pool.get('stock.move').search(cr, uid, [
+                    ('purchase_line_id', '=', move.purchase_line_id.id),
+                    ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                    ('picking_id.type', '=', 'in'),
+                ], context=context)
+                if (not not_done_moves) or all([x in ids for x in not_done_moves]):
+                    # all in lines processed or will be processed for this po line
+                    wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
+
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
-                    if sol.order_id.procurement_request and pick_cancel:
-                        continue
-
                     # If the line will be sourced in another way, do not cancel the OUT move
                     if solc_obj.search(cr, uid, [('fo_sync_order_line_db_id', '=', sol.sync_order_line_db_id), ('resource_sync_line_db_id', '!=', False)],
                                        limit=1, order='NO_ORDER', context=context):
                         continue
 
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
-                    if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
-                        sol_obj.add_resource_line(cr, uid, sol.id, False, diff_qty, context=context)
-                    sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, context=context)
-
+                    if move.picking_id.partner_id2.partner_type not in ['internal','section','intermission']:
+                        sol_obj.update_or_cancel_line(cr, uid, sol.id, diff_qty, resource=resource,context=context)
                     # Cancel the remaining OUT line
                     if diff_qty < sol.product_uom_qty:
                         data_back = self.create_data_back(move)
@@ -5037,41 +5096,23 @@ class stock_move(osv.osv):
                         if out_move_id:
                             context.setdefault('not_resource_move', []).append(out_move_id)
                             self.action_cancel(cr, uid, [out_move_id], context=context)
+
+                self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
+
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
+                resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
-                    if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
-                        sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, False, diff_qty, context=context)
+                    if resource:
+                        sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, move.sale_line_id.order_id.id, diff_qty, context=context)
                     if move.id not in context.get('not_resource_move', []):
-                        sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, context=context)
-                if move.sale_line_id.procurement_id:
-                    # Search OUT moves that have the same source and there are done
-                    other_out_move_ids = self.search(cr, uid, [
-                        ('sale_line_id', '=', move.sale_line_id.id),
-                        ('state', 'in', ['assigned', 'confirmed', 'done']),
-                        ('id', '!=', move.id),
-                    ], context=context)
-                    if other_out_move_ids:
-                        proc_obj.write(cr, uid,
-                                       [move.sale_line_id.procurement_id.id],
-                                       {'move_id': other_out_move_ids[0]},
-                                       context=context)
+                        sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=resource, context=context)
 
         self.action_done(cr, uid, move_to_done, context=context)
 
         # Search only non unlink move
         ids = self.search(cr, uid, [('id', 'in', ids)])
         res = super(stock_move, self).action_cancel(cr, uid, ids, context=context)
-
-        wf_service = netsvc.LocalService("workflow")
-
-        proc_obj = self.pool.get('procurement.order')
-        proc_ids = proc_obj.search(cr, uid, [('move_id', 'in', ids)], context=context)
-        for proc in proc_obj.read(cr, uid, proc_ids, ['state'], context=context):
-            if proc['state'] == 'draft':
-                wf_service.trg_validate(uid, 'procurement.order', proc['id'], 'button_confirm', cr)
-            else:
-                wf_service.trg_validate(uid, 'procurement.order', proc['id'], 'button_check', cr)
 
         for ptc in pick_obj.browse(cr, uid, list(pick_to_check), context=context):
             if ptc.subtype == 'picking' and ptc.state == 'draft' and not pick_obj.has_picking_ticket_in_progress(cr, uid, [ptc.id], context=context)[ptc.id] and all(m.state == 'cancel' or m.product_qty == 0.00 for m in ptc.move_lines):
@@ -5121,6 +5162,8 @@ class pack_family_memory(osv.osv):
     dynamic memory object for pack families
     '''
     _name = 'pack.family.memory'
+    _order = 'sale_order_id, from_pack, id'
+
     _auto = False
     def init(self, cr):
         tools.sql.drop_view_if_exists(cr, 'pack_family_memory')
@@ -5203,7 +5246,7 @@ class pack_family_memory(osv.osv):
             if num_of_packs:
                 values['amount'] = pf_memory['total_amount'] / num_of_packs
             values['total_weight'] = pf_memory['weight'] * num_of_packs
-            values['total_volume'] = (pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0
+            values['total_volume'] = round((pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0, 4)
             values['fake_state'] = pf_memory['state']
 
             result[pf_memory['id']] = values

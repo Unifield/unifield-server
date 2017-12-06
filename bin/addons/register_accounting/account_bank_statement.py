@@ -205,6 +205,8 @@ class account_bank_statement(osv.osv):
         'period_number': fields.related('period_id', 'number', relation='account.period', string="Period number", type="integer", store=True, readonly=True),
         'closing_date': fields.date("Closed On"),
         'responsible_ids': fields.many2many('res.users', 'bank_statement_users_rel', 'statement_id', 'user_id', 'Responsible'),
+        'bank_account_number': fields.related('journal_id', 'bank_account_number', type='char',
+                                              string='Bank Account Number', store=False, readonly=True),
     }
 
     _order = 'state asc, period_number asc'
@@ -249,23 +251,6 @@ class account_bank_statement(osv.osv):
             return super(account_bank_statement, self).unlink(cr, uid, ids)
         raise osv.except_osv(_('Warning'), _('Delete a Register is totally forbidden!'))
         return True
-
-    def button_open_bank(self, cr, uid, ids, context=None):
-        """
-        when pressing 'Open Bank' button
-        """
-        if not context:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        registers = self.browse(cr, uid, ids, context=context)
-        for register in registers:
-            if register['period_id']['state'] in ['field-closed',
-                                                  'mission-closed', 'done']:
-                raise osv.except_osv(_('Error'),
-                                     _('The associated period is closed'))
-            else:
-                return self.write(cr, uid, [register.id], {'state': 'open', 'name': register.journal_id.name})
 
     def check_status_condition(self, cr, uid, state, journal_type='bank'):
         """
@@ -357,6 +342,9 @@ class account_bank_statement(osv.osv):
         if context is None:
             context = {}
 
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
+
         # Search the customized view we made for Supplier Invoice (for * Register's users)
         currency =  self.read(cr, uid, ids, ['currency'])[0]['currency']
         if isinstance(currency, tuple):
@@ -395,6 +383,8 @@ class account_bank_statement(osv.osv):
         from_cheque = False
         if st.journal_id.type == 'cheque':
             from_cheque = True
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
         return {
             'name': "Import Invoice",
             'type': 'ir.actions.act_window',
@@ -424,6 +414,8 @@ class account_bank_statement(osv.osv):
         st = self.browse(cr, uid, ids[0], context=context)
         i = self.pool.get('wizard.import.cheque').create(cr, uid, {'statement_id': ids[0] or None, 'currency_id': st.currency.id or None,
                                                                    'period_id': st.period_id.id}, context=context)
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
         return {
             'name': "Import Cheque",
             'type': 'ir.actions.act_window',
@@ -497,6 +489,11 @@ class account_bank_statement(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # Prepare some values
+
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        self.check_access_rule(cr, real_uid, ids, 'write')
+
+
         date = time.strftime('%Y-%m-%d')
         registers = self.browse(cr, uid, ids, context=context)
         register = registers and registers[0] or False
@@ -716,13 +713,75 @@ The starting balance will be proposed automatically and the closing balance is t
                 aml_list.append(aml.id)
         return aml_list
 
+    def open_register(self, cr, uid, reg_id, cash_opening_balance=None, context=None):
+        """
+        Opens the register and updates the related XML_ID
+        """
+        if context is None:
+            context = {}
+        reg = self.browse(cr, uid, reg_id, fields_to_fetch=['period_id', 'journal_id'], context=context)
+        if reg.period_id.state in ['field-closed', 'mission-closed', 'done']:
+            raise osv.except_osv(_('Error'),
+                                 _('The associated period is closed.'))
+        if reg.journal_id.type == 'cash':
+            self.do_button_open_cash(cr, uid, [reg_id], opening_balance=cash_opening_balance, context=context)
+        else:
+            self.write(cr, uid, [reg_id], {'state': 'open', 'name': reg.journal_id.name})
+        # The update of xml_id must be done when opening the register
+        # --> set the value of xml_id based on the period as period is no more editable
+        self.update_xml_id_register(cr, uid, reg_id, context)
+        return True
+
+    def button_open_register(self, cr, uid, ids, context=None):
+        """
+        Opens the "Register Opening Confirmation" wizard if it is the first register of the journal,
+        else opens the register directly.
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = False
+        wiz_reg_opening_obj = self.pool.get('wizard.register.opening.confirmation')
+        if ids:
+            reg = self.browse(cr, uid, ids[0], fields_to_fetch=['prev_reg_id', 'journal_id'], context=context)
+            if not reg.prev_reg_id:
+                wiz_id = wiz_reg_opening_obj.create(cr, uid, {'register_id': ids[0]}, context=context)
+                return {'name': _('Open Register Confirmation'),
+                        'type': 'ir.actions.act_window',
+                        'res_model': 'wizard.register.opening.confirmation',
+                        'target': 'new',
+                        'view_mode': 'form',
+                        'view_type': 'form',
+                        'res_id': [wiz_id],
+                        'context': context,
+                        }
+            else:
+                computed_balance = 0.0
+                if reg.journal_id.type == 'cash':
+                    context['from_open'] = True
+                    computed_balance = self._get_starting_balance(cr, uid, [ids[0]], context=context)[ids[0]].get('balance_start', 0.0)
+                    del context['from_open']
+                return self.open_register(cr, uid, ids[0], cash_opening_balance=computed_balance, context=context)
+        return res
+
 account_bank_statement()
+
 
 class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
     _inherit = "account.bank.statement.line"
 
     _order = 'sequence_for_order desc, sequence_for_reference desc, document_date desc, date desc, id desc'
+
+
+    def check_access_rule(self, cr, uid, ids, operation, context=None):
+        if operation == 'create':
+            real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        else:
+            real_uid = uid
+
+        return super(account_bank_statement_line, self).check_access_rule(cr, real_uid, ids, operation, context=context)
 
     def _get_state(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """

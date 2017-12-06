@@ -38,13 +38,12 @@
         'account_year_end_closing.xml',
     ],
     "test": [
-        'test/account_period_closing_level.yml',
     ],
     'demo_xml': [
         'test/account_period_demo.xml'
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
