@@ -51,6 +51,9 @@ $.ctrlshift = function(key, callback, args) {
             else if (key == '13'){
                 class_to_parse = '.oe_form_button_search';
             }
+            else if (key == 'R'){
+                class_to_parse = '.oe_form_button_clear';
+            }
             else if (key == '38'){
                 class_to_parse = '.oe_button_pager[action="first"]';
             }
@@ -62,6 +65,9 @@ $.ctrlshift = function(key, callback, args) {
             }
             else if (key == '40'){
                 class_to_parse = '.oe_button_pager[action="last"]';
+            }
+            else if (key=='Q'){
+                class_to_parse = '.oe_form_button_close';
             }
             if (class_to_parse != null){
                 //$('.oe_form_button_save')
