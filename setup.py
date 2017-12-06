@@ -126,6 +126,7 @@ setup(
                 + find_data_files('addons/view_diagram')
                 + find_data_files('addons/view_graph')
                 + find_data_files('addons/widget_ckeditor')
+                + find_data_files('addons/sync_client_web')
                 + find_data_files('doc', patterns='')
                 + find_data_files('openobject', patterns=r'.+\.(cfg|css|js|mako|gif|png|jpg|ico)')
                 + find_data_files('revprox', patterns='')
