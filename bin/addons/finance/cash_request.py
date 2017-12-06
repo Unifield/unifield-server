@@ -1131,16 +1131,16 @@ class cash_request_liquidity(osv.osv):
         'instance_level': fields.related('instance_id', 'level', string='Instance level', readonly=True, store=True,
                                          type='selection',
                                          selection=[('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')]),
-        'register_id': fields.many2one('account.bank.statement', 'Register', required=True),
+        'register_id': fields.many2one('account.bank.statement', 'Register'),
         'type': fields.related('register_id', 'journal_id', 'type', string='Register Type', type='selection',
                                selection=_get_journal_type, readonly=True, store=True),
-        'journal_code': fields.related('register_id', 'journal_id', 'code', string='Journal Code', type='char',
-                                       readonly=True),
-        'journal_name': fields.related('register_id', 'journal_id', 'name', string='Journal Name', type='char',
-                                       readonly=True),
+        'journal_code': fields.related('register_id', 'journal_id', 'code', string='Journal Code', type='char', size=10,
+                                       readonly=True, store=True),
+        'journal_name': fields.related('register_id', 'journal_id', 'name', string='Journal Name', type='char', size=64,
+                                       readonly=True, store=True),
         'status': fields.related('register_id', 'state', string='Status', readonly=True, type='selection',
                                  selection=[('draft', 'Draft'), ('open', 'Open'),
-                                            ('partial_close', 'Partial Close'), ('confirm', 'Closed')]),
+                                            ('partial_close', 'Partial Close'), ('confirm', 'Closed')], store=True),
         'period_id': fields.function(_period_id_compute, method=True, relation='account.period',
                                      type='many2one', string='Period', readonly=True),
         'opening_balance': fields.related('register_id', 'balance_start', string='Opening Balance in register currency',
@@ -1343,7 +1343,7 @@ class cash_request_liquidity_cheque(osv.osv):
         for liq in self.browse(cr, uid, ids, fields_to_fetch=['cash_request_id', 'register_id'], context=context):
             period_ids = period_obj.get_period_from_date(cr, uid, liq.cash_request_id.request_date, context=context)
             state = ''
-            if liquidity_pos_report and period_ids:
+            if liquidity_pos_report and liq.register_id and period_ids:
                 state = liquidity_pos_report.getRegisterState(liq.register_id, report_period_id=period_ids[0])
             result[liq.id] = state
         return result
