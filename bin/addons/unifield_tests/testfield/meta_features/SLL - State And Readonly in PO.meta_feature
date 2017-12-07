@@ -93,7 +93,7 @@ Scenario: SLL - State propagation and readonly checks in Purchase Orders
     I should see "Creation Date" as readonly
     I should see "Supplier" as readonly
     I should see "Warehouse" as readonly
-    I should see "Order Type" as editable
+    I should see "Order Type" as readonly
     I should see "Order category" as readonly
 
     # Check that we can see the details for a line by clicking on it
@@ -108,7 +108,7 @@ Scenario: SLL - State propagation and readonly checks in Purchase Orders
     I should see "Creation Date" as readonly
     I should see "Supplier" as readonly
     I should see "Warehouse" as readonly
-    I should see "Order Type" as editable
+    I should see "Order Type" as readonly
     I should see "Order category" as readonly
 
     I click on "Save"
