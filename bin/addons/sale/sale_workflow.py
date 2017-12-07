@@ -157,20 +157,30 @@ class sale_order_line(osv.osv):
 
 
     def test_done(self, cr, uid, ids, context=None):
+        '''
+        Workflow method to test if there are OUT moves not closed for the given sale.order.line
+        return true if the sol can be closed
+        '''
         if context is None:
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
 
-        for sol_id in ids:
-            open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
-                ('sale_line_id', '=', sol_id),
+        sol = self.browse(cr, uid, ids[0], context=context)
+
+        if sol.order_id.procurement_request:
+            # case the sol has no OUT moves but its normal, so don't close the sol in this case:
+            if sol.order_id.location_requestor_id.usage == 'internal' or sol.product_id.type in ('consu', 'service', 'service_recep'):
+                has_open_moves = True
+        else:
+            has_open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
+                ('sale_line_id', '=', sol.id),
                 ('state', 'not in', ['cancel', 'cancel_r', 'done']),
                 ('type', '=', 'out'),
                 ('product_qty', '!=', 0.0),
             ], context=context)
 
-        return not open_moves
+        return not has_open_moves
 
 
     def action_done(self, cr, uid, ids, context=None):
@@ -366,7 +376,7 @@ class sale_order_line(osv.osv):
                 ('order_id.order_type', '=', 'direct'),
             ], context=context)
 
-            if sol.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep'): # IR non stockable
+            if sol.order_id.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep'): # IR non stockable
                 continue
 
             if linked_dpo_line:

@@ -1382,7 +1382,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [sourcing_line.supplier.id], ['default'])['default'],
                 'customer_id': sourcing_line.order_id.partner_id.id,    
                 'location_id': self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0],
-                'cross_docking_ok': False if (sourcing_line.procurement_request and sourcing_line.order_id.location_requestor_id.usage != 'customer') else True,
+                'cross_docking_ok': False if (sourcing_line.order_id.procurement_request and sourcing_line.order_id.location_requestor_id.usage != 'customer') else True,
                 'pricelist_id': sourcing_line.supplier.property_product_pricelist_purchase.id,
                 'fiscal_position': sourcing_line.supplier.property_account_position and sourcing_line.supplier.property_account_position.id or False,
                 'warehouse_id': sourcing_line.order_id.warehouse_id.id,
@@ -1580,7 +1580,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 # update SO line with good state:
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'confirmed', cr) # confirmation create pick/out or INT
-                if sourcing_line.procurement_request and sourcing_line.order_id.location_requestor_id.usage == 'internal':
+                if sourcing_line.order_id.procurement_request and sourcing_line.order_id.location_requestor_id.usage == 'internal':
                     wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'done', cr)
 
             elif sourcing_line.type == 'make_to_order':
@@ -1629,7 +1629,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     if not sourcing_line.product_id:
                         pol_values['name'] = sourcing_line.comment
-                    if sourcing_line.procurement_request:
+                    if sourcing_line.order_id.procurement_request:
                         pol_values.update({
                             'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
@@ -1647,7 +1647,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, context=context)
                         self.pool.get('purchase.order').infolog(cr, uid, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
                     anal_dist = False
-                    if not sourcing_line.procurement_request:
+                    if not sourcing_line.order_id.procurement_request:
                         distrib = False
                         if sourcing_line.analytic_distribution_id:
                             distrib = sourcing_line.analytic_distribution_id.id
@@ -1674,7 +1674,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'analytic_distribution_id': anal_dist,
                         'link_so_id': sourcing_line.order_id.id,
                     }
-                    if sourcing_line.procurement_request:
+                    if sourcing_line.order_id.procurement_request:
                         rfq_line_values.update({
                             'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
@@ -1703,7 +1703,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'sale_order_line_id': sourcing_line.id,
                         'location_id': proc_location_id,
                     }
-                    if sourcing_line.procurement_request:
+                    if sourcing_line.order_id.procurement_request:
                         tender_values.update({
                             'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
