@@ -1367,7 +1367,7 @@ class cash_request_liquidity_cheque(osv.osv):
                     amount_func_currency += aml.debit - aml.credit or 0.0
                 # get the most recent register for this journal (used in particular to determine the reg. status)
                 most_recent_date = most_recent_reg = False
-                for reg in reg_obj.browse(cr, uid, reg_ids, fields_to_fetch=['period_id'], context=context):
+                for reg in reg_obj.browse(cr, uid, reg_ids, fields_to_fetch=['period_id', 'journal_id'], context=context):
                     if not most_recent_reg:
                         most_recent_date = reg.period_id.date_stop
                         most_recent_reg = reg
