@@ -1203,6 +1203,38 @@ class claim_event(osv.osv):
         picking_tools.all(cr, uid, ids, context=context)
         return True
 
+    def _cancel_out_line_linked_to_extcu_ir(self, cr, uid, origin_picking, context=None):
+        '''
+        Check if IN/INT moves are linked to an IR and if this IR has an ExtCU location Requestor.
+        If that is the case, we cancel the qty from processed move lines of the linked OUT
+        '''
+        if context is None:
+            context = {}
+
+        move_obj = self.pool.get('stock.move')
+
+        for in_move in origin_picking.move_lines:
+            if in_move.purchase_line_id:
+                if in_move.purchase_line_id.linked_sol_id and in_move.purchase_line_id.linked_sol_id.procurement_request:
+                    current_sol = in_move.purchase_line_id.linked_sol_id
+                    origin_ir = current_sol.order_id
+                    if origin_ir.location_requestor_id.usage == 'customer' \
+                            and origin_ir.location_requestor_id.location_category == 'consumption_unit' \
+                            and origin_ir.location_requestor_id.chained_picking_type == 'out':
+                        out_move_ids = move_obj.search(cr, uid, [('sale_line_id', '=', current_sol.id),
+                                                       ('state', '=', 'confirmed')], order='create_date desc',
+                                                       context=context)
+                        for out_move in move_obj.browse(cr, uid, out_move_ids,
+                                                        fields_to_fetch=['product_qty', 'product_id'], context=context):
+                            # Check for same data
+                            if in_move.product_id.id == out_move.product_id.id \
+                                    and in_move.product_qty == out_move.product_qty:
+                                move_obj.action_cancel(cr, uid, [out_move.id], context=context)
+                                # prevent cancel on multiple lines if they have the same qty
+                                break
+
+        return True
+
     def _do_process_accept(self, cr, uid, obj, context=None):
         '''
         process logic for accept event
@@ -1297,8 +1329,16 @@ class claim_event(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         picking_tools = self.pool.get('picking.tools')
         get_object_reference = self.pool.get('ir.model.data').get_object_reference
+        origin_picking = obj.return_claim_id_claim_event.picking_id_return_claim
         # event picking object
         event_picking = obj.event_picking_id_claim_event
+        # We cancel the lines of the OUT linked to the IN/INT lines processed
+        # if the linked PO lines has an IR whose Location Requestor is ExtCU
+        if event_picking.type == 'in':
+            picking_to_process = origin_picking
+        else:
+            picking_to_process = event_picking
+        self._cancel_out_line_linked_to_extcu_ir(cr, uid, picking_to_process, context=context)
         # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
         picking_tools.confirm(cr, uid, event_picking.id, context=context)
         # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking)
@@ -1311,7 +1351,6 @@ class claim_event(osv.osv):
             self._validate_picking(cr, uid, event_picking.id, context=context)
 
         if obj.replacement_picking_expected_claim_event:
-            origin_picking = obj.return_claim_id_claim_event.picking_id_return_claim
             # claim
             claim = obj.return_claim_id_claim_event
             # claim type
@@ -1385,8 +1424,16 @@ class claim_event(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         picking_tools = self.pool.get('picking.tools')
         get_object_reference = self.pool.get('ir.model.data').get_object_reference
+        origin_picking = obj.return_claim_id_claim_event.picking_id_return_claim
         # event picking object
         event_picking = obj.event_picking_id_claim_event
+        # We cancel the lines of the OUT linked to the IN/INT lines processed
+        # if the linked PO lines has an IR whose Location Requestor is ExtCU
+        if event_picking.type == 'in':
+            picking_to_process = origin_picking
+        else:
+            picking_to_process = event_picking
+        self._cancel_out_line_linked_to_extcu_ir(cr, uid, picking_to_process, context=context)
         # confirm the picking - in custom event function because we need to take the type of picking into account for self.log messages
         picking_tools.confirm(cr, uid, event_picking.id, context=context)
         # we check availability for created or wizard picking (wizard picking can be waiting as it is chained picking)
@@ -1399,7 +1446,6 @@ class claim_event(osv.osv):
             self._validate_picking(cr, uid, event_picking.id, context=context)
 
         if obj.replacement_picking_expected_claim_event:
-            origin_picking = obj.return_claim_id_claim_event.picking_id_return_claim
             # claim
             claim = obj.return_claim_id_claim_event
             # claim type
@@ -1474,6 +1520,7 @@ class claim_event(osv.osv):
 
         # objects
         data_obj = self.pool.get('ir.model.data')
+        so_obj = self.pool.get('sale.order')
         move_obj = self.pool.get('stock.move')
         pick_obj = self.pool.get('stock.picking')
         picking_tools = self.pool.get('picking.tools')
@@ -1486,6 +1533,13 @@ class claim_event(osv.osv):
         claim = obj.return_claim_id_claim_event
         # claim type
         claim_type = claim.type_return_claim
+        # We cancel the lines of the OUT linked to the IN/INT lines processed
+        # if the linked PO lines has an IR whose Location Requestor is ExtCU
+        if event_picking.type == 'in':
+            picking_to_process = origin_picking
+        else:
+            picking_to_process = event_picking
+        self._cancel_out_line_linked_to_extcu_ir(cr, uid, picking_to_process, context=context)
         # don't generate financial documents if the claim is linked to an internal or intermission partner
         inv_status = claim.partner_id_return_claim.partner_type in ['internal', 'intermission'] and 'none' or '2binvoiced'
         # new name + -return
@@ -1671,6 +1725,13 @@ class claim_event(osv.osv):
         # event picking object
         event_picking_id = pick_obj.copy(cr, uid, obj.event_picking_id_claim_event.id, context=context)
         event_picking = pick_obj.browse(cr, uid, event_picking_id, context=context)
+        # We cancel the lines of the OUT linked to the IN/INT lines processed
+        # if the linked PO lines has an IR whose Location Requestor is ExtCU
+        if event_picking.type == 'in':
+            picking_to_process = origin_picking
+        else:
+            picking_to_process = event_picking
+        self._cancel_out_line_linked_to_extcu_ir(cr, uid, picking_to_process, context=context)
         # we copy the picking
         in_values = {
             'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.picking.in') + '-missing',

@@ -1395,7 +1395,7 @@ class stock_picking(osv.osv):
                     picking_id, picking_dict['name'],
                 ))
 
-            if not sync_in:
+            if not sync_in and wizard.claim_type not in ('scrap', 'quarantine', 'return', 'missing'):
                 move_obj.action_assign(cr, uid, processed_out_moves)
 
             # create track changes:
