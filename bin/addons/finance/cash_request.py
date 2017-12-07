@@ -1124,6 +1124,27 @@ class cash_request_liquidity(osv.osv):
             result[liq.id] = balance_amount
         return result
 
+    def _get_reg_status(self, cr, uid, cash_req_id, reg_id, context=None):
+        """
+        Returns a String with the status of the register, based on the Liquidity Pos. Report method:
+        - classical register state Value if the reg. is the one of the Cash Req. period
+        - "Not Created" if the register of the month doesn't exist yet
+        """
+        if context is None:
+            context = {}
+        cash_req_obj = self.pool.get('cash.request')
+        period_obj = self.pool.get('account.period')
+        reg_obj = self.pool.get('account.bank.statement')
+        liquidity_pos_report = register_accounting.report.report_liquidity_position \
+            .report_liquidity_position3(cr, uid, 'fakereport', context=context)
+        cash_req = cash_req_obj.browse(cr, uid, cash_req_id, fields_to_fetch=['request_date'], context=context)
+        period_ids = period_obj.get_period_from_date(cr, uid, cash_req.request_date, context=context)
+        reg = reg_obj.browse(cr, uid, reg_id, context=context)
+        state = ''
+        if liquidity_pos_report and reg and period_ids:
+            state = liquidity_pos_report.getRegisterState(reg, report_period_id=period_ids[0])
+        return state
+
     def create(self, cr, uid, vals, context=None):
         """
         Get all the values depending from the register if they are not in vals (= at fist creation in coordo)
@@ -1141,12 +1162,16 @@ class cash_request_liquidity(osv.osv):
             opening_balance = vals.get('opening_balance') or register.balance_start or 0.0
             calculated_balance_booking = vals.get('calculated_balance_booking') or register.msf_calculated_balance or 0.0
             booking_currency_id = vals.get('booking_currency_id') or (register.currency and register.currency.id) or False
+            status = vals.get('status', '')
+            if not status and vals.get('cash_request_id'):
+                status = self._get_reg_status(cr, uid, vals['cash_request_id'], register.id, context=context)
             vals.update({'journal_code': journal_code,
                          'journal_name': journal_name,
                          'type': type,
                          'opening_balance': opening_balance,
                          'calculated_balance_booking': calculated_balance_booking,
                          'booking_currency_id': booking_currency_id,
+                         'status': status,
                          })
         return super(cash_request_liquidity, self).create(cr, uid, vals, context=context)
 
@@ -1161,15 +1186,14 @@ class cash_request_liquidity(osv.osv):
         'type': fields.selection(_get_journal_type, 'Register Type', readonly=True),
         'journal_code': fields.char(size=10, string='Journal Code', readonly=True),
         'journal_name': fields.char(size=64, string='Journal Name', readonly=True),
-        'status': fields.related('register_id', 'state', string='Status', readonly=True, type='selection',
-                                 selection=[('draft', 'Draft'), ('open', 'Open'),
-                                            ('partial_close', 'Partial Close'), ('confirm', 'Closed')], store=True),
+        'status': fields.char(size=16, string='Status',
+                              readonly=True),  # can be "Not Created" if the cheque reg. of the month is not created yet
         'period_id': fields.function(_period_id_compute, method=True, relation='account.period',
                                      type='many2one', string='Period', readonly=True, store=False),
         'opening_balance': fields.float('Opening Balance in register currency', readonly=True,
                                         digits_compute=dp.get_precision('Account')),
         'calculated_balance_booking': fields.float('Calculated Balance in register currency', readonly=True,
-                                        digits_compute=dp.get_precision('Account')),
+                                                   digits_compute=dp.get_precision('Account')),
         'booking_currency_id': fields.many2one('res.currency', 'Register Currency', readonly=True),
         'functional_currency_id': fields.related('cash_request_id', 'consolidation_currency_id',
                                                  string='Functional Currency', type='many2one', relation='res.currency',
@@ -1349,29 +1373,7 @@ class cash_request_liquidity_cheque(osv.osv):
                     }
                     self.create(cr, uid, vals, context=context)
 
-    def _get_cheque_reg_status(self, cr, uid, ids, name, args, context=None):
-        """
-        Returns a String with the status of the cheque register, based on the Liquidity Pos. Report method:
-        - classical register state Value if the reg. is the one of the Cash Req. period
-        - "Not Created" if the register of the month doesn't exist yet
-        """
-        if context is None:
-            context = {}
-        result = {}
-        period_obj = self.pool.get('account.period')
-        liquidity_pos_report = register_accounting.report.report_liquidity_position \
-            .report_liquidity_position3(cr, uid, 'fakereport', context=context)
-        for liq in self.browse(cr, uid, ids, fields_to_fetch=['cash_request_id', 'register_id'], context=context):
-            period_ids = period_obj.get_period_from_date(cr, uid, liq.cash_request_id.request_date, context=context)
-            state = ''
-            if liquidity_pos_report and liq.register_id and period_ids:
-                state = liquidity_pos_report.getRegisterState(liq.register_id, report_period_id=period_ids[0])
-            result[liq.id] = state
-        return result
-
     _columns = {
-        'status': fields.function(_get_cheque_reg_status,  # can be "Not Created" if the cheque reg. of the month is not created yet
-                                  method=True, type='char', size=64, string='Status', store=True, readonly=True),
         'bank_journal_code': fields.related('register_id', 'journal_id', 'bank_journal_id', 'code', type='char',
                                             size=10, string='Bank Journal Code', store=True, readonly=True),
         'bank_journal_name': fields.related('register_id', 'journal_id', 'bank_journal_id', 'name', type='char',
