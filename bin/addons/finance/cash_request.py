@@ -880,7 +880,7 @@ class cash_request_recap_expense(osv.osv):
             result[expense.id] = total
         return result
 
-    def _budgeted_expense_compute(self, cr, uid, ids, month_index, context=None):
+    def _budgeted_expense_compute(self, cr, uid, instance_id, cash_request_id, month_index=0, context=None):
         """
         Sums all the budgets amounts for all the CCs targeted instance by instance:
         - use only normal CC to avoid amount duplication
@@ -893,62 +893,74 @@ class cash_request_recap_expense(osv.osv):
         budget_obj = self.pool.get('msf.budget')
         target_cc_obj = self.pool.get('account.target.costcenter')
         period_obj = self.pool.get('account.period')
-        for expense in self.browse(cr, uid, ids, fields_to_fetch=['cash_request_id', 'instance_id'], context=context):
-            total = 0.0
-            # get all the normal target CCs for the instance
-            target_cc_ids = target_cc_obj.search(cr, uid,
-                                                 [('instance_id', '=', expense.instance_id.id),
-                                                  ('is_target', '=', True),
-                                                  ('cost_center_id.type', '=', 'normal')],
-                                                 order='NO_ORDER', context=context)
-            target_ccs = target_cc_obj.browse(cr, uid, target_cc_ids, fields_to_fetch=['cost_center_id'], context=context)
-            cc_ids = [cc.cost_center_id.id for cc in target_ccs]
-            # get the month FY
-            cash_req_month_id = expense.cash_request_id.month_period_id.id
-            month_id = period_obj.get_next_period_id_at_index(cr, uid, cash_req_month_id, month_index, context=context)
-            if month_id:
-                month = period_obj.browse(cr, uid, month_id, fields_to_fetch=['fiscalyear_id', 'number'], context=context)
-                fy = month.fiscalyear_id
-                # get all the budgets for the FY and the CCs found
-                budget_ids = budget_obj.search(cr, uid,
-                                               [('fiscalyear_id', '=', fy.id), ('cost_center_id', 'in', cc_ids)],
-                                               order='NO_ORDER', context=context)
-                budget_set = set()
-                # keep only the budgets with the highest version
-                for budget in budget_obj.read(cr, uid, budget_ids, ['code', 'name', 'decision_moment_id'], context=context):
-                    if budget['id'] not in budget_set:
-                        sql = '''
-                        SELECT id FROM msf_budget 
-                        WHERE code = %s AND name = %s AND decision_moment_id = %s
-                        AND id IN %s
-                        ORDER BY version DESC LIMIT 1;
-                        '''
-                        cr.execute(sql, (budget['code'], budget['name'], budget['decision_moment_id'][0], tuple(budget_ids),))
-                        budg_id = cr.fetchone()[0]
-                        budget_set.add(budg_id)
-                # add the amounts of each budget line linked to the budgets found AND for the month selected
-                for b in budget_obj.browse(cr, uid, list(budget_set), fields_to_fetch=['budget_line_ids'], context=context):
-                    for b_l in b.budget_line_ids:
-                        month_field = 'month%s' % month.number  # ex: month11
-                        total += b_l.line_type == 'normal' and hasattr(b_l, month_field) and getattr(b_l, month_field) or 0.0
-                result[expense.id] = total
-        return result
+        cash_req_obj = self.pool.get('cash.request')
+        total = 0.0
+        # get all the normal target CCs for the instance
+        target_cc_ids = target_cc_obj.search(cr, uid,
+                                             [('instance_id', '=', instance_id),
+                                              ('is_target', '=', True),
+                                              ('cost_center_id.type', '=', 'normal')],
+                                             order='NO_ORDER', context=context)
+        target_ccs = target_cc_obj.browse(cr, uid, target_cc_ids, fields_to_fetch=['cost_center_id'], context=context)
+        cc_ids = [cc.cost_center_id.id for cc in target_ccs]
+        # get the month FY
+        # get the Cash Req. period
+        cash_req = cash_req_obj.browse(cr, uid, cash_request_id, fields_to_fetch=['request_date'], context=context)
+        period_ids = period_obj.get_period_from_date(cr, uid, cash_req.request_date, context=context)
+        cash_req_month_id = period_ids and period_ids[0] or False
+        month_id = period_obj.get_next_period_id_at_index(cr, uid, cash_req_month_id, month_index, context=context)
+        if month_id:
+            month = period_obj.browse(cr, uid, month_id, fields_to_fetch=['fiscalyear_id', 'number'], context=context)
+            fy = month.fiscalyear_id
+            # get all the budgets for the FY and the CCs found
+            budget_ids = budget_obj.search(cr, uid,
+                                           [('fiscalyear_id', '=', fy.id), ('cost_center_id', 'in', cc_ids)],
+                                           order='NO_ORDER', context=context)
+            budget_set = set()
+            # keep only the budgets with the highest version
+            for budget in budget_obj.read(cr, uid, budget_ids, ['code', 'name', 'decision_moment_id'], context=context):
+                if budget['id'] not in budget_set:
+                    sql = '''
+                    SELECT id FROM msf_budget 
+                    WHERE code = %s AND name = %s AND decision_moment_id = %s
+                    AND id IN %s
+                    ORDER BY version DESC LIMIT 1;
+                    '''
+                    cr.execute(sql, (budget['code'], budget['name'], budget['decision_moment_id'][0], tuple(budget_ids),))
+                    budg_id = cr.fetchone()[0]
+                    budget_set.add(budg_id)
+            # add the amounts of each budget line linked to the budgets found AND for the month selected
+            for b in budget_obj.browse(cr, uid, list(budget_set), fields_to_fetch=['budget_line_ids'], context=context):
+                for b_l in b.budget_line_ids:
+                    month_field = 'month%s' % month.number  # ex: month11
+                    total += b_l.line_type == 'normal' and hasattr(b_l, month_field) and getattr(b_l, month_field) or 0.0
+        return total
 
-    def _budgeted_expense_m_compute(self, cr, uid, ids, name, args, context=None):
-        month_index = 0
-        return self._budgeted_expense_compute(cr, uid, ids, month_index, context=context)
-
-    def _budgeted_expense_m1_compute(self, cr, uid, ids, name, args, context=None):
-        month_index = 1
-        return self._budgeted_expense_compute(cr, uid, ids, month_index, context=context)
-
-    def _budgeted_expense_m2_compute(self, cr, uid, ids, name, args, context=None):
-        month_index = 2
-        return self._budgeted_expense_compute(cr, uid, ids, month_index, context=context)
-
-    def _budgeted_expense_m3_compute(self, cr, uid, ids, name, args, context=None):
-        month_index = 3
-        return self._budgeted_expense_compute(cr, uid, ids, month_index, context=context)
+    def create(self, cr, uid, vals, context=None):
+        """
+        Fills in the values for "budget_expense_m" fields, at fist creation in coordo
+        """
+        if context is None:
+            context = {}
+        if vals.get('instance_id') and vals.get('cash_request_id'):
+            budget_expense_m = vals.get('budget_expense_m') or \
+                self._budgeted_expense_compute(cr, uid, vals['instance_id'], vals['cash_request_id'],
+                                               month_index=0, context=context) or 0.0
+            budget_expense_m1 = vals.get('budget_expense_m1') or \
+                self._budgeted_expense_compute(cr, uid, vals['instance_id'], vals['cash_request_id'],
+                                               month_index=1, context=context) or 0.0
+            budget_expense_m2 = vals.get('budget_expense_m2') or \
+                self._budgeted_expense_compute(cr, uid, vals['instance_id'], vals['cash_request_id'],
+                                               month_index=2, context=context) or 0.0
+            budget_expense_m3 = vals.get('budget_expense_m3') or \
+                self._budgeted_expense_compute(cr, uid, vals['instance_id'], vals['cash_request_id'],
+                                               month_index=3, context=context) or 0.0
+            vals.update({'budget_expense_m': budget_expense_m,
+                         'budget_expense_m1': budget_expense_m1,
+                         'budget_expense_m2': budget_expense_m2,
+                         'budget_expense_m3': budget_expense_m3,
+                         })
+        return super(cash_request_recap_expense, self).create(cr, uid, vals, context=context)
 
     _columns = {
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
@@ -959,18 +971,14 @@ class cash_request_recap_expense(osv.osv):
                                          selection=[('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')]),
         'expense_total': fields.function(_expense_total_compute, method=True, string='Planned Expenses for the period M',
                                          type='float', digits_compute=dp.get_precision('Account'), readonly=True, store=True),
-        'budget_expense_m': fields.function(_budgeted_expense_m_compute, method=True,
-                                            string='Budgeted expenses for the period M', type='float',
-                                            digits_compute=dp.get_precision('Account'), readonly=True, store=True),
-        'budget_expense_m1': fields.function(_budgeted_expense_m1_compute, method=True,
-                                             string='Budgeted expenses for the period M+1', type='float',
-                                             digits_compute=dp.get_precision('Account'), readonly=True, store=True),
-        'budget_expense_m2': fields.function(_budgeted_expense_m2_compute, method=True,
-                                             string='Budgeted expenses for the period M+2', type='float',
-                                             digits_compute=dp.get_precision('Account'), readonly=True, store=True),
-        'budget_expense_m3': fields.function(_budgeted_expense_m3_compute, method=True,
-                                             string='Budgeted expenses for the period M+3', type='float',
-                                             digits_compute=dp.get_precision('Account'), readonly=True, store=True),
+        'budget_expense_m': fields.float('Budgeted expenses for the period M', readonly=True,
+                                         digits_compute=dp.get_precision('Account')),
+        'budget_expense_m1': fields.float('Budgeted expenses for the period M+1', readonly=True,
+                                          digits_compute=dp.get_precision('Account')),
+        'budget_expense_m2': fields.float('Budgeted expenses for the period M+2', readonly=True,
+                                          digits_compute=dp.get_precision('Account')),
+        'budget_expense_m3': fields.float('Budgeted expenses for the period M+3', readonly=True,
+                                          digits_compute=dp.get_precision('Account')),
     }
 
     _order = 'instance_level, instance_id'
