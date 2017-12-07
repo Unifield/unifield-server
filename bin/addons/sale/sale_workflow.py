@@ -168,10 +168,9 @@ class sale_order_line(osv.osv):
 
         sol = self.browse(cr, uid, ids[0], context=context)
 
-        if sol.order_id.procurement_request:
+        if sol.order_id.procurement_request and (sol.order_id.location_requestor_id.usage == 'internal' or sol.product_id.type in ('consu', 'service', 'service_recep')):
             # case the sol has no OUT moves but its normal, so don't close the sol in this case:
-            if sol.order_id.location_requestor_id.usage == 'internal' or sol.product_id.type in ('consu', 'service', 'service_recep'):
-                has_open_moves = True
+            has_open_moves = True
         else:
             has_open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
                 ('sale_line_id', '=', sol.id),
