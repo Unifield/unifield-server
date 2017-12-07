@@ -1124,6 +1124,32 @@ class cash_request_liquidity(osv.osv):
             result[liq.id] = balance_amount
         return result
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        Get all the values depending from the register if they are not in vals (= at fist creation in coordo)
+        """
+        if context is None:
+            context = {}
+        reg_obj = self.pool.get('account.bank.statement')
+        fields_list = ['journal_id', 'balance_start', 'msf_calculated_balance', 'currency']
+        register = 'register_id' in vals and \
+                   reg_obj.browse(cr, uid, vals['register_id'], fields_to_fetch=fields_list, context=context) or False
+        if register:
+            journal_code = vals.get('journal_code') or register.journal_id.code
+            journal_name = vals.get('journal_name') or register.journal_id.name
+            type = vals.get('type') or register.journal_id.type
+            opening_balance = vals.get('opening_balance') or register.balance_start or 0.0
+            calculated_balance_booking = vals.get('calculated_balance_booking') or register.msf_calculated_balance or 0.0
+            booking_currency_id = vals.get('booking_currency_id') or (register.currency and register.currency.id) or False
+            vals.update({'journal_code': journal_code,
+                         'journal_name': journal_name,
+                         'type': type,
+                         'opening_balance': opening_balance,
+                         'calculated_balance_booking': calculated_balance_booking,
+                         'booking_currency_id': booking_currency_id,
+                         })
+        return super(cash_request_liquidity, self).create(cr, uid, vals, context=context)
+
     _columns = {
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
         'instance_id': fields.many2one('msf.instance', 'Proprietary instance', required=True,
@@ -1132,24 +1158,19 @@ class cash_request_liquidity(osv.osv):
                                          type='selection',
                                          selection=[('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')]),
         'register_id': fields.many2one('account.bank.statement', 'Register'),
-        'type': fields.related('register_id', 'journal_id', 'type', string='Register Type', type='selection',
-                               selection=_get_journal_type, readonly=True, store=True),
-        'journal_code': fields.related('register_id', 'journal_id', 'code', string='Journal Code', type='char', size=10,
-                                       readonly=True, store=True),
-        'journal_name': fields.related('register_id', 'journal_id', 'name', string='Journal Name', type='char', size=64,
-                                       readonly=True, store=True),
+        'type': fields.selection(_get_journal_type, 'Register Type', readonly=True),
+        'journal_code': fields.char(size=10, string='Journal Code', readonly=True),
+        'journal_name': fields.char(size=64, string='Journal Name', readonly=True),
         'status': fields.related('register_id', 'state', string='Status', readonly=True, type='selection',
                                  selection=[('draft', 'Draft'), ('open', 'Open'),
                                             ('partial_close', 'Partial Close'), ('confirm', 'Closed')], store=True),
         'period_id': fields.function(_period_id_compute, method=True, relation='account.period',
                                      type='many2one', string='Period', readonly=True, store=False),
-        'opening_balance': fields.related('register_id', 'balance_start', string='Opening Balance in register currency',
-                                          type='float', readonly=True, store=True),
-        'calculated_balance_booking': fields.related('register_id', 'msf_calculated_balance',
-                                                     string='Calculated Balance in register currency', type='float',
-                                                     readonly=True, store=True),
-        'booking_currency_id': fields.related('register_id', 'currency', string='Register Currency', type='many2one',
-                                              relation='res.currency', readonly=True, store=True),
+        'opening_balance': fields.float('Opening Balance in register currency', readonly=True,
+                                        digits_compute=dp.get_precision('Account')),
+        'calculated_balance_booking': fields.float('Calculated Balance in register currency', readonly=True,
+                                        digits_compute=dp.get_precision('Account')),
+        'booking_currency_id': fields.many2one('res.currency', 'Register Currency', readonly=True),
         'functional_currency_id': fields.related('cash_request_id', 'consolidation_currency_id',
                                                  string='Functional Currency', type='many2one', relation='res.currency',
                                                  store=False, readonly=True),
