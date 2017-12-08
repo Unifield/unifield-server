@@ -62,6 +62,7 @@
             <para>Currency of Transfers:</para>
               <blockTable>
                 <tr>
+                  [[ o.transfer_currency_ids or removeParentNode('blockTable') ]]
                   [[ repeatIn(o.transfer_currency_ids, 'curr') ]]
                   <td>
                     <para style="text_right">
