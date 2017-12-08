@@ -616,54 +616,6 @@ class stock_picking(osv.osv):
         rule_obj = self.pool.get("sync.client.message_rule")
         rule_obj._manual_create_sync_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
 
-    # REMOVE THIS METHOD, NO MORE USE! do_incoming_shipment_sync
-
-    def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
-        '''
-        ' Cancel the OUT/PICK at the supplier side cancels the corresponding IN at the project side
-        '''
-        if not context:
-            context = {}
-        self._logger.info("+++ Cancel the relevant IN at %s due to the cancel of OUT at supplier %s" % (cr.dbname, source))
-
-        wf_service = netsvc.LocalService("workflow")
-        so_po_common = self.pool.get('so.po.common')
-        po_obj = self.pool.get('purchase.order')
-        pick_dict = out_info.to_dict()
-
-        # Look for the PO name, which has the reference to the FO on Coordo as source.out_info.origin
-        so_ref = source + "." + pick_dict['origin']
-        po_id = so_po_common.get_po_id_by_so_ref(cr, uid, so_ref, context)
-
-        if po_id:
-            # Then from this PO, get the IN with the reference to that PO, and update the data received from the OUT of FO to this IN
-            in_id = so_po_common.get_in_id_from_po_id(cr, uid, po_id, context)
-            if in_id:
-                # Cancel the IN object
-                wf_service.trg_validate(uid, 'stock.picking', in_id, 'button_cancel', cr)
-
-                name = self.browse(cr, uid, in_id, context).name
-                message = "The IN " + name + " is canceled by sync as its partner " + out_info.name + " got canceled at " + source
-                self._logger.info(message)
-                return message
-            else:
-                # UTP-872: If there is no IN corresponding to the give OUT/SHIP/PICK, then check if the PO has any line
-                # if it has no line, then no need to raise error, because PO without line does not generate any IN
-                po = po_obj.browse(cr, uid, [po_id], context=context)[0]
-                if len(po.order_line) == 0:
-                    message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
-                    self._logger.info(message)
-                    return message
-
-        elif context.get('restore_flag'):
-            # UF-1830: Create a message to remove the invalid reference to the inexistent document
-            shipment_ref = pick_dict['name']
-            so_po_common.create_invalid_recovery_message(cr, uid, source, shipment_ref, context)
-            return "Recovery: the reference to " + shipment_ref + " at " + source + " will be set to void."
-
-        raise Exception("There is a problem (no PO or IN found) when cancel the IN at project")
-
-
     def closed_in_confirms_dpo_reception(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
