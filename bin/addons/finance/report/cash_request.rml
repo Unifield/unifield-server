@@ -18,7 +18,8 @@
       <blockValign value="TOP"/>
     </blockTableStyle>
 
-    <blockTableStyle id="table_mission_settings">
+    <blockTableStyle id="sub_table">
+      <blockSpan start="0,0" stop="2,0"/>  <!-- merge the first 2 "cells" of the first line -->
       <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
       <blockValign value="TOP"/>
     </blockTableStyle>
@@ -79,15 +80,45 @@
 
       <spacer length="24"/>
 
-      <blockTable colWidths="64mm, 64mm, 64mm" style="table_mission_settings">
+      <blockTable colWidths="64mm, 64mm, 64mm" style="sub_table">
         <tr>
           <td><para><b>Mission Settings</b></para></td>
+        </tr>
+        <tr>
+          <td><para>Code:</para></td>
+          <td><para>Name:</para></td>
+          <td><para>Level:</para></td>
         </tr>
         <tr>
           [[ repeatIn(o.instance_ids, 'inst') ]]
           <td><para>[[ inst.code ]]</para></td>
           <td><para>[[ inst.name ]]</para></td>
           <td><para>[[ inst.level ]]</para></td>
+        </tr>
+      </blockTable>
+
+      <spacer length="24"/>
+
+      <blockTable colWidths="32mm, 32mm, 32mm, 32mm, 32mm, 32mm" style="sub_table">
+        <tr>
+          <td><para><b>Recap Mission</b></para></td>
+        </tr>
+        <tr>
+          <td><para>Instance code / Place of payment:</para></td>
+          <td><para>Cash available in mission:</para></td>
+          <td><para>Payable Invoices:</para></td>
+          <td><para>Commitment:</para></td>
+          <td><para>Foreseen expenses:</para></td>
+          <td><para>Total Cash requested:</para></td>
+        </tr>
+        <tr>
+          [[ repeatIn(o.recap_mission_ids, 'rec') ]]
+          <td><para>[[ rec.instance_id.code ]]</para></td>
+          <td><para>[[ formatLang(rec.liquidity_amount or 0.0)]]</para></td>
+          <td><para>[[ formatLang(rec.payable_amount or 0.0) ]]</para></td>
+          <td><para>[[ formatLang(rec.commitment_amount or 0.0) ]]</para></td>
+          <td><para>[[ formatLang(rec.expense_amount or 0.0) ]]</para></td>
+          <td><para>[[ formatLang(rec.total or 0.0) ]]</para></td>
         </tr>
       </blockTable>
 
