@@ -402,5 +402,16 @@
                 <field name="type">search</field>
                 &liquidity_position_search;
             </record>
+
+            <!-- CASH REQUEST - ENTRY "Export PDF" IN RIGHT MENU -->
+            <report id="cash_request_export"
+                    string="Cash Request - Export PDF"
+                    target_filename="${name}"
+                    model="cash.request"
+                    name="cash.request.export"
+                    rml="finance/report/cash_request.rml"
+                    auto="False"
+                    menu="True"
+                    header="False"/>
        </data>
 </openerp>
