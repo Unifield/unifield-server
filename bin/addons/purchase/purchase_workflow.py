@@ -599,10 +599,10 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
+
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
-
-            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
@@ -621,10 +621,10 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
+            
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
-
-            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
 
