@@ -58,7 +58,7 @@ class purchase_order_line(osv.osv):
                 # update the PO line with new qty
                 self.write(cr, uid, [pol.original_line_id.id], {'product_qty': new_qty}, context=context)
 
-                # update the linked IN if has:
+                # update IN moves of the original pol:
                 domain = [('purchase_line_id', '=', pol.original_line_id.id), ('type', '=', 'in'), ('state', '=', 'assigned')]
                 linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
                 if linked_in_move:
@@ -68,6 +68,12 @@ class purchase_order_line(osv.osv):
                     sys_int_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
                     if sys_int_move:
                         self.pool.get('stock.move').write(cr, uid, sys_int_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
+
+                # cancel IN moves of the current split pol:
+                domain = [('purchase_line_id', '=', pol.id), ('type', '=', 'in'), ('state', '=', 'assigned')]
+                linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
+                if linked_in_move:
+                    self.pool.get('stock.move').action_cancel(cr, uid, linked_in_move, context=context)  
 
         return True
 
