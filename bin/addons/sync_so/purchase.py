@@ -123,7 +123,7 @@ class purchase_order_line_sync(osv.osv):
                 orig_pol = self.search(cr, uid, [('sync_linked_sol', '=', sync_linked_sol)], context=context)
                 if not orig_pol:
                     raise Exception, "Original PO line not found when trying to split the PO line"
-                orig_pol_info = self.browse(cr, uid, orig_pol[0], fields_to_fetch=['linked_sol_id', 'line_number', 'origin'], context=context)
+                orig_pol_info = self.browse(cr, uid, orig_pol[0], fields_to_fetch=['linked_sol_id', 'line_number', 'origin', 'state'], context=context)
                 pol_values['original_line_id'] = orig_pol[0]
                 pol_values['line_number'] = orig_pol_info.line_number
                 if orig_pol_info.linked_sol_id:
@@ -137,6 +137,15 @@ class purchase_order_line_sync(osv.osv):
             # so we have to create this new PO line:
             pol_values['set_as_sourced_n'] = True if not sol_dict.get('resourced_original_line') else False
             new_pol = self.create(cr, uid, pol_values, context=context)
+
+            # if original pol has already been confirmed (and so has linked IN moves), then we re-attach moves to the right new split pol:
+            if sol_dict['is_line_split']:
+                linked_in_moves = self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', '=', orig_pol[0]), ('type', '=', 'in')], context=context)
+                if len(linked_in_moves) > 1:
+                    for in_move in self.pool.get('stock.move').browse(cr, uid, linked_in_moves, context=context):
+                        if in_move.state == 'assigned' and pol_values['product_qty'] == in_move.product_qty:
+                            self.pool.get('stock.move').write(cr, uid, [in_move.id], {'purchase_line_id': new_pol}, context=context)
+
             if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:  # update the stock moves PO line id
                 in_name = sol_dict['in_name_goods_return'].split('.')[-1]
                 pick_id = pick_obj.search(cr, uid, [('name', '=', in_name)], limit=1, context=context)[0]
