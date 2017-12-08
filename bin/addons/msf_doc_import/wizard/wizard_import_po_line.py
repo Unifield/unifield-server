@@ -163,7 +163,7 @@ class wizard_import_po_line(osv.osv_memory):
                         'default_code': False,
                         'confirmed_delivery_date': False,
                         'line_number': '',
-                        'set_as_validated_n': True,
+                        'set_as_validated_n': True if wiz.po_id.state not in ('draft', 'draft_p') else False,
                     }
 
                     col_count = len(row)
