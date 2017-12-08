@@ -18,6 +18,11 @@
       <blockValign value="TOP"/>
     </blockTableStyle>
 
+    <blockTableStyle id="table_mission_settings">
+      <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+
     <paraStyle name="right" alignment="RIGHT"/>
     <paraStyle name="center" alignment="CENTER"/>
     <paraStyle name="text" leftIndent="3mm"/>
@@ -32,10 +37,11 @@
 
       <spacer length="24"/>
 
-      <blockTable colWidths="95mm, 95mm" style="table_settings">
+      <blockTable colWidths="96mm, 96mm" style="table_settings">
         <tr>
           <td>
             <para>Name: <b>[[ o.name ]]</b></para>
+            <para><font color="white"> </font></para>
             <para>Request Date: [[ formatLang(o.request_date, date=True) ]]</para>
             <para>Mission: [[ o.mission ]]</para>
             <para><font color="white"> </font></para>
@@ -43,6 +49,7 @@
           </td>
           <td>
             <para>State: [[ getStateValue(o.state) ]]</para>
+            <para><font color="white"> </font></para>
             <para>Month: [[ o.month_period_id.name ]]</para>
             <para>Proprietary instance: [[ o.prop_instance_id.code ]]</para>
             <para><font color="white"> </font></para>
@@ -60,7 +67,7 @@
                       [[ curr.currency_id.name ]]
                     </para>[[ curr.currency_id.name ]]
                   </td>
-                  <td>[[ '%s%%' % (curr.percentage or '') ]]</td>
+                  <td><para>[[ '%s%%' % (curr.percentage or '') ]]</para></td>
                 </tr>
               </blockTable>
           </td>
@@ -69,6 +76,21 @@
           </td>
         </tr>
       </blockTable>
+
+      <spacer length="24"/>
+
+      <blockTable colWidths="64mm, 64mm, 64mm" style="table_mission_settings">
+        <tr>
+          <td><para><b>Mission Settings</b></para></td>
+        </tr>
+        <tr>
+          [[ repeatIn(o.instance_ids, 'inst') ]]
+          <td><para>[[ inst.code ]]</para></td>
+          <td><para>[[ inst.name ]]</para></td>
+          <td><para>[[ inst.level ]]</para></td>
+        </tr>
+      </blockTable>
+
     </section>
 
   </story>
