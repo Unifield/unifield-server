@@ -1,18 +1,9 @@
 <?xml version="1.0"?>
 <document filename="cash_request.pdf">
 
-  <template pageSize="(595.0,832.0)" title="Cash Request" author="Medecins Sans Frontieres" allowSplitting="20">
+  <template pageSize="(595.0,842.0)" title="Cash Request" author="Medecins Sans Frontieres" allowSplitting="20">
     <pageTemplate id="first">
-      <frame id="first" x1="42.0" y1="42.0" width="539" height="756" />
-
-      <pageGraphics>
-        <fill color="blue"/>
-        <drawString x="35" y="780.0">[[ '%s %s %s' % (selection(objects[0], 'order_type'), objects[0].name, selection(objects[0], 'state')) ]]</drawString>
-        <image x="50" y="760.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
-        <setFont name="Helvetica" size="8"/>
-        <fill color="black"/>
-        <drawString x="285" y="10.0">Page <pageNumber /></drawString>
-      </pageGraphics>
+      <frame id="first" x1="57.0" y1="57.0" width="481" height="728"/>
     </pageTemplate>
   </template>
 

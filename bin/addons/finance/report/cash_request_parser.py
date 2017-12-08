@@ -41,5 +41,6 @@ class cash_request_parser(report_sxw.rml_parse):
         return state
 
 
-report_sxw.report_sxw('report.cash.request.export', 'cash.request', 'addons/finance/report/cash_request.rml', parser=cash_request_parser)
+report_sxw.report_sxw('report.cash.request.export', 'cash.request', 'addons/finance/report/cash_request.rml',
+                      parser=cash_request_parser, header='internal')
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

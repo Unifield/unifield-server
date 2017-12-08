@@ -412,6 +412,6 @@
                     rml="finance/report/cash_request.rml"
                     auto="False"
                     menu="True"
-                    header="False"/>
+                    header="True"/>
        </data>
 </openerp>
