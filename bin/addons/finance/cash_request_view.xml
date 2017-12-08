@@ -28,13 +28,13 @@
                                     <field name="current_instance_level" invisible="1"/>
                                     <field name="name"/>
                                     <field name="state"/>
-                                    <field name="request_date" attrs="{'readonly': [('state', '=', 'done')]}"/>
-                                    <field name="month_period_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                    <field name="request_date" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}"/>
+                                    <field name="month_period_id" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}"/>
                                     <field name="mission"/>
                                     <field name="prop_instance_id"/>
-                                    <field name="transfer_account_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
-                                    <field name="bank_journal_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
-                                    <field name="transfer_currency_ids">
+                                    <field name="transfer_account_id" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}"/>
+                                    <field name="bank_journal_id" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}"/>
+                                    <field name="transfer_currency_ids" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}">
                                         <tree string="Currencies" editable="bottom">
                                             <field name="currency_id"/>
                                             <field name="percentage"/>
