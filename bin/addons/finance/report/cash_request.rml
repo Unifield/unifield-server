@@ -13,8 +13,8 @@
     </initialize>
 
     <blockTableStyle id="table_settings">
-      <lineStyle kind="GRID" colorName="grey"/>
-      <lineStyle kind="OUTLINE" colorName="grey" thickness="1"/>
+      <lineStyle kind="GRID" colorName="#cccccc"/>
+      <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
       <blockValign value="TOP"/>
     </blockTableStyle>
 
@@ -32,15 +32,40 @@
 
       <spacer length="24"/>
 
-      <blockTable colWidths="90mm, 90mm" style="table_settings">
+      <blockTable colWidths="95mm, 95mm" style="table_settings">
         <tr>
           <td>
             <para>Name: <b>[[ o.name ]]</b></para>
-            <para>Request Date: [[ o.request_date ]]</para>
+            <para>Request Date: [[ formatLang(o.request_date, date=True) ]]</para>
+            <para>Mission: [[ o.mission ]]</para>
+            <para><font color="white"> </font></para>
+            <para>Transfer Account Code: [[ o.transfer_account_id and '%s - %s' % (o.transfer_account_id.code, o.transfer_account_id.name) or '' ]]</para>
           </td>
           <td>
             <para>State: [[ getStateValue(o.state) ]]</para>
             <para>Month: [[ o.month_period_id.name ]]</para>
+            <para>Proprietary instance: [[ o.prop_instance_id.code ]]</para>
+            <para><font color="white"> </font></para>
+            <para>Bank: [[ o.bank_journal_id and o.bank_journal_id.code or '' ]]</para>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para>Currency of Transfers:</para>
+              <blockTable>
+                <tr>
+                  [[ repeatIn(o.transfer_currency_ids, 'curr') ]]
+                  <td>
+                    <para style="text_right">
+                      [[ curr.currency_id.name ]]
+                    </para>[[ curr.currency_id.name ]]
+                  </td>
+                  <td>[[ '%s%%' % (curr.percentage or '') ]]</td>
+                </tr>
+              </blockTable>
+          </td>
+          <td>
+            <para>Consolidation Currency: [[ o.consolidation_currency_id.name ]]</para>
           </td>
         </tr>
       </blockTable>
