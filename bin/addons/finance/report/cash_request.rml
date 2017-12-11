@@ -71,7 +71,7 @@
                       [[ curr.currency_id.name ]]
                     </para>[[ curr.currency_id.name ]]
                   </td>
-                  <td><para>[[ '%s%%' % (curr.percentage or '') ]]</para></td>
+                  <td><para>[[ curr.percentage and '%s%%' % (curr.percentage) or '' ]]</para></td>
                 </tr>
               </blockTable>
           </td>
