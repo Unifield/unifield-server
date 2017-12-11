@@ -100,6 +100,8 @@ class mission_stock_wizard(osv.osv_memory):
                                             ], string="Processing", readonly=True),
         'export_error_msg': fields.text('Error message', readonly=True),
         'instance_level': fields.char('Instance Level', size=64),
+        'local_report': fields.boolean('Local Report'),
+        'full_view': fields.boolean('Full View'),
     }
 
     _defaults = {
@@ -109,6 +111,8 @@ class mission_stock_wizard(osv.osv_memory):
         'fname': lambda *a: 'Mission stock report',
         'processed_state': lambda *a: 'not_started',
         'export_error_msg': lambda *a: False,
+        'local_report': True,
+        'full_view': False,
     }
 
     def default_get(self, cr, uid, fields_list, context=None):
@@ -150,6 +154,8 @@ class mission_stock_wizard(osv.osv_memory):
                 'export_ok': report.export_ok and progress_state == 'done',
                 'export_error_msg': report.export_error_msg,
                 'processed_state': progress_state,
+                'local_report': report.local_report,
+                'full_view': report.full_view,
             })
             if progress_state == 'in_progress':
                 v.update({'processed_start_date': start_date})
