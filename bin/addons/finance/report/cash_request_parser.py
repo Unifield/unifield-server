@@ -27,8 +27,14 @@ class cash_request_parser(report_sxw.rml_parse):
         if context is None:
             context = {}
         super(cash_request_parser, self).__init__(cr, uid, name, context=context)
+        self.total = {}
         self.localcontext.update({
             'getStateValue': self._get_state_value,
+            'total_liquidity': self._get_total_liquidity,
+            'total_payable': self._get_total_payable,
+            'total_commitment': self._get_total_commitment,
+            'total_expense': self._get_total_expense,
+            'total_cash_requested': self._get_total_cash_requested,
         })
 
     def _get_state_value(self, state):
@@ -39,6 +45,40 @@ class cash_request_parser(report_sxw.rml_parse):
         if state:
             state = dict(cash_req_obj._columns['state'].selection).get(state) or ''
         return state
+
+    def _get_total(self, o):
+        """
+        Returns a dict with the different totals to display in the export
+        """
+        if not self.total:
+            liquidity = payable = commitment = expense = cash_requested = 0.0
+            for rec in o.recap_mission_ids:
+                liquidity += rec.liquidity_amount or 0.0
+                payable += rec.payable_amount or 0.0
+                commitment += rec.commitment_amount or 0.0
+                expense += rec.expense_amount or 0.0
+                cash_requested += rec.total or 0.0
+            self.total = {'liquidity': liquidity,
+                          'payable': payable,
+                          'commitment': commitment,
+                          'expense': expense,
+                          'cash_requested': cash_requested}
+        return self.total
+
+    def _get_total_liquidity(self, o):
+        return self._get_total(o)['liquidity']
+
+    def _get_total_payable(self, o):
+        return self._get_total(o)['payable']
+
+    def _get_total_commitment(self, o):
+        return self._get_total(o)['commitment']
+
+    def _get_total_expense(self, o):
+        return self._get_total(o)['expense']
+
+    def _get_total_cash_requested(self, o):
+        return self._get_total(o)['cash_requested']
 
 
 report_sxw.report_sxw('report.cash.request.export', 'cash.request', 'addons/finance/report/cash_request.rml',

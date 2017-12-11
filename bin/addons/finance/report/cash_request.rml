@@ -24,6 +24,7 @@
       <blockValign value="TOP"/>
     </blockTableStyle>
 
+    <paraStyle name="bold" fontName="Helvetica-Bold"/>
     <paraStyle name="right" alignment="RIGHT"/>
     <paraStyle name="center" alignment="CENTER"/>
     <paraStyle name="text" leftIndent="3mm"/>
@@ -84,7 +85,7 @@
 
       <blockTable colWidths="64mm, 64mm, 64mm" style="sub_table">
         <tr>
-          <td><para><b>Mission Settings</b></para></td>
+          <td><para style="bold">Mission Settings</para></td>
         </tr>
         <tr>
           <td><para>Code:</para></td>
@@ -103,7 +104,7 @@
 
       <blockTable colWidths="32mm, 32mm, 32mm, 32mm, 32mm, 32mm" style="sub_table">
         <tr>
-          <td><para><b>Recap Mission</b></para></td>
+          <td><para style="bold">Recap Mission</para></td>
         </tr>
         <tr>
           <td><para>Instance code / Place of payment:</para></td>
@@ -121,6 +122,14 @@
           <td><para>[[ formatLang(rec.commitment_amount or 0.0) ]]</para></td>
           <td><para>[[ formatLang(rec.expense_amount or 0.0) ]]</para></td>
           <td><para>[[ formatLang(rec.total or 0.0) ]]</para></td>
+        </tr>
+        <tr>
+          <td><para style="bold">Total</para></td>
+          <td><para style="bold">[[ formatLang(total_liquidity(o) or 0.0) ]]</para></td>
+          <td><para style="bold">[[ formatLang(total_payable(o) or 0.0) ]]</para></td>
+          <td><para style="bold">[[ formatLang(total_commitment(o) or 0.0) ]]</para></td>
+          <td><para style="bold">[[ formatLang(total_expense(o) or 0.0) ]]</para></td>
+          <td><para style="bold">[[ formatLang(total_cash_requested(o) or 0.0) ]]</para></td>
         </tr>
       </blockTable>
 
