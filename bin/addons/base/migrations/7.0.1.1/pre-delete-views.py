@@ -1,3 +1,6 @@
+from tools import config
+import os
+
 def migrate(cr, version):
     if not cr.table_exists('ir_ui_view'):
         return
@@ -7,6 +10,13 @@ def migrate(cr, version):
     cr.execute("delete from ir_ui_menu where id in (select res_id from ir_model_data where model='ir.ui.menu' and module='sale_override')")
     cr.execute("update ir_module_module set state='to upgrade' where name='msf_button_access_rights'")
     cr.execute("update ir_model_data set name=regexp_replace(name,'^sale_override_(.*)$', 'sale_\\1') where model='ir.model' and module='sd'")
+
+    queries = os.path.join(config['root_path'], 'addons/base/migrations/7.0.1.1/update_ir_model_data_fields.sql')
+    if os.path.exists(queries):
+        with open(queries) as lines:
+            for line in lines:
+                if line:
+                    cr.execute(line)
 
     # WKF
     cr.execute("delete from wkf_workitem where act_id in (select id from  wkf_activity  where wkf_id in (select id from wkf  where osv in ('purchase.order', 'sale.order', 'procurement.order')))")
