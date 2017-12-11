@@ -202,16 +202,16 @@ class cash_request(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         """
-        Creates the Cash Request, at first creation in coordo automatically fills in the values for the following
-        fields: name, instance_ids
+        Creates the Cash Request, automatically fills in the values for the fields name and instance_ids, at first
+        creation in coordo (including at duplication).
         """
         if context is None:
             context = {}
-        if 'name' not in vals:
+        if 'name' not in vals or not vals['name']:
             # Cash Request name = sequence (looks like: Mission code_Cash_request-XXXX)
             sequence = self.pool.get('ir.sequence').get(cr, uid, 'cash.request')
             vals.update({'name': sequence})
-        if 'instance_ids' not in vals:
+        if 'instance_ids' not in vals or not vals['instance_ids']:
             # fill in the list of Prop. Instances
             vals.update({'instance_ids': [(6, 0, self._get_instance_ids(cr, uid, context=context))]})
         return super(cash_request, self).create(cr, uid, vals, context=context)
@@ -227,6 +227,7 @@ class cash_request(osv.osv):
             default = {}
         default.update({
             'request_date': datetime.today(),
+            'name': '',
             'instance_ids': [],
             'past_transfer_ids': [],
             'total_to_transfer': 0.0,
