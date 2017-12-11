@@ -234,7 +234,6 @@ class cash_request(osv.osv):
             'state': 'draft',
             'commitment_ids': [],
             'recap_expense_ids': [],
-            'planned_expense_ids': [],
             'total_to_transfer_line_ids': [],
             'recap_mission_ids': [],
             'payable_ids': [],
@@ -821,6 +820,21 @@ class cash_request_expense(osv.osv):
                                               expense.total_booking or 0.0, round=True, context=context)
                 result[expense.id] = total_fctal
         return result
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        Creates a cash_request_expense: in case of a Cash Request Duplication, the Prop. Instance of every
+        Planned Expense becomes the coordo (so none of these lines won't be visible in project)
+        """
+        if context is None:
+            context = {}
+        cash_req_obj = self.pool.get('cash.request')
+        cash_req__duplication = '__copy_data_seen' in context and 'cash.request' in context['__copy_data_seen'] or False
+        if cash_req__duplication:
+            cash_req_id = context['__copy_data_seen']['cash.request'][0]
+            cash_req = cash_req_obj.browse(cr, uid, cash_req_id, fields_to_fetch=['prop_instance_id'], context=context)
+            vals.update({'prop_instance_id': cash_req.prop_instance_id.id})
+        return super(cash_request_expense, self).create(cr, uid, vals, context=context)
 
     _columns = {
         'cash_request_id': fields.many2one('cash.request', 'Cash Request', invisible=True, ondelete='cascade'),
