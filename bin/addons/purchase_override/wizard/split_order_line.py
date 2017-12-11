@@ -106,6 +106,7 @@ class split_purchase_order_line_wizard(osv.osv_memory):
                 'move_dest_id': move_dest_id,
                 'sale_line_id': sale_line_id,
                 'product_qty': split.new_line_qty,
+                'origin': split.purchase_line_id.origin,
             }
 
             # copy original line
