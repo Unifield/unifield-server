@@ -505,7 +505,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                  select=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'."
                                  ),
         'state_hidden_sale_order': fields.function(_get_state_hidden, method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True, string='State'),
-        'date_order': fields.date('Ordered Date', required=True, readonly=True, select=True, states={'draft': [('readonly', False)]}),
+        'date_order': fields.date('Ordered Date', required=True, readonly=True, select=True),
         'create_date': fields.date('Creation Date', readonly=True, select=True, help="Date on which sales order is created."),
         'date_confirm': fields.date('Confirmation Date', readonly=True, select=True, help="Date on which sales order is confirmed."),
         'user_id': fields.many2one('res.users', 'Salesman', states={'draft': [('readonly', False)]}, select=True),
@@ -546,12 +546,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True),
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'), ],
-                                       string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)]}),
+                                       string='Order Type', required=True, readonly=True),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
-        'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         # we increase the size of the 'details' field from 30 to 86
-        'details': fields.char(size=86, string='Details', readonly=True, states={'draft': [('readonly', False)], 'draft_p': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'details': fields.char(size=86, string='Details', readonly=True),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
                                     fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
@@ -2366,6 +2366,36 @@ class sale_order_line(osv.osv):
 
         return True
 
+
+    def cancel_partial_qty(self, cr, uid, ids, qty_to_cancel, resource=False, context=None):
+        '''
+        cancel partially a SO line: create a split and cancel the split
+        '''
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+        wf_service = netsvc.LocalService("workflow")
+        signal = 'cancel_r' if resource else 'cancel' 
+
+        for sol in self.browse(cr, uid, ids, context=context):
+            orig_qty = sol.product_uom_qty
+            # create split to cancel:
+            split_id = self.pool.get('split.sale.order.line.wizard').create(cr, uid, {
+                'sale_line_id': sol.id,
+                'original_qty': orig_qty,
+                'old_line_qty': sol.product_uom_qty - qty_to_cancel,
+                'new_line_qty': qty_to_cancel,
+            }, context=context)
+            context.update({'return_new_line_id': True})
+            new_line_id = self.pool.get('split.sale.order.line.wizard').split_line(cr, uid, split_id, context=context)
+            context.update({'return_new_line_id': True})
+            wf_service.trg_validate(uid, 'sale.order.line', new_line_id, signal, cr)
+
+        return True
+
+
+
     def _check_restriction_line(self, cr, uid, ids, context=None):
         '''
         Check if there is restriction on lines
@@ -2397,7 +2427,6 @@ class sale_order_line(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         so_obj = self.pool.get('sale.order')
 
-        wf_service = netsvc.LocalService("workflow")
 
         if context is None:
             context = {}
@@ -2431,12 +2460,13 @@ class sale_order_line(osv.osv):
             if line.original_line_id:
                 cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
+        else:
+            # Update the line and the procurement
+            self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource=False, context=context)
 
         so_to_cancel_id = False
         if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
             so_to_cancel_id = order
-        else:
-            wf_service.trg_write(uid, 'sale.order', order, cr)
 
         return so_to_cancel_id
 

@@ -210,7 +210,7 @@ class purchase_order(osv.osv):
         :return: A dictionnary with the purchase.order ID as keys and the number of Purchase
                  order lines for each of them as value
         """
-        pol_obj = self.pool.get('sale.order.line')
+        pol_obj = self.pool.get('purchase.order.line')
 
         if context is None:
             context =  {}
@@ -577,22 +577,20 @@ class purchase_order(osv.osv):
         return [('id', operator, list(po_ids))]
 
     _columns = {
-        'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
-        'priority': fields.selection(ORDER_PRIORITY, string='Priority', states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
-        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'priority': fields.selection(ORDER_PRIORITY, string='Priority'),
+        'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True),
         # we increase the size of the 'details' field from 30 to 86
-        'details': fields.char(size=86, string='Details', states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'cancel':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
-        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', states={'validated':[('readonly',True)],'approved':[('readonly',True)],'done':[('readonly',True)]}),
-        'date_order': fields.date(string='Creation Date', readonly=True, required=True,
-                                  states={'draft':[('readonly',False)],}, select=True, help="Date on which this document has been created."),
+        'details': fields.char(size=86, string='Details'),
+        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months'),
+        'date_order': fields.date(string='Creation Date', required=True, select=True, help="Date on which this document has been created."),
         'name': fields.char('Order Reference', size=64, required=True, select=True, readonly=True,
                             help="unique number of the purchase order,computed automatically when the purchase order is created"),
         'invoice_ids': fields.many2many('account.invoice', 'purchase_invoice_rel', 'purchase_id', 'invoice_id', 'Invoices', help="Invoices generated for a purchase order", readonly=True),
         'order_line': fields.one2many('purchase.order.line', 'order_id', 'Order Lines', readonly=False),
-        'partner_id': fields.many2one('res.partner', 'Supplier', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'confirmed':[('readonly',True)], 'confirmed_wait':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)],'cancel':[('readonly',True)]}, change_default=True, domain="[('id', '!=', company_id)]"),
-        'partner_address_id': fields.many2one('res.partner.address', 'Address', required=True,
-                                              states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'rfq_sent':[('readonly',True)], 'rfq_done':[('readonly',True)], 'rfq_updated':[('readonly',True)], 'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
+        'partner_id': fields.many2one('res.partner', 'Supplier', required=True, change_default=True, domain="[('id', '!=', company_id)]"),
+        'partner_address_id': fields.many2one('res.partner.address', 'Address', required=True, domain="[('partner_id', '=', partner_id)]"),
         'dest_partner_id': fields.many2one('res.partner', string='Destination partner'),
         'invoice_address_id': fields.many2one('res.partner.address', string='Invoicing address', required=True,
                                               help="The address where the invoice will be sent."),
@@ -639,13 +637,12 @@ class purchase_order(osv.osv):
 
         'date_approve':fields.date('Date Approved', readonly=1, select=True, help="Date on which purchase order has been approved"),
         'dest_address_id':fields.many2one('res.partner.address', 'Destination Address',
-                                          states={'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},
                                           help="Put an address if you want to deliver directly from the supplier to the customer." \
                                           "In this case, it will remove the warehouse link and set the customer location."
                                           ),
-        'warehouse_id': fields.many2one('stock.warehouse', 'Warehouse', states={'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'warehouse_id': fields.many2one('stock.warehouse', 'Warehouse'),
         'location_id': fields.many2one('stock.location', 'Destination', required=True, domain=[('usage','<>','view')]),
-        'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, states={'validated':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
+        'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
         'state': fields.function(_get_less_advanced_pol_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
                                      'purchase.order.line': (_get_order, ['state'], 10), 

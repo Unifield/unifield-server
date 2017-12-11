@@ -585,19 +585,16 @@ class cash_request(osv.osv):
             ids = [ids]
         if regtype in ['cash', 'bank', 'cheque']:
             if regtype == 'cash':
-                liq_obj = self.pool.get('cash.request.liquidity.cash')
                 search_view = 'view_cash_request_liquidity_cash_search'
                 tree_view = 'view_cash_request_liquidity_cash_tree'
                 res_model = 'cash.request.liquidity.cash'
                 view_name = _('Liquidity Position - Cash')
             elif regtype == 'bank':
-                liq_obj = self.pool.get('cash.request.liquidity.bank')
                 search_view = 'view_cash_request_liquidity_bank_search'
                 tree_view = 'view_cash_request_liquidity_bank_tree'
                 res_model = 'cash.request.liquidity.bank'
                 view_name = _('Liquidity Position - Bank')
             else:
-                liq_obj = self.pool.get('cash.request.liquidity.cheque')
                 search_view = 'view_cash_request_liquidity_cheque_search'
                 tree_view = 'view_cash_request_liquidity_cheque_tree'
                 res_model = 'cash.request.liquidity.cheque'
@@ -850,9 +847,9 @@ class cash_request_expense(osv.osv):
         'is_local_expense': fields.boolean(string='Local Expense'),
         'account_id': fields.many2one('account.account', 'Account', required=True,
                                       domain=[('user_type_code', 'in', ['expense', 'income']),
-                                               '|',  # exclude extra-accounting expense accounts
-                                               ('user_type_code', '!=', 'expense'),
-                                               ('user_type.report_type', '!=', 'none')]),
+                                              '|',  # exclude extra-accounting expense accounts
+                                              ('user_type_code', '!=', 'expense'),
+                                              ('user_type.report_type', '!=', 'none')]),
         'description': fields.char(size=128, string='Description', required=True),
         'is_budgeted': fields.boolean(string='Budgeted'),
         'quantity': fields.float('Quantity', required=True),

@@ -30,7 +30,7 @@ Scenario: SLL - State propagation and readonly checks in Field Orders
     I should see "Draft" in "State"
     I should see "State" as readonly
     I should see "Order Reference" as readonly
-    I should see "Ordered Date" as editable
+    I should see "Ordered Date" as readonly
     I should see "Customer" as editable
     I should see "Warehouse" as editable
     I should see "Order Type" as editable

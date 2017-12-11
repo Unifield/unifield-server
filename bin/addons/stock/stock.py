@@ -652,7 +652,7 @@ class stock_picking(osv.osv):
             select=True, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'company_id': fields.many2one('res.company', 'Company', required=True, select=True),
         'claim': fields.boolean('Claim'),
-        'claim_name': fields.char(string='Name of the claim', size=512),
+        'claim_name': fields.char(string='Claim name', size=512),
     }
     _defaults = {
         'name': lambda self, cr, uid, context: '/',
@@ -2063,12 +2063,14 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if uid != 1:
-            frozen_fields = set(['product_qty', 'product_uom', 'product_uos_qty', 'product_uos', 'location_id', 'location_dest_id', 'product_id'])
-            done_moves = self.search_exist(cr, uid, [('picking_id', 'in', ids), ('state', '=', 'done')])
-            if done_moves and frozen_fields.intersection(vals):
-                raise osv.except_osv(_('Operation forbidden'),
-                                     _('Quantities, UoMs, Products and Locations cannot be modified on stock moves that have already been processed (except by the Administrator)'))
+        # check disabled due to an obvious bug on picking_id vs id in domain
+        # i.e: self is a stock.move object, ids are also stock.move
+        #if uid != 1:
+        #    frozen_fields = set(['product_qty', 'product_uom', 'product_uos_qty', 'product_uos', 'location_id', 'location_dest_id', 'product_id'])
+        #    done_moves = self.search_exist(cr, uid, [('picking_id', 'in', ids), ('state', '=', 'done')])
+        #    if done_moves and frozen_fields.intersection(vals):
+        #        raise osv.except_osv(_('Operation forbidden'),
+        #                             _('Quantities, UoMs, Products and Locations cannot be modified on stock moves that have already been processed (except by the Administrator)'))
         return  super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
     def copy(self, cr, uid, id, default=None, context=None):
