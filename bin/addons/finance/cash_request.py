@@ -829,8 +829,8 @@ class cash_request_expense(osv.osv):
         if context is None:
             context = {}
         cash_req_obj = self.pool.get('cash.request')
-        cash_req__duplication = '__copy_data_seen' in context and 'cash.request' in context['__copy_data_seen'] or False
-        if cash_req__duplication:
+        cash_req_duplication = '__copy_data_seen' in context and 'cash.request' in context['__copy_data_seen'] or False
+        if cash_req_duplication:
             cash_req_id = context['__copy_data_seen']['cash.request'][0]
             cash_req = cash_req_obj.browse(cr, uid, cash_req_id, fields_to_fetch=['prop_instance_id'], context=context)
             vals.update({'prop_instance_id': cash_req.prop_instance_id.id})
