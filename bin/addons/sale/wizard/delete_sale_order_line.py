@@ -59,6 +59,8 @@ class delete_sale_order_line_wizard(osv.osv_memory):
             parent_so_id = 0
             for index, line_id in enumerate(line_ids, start=1):
                 line = so_line.browse(cr, uid, line_id, context=context)
+                if line.state.startswith('cancel'):
+                    continue
                 name = _('line %s') % (line.line_number)
                 if line.product_id:
                     name = line.product_id.default_code
