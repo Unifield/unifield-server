@@ -19,7 +19,7 @@
     </blockTableStyle>
 
     <blockTableStyle id="sub_table">
-      <blockSpan start="0,0" stop="2,0"/>  <!-- merge the first 3 "cells" of the first line -->
+      <blockSpan start="0,0" stop="1,0"/>  <!-- merge the first 2 "cells" of the first line -->
       <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
       <blockValign value="TOP"/>
     </blockTableStyle>
@@ -151,7 +151,24 @@
           <td><para style="bold">Total Cash Request to transfer: [[ "%s %s" % (formatLang(o.total_to_transfer or 0.0), o.consolidation_currency_id.name) ]]</para></td>
         </tr>
       </blockTable>
-    </section>
 
+      <spacer length="24"/>
+
+      <blockTable colWidths="96mm, 96mm" style="sub_table">
+        <tr>
+          <td><para style="bold">Split per currencies</para></td>
+        </tr>
+        <tr>
+          <td><para>Currency:</para></td>
+          <td><para>Amount:</para></td>
+        </tr>
+        <tr>
+          [[ repeatIn(o.total_to_transfer_line_ids, 'transfer_line') ]]
+          <td><para>[[ transfer_line.currency_id.name ]]</para></td>
+          <td><para>[[ formatLang(transfer_line.amount or 0.0) ]]</para></td>
+        </tr>
+      </blockTable>
+
+    </section>
   </story>
 </document>
