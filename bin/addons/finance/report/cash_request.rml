@@ -109,8 +109,8 @@
           <td><para style="bold">Mission Settings</para></td>
         </tr>
         <tr>
-          <td><para>Code:</para></td>
-          <td><para>Name:</para></td>
+          <td><para>Instance Code:</para></td>
+          <td><para>Instance Name:</para></td>
           <td><para>Level:</para></td>
         </tr>
         <tr>
@@ -200,7 +200,7 @@
           <td><para>Signature:</para></td>
         </tr>
       </blockTable>
-      <blockTable colWidths="64mm, 64mm, 64mm" style="authorization_line" rowHeights="15mm">
+      <blockTable colWidths="64mm, 64mm, 64mm" style="authorization_line" rowHeights="17mm">
         <tr>
           <td><para>1</para></td>
           <td><para></para></td>
