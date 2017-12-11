@@ -175,6 +175,18 @@ class purchase_order_line(osv.osv):
                 sol_values.update(self.get_split_info(cr, uid, pol, context))
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
+
+                # if OUT move already exists for this sale.order.line, then the split going to be created must be linked to
+                # the right OUT move (moves are already splits at this level):
+                if sol_values['is_line_split']:
+                    linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
+                        ('sale_line_id', '=', sol_values['original_line_id']), 
+                        ('type', '=', 'out')], 
+                    context=context)
+                    if len(linked_out_moves) > 1:
+                        for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
+                            if out_move.state in ('assigned', 'confirmed') and out_move.product_qty == sol_values['product_uom_qty']:
+                                self.pool.get('stock.move').write(cr, uid, [out_move.id], {'sale_line_id': new_sol}, context=context)
             else: # update FO line
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
 

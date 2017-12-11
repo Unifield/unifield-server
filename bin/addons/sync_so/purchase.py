@@ -143,7 +143,7 @@ class purchase_order_line_sync(osv.osv):
                 linked_in_moves = self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', '=', orig_pol[0]), ('type', '=', 'in')], context=context)
                 if len(linked_in_moves) > 1:
                     for in_move in self.pool.get('stock.move').browse(cr, uid, linked_in_moves, context=context):
-                        if in_move.state == 'assigned' and pol_values['product_qty'] == in_move.product_qty:
+                        if in_move.state in ('assigned', 'confirmed') and pol_values['product_qty'] == in_move.product_qty:
                             self.pool.get('stock.move').write(cr, uid, [in_move.id], {'purchase_line_id': new_pol}, context=context)
 
             if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:  # update the stock moves PO line id
