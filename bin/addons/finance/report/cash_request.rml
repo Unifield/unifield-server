@@ -30,6 +30,19 @@
       <blockValign value="TOP"/>
     </blockTableStyle>
 
+    <blockTableStyle id="authorization_header">
+      <blockSpan start="0,0" stop="2,0"/>  <!-- merge the first 3 "cells" of the first line -->
+      <lineStyle kind="GRID" colorName="#cccccc"/>
+      <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="LINEBELOW" colorName="#ffffff" start="0,1" stop="2,1"/>
+    </blockTableStyle>
+    <blockTableStyle id="authorization_line">
+      <lineStyle kind="GRID" colorName="#cccccc"/>
+      <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+
     <paraStyle name="bold" fontName="Helvetica-Bold"/>
     <paraStyle name="right" alignment="RIGHT"/>
     <paraStyle name="center" alignment="CENTER"/>
@@ -41,10 +54,11 @@
 
     <section>
       [[ repeatIn(objects,'o') ]]
-      <title>Cash Request</title>
+      <title>Cash Request Validation</title>
 
       <spacer length="24"/>
 
+      <!-- Recap of the Settings -->
       <blockTable colWidths="96mm, 96mm" style="table_settings">
         <tr>
           <td>
@@ -89,6 +103,7 @@
 
       <spacer length="24"/>
 
+      <!-- Mission Settings -->
       <blockTable colWidths="64mm, 64mm, 64mm" style="sub_table">
         <tr>
           <td><para style="bold">Mission Settings</para></td>
@@ -108,6 +123,7 @@
 
       <spacer length="24"/>
 
+      <!-- Recap Mission -->
       <blockTable colWidths="32mm, 32mm, 32mm, 32mm, 32mm, 32mm" style="sub_table">
         <tr>
           <td><para style="bold">Recap Mission</para></td>
@@ -141,6 +157,7 @@
 
       <spacer length="24"/>
 
+      <!-- Total Section -->
       <blockTable colWidths="64mm, 64mm, 64mm" style="sub_table_total">
         <tr>
           <td><para>Total Transfer to come: [[ formatLang(o.transfer_to_come or 0.0) ]]</para></td>
@@ -154,6 +171,7 @@
 
       <spacer length="24"/>
 
+      <!-- Split per currencies -->
       <blockTable colWidths="96mm, 96mm" style="sub_table">
         <tr>
           <td><para style="bold">Split per currencies</para></td>
@@ -166,6 +184,37 @@
           [[ repeatIn(o.total_to_transfer_line_ids, 'transfer_line') ]]
           <td><para>[[ transfer_line.currency_id.name ]]</para></td>
           <td><para>[[ formatLang(transfer_line.amount or 0.0) ]]</para></td>
+        </tr>
+      </blockTable>
+
+      <spacer length="24"/>
+
+      <!-- Authorizations Section -->
+      <blockTable colWidths="64mm, 64mm, 64mm" style="authorization_header">
+        <tr>
+          <td><para style="bold">Authorizations</para></td>
+        </tr>
+        <tr>
+          <td><para>Position:</para></td>
+          <td><para>Name:</para></td>
+          <td><para>Signature:</para></td>
+        </tr>
+      </blockTable>
+      <blockTable colWidths="64mm, 64mm, 64mm" style="authorization_line" rowHeights="15mm">
+        <tr>
+          <td><para>1</para></td>
+          <td><para></para></td>
+          <td><para></para></td>
+        </tr>
+        <tr>
+          <td><para>2</para></td>
+          <td><para></para></td>
+          <td><para></para></td>
+        </tr>
+        <tr>
+          <td><para>3</para></td>
+          <td><para></para></td>
+          <td><para></para></td>
         </tr>
       </blockTable>
 
