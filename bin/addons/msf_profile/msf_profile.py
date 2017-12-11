@@ -213,7 +213,7 @@ class patch_scripts(osv.osv):
 
 
         # do not re-generate messages
-        cr.execute("select date_trunc('second', create_date) from sync_monitor where msg_push_send='ok' order by id desc limit 1")
+        cr.execute("select date_trunc('second', max(create_date)) from sync_client_message_to_send")
         create_date = [x[0] for x in cr.fetchall()]
         if create_date:
             cr.execute("update ir_model_data set sync_date=%s where module='sd' and model in ('purchase.order', 'sale.order', 'sale.order.line', 'purchase.order.line')", (create_date[0],))
