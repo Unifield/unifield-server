@@ -54,13 +54,13 @@ class delete_sale_order_line_wizard(osv.osv_memory):
             # not called through an action (e.g. buildbot), return the default.
             return result
 
+        line_ids = self.filter_sol(cr, uid, line_ids, context=context)
+
         if len(line_ids) > 1:
             names = ''
             parent_so_id = 0
             for index, line_id in enumerate(line_ids, start=1):
                 line = so_line.browse(cr, uid, line_id, context=context)
-                if line.state.startswith('cancel'):
-                    continue
                 name = _('line %s') % (line.line_number)
                 if line.product_id:
                     name = line.product_id.default_code
@@ -104,6 +104,23 @@ class delete_sale_order_line_wizard(osv.osv_memory):
 
         return result
 
+    def filter_sol(self, cr, uid, ids, context=None):
+        '''
+        filter to keep only sol that can be cancelled
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        to_cancel = []
+        for sol in self.pool.get('sale.order.line').browse(cr, uid, ids, context=context):
+            if sol.state not in ['draft', 'validated']:
+                raise osv.except_osv(_('Warning !'), _('Sale order line with state %s cannot be cancelled') % sol.state)
+            to_cancel.append(sol.id)
+
+        return to_cancel
+
     def fake_unlink(self, cr, uid, ids, context=None):
         '''
         deletes the corresponding line, and asks to cancel the FO if it has no line
@@ -114,14 +131,11 @@ class delete_sale_order_line_wizard(osv.osv_memory):
         wf_service = netsvc.LocalService("workflow")
 
         if context.get('ids', []) and len(context['ids']) > 1:
-            for line_id in context.get('ids'):
+            for line_id in self.filter_sol(cr, uid, context.get('ids'), context=context):
                 wf_service.trg_validate(uid, 'sale.order.line', line_id, 'cancel', cr)
         else:
-            wf_service.trg_validate(uid, 'sale.order.line', context.get('line_id', []), 'cancel', cr)
-
-            parent_so = self.pool.get('sale.order').browse(cr, uid, context.get('order_id', []), context=context)
-            if len(parent_so['order_line']) == 0:
-                return self.pool.get('sale.order.unlink.wizard').ask_unlink(cr, uid, parent_so['id'], context=context)
+            for line_id in self.filter_sol(cr, uid, context.get('line_id', []), context=context):
+                wf_service.trg_validate(uid, 'sale.order.line', line_id, 'cancel', cr)
 
         return {'type': 'ir.actions.act_window_close'}
 
