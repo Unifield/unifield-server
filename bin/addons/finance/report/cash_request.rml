@@ -19,7 +19,13 @@
     </blockTableStyle>
 
     <blockTableStyle id="sub_table">
-      <blockSpan start="0,0" stop="2,0"/>  <!-- merge the first 2 "cells" of the first line -->
+      <blockSpan start="0,0" stop="2,0"/>  <!-- merge the first 3 "cells" of the first line -->
+      <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+
+    <blockTableStyle id="sub_table_total">
+      <blockSpan start="0,1" stop="2,1"/>  <!-- merge the first 3 "cells" of the second line -->
       <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
       <blockValign value="TOP"/>
     </blockTableStyle>
@@ -133,6 +139,18 @@
         </tr>
       </blockTable>
 
+      <spacer length="24"/>
+
+      <blockTable colWidths="64mm, 64mm, 64mm" style="sub_table_total">
+        <tr>
+          <td><para>Total Transfer to come: [[ formatLang(o.transfer_to_come or 0.0) ]]</para></td>
+          <td><para>Security Envelopes: [[ formatLang(o.security_envelope or 0.0) ]]</para></td>
+          <td><para>Buffer: [[ "%s%%" % (formatLang(o.buffer or 0.0)) ]]</para></td>
+        </tr>
+        <tr>
+          <td><para style="bold">Total Cash Request to transfer: [[ "%s %s" % (formatLang(o.total_to_transfer or 0.0), o.consolidation_currency_id.name) ]]</para></td>
+        </tr>
+      </blockTable>
     </section>
 
   </story>
