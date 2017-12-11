@@ -50,11 +50,18 @@ class delete_sale_order_line_wizard(osv.osv_memory):
         else:
             line_ids = context.get('active_ids', [])
 
-        if not line_ids:
-            # not called through an action (e.g. buildbot), return the default.
-            return result
-
+        prev_lines_ids = line_ids
         line_ids = self.filter_sol(cr, uid, line_ids, context=context)
+
+        if not line_ids:
+            if not prev_lines_ids:
+                return result
+            result['arch'] = """
+                <form>
+                <separator colspan="6" string="You cannot delete product: %s"/>
+                <button special="cancel" string="Return to previous screen" icon="gtk-cancel"/>
+                </form>""" % ", ".join([sol.product_id.default_code for sol in so_line.browse(cr, uid, prev_lines_ids)]).strip(', ')
+            return result
 
         if len(line_ids) > 1:
             names = ''
@@ -115,9 +122,8 @@ class delete_sale_order_line_wizard(osv.osv_memory):
 
         to_cancel = []
         for sol in self.pool.get('sale.order.line').browse(cr, uid, ids, context=context):
-            if sol.state not in ['draft', 'validated']:
-                raise osv.except_osv(_('Warning !'), _('Sale order line with state %s cannot be cancelled') % sol.state)
-            to_cancel.append(sol.id)
+            if sol.state in ['draft', 'validated']:
+                to_cancel.append(sol.id)
 
         return to_cancel
 
