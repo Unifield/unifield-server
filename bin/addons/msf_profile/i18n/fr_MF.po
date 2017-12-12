@@ -9349,7 +9349,7 @@ msgstr "Pas Disponible"
 #: field:res.users,instance_level:0
 #: field:account.account,instance_level:0
 msgid "Instance level"
-msgstr "Instance level"
+msgstr "Niveau d'Instance"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,country_id:0
@@ -12643,7 +12643,7 @@ msgstr "Zone de Destination"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:335
 msgid "Cash Box Balance in register currency"
-msgstr "Cash Box Balance in register currency"
+msgstr "Solde de Caisse dans la devise du registre"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -14371,7 +14371,7 @@ msgstr "Vous ne pouvez pas valider une écriture non balancée!\n"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:350
 msgid "Bank Statement Balance in functional currency"
-msgstr "Bank Statement Balance in functional currency"
+msgstr "Solde du Relevé Bancaire en devise fonctionnelle"
 
 #. module: return_claim
 #: code:addons/return_claim/return_claim.py:144
@@ -21904,7 +21904,7 @@ msgstr "Stocks Alloués"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:328
 msgid "Opening Balance in register currency"
-msgstr "Opening Balance in register currency"
+msgstr "Solde d'Ouverture dans la devise du registre"
 
 #. module: mission_stock
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:68
@@ -26623,7 +26623,7 @@ msgstr "Paysage"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:492
 msgid "Pending cheque amount in functional currency"
-msgstr "Pending cheque amount in functional currency"
+msgstr "Montant des chèques en attente en devise fonctionnelle"
 
 #. modules: account_override, base
 #: view:ir.attachment:0
@@ -28759,7 +28759,7 @@ msgstr "Choisir des jours"
 #: report:addons/register_accounting/report/open_advances_xls.mako:155
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:300
 msgid "Booking Currency"
-msgstr "Booking Currency"
+msgstr "Devise d'Enregistrement"
 
 #. module: account
 #: view:account.fiscal.position.template:0
@@ -43921,7 +43921,7 @@ msgstr "User Type Name"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:331
 msgid "Calculated Balance in register currency"
-msgstr "Calculated Balance in register currency"
+msgstr "Solde Calculé dans la devise du registre"
 
 #. modules: account, base
 #: view:account.addtmpl.wizard:0
@@ -51823,7 +51823,7 @@ msgstr "Export Ecritures de Compte"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:337
 msgid "Bank Statement Balance in register currency"
-msgstr "Bank Statement Balance in register currency"
+msgstr "Solde du Relevé Bancaire dans la devise du registre"
 
 #. modules: process, base
 #: field:multi_company.default,expression:0
@@ -52639,7 +52639,7 @@ msgstr "Vous ne pouvez pas supprimer l'utilisateur 'admin' car il est utilisé e
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:344
 msgid "Calculated Balance in functional currency"
-msgstr "Calculated Balance in functional currency"
+msgstr "Solde Calculé en devise fonctionnelle"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:35
@@ -58702,7 +58702,7 @@ msgstr "Compte - Rapport du Solde de la Balance Agée"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:486
 msgid "Pending cheque amount in register currency"
-msgstr "Pending cheque amount in register currency"
+msgstr "Montant des chèques en attente dans la devise du registre"
 
 #. modules: threshold_value, procurement_report
 #: view:procurement.purchase.compute.all:0
@@ -73115,7 +73115,7 @@ msgstr "Origine"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:460
 msgid "Pending Cheques"
-msgstr "Pending Cheques"
+msgstr "Chèques en Attente"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:376
@@ -76764,7 +76764,7 @@ msgstr "Packing list"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:480
 msgid "Bank Journal Code"
-msgstr "Bank Journal Code"
+msgstr "Code du Journal de Banque"
 
 #. module: stock
 #: model:ir.actions.act_window,name:stock.action_picking_tree6
@@ -81765,7 +81765,7 @@ msgstr "In Kind Donation"
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:348
 msgid "Cash Box Balance in functional currency"
-msgstr "Cash Box Balance in functional currency"
+msgstr "Solde de Caisse en devise fonctionnelle"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -82999,7 +82999,7 @@ msgstr "La Commande d'Assemblage de Kit  %s a été confirmée"
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:341
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:489
 msgid "Register Currency"
-msgstr "Register Currency"
+msgstr "Devise du Registre"
 
 #. modules: msf_instance, unifield_setup
 #: field:res.company,second_time:0
@@ -86705,7 +86705,7 @@ msgstr "De attribué à reliquat de commande."
 #. module: msf_instance
 #: field:msf.instance,current_instance_level:0
 msgid "Current Instance Level"
-msgstr "Current Instance Level"
+msgstr "Niveau de l'Instance Actuelle"
 
 #. modules: msf_order_date, purchase, account, partner_modification, msf_partner, supplier_catalogue, product, purchase_override, account_override, sale_override, sourcing, base, register_accounting, sync_so, return_claim, stock
 #: constraint:res.partner:0
@@ -96649,7 +96649,7 @@ msgstr "Objet de prélèvement correspondant n'est pas une Livraison Entrante. L
 #. module: register_accounting
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:483
 msgid "Bank Journal Name"
-msgstr "Bank Journal Name"
+msgstr "Nom du Journal de Banque"
 
 #. module: partner_modification
 #: field:res.partner,procurement_lt:0
