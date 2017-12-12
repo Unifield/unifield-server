@@ -29,22 +29,12 @@ class cash_request_parser(report_sxw.rml_parse):
         super(cash_request_parser, self).__init__(cr, uid, name, context=context)
         self.total = {}
         self.localcontext.update({
-            'getStateValue': self._get_state_value,
             'total_liquidity': self._get_total_liquidity,
             'total_payable': self._get_total_payable,
             'total_commitment': self._get_total_commitment,
             'total_expense': self._get_total_expense,
             'total_cash_requested': self._get_total_cash_requested,
         })
-
-    def _get_state_value(self, state):
-        """
-        Returns the value corresponding to the state (open ==> Open)
-        """
-        cash_req_obj = self.pool.get('cash.request')
-        if state:
-            state = dict(cash_req_obj._columns['state'].selection).get(state) or ''
-        return state
 
     def _get_total(self, o):
         """
