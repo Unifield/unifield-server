@@ -2539,6 +2539,10 @@ class stock_move(osv.osv):
 
         self.write(cr, uid, ids, {'state': 'cancel', 'move_dest_id': False})
 
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['sale_line_id'], context=context):
+            if move.sale_line_id:
+                wf_service.trg_write(uid, 'sale.order.line', move.sale_line_id.id, cr)
+
         if not context.get('call_unlink',False):
             picking_to_write = []
             for pick in picking_obj.read(cr, uid, pickings.keys(), ['move_lines']):
