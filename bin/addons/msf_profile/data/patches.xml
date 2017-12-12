@@ -30,7 +30,7 @@
             <field name="method">us_3516_change_damage_reason_type_incoming_ok</field>
         </record>
 
-        <record id="delete_commitment" model="patch.script">
+        <record id="delete_commitment" model="patch.scripts">
             <field name="method">delete_commitment</field>
         </record>
         <!-- OLD -->
