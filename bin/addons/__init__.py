@@ -742,14 +742,15 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
         migrations.migrate_module(package, 'pre')
         register_class(package.name)
         modules = pool.instanciate(package.name, cr)
-        if hasattr(package, 'init') or hasattr(package, 'update') or package.state in ('to install', 'to upgrade'):
-            fk, m2m = init_module_objects(cr, package.name, modules)
-            for obj, missing in fk.iteritems():
-                missing_fk.setdefault(obj, [])
-                missing_fk[obj] += missing
-            for obj, missing in m2m.iteritems():
-                missing_m2m.setdefault(obj, [])
-                missing_m2m[obj] += missing
+        if tools.config.get('objects_update'):
+            if hasattr(package, 'init') or hasattr(package, 'update') or package.state in ('to install', 'to upgrade'):
+                fk, m2m = init_module_objects(cr, package.name, modules)
+                for obj, missing in fk.iteritems():
+                    missing_fk.setdefault(obj, [])
+                    missing_fk[obj] += missing
+                for obj, missing in m2m.iteritems():
+                    missing_m2m.setdefault(obj, [])
+                    missing_m2m[obj] += missing
         cr.commit()
 
     for related_obj, to_create in missing_fk.iteritems():
@@ -785,11 +786,13 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
                 if package.state=='to upgrade':
                     # upgrading the module information
                     modobj.write(cr, 1, [mid], modobj.get_values_from_terp(package.data))
-                load_init_update_xml(cr, m, idref, mode, kind)
+                if tools.config.get('xml_update'):
+                    load_init_update_xml(cr, m, idref, mode, kind)
                 # Hack to load data only on Unifield runbot
                 if tools.config['additional_xml']:
                     load_init_update_xml(cr, m, idref, mode, 'additional')
-            load_data(cr, m, idref, mode)
+            if tools.config.get('xml_update'):
+                load_data(cr, m, idref, mode)
             if hasattr(package, 'demo') or (package.dbdemo and package.state != 'installed'):
                 status['progress'] = (float(statusi)+0.75) / len(graph)
                 load_demo_xml(cr, m, idref, mode)
@@ -959,7 +962,8 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
                     logger.notifyChannel('init', netsvc.LOG_WARNING, "Model %s is referenced but not present in the orm pool!" % model)
 
             # Cleanup orphan records
-            pool.get('ir.model.data')._process_end(cr, 1, processed_modules)
+            if tools.config.get('xml_update'):
+                pool.get('ir.model.data')._process_end(cr, 1, processed_modules)
 
         if report.get_report():
             logger.notifyChannel('init', netsvc.LOG_INFO, report)

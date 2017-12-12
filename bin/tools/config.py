@@ -164,6 +164,10 @@ class configmanager(object):
                           help="load demo data for a module (use \"all\" for all modules)", default=False)
         parser.add_option("-u", "--update", dest="update",
                           help="update a module (use \"all\" for all modules)")
+        parser.add_option("-o", "--objects-update", dest="objects_update",
+                          help="update a module objetcs (only update database columns) (use \"all\" for all modules)")
+        parser.add_option("-x", "--xml-update", dest="xml_update",
+                          help="update a module files (only load files: xml, csv) (use \"all\" for all modules)")
         parser.add_option("--additional-xml", dest="additional_xml", help="load additonal xml files", default=False, action='store_true')
         parser.add_option("--cache-timeout", dest="cache_timeout",
                           help="set the timeout for the cache system", type="int")
@@ -357,9 +361,18 @@ class configmanager(object):
         self.options['init'] = opt.init and dict.fromkeys(opt.init.split(','), 1) or {}
         self.options["demo"] = not opt.without_demo and self.options['init'] or {}
         self.options['update'] = opt.update and dict.fromkeys(opt.update.split(','), 1) or {}
+        if self.options['update']:
+            self.options['objects_update'] = True
+            self.options['xml_update'] = True
+        elif opt.xml_update:
+            self.options['xml_update'] = True
+            self.options['update'] = dict.fromkeys(opt.xml_update.split(','), 1) or {}
+        elif opt.objects_update:
+            self.options['objects_update'] = True
+            self.options['update'] = dict.fromkeys(opt.objects_update.split(','), 1) or {}
         self.options['translate_modules'] = opt.translate_modules and map(lambda m: m.strip(), opt.translate_modules.split(',')) or ['all']
         self.options['translate_modules'].sort()
-
+        print self.options['update'], self.options.get('xml_update'), self.options.get('objects_update')
         if self.options['timezone']:
             # If an explicit TZ was provided in the config, make sure it is known
             try:
@@ -496,7 +509,7 @@ class configmanager(object):
         loglevelnames = dict(zip(self._LOGLEVELS.values(), self._LOGLEVELS.keys()))
         p.add_section('options')
         for opt in sorted(self.options.keys()):
-            if opt in ('version', 'language', 'translate_out', 'translate_in', 'overwrite_existing_translations', 'init', 'update'):
+            if opt in ('version', 'language', 'translate_out', 'translate_in', 'overwrite_existing_translations', 'init', 'update', 'objects_update', 'xml_update'):
                 continue
             if opt in self.blacklist_for_save:
                 continue
