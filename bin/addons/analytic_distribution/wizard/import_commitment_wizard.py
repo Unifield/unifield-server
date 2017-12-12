@@ -130,7 +130,7 @@ class import_commitment_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Error'), raise_msg_prefix + _('No account code found!'))
                     # Destination
                     if destination:
-                        dest_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', destination), ('name', '=', destination)])
+                        dest_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', destination), ('name', '=', destination), ('type', '!=', 'view')])
                         if dest_id:
                             vals.update({'destination_id': dest_id[0]})
                         else:
@@ -147,7 +147,7 @@ class import_commitment_wizard(osv.osv_memory):
                             raise osv.except_osv(_('Error'), raise_msg_prefix + msg)
                     # Cost Center
                     if cost_center:
-                        cc_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center)])
+                        cc_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center), ('type', '!=', 'view')])
                         if cc_id:
                             vals.update({'cost_center_id': cc_id[0]})
                         else:
@@ -156,7 +156,7 @@ class import_commitment_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Error'), raise_msg_prefix + _('No cost center code found!'))
                     # Funding Pool
                     if funding_pool:
-                        fp_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool)])
+                        fp_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool), ('type', '!=', 'view')])
                         if fp_id:
                             vals.update({'account_id': fp_id[0]})
                         else:
