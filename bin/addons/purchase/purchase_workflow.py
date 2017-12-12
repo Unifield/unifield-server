@@ -71,6 +71,22 @@ class purchase_order_line(osv.osv):
 
         return True
 
+
+    def check_unit_price(self, cr, uid, ids, context=None):
+        '''
+        made some checks on unit price before validating the PO line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=['price_unit'], context=context):
+            if not pol.price_unit:
+                raise osv.except_osv(_('Warning'), _('You cannot validate a PO line with 0.0 as price unit !'))
+
+        return True
+
     def update_fo_lines(self, cr, uid, ids, context=None):
         '''
         update corresponding FO lines in the same instance
@@ -371,6 +387,7 @@ class purchase_order_line(osv.osv):
         # checks before validating the line:
         self.check_analytic_distribution(cr, uid, ids, context=context)
         self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
+        self.check_unit_price(cr, uid, ids, context=context)
 
         # update FO lines:
         self.update_fo_lines(cr, uid, ids, context=context)
