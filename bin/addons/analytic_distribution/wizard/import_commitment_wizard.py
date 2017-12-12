@@ -55,7 +55,7 @@ class import_commitment_wizard(osv.osv_memory):
             context = {}
         analytic_obj = self.pool.get('account.analytic.line')
         instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
-        journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI')], context=context)
+        journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI'), ('is_current_instance', '=', True)], context=context)
         to_be_deleted_ids = analytic_obj.search(cr, uid, [('imported_commitment', '=', True)], context=context)
         functional_currency_obj = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
         default_founding_pool_id = self.pool.get('account.analytic.account').search(
