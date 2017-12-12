@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 import netsvc
+from tools.translate import _
 
 class purchase_order_line_cancel_wizard(osv.osv_memory):
     _name = 'purchase.order.line.cancel.wizard'
@@ -45,6 +46,8 @@ class purchase_order_line_cancel_wizard(osv.osv_memory):
         # cancel line:
         signal = 'cancel_r' if resource else 'cancel'
         for wiz in self.browse(cr, uid, ids, context=context):
+            if wiz.pol_id.has_pol_been_synched:
+                raise osv.except_osv(_('Warning'), _('You cannot cancel a purchase order line which has already been synchronized'))
             wf_service.trg_validate(uid, 'purchase.order.line', wiz.pol_id.id, signal, cr)
 
         return {'type': 'ir.actions.act_window_close'}
