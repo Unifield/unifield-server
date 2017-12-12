@@ -100436,3 +100436,703 @@ msgstr "Import IN, écran de simulation"
 #: view:wizard.import.in.simulation.screen:0
 msgid "Import, pick & pack"
 msgstr "Importer, Pick et Colissage"
+
+#. module: finance
+#: field:cash.request.payable,account_move_line_ids:0
+msgid "Account Move Lines"
+msgstr "Lignes d'Ecriture Comptable"
+
+#. module: finance
+#: help:cash.request,security_envelope:0
+msgid "Amount to encode in functional currency"
+msgstr "Montant à saisir en devise fonctionnelle"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Amount:"
+msgstr "Montant :"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Authorizations"
+msgstr "Autorisations"
+
+#. module: finance
+#: field:cash.request.payable,balance:0
+msgid "Balance in functional currency"
+msgstr "Solde en devise fonctionnelle"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Bank - See details for subtotals"
+msgstr "Banque - Voir le détail pour les sous-totaux"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Bank:"
+msgstr "Banque :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Banking"
+msgstr "Banque"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Banking references"
+msgstr "Références de la Banque"
+
+#. module: finance
+#: field:cash.request.expense,is_budgeted:0
+msgid "Budgeted"
+msgstr "Budgétisé"
+
+#. module: finance
+#: field:cash.request.recap.expense,budget_expense_m:0
+msgid "Budgeted expenses for the period M"
+msgstr "Dépenses budgétisées pour la période M"
+
+#. module: finance
+#: field:cash.request.recap.expense,budget_expense_m1:0
+msgid "Budgeted expenses for the period M+1"
+msgstr "Dépenses budgétisées pour la période M+1"
+
+#. module: finance
+#: field:cash.request.recap.expense,budget_expense_m2:0
+msgid "Budgeted expenses for the period M+2"
+msgstr "Dépenses budgétisées pour la période M+2"
+
+#. module: finance
+#: field:cash.request.recap.expense,budget_expense_m3:0
+msgid "Budgeted expenses for the period M+3"
+msgstr "Dépenses budgétisées pour la période M+3"
+
+#. module: finance
+#: field:cash.request,buffer:0
+msgid "Buffer (%)"
+msgstr "Buffer (%)"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Buffer:"
+msgstr "Buffer :"
+
+#. module: finance
+#: view:cash.request:0
+#: selection:cash.request.liquidity,type:0
+#: selection:cash.request.liquidity.bank,type:0
+#: selection:cash.request.liquidity.cash,type:0
+#: selection:cash.request.liquidity.cheque,type:0
+msgid "Cash"
+msgstr "Caisse"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Cash - See details for subtotals"
+msgstr "Caisse - Voir le détail pour les sous-totaux"
+
+#. module: finance
+#: view:cash.request:0
+#: field:cash.request.commitment,cash_request_id:0
+#: field:cash.request.expense,cash_request_id:0
+#: field:cash.request.liquidity,cash_request_id:0
+#: field:cash.request.liquidity.bank,cash_request_id:0
+#: field:cash.request.liquidity.cash,cash_request_id:0
+#: field:cash.request.liquidity.cheque,cash_request_id:0
+#: field:cash.request.liquidity.total,cash_request_id:0
+#: field:cash.request.payable,cash_request_id:0
+#: field:cash.request.recap.expense,cash_request_id:0
+#: field:cash.request.recap.mission,cash_request_id:0
+#: field:cash.request.total.transfer.line,cash_request_id:0
+#: field:cash.request.transfer.currency,cash_request_id:0
+#: model:ir.actions.act_window,name:finance.action_cash_request_tree
+#: model:ir.model,name:finance.model_cash_request
+#: model:ir.ui.menu,name:finance.menu_action_cash_request_tree
+msgid "Cash Request"
+msgstr "Cash Request"
+
+#. module: finance
+#: model:ir.actions.report.xml,name:finance.cash_request_export
+msgid "Cash Request - Export PDF"
+msgstr "Cash Request - Export PDF"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Cash Request Validation"
+msgstr "Validation Cash Request"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:575
+#, python-format
+msgid "Cash Requests can only be deleted in Draft state."
+msgstr "Les Cash Requests ne peuvent être supprimées qu'à l'état Brouillon."
+
+#. module: finance
+#: field:cash.request.recap.mission,liquidity_amount:0
+msgid "Cash available in mission"
+msgstr "Liquidités disponibles dans la mission"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Cash available in mission:"
+msgstr "Liquidités disponibles dans la mission :"
+
+#. module: finance
+#: view:cash.request:0
+#: field:cash.request.recap.mission,commitment_amount:0
+msgid "Commitment"
+msgstr "Engagement"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_commitment
+msgid "Commitment Line for Cash Request"
+msgstr "Ligne d'Engagement pour la Cash Request"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Commitment:"
+msgstr "Engagement :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Compute recap lines & total to transfer"
+msgstr "Calculer les lignes de récap. et le total à transférer"
+
+#. module: finance
+#: field:cash.request,consolidation_currency_id:0
+msgid "Consolidation Currency"
+msgstr "Devise de Consolidation"
+
+#. module: finance
+#: field:cash.request,consolidation_currency_name:0
+msgid "Consolidation Currency Name"
+msgstr "Nom de la Devise de Consolidation"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Consolidation Currency:"
+msgstr "Devise de Consolidation :"
+
+#. module: finance
+#: field:cash.request,transfer_currency_ids:0
+msgid "Currency of Transfers"
+msgstr "Devise de Virement"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_transfer_currency
+msgid "Currency of Transfers for Cash Request"
+msgstr "Devise de Virement pour la Cash Request"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Currency of Transfers:"
+msgstr "Devise de Virement :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Engagement Entries in func. currency"
+msgstr "Ecritures d'Engagement en devise fonc."
+
+#. module: finance
+#: field:cash.request.recap.mission,expense_amount:0
+msgid "Foreseen expenses"
+msgstr "Dépenses prévues"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Foreseen expenses:"
+msgstr "Dépenses prévues :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Generate"
+msgstr "Générer"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Grand Total"
+msgstr "Total Général"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Grand Total Functional"
+msgstr "Total Général Fonctionnel"
+
+#. module: finance
+#: field:cash.request.liquidity.total,amount_functional:0
+msgid "Grand Total Functional Currency"
+msgstr "Total Général Devise Fonctionnelle"
+
+#. module: finance
+#: field:cash.request.liquidity.total,amount_booking:0
+msgid "Grand Total Register Currency"
+msgstr "Total Général dans la Devise du Registre"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Grand Total per Currency"
+msgstr "Total Général par Devise"
+
+#. module: finance
+#: view:cash.request:0
+msgid ""
+"Have you clicked on \"Compute recap lines & total to transfer\" to get the "
+"accurate Total to transfer?"
+msgstr ""
+"Avez-vous cliqué sur \"Calculer les lignes de récap. et le total à transférer\" pour avoir le "
+"Total exact à transférer ?"
+
+#. module: finance
+#: help:cash.request,transfer_to_come:0
+msgid ""
+"In case a transfer is on its way and not yet received. In functional "
+"currency."
+msgstr ""
+"Dans le cas où un virement est en cours et pas encore réceptionné. En devise "
+"fonctionnelle."
+
+#. module: finance
+#: field:cash.request.commitment,instance_id:0
+msgid "Instance Code"
+msgstr "Code de l'Instance"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Instance Code:"
+msgstr "Code de l'Instance :"
+
+#. module: finance
+#: field:cash.request.expense,consumer_instance_id:0
+msgid "Instance Consumer"
+msgstr "Instance Consommatrice"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Instance Name:"
+msgstr "Nom de l'Instance :"
+
+#. module: finance
+#: field:cash.request.recap.mission,instance_id:0
+msgid "Instance code / Place of payment"
+msgstr "Code de l'Instance / Lieu du paiement"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Instance code / Place of payment:"
+msgstr "Code de l'Instance / Lieu du paiement :"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Level:"
+msgstr "Niveau :"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_total_transfer_line
+msgid "Line of Total to transfer for Cash Request"
+msgstr "Ligne de Total à transférer pour la Cash Request"
+
+#. module: finance
+#: field:cash.request,recap_mission_ids:0
+msgid "Lines of Recap Mission"
+msgstr "Lignes de Récap Mission"
+
+#. module: finance
+#: field:cash.request,total_to_transfer_line_ids:0
+msgid "Lines of Total Cash Request to transfer"
+msgstr "Lignes de Total Cash Request à transférer"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:596
+#, python-format
+msgid "Liquidity Position - Bank"
+msgstr "Point de Trésorerie - Banque"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:591
+#, python-format
+msgid "Liquidity Position - Cash"
+msgstr "Point de Trésorerie - Caisse"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:601
+#, python-format
+msgid "Liquidity Position - Pending Cheques"
+msgstr "Point de Trésorerie - Chèques en Attente"
+
+#. module: finance
+#: field:cash.request,liquidity_bank_ids:0
+msgid "Liquidity Position Bank"
+msgstr "Point de Trésorerie Banque"
+
+#. module: finance
+#: field:cash.request,liquidity_cash_ids:0
+msgid "Liquidity Position Cash"
+msgstr "Point de Trésorerie Caisse"
+
+#. module: finance
+#: field:cash.request,liquidity_cheque_ids:0
+msgid "Liquidity Position Cheque"
+msgstr "Point de Trésorerie Chèques"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_liquidity_total
+msgid "Liquidity Position Grand Total per Currency for Cash Request"
+msgstr "Total Général Point de Trésorerie par Devise pour la Cash Request"
+
+#. module: finance
+#: field:cash.request,liquidity_total_ids:0
+msgid "Liquidity Position Total"
+msgstr "Point de Trésorerie Total"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_liquidity
+#: model:ir.model,name:finance.model_cash_request_liquidity_bank
+#: model:ir.model,name:finance.model_cash_request_liquidity_cash
+#: model:ir.model,name:finance.model_cash_request_liquidity_cheque
+msgid "Liquidity Position for Cash Request"
+msgstr "Point de Trésorerie pour la Cash Request"
+
+#. module: finance
+#: field:cash.request.expense,is_local_expense:0
+msgid "Local Expense"
+msgstr "Dépense Locale"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Main Tab"
+msgstr "Onglet Principal"
+
+#. module: finance
+#: field:cash.request,instance_ids:0
+#: report:cash.request.export:0
+msgid "Mission Settings"
+msgstr "Paramètres Mission"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Mission:"
+msgstr "Mission :"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Month:"
+msgstr "Mois :"
+
+#. module: finance
+#: view:cash.request:0
+#: field:cash.request,past_transfer_ids:0
+msgid "Past Transfers"
+msgstr "Virements précédents"
+
+#. module: finance
+#: field:cash.request.recap.mission,payable_amount:0
+msgid "Payable Invoices"
+msgstr "Factures Fournisseurs"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Payable Invoices:"
+msgstr "Factures Fournisseurs :"
+
+#. module: finance
+#: view:cash.request:0
+#: field:cash.request,payable_ids:0
+msgid "Payables"
+msgstr "Fournisseurs"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_payable
+msgid "Payables for Cash Request"
+msgstr "Entrées fournisseurs pour la Cash Request"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Pending Cheques - See details for subtotals"
+msgstr "Chèques en Attente - Voir le détail pour les sous-totaux"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Planned Expense"
+msgstr "Dépense Prévue"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Planned Expenses entries"
+msgstr "Dépenses Prévues"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_expense
+msgid "Planned Expenses for Cash Request"
+msgstr "Dépenses Prévues pour la Cash Request"
+
+#. module: finance
+#: field:cash.request.recap.expense,expense_total:0
+msgid "Planned Expenses for the period M"
+msgstr "Dépenses Prévues pour la période M"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Planned expense for the coming period"
+msgstr "Dépense prévue pour la période à venir"
+
+#. module: finance
+#: field:cash.request,planned_expense_ids:0
+msgid "Planned expenses entries"
+msgstr "Dépenses prévues"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:270
+#, python-format
+msgid ""
+"Please indicate the percentage for each currency of transfers selected."
+msgstr ""
+"Veuillez indiquer le pourcentage pour chaque devise de virement sélectionnée."
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Position:"
+msgstr "Poste :"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Proprietary instance:"
+msgstr "Instance propriétaire :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Recap"
+msgstr "Récap"
+
+#. module: finance
+#: view:cash.request:0
+#: report:cash.request.export:0
+msgid "Recap Mission"
+msgstr "Récap Mission"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_recap_mission
+#: model:ir.model,name:finance.model_recap_mission
+msgid "Recap Mission Line for Cash Request"
+msgstr "Récap Ligne de Mission pour la Cash Request"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_recap_expense
+msgid "Recap Planned Expenses for Cash Request"
+msgstr "Récap Dépenses Prévues pour la Cash Request"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Recap Planned Expenses in func. currency"
+msgstr "Récap Dépenses Prévues en devise fonc."
+
+#. module: finance
+#: field:cash.request,recap_expense_ids:0
+msgid "Recap Planned expenses"
+msgstr "Récap Dépenses prévues"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Request Date:"
+msgstr "Date de la Demande :"
+
+#. module: finance
+#: field:cash.request,security_envelope:0
+msgid "Security Envelopes"
+msgstr "Enveloppes de Sécurité"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Security Envelopes:"
+msgstr "Enveloppes de Sécurité :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Settings"
+msgstr "Paramètres"
+
+#. module: finance
+#: view:cash.request:0
+#: report:cash.request.export:0
+msgid "Split per currencies"
+msgstr "Répartition par devises"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:455
+#, python-format
+msgid "The date of the Cash Request must be the date of the day."
+msgstr "La date de la Cash Request doit être celle du jour."
+
+#. module: finance
+#: code:addons/finance/cash_request.py:129
+#: constraint:cash.request:0
+#, python-format
+msgid "The percentage in the Buffer field is incorrect."
+msgstr "Le pourcentage dans le champ Buffer est incorrect."
+
+#. module: finance
+#: code:addons/finance/cash_request.py:672
+#: constraint:cash.request.transfer.currency:0
+#, python-format
+msgid "The percentage of the currency is incorrect."
+msgstr "Le pourcentage de la devise est incorrect."
+
+#. module: finance
+#: code:addons/finance/cash_request.py:268
+#, python-format
+msgid "The total percentage of the currencies of transfers is incorrect."
+msgstr "Le pourcentage total des devises de virements est incorrect."
+
+#. module: finance
+#: view:cash.request:0
+msgid "Top Proprietary Instance"
+msgstr "Instance Propriétaire Parente"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Total Balance"
+msgstr "Solde Total"
+
+#. module: finance
+#: view:cash.request.liquidity.bank:0
+msgid "Total Bank Statement Balance Booking"
+msgstr "Solde Total du Relevé Bancaire en Devise d'Enreg."
+
+#. module: finance
+#: view:cash.request:0
+#: view:cash.request.liquidity.bank:0
+msgid "Total Bank Statement Balance Functional"
+msgstr "Solde Total du Relevé Bancaire en Devise Fonc."
+
+#. module: finance
+#: field:cash.request.expense,total_booking:0
+msgid "Total Booking Cur."
+msgstr "Total Devise d'Enreg."
+
+#. module: finance
+#: view:cash.request.liquidity.bank:0
+#: view:cash.request.liquidity.cash:0
+msgid "Total Calculated Balance Booking"
+msgstr "Total Solde Calculé en Devise d'Enreg."
+
+#. module: finance
+#: view:cash.request:0
+#: view:cash.request.liquidity.bank:0
+#: view:cash.request.liquidity.cash:0
+msgid "Total Calculated Balance Functional"
+msgstr "Total Solde Calculé en Devise Fonctionnelle"
+
+#. module: finance
+#: field:cash.request,total_to_transfer:0
+msgid "Total Cash Request to transfer"
+msgstr "Total Cash Request à tranférer"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Total Cash Request to transfer:"
+msgstr "Total Cash Request à transférer :"
+
+#. module: finance
+#: field:cash.request.recap.mission,total:0
+msgid "Total Cash requested"
+msgstr "Total Cash demandé"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Total Cash requested:"
+msgstr "Total Cash demandé :"
+
+#. module: finance
+#: view:cash.request.liquidity.cash:0
+msgid "Total Cashbox Balance Booking"
+msgstr "Total Solde de Caisse en Devise d'Enreg."
+
+#. module: finance
+#: view:cash.request:0
+#: view:cash.request.liquidity.cash:0
+msgid "Total Cashbox Balance Functional"
+msgstr "Total Solde de Caisse en Devise Fonctionnelle"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Total Commitment"
+msgstr "Total Engagement"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Total Engagement in Func. currency for the month to come"
+msgstr "Total Engagement en devise Fonc. pour le mois à venir"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Total Expenses"
+msgstr "Total des Dépenses"
+
+#. module: finance
+#: field:cash.request.expense,total_functional:0
+msgid "Total Functional Cur."
+msgstr "Total Devise Fonc."
+
+#. module: finance
+#: view:cash.request:0
+msgid "Total Liquidity"
+msgstr "Total Liquidités"
+
+#. module: finance
+#: view:cash.request.liquidity.bank:0
+#: view:cash.request.liquidity.cash:0
+msgid "Total Opening Balance"
+msgstr "Total Solde d'Ouverture"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Total Payable"
+msgstr "Total Fournisseurs"
+
+#. module: finance
+#: view:cash.request.liquidity.cheque:0
+msgid "Total Pending Cheques Booking"
+msgstr "Total Chèques en Attente en Devise d'Enreg."
+
+#. module: finance
+#: view:cash.request:0
+#: view:cash.request.liquidity.cheque:0
+msgid "Total Pending Cheques Functional"
+msgstr "Total Chèques en Attente en Devise Fonc."
+
+#. module: finance
+#: field:cash.request,transfer_to_come:0
+msgid "Total Transfer to come"
+msgstr "Total Virements à venir"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Total Transfer to come:"
+msgstr "Total Virements à venir :"
+
+#. module: finance
+#: field:cash.request,transfer_account_id:0
+msgid "Transfer Account Code"
+msgstr "Code du Compte pour Virement"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Transfer Account Code:"
+msgstr "Code du Compte pour Virement :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Transfers Follow-up"
+msgstr "Suivi des Virements"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:677
+#: sql_constraint:cash.request.transfer.currency:0
+#, python-format
+msgid "You have already selected this currency."
+msgstr "Vous avez déjà sélectionné cette devise."
+
+#. module: finance
+#: code:addons/finance/cash_request.py:261
+#, python-format
+msgid "You must select at least one currency of transfers."
+msgstr "Vous devez sélectionner au moins une devise de virement."
