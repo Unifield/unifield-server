@@ -168,7 +168,7 @@
    <NamedRange ss:Name="_FilterDatabase"
     ss:RefersTo="=user_rights_groups!R1C1:R1C51" ss:Hidden="1"/>
   </Names>
-  <Table ss:ExpandedRowCount="4544" x:FullColumns="1"
+  <Table x:FullColumns="1"
    x:FullRows="1" ss:StyleID="s62" ss:DefaultRowHeight="14.25">
    <Column ss:StyleID="s62" ss:Width="140.25"/>
    <Column ss:StyleID="s62" ss:Width="180"/>
@@ -870,8 +870,8 @@
     <Cell ss:StyleID="s79"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s79"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s79"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s79"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s79"><Data ss:Type="String">NO</Data></Cell>
+    <Cell ss:StyleID="s79"><Data ss:Type="String">YES</Data></Cell>
+    <Cell ss:StyleID="s79"><Data ss:Type="String">YES</Data></Cell>
     <Cell ss:StyleID="s79"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s79"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s79"><Data ss:Type="String">NO</Data></Cell>
@@ -1029,9 +1029,9 @@
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s82"><Data ss:Type="String">YES</Data></Cell>
+    <Cell ss:StyleID="s82"><Data ss:Type="String">YES</Data></Cell>
+    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
@@ -10490,7 +10490,7 @@
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="15">
-    <Cell ss:StyleID="s79"><Data ss:Type="String">sale_override</Data></Cell>
+    <Cell ss:StyleID="s79"><Data ss:Type="String">sale</Data></Cell>
     <Cell ss:StyleID="s79"><Data ss:Type="String">menu_localisation</Data></Cell>
     <Cell ss:StyleID="s79"><Data ss:Type="Number">0</Data></Cell>
     <Cell ss:StyleID="s79"><Data ss:Type="String">Localisation</Data></Cell>
@@ -10543,7 +10543,7 @@
     <Cell ss:StyleID="s80"><Data ss:Type="String">NO</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="15">
-    <Cell ss:StyleID="s69"><Data ss:Type="String">sale_override</Data></Cell>
+    <Cell ss:StyleID="s69"><Data ss:Type="String">sale</Data></Cell>
     <Cell ss:StyleID="s69"><Data ss:Type="String">menu_country_partner</Data></Cell>
     <Cell ss:StyleID="s69"><Data ss:Type="String">++</Data></Cell>
     <Cell ss:StyleID="s69"><Data ss:Type="String">Countries</Data></Cell>
@@ -10596,7 +10596,7 @@
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="15">
-    <Cell ss:StyleID="s69"><Data ss:Type="String">sale_override</Data></Cell>
+    <Cell ss:StyleID="s69"><Data ss:Type="String">sale</Data></Cell>
     <Cell ss:StyleID="s69"><Data ss:Type="String">menu_country_state_partner</Data></Cell>
     <Cell ss:StyleID="s69"><Data ss:Type="String">++</Data></Cell>
     <Cell ss:StyleID="s69"><Data ss:Type="String">Fed. States</Data></Cell>
@@ -11948,59 +11948,6 @@
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-   </Row>
-   <Row ss:AutoFitHeight="0" ss:Height="15">
-    <Cell ss:StyleID="s69"><Data ss:Type="String">base</Data></Cell>
-    <Cell ss:StyleID="s69"><Data ss:Type="String">menu_action_translation</Data></Cell>
-    <Cell ss:StyleID="s69"><Data ss:Type="String">+++</Data></Cell>
-    <Cell ss:StyleID="s69"><Data ss:Type="String">Translation Terms</Data></Cell>
-    <Cell ss:StyleID="s69"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s69"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s69"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
-    <Cell ss:StyleID="s82"><Data ss:Type="String">YES</Data></Cell>
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
     <Cell ss:StyleID="s82"><Data ss:Type="String">NO</Data></Cell>
@@ -13829,7 +13776,7 @@
     <Cell ss:StyleID="s82"><Data ss:Type="String">YES</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="15">
-    <Cell ss:StyleID="s69"><Data ss:Type="String">sale_override</Data></Cell>
+    <Cell ss:StyleID="s69"><Data ss:Type="String">sale</Data></Cell>
     <Cell ss:StyleID="s69"><Data ss:Type="String">sale_order_sourcing_progress_menu</Data></Cell>
     <Cell ss:StyleID="s69"><Data ss:Type="String">++</Data></Cell>
     <Cell ss:StyleID="s69"><Data ss:Type="String">Sourcing progress</Data></Cell>
@@ -20295,7 +20242,7 @@
     <Cell ss:StyleID="s87"><Data ss:Type="String">YES</Data></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="15">
-    <Cell ss:StyleID="s79"><Data ss:Type="String">sale_override</Data></Cell>
+    <Cell ss:StyleID="s79"><Data ss:Type="String">sale</Data></Cell>
     <Cell ss:StyleID="s79"><Data ss:Type="String">menu_sale_action_picking_tree_out_move</Data></Cell>
     <Cell ss:StyleID="s79"><Data ss:Type="Number">0</Data></Cell>
     <Cell ss:StyleID="s79"/>
@@ -23378,9 +23325,9 @@
    <FreezePanes/>
    <FrozenNoSplit/>
    <SplitHorizontal>1</SplitHorizontal>
-   <TopRowBottomPane>358</TopRowBottomPane>
+   <TopRowBottomPane>1</TopRowBottomPane>
    <SplitVertical>4</SplitVertical>
-   <LeftColumnRightPane>17</LeftColumnRightPane>
+   <LeftColumnRightPane>33</LeftColumnRightPane>
    <ActivePane>0</ActivePane>
    <Panes>
     <Pane>
@@ -23392,12 +23339,11 @@
     </Pane>
     <Pane>
      <Number>2</Number>
-     <ActiveRow>1</ActiveRow>
     </Pane>
     <Pane>
      <Number>0</Number>
-     <ActiveRow>360</ActiveRow>
-     <ActiveCol>23</ActiveCol>
+     <ActiveRow>14</ActiveRow>
+     <ActiveCol>37</ActiveCol>
     </Pane>
    </Panes>
    <ProtectObjects>False</ProtectObjects>
