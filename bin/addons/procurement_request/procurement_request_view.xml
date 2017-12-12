@@ -67,7 +67,8 @@
                                     icon="terp-go-week" />
                                     <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
                                     <field name="original_changed" readonly="1"/>
-                                    <button name="button_view_changed" string="View Current/Original" type="object" icon="terp-stock_zoom" />
+                                    <button name="button_view_changed" string="View Current/Original" type="object" icon="terp-stock_zoom"
+                                            attrs="{'invisible': [('original_qty', '=', False), ('modification_comment', '=', False)]}"/>
                                     <field name="price_unit"/>
                                     <field name="notes" />
                                     <field name="display_resourced_orig_line" />
@@ -83,6 +84,8 @@
                                         domain="[('supplier', '=', True), ('id', '!=', my_company_id), ('check_partner_ir', '=', True)]"
                                         />
                                     <field name="fake_state" invisible="1"/>
+                                    <field name="original_qty" invisible="1"/>
+                                    <field name="modification_comment" invisible="1"/>
                                     <field name="state_to_display"/>
                                     <field name="stock_take_date"/>
                                     <field name="price_subtotal" sum="Total"/>
