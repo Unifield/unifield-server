@@ -425,7 +425,11 @@ class account_invoice(osv.osv):
     def get_log_context(self, cr, uid, context=None):
         if context is None:
             context = {}
-        res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
+        is_intermission = context.get('is_intermission', False)
+        if is_intermission:
+            res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
+        else:
+            res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
         view_id = res and res[1] or False
         context.update({'view_id': view_id})
         return context
@@ -437,6 +441,8 @@ class account_invoice(osv.osv):
             res = super(account_invoice, self).create(cr, uid, vals, context)
             for inv_id, name in self.name_get(cr, uid, [res], context=context):
                 ctx = context.copy()
+                if 'is_intermission' in vals:
+                    ctx.update({'is_intermission': vals['is_intermission']})
                 if vals.get('type', 'in_invoice') in ('out_invoice', 'out_refund'):
                     ctx = self.get_log_context(cr, uid, context=ctx)
                 if 'type' in vals:
