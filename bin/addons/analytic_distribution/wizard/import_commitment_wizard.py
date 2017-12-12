@@ -122,7 +122,7 @@ class import_commitment_wizard(osv.osv_memory):
 
                     # G/L account
                     if account_code:
-                        account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)])
+                        account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code), ('type', '!=', 'view')])
                         if not account_ids:
                             raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Account code %s doesn\'t exist!') % (account_code,)))
                         vals.update({'general_account_id': account_ids[0]})
