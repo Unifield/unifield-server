@@ -10,6 +10,7 @@ def migrate(cr, version):
     cr.execute("delete from ir_ui_menu where id in (select res_id from ir_model_data where model='ir.ui.menu' and module='sale_override')")
     cr.execute("update ir_module_module set state='to upgrade' where name='msf_button_access_rights'")
     cr.execute("update ir_model_data set name=regexp_replace(name,'^sale_override_(.*)$', 'sale_\\1') where model='ir.model' and module='sd'")
+    cr.execute("update ir_model_data set name=regexp_replace(name,'^(.*)$_sale_override_(.*)$', '\\1_sale_\\2') where model='ir.model.access'")
 
     queries = os.path.join(config['root_path'], 'addons/base/migrations/7.0.1.1/update_ir_model_data_fields.sql')
     if os.path.exists(queries):
@@ -17,6 +18,40 @@ def migrate(cr, version):
             for line in lines:
                 if line:
                     cr.execute(line)
+
+    # delete FARL linked to deleted fields
+    #field_sale_order_from_yml_test
+    cr.execute('''delete from msf_field_access_rights_field_access_rule_line where id in
+        (select res_id from ir_model_data where name in (
+            'msf_profile/field_access_rule_line/30',
+            'msf_profile/field_access_rule_line/122',
+            'msf_profile/field_access_rule_line/214',
+            'msf_profile/field_access_rule_line/298',
+            'msf_profile/field_access_rule_line/382',
+            'msf_profile/field_access_rule_line/465'
+        ))''')
+    cr.execute('''delete from ir_model_data where name in (
+            'msf_profile/field_access_rule_line/30',
+            'msf_profile/field_access_rule_line/122',
+            'msf_profile/field_access_rule_line/214',
+            'msf_profile/field_access_rule_line/298',
+            'msf_profile/field_access_rule_line/382',
+            'msf_profile/field_access_rule_line/465'
+    )''')
+
+    # sale_override.field_sale_order_validated_date
+    cr.execute('''delete from msf_field_access_rights_field_access_rule_line where id in
+        (select res_id from ir_model_data where name in (
+            'msf_profile/field_access_rule_line/357',
+            'msf_profile/field_access_rule_line/441',
+            'msf_profile/field_access_rule_line/524'
+        ))''')
+    cr.execute('''delete from ir_model_data where name in (
+            'msf_profile/field_access_rule_line/357',
+            'msf_profile/field_access_rule_line/441',
+            'msf_profile/field_access_rule_line/524'
+    )''')
+
 
     # WKF
     cr.execute("delete from wkf_workitem where act_id in (select id from  wkf_activity  where wkf_id in (select id from wkf  where osv in ('purchase.order', 'sale.order', 'procurement.order')))")

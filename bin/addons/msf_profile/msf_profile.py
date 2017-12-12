@@ -221,6 +221,40 @@ class patch_scripts(osv.osv):
         # Set sync id on POL/SOL
         cr.execute("update purchase_order_line set sync_linked_sol=regexp_replace(sync_order_line_db_id,'/FO([0-9-]+)_([0-9]+)$', '/FO\\1/\\2') where sync_order_line_db_id ~ '/FO([0-9-]+)_([0-9]+)$' ")
         cr.execute("update sale_order_line set sync_linked_pol=regexp_replace(source_sync_line_id,'/PO([0-9-]+)_([0-9]+)$', '/PO\\1/\\2') where source_sync_line_id ~ '/PO([0-9-]+)_([0-9]+)$'")
+
+
+        acl_file = os.path.join(tools.config['root_path'], 'addons/msf_profile/migrations/7.0_acl.txt')
+        if not os.path.exists(acl_file):
+            self._logger.warn("File %s not found" % acl_file)
+        else:
+            all_acl = []
+            fd = open(acl_file)
+            for line in fd.readlines():
+                line = line.strip()
+                if line:
+                    all_acl.append(line)
+            update_module = self.pool.get('sync.server.update')
+            if update_module:
+                # we are on a sync server
+                # delete depecrated acl to prevent NR on new created instance
+                cr.execute('''delete from sync_server_update where sdref in %s''', (tuple(all_acl),))
+            else:
+                user_obj = self.pool.get('res.users')
+                usr = user_obj.browse(cr, uid, [uid])[0]
+                level_current = False
+
+                if usr and usr.company_id and usr.company_id.instance_id:
+                    level_current = usr.company_id.instance_id.level
+                # only at hq ?
+                if level_current == 'section':
+                    for line in all_acl:
+                        if line.startswith('_msf_profile/field_access_rule_line'):
+                            # FARL change of field xmlid, force update on this FARL
+                            cr.execute('''update ir_model_data set touched='[''comment'']', last_modification=NOW() where name=%s''' , (line, ))
+                        elif line.startswith('_msf_profile_sale_override'):
+                            # ACL xmlid changed, force update
+                            cr.execute('''update ir_model_data set touched='[''name'']', last_modification=NOW() where name=%s''' , (line.replace('sale_override', 'sale'), ))
+
         return True
 
     def us_3306(self, cr, uid, *a, **b):
