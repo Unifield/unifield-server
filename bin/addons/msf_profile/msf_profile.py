@@ -250,11 +250,12 @@ class patch_scripts(osv.osv):
                     for line in all_acl:
                         if line.startswith('_msf_profile/field_access_rule_line'):
                             # FARL change of field xmlid, force update on this FARL
-                            cr.execute('''update ir_model_data set touched='[''comment'']', last_modification=NOW() where name=%s''' , (line, ))
+                            cr.execute('''update ir_model_data set touched='[''field_name'']', last_modification=NOW() where name=%s''' , (line, ))
                         elif line.startswith('_msf_profile_sale_override'):
                             # ACL xmlid changed, force update
                             cr.execute('''update ir_model_data set touched='[''name'']', last_modification=NOW() where name=%s''' , (line.replace('sale_override', 'sale'), ))
 
+        cr.commit()
         return True
 
     def us_3306(self, cr, uid, *a, **b):

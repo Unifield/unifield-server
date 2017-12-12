@@ -10,7 +10,7 @@ def migrate(cr, version):
     cr.execute("delete from ir_ui_menu where id in (select res_id from ir_model_data where model='ir.ui.menu' and module='sale_override')")
     cr.execute("update ir_module_module set state='to upgrade' where name='msf_button_access_rights'")
     cr.execute("update ir_model_data set name=regexp_replace(name,'^sale_override_(.*)$', 'sale_\\1') where model='ir.model' and module='sd'")
-    cr.execute("update ir_model_data set name=regexp_replace(name,'^(.*)$_sale_override_(.*)$', '\\1_sale_\\2') where model='ir.model.access'")
+    cr.execute("update ir_model_data set name=regexp_replace(name,'^(.*)_sale_override_(.*)$', '\\1_sale_\\2') where model='ir.model.access'")
 
     queries = os.path.join(config['root_path'], 'addons/base/migrations/7.0.1.1/update_ir_model_data_fields.sql')
     if os.path.exists(queries):
