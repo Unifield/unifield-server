@@ -221,14 +221,19 @@ class cash_request(osv.osv):
     def copy(self, cr, uid, cash_req_id, default=None, context=None):
         """
         Duplicates a cash request:
-        resets the computed items and changes the date to the one of the day
+        resets the computed items and changes the date and month to the date of the day
         """
         if context is None:
             context = {}
         if default is None:
             default = {}
+        period_obj = self.pool.get('account.period')
+        today = datetime.today()
+        current_month_ids = period_obj.get_period_from_date(cr, uid, today.strftime('%Y-%m-%d'), context=context)
+        current_month_id = current_month_ids and current_month_ids[0] or False
         default.update({
-            'request_date': datetime.today(),
+            'request_date': today,
+            'month_period_id': current_month_id,
             'name': '',
             'instance_ids': [],
             'past_transfer_ids': [],
