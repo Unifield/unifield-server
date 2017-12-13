@@ -51,6 +51,9 @@ $.ctrlshift = function(key, callback, args) {
             else if (key == '13'){
                 class_to_parse = '.oe_form_button_search';
             }
+            else if (key == 'R'){
+                class_to_parse = '.oe_form_button_clear';
+            }
             else if (key == '38'){
                 class_to_parse = '.oe_button_pager[action="first"]';
             }
@@ -100,7 +103,7 @@ $.ctrlshift = function(key, callback, args) {
                         }
                         var $newdiv1 = $( "<span class='shortcut_tooltip'>" + key_to_display + "</span>" );
                         $( "body" ).append($newdiv1);
-                        var postion = $(this).position();
+                        var postion = $(this).offset();
                         var new_top = postion.top + 20;
                         if ($(this).width() <= 20){
                             var new_left = postion.left - $newdiv1.width()/2;
@@ -117,6 +120,7 @@ $.ctrlshift = function(key, callback, args) {
                            $newdiv1.remove();
                         }, 2000);
                      }
+                     return false;
                 });
             }
         }
@@ -227,6 +231,7 @@ $.ctrlshift('R', function() {
 $.ctrlshift('38', function(event) {
     $('.oe_button_pager[action="first"]').each(function() {
         fake_click(this);
+        return false;
     });
 });
 
@@ -234,6 +239,7 @@ $.ctrlshift('38', function(event) {
 $.ctrlshift('37', function() {
     $('.oe_button_pager[action="previous"]').each(function() {
         fake_click(this);
+        return false;
     });
 });
 
@@ -241,6 +247,7 @@ $.ctrlshift('37', function() {
 $.ctrlshift('39', function() {
     $('.oe_button_pager[action="next"]').each(function() {
         fake_click(this);
+        return false;
     });
 });
 
@@ -248,12 +255,6 @@ $.ctrlshift('39', function() {
 $.ctrlshift('40', function() {
     $('.oe_button_pager[action="last"]').each(function() {
         fake_click(this);
-    });
-});
-
-//Close ('Q')
-$.ctrlshift('Q', function() {
-    $('.oe_form_button_close').each(function() {
-        fake_click(this);
+        return false;
     });
 });
