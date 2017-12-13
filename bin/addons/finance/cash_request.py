@@ -72,7 +72,7 @@ class cash_request(osv.osv):
             [('draft', 'Draft'), ('open', 'Open'), ('done', 'Done')], 'State',
             required=True, readonly=True),
         'instance_ids': fields.many2many('msf.instance', 'cash_request_instance_rel', 'cash_request_id', 'instance_id',
-                                         string='Mission Settings', readonly=True),
+                                         string='Mission Settings', readonly=True, order_by='level, id'),
         'transfer_to_come': fields.float('Total Transfer to come', digits_compute=dp.get_precision('Account'),
                                          help='In case a transfer is on its way and not yet received. In functional currency.'),
         'security_envelope': fields.float('Security Envelopes', digits_compute=dp.get_precision('Account'),

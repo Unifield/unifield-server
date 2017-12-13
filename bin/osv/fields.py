@@ -565,6 +565,9 @@ class many2many(_column):
         self._id1 = id1
         self._id2 = id2
         self._limit = limit
+        self._order_by = ''
+        if 'order_by' in args:
+            self._order_by = args['order_by']
 
     def get(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
         if not context:
@@ -594,6 +597,8 @@ class many2many(_column):
 
         if offset or self._limit:
             order_by = ' ORDER BY "%s".%s' %(obj._table, obj._order.split(',')[0])
+        elif self._order_by:
+            order_by = ' ORDER BY %s' % self._order_by
         else:
             order_by = ''
 
