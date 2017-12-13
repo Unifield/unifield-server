@@ -52,7 +52,9 @@ class cash_request(osv.osv):
         'mission': fields.related('prop_instance_id', 'mission', string='Mission', type='char', store=False,
                                   readonly=True, required=True),
         'month_period_id': fields.many2one('account.period', 'Month', required=True,
-                                           domain=[('date_stop', '>=', time.strftime('%Y-%m-%d')), ('special', '=', False)]),
+                                           domain=[('date_stop', '>=', time.strftime('%Y-%m-%d')),
+                                                   ('special', '=', False),
+                                                   ('state', '=', 'draft')]),  # Open periods
         'fiscalyear_id': fields.related('month_period_id', 'fiscalyear_id', string='Fiscal Year', type='many2one',
                                         relation='account.fiscalyear', store=False, readonly=True),
         'request_date': fields.date('Request Date', required=True),
