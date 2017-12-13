@@ -1016,8 +1016,9 @@ class cash_request_payable(osv.osv):
         Gets the ids of the JIs matching all the following criteria:
         - booked on accounts with Internal Type Payables (exclude Donations)
         - posted
-        - not fully reconciled
+        - not fully reconciled (but reconcilable)
         - booked in the period of the cash request or before
+        - not booked in a Period 0 or 16
         - for a given Prop. Instance (=> instance_id of the cash_request_payable)
         """
         if context is None:
@@ -1034,8 +1035,10 @@ class cash_request_payable(osv.osv):
             period = cash_req.month_period_id
             aml_domain = [('account_id', 'in', account_ids),
                           ('move_id.state', '=', 'posted'),
-                          ('reconcile_id', '=', False),
+                          ('account_id.reconcile', '=', True),  # reconcilable...
+                          ('reconcile_id', '=', False),  # ... but not reconciled
                           ('date', '<=', period.date_stop),
+                          ('period_id.number', 'not in', [0, 16]),
                           ('instance_id', '=', cr_payable.instance_id.id)]
             result[cr_payable.id] = aml_obj.search(cr, uid, aml_domain, order='NO_ORDER', context=context)
         return result
