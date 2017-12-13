@@ -188,8 +188,9 @@ class cash_request(osv.osv):
             context = {}
         instance_obj = self.pool.get('msf.instance')
         mission = self._get_mission(cr, uid, context=context)
+        # note: the instances displayed in the Cash Req. will be ordered by "level, id" (see the field definition)
         instance_ids = instance_obj.search(cr, uid, [('mission', '=', mission), ('level', '!=', 'section')],
-                                           order='level asc, code asc', context=context)  # coordo first
+                                           order='NO_ORDER', context=context)
         return instance_ids
 
     _defaults = {
