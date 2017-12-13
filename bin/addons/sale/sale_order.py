@@ -1147,32 +1147,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         Launch the wizard to re-source lines
         '''
-        # Objects
-        wiz_obj = self.pool.get('sale.order.cancelation.wizard')
-
-        # Variables
-        wf_service = netsvc.LocalService("workflow")
-
-        if not context:
+        if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for order in self.browse(cr, uid, ids, context=context):
-            if order.state == 'validated' and len(order.order_line) > 0:
-                wiz_id = wiz_obj.create(cr, uid, {'order_id': order.id}, context=context)
-                return {'type': 'ir.actions.act_window',
-                        'res_model': 'sale.order.cancelation.wizard',
-                        'view_type': 'form',
-                        'view_mode': 'form',
-                        'target': 'new',
-                        'res_id': wiz_id,
-                        'context': context}
+        sale_order = self.browse(cr, uid, ids[0], context=context)
+        sol_ids = [sol.id for sol in sale_order.order_line]
 
-            wf_service.trg_validate(uid, 'sale.order', order.id, 'cancel', cr)
-
-        return True
+        context.update({'line_ids': sol_ids})
+        return self.pool.get('sale.order.line').open_delete_sale_order_line_wizard(cr, uid, sol_ids, context=context)
 
     def change_currency(self, cr, uid, ids, context=None):
         '''

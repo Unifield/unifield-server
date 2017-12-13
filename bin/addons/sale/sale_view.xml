@@ -316,7 +316,7 @@
                                     <field name="soq_updated" invisible="1" readonly="1"/>
                                     <button string="Split line" icon="terp-stock_effects-object-colorize" name="open_split_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
                                     <button string="Validate" icon="terp-check" name="validated" type="workflow" attrs="{'invisible': [('fake_state', '!=', 'draft')]}" header="True"/>
-                                    <button string="Delete" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'in', ('cancel', 'cancel_r' 'done'))]}"/>
+                                    <button string="Delete" icon="gtk-del" name="open_delete_sale_order_line_wizard" type="object" attrs="{'invisible': [('fake_state', 'not in', ('draft', 'validated'))]}"/>
                                 </tree>
                             </field>
                             <newline/>
@@ -395,7 +395,7 @@
                         <button name="ship_corrected" states="shipping_except" string="Manually corrected" icon="gtk-apply"/>
                         <button name="manual_invoice" states="manual" string="Create Final Invoice" icon="gtk-go-forward" type="object" invisible="1"/>
                         <button name="ship_cancel" states="shipping_except" string="Cancel Order" icon="gtk-cancel"/>
-                        <button name="ask_resource_lines" states="draft,validated" string="Cancel Order" type="object" icon="gtk-cancel"/>
+                        <button name="ask_resource_lines" states="draft,draft_p,validated,validated_p" string="Cancel Order" type="object" icon="gtk-cancel"/>
                         <button name="invoice_cancel" states="invoice_except" string="Cancel Order" icon="gtk-cancel"/>
                         <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply" invisible="True"/>
                         <button name="do_order_confirm_method" type="object" states="validated" string="Confirm Order" icon="gtk-apply" confirm="You are about to confirm the Field Order without going through the sourcing tool. Are you sure?" attrs="{'readonly': [('no_line', '=', True)]}"/>

@@ -109,7 +109,7 @@
                             </field>
                             <group colspan="4" col="6">
                                 <field name="state" />
-                                <button name="procurement_cancel" icon="gtk-cancel" string="Cancel" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" />
+                                <button name="ask_resource_lines" type="object" icon="gtk-cancel" string="Cancel" states="draft,draft_p,validated,validated_p" context="{'noraise': True}" />
                                 <button name="validate_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('no_line', '=', True)]}" />
                             </group>
                         </page>
