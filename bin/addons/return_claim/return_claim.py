@@ -1316,13 +1316,18 @@ class claim_event(osv.osv):
             # update the moves
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
             # update the destination location for each move
-            event_line_numbers = [move.line_number for move in event_picking.move_lines]
+            event_moves = [move for move in event_picking.move_lines]
             for i, move_id in enumerate(replacement_move_ids):
-                replacement_move_values_with_line_numbers = replacement_move_values
+                replacement_move_values_with_more = replacement_move_values
                 # set the same line number as the original move
-                replacement_move_values_with_line_numbers.update({'line_number': event_line_numbers[i]})
+                replacement_move_values_with_more.update({'line_number': event_moves[i].line_number})
+                # update destination to cross docking if the original move goes to cross docking
+                if event_moves[i].location_dest_id.id == context['common']['cross_docking']:
+                    replacement_move_values_with_more.update({
+                        'location_dest_id': context['common']['cross_docking'],
+                    })
                 # get the move values according to claim type
-                move_obj.write(cr, uid, move_id, replacement_move_values_with_line_numbers, context=context)
+                move_obj.write(cr, uid, move_id, replacement_move_values_with_more, context=context)
             # confirm and check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
@@ -1407,13 +1412,18 @@ class claim_event(osv.osv):
             # update the moves
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
             # update the destination location for each move
-            event_line_numbers = [move.line_number for move in event_picking.move_lines]
+            event_moves = [move for move in event_picking.move_lines]
             for i, move_id in enumerate(replacement_move_ids):
-                replacement_move_values_with_line_numbers = replacement_move_values
+                replacement_move_values_with_more = replacement_move_values
                 # set the same line number as the original move
-                replacement_move_values_with_line_numbers.update({'line_number': event_line_numbers[i]})
+                replacement_move_values_with_more.update({'line_number': event_moves[i].line_number})
+                # update destination to cross docking if the original move goes to cross docking
+                if event_moves[i].location_dest_id.id == context['common']['cross_docking']:
+                    replacement_move_values_with_more.update({
+                        'location_dest_id': context['common']['cross_docking'],
+                    })
                 # get the move values according to claim type
-                move_obj.write(cr, uid, move_id, replacement_move_values_with_line_numbers, context=context)
+                move_obj.write(cr, uid, move_id, replacement_move_values_with_more, context=context)
             # check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
@@ -1502,13 +1512,18 @@ class claim_event(osv.osv):
             # update the moves
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
             # update the destination location for each move
-            event_line_numbers = [move.line_number for move in event_picking.move_lines]
+            event_moves = [move for move in event_picking.move_lines]
             for i, move_id in enumerate(replacement_move_ids):
-                replacement_move_values_with_line_numbers = replacement_move_values
+                replacement_move_values_with_more = replacement_move_values
                 # set the same line number as the original move
-                replacement_move_values_with_line_numbers.update({'line_number': event_line_numbers[i]})
+                replacement_move_values_with_more.update({'line_number': event_moves[i].line_number})
+                # update destination to cross docking if the original move goes to cross docking
+                if event_moves[i].location_dest_id.id == context['common']['cross_docking']:
+                    replacement_move_values_with_more.update({
+                        'location_dest_id': context['common']['cross_docking'],
+                    })
                 # get the move values according to claim type
-                move_obj.write(cr, uid, move_id, replacement_move_values_with_line_numbers, context=context)
+                move_obj.write(cr, uid, move_id, replacement_move_values_with_more, context=context)
             # check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
@@ -1634,13 +1649,18 @@ class claim_event(osv.osv):
             # update the moves
             replacement_move_ids = move_obj.search(cr, uid, [('picking_id', '=', replacement_id)], context=context)
             # update the destination location for each move
-            event_line_numbers = [move.line_number for move in obj.event_picking_id_claim_event.move_lines]
+            event_moves = [move for move in event_picking.move_lines]
             for i, move_id in enumerate(replacement_move_ids):
-                replacement_move_values_with_line_numbers = replacement_move_values
+                replacement_move_values_with_more = replacement_move_values
                 # set the same line number as the original move
-                replacement_move_values_with_line_numbers.update({'line_number': event_line_numbers[i]})
+                replacement_move_values_with_more.update({'line_number': event_moves[i].line_number})
+                # update destination to cross docking if the original move goes to cross docking
+                if obj.event_picking_id_claim_event.move_lines[i].location_dest_id.id == context['common']['cross_docking']:
+                    replacement_move_values_with_more.update({
+                        'location_dest_id': context['common']['cross_docking'],
+                    })
                 # get the move values according to claim type
-                move_obj.write(cr, uid, move_id, replacement_move_values_with_line_numbers, context=context)
+                move_obj.write(cr, uid, move_id, replacement_move_values_with_more, context=context)
             # confirm and check availability of replacement picking
             picking_tools.confirm(cr, uid, replacement_id, context=context)
             picking_tools.check_assign(cr, uid, replacement_id, context=context)
@@ -1769,6 +1789,11 @@ class claim_event(osv.osv):
             # force po line id if there is none in the event_picking
             if not move.purchase_line_id:
                 move_values_with_line_numbers.update({'purchase_line_id': origin_picking.move_lines[i].purchase_line_id.id})
+            # update destination to cross docking if the original move goes to cross docking
+            if origin_picking.move_lines[i].location_dest_id.id == context['common']['cross_docking']:
+                move_values_with_line_numbers.update({
+                    'location_dest_id': context['common']['cross_docking'],
+                })
             # get the move values according to claim type
             move_obj.write(cr, uid, move.id, move_values_with_line_numbers, context=context)
         # check availability of replacement picking
