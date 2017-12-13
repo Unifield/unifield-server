@@ -68,7 +68,7 @@ Scenario: SLL - State propagation and readonly checks in Field Orders
     I should see "Warehouse" as readonly
     I should see "Order category" as readonly
     # Order type editable.. not sure if really the expected behavior
-    I should see "Order Type" as editable
+    I should see "Order Type" as readonly
 
     # Check that we can see the details for a line by clicking on it
     I click on line and open the window:
@@ -84,7 +84,7 @@ Scenario: SLL - State propagation and readonly checks in Field Orders
     I should see "Customer" as readonly
     I should see "Warehouse" as readonly
     I should see "Order category" as readonly
-    I should see "Order Type" as editable
+    I should see "Order Type" as readonly
 
     I click "Validate" on line:
     | Product Code |
@@ -97,7 +97,7 @@ Scenario: SLL - State propagation and readonly checks in Field Orders
     I should see "Warehouse" as readonly
     I should see "Order category" as readonly
     # Order type editable.. not sure if really the expected behavior
-    I should see "Order Type" as editable
+    I should see "Order Type" as readonly
 
     I click on "Save & Edit"
 
@@ -107,7 +107,7 @@ Scenario: SLL - State propagation and readonly checks in Field Orders
     I should see "Customer" as readonly
     I should see "Warehouse" as readonly
     I should see "Order category" as readonly
-    I should see "Order Type" as editable
+    I should see "Order Type" as readonly
 
     # Check that we can see the details for a line by clicking on it
     I click on line and open the window:

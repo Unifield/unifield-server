@@ -55,9 +55,9 @@ Scenario: SLL - State propagation and readonly checks in Internal Requests
     I should see "Draft-p" in "Order State"
     I should see "Order Reference" as readonly
     I should see "Ordered Date" as editable
-    I should see "Warehouse" as editable
+    I should see "Warehouse" as readonly
     I should see "Requestor" as editable
-    I should see "Location Requestor" as editable
+    I should see "Location Requestor" as readonly
     I should see "Requested Date" as editable
     I should see "Origin" as editable
     I should see "Functional Currency" as readonly
@@ -71,9 +71,9 @@ Scenario: SLL - State propagation and readonly checks in Internal Requests
     I should see "Draft-p" in "Order State"
     I should see "Order Reference" as readonly
     I should see "Ordered Date" as editable
-    I should see "Warehouse" as editable
+    I should see "Warehouse" as readonly
     I should see "Requestor" as editable
-    I should see "Location Requestor" as editable
+    I should see "Location Requestor" as readonly
     I should see "Requested Date" as editable
     I should see "Origin" as editable
     I should see "Functional Currency" as readonly
@@ -96,9 +96,9 @@ Scenario: SLL - State propagation and readonly checks in Internal Requests
     I should see "Validated" in "Order State"
     I should see "Order Reference" as readonly
     I should see "Ordered Date" as editable
-    I should see "Warehouse" as editable
+    I should see "Warehouse" as readonly
     I should see "Requestor" as editable
-    I should see "Location Requestor" as editable
+    I should see "Location Requestor" as readonly
     I should see "Requested Date" as editable
     I should see "Origin" as editable
     I should see "Functional Currency" as readonly
@@ -111,9 +111,9 @@ Scenario: SLL - State propagation and readonly checks in Internal Requests
     I should see "Validated" in "Order State"
     I should see "Order Reference" as readonly
     I should see "Ordered Date" as editable
-    I should see "Warehouse" as editable
+    I should see "Warehouse" as readonly
     I should see "Requestor" as editable
-    I should see "Location Requestor" as editable
+    I should see "Location Requestor" as readonly
     I should see "Requested Date" as editable
     I should see "Origin" as editable
     I should see "Functional Currency" as readonly
