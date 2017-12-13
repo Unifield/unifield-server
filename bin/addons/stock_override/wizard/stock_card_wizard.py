@@ -268,7 +268,7 @@ class stock_card_wizard(osv.osv_memory):
 
             doc_ref = (move.picking_id and move.picking_id.name) or \
                       (move.init_inv_ids and move.init_inv_ids[0].name) or \
-                      (move.inventory_ids and move.inventory_ids[0].name) or ''
+                      (move.inventory_ids and move.inventory_ids[0].name) or move.name or ''
 
             line_values = {
                 'card_id': ids[0],
