@@ -368,6 +368,8 @@ class procurement_request(osv.osv):
         if not context:
             context = {}
 
+        pricelist_obj = self.pool.get('product.pricelist')
+
         if context.get('procurement_request') or vals.get('procurement_request', False):
             # Get the ISR number
             if not vals.get('name', False):
@@ -382,7 +384,8 @@ class procurement_request(osv.osv):
             vals['partner_order_id'] = address_id
             vals['partner_invoice_id'] = address_id
             vals['partner_shipping_id'] = address_id
-            pl = self.pool.get('product.pricelist').search(cr, uid, [], limit=1)[0]
+            pl = pricelist_obj.search(cr, uid, [('type', '=', 'sale'),
+                                                ('currency_id', '=', company.currency_id.id)], limit=1)[0]
             vals['pricelist_id'] = pl
             if 'delivery_requested_date' in vals:
                 vals['ready_to_ship_date'] = compute_rts(self, cr, uid, vals['delivery_requested_date'], 0, 'so', context=context)
