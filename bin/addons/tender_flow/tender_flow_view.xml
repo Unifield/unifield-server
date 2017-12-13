@@ -259,7 +259,7 @@
             <field name="priority">21</field>
             <field name="arch" type="xml">
                 <form string="Request for Quotation">
-                    <group col="6" colspan="4" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}">
+                    <group col="6" colspan="4">
                         <field name="name"/>
                         <field name="date_order"/>
                         <field name="invoiced" attrs="{'invisible': [('rfq_state', '=', 'draft')]}"/>
@@ -273,17 +273,17 @@
                         <newline />
                         <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" />
                         <field name="details" />
-                        <field name="parent_order_name" readonly="True" attrs="{'invisible': [('parent_order_name', '=', False)]}" />
+                        <field name="parent_order_name" readonly="1" attrs="{'invisible': [('parent_order_name', '=', False)]}" />
                         <newline />
-                        <field name="valid_till"/>
-                        <field name="tender_id"/>
+                        <field name="valid_till" attrs="{'readonly': [('rfq_state', '!=', 'sent')]}" />
+                        <field name="tender_id" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}"/>
                         <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
                         <field name="rfq_delivery_address"/>
                         <field name="from_procurement" invisible="1"/>
                     </group>
                     <notebook colspan="4">
                         <page string="Request for Quotation">
-                            <group attrs="{'readonly': [('rfq_state', 'in', ['updated','done','cancel'])]}">
+                            <group>
                                 <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
                                 <field name="partner_type"/>
                                 <field name="allocation_setup" invisible="1" />
@@ -293,7 +293,7 @@
                                 <field name="customer_ref" widget="char"/>
                                 <group colspan="4">
                                     <field name="pricelist_id" string="Currency"/>
-                                    <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': [('state', 'in', ['rfq_updated', 'done', 'cancel'])]}" />
+                                    <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" />
                                 </group>
                             </group>
                             <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('rfq_state', '!=', 'draft')]}" />
