@@ -104,7 +104,7 @@
       <spacer length="24"/>
 
       <!-- Mission Settings -->
-      <blockTable colWidths="64mm, 64mm, 64mm" style="sub_table">
+      <blockTable colWidths="54mm, 94mm, 44mm" style="sub_table">
         <tr>
           <td><para style="bold">Mission Settings</para></td>
         </tr>
