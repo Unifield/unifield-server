@@ -1670,7 +1670,15 @@ class shipment(osv.osv):
                 # closing FO lines:
                 for stock_move in packing.move_lines:
                     if stock_move.sale_line_id:
-                        wf_service.trg_validate(uid, 'sale.order.line', stock_move.sale_line_id.id, 'done', cr)
+                        open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
+                            ('sale_line_id', '=', stock_move.sale_line_id.id),
+                            ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                            ('type', '=', 'out'),
+                            ('id', '!=', stock_move.id),
+                            ('product_qty', '!=', 0.0),
+                        ], context=context)
+                        if not open_moves:
+                            wf_service.trg_validate(uid, 'sale.order.line', stock_move.sale_line_id.id, 'done', cr)
 
             # Create automatically the invoice
             self.shipment_create_invoice(cr, uid, shipment.id, context=context)
@@ -3426,7 +3434,14 @@ class stock_picking(osv.osv):
                     move_obj.write(cr, uid, [move.id], values, context=context)
                     processed_moves.append(move.id)
                     if move.sale_line_id:
-                        wf_service.trg_validate(uid, 'sale.order.line', move.sale_line_id.id, 'done', cr)
+                        open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
+                            ('sale_line_id', '=', move.sale_line_id.id),
+                            ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                            ('type', '=', 'out'),
+                            ('id', '!=', move.id),
+                        ], context=context)
+                        if not open_moves:
+                            wf_service.trg_validate(uid, 'sale.order.line', move.sale_line_id.id, 'done', cr)
 
             if not len(move_data):
                 pick_type = 'Internal picking'
