@@ -261,14 +261,14 @@
                 <form string="Request for Quotation">
                     <group col="6" colspan="4">
                         <field name="name"/>
-                        <field name="date_order"/>
+                        <field name="date_order" attrs="{'readonly': [('rfq_state', '!=', 'draft')]}"/>
                         <field name="invoiced" attrs="{'invisible': [('rfq_state', '=', 'draft')]}"/>
                         <newline/>
                         <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection"/>
                         <field name="partner_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('rfq_state', '!=', 'draft')]}"/>
                         <field name="shipped" attrs="{'invisible': [('rfq_state', '=', 'draft')]}"/>
                         <field name="push_fo" invisible="1"/>
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" />
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': [('rfq_state', '!=', 'draft')]}"/>
                         <field name="priority"/>
                         <newline />
                         <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" />
@@ -284,11 +284,11 @@
                     <notebook colspan="4">
                         <page string="Request for Quotation">
                             <group>
-                                <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" />
+                                <field name="partner_id" on_change="onchange_partner_id(partner_id)" context="{'search_default_supplier':1}" domain="[('id', '!=', company_id)]" attrs="{'readonly': [('rfq_state', '!=', 'draft')]}"/>
                                 <field name="partner_type"/>
                                 <field name="allocation_setup" invisible="1" />
-                                <field name="partner_address_id"/>
-                                <field name="origin" groups="base.group_extended" widget="char"/>
+                                <field name="partner_address_id" attrs="{'readonly': [('rfq_state', '!=', 'draft')]}"/>
+                                <field name="origin" groups="base.group_extended" widget="char" attrs="{'readonly': [('rfq_state', '!=', 'draft')]}"/>
                                 <field name="internal_type"/>
                                 <field name="customer_ref" widget="char"/>
                                 <group colspan="4">
