@@ -616,10 +616,10 @@ class stock_picking(osv.osv):
         rule_obj = self.pool.get("sync.client.message_rule")
         rule_obj._manual_create_sync_message(cr, uid, self._name, res_id, return_info, rule_method, self._logger, context=context)
 
-    # REMOVE THIS METHOD, NO MORE USE! do_incoming_shipment_sync
 
     def cancel_out_pick_cancel_in(self, cr, uid, source, out_info, context=None):
         '''
+        ' USED ONLY FOR SLL MIG, to delete after
         ' Cancel the OUT/PICK at the supplier side cancels the corresponding IN at the project side
         '''
         if not context:
