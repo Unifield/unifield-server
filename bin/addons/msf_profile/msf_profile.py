@@ -258,6 +258,17 @@ class patch_scripts(osv.osv):
         cr.commit()
         return True
 
+
+    def delete_commitment(self, cr, uid, *a, **b):
+        journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI')])
+        if journal_ids:
+            aa_obj = self.pool.get('account.analytic.line')
+            aa_ids = aa_obj.search(cr, uid, [('journal_id', 'in', journal_ids)])
+            self._logger.warn("Delete %d Commitment" % len(aa_ids))
+            if aa_ids:
+                aa_obj.unlink(cr, uid, aa_ids)
+        return True
+
     def us_3306(self, cr, uid, *a, **b):
         '''setup currency rate constraint
         '''

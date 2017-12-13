@@ -55,7 +55,7 @@ class import_commitment_wizard(osv.osv_memory):
             context = {}
         analytic_obj = self.pool.get('account.analytic.line')
         instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
-        journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI')], context=context)
+        journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI'), ('is_current_instance', '=', True)], context=context)
         to_be_deleted_ids = analytic_obj.search(cr, uid, [('imported_commitment', '=', True)], context=context)
         functional_currency_obj = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
         default_founding_pool_id = self.pool.get('account.analytic.account').search(
@@ -122,7 +122,7 @@ class import_commitment_wizard(osv.osv_memory):
 
                     # G/L account
                     if account_code:
-                        account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)])
+                        account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code), ('type', '!=', 'view')])
                         if not account_ids:
                             raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Account code %s doesn\'t exist!') % (account_code,)))
                         vals.update({'general_account_id': account_ids[0]})
@@ -130,7 +130,7 @@ class import_commitment_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Error'), raise_msg_prefix + _('No account code found!'))
                     # Destination
                     if destination:
-                        dest_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', destination), ('name', '=', destination)])
+                        dest_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', destination), ('name', '=', destination), ('type', '!=', 'view')])
                         if dest_id:
                             vals.update({'destination_id': dest_id[0]})
                         else:
@@ -147,7 +147,7 @@ class import_commitment_wizard(osv.osv_memory):
                             raise osv.except_osv(_('Error'), raise_msg_prefix + msg)
                     # Cost Center
                     if cost_center:
-                        cc_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center)])
+                        cc_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center), ('type', '!=', 'view')])
                         if cc_id:
                             vals.update({'cost_center_id': cc_id[0]})
                         else:
@@ -156,7 +156,7 @@ class import_commitment_wizard(osv.osv_memory):
                         raise osv.except_osv(_('Error'), raise_msg_prefix + _('No cost center code found!'))
                     # Funding Pool
                     if funding_pool:
-                        fp_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool)])
+                        fp_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool), ('type', '!=', 'view')])
                         if fp_id:
                             vals.update({'account_id': fp_id[0]})
                         else:
