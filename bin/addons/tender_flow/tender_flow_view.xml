@@ -264,21 +264,21 @@
                         <field name="date_order" attrs="{'readonly': [('rfq_state', '!=', 'draft')]}"/>
                         <field name="invoiced" attrs="{'invisible': [('rfq_state', '=', 'draft')]}"/>
                         <newline/>
-                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection"/>
+                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id,order_type,dest_address_id)" widget="selection" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}"/>
                         <field name="partner_ref" attrs="{'readonly': ['|', ('partner_type', 'not in', ['external', 'esc']), ('rfq_state', '!=', 'draft')]}"/>
                         <field name="shipped" attrs="{'invisible': [('rfq_state', '=', 'draft')]}"/>
                         <field name="push_fo" invisible="1"/>
                         <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': [('rfq_state', '!=', 'draft')]}"/>
-                        <field name="priority"/>
+                        <field name="priority" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}"/>
                         <newline />
-                        <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" />
-                        <field name="details" />
+                        <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}"/>
+                        <field name="details" attrs="{'readonly': [('rfq_state', 'in', ['done', 'cancel'])]}"/>
                         <field name="parent_order_name" readonly="1" attrs="{'invisible': [('parent_order_name', '=', False)]}" />
                         <newline />
                         <field name="valid_till" attrs="{'readonly': [('rfq_state', '!=', 'sent')]}" />
                         <field name="tender_id" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}"/>
                         <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
-                        <field name="rfq_delivery_address"/>
+                        <field name="rfq_delivery_address" attrs="{'readonly': ['|', ('tender_id', '!=', False), ('rfq_state', 'in', ['updated', 'done', 'cancel'])]}"/>
                         <field name="from_procurement" invisible="1"/>
                     </group>
                     <notebook colspan="4">
@@ -292,7 +292,7 @@
                                 <field name="internal_type"/>
                                 <field name="customer_ref" widget="char"/>
                                 <group colspan="4">
-                                    <field name="pricelist_id" string="Currency"/>
+                                    <field name="pricelist_id" string="Currency" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}"/>
                                     <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" />
                                 </group>
                             </group>
