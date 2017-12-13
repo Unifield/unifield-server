@@ -381,6 +381,14 @@ class patch_scripts(osv.osv):
         cr.execute("UPDATE stock_reason_type SET incoming_ok = 't' WHERE name = 'Damage'")
         return True
 
+    def us_3879_set_pricelist_id_for_ir(self, cr, uid, *a, **b):
+        currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+        pricelist_id = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'sale'),
+                                                                           ('currency_id', '=', currency_id)], limit=1)[0]
+
+        cr.execute("UPDATE sale_order SET pricelist_id = %s WHERE procurement_request = 't'", (pricelist_id,))
+        return True
+
     # OLD patches
     def us_3048_patch(self, cr, uid, *a, **b):
         '''
