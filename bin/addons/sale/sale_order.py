@@ -122,6 +122,20 @@ class sale_order(osv.osv):
 
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
 
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        if 'order_line' not in default:
+            default['order_line'] = []
+            sol_obj = self.pool.get('sale.order.line')
+            line_ids = sol_obj.search(cr, uid, [('order_id', '=', id), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
+            line_ids.sort()
+            for line_id in line_ids:
+                d = sol_obj.copy_data(cr, uid, line_id, context=context)
+                if d:
+                    default['order_line'].append((0, 0, d))
+
+        return super(sale_order, self).copy_data(cr, uid, id, default, context)
 
     def _amount_line_tax(self, cr, uid, line, context=None):
         val = 0.0
@@ -2072,11 +2086,6 @@ class sale_order_line(osv.osv):
 
         if context is None:
             context = {}
-
-        # do not copy canceled sale.order.line:
-        sol = self.browse(cr, uid, id, fields_to_fetch=['state'], context=context)
-        if sol.state in ['cancel', 'cancel_r']:
-            return False
 
         # if the po link is not in default, we set both to False (both values are closely related)
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
