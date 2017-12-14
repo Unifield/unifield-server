@@ -21,20 +21,20 @@
                             <!-- MAIN TAB -->
                             <page string="Main Tab">
                                 <button name="generate_cash_request" type="object" string="Generate" icon="gtk-execute"
-                                        attrs="{'invisible': [('state', '=', 'done')]}"/>
+                                        attrs="{'invisible': ['|', ('state', '=', 'done'), ('current_instance_level', '!=', 'coordo')]}"/>
                                 <separator colspan="4" string="Settings"/>
                                 <group colspan="4" col="4">
                                     <field name="id" invisible="1"/>
                                     <field name="current_instance_level" invisible="1"/>
                                     <field name="name"/>
                                     <field name="state"/>
-                                    <field name="request_date" attrs="{'readonly': [('state', '=', 'done')]}"/>
-                                    <field name="month_period_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                    <field name="request_date" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}"/>
+                                    <field name="month_period_id" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}"/>
                                     <field name="mission"/>
                                     <field name="prop_instance_id"/>
-                                    <field name="transfer_account_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
-                                    <field name="bank_journal_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
-                                    <field name="transfer_currency_ids">
+                                    <field name="transfer_account_id" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}"/>
+                                    <field name="bank_journal_id" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}"/>
+                                    <field name="transfer_currency_ids" attrs="{'readonly': ['|', ('state', '=', 'done'), ('current_instance_level', '==', 'project')]}">
                                         <tree string="Currencies" editable="bottom">
                                             <field name="currency_id"/>
                                             <field name="percentage"/>
@@ -55,7 +55,7 @@
                                     <separator colspan="4" string="Recap"/>
                                     <button name="compute_recap_and_total" type="object"
                                             string="Compute recap lines &amp; total to transfer" icon="gtk-refresh"
-                                            attrs="{'invisible': [('state', '=', 'done')]}"/>
+                                            attrs="{'invisible': ['|', ('state', '=', 'done'), ('current_instance_level', '!=', 'coordo')]}"/>
                                     <group colspan="4" col="2">
                                         <field name="recap_mission_ids" nolabel="1">
                                             <tree string="Recap Mission">
@@ -87,7 +87,7 @@
                                 <group colspan="4" col="4">
                                     <label string="" colspan="2"/>
                                     <button name="set_to_done" type="object" string="Done" icon="terp-camera_test"
-                                            attrs="{'invisible': [('state', '!=', 'open')]}"
+                                            attrs="{'invisible': ['|', ('state', '!=', 'open'), ('current_instance_level', '!=', 'coordo')]}"
                                             confirm='Have you clicked on "Compute recap lines &amp; total to transfer" to get the accurate Total to transfer?'/>
                                 </group>
                             </page>
@@ -402,5 +402,16 @@
                 <field name="type">search</field>
                 &liquidity_position_search;
             </record>
+
+            <!-- CASH REQUEST - ENTRY "Export PDF" IN RIGHT MENU -->
+            <report id="cash_request_export"
+                    string="Cash Request - Export PDF"
+                    target_filename="${name}"
+                    model="cash.request"
+                    name="cash.request.export"
+                    rml="finance/report/cash_request.rml"
+                    auto="False"
+                    menu="True"
+                    header="True"/>
        </data>
 </openerp>
