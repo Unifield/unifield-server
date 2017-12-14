@@ -1547,6 +1547,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
+        pricelist_obj = self.pool.get('product.pricelist')
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             if sourcing_line.type == 'make_to_stock':
@@ -1592,10 +1593,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
                         self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                         self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
-                    else:
-                        po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id'], context=context)
 
-                    target_currency_id = po.pricelist_id.currency_id.id
                     # No AD on sourcing line if it comes from IR:
                     anal_dist = False
                     if not sourcing_line.order_id.procurement_request:
@@ -1611,18 +1609,22 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             )
 
                         anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distib_to_copy, {}, context=context)
-                    # attach PO line:
-                    price_unit = sourcing_line.price_unit if sourcing_line.price_unit > 0 else (sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0)
-                    src_currency = sourcing_line.currency_id.id
-                    if price_unit and src_currency != target_currency_id:
-                        price_unit = self.pool.get('res.currency').compute(cr, uid, src_currency, target_currency_id, price_unit, round=False, context=context)
+
+                    # set unit price
+                    price = 0.0
+                    if sourcing_line.product_id and sourcing_line.supplier.property_product_pricelist_purchase:
+                        price_dict = pricelist_obj.price_get(cr, uid, [sourcing_line.supplier.property_product_pricelist_purchase.id],
+                                                             sourcing_line.product_id.id, sourcing_line.product_uom_qty,
+                                                             sourcing_line.supplier.id, {'uom': sourcing_line.product_uom.id})
+                        if price_dict[sourcing_line.supplier.property_product_pricelist_purchase.id]:
+                            price = price_dict[sourcing_line.supplier.property_product_pricelist_purchase.id]
 
                     pol_values = {
                         'order_id': po_to_use,
                         'product_id': sourcing_line.product_id.id or False,
                         'product_uom': sourcing_line.product_id and sourcing_line.product_id.uom_id.id or sourcing_line.product_uom.id,
                         'product_qty': sourcing_line.product_uom_qty,
-                        'price_unit': price_unit,
+                        'price_unit': price if price > 0 else (sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0),
                         'partner_id': sourcing_line.supplier.id,
                         'origin': sourcing_line.order_id.name,
                         'sale_order_line_id': sourcing_line.id,
