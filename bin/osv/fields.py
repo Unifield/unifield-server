@@ -598,7 +598,8 @@ class many2many(_column):
         if offset or self._limit:
             order_by = ' ORDER BY "%s".%s' %(obj._table, obj._order.split(',')[0])
         elif self._order_by:
-            order_by = ' ORDER BY %s' % self._order_by
+            # add the table name as a prefix. Ex: 'level, id' ==> ' ORDER BY "msf_instance".level, "msf_instance".id'
+            order_by = ' ORDER BY %s' % ', '.join(['"%s".%s' % (obj._table, elem.strip()) for elem in self._order_by.split(',')])
         else:
             order_by = ''
 
