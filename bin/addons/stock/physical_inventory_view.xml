@@ -16,6 +16,7 @@
                     <field name="responsible"/>
                     <field name="date_done"/>
                     <field name="full_inventory"/>
+                    <field name="discrepancies_generated" invisible="1"/>
                     <button colspan="2" name="set_full_inventory" states="draft" string="Set as full inventory" type="object"
                         icon="gtk-about" 
                         confirm="Setting as 'full inventory' is irreversible. Do you confirm ?" 
@@ -201,8 +202,10 @@
 
                         <button name="action_recount" states="validated" string="Recount"
                                 type="object" icon="gtk-undo"/>
+
                         <button name="action_confirm" states="validated" string="Confirm Inventory"
-                                type="object" icon="gtk-jump-to" confirm="Do you confirm that you want confirm the inventory ?"/>
+                                type="object" icon="gtk-jump-to" confirm="Do you confirm that you want confirm the inventory ?"
+                                attrs="{'readonly': [('discrepancies_generated', '=', False)]}"/>
 
                         <button name="action_done" states="confirmed" string="Close Inventory"
                                 type="object" icon="gtk-jump-to" confirm="Do you confirm that you want to close the inventory ?"/>
