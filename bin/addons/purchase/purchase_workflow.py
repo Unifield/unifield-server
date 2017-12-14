@@ -103,6 +103,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         for pol in self.browse(cr, uid, ids, context=context):
+            to_trigger = False
             # linked FO line already exists ?
             # => if yes update it, else create new
             create_line = False
@@ -118,6 +119,8 @@ class purchase_order_line(osv.osv):
                 if not so_id:
                     continue # no sale order linked to our PO line
                 sale_order = self.pool.get('sale.order').browse(cr, uid, so_id, context=context)
+                if sale_order.state == 'cancel':
+                    to_trigger = True
                 create_line = True
             elif pol.linked_sol_id:
                 sale_order = pol.linked_sol_id.order_id
@@ -192,6 +195,11 @@ class purchase_order_line(osv.osv):
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
 
+                if to_trigger:
+                    # IR is cancel but a new line is added, trigger a new wkf
+                    # UC: IR > PO > FO (full claim retrun + replacement on IN)
+                    cr.execute("update sale_order set state='draft' where id=%s", (so_id,))
+
                 # if OUT move already exists for this sale.order.line, then the split going to be created must be linked to
                 # the right OUT move (moves are already splits at this level):
                 if sol_values['is_line_split']:
@@ -205,6 +213,7 @@ class purchase_order_line(osv.osv):
                                 self.pool.get('stock.move').write(cr, uid, [out_move.id], {'sale_line_id': new_sol}, context=context)
             else: # update FO line
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
+
 
         return True
 
