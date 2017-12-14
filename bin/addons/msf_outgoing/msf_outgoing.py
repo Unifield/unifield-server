@@ -3372,7 +3372,6 @@ class stock_picking(osv.osv):
             new_picking_id = False
             processed_moves = []
             move_data = {}
-
             for line in wizard.move_ids:
                 move = line.move_id
 
@@ -3438,15 +3437,7 @@ class stock_picking(osv.osv):
                     # Update the original move
                     move_obj.write(cr, uid, [move.id], values, context=context)
                     processed_moves.append(move.id)
-                    if move.sale_line_id:
-                        open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
-                            ('sale_line_id', '=', move.sale_line_id.id),
-                            ('state', 'not in', ['cancel', 'cancel_r', 'done']),
-                            ('type', '=', 'out'),
-                            ('id', '!=', move.id),
-                        ], context=context)
-                        if not open_moves:
-                            wf_service.trg_validate(uid, 'sale.order.line', move.sale_line_id.id, 'done', cr)
+
 
             if not len(move_data):
                 pick_type = 'Internal picking'
@@ -3489,6 +3480,7 @@ class stock_picking(osv.osv):
                 move_obj.write(cr, uid, processed_moves, {'picking_id': new_picking_id}, context=context)
 
             # At first we confirm the new picking (if necessary)
+            pick_to_check = False
             if new_picking_id:
                 self.write(cr, uid, [picking.id], {'backorder_id': new_picking_id}, context=context)
 
@@ -3523,6 +3515,7 @@ class stock_picking(osv.osv):
                     # Then we finish the picking
                     self.action_move(cr, uid, [new_picking_id])
                     wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_done', cr)
+                    pick_to_check = new_picking_id
                 # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
                 self._hook_create_sync_messages(cr, uid, new_picking_id, context)
 
@@ -3552,6 +3545,7 @@ class stock_picking(osv.osv):
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
                     update_vals = {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}
+                    pick_to_check = picking.id
                     if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                         update_vals.update({'already_replicated': False})
                     self.write(cr, uid, picking.id, update_vals)
@@ -3561,6 +3555,19 @@ class stock_picking(osv.osv):
 
                 delivered_pack_id = picking.id
 
+            if pick_to_check:
+                sale_line_id_checked = {}
+                for move in self.browse(cr, uid, pick_to_check, fields_to_fetch=['move_lines'], context=context).move_lines:
+                    if move.sale_line_id and move.sale_line_id.id not in sale_line_id_checked:
+                        open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
+                            ('sale_line_id', '=', move.sale_line_id.id),
+                            ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                            ('type', '=', 'out'),
+                            ('id', '!=', move.id),
+                        ], context=context)
+                        if not open_moves:
+                            sale_line_id_checked[move.sale_line_id.id] = True
+                            wf_service.trg_validate(uid, 'sale.order.line', move.sale_line_id.id, 'done', cr)
             # UF-1617: set the delivered_pack_id (new or original) to become already_shipped
             self.write(cr, uid, [delivered_pack_id], {'already_shipped': True})
 
@@ -3573,7 +3580,6 @@ class stock_picking(osv.osv):
         # US-379: point 2) Generate RW messages manually and put into the queue when a partial OUT is done
         if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
             self._manual_create_rw_messages(cr, uid, context=context)
-
         return res
 
     @check_cp_rw
