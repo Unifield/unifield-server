@@ -595,6 +595,8 @@ class stock_mission_report(osv.osv):
                 for name, key in fixed_data:
                     to_write.append(data.get(report_id_by_instance_id[local_instance.id], {}).get(key))
                 for inst_id in all_instances:
+                    if inst_id not in report_id_by_instance_id:
+                        continue
                     for name, key in repeated_data:
                         num = data.get(report_id_by_instance_id[inst_id], {}).get(key)
                         if not num or num == '.000':

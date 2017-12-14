@@ -9,11 +9,13 @@
         <field name="arch" type="xml">
             <form string="Mission stock report">
                 <field name="export_ok" invisible="1" />
+                <field name="local_report" invisible="1" />
+                <field name="full_view" invisible="1" />
                 <separator colspan="4" string="Mission stock" />
                 <field name="report_id" widget="selection" on_change="report_change(report_id)" />
                 <field name="last_update" />
                 <label colspan="4" />
-                <field name="processed_state" string="Updating..." />
+                <field name="processed_state" string="Updating..." attrs="{'invisible': [('local_report', '!=', True)]}"/>
                 <field name="processed_start_date" attrs="{'invisible': [('processed_state', '!=', 'in_progress')]}"/>
                 <separator colspan="4" string="Stock valuation" />
                 <field name="with_valuation" />
@@ -27,7 +29,7 @@
                 </group>
                 <field name="instance_level" invisible="1" />
                 <separator colspan="4" string="Actions" />
-                <button name="update" string="Update (in background)" type="object" colspan="4" icon="gtk-remove" />
+                <button name="update" string="Update (in background)" type="object" colspan="4" icon="gtk-remove" attrs="{'invisible': ['|', ('local_report', '!=', True), ('full_view', '=', True)]}"/>
                 <button special="cancel" string="Close window" icon="gtk-cancel" colspan="2" />
                 <button name="open_products_view" string="Open report" type="object" icon="gtk-go-forward" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
                 <button name="open_xls_file" string="Open XLS file" type="object" icon="gtk-print" colspan="2" attrs="{'readonly': [('processed_state', 'not in', ('done', 'draft'))]}" />
