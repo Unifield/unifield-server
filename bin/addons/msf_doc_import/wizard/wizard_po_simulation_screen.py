@@ -1309,6 +1309,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'imp_external_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'imp_project_ref': fields.char(size=256, string='Project Ref.', readonly=True),
         'imp_origin': fields.char(size=256, string='Origin Ref.', readonly=True),
+        'imp_ad': fields.many2one('analytic.distribution', string='Analytic Distribution', readonly=True),
+        'imp_original_line_id': fields.many2one('purchase.order.line', string='Original Line', readonly=True),
         'change_ok': fields.function(_get_line_info, method=True, multi='line',
                                      type='boolean', string='Change', store=False),
         'error_msg': fields.text(string='Error message', readonly=True),
@@ -1337,6 +1339,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         '''
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
+        pol_obj = self.pool.get('purchase.order.line')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -1514,6 +1517,19 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
 
+            # Analytic Distribution
+            if line.po_line_id and not line.po_line_id.analytic_distribution_id:
+                if line.po_line_id.order_id.analytic_distribution_id:
+                    write_vals['imp_ad'] = line.po_line_id.order_id.analytic_distribution_id.id
+                else:
+                    # Look for the original line if it was split in the file
+                    po_line_ids = pol_obj.search(cr, uid, [('order_id', '=', line.po_line_id.order_id.id)], context=context)
+                    for po_line in pol_obj.browse(cr, uid, po_line_ids, context=context):
+                        if po_line.id != line.po_line_id.id and po_line.product_id.id == line.po_line_id.product_id.id \
+                                and po_line.analytic_distribution_id:
+                            write_vals['imp_ad'] = po_line.analytic_distribution_id.id
+                            write_vals['imp_original_line_id'] = po_line.id
+
             # Project Ref.
             write_vals['imp_project_ref'] = values[16]
 
@@ -1611,6 +1627,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         line_vals['origin'] = line.imp_origin
                     if line.imp_external_ref:
                         line_vals['external_ref'] = line.imp_external_ref
+                    if line.imp_ad:
+                        line_vals['analytic_distribution_id'] = line.imp_ad.id
+                    if line.imp_original_line_id:
+                        line_vals['original_line_id'] = line.imp_original_line_id.id
 
                     # UF-2537 after split reinject import qty computed in
                     # simu for import consistency versus simu
@@ -1657,6 +1677,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['origin'] = line.imp_origin
                 if line.imp_external_ref:
                     line_vals['external_ref'] = line.imp_external_ref
+                if line.imp_ad:
+                    line_vals['analytic_distribution_id'] = line.imp_ad.id
+                if line.imp_original_line_id:
+                    line_vals['original_line_id'] = line.imp_original_line_id.id
                 line_obj.create(cr, uid, line_vals, context=context)
             elif line.po_line_id:
                 line_vals = {'product_id': line.imp_product_id.id,
@@ -1674,6 +1698,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     line_vals['origin'] = line.imp_origin
                 if line.imp_external_ref:
                     line_vals['external_ref'] = line.imp_external_ref
+                if line.imp_ad:
+                    line_vals['analytic_distribution_id'] = line.imp_ad.id
+                if line.imp_original_line_id:
+                    line_vals['original_line_id'] = line.imp_original_line_id.id
 
                 line_obj.write(cr, uid, [line.po_line_id.id], line_vals, context=context)
             simu_obj.write(cr, uid, [line.simu_id.id], {'percent_completed': percent_completed}, context=context)
