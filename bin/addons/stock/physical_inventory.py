@@ -104,7 +104,7 @@ class PhysicalInventory(osv.osv):
         'responsible': fields.char('Responsible', size=128, required=False),
         'date_done': fields.datetime('Date done', readonly=True),
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
-                                        'product_id', 'inventory_id', string="Product selection"),
+                                        'product_id', 'inventory_id', string="Product selection", order_by="default_code"),
         'discrepancy_line_ids': fields.one2many('physical.inventory.discrepancy', 'inventory_id', 'Discrepancy lines',
                                                 states={'closed': [('readonly', True)]}),
         'counting_line_ids': fields.one2many('physical.inventory.counting', 'inventory_id', 'Counting lines',
@@ -834,10 +834,18 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
                 continue
             adjustment_type = row.cells[18].data
             if adjustment_type:
-                reason_ids = reason_type_obj.search(cr, uid, [('name', '=like', adjustment_type)], context=context)
-                if reason_ids:
-                    adjustment_type = reason_ids[0]
-                else:
+                adjustement_split = adjustment_type.split(' ')
+                code = adjustement_split[0].split('.')[-1]
+                reason_ids = []
+                try:
+                    int(code)
+                    reason_ids = reason_type_obj.search(cr, uid, [('code', '=', code), ('name', '=', adjustement_split[-1].strip())], context=context)
+                    if reason_ids:
+                        adjustment_type = reason_ids[0]
+                except ValueError:
+                    reason_ids = []
+
+                if not reason_ids:
                     add_error('Unknown adjustment type %s' % adjustment_type, row_index, 18)
                     adjustment_type = False
 
