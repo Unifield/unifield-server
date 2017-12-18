@@ -149,15 +149,28 @@ class stock_card_wizard(osv.osv_memory):
             ('inventory_id.state', 'in', ['confirmed', 'closed'])
         ]
 
+
         if card.from_date:
             domain.append(('date', '>=', card.from_date))
             inv_dom.append(('inventory_id.date_done', '>=', card.from_date))
-            pi_counting_dom.append(('inventory_id.date_done', '>=', card.from_date))
+            pi_counting_dom.extend([
+                '|',
+                ('inventory_id.date_done', '>=', card.from_date), 
+                '&', 
+                ('inventory_id.state', '=', 'confirmed'), 
+                ('inventory_id.date_confirmed', '>=', card.from_date),
+            ])
 
         if card.to_date:
             domain.append(('date', '<=', card.to_date))
             inv_dom.append(('inventory_id.date_done', '<=', card.to_date + ' 23:59:00'))
-            pi_counting_dom.append(('inventory_id.date_done', '<=', card.to_date + ' 23:59:00'))
+            pi_counting_dom.extend([
+                '|', 
+                ('inventory_id.date_done', '<=', card.to_date + ' 23:59:00'),
+                '&', 
+                ('inventory_id.state', '=', 'confirmed'),
+                ('inventory_id.date_confirmed', '>=', card.to_date),
+            ])
 
         if location_id:
             domain.extend(['|',
@@ -192,9 +205,9 @@ class stock_card_wizard(osv.osv_memory):
         pi_counting_line_ids = pi_line_obj.search(cr, uid, pi_counting_dom, context=context)
         pi_counting_line_to_add = {}
         for line in pi_line_obj.browse(cr, uid, pi_counting_line_ids, context=context):
-            pi_counting_line_to_add.setdefault(line.inventory_id.date_done, []).append({
+            pi_counting_line_to_add.setdefault(line.inventory_id.date_done or line.inventory_id.date_confirmed, []).append({
                 'card_id': ids[0],
-                'date_done': line.inventory_id.date_done,
+                'date_done': line.inventory_id.date_done or line.inventory_id.date_confirmed,
                 'doc_ref': line.inventory_id.name,
                 'origin': False,
                 'qty_in': 0,
