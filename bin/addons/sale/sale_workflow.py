@@ -151,6 +151,7 @@ class sale_order_line(osv.osv):
                 'resourced_at_state': sol.state,
                 'is_line_split': False,
                 'analytic_distribution_id': sol.analytic_distribution_id.id or False,
+                'date_planned': sol.date_planned,
             }, context=context)
             wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 
@@ -365,7 +366,9 @@ class sale_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int,long)):
             ids = [ids]
+        wf_service = netsvc.LocalService("workflow")
 
+        pick_to_check = set()
         for sol in self.browse(cr, uid, ids, context=context):
             out_moves_to_cancel = self.pool.get('stock.move').search(cr, uid, [
                 ('sale_line_id', '=', sol.id), 
@@ -375,6 +378,12 @@ class sale_order_line(osv.osv):
 
             if out_moves_to_cancel:
                 self.pool.get('stock.move').action_cancel(cr, uid, out_moves_to_cancel, context=context)
+                for move in self.pool.get('stock.move').browse(cr, uid, out_moves_to_cancel, fields_to_fetch=['picking_id'], context=context):
+                    pick_to_check.add(move.picking_id.id)
+
+        # maybe the stock picking needs to be closed/cancelled :
+        for pick in self.pool.get('stock.picking').browse(cr, uid, list(pick_to_check), context=context):
+            wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
 
         return True
 
