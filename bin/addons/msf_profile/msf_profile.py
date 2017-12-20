@@ -379,7 +379,7 @@ class patch_scripts(osv.osv):
 
     def us_3516_change_damage_reason_type_incoming_ok(self, cr, uid, *a, **b):
         cr.execute("UPDATE stock_reason_type SET incoming_ok = 't' WHERE name = 'Damage'")
-        cr.execute("UPDATE return_claim set old_version='t'")
+        cr.execute("UPDATE return_claim SET old_version='t' WHERE state!='draft'")
         return True
 
     def us_3879_set_pricelist_id_for_ir(self, cr, uid, *a, **b):
