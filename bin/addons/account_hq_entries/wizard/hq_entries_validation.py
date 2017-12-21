@@ -349,7 +349,7 @@ class hq_entries_validation(osv.osv_memory):
                 ana_line_obj.write(cr, uid, aal.id, {'last_corrected_id': original_aal_ids[0],'name': cor_name, 'ref': cor_ref})
             # also write the OD entry_sequence to the REV aal
             # ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'entry_sequence': aal.entry_sequence})
-            cr.execute('''update account_analytic_line set entry_sequence = '%s' where id = %s''' % (aal.entry_sequence, res_reverse[0]))
+            cr.execute('''UPDATE account_analytic_line SET entry_sequence=%s WHERE id=%s''', (aal.entry_sequence, res_reverse[0]))
 
         # US-1333/1 - BKLG-12 pure AD correction flag marker for splitted lines
         # (do this bypassing model write)

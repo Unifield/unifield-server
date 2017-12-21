@@ -415,9 +415,7 @@ class account_move_line(osv.osv):
                     FROM account_move_line l1, account_move_line l2
                     WHERE l2.account_id = l1.account_id
                       AND l1.id <= l2.id
-                      AND l2.id IN %s AND """ + \
-            self._query_get(cr, uid, obj='l1', context=c) + \
-            " GROUP BY l2.id"
+                      AND l2.id IN %%s AND %s GROUP BY l2.id""" % self._query_get(cr, uid, obj='l1', context=c)  # ignore_sql_check
 
         cr.execute(sql, [tuple(ids)])
         result = dict(cr.fetchall())
@@ -465,7 +463,7 @@ class account_move_line(osv.osv):
             return []
         where = ' AND '.join(map(lambda x: '(abs(sum(debit-credit))'+x[1]+str(x[2])+')',args))
         cursor.execute('SELECT id, SUM(debit-credit) FROM account_move_line \
-                     GROUP BY id, debit, credit having '+where)
+                        GROUP BY id, debit, credit having '+where)  # not_a_user_entry
         res = cursor.fetchall()
         if not res:
             return [('id', '=', '0')]
@@ -508,9 +506,10 @@ class account_move_line(osv.osv):
             qu1 = ' AND' + ' AND'.join(qu1)
         else:
             qu1 = ''
-        cursor.execute('SELECT l.id ' \
-                       'FROM account_move_line l, account_invoice i ' \
-                       'WHERE l.move_id = i.move_id ' + qu1, qu2)
+        cursor.execute('''
+            SELECT l.id
+            FROM account_move_line l, account_invoice i
+            WHERE l.move_id = i.move_id ''' + qu1, qu2)  # not_a_user_entry
         res = cursor.fetchall()
         if not res:
             return [('id', '=', '0')]

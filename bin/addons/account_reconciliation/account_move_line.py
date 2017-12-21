@@ -509,7 +509,7 @@ class account_move_reconcile(osv.osv):
                 if d and d[0] and d[0][1]:
                     name = d[0][1]
                 if p or t:
-                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"
+                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"  # not_a_user_entry
                     cr.execute(sql, (name, tuple(p+t)))
         return res
 
@@ -533,7 +533,7 @@ class account_move_reconcile(osv.osv):
                 if d and d[0] and d[0][1]:
                     name = d[0][1]
                 if p or t:
-                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"
+                    sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"  # not_a_user_entry
                     cr.execute(sql, (name, tuple(p+t)))
         return res
 

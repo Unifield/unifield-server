@@ -392,7 +392,7 @@ class ir_model_fields(osv.osv):
         res = super(ir_model_fields,self).write(cr, user, ids, vals, context=context)
 
         if column_rename:
-            cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO "%s"' % column_rename[1])
+            cr.execute('ALTER TABLE "%s" RENAME COLUMN "%s" TO "%s"' % column_rename[1])  # not_a_user_entry
             # This is VERY risky, but let us have this feature:
             # we want to change the key of column in obj._columns dict
             col = column_rename[0]._columns.pop(column_rename[1][1]) # take object out, w/o copy
@@ -498,17 +498,17 @@ class ir_model_access(osv.osv):
         if isinstance(group_ids, (int, long)):
             group_ids = [group_ids]
         for group_id in group_ids:
-            cr.execute("SELECT perm_" + mode + " "
-                       "  FROM ir_model_access a "
-                       "  JOIN ir_model m ON (m.id = a.model_id) "
-                       " WHERE m.model = %s AND a.group_id = %s", (model_name, group_id)
+            cr.execute("""SELECT perm_%s
+                         FROM ir_model_access a
+                         JOIN ir_model m ON (m.id = a.model_id)
+                        WHERE m.model = %%s AND a.group_id = %%s""" % mode, (model_name, group_id)  # not_a_user_entry
                        )
             r = cr.fetchone()
             if r is None:
-                cr.execute("SELECT perm_" + mode + " "
-                           "  FROM ir_model_access a "
-                           "  JOIN ir_model m ON (m.id = a.model_id) "
-                           " WHERE m.model = %s AND a.group_id IS NULL", (model_name, )
+                cr.execute("""SELECT perm_%s
+                             FROM ir_model_access a
+                             JOIN ir_model m ON (m.id = a.model_id)
+                            WHERE m.model = %%s AND a.group_id IS NULL""" % mode, (model_name, )  # not_a_user_entry
                            )
                 r = cr.fetchone()
 
@@ -543,23 +543,23 @@ class ir_model_access(osv.osv):
             return True
 
         # We check if a specific rule exists
-        cr.execute('SELECT MAX(CASE WHEN perm_' + mode + ' THEN 1 ELSE 0 END) '
-                   '  FROM ir_model_access a '
-                   '  JOIN ir_model m ON (m.id = a.model_id) '
-                   '  JOIN res_groups_users_rel gu ON (gu.gid = a.group_id) '
-                   ' WHERE m.model = %s '
-                   '   AND gu.uid = %s '
+        cr.execute('''SELECT MAX(CASE WHEN perm_%s THEN 1 ELSE 0 END)
+                     FROM ir_model_access a
+                     JOIN ir_model m ON (m.id = a.model_id)
+                     JOIN res_groups_users_rel gu ON (gu.gid = a.group_id)
+                    WHERE m.model = %%s
+                      AND gu.uid = %%s''' % mode  # not_a_user_entry
                    , (model_name, uid,)
                    )
         r = cr.fetchone()[0]
 
         if r is None:
             # there is no specific rule. We check the generic rule
-            cr.execute('SELECT MAX(CASE WHEN perm_' + mode + ' THEN 1 ELSE 0 END) '
-                       '  FROM ir_model_access a '
-                       '  JOIN ir_model m ON (m.id = a.model_id) '
-                       ' WHERE a.group_id IS NULL '
-                       '   AND m.model = %s '
+            cr.execute('''SELECT MAX(CASE WHEN perm_%s THEN 1 ELSE 0 END)
+                         FROM ir_model_access a
+                         JOIN ir_model m ON (m.id = a.model_id)
+                        WHERE a.group_id IS NULL
+                          AND m.model = %%s ''' % mode  # not_a_user_entry
                        , (model_name,)
                        )
             r = cr.fetchone()[0]
@@ -568,12 +568,12 @@ class ir_model_access(osv.osv):
             cr.execute('''select
                     g.name
                 from
-                    ir_model_access a 
-                    left join ir_model m on (a.model_id=m.id) 
+                    ir_model_access a
+                    left join ir_model m on (a.model_id=m.id)
                     left join res_groups g on (a.group_id=g.id)
                 where
-                    m.model=%s and
-                    a.group_id is not null and perm_''' + mode, (model_name, ))
+                    m.model=%%s and
+                    a.group_id is not null and perm_%s''' % mode, (model_name, ))  # not_a_user_entry
             groups = ', '.join(map(lambda x: x[0], cr.fetchall())) or '/'
             msgs = {
                 'read':   _("You can not read this document (%s) ! Be sure your user belongs to one of these groups: %s."),
@@ -734,7 +734,7 @@ class ir_model_data(osv.osv):
         if xml_id:
             cr.execute('''SELECT imd.id, imd.res_id, md.id
                           FROM ir_model_data imd LEFT JOIN %s md ON (imd.res_id = md.id)
-                          WHERE imd.module=%%s AND imd.name=%%s''' % model_obj._table,
+                          WHERE imd.module=%%s AND imd.name=%%s''' % model_obj._table,  # not_a_user_entry
                        (module, xml_id))
             results = cr.fetchall()
             for imd_id2,res_id2,real_id2 in results:
@@ -841,20 +841,19 @@ class ir_model_data(osv.osv):
         else:
             where += ' and (key2 is null)'
 
-        cr.execute('select * from ir_values where model=%s and key=%s and name=%s'+where,(model, key, name))
+        cr.execute('select * from ir_values where model=%s and key=%s and name=%s'+where,(model, key, name))  # not_a_user_entry
         res = cr.fetchone()
         if not res:
             res = ir.ir_set(cr, uid, key, key2, name, models, value, replace, isobject, meta)
         elif xml_id:
-            cr.execute('UPDATE ir_values set value=%s WHERE model=%s and key=%s and name=%s'+where,(value, model, key, name))
+            cr.execute('UPDATE ir_values set value=%s WHERE model=%s and key=%s and name=%s'+where,(value, model, key, name))  # not_a_user_entry
         return True
 
     def _process_end(self, cr, uid, modules):
         if not modules:
             return True
         modules = list(modules)
-        module_in = ",".join(["%s"] * len(modules))
-        cr.execute('select id,name,model,res_id,module from ir_model_data where module IN (' + module_in + ') and noupdate=%s', modules + [False])
+        cr.execute('select id,name,model,res_id,module from ir_model_data where module IN %s and noupdate=%s', (tuple(modules), False))
         wkf_todo = []
         for (id, name, model, res_id,module) in cr.fetchall():
             if (module,name) not in self.loads:

@@ -52,6 +52,14 @@ import codecs
 from passlib.hash import bcrypt
 from report import report_sxw
 
+def _check_db_name(name):
+    '''Raise if the name is composed with unauthorized characters
+    '''
+    if name and isinstance(name, basestring):
+        # allow char, number, _ and -
+        if not re.match('^[a-zA-Z][a-zA-Z0-9_-]+$', name):
+            raise _("You must avoid all accents, space or special characters.")
+
 def export_csv(fields, result, result_file_path):
     try:
         with open(result_file_path, 'wb') as result_file:
@@ -133,11 +141,13 @@ class db(netsvc.ExportService):
         cr = db.cursor()
         try:
             cr.autocommit(True) # avoid transaction block
-            cr.execute("""CREATE DATABASE "%s" ENCODING 'unicode' TEMPLATE "template0" """ % name)
+            _check_db_name(name)
+            cr.execute("""CREATE DATABASE "%s" ENCODING 'unicode' TEMPLATE "template0" """ % name)  # ignore_sql_check
         finally:
             cr.close(True)
 
     def exp_create(self, db_name, demo, lang, user_password='admin'):
+        _check_db_name(db_name)
         self.id_protect.acquire()
         self.id += 1
         id = self.id
@@ -277,6 +287,7 @@ class db(netsvc.ExportService):
                 raise Exception, e
 
     def exp_drop(self, db_name):
+        _check_db_name(db_name)
         sql_db.close_db(db_name)
         logger = netsvc.Logger()
 
@@ -286,7 +297,7 @@ class db(netsvc.ExportService):
         drop_db = False
         try:
             try:
-                cr.execute('DROP DATABASE "%s"' % db_name)
+                cr.execute('DROP DATABASE "%s"' % db_name)  # ignore_sql_check
                 drop_db = True
             except Exception, e:
                 logger.notifyChannel("web-services", netsvc.LOG_ERROR,
@@ -310,6 +321,7 @@ class db(netsvc.ExportService):
             del os.environ['PGPASSWORD']
 
     def exp_dump_file(self, db_name):
+        _check_db_name(db_name)
         # get a tempfilename
         f = NamedTemporaryFile(delete=False)
         f_name = f.name
@@ -321,6 +333,7 @@ class db(netsvc.ExportService):
 
 
     def exp_dump(self, db_name):
+        _check_db_name(db_name)
         logger = netsvc.Logger()
         data, res = tools.pg_dump(db_name)
         if res:
@@ -330,6 +343,7 @@ class db(netsvc.ExportService):
         return base64.encodestring(data)
 
     def exp_restore_file(self, db_name, filename):
+        _check_db_name(db_name)
         try:
             logger = netsvc.Logger()
 
@@ -366,6 +380,7 @@ class db(netsvc.ExportService):
             raise
 
     def exp_restore(self, db_name, data):
+        _check_db_name(db_name)
         logging.getLogger('web-services').info("Restore DB from memory")
         buf=base64.decodestring(data)
         tmpfile = NamedTemporaryFile('w+b', delete=False)
@@ -375,6 +390,8 @@ class db(netsvc.ExportService):
         return self.exp_restore_file(db_name, tmpfile.name)
 
     def exp_rename(self, old_name, new_name):
+        _check_db_name(old_name)
+        _check_db_name(new_name)
         sql_db.close_db(old_name)
         logger = netsvc.Logger()
 
@@ -383,7 +400,7 @@ class db(netsvc.ExportService):
         cr.autocommit(True) # avoid transaction block
         try:
             try:
-                cr.execute('ALTER DATABASE "%s" RENAME TO "%s"' % (old_name, new_name))
+                cr.execute('ALTER DATABASE "%s" RENAME TO "%s"' % (old_name, new_name))  # ignore_sql_check
             except Exception, e:
                 logger.notifyChannel("web-services", netsvc.LOG_ERROR,
                                      'RENAME DB: %s -> %s failed:\n%s' % (old_name, new_name, e))
@@ -400,6 +417,7 @@ class db(netsvc.ExportService):
         return True
 
     def exp_db_exist(self, db_name):
+        _check_db_name(db_name)
         ## Not True: in fact, check if connection to database is possible. The database may exists
         return bool(sql_db.db_connect(db_name))
 
@@ -435,6 +453,7 @@ class db(netsvc.ExportService):
         """Return True if db_name is connected to a production SYNC_SERVER,
         False otherwise"""
 
+        _check_db_name(db_name)
         connection = sql_db.db_connect(db_name)
         # it the db connnected to a sync_server ?
         server_connecion_module = pooler.get_pool(db_name, upgrade_modules=False).get('sync.client.sync_server_connection')
@@ -472,6 +491,7 @@ class db(netsvc.ExportService):
         """
         if not dbname:
             return release.version
+        _check_db_name(dbname)
 
         db = sql_db.db_connect(dbname)
         cr = db.cursor()
@@ -905,6 +925,7 @@ class report_spool(netsvc.ExportService):
 
     def exp_export(self, db_name, uid, fields, domain, model, fields_name,
                    group_by=None, export_format='csv', ids=None, context=None):
+        _check_db_name(db_name)
         res = {'result': None}
         db, pool = pooler.get_db_and_pool(db_name)
         cr = db.cursor()
@@ -1046,11 +1067,13 @@ class report_spool(netsvc.ExportService):
         cr.close()
         return result_file_path
 
-    def exp_report(self, db, uid, object, ids, datas=None, context=None):
+    def exp_report(self, db_name, uid, object, ids, datas=None, context=None):
         if not datas:
             datas={}
         if not context:
             context={}
+
+        _check_db_name(db_name)
 
         self.id_protect.acquire()
         self.id += 1
@@ -1060,7 +1083,7 @@ class report_spool(netsvc.ExportService):
         self._reports[id] = {'uid': uid, 'result': False, 'state': False, 'exception': None}
 
         def go(id, uid, ids, datas, context):
-            cr = pooler.get_db(db).cursor()
+            cr = pooler.get_db(db_name).cursor()
             import traceback
             import sys
             try:

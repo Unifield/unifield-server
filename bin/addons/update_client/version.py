@@ -8,10 +8,7 @@ Created on 9 juil. 2012
 from osv import osv
 from osv import fields
 from tools.translate import _
-import tools
-from tools import config
-import os
-from updater import *
+from updater import base_version, server_version, isset_lock
 import calendar
 import time
 import logging
@@ -33,8 +30,7 @@ class version(osv.osv):
     
     def _patch_needs_to_be_downloaded(self, cr, uid, ids, name, args, context=None):
         cr.execute("""\
-            SELECT id, patch IS NULL FROM %s WHERE id IN %%s""" % \
-            self._table, [tuple(ids)])
+            SELECT id, patch IS NULL FROM %s WHERE id IN %%s""" % self._table, [tuple(ids)])  # not_a_user_entry
         return dict(cr.fetchall())
 
     _columns = {
@@ -89,7 +85,7 @@ class version(osv.osv):
             time.sleep(1)
             if len(server_version_keys) > 1:
                 self.write(cr, 1, [versions_id[server_version_keys[-1]]], {'applied':fields.datetime.now()})
-        except BaseException, e:
+        except BaseException:
             self._logger.exception("version init failure!")
 
     def _need_restart(self, cr, uid, context=None):

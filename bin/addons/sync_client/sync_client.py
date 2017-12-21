@@ -1314,15 +1314,15 @@ class Entity(osv.osv):
 
         # delete sync_client_update_received older than 6 month
         cr.execute("""DELETE FROM sync_client_update_received
-        WHERE create_date < now() - interval '%d month' AND
-        execution_date IS NOT NULL AND run='t'""" % nb_month_to_clean)
+        WHERE create_date < now() - interval '%s month' AND
+        execution_date IS NOT NULL AND run='t'""", (nb_month_to_clean,))
         deleted_update_received = cr.rowcount
         self._logger.info('clean_updates method has deleted %d sync_client_update_received' % deleted_update_received)
 
         # delete sync_client_update_to_send older than 6 month
         cr.execute("""DELETE FROM sync_client_update_to_send
-        WHERE create_date < now() - interval '%d month' AND
-        sent_date IS NOT NULL AND sent='t'""" % nb_month_to_clean)
+        WHERE create_date < now() - interval '%s month' AND
+        sent_date IS NOT NULL AND sent='t'""", (nb_month_to_clean,))
         deleted_update_to_send = cr.rowcount
         self._logger.info('clean_updates method has deleted %d sync_client_update_to_send' % deleted_update_to_send)
 

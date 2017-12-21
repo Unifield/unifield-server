@@ -53,13 +53,12 @@ class log_sale_purchase(osv.osv):
 
     def _get_model_id_from_document(self, cr, uid, ids, field, args, context=None):
         self.read(cr, uid, ids, ['model'], context=context)
-        cr.execute("""\
+        cr.execute("""
             SELECT log.id, m.id
             FROM %s log
             LEFT JOIN ir_model m
             ON log.model = m.model
-            WHERE log.id IN %%s;""" \
-            % (self._table,), [tuple(ids)])
+            WHERE log.id IN %%s;""" % (self._table,), [tuple(ids)])  # not_a_user_entry
         return dict(cr.fetchall())
 
     @check

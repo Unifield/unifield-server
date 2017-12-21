@@ -156,10 +156,8 @@ class analytic_account(osv.osv):
                          COALESCE(SUM(l.amount),0) AS balance,
                          COALESCE(SUM(l.unit_amount),0) AS quantity
                   FROM account_analytic_account a
-                      LEFT JOIN account_analytic_line l ON (a.id = l.""" + default_field  + """)
-                  WHERE a.id IN %s
-                  """ + where_date + """
-                  GROUP BY a.id""", where_clause_args)
+                      LEFT JOIN account_analytic_line l ON (a.id = l.%s)
+                  WHERE a.id IN %%s %s GROUP BY a.id""" % (default_field, where_date), where_clause_args)  # ignore_sql_check
             for ac_id, debit, credit, balance, quantity in cr.fetchall():
                 res[ac_id] = {'debit': debit, 'credit': credit, 'balance': balance, 'quantity': quantity}
             tmp_res = self._compute_level_tree(cr, uid, ids, child_ids, res, name, context)
@@ -277,11 +275,11 @@ class analytic_account(osv.osv):
             ids = [ids]
         if not ids:
             return True
-        cr.execute('''select a.code, a.name, d.name from
-            '''+self._table+''' d
+        cr.execute('''
+            select a.code, a.name, d.name from %s d
             left join account_account a on a.default_destination_id = d.id
             left join account_destination_link l on l.destination_id = d.id and l.account_id = a.id and l.disabled='f'
-            where a.default_destination_id is not null and l.destination_id is null and d.id in %s ''', (tuple(ids),)
+            where a.default_destination_id is not null and l.destination_id is null and d.id in %%s''' % self._table, (tuple(ids),)  # not_a_user_entry
                    )
         error = []
         for x in cr.fetchall():

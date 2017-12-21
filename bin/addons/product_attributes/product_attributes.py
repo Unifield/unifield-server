@@ -318,19 +318,19 @@ class product_attributes(osv.osv):
                             touched='[''%s'']'
                         WHERE model = 'product.product'
                         AND res_id IN (%s)
-        ''' % (new_column, ids_req))
+        ''' % (new_column, ids_req))  # not_a_user_entry
 
         # Make the migration
         if new_column == 'standard_ok':
-            request = 'UPDATE product_product SET standard_ok = \'True\' WHERE %s = True' % moved_column
+            request = 'UPDATE product_product SET standard_ok = \'True\' WHERE %s = True' % moved_column  # not_a_user_entry
             cr.execute(request)
 
         if new_column == 'dangerous_goods':
-            request = 'UPDATE product_product SET is_dg = True, dg_txt = \'X\', dangerous_goods = \'True\' WHERE %s = True' % moved_column
+            request = 'UPDATE product_product SET is_dg = True, dg_txt = \'X\', dangerous_goods = \'True\' WHERE %s = True' % moved_column  # not_a_user_entry
             cr.execute(request)
 
         if new_column == 'short_shelf_life':
-            request = 'UPDATE product_product SET is_ssl = True, ssl_txt = \'X\', short_shelf_life = \'True\' WHERE %s = True' % moved_column
+            request = 'UPDATE product_product SET is_ssl = True, ssl_txt = \'X\', short_shelf_life = \'True\' WHERE %s = True' % moved_column  # not_a_user_entry
             cr.execute(request)
 
         if new_column == 'controlled_substance':
@@ -339,7 +339,7 @@ class product_attributes(osv.osv):
                               controlled_substance = 'True',
                               is_cs = True,
                               cs_txt = 'X'
-                            WHERE %s = True OR narcotic = True''' % moved_column
+                            WHERE %s = True OR narcotic = True''' % moved_column  # not_a_user_entry
             cr.execute(request)
 
         return
@@ -1780,7 +1780,7 @@ class product_attributes(osv.osv):
         '''
         res = {}
         if default_code:
-            cr.execute("SELECT * FROM product_product pp where pp.default_code = '%s'" % default_code)
+            cr.execute("SELECT * FROM product_product pp where pp.default_code = %s", (default_code,))
             duplicate = cr.fetchall()
             if duplicate:
                 res.update({'warning': {'title': 'Warning', 'message':'The Code already exists'}})

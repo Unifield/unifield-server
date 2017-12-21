@@ -261,7 +261,7 @@ class account_analytic_line(osv.osv):
         br = self.browse(cr, uid, res,context)
         if entry_sequence_sync is not None:
             if entry_sequence_sync != br.entry_sequence:
-                cr.execute('''update account_analytic_line set entry_sequence = '%s' where id = %s''' % (entry_sequence_sync,res))
+                cr.execute('''UPDATE account_analytic_line SET entry_sequence=%s WHERE id=%s''', (entry_sequence_sync, res))
         return res
 
     def write(self, cr, uid, ids, vals, context=None):

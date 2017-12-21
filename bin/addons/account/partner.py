@@ -93,16 +93,16 @@ class res_partner(osv.osv):
 
     def _credit_debit_get(self, cr, uid, ids, field_names, arg, context=None):
         query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
-        cr.execute("""SELECT l.partner_id, a.type, SUM(l.debit-l.credit)
-                      FROM account_move_line l
-                      LEFT JOIN account_account a ON (l.account_id=a.id)
-                      WHERE a.type IN ('receivable','payable')
-                      AND l.partner_id IN %s
-                      AND l.reconcile_id IS NULL
-                      AND """ + query + """
-                      GROUP BY l.partner_id, a.type
-                      """,
-                   (tuple(ids),))
+        cr.execute("""
+            SELECT l.partner_id, a.type, SUM(l.debit-l.credit)
+            FROM account_move_line l
+            LEFT JOIN account_account a ON (l.account_id=a.id)
+            WHERE a.type IN ('receivable','payable')
+            AND l.partner_id IN %%s
+            AND l.reconcile_id IS NULL
+            AND %s
+            GROUP BY l.partner_id, a.type""" % query,  # not_a_user_entry
+            (tuple(ids),))
         maps = {'receivable':'credit', 'payable':'debit' }
         res = {}
         for id in ids:
@@ -112,7 +112,7 @@ class res_partner(osv.osv):
             res[pid][maps[type]] = (type=='receivable') and val or -val
         return res
 
-    def _asset_difference_search(self, cr, uid, obj, name, type, args, context=None):
+    def _asset_difference_search(self, cr, uid, obj, name, line_type, args, context=None):
         if not args:
             return []
         having_values = tuple(map(itemgetter(2), args))
@@ -120,15 +120,16 @@ class res_partner(osv.osv):
             map(lambda x: '(SUM(debit-credit) %(operator)s %%s)' % {
                                 'operator':x[1]},args))
         query = self.pool.get('account.move.line')._query_get(cr, uid, context=context)
-        cr.execute(('SELECT partner_id FROM account_move_line l '\
-                    'WHERE account_id IN '\
-                        '(SELECT id FROM account_account '\
-                        'WHERE type=%s AND active) '\
-                    'AND reconcile_id IS NULL '\
-                    'AND '+query+' '\
-                    'AND partner_id IS NOT NULL '\
-                    'GROUP BY partner_id HAVING '+where),
-                   (type,) + having_values)
+        cr.execute(('''
+            SELECT partner_id FROM account_move_line l
+            WHERE account_id IN
+               (SELECT id FROM account_account
+               WHERE type=%%s AND active)
+            AND reconcile_id IS NULL
+            AND %s
+            AND partner_id IS NOT NULL
+            GROUP BY partner_id HAVING %s''' % (query, where)),  # not_a_user_entry
+                   (line_type,) + having_values)
         res = cr.fetchall()
         if not res:
             return [('id','=','0')]

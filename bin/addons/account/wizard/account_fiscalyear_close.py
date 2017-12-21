@@ -63,9 +63,9 @@ class account_fiscalyear_close(osv.osv_memory):
         fy_id = data[0]['fy_id']
 
         cr.execute("SELECT id FROM account_period WHERE date_stop < (SELECT date_start FROM account_fiscalyear WHERE id = %s)", (str(data[0]['fy2_id']),))
-        fy_period_set = ','.join(map(lambda id: str(id[0]), cr.fetchall()))
+        fy_period_list = [x[0] for x in cr.fetchall()]
         cr.execute("SELECT id FROM account_period WHERE date_start > (SELECT date_stop FROM account_fiscalyear WHERE id = %s)", (str(fy_id),))
-        fy2_period_set = ','.join(map(lambda id: str(id[0]), cr.fetchall()))
+        fy2_period_list = [x[0] for x in cr.fetchall()]
 
         period = obj_acc_period.browse(cr, uid, data[0]['period_id'], context=context)
         new_fyear = obj_acc_fiscalyear.browse(cr, uid, data[0]['fy2_id'], context=context)
@@ -103,15 +103,16 @@ class account_fiscalyear_close(osv.osv_memory):
             if accnt_type_data.close_method=='none' or account.type == 'view':
                 continue
             if accnt_type_data.close_method=='balance':
-                
+
                 balance_in_currency = 0.0
                 if account.currency_id:
-                    cr.execute('SELECT sum(amount_currency) as balance_in_currency FROM account_move_line ' \
-                            'WHERE account_id = %s ' \
-                                'AND ' + query_line + ' ' \
-                                'AND currency_id = %s', (account.id, account.currency_id.id)) 
+                    cr.execute('''
+                            SELECT sum(amount_currency) as balance_in_currency FROM account_move_line
+                            WHERE account_id = %%s
+                                AND %s
+                                AND currency_id = %%s''' % query_line, (account.id, account.currency_id.id))  # not_a_user_entry
                     balance_in_currency = cr.dictfetchone()['balance_in_currency']
-                    
+
                 if abs(account.balance)>0.0001:
                     obj_acc_move_line.create(cr, uid, {
                         'debit': account.balance>0 and account.balance,
@@ -128,15 +129,16 @@ class account_fiscalyear_close(osv.osv_memory):
                 offset = 0
                 limit = 100
                 while True:
-                    cr.execute('SELECT id, name, quantity, debit, credit, account_id, ref, ' \
-                                'amount_currency, currency_id, blocked, partner_id, ' \
-                                'date_maturity, date_created ' \
-                            'FROM account_move_line ' \
-                            'WHERE account_id = %s ' \
-                                'AND ' + query_line + ' ' \
-                                'AND reconcile_id is NULL ' \
-                            'ORDER BY id ' \
-                            'LIMIT %s OFFSET %s', (account.id, limit, offset))
+                    cr.execute('''
+                            SELECT id, name, quantity, debit, credit, account_id, ref,
+                                amount_currency, currency_id, blocked, partner_id,
+                                date_maturity, date_created
+                            FROM account_move_line
+                            WHERE account_id = %%s
+                                AND %s
+                                AND reconcile_id is NULL
+                            ORDER BY id
+                            LIMIT %%s OFFSET %%s''' % query_line, (account.id, limit, offset))  # not_a_user_entry
                     result = cr.dictfetchall()
                     if not result:
                         break
@@ -158,17 +160,18 @@ class account_fiscalyear_close(osv.osv_memory):
                 offset = 0
                 limit = 100
                 while True:
-                    cr.execute('SELECT  DISTINCT b.id, b.name, b.quantity, b.debit, b.credit, b.account_id, b.ref, ' \
-                                'b.amount_currency, b.currency_id, b.blocked, b.partner_id, ' \
-                                'b.date_maturity, b.date_created ' \
-                            'FROM account_move_line a, account_move_line b ' \
-                            'WHERE b.account_id = %s ' \
-                                'AND b.reconcile_id is NOT NULL ' \
-                                'AND a.reconcile_id = b.reconcile_id ' \
-                                'AND b.period_id IN ('+fy_period_set+') ' \
-                                'AND a.period_id IN ('+fy2_period_set+') ' \
-                            'ORDER BY id ' \
-                            'LIMIT %s OFFSET %s', (account.id, limit, offset))
+                    cr.execute('''
+                            SELECT  DISTINCT b.id, b.name, b.quantity, b.debit, b.credit, b.account_id, b.ref,
+                                b.amount_currency, b.currency_id, b.blocked, b.partner_id,
+                                b.date_maturity, b.date_created
+                            FROM account_move_line a, account_move_line b
+                            WHERE b.account_id = %s
+                                AND b.reconcile_id is NOT NULL
+                                AND a.reconcile_id = b.reconcile_id
+                                AND b.period_id IN %s
+                                AND a.period_id IN %s
+                            ORDER BY id
+                            LIMIT %s OFFSET %s''', (account.id, fy_period_list, fy2_period_list, limit, offset))
                     result = cr.dictfetchall()
                     if not result:
                         break
@@ -188,14 +191,15 @@ class account_fiscalyear_close(osv.osv_memory):
                 offset = 0
                 limit = 100
                 while True:
-                    cr.execute('SELECT id, name, quantity, debit, credit, account_id, ref, ' \
-                                'amount_currency, currency_id, blocked, partner_id, ' \
-                                'date_maturity, date_created ' \
-                            'FROM account_move_line ' \
-                            'WHERE account_id = %s ' \
-                                'AND ' + query_line + ' ' \
-                            'ORDER BY id ' \
-                            'LIMIT %s OFFSET %s', (account.id, limit, offset))
+                    cr.execute('''
+                            SELECT id, name, quantity, debit, credit, account_id, ref,
+                                amount_currency, currency_id, blocked, partner_id,
+                                date_maturity, date_created
+                            FROM account_move_line
+                            WHERE account_id = %%s
+                                AND %s
+                            ORDER BY id
+                            LIMIT %%s OFFSET %%s''' % query_line, (account.id, limit, offset))  # not_a_user_entry
 
                     result = cr.dictfetchall()
                     if not result:

@@ -1,4 +1,4 @@
-from osv import osv, fields, orm
+from osv import orm
 
 super_get_unique_xml_name = orm.orm.get_unique_xml_name
     
@@ -52,10 +52,10 @@ def usb_need_to_push(self, cr, uid, context=None):
             SELECT res_id
                 FROM ir_model_data
                 WHERE module = 'sd' AND
-                      model = %%s AND
-                      (last_modification > '%(clone_date)s' OR sync_date > '%(clone_date)s' OR (last_modification is null and sync_date is null)) 
+                      model = %s AND
+                      (last_modification > %s OR sync_date > %s OR (last_modification is null and sync_date is null))
                       AND
-                      (usb_sync_date < last_modification OR usb_sync_date < sync_date OR usb_sync_date IS NULL)""" % {'clone_date' : clone_date},[self._name])
+                      (usb_sync_date < last_modification OR usb_sync_date < sync_date OR usb_sync_date IS NULL)""", (self._name, clone_date, clone_date))
 
         return [row[0] for row in cr.fetchall()]
 
