@@ -1185,7 +1185,7 @@ class shipment(osv.osv):
                     move_obj.write(cr, uid, [move.id], move_values, context=context)
 
                 for move_vals in move_data.values():
-                    if round(move_vals['initial'], 14) != round(move_vals['partial_qty'], 14):
+                    if round(move_vals['initial'], 13) != round(move_vals['partial_qty'], 13):
                         raise osv.except_osv(
                             _('Processing Error'),
                             _('The sum of the processed quantities is not equal to the sum of the initial quantities'),
