@@ -865,10 +865,13 @@ class audittrail_log_line(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'old_value_fct': False, 'new_value_fct': False}
-            if not line.old_value_text:
+            if line.method == 'create':
+                res[line.id]['old_value_fct'] = False
+            elif not line.old_value_text:
                 res[line.id]['old_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.old_value, line.fct_object_id or line.object_id, context=context)
             else:
                 res[line.id]['old_value_fct'] = line.old_value_text
+
             if not line.new_value_text:
                 res[line.id]['new_value_fct'] = get_value_text(self, cr, uid, line.field_id.id, False, line.new_value, line.fct_object_id or line.object_id, context=context)
             else:
