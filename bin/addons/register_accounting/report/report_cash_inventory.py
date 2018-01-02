@@ -41,11 +41,11 @@ class cash_inventory(report_sxw.rml_parse):
         """
         Formats the comments to print:
         - 4 lines max
-        - 100 characters per line
+        - 90 characters per line
         """
         res = ''
         nb_lines = 4
-        strlimit = 100
+        strlimit = 90
         # remove the existing line breaks from the comments
         notes = notes.replace('\r\n', ' ').replace('\n', ' ')
         for i in range(nb_lines):
