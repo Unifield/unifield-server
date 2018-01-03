@@ -268,11 +268,12 @@ class msf_doc_import_accounting(osv.osv_memory):
                     current_line_num = num + base_num
                     # Fetch all XML row values
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
-                    self._format_unit_separator(line)
 
                     # ignore empty lines
                     if not self._check_has_data(line):
                         continue
+
+                    self._format_unit_separator(line)
 
                     # Check document date
                     if not line[cols['Document Date']]:
