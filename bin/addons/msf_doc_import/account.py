@@ -32,6 +32,7 @@ import threading
 import pooler
 import mx
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
+from addons.spreadsheet_xml import UNIT_SEPARATOR
 
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'
@@ -152,6 +153,15 @@ class msf_doc_import_accounting(osv.osv_memory):
                 return True
         return False
 
+    def _format_unit_separator(self, line):
+        """
+        Replaces back the arbitrary string used for the unit separator with the corresponding hexadecimal code
+        """
+        for i in range(len(line)):
+            if line[i] and isinstance(line[i], basestring) and UNIT_SEPARATOR in line[i]:
+                line[i] = line[i].replace(UNIT_SEPARATOR, '\x1F')
+        return line
+
     def _import(self, dbname, uid, ids, context=None):
         """
         Do treatment before validation:
@@ -204,7 +214,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                 fileobj = NamedTemporaryFile('w+b', delete=False)
                 fileobj.write(decodestring(wiz.file))
                 fileobj.close()
-                content = SpreadsheetXML(xmlfile=fileobj.name)
+                context.update({'from_je_import': True})
+                content = SpreadsheetXML(xmlfile=fileobj.name, context=context)
                 if not content:
                     raise osv.except_osv(_('Warning'), _('No content'))
                 # Update wizard
@@ -257,6 +268,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     current_line_num = num + base_num
                     # Fetch all XML row values
                     line = self.pool.get('import.cell.data').get_line_values(cr, uid, ids, r)
+                    self._format_unit_separator(line)
 
                     # ignore empty lines
                     if not self._check_has_data(line):
