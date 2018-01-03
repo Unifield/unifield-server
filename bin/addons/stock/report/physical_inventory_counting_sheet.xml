@@ -400,7 +400,7 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s22"><Data ss:Type="String">Location</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:MergeAcross="1" ss:StyleID="m2667643071524"><Data ss:Type="String">${objects[0].location_id and objects[0].location_id.name or ''}</Data><NamedCell
+    <Cell ss:MergeAcross="1" ss:StyleID="m2667643071524"><Data ss:Type="String">${objects[0].location_id and objects[0].location_id.name or ''|x}</Data><NamedCell
       ss:Name="Print_Titles"/></Cell>
     <Cell ss:StyleID="s18"><NamedCell ss:Name="Print_Titles"/></Cell>
    </Row>
@@ -420,7 +420,7 @@
    <Row ss:Height="15.75">
     <Cell ss:Index="2" ss:StyleID="s24"><Data ss:Type="String">Inventory name </Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s20"><Data ss:Type="String">${objects[0].name or ''}</Data><NamedCell
+    <Cell ss:StyleID="s20"><Data ss:Type="String">${objects[0].name or ''|x}</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s25"><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
@@ -472,21 +472,21 @@
 % for index,item in enumerate(objects[0].counting_line_ids):
    <Row ss:AutoFitHeight="0" ss:Height="15.75">
     <Cell ss:StyleID="s107"><Data ss:Type="Number">${item.line_no}</Data></Cell>
-    <Cell ss:StyleID="s106"><Data ss:Type="String">${item.product_id and item.product_id.code or ''}</Data><NamedCell
+    <Cell ss:StyleID="s106"><Data ss:Type="String">${item.product_id and item.product_id.code or ''|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s106"><Data ss:Type="String">${item.product_id and item.product_id.name or ''}</Data><NamedCell
+    <Cell ss:StyleID="s106"><Data ss:Type="String">${item.product_id and item.product_id.name or ''|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s107"><Data ss:Type="String">${item.product_uom_id and item.product_uom_id.name or ''}</Data><NamedCell
+    <Cell ss:StyleID="s107"><Data ss:Type="String">${item.product_uom_id and item.product_uom_id.name or ''|x}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s108"><Data ss:Type="String">${item.quantity or ''}</Data><NamedCell
       ss:Name="_FilterDatabase"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s108"><Data ss:Type="String">${item.batch_number or ''}</Data></Cell>
+    <Cell ss:StyleID="s108"><Data ss:Type="String">${item.batch_number or ''|x}</Data></Cell>
     % if isDate(item.expiry_date):
     <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${item.expiry_date|n}T00:00:00.000</Data></Cell>
     % else:
     <Cell ss:StyleID="s108"><Data ss:Type="String"></Data></Cell>
     % endif
-    <Cell ss:StyleID="s108"><Data ss:Type="String">${display_product_attributes(item)}</Data></Cell>
+    <Cell ss:StyleID="s108"><Data ss:Type="String">${display_product_attributes(item)|x}</Data></Cell>
     <Cell ss:StyleID="s109"><Data ss:Type="String">${yesno(item.is_bn)}</Data></Cell>
     <Cell ss:StyleID="s209"><Data ss:Type="String">${yesno(item.is_ed)}</Data></Cell>
    </Row>
