@@ -61,6 +61,7 @@ class stock_move(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        commitment_obj = self.pool.get('account.commitment')
         # Browse all elements
         for move in self.browse(cr, uid, ids, context=context):
             # Fetch all necessary elements
@@ -76,11 +77,20 @@ class stock_move(osv.osv):
                 # If no price_unit, so no impact on commitments because no price unit have been taken for commitment calculation
                 continue
             # update all commitment voucher lines
+            cv_to_set_to_done = {}  # dict of the CV that will be set to Done if all their lines now have the amount 0.0
             for cl in move.purchase_line_id.commitment_line_ids:
+                if cl.commit_id and cl.commit_id.id not in cv_to_set_to_done:
+                    cv_to_set_to_done[cl.commit_id.id] = True
                 new_amount = cl.amount - (qty * price_unit)
                 if new_amount < 0.0:
                     new_amount = 0.0
+                if abs(new_amount) > 10**-3:
+                    if cl.commit_id:
+                        # don't change the CV state if one line != 0
+                        cv_to_set_to_done[cl.commit_id.id] = False
                 self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': new_amount}, context=context)
+            cv_list = [cv for cv in cv_to_set_to_done if cv_to_set_to_done[cv]]
+            commitment_obj.write(cr, uid, cv_list, {'state': 'done'}, context=context)
         return super(stock_move, self).action_cancel(cr, uid, ids, context=context)
 
 stock_move()
