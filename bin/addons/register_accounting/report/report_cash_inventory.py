@@ -55,7 +55,7 @@ class cash_inventory(report_sxw.rml_parse):
             eol = ''
             if not is_last_line:
                 # add an hyphen if the cut is done in the middle of a word
-                eol = len(notes) > end and notes[end-1].isalpha() and notes[end].isalpha() and '-\n' or '\n'
+                eol = len(notes) > end and notes[end-1].isalpha() and notes[end].isalpha() and '-\n-' or '\n'
             res = '%s%s%s' % (res, notes[begin:end], eol)
         # add an ellipsis if the comment is too long to be fully printed
         if len(notes) > strlimit * nb_lines:
