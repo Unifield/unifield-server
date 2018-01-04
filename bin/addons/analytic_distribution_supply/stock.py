@@ -61,7 +61,10 @@ class stock_move(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # Browse all elements
+
+        inv_obj = self.pool.get('account.invoice')
+        account_amount = {}
+        po_ids = {}
         for move in self.browse(cr, uid, ids, context=context):
             # Fetch all necessary elements
             qty = move.product_uos_qty or move.product_qty or 0.0
@@ -75,12 +78,17 @@ class stock_move(osv.osv):
             if not price_unit:
                 # If no price_unit, so no impact on commitments because no price unit have been taken for commitment calculation
                 continue
-            # update all commitment voucher lines
-            for cl in move.purchase_line_id.commitment_line_ids:
-                new_amount = cl.amount - (qty * price_unit)
-                if new_amount < 0.0:
-                    new_amount = 0.0
-                self.pool.get('account.commitment.line').write(cr, uid, [cl.id], {'amount': new_amount}, context=context)
+
+            po_ids[move.purchase_line_id.order_id.id] = True
+            account_id = inv_obj._get_expense_account(cr, uid, move.purchase_line_id, context=context)
+            if account_id:
+                if account_id not in account_amount:
+                    account_amount[account_id] = 0
+                account_amount[account_id] += qty * price_unit
+
+        if account_amount and po_ids:
+            inv_obj._update_commitments_lines(cr, uid, po_ids.keys(), account_amount, context=context)
+
         return super(stock_move, self).action_cancel(cr, uid, ids, context=context)
 
 stock_move()
