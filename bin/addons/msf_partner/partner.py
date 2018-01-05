@@ -629,7 +629,7 @@ class res_partner(osv.osv):
                                            ) % (objects_linked_to_partner))
 
         if vals.get('name'):
-            vals['name'] = vals['name'].strip()
+            vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
 
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
@@ -659,7 +659,7 @@ class res_partner(osv.osv):
             vals['address'] = [(0, 0, {'function': False, 'city': False, 'fax': False, 'name': False, 'zip': False, 'title': False, 'mobile': False, 'street2': False, 'country_id': False, 'phone': False, 'street': False, 'active': True, 'state_id': False, 'type': False, 'email': False})]
 
         if vals.get('name'):
-            vals['name'] = vals['name'].strip()
+            vals['name'] = vals['name'].replace('\r\n', ' ').replace('\r', ' ').replace('\n', ' ').strip()
 
         return super(res_partner, self).create(cr, uid, vals, context=context)
 
