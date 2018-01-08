@@ -99,7 +99,7 @@ class currency_setup(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No pricelist found for this currency !'))
 
         # Change the currencies on all internal partners
-        partner_ids = self.pool.get('res.partner').search(cr, uid, [('partner_type', 'in', ['internal', 'intermission'])])
+        partner_ids = self.pool.get('res.partner').search(cr, uid, [('partner_type', 'in', ['internal', 'intermission']), ('active', 'in', ['t', 'f'])])
         self.pool.get('res.partner').write(cr, uid, partner_ids, {'property_product_pricelist': sale_price_id[0],
                                                                   'property_product_pricelist_purchase': purchase_price_id[0]})
 
