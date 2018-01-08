@@ -69,7 +69,7 @@ class stock_move(osv.osv):
             # Fetch all necessary elements
             qty = move.product_uos_qty or move.product_qty or 0.0
             picking = move.picking_id or False
-            if not picking or not move.purchase_line_id or picking.type !='in':
+            if not picking or not move.purchase_line_id or picking.type !='in' or move.state == 'cancel':
                 # If no picking then no PO have generated this stock move
                 continue
             # fetch invoice type in order to retrieve price unit
@@ -87,7 +87,7 @@ class stock_move(osv.osv):
                 account_amount[account_id] += qty * price_unit
 
         if account_amount and po_ids:
-            inv_obj._update_commitments_lines(cr, uid, po_ids.keys(), account_amount, context=context)
+            inv_obj._update_commitments_lines(cr, uid, po_ids.keys(), account_amount, from_cancel=True, context=context)
 
         return super(stock_move, self).action_cancel(cr, uid, ids, context=context)
 

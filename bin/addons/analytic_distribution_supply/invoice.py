@@ -151,7 +151,7 @@ class account_invoice(osv.osv):
                 grouped_invl[a] += invl.price_subtotal
 
             po_ids = [x.id for x in inv.purchase_ids]
-            self._update_commitments_lines(cr, uid, po_ids, grouped_invl, context=context)
+            self._update_commitments_lines(cr, uid, po_ids, grouped_invl, from_cancel=True, context=context)
 
         return True
 
@@ -168,7 +168,7 @@ class account_invoice(osv.osv):
 
         return account_id
 
-    def _update_commitments_lines(self, cr, uid, po_ids, account_amount_dic, context=None):
+    def _update_commitments_lines(self, cr, uid, po_ids, account_amount_dic, from_cancel=False, context=None):
         """
             po_ids: list of PO ids
             account_amount_dic: dict, keys are G/L account_id, values are amount to deduce
@@ -205,7 +205,7 @@ class account_invoice(osv.osv):
             if account not in cv_info:
                 continue
             for cv_line in cv_info[account]:
-                if cv_line[3] == 'draft' and cv_line[2] not in draft_opened:
+                if cv_line[3] == 'draft' and cv_line[2] not in draft_opened and not from_cancel:
                     draft_opened.append(cv_line[2])
                     # If Commitment voucher in draft state we change it to 'validated' without using workflow and engagement lines generation
                     # NB: This permits to avoid modification on commitment voucher when receiving some goods
