@@ -591,8 +591,9 @@ class tender(osv.osv):
                     'move_dest_id': False,
                     'notes': tender_line.product_id.description_purchase,
                     'comment': tender_line.comment,
-                    'analytic_distribution_id': self.pool.get('analytic.distribution').copy(cr, uid, anal_dist_to_copy, {}, context=context),
                 }
+                if anal_dist_to_copy:
+                    pol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, anal_dist_to_copy, {}, context=context)
                 self.pool.get('purchase.order.line').create(cr, uid, pol_values, context=context)
 
             # when the po is generated, the tender is done - no more modification or comparison
