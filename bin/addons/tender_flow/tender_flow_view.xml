@@ -291,7 +291,11 @@
                                 <field name="origin" groups="base.group_extended" widget="char" attrs="{'readonly': [('rfq_state', '!=', 'draft')]}"/>
                                 <field name="internal_type"/>
                                 <field name="customer_ref" widget="char"/>
-                                <group colspan="4">
+                                <group colspan="2" col="3">
+                                    <field name="stock_take_date" attrs="{'readonly': [('rfq_state', '!=', 'draft')]}"/>
+                                    <button colspan="1" name="update_date" string="Update Lines" type="object" context="{'field_name': 'stock_take', 'type': 'purchase.order'}" icon="gtk-indent" attrs="{'invisible': [('rfq_state', '!=', 'draft')]}"/>
+                                </group>
+                                <group colspan="2">
                                     <field name="pricelist_id" string="Currency" attrs="{'readonly': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}"/>
                                     <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" attrs="{'invisible': [('rfq_state', 'in', ['updated', 'done', 'cancel'])]}" />
                                 </group>
