@@ -1308,7 +1308,7 @@ class purchase_order(osv.osv):
         return True
 
     def _hook_o_line_value(self, cr, uid, *args, **kwargs):
-        o_line = super(purchase_order, self)._hook_o_line_value(cr, uid, *args, **kwargs)
+        o_line = kwargs['o_line']
         order_line = kwargs['order_line']
 
         # Copy all fields except order_id and analytic_distribution_id
@@ -1349,7 +1349,7 @@ class purchase_order(osv.osv):
         '''
         Hook to change the values of the PO
         '''
-        order_infos = super(purchase_order, self)._hook_order_infos(cr, uid, *args, **kwargs)
+        order_infos = kwargs['order_infos']
         order_id = kwargs['order_id']
 
         fields = ['invoice_method', 'minimum_planned_date', 'order_type',
