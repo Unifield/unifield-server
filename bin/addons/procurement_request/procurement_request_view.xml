@@ -95,7 +95,7 @@
                                         icon="terp-stock_effects-object-colorize"
                                         attrs="{'invisible': [('fake_state', 'in', ('confirmed', 'cancel', 'cancel_r', 'done', 'exception'))]}"
                                         />
-                                    <button string="Validate" icon="terp-check" name="validated" type="workflow" header="True"
+                                    <button string="Validate" icon="terp-check" name="validated_ir" type="object" header="True"
                                             attrs="{'invisible': [('fake_state', '!=', 'draft')]}"/>
                                 </tree>
                                 <form>
