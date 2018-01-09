@@ -22,20 +22,10 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from lxml import etree
+from purchase import PURCHASE_ORDER_STATE_SELECTION
 
 import time
 from datetime import datetime
-
-PURCHASE_ORDER_STATE_SELECTION = [
-    ('draft', 'Draft'),
-    ('sourced', 'Sourced'),
-    ('confirmed', 'Validated'),
-    ('confirmed_wait', 'Confirmed (waiting)'),
-    ('approved', 'Confirmed'),
-    ('done', 'Closed'),
-    ('cancel', 'Cancelled'),
-]
 
 class po_follow_up(osv.osv_memory):
     _name = 'po.follow.up'
