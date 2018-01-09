@@ -1117,7 +1117,7 @@ class stock_picking(osv.osv):
         payment_term_id = False
         partner =  picking.address_id and picking.address_id.partner_id
 
-        if picking.partner_id.partner_type == 'internal':
+        if picking.partner_id.partner_type in ('esc', 'internal'):
             return False, False
 
         if picking.claim:
