@@ -15,7 +15,8 @@ class PhysicalInventoryImportWizard(osv.osv_memory):
     def action_close(self, cr, uid, ids, context=None):
         return self.close_action()
 
-    def message_box(self, cr, uid, title, message, context=None):
+    def message_box(self, cr, button_uid, title, message, context=None):
+        uid = hasattr(button_uid, 'realUid') and button_uid.realUid or button_uid
         return {
             'name': title,
             'view_type': 'form',
@@ -67,7 +68,8 @@ class PhysicalInventoryImportWizard(osv.osv_memory):
     def get_view_by_name(self, cr, uid, name):
         return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', name)[1]
 
-    def action_box(self, cr, uid, title, items=None, context=None):
+    def action_box(self, cr, button_uid, title, items=None, context=None):
+        uid = hasattr(button_uid, 'realUid') and button_uid.realUid or button_uid
         result = {
             'name': title,
             'view_type': 'form',
