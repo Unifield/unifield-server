@@ -1,0 +1,223 @@
+<?xml version="1.0"?>
+<document filename="cash_request.pdf">
+
+  <template pageSize="(595.0,842.0)" title="Cash Request" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="57.0" y1="57.0" width="481" height="728"/>
+    </pageTemplate>
+  </template>
+
+  <stylesheet>
+    <initialize>
+      <paraStyle name="all" fontName="Helvetica" fontSize="9.0"/>
+    </initialize>
+
+    <blockTableStyle id="table_settings">
+      <lineStyle kind="GRID" colorName="#cccccc"/>
+      <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+
+    <blockTableStyle id="sub_table">
+      <blockSpan start="0,0" stop="1,0"/>  <!-- merge the first 2 "cells" of the first line -->
+      <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+
+    <blockTableStyle id="sub_table_total">
+      <blockSpan start="0,1" stop="2,1"/>  <!-- merge the first 3 "cells" of the second line -->
+      <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+
+    <blockTableStyle id="authorization_header">
+      <blockSpan start="0,0" stop="2,0"/>  <!-- merge the first 3 "cells" of the first line -->
+      <lineStyle kind="GRID" colorName="#cccccc"/>
+      <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="LINEBELOW" colorName="#ffffff" start="0,1" stop="2,1"/>
+    </blockTableStyle>
+    <blockTableStyle id="authorization_line">
+      <lineStyle kind="GRID" colorName="#cccccc"/>
+      <lineStyle kind="OUTLINE" colorName="#cccccc" thickness="1"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+
+    <paraStyle name="bold" fontName="Helvetica-Bold"/>
+    <paraStyle name="right" alignment="RIGHT"/>
+    <paraStyle name="center" alignment="CENTER"/>
+    <paraStyle name="text" leftIndent="3mm"/>
+    <paraStyle name="text_right" rightIndent="3mm" alignment="RIGHT"/>
+  </stylesheet>
+
+  <story>
+
+    <section>
+      [[ repeatIn(objects,'o') ]]
+      <title>Cash Request Validation</title>
+
+      <spacer length="24"/>
+
+      <!-- Recap of the Settings -->
+      <blockTable colWidths="96mm, 96mm" style="table_settings">
+        <tr>
+          <td>
+            <para>Name: <b>[[ o.name ]]</b></para>
+            <para><font color="white"> </font></para>
+            <para>Request Date: [[ formatLang(o.request_date, date=True) ]]</para>
+            <para>Mission: [[ o.mission ]]</para>
+            <para><font color="white"> </font></para>
+            <para>Transfer Account Code:</para>
+            <para>[[ o.transfer_account_id and '%s - %s' % (o.transfer_account_id.code, o.transfer_account_id.name) or '' ]]</para>
+          </td>
+          <td>
+            <para>State: [[ getSel(o, 'state') ]]</para>
+            <para><font color="white"> </font></para>
+            <para>Month: [[ o.month_period_id.name ]]</para>
+            <para>Proprietary instance: [[ o.prop_instance_id.code ]]</para>
+            <para><font color="white"> </font></para>
+            <para>Bank: [[ o.bank_journal_id and o.bank_journal_id.code or '' ]]</para>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para>Currency of Transfers:</para>
+              <blockTable>
+                <tr>
+                  [[ o.transfer_currency_ids or removeParentNode('blockTable') ]]
+                  [[ repeatIn(o.transfer_currency_ids, 'curr') ]]
+                  <td>
+                    <para style="text_right">
+                      [[ curr.currency_id.name ]]
+                    </para>[[ curr.currency_id.name ]]
+                  </td>
+                  <td><para>[[ curr.percentage and '%s%%' % (curr.percentage) or '' ]]</para></td>
+                </tr>
+              </blockTable>
+          </td>
+          <td>
+            <para>Consolidation Currency: [[ o.consolidation_currency_id.name ]]</para>
+          </td>
+        </tr>
+      </blockTable>
+
+      <spacer length="24"/>
+
+      <!-- Mission Settings -->
+      <blockTable colWidths="54mm, 94mm, 44mm" style="sub_table">
+        <tr>
+          <td><para style="bold">Mission Settings</para></td>
+        </tr>
+        <tr>
+          <td><para>Instance Code:</para></td>
+          <td><para>Instance Name:</para></td>
+          <td><para>Level:</para></td>
+        </tr>
+        <tr>
+          [[ repeatIn(o.instance_ids, 'inst') ]]
+          <td><para>[[ inst.code ]]</para></td>
+          <td><para>[[ inst.name ]]</para></td>
+          <td><para>[[ inst.level ]]</para></td>
+        </tr>
+      </blockTable>
+
+      <spacer length="24"/>
+
+      <!-- Recap Mission -->
+      <blockTable colWidths="32mm, 32mm, 32mm, 32mm, 32mm, 32mm" style="sub_table">
+        <tr>
+          <td><para style="bold">Recap Mission</para></td>
+        </tr>
+        <tr>
+          <td><para>Instance code / Place of payment:</para></td>
+          <td><para>Cash available in mission:</para></td>
+          <td><para>Payable Invoices:</para></td>
+          <td><para>Commitment:</para></td>
+          <td><para>Foreseen expenses:</para></td>
+          <td><para>Total Cash requested:</para></td>
+        </tr>
+        <tr>
+          [[ repeatIn(o.recap_mission_ids, 'rec') ]]
+          <td><para>[[ rec.instance_id.code ]]</para></td>
+          <td><para>[[ formatLang(rec.liquidity_amount or 0.0)]]</para></td>
+          <td><para>[[ formatLang(rec.payable_amount or 0.0) ]]</para></td>
+          <td><para>[[ formatLang(rec.commitment_amount or 0.0) ]]</para></td>
+          <td><para>[[ formatLang(rec.expense_amount or 0.0) ]]</para></td>
+          <td><para>[[ formatLang(rec.total or 0.0) ]]</para></td>
+        </tr>
+        <tr>
+          <td><para style="bold">Total</para></td>
+          <td><para style="bold">[[ formatLang(total_liquidity(o) or 0.0) ]]</para></td>
+          <td><para style="bold">[[ formatLang(total_payable(o) or 0.0) ]]</para></td>
+          <td><para style="bold">[[ formatLang(total_commitment(o) or 0.0) ]]</para></td>
+          <td><para style="bold">[[ formatLang(total_expense(o) or 0.0) ]]</para></td>
+          <td><para style="bold">[[ formatLang(total_cash_requested(o) or 0.0) ]]</para></td>
+        </tr>
+      </blockTable>
+
+      <spacer length="24"/>
+
+      <!-- Total Section -->
+      <blockTable colWidths="64mm, 64mm, 64mm" style="sub_table_total">
+        <tr>
+          <td><para>Total Transfer to come: [[ formatLang(o.transfer_to_come or 0.0) ]]</para></td>
+          <td><para>Security Envelopes: [[ formatLang(o.security_envelope or 0.0) ]]</para></td>
+          <td><para>Buffer: [[ "%s%%" % (formatLang(o.buffer or 0.0)) ]]</para></td>
+        </tr>
+        <tr>
+          <td><para style="bold">Total Cash Request to transfer: [[ "%s %s" % (formatLang(o.total_to_transfer or 0.0), o.consolidation_currency_id.name) ]]</para></td>
+        </tr>
+      </blockTable>
+
+      <spacer length="24"/>
+
+      <!-- Split per currencies -->
+      <blockTable colWidths="96mm, 96mm" style="sub_table">
+        <tr>
+          <td><para style="bold">Split per currencies</para></td>
+        </tr>
+        <tr>
+          <td><para>Currency:</para></td>
+          <td><para>Amount:</para></td>
+        </tr>
+        <tr>
+          [[ repeatIn(o.total_to_transfer_line_ids, 'transfer_line') ]]
+          <td><para>[[ transfer_line.currency_id.name ]]</para></td>
+          <td><para>[[ formatLang(transfer_line.amount or 0.0) ]]</para></td>
+        </tr>
+      </blockTable>
+
+      <spacer length="24"/>
+
+      <!-- Authorizations Section -->
+      <blockTable colWidths="64mm, 64mm, 64mm" style="authorization_header">
+        <tr>
+          <td><para style="bold">Authorizations</para></td>
+        </tr>
+        <tr>
+          <td><para>Position:</para></td>
+          <td><para>Name:</para></td>
+          <td><para>Signature:</para></td>
+        </tr>
+      </blockTable>
+      <blockTable colWidths="64mm, 64mm, 64mm" style="authorization_line" rowHeights="17mm">
+        <tr>
+          <td><para>1</para></td>
+          <td><para></para></td>
+          <td><para></para></td>
+        </tr>
+        <tr>
+          <td><para>2</para></td>
+          <td><para></para></td>
+          <td><para></para></td>
+        </tr>
+        <tr>
+          <td><para>3</para></td>
+          <td><para></para></td>
+          <td><para></para></td>
+        </tr>
+      </blockTable>
+
+    </section>
+  </story>
+</document>

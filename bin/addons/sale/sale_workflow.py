@@ -150,6 +150,7 @@ class sale_order_line(osv.osv):
                 'resourced_original_remote_line': sol.sync_linked_pol,
                 'resourced_at_state': sol.state,
                 'is_line_split': False,
+                'analytic_distribution_id': sol.analytic_distribution_id.id or False,
             }, context=context)
             wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 
@@ -618,6 +619,9 @@ class sale_order(osv.osv):
                 wf_service.trg_validate(uid, 'sale.order.line', sol_id, 'validated', cr)
 
         return True
+
+    def validate_ir_lines(self, cr, uid, ids, context=None):
+        return self.validate_lines(cr, uid, ids, context)
 
     def wkf_split(self, cr, uid, ids, context=None):
         return True
