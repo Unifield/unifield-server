@@ -182,6 +182,13 @@ class purchase_order_line(osv.osv):
             if pol.modification_comment:
                 sol_values['modification_comment'] = pol.modification_comment
 
+            # update analytic distribution if PO line has one
+            if pol.linked_sol_id and not pol.linked_sol_id.analytic_distribution_id and pol.analytic_distribution_id:
+                sol_values.update({
+                    'analytic_distribution_id': self.pool.get('analytic.distribution').
+                        copy(cr, uid, pol.analytic_distribution_id.id, {}, context=context)
+                })
+
             if create_line:
                 sol_values.update({
                     'order_id': so_id,
@@ -280,6 +287,14 @@ class purchase_order_line(osv.osv):
                 'sync_sourced_origin': pol.instance_sync_order_ref and pol.instance_sync_order_ref.name or False,
                 'set_as_sourced_n': True,
             }
+
+            # if PO line has an analytic distribution, we copy it
+            if pol.analytic_distribution_id:
+                sol_values.update({
+                    'analytic_distribution_id': self.pool.get('analytic.distribution').
+                        copy(cr, uid, pol.analytic_distribution_id.id, {}, context=context)
+                })
+
             # create FO line:
             sol_values.update(self.get_split_info(cr, uid, pol, context))
             new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
