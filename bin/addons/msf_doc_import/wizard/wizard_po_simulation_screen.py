@@ -765,9 +765,8 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 # Nothing to do
 
                 # Line 20: Message ESC Header
-                if wiz.filetype != 'excel':
-                    header_values['imp_message_esc'] = values.get(20, [])[1]
-
+                if values.get(20, False):
+                    header_values['imp_message_esc'] = values.get(20)[1]
 
                 '''
                 The header values have been imported, start the importation of
@@ -779,7 +778,6 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 not_ok_file_lines = {}
                 # Loop on lines
                 for x in xrange(first_line_index+1, len(values)+1):
-
                     # Check mandatory fields
                     not_ok = False
                     file_line_error = []
