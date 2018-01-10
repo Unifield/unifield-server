@@ -84,7 +84,7 @@ class stock_move(osv.osv):
             if account_id:
                 if account_id not in account_amount:
                     account_amount[account_id] = 0
-                account_amount[account_id] += qty * price_unit
+                account_amount[account_id] += round(qty * price_unit, 2)
 
         if account_amount and po_ids:
             inv_obj._update_commitments_lines(cr, uid, po_ids.keys(), account_amount, from_cancel=True, context=context)

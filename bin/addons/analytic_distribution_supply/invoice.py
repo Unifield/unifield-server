@@ -151,7 +151,7 @@ class account_invoice(osv.osv):
                 grouped_invl[a] += invl.price_subtotal
 
             po_ids = [x.id for x in inv.purchase_ids]
-            self._update_commitments_lines(cr, uid, po_ids, grouped_invl, from_cancel=True, context=context)
+            self._update_commitments_lines(cr, uid, po_ids, grouped_invl, from_cancel=False, context=context)
 
         return True
 
@@ -178,8 +178,10 @@ class account_invoice(osv.osv):
         if not po_ids or not account_amount_dic:
             return True
 
+
+        # po is state=cancel on last IN cancel
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        cr.execute('''select l.id, l.account_id, l.commit_id, c.state, l.amount, l.analytic_distribution_id, c.analytic_distribution_id, c.id, c.currency_id from
+        cr.execute('''select l.id, l.account_id, l.commit_id, c.state, l.amount, l.analytic_distribution_id, c.analytic_distribution_id, c.id, c.currency_id, c.type from
             account_commitment_line l, account_commitment c
             where l.commit_id = c.id and
             l.amount > 0 and
@@ -189,13 +191,16 @@ class account_invoice(osv.osv):
             order by c.date asc
             ''', (tuple(po_ids), tuple(account_amount_dic.keys()))
         )
-
         # sort all cv lines by account / cv date
         cv_info = {}
+        auto_cv = True
         for cv in cr.fetchall():
             if cv[1] not in cv_info:
                 cv_info[cv[1]] = []
             cv_info[cv[1]].append(cv)
+            if cv[9] == 'manual':
+                auto_cv = False
+
 
         draft_opened = []
         cv_to_close = {}
@@ -211,7 +216,7 @@ class account_invoice(osv.osv):
                     # NB: This permits to avoid modification on commitment voucher when receiving some goods
                     self.pool.get('account.commitment').write(cr, uid, [cv_line[2]], {'state': 'open'}, context=context)
 
-                if cv_line[4] > account_amount_dic[account]:
+                if abs(cv_line[4] - account_amount_dic[account]) > 0.001:
                     # update amount left on CV line
                     amount_left = cv_line[4] - account_amount_dic[account]
                     self.pool.get('account.commitment.line').write(cr, uid, [cv_line[0]], {'amount': amount_left}, context=context)
@@ -247,6 +252,7 @@ class account_invoice(osv.osv):
                                         anal_amount = (distrib_line.percentage * amount_left) / 100
                                         amount = -1 * self.pool.get('res.currency').compute(cr, uid, cv_line[8], company_currency,
                                                                                             anal_amount, round=False, context=context)
+
                                         # write new amount to corresponding engagement line
                                         self.pool.get('account.analytic.line').write(cr, uid, [eng_line.id],
                                                                                      {'amount': amount, 'amount_currency': -1 * anal_amount}, context=context)
@@ -266,6 +272,12 @@ class account_invoice(osv.osv):
                 # check next CV on this account
                 account_amount_dic[account] -= cv_line[4]
 
+        if auto_cv and from_cancel:
+            # we cancel the last IN from PO and no draft invoice exist
+            if not self.pool.get('purchase.order').search_exist(cr, uid, [('id', 'in', po_ids), ('state', 'not in', ['cancel', 'done'])], context=context):
+                if not self.pool.get('account.invoice').search_exist(cr, uid, [('purchase_ids', 'in', po_ids), ('state', '=', 'draft')], context=context):
+                    self.pool.get('purchase.order')._finish_commitment(cr, uid, po_ids, context=context)
+                    return True
 
         if cv_to_close:
             for cv in self.pool.get('account.commitment').read(cr, uid, cv_to_close.keys(), ['total'], context=context):
