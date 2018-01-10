@@ -300,7 +300,16 @@ class account_move_line(osv.osv):
         if context.get('sync_update_execution'):
             # US-836: no need to cascade actions in sync context
             # AJI deletion and JE validation are sync'ed
-            return super(account_move_line, self).unlink(cr, uid, ids, context=context, check=False)
+            moves = [aml.move_id.id for aml in self.browse(cr, uid, ids, fields_to_fetch=['move_id'], context=context)]
+            res = super(account_move_line, self).unlink(cr, uid, ids, context=context, check=False)
+            # US-3963 1) re-trigger the computation that ensures the move is balanced in case of a small diff in the converted amounts
+            reconcile_set = set()
+            move_set = set(moves)
+            reconcile_set.update(self.pool.get('account.move').balance_move(cr, uid, list(move_set), context=context))
+            # 2) adapt the amounts of the related FXAs accordingly
+            if reconcile_set:
+                self.reconciliation_update(cr, uid, list(reconcile_set), context=context)
+            return res
         move_ids = []
         if ids:
             # Search manual moves to revalidate
