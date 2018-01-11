@@ -29,6 +29,105 @@ oerp.get('sync.server.entity').write(ids, {'user_id': 1})
 
 
 sync_needed = False
+# create CC
+
+all_ccs = {
+    'HQ1': [
+        ('MW1', {'target': 'HQ1C1', 'top': 'HQ1C1'}),
+        ('MW101', {'target': 'HQ1C1', 'fopo': 'HQ1C1'}),
+        ('MW109', {'target': 'HQ1C1'}),
+        ('MW110', {'target': 'HQ1C1P1', 'top': 'HQ1C1P1', 'fopo': 'HQ1C1P1'}),
+        ('MW120', {'target': 'HQ1C1P2', 'top': 'HQ1C1P2', 'fopo': 'HQ1C1P2'}),
+
+        ('BI1', {'target': 'HQ1C2', 'top': 'HQ1C2'}),
+        ('BI101', {'target': 'HQ1C2', 'fopo': 'HQ1C2'}),
+        ('BI109', {'target': 'HQ1C2'}),
+        ('BI110', {'target': 'HQ1C2P1', 'top': 'HQ1C2P1', 'fopo': 'HQ1C2P1'}),
+        ('BI120', {'target': 'HQ1C2P2', 'top': 'HQ1C2P2', 'fopo': 'HQ1C2P2'}),
+    ],
+    'HQ2': [
+        ('ZW1', {'target': 'HQ2C1', 'top': 'HQ2C1'}),
+        ('ZW101', {'target': 'HQ2C1', 'fopo': 'HQ2C1'}),
+        ('ZW109', {'target': 'HQ2C1'}),
+    ]
+}
+
+for hq in all_ccs.keys():
+    new_ccs = all_ccs[hq]
+
+    l = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_%s' % (DB_PREFIX, hq))
+    cc_o = oerp.get('account.analytic.account')
+    target_cc = oerp.get('account.target.costcenter')
+
+    all_instances = {}
+    instance_ids = oerp.get('msf.instance').search([])
+    for x in oerp.get('msf.instance').read(instance_ids, ['code']):
+        all_instances[x['code']] = x['id']
+
+
+    for new_cc, data_cc in new_ccs:
+        cc_id = cc_o.search([('code', '=', new_cc)])
+        if not cc_id:
+            if len(new_cc) == 3:
+                parent_id = cc_o.search([('code', '=', 'OC')])[0]
+                parent_id = cc_o.create({
+                    'name': new_cc,
+                    'code': new_cc,
+                    'type': 'view',
+                    'category': 'OC',
+                    'parent_id': parent_id,
+                    'date_start': '2015-01-01',
+                })
+
+            else:
+                cc_o.create({
+                    'name': new_cc,
+                    'code': new_cc,
+                    'type': 'normal',
+                    'category': 'OC',
+                    'parent_id': parent_id,
+                    'date_start': '2015-01-01',
+                })
+        elif len(new_cc) == 3:
+            parent_id = cc_id[0]
+
+    target_ids = target_cc.search([])
+    target_cc.write(target_ids, {'is_top_cost_center': False, 'is_po_fo_cost_center': False})
+    for cc, data_cc in new_ccs:
+        coordo = all_instances['%s_%s' % (DB_PREFIX, data_cc['target'][0:5])]
+        target_id = target_cc.search([('instance_id', '=', coordo), ('cost_center_id', '=', cc)])
+
+        if not target_id:
+            cc_id = cc_o.search([('code', '=', cc)])[0]
+            target_cc.create({'instance_id': coordo, 'cost_center_id': cc_id})
+
+        if data_cc.get('target'):
+            target_id = target_cc.search([('instance_id', '=',  all_instances.get('%s_%s' % (DB_PREFIX, data_cc.get('target')))), ('cost_center_id', '=', cc)])
+            values = {'is_target': True}
+            if data_cc.get('top'):
+                values['is_top_cost_center'] = True
+            if data_cc.get('fopo'):
+                values['is_po_fo_cost_center'] = True
+            target_cc.write(target_id, values)
+
+
+    # create 2017 FY
+    fy_obj = oerp.get('account.fiscalyear')
+    if not fy_obj.search([('date_start', '=', '2017-01-01'), ('date_stop', '=', '2017-12-31')]):
+        fy_id = fy_obj.create({'date_start': '2017-01-01', 'date_stop': '2017-12-31', 'name': 'FY 2017', 'code': 'FY2017'})
+        fy_obj.create_period([fy_id])
+        period_obj = oerp.get('account.period')
+        period_ids = period_obj.search([('fiscalyear_id', '=', fy_id)])
+        period_obj.write(period_ids, {'state': 'draft'})
+
+    oerp.get('sync.client.entity').sync()
+    for x in all_instances:
+        oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, x)
+        period_obj = oerp.get('account.period')
+        period_ids = period_obj.search([('fiscalyear_id', '=', 'FY 2017'), ('state', '=', 'created')])
+        period_obj.write(period_ids, {'state': 'draft'})
+        oerp.get('sync.client.entity').sync()
+
 l = oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, '%s_HQ1C1' % DB_PREFIX)
 prod_o = oerp.get('product.product')
 if not prod_o.search([('default_code', '=', 'AZAZA')]):
@@ -50,6 +149,16 @@ if p_ids:
     print 'Update Partner'
     sync_needed = True
     oerp.get('res.partner').write(p_ids, {'active': True})
+
+partner_obj = oerp.get('res.partner')
+if not partner_obj.search([('name', '=', '%s_HQ1C1P2' % DB_PREFIX)]):
+    account_obj =  oerp.get('account.account')
+    rec = account_obj.search([('code', '=', '12050')])[0]
+    pay = account_obj.search([('code', '=', '30020')])[0]
+    partner_obj.create({'name': '%s_HQ1C1P2' % DB_PREFIX, 'partner_type': 'internal', 'property_account_receivable': rec, 'property_account_payable': pay, 'supplier': True})
+    oerp.get('sync.client.entity').sync()
+    sync_needed = True
+
 
 loc_o = oerp.get('stock.location')
 loc_ids = loc_o.search([('name', '=', 'LOG')])
