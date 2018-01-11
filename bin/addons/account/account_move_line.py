@@ -1011,9 +1011,6 @@ class account_move_line(osv.osv):
             result = super(account_move_line, self).unlink(cr, uid, [line.id], context=context)
             if check:
                 move_obj.validate(cr, uid, [line.move_id.id], context=context)
-            elif context.get('sync_update_execution'):
-                move_obj.validate_sync(cr, uid, [line.move_id.id], context=context)
-
         return result
 
     def _check_date(self, cr, uid, vals, context=None, check=True):

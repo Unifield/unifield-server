@@ -297,6 +297,7 @@ class account_move_line(osv.osv):
         """
         if context is None:
             context = {}
+        move_obj = self.pool.get('account.move')
         if context.get('sync_update_execution'):
             # US-836: no need to cascade actions in sync context
             # AJI deletion and JE validation are sync'ed
@@ -305,10 +306,12 @@ class account_move_line(osv.osv):
             # US-3963 1) re-trigger the computation that ensures the move is balanced in case of a small diff in the converted amounts
             reconcile_set = set()
             move_set = set(moves)
-            reconcile_set.update(self.pool.get('account.move').balance_move(cr, uid, list(move_set), context=context))
+            reconcile_set.update(move_obj.balance_move(cr, uid, list(move_set), context=context))
             # 2) adapt the amounts of the related FXAs accordingly
             if reconcile_set:
                 self.reconciliation_update(cr, uid, list(reconcile_set), context=context)
+            # 3) validate the moves
+            move_obj.validate_sync(cr, uid, list(move_set), context=context)
             return res
         move_ids = []
         if ids:
@@ -330,7 +333,7 @@ class account_move_line(osv.osv):
         # Revalidate move
         # US-3251 exclude moves about to be deleted
         moves_to_validate = [move_id for move_id in move_ids if move_id not in context.get('move_ids_to_delete', [])]
-        self.pool.get('account.move').validate(cr, uid, moves_to_validate, context=context)
+        move_obj.validate(cr, uid, moves_to_validate, context=context)
         return res
 
     def button_analytic_distribution(self, cr, uid, ids, context=None):
