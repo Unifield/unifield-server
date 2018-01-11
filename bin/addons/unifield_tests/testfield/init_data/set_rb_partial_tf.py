@@ -111,12 +111,17 @@ for hq in all_ccs.keys():
             target_cc.write(target_id, values)
 
 
-    # create 2017 FY
+    # create 2016 / 2017 FY
     fy_obj = oerp.get('account.fiscalyear')
+    period_obj = oerp.get('account.period')
     if not fy_obj.search([('date_start', '=', '2017-01-01'), ('date_stop', '=', '2017-12-31')]):
         fy_id = fy_obj.create({'date_start': '2017-01-01', 'date_stop': '2017-12-31', 'name': 'FY 2017', 'code': 'FY2017'})
         fy_obj.create_period([fy_id])
-        period_obj = oerp.get('account.period')
+        period_ids = period_obj.search([('fiscalyear_id', '=', fy_id)])
+        period_obj.write(period_ids, {'state': 'draft'})
+    if not fy_obj.search([('date_start', '=', '2016-01-01'), ('date_stop', '=', '2016-12-31')]):
+        fy_id = fy_obj.create({'date_start': '2016-01-01', 'date_stop': '2016-12-31', 'name': 'FY 2016', 'code': 'FY2016'})
+        fy_obj.create_period([fy_id])
         period_ids = period_obj.search([('fiscalyear_id', '=', fy_id)])
         period_obj.write(period_ids, {'state': 'draft'})
 
@@ -124,7 +129,7 @@ for hq in all_ccs.keys():
     for x in all_instances:
         oerp.login(UNIFIELD_ADMIN, UNIFIELD_PASSWORD, x)
         period_obj = oerp.get('account.period')
-        period_ids = period_obj.search([('fiscalyear_id', '=', 'FY 2017'), ('state', '=', 'created')])
+        period_ids = period_obj.search(['|', ('fiscalyear_id', '=', 'FY 2017'), ('fiscalyear_id', '=', 'FY 2016'), ('state', '=', 'created')])
         period_obj.write(period_ids, {'state': 'draft'})
         oerp.get('sync.client.entity').sync()
 
