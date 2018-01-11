@@ -41,7 +41,7 @@
         <field name="notes">${o.notes or ''|x}</field>
         <field name="origin">${o.origin or ''|x}</field>
         <field name="project_ref">${o.fnct_project_ref or ''|x}</field>
-        <field name="message_esc">${o.message_esc or ''|x}</field>
+        <field name="message_esc">${(o.message_esc or '') + (o.related_sourcing_id and (o.related_sourcing_id.name if not o.message_esc else '. ' + o.related_sourcing_id.name) or '')|x}</field>
         <field name="analytic_distribution_id">
             % if need_ad and o.analytic_distribution_id:
                 % for ccl in o.analytic_distribution_id.cost_center_lines:
