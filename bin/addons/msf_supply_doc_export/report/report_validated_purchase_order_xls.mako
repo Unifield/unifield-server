@@ -168,7 +168,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Message ESC Header')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.message_esc or ''|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.message_esc or '') + (o.related_sourcing_id and (o.related_sourcing_id.name if not o.message_esc else '. ' + o.related_sourcing_id.name) or '')|x}</Data></Cell>
     </Row>
 
     % if need_ad and o.analytic_distribution_id:
