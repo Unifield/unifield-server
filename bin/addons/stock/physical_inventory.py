@@ -897,6 +897,10 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
     def action_recount(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+        discrep_line_obj = self.pool.get('physical.inventory.discrepancy')
+        for inv_id in ids:
+            for discrep_line_id in discrep_line_obj.search(cr, uid, [('inventory_id', '=', inv_id)], context=context):
+                discrep_line_obj.write(cr, uid, [discrep_line_id], ({'ignored': False}), context=context)
         self.write(cr, uid, ids, {'state': 'counting'}, context=context)
         return {}
 
