@@ -335,13 +335,14 @@ class product_list_line(osv.osv):
             ids = [ids]
 
         if not context.get('import_error', False):
-            for line in self.read(cr, uid, ids, context=context):
-                opll.create(cr, uid, {
-                    'removal_date': time.strftime('%Y-%m-%d'),
-                    'comment': 'comment' in line and line['comment'] or '',
-                    'name': line['name'][0],
-                    'list_id': line['list_id'][0],
-                }, context=context)
+            for line in self.read(cr, uid, ids, ['comment', 'name', 'list_id'], context=context):
+                if line['list_id'] and line['name']:
+                    opll.create(cr, uid, {
+                        'removal_date': time.strftime('%Y-%m-%d'),
+                        'comment': 'comment' in line and line['comment'] or '',
+                        'name': line['name'][0],
+                        'list_id': line['list_id'][0],
+                    }, context=context)
 
         return super(product_list_line, self).\
             unlink(cr, uid, ids, context=context)

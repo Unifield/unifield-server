@@ -113,7 +113,7 @@ class account_move_compute_currency(osv.osv):
         return res
 
     _columns = {
-        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
+        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, write_relate=False),
         'currency_id': fields.function(_get_currency, method=True, type="many2one", relation="res.currency", string='Book. Currency', help="The optional other currency if it is a multi-currency entry."),
         'manual_currency_id': fields.many2one('res.currency', "Book. Currency",
                                               hide_default_menu=True),

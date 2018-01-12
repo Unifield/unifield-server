@@ -150,10 +150,37 @@ class sale_order_line(osv.osv):
                 'resourced_original_remote_line': sol.sync_linked_pol,
                 'resourced_at_state': sol.state,
                 'is_line_split': False,
+                'analytic_distribution_id': sol.analytic_distribution_id.id or False,
             }, context=context)
             wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
 
         return new_sol_id
+
+
+    def test_done(self, cr, uid, ids, context=None):
+        '''
+        Workflow method to test if there are OUT moves not closed for the given sale.order.line
+        return true if the sol can be closed
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        sol = self.browse(cr, uid, ids[0], context=context)
+
+        if sol.order_id.procurement_request and (sol.order_id.location_requestor_id.usage == 'internal' or sol.product_id.type in ('consu', 'service', 'service_recep')):
+            # case the sol has no OUT moves but its normal, so don't close the sol in this case:
+            has_open_moves = True
+        else:
+            has_open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
+                ('sale_line_id', '=', sol.id),
+                ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                ('type', '=', 'out'),
+                ('product_qty', '!=', 0.0),
+            ], context=context)
+
+        return not has_open_moves
 
 
     def action_done(self, cr, uid, ids, context=None):
@@ -330,6 +357,28 @@ class sale_order_line(osv.osv):
         return pick_to_use
 
 
+    def check_out_moves_to_cancel(self, cr, uid, ids, context=None):
+        '''
+        check if the sol to cancel are linked to OUT stock moves, if yes we must cancel them too
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for sol in self.browse(cr, uid, ids, context=context):
+            out_moves_to_cancel = self.pool.get('stock.move').search(cr, uid, [
+                ('sale_line_id', '=', sol.id), 
+                ('type', '=', 'out'),
+                ('state', 'in', ['assigned', 'confirmed']),
+            ], context=context)
+
+            if out_moves_to_cancel:
+                self.pool.get('stock.move').action_cancel(cr, uid, out_moves_to_cancel, context=context)
+
+        return True
+
+
     def action_confirmed(self, cr, uid, ids, context=None):
         '''
         Workflow method called when confirming the sale.order.line
@@ -349,7 +398,7 @@ class sale_order_line(osv.osv):
                 ('order_id.order_type', '=', 'direct'),
             ], context=context)
 
-            if sol.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep'): # IR non stockable
+            if sol.order_id.procurement_request and sol.product_id.type in ('consu', 'service', 'service_recep'): # IR non stockable
                 continue
 
             if linked_dpo_line:
@@ -502,6 +551,8 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        self.check_out_moves_to_cancel(cr, uid, ids, context=context)
+
         context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         context.pop('no_check_line')
@@ -524,6 +575,7 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        self.check_out_moves_to_cancel(cr, uid, ids, context=context)
         resourced_sol = self.create_resource_line(cr, uid, ids, context=context)
 
         context.update({'no_check_line': True})
@@ -567,6 +619,9 @@ class sale_order(osv.osv):
                 wf_service.trg_validate(uid, 'sale.order.line', sol_id, 'validated', cr)
 
         return True
+
+    def validate_ir_lines(self, cr, uid, ids, context=None):
+        return self.validate_lines(cr, uid, ids, context)
 
     def wkf_split(self, cr, uid, ids, context=None):
         return True

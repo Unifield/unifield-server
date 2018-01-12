@@ -146,6 +146,18 @@ WHITE_LIST_MODEL = [
     'threshold.value',
     'threshold.value.line',
     'stock.mission.report.line.location',
+    'cash.request',
+    'cash.request.transfer.currency',
+    'cash.request.commitment',
+    'cash.request.total.transfer.line',
+    'cash.request.recap.mission',
+    'cash.request.expense',
+    'cash.request.recap.expense',
+    'cash.request.payable',
+    'cash.request.liquidity.cash',
+    'cash.request.liquidity.bank',
+    'cash.request.liquidity.cheque',
+    'cash.request.liquidity.total',
 ]
 
 OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']

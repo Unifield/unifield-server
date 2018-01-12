@@ -30,6 +30,14 @@
             <field name="method">us_3516_change_damage_reason_type_incoming_ok</field>
         </record>
 
+        <record id="delete_commitment" model="patch.scripts">
+            <field name="method">delete_commitment</field>
+        </record>
+
+        <record id="us_3879_set_pricelist_id_for_ir" model="patch.scripts">
+            <field name="method">us_3879_set_pricelist_id_for_ir</field>
+        </record>
+
         <!-- OLD -->
 
         <record id="us_3048_patch" model="patch.scripts">

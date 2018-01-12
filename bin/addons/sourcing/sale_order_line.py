@@ -1382,7 +1382,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [sourcing_line.supplier.id], ['default'])['default'],
                 'customer_id': sourcing_line.order_id.partner_id.id,    
                 'location_id': self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0],
-                'cross_docking_ok': False if (sourcing_line.procurement_request and sourcing_line.order_id.location_requestor_id.usage != 'customer') else True,
+                'cross_docking_ok': False if (sourcing_line.order_id.procurement_request and sourcing_line.order_id.location_requestor_id.usage != 'customer') else True,
                 'pricelist_id': sourcing_line.supplier.property_product_pricelist_purchase.id,
                 'fiscal_position': sourcing_line.supplier.property_account_position and sourcing_line.supplier.property_account_position.id or False,
                 'warehouse_id': sourcing_line.order_id.warehouse_id.id,
@@ -1547,6 +1547,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             ids = [ids]
 
         wf_service = netsvc.LocalService("workflow")
+        pricelist_obj = self.pool.get('product.pricelist')
 
         for sourcing_line in self.browse(cr, uid, ids, context=context):
             if sourcing_line.type == 'make_to_stock':
@@ -1580,7 +1581,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 # update SO line with good state:
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'confirmed', cr) # confirmation create pick/out or INT
-                if sourcing_line.procurement_request and sourcing_line.order_id.location_requestor_id.usage == 'internal':
+                if sourcing_line.order_id.procurement_request and sourcing_line.order_id.location_requestor_id.usage == 'internal':
                     wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'done', cr)
 
             elif sourcing_line.type == 'make_to_order':
@@ -1592,6 +1593,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, context=context)
                         self.pool.get('purchase.order').log(cr, uid, po_to_use, 'The Purchase Order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
                         self.pool.get('purchase.order').infolog(cr, uid, 'The Purchase order %s for supplier %s has been created.' % (po.name, po.partner_id.name))
+                    else:
+                        po = self.pool.get('purchase.order').browse(cr, uid, po_to_use, fields_to_fetch=['pricelist_id'], context=context)
+
+                    target_currency_id = po.pricelist_id.currency_id.id
                     # No AD on sourcing line if it comes from IR:
                     anal_dist = False
                     if not sourcing_line.order_id.procurement_request:
@@ -1607,13 +1612,28 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             )
 
                         anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distib_to_copy, {}, context=context)
-                    # attach PO line:
+
+                    # set unit price
+                    price = 0.0
+                    if sourcing_line.product_id and sourcing_line.supplier.property_product_pricelist_purchase:
+                        price_dict = pricelist_obj.price_get(cr, uid, [sourcing_line.supplier.property_product_pricelist_purchase.id],
+                                                             sourcing_line.product_id.id, sourcing_line.product_uom_qty,
+                                                             sourcing_line.supplier.id, {'uom': sourcing_line.product_uom.id})
+                        if price_dict[sourcing_line.supplier.property_product_pricelist_purchase.id]:
+                            price = price_dict[sourcing_line.supplier.property_product_pricelist_purchase.id]
+
+                    if not price:
+                        price = sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0
+                        src_currency = sourcing_line.currency_id.id
+                        if price and src_currency != target_currency_id:
+                            price = self.pool.get('res.currency').compute(cr, uid, src_currency, target_currency_id, price, round=False, context=context)
+
                     pol_values = {
                         'order_id': po_to_use,
                         'product_id': sourcing_line.product_id.id or False,
                         'product_uom': sourcing_line.product_id and sourcing_line.product_id.uom_id.id or sourcing_line.product_uom.id,
                         'product_qty': sourcing_line.product_uom_qty,
-                        'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else (sourcing_line.product_id and sourcing_line.product_id.standard_price or 0.0),
+                        'price_unit': price,
                         'partner_id': sourcing_line.supplier.id,
                         'origin': sourcing_line.order_id.name,
                         'sale_order_line_id': sourcing_line.id,
@@ -1629,7 +1649,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     }
                     if not sourcing_line.product_id:
                         pol_values['name'] = sourcing_line.comment
-                    if sourcing_line.procurement_request:
+                    if sourcing_line.order_id.procurement_request:
                         pol_values.update({
                             'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
@@ -1646,8 +1666,13 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         # log new RfQ:
                         rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, context=context)
                         self.pool.get('purchase.order').infolog(cr, uid, 'The Request for Quotation %s for supplier %s has been created.' % (rfq.name, rfq.partner_id.name))
+                    else:
+                        rfq = self.pool.get('purchase.order').browse(cr, uid, rfq_to_use, fields_to_fetch=['pricelist_id'], context=context)
+
+                    target_currency_id = rfq.pricelist_id.currency_id.id
+
                     anal_dist = False
-                    if not sourcing_line.procurement_request:
+                    if not sourcing_line.order_id.procurement_request:
                         distrib = False
                         if sourcing_line.analytic_distribution_id:
                             distrib = sourcing_line.analytic_distribution_id.id
@@ -1661,12 +1686,17 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
                         anal_dist = self.pool.get('analytic.distribution').copy(cr, uid, distrib, {}, context=context)
                     # attach new RfQ line:
+                    price_unit = sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price
+                    src_currency = sourcing_line.currency_id.id
+                    if price_unit and src_currency != target_currency_id:
+                        price_unit = self.pool.get('res.currency').compute(cr, uid, src_currency, target_currency_id, price_unit, round=False, context=context)
+
                     rfq_line_values = {
                         'order_id': rfq_to_use,
                         'product_id': sourcing_line.product_id.id,
                         'product_uom': sourcing_line.product_id.uom_id.id,
                         'product_qty': sourcing_line.product_uom_qty,
-                        'price_unit': sourcing_line.price_unit if sourcing_line.price_unit > 0 else sourcing_line.product_id.standard_price,
+                        'price_unit': price_unit,
                         'partner_id': sourcing_line.supplier.id,
                         'origin': sourcing_line.order_id.name,
                         'sale_order_line_id': sourcing_line.id,
@@ -1674,7 +1704,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'analytic_distribution_id': anal_dist,
                         'link_so_id': sourcing_line.order_id.id,
                     }
-                    if sourcing_line.procurement_request:
+                    if sourcing_line.order_id.procurement_request:
                         rfq_line_values.update({
                             'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,
@@ -1703,7 +1733,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'sale_order_line_id': sourcing_line.id,
                         'location_id': proc_location_id,
                     }
-                    if sourcing_line.procurement_request:
+                    if sourcing_line.order_id.procurement_request:
                         tender_values.update({
                             'original_product': sourcing_line.original_product.id,
                             'original_qty': sourcing_line.original_qty,

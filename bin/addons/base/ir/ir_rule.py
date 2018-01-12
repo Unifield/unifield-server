@@ -103,6 +103,11 @@ class ir_rule(osv.osv):
 
         if uid == 1:
             return None
+
+        # do not merge these 2 conditions to prevent infinite loop
+        if uid == self.pool.get('res.users')._get_sync_user_id(cr):
+            return None
+
         cr.execute("""SELECT r.id
                 FROM ir_rule r
                 JOIN ir_model m ON (r.model_id = m.id)

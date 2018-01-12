@@ -3323,7 +3323,7 @@ msgstr "Créer"
 msgid "Saint Lucia"
 msgstr "Saint Lucia"
 
-#. modules: msf_budget, account, account_period_closing_level, sync_so, account_mcdb, analytic_distribution
+#. modules: msf_budget, account, account_period_closing_level, sync_so, account_mcdb, analytic_distribution, finance
 #: report:account.account.balance:0
 #: report:account.central.journal:0
 #: view:account.entries.report:0
@@ -3348,6 +3348,7 @@ msgstr "Saint Lucia"
 #: field:account.move.line,fiscalyear_id:0
 #: field:account.mcdb,fiscalyear_id:0
 #: field:account.analytic.line,fiscalyear_id:0
+#: field:cash.request,fiscalyear_id:0
 msgid "Fiscal Year"
 msgstr "Exercice Comptable"
 
@@ -5832,8 +5833,9 @@ msgstr "Délai de Livraison"
 msgid "If checked, the system will used the average monthly consumption to compute the quantity to order"
 msgstr "Si coché, le système utilisera la consommation moyenne mensuelle pour calculer la quantité à commander"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: model:ir.actions.report.xml,name:register_accounting.liquidity_position
+#: view:cash.request:0
 msgid "Liquidity Position"
 msgstr "Point de Trésorerie"
 
@@ -5848,7 +5850,7 @@ msgstr "Informations supplémentaires"
 msgid "Search Real Kit Composition Item"
 msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 
-#. modules: process, financing_contract, account_voucher, account_hq_entries, account_override, product_attributes, base_report_designer, msf_accrual, return_claim, account_mcdb, stock_override, analytic, msf_doc_import, stock, product, msf_homere_interface, hr, register_accounting, base, product_list, msf_tools, procurement_report, purchase, account, msf_outgoing, vertical_integration, sale, sales_followup, procurement, sourcing, msf_audittrail, msf_supply_doc_export
+#. modules: process, financing_contract, account_voucher, account_hq_entries, account_override, product_attributes, base_report_designer, msf_accrual, return_claim, account_mcdb, stock_override, analytic, msf_doc_import, stock, product, msf_homere_interface, hr, register_accounting, base, product_list, msf_tools, procurement_report, purchase, account, msf_outgoing, vertical_integration, sale, sales_followup, procurement, sourcing, msf_audittrail, msf_supply_doc_export, finance
 #: view:account.account.type:0
 #: field:account.account.type,note:0
 #: view:account.analytic.account:0
@@ -5940,6 +5942,7 @@ msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 #: field:wizard.advance.line,description:0
 #: field:wizard.register.import.errors,name:0
 #: field:wizard.register.import.lines,description:0
+#: field:cash.request.expense,description:0
 #: view:return.claim:0
 #: field:return.claim,description_return_claim:0
 #: report:msf.freight_manifest:0
@@ -8229,7 +8232,7 @@ msgstr "Europe/Moscow"
 msgid "Create Board Menu"
 msgstr "Créer Menu Tableau"
 
-#. modules: purchase, account, msf_outgoing, purchase_override, procurement, sale, product, specific_rules, kit, stock_forecast, analytic, stock_batch_recall, register_accounting, stock_override, msf_doc_import, tender_flow, msf_supply_doc_export, stock
+#. modules: purchase, account, msf_outgoing, purchase_override, procurement, sale, product, specific_rules, kit, stock_forecast, analytic, stock_batch_recall, register_accounting, stock_override, msf_doc_import, tender_flow, msf_supply_doc_export, stock, finance
 #: report:account.analytic.account.balance:0
 #: report:account.analytic.account.inverted.balance:0
 #: report:account.analytic.account.quantity_cost_ledger:0
@@ -8304,6 +8307,7 @@ msgstr "Créer Menu Tableau"
 #: report:internal.move:0
 #: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:573
 #: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:192
+#: field:cash.request.expense,quantity:0
 #, python-format
 msgid "Quantity"
 msgstr "Quantité"
@@ -8395,7 +8399,7 @@ msgstr "Requested Date"
 msgid "Either there are no moves linked to the picking or Accounting Journals are misconfigured!"
 msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de mouvement connexe à ce prélèvement !"
 
-#. modules: tender_flow, financing_contract, account_voucher, account_override, purchase_allocation_report, register_accounting, msf_accrual, return_claim, res_currency_tables, procurement_request, stock_forecast, analytic, msf_doc_import, analytic_distribution, msf_order_date, account_payment, msf_homere_interface, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_tools, msf_budget, account_corrections, account, msf_outgoing, sale_override, sale, sales_followup, procurement, purchase, msf_audittrail, stock, mission_stock
+#. modules: tender_flow, financing_contract, account_voucher, account_override, purchase_allocation_report, register_accounting, msf_accrual, return_claim, res_currency_tables, procurement_request, stock_forecast, analytic, msf_doc_import, analytic_distribution, msf_order_date, account_payment, msf_homere_interface, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_tools, msf_budget, account_corrections, account, msf_outgoing, sale_override, sale, sales_followup, procurement, purchase, msf_audittrail, stock, mission_stock, finance
 #: view:account.bank.statement:0
 #: selection:account.bank.statement,state:0
 #: view:account.invoice:0
@@ -8506,6 +8510,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:wizard.import.invoice.line,state:0
 #: selection:mission.stock.wizard,processed_state:0
 #: selection:hr.payroll.validation,state:0
+#: selection:cash.request,state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -9343,13 +9348,22 @@ msgstr "Guyane"
 msgid "Not Available"
 msgstr "Pas Disponible"
 
-#. modules: base, account_period_closing_level, msf_currency_revaluation
+#. modules: base, account_period_closing_level, msf_currency_revaluation, finance
 #: field:wizard.account.year.end.closing,instance_level:0
 #: field:res.config.users,instance_level:0
 #: field:res.users,instance_level:0
 #: field:account.account,instance_level:0
+#: field:cash.request.commitment,instance_level:0
+#: field:cash.request.expense,prop_instance_level:0
+#: field:cash.request.liquidity,instance_level:0
+#: field:cash.request.liquidity.bank,instance_level:0
+#: field:cash.request.liquidity.cash,instance_level:0
+#: field:cash.request.liquidity.cheque,instance_level:0
+#: field:cash.request.payable,instance_level:0
+#: field:cash.request.recap.expense,instance_level:0
+#: field:cash.request.recap.mission,instance_level:0
 msgid "Instance level"
-msgstr "Instance level"
+msgstr "Niveau d'Instance"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,country_id:0
@@ -12640,10 +12654,11 @@ msgstr "11e"
 msgid "Dest. Loc"
 msgstr "Zone de Destination"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:335
+#: field:cash.request.liquidity.cash,cashbox_balance_booking:0
 msgid "Cash Box Balance in register currency"
-msgstr "Cash Box Balance in register currency"
+msgstr "Solde de Caisse dans la devise du registre"
 
 #. module: msf_outgoing
 #: report:packing.list:0
@@ -12868,7 +12883,7 @@ msgstr "Error in Import"
 msgid "Select Purchase Order"
 msgstr "Sélectionner Bon de Commande"
 
-#. modules: sale, unifield_setup, account_override, purchase_allocation_report, msf_supply_doc_export, msf_profile
+#. modules: sale, unifield_setup, account_override, purchase_allocation_report, msf_supply_doc_export, msf_profile, finance
 #: report:allocation.invoices.report:0
 #: model:product.uom,name:msf_profile.uom_percentage
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:179
@@ -12879,6 +12894,7 @@ msgstr "Sélectionner Bon de Commande"
 #: report:po.line.allocation.report:0
 #: report:purchase.order.allocation.report:0
 #: field:purchase.order.line.allocation.report,percentage:0
+#: field:cash.request.transfer.currency,percentage:0
 #: report:sale.order.allocation.report:0
 #: view:sale.price.setup:0
 msgid "%"
@@ -13689,8 +13705,9 @@ msgstr "Optionnel : prochain mouvement de stock si les mouvements sont à la cha
 msgid "Python code to be executed"
 msgstr "Code Python à exécuter"
 
-#. module: msf_instance
+#. modules: msf_instance, finance
 #: field:msf.instance,mission:0
+#: field:cash.request,mission:0
 msgid "Mission"
 msgstr "Mission"
 
@@ -14368,10 +14385,11 @@ msgstr "Vous ne pouvez pas valider une écriture non balancée!\n"
 "Assurez-vous que vous ayez configuré correctement le délai de paiement !\n"
 "Il devrait contenir au moins une ligne avec une échéance  de type \"Balance\"!"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:350
+#: field:cash.request.liquidity.bank,bank_statement_balance_functional:0
 msgid "Bank Statement Balance in functional currency"
-msgstr "Bank Statement Balance in functional currency"
+msgstr "Solde du Relevé Bancaire en devise fonctionnelle"
 
 #. module: return_claim
 #: code:addons/return_claim/return_claim.py:144
@@ -15745,7 +15763,7 @@ msgstr "Remove all quads"
 msgid "Unreconcile entries"
 msgstr "Annuler le lettrage des Ecritures"
 
-#. modules: tender_flow, process, account_voucher, account_hq_entries, account_override, procurement_cycle, return_claim, sync_client, account_mcdb, procurement_request, product_asset, board, stock_override, analytic_distribution, account_payment, msf_homere_interface, hr, consumption_calculation, register_accounting, kit, base, procurement_report, threshold_value, purchase, account, msf_outgoing, resource, stock_move_tracking, msf_partner, procurement_auto, sale, transport_mgmt, procurement, sourcing, msf_audittrail, stock
+#. modules: tender_flow, process, account_voucher, account_hq_entries, account_override, procurement_cycle, return_claim, sync_client, account_mcdb, procurement_request, product_asset, board, stock_override, analytic_distribution, account_payment, msf_homere_interface, hr, consumption_calculation, register_accounting, kit, base, procurement_report, threshold_value, purchase, account, msf_outgoing, resource, stock_move_tracking, msf_partner, procurement_auto, sale, transport_mgmt, procurement, sourcing, msf_audittrail, stock, finance
 #: view:account.account:0
 #: view:account.account.template:0
 #: view:account.analytic.account:0
@@ -15839,6 +15857,10 @@ msgstr "Annuler le lettrage des Ecritures"
 #: view:threshold.value:0
 #: view:international.transport.cost.report:0
 #: view:local.transport.cost.report:0
+#: view:account.partner.balance.tree:0
+#: view:cash.request.liquidity.bank:0
+#: view:cash.request.liquidity.cash:0
+#: view:cash.request.liquidity.cheque:0
 msgid "Group By..."
 msgstr "Grouper Par..."
 
@@ -15878,8 +15900,13 @@ msgstr "Commande Terrain"
 msgid "Salesman"
 msgstr "Responsable"
 
-#. module: msf_instance
+#. modules: msf_instance, finance
 #: field:msf_instance.setup,instance_id:0
+#: field:cash.request,prop_instance_id:0
+#: field:cash.request.liquidity,instance_id:0
+#: field:cash.request.liquidity.bank,instance_id:0
+#: field:cash.request.liquidity.cash,instance_id:0
+#: field:cash.request.liquidity.cheque,instance_id:0
 msgid "Proprietary instance"
 msgstr "Instance propriétaire"
 
@@ -20463,7 +20490,7 @@ msgstr "Note de débit"
 msgid "Sync order line DB Id of the splitted line"
 msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 
-#. modules: tender_flow, product_nomenclature, process, financing_contract, product_asset, product_attributes, mission_stock, return_claim, analytic_override, account_mcdb, supplier_catalogue, stock_override, unifield_setup, analytic, report_webkit, product_list, analytic_distribution, product, reason_types_moves, account_payment, msf_homere_interface, hr, msf_instance, consumption_calculation, register_accounting, specific_rules, kit, sale_override, base, msf_tools, procurement_report, msf_budget, sales_followup, account, msf_outgoing, resource, msf_field_access_rights, documents_done, sale, procurement, sourcing, msf_button_access_rights, object_query, stock, msf_profile
+#. modules: tender_flow, product_nomenclature, process, financing_contract, product_asset, product_attributes, mission_stock, return_claim, analytic_override, account_mcdb, supplier_catalogue, stock_override, unifield_setup, analytic, report_webkit, product_list, analytic_distribution, product, reason_types_moves, account_payment, msf_homere_interface, hr, msf_instance, consumption_calculation, register_accounting, specific_rules, kit, sale_override, base, msf_tools, procurement_report, msf_budget, sales_followup, account, msf_outgoing, resource, msf_field_access_rights, documents_done, sale, procurement, sourcing, msf_button_access_rights, object_query, stock, msf_profile, finance
 #: field:account.account,name:0
 #: field:account.account.template,name:0
 #: report:account.analytic.account.inverted.balance:0
@@ -20602,6 +20629,7 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: field:res.country.restriction.memory,name:0
 #: field:unifield.setup.configuration,name:0
 #: report:addons/account/report/account_liquidity_balance.mako:162
+#: field:cash.request,name:0
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -21901,10 +21929,14 @@ msgstr "Analytic Journal Items related to a sale journal."
 msgid "Allocated stocks"
 msgstr "Stocks Alloués"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:328
+#: field:cash.request.liquidity,opening_balance:0
+#: field:cash.request.liquidity.bank,opening_balance:0
+#: field:cash.request.liquidity.cash,opening_balance:0
+#: field:cash.request.liquidity.cheque,opening_balance:0
 msgid "Opening Balance in register currency"
-msgstr "Opening Balance in register currency"
+msgstr "Solde d'Ouverture dans la devise du registre"
 
 #. module: mission_stock
 #: report:addons/mission_stock/report/stock_mission_report_xls.mako:68
@@ -22086,10 +22118,11 @@ msgstr "Pied de page 1 du Rapport"
 msgid "This is a model for recurring accounting entries"
 msgstr "Ceci est un modèle pour des écritures comptables périodiques"
 
-#. modules: sale_override, account, product_nomenclature
+#. modules: sale_override, account, product_nomenclature, finance
 #: selection:account.automatic.reconcile,power:0
 #: selection:product.nomenclature,sub_level:0
 #: selection:sale.order,split_type_sale_order:0
+#: report:cash.request.export:0
 msgid "2"
 msgstr "2"
 
@@ -24291,7 +24324,7 @@ msgstr "Photo"
 msgid "Wizard to split processor lines"
 msgstr "Wizard to split processor lines"
 
-#. modules: account_override, account, account_mcdb, msf_homere_interface, account_voucher, account_hq_entries, account_corrections, account_period_closing_level, board, register_accounting, msf_accrual, analytic_distribution
+#. modules: account_override, account, account_mcdb, msf_homere_interface, account_voucher, account_hq_entries, account_corrections, account_period_closing_level, board, register_accounting, msf_accrual, analytic_distribution, finance
 #: field:account.automatic.reconcile,period_id:0
 #: view:account.bank.statement:0
 #: field:account.bank.statement,period_id:0
@@ -24341,6 +24374,11 @@ msgstr "Wizard to split processor lines"
 #: field:wizard.register.creation.lines,period_id:0
 #: field:wizard.register.import.lines,period_id:0
 #: field:liquidity.balance.wizard,period_id:0
+#: field:cash.request.commitment,period_id:0
+#: field:cash.request.liquidity,period_id:0
+#: field:cash.request.liquidity.bank,period_id:0
+#: field:cash.request.liquidity.cash,period_id:0
+#: field:cash.request.liquidity.cheque,period_id:0
 #: report:addons/account/report/account_liquidity_balance.mako:165
 #, python-format
 msgid "Period"
@@ -26620,10 +26658,11 @@ msgstr "Bien - Code"
 msgid "Landscape"
 msgstr "Paysage"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:492
+#: field:cash.request.liquidity.cheque,pending_cheque_amount_functional:0
 msgid "Pending cheque amount in functional currency"
-msgstr "Pending cheque amount in functional currency"
+msgstr "Montant des chèques en attente en devise fonctionnelle"
 
 #. modules: account_override, base
 #: view:ir.attachment:0
@@ -28104,10 +28143,11 @@ msgstr "Impossible de créer des mouvements entre différentes entreprises"
 msgid "wizard.import.product.list"
 msgstr "wizard.import.product.list"
 
-#. module: account
+#. modules: account, finance
 #: report:account.account.balance.landscape:0
 #: report:account.analytic.account.balance:0
 #: report:account.central.journal:0
+#: field:cash.request,account_name:0
 msgid "Account Name"
 msgstr "Nom du Compte"
 
@@ -28753,13 +28793,14 @@ msgstr "Recurring entries"
 msgid "Choose days"
 msgstr "Choisir des jours"
 
-#. modules: account_override, vertical_integration, financing_contract, register_accounting
+#. modules: account_override, vertical_integration, financing_contract, register_accounting, finance
 #: report:addons/account_override/report/open_invoices_xls.mako:306
 #: report:addons/financing_contract/report/project_expenses_xls.mako:503
 #: report:addons/register_accounting/report/open_advances_xls.mako:155
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:300
+#: field:cash.request.liquidity.total,booking_currency_id:0
 msgid "Booking Currency"
-msgstr "Booking Currency"
+msgstr "Devise d'Enregistrement"
 
 #. module: account
 #: view:account.fiscal.position.template:0
@@ -30538,7 +30579,7 @@ msgstr "Lignes avec des erreurs"
 msgid "B"
 msgstr "B"
 
-#. modules: account, account_payment, account_mcdb, msf_homere_interface, account_voucher, account_hq_entries, register_accounting, res_currency_functional, analytic_override, analytic_distribution
+#. modules: account, account_payment, account_mcdb, msf_homere_interface, account_voucher, account_hq_entries, register_accounting, res_currency_functional, analytic_override, analytic_distribution, finance
 #: view:account.analytic.line:0
 #: field:account.bank.statement.line,amount:0
 #: field:account.invoice.tax,amount:0
@@ -30550,6 +30591,7 @@ msgstr "B"
 #: view:analytic.entries.report:0
 #: field:analytic.entries.report,amount:0
 #: field:hq.entries,amount:0
+#: field:cash.request.total.transfer.line,amount:0
 #: view:account.mcdb:0
 #: report:payment.order:0
 #: view:payment.order:0
@@ -31934,10 +31976,11 @@ msgstr "A bouger de/vers la zone"
 msgid "Posted Journal Entries"
 msgstr "Posted Journal Entries"
 
-#. module: sale
+#. modules: sale, finance
 #: report:msf.freight_manifest:0
+#: report:cash.request.export:0
 msgid "Signature:"
-msgstr "Signature:"
+msgstr "Signature :"
 
 #. module: account
 #: model:process.transition,note:account.process_transition_entriesreconcile0
@@ -31953,8 +31996,9 @@ msgstr "Les écritures comptables sont les premières informations d'un lettrage
 msgid "End of period"
 msgstr "Fin de Période"
 
-#. module: account_voucher
+#. modules: account_voucher, finance
 #: report:voucher.print:0
+#: report:cash.request.export:0
 msgid "Currency:"
 msgstr "Devise :"
 
@@ -34606,7 +34650,7 @@ msgstr "Spanish (EC) / Español (EC)"
 msgid "Europe/Skopje"
 msgstr "Europe/Skopje"
 
-#. modules: msf_budget, account, msf_field_access_rights, msf_instance, account_override, base, product_list
+#. modules: msf_budget, account, msf_field_access_rights, msf_instance, account_override, base, product_list, finance
 #: selection:account.analytic.journal,type:0
 #: selection:account.journal,type:0
 #: selection:account.analytic.line,journal_type:0
@@ -34620,6 +34664,10 @@ msgstr "Europe/Skopje"
 #: selection:account.analytic.journal.fake,type:0
 #: selection:account.journal.fake,type:0
 #: selection:product.list,creator:0
+#: selection:cash.request.liquidity,type:0
+#: selection:cash.request.liquidity.bank,type:0
+#: selection:cash.request.liquidity.cash,type:0
+#: selection:cash.request.liquidity.cheque,type:0
 msgid "HQ"
 msgstr "HQ"
 
@@ -34939,11 +34987,15 @@ msgstr "External"
 msgid "Button Access Rights for MSF"
 msgstr "Button Access Rights for MSF"
 
-#. modules: sales_followup, register_accounting
+#. modules: sales_followup, register_accounting, finance
 #: report:addons/register_accounting/report/cheque_inventory_xls.mako:173
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:322
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:474
 #: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:218
+#: field:cash.request.liquidity,status:0
+#: field:cash.request.liquidity.bank,status:0
+#: field:cash.request.liquidity.cash,status:0
+#: field:cash.request.liquidity.cheque,status:0
 msgid "Status"
 msgstr "Statut"
 
@@ -37573,7 +37625,7 @@ msgstr "Supprimer des lignes"
 msgid "Name of the method to be called on the object when this scheduler is executed."
 msgstr "Nom de la méthode à appliquer à l'objet  lorsque ce planificateur de tâches est exécuté."
 
-#. modules: purchase, account, consumption_calculation, account_voucher, sale, account_override, base, board, stock
+#. modules: purchase, account, consumption_calculation, account_voucher, sale, account_override, base, board, stock, finance
 #: field:account.entries.report,month:0
 #: view:account.invoice.report:0
 #: field:account.invoice.report,month:0
@@ -37596,6 +37648,7 @@ msgstr "Nom de la méthode à appliquer à l'objet  lorsque ce planificateur de 
 #: field:sale.report,month:0
 #: view:report.stock.move:0
 #: field:report.stock.move,month:0
+#: field:cash.request,month_period_id:0
 msgid "Month"
 msgstr "Mois"
 
@@ -38304,7 +38357,7 @@ msgstr "Création BCs (Auto. Approvisionnement)"
 msgid "Add multiple products"
 msgstr "Add multiple products"
 
-#. modules: supplier_catalogue, res_currency_functional, base, account_period_closing_level, res_currency_tables
+#. modules: supplier_catalogue, res_currency_functional, base, account_period_closing_level, res_currency_tables, finance
 #: view:account.period:0
 #: model:ir.actions.act_window,name:base.action_currency_form
 #: model:ir.ui.menu,name:base.menu_action_currency_form
@@ -38314,6 +38367,7 @@ msgstr "Add multiple products"
 #: view:res.currency.table:0
 #: field:res.currency.table,currency_ids:0
 #: view:product.pricelist:0
+#: view:cash.request:0
 msgid "Currencies"
 msgstr "Devises"
 
@@ -38436,9 +38490,10 @@ msgstr "Vue Assistant"
 msgid "Document date (%s) should be in posting date FY"
 msgstr "Document date (%s) should be in posting date FY"
 
-#. modules: sale_override, product_nomenclature
+#. modules: sale_override, product_nomenclature, finance
 #: selection:product.nomenclature,sub_level:0
 #: selection:sale.order,split_type_sale_order:0
+#: report:cash.request.export:0
 msgid "1"
 msgstr "1"
 
@@ -40634,9 +40689,10 @@ msgstr "Qté affectée"
 msgid "America/Noronha"
 msgstr "America/Noronha"
 
-#. modules: msf_budget, analytic_distribution
+#. modules: msf_budget, analytic_distribution, finance
 #: model:ir.ui.menu,name:analytic_distribution.menu_commitment
 #: field:wizard.budget.criteria.export,commitment:0
+#: field:cash.request,commitment_ids:0
 msgid "Commitments"
 msgstr "Engagements"
 
@@ -42577,8 +42633,9 @@ msgstr "Importation des travailleurs expatriés"
 msgid "CHEQUE REGISTER"
 msgstr "CHEQUE REGISTER"
 
-#. module: account
+#. modules: account, finance
 #: view:account.move:0
+#: view:cash.request:0
 msgid "Total Debit"
 msgstr "Total Débit"
 
@@ -43918,10 +43975,14 @@ msgstr "Sortie - fermé"
 msgid "User Type Name"
 msgstr "User Type Name"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:331
+#: field:cash.request.liquidity,calculated_balance_booking:0
+#: field:cash.request.liquidity.bank,calculated_balance_booking:0
+#: field:cash.request.liquidity.cash,calculated_balance_booking:0
+#: field:cash.request.liquidity.cheque,calculated_balance_booking:0
 msgid "Calculated Balance in register currency"
-msgstr "Calculated Balance in register currency"
+msgstr "Solde Calculé dans la devise du registre"
 
 #. modules: account, base
 #: view:account.addtmpl.wizard:0
@@ -45401,8 +45462,9 @@ msgstr "max"
 msgid "Sale Order Ref."
 msgstr "Sale Order Ref."
 
-#. module: base
+#. modules: base, finance
 #: view:res.request:0
+#: field:cash.request,request_date:0
 msgid "Request Date"
 msgstr "Date de la Demande"
 
@@ -46406,10 +46468,19 @@ msgstr "Le Bon de Commande %s est %s%% reçu"
 msgid "Blocked"
 msgstr "Bloqué"
 
-#. modules: account_reconciliation, msf_instance, product_attributes
+#. modules: account_reconciliation, msf_instance, product_attributes, finance
 #: selection:account.move.reconcile,multi_instance_level_creation:0
 #: selection:msf.instance,level:0
 #: field:product.section.code,section:0
+#: selection:cash.request.commitment,instance_level:0
+#: selection:cash.request.expense,prop_instance_level:0
+#: selection:cash.request.liquidity,instance_level:0
+#: selection:cash.request.liquidity.bank,instance_level:0
+#: selection:cash.request.liquidity.cash,instance_level:0
+#: selection:cash.request.liquidity.cheque,instance_level:0
+#: selection:cash.request.payable,instance_level:0
+#: selection:cash.request.recap.expense,instance_level:0
+#: selection:cash.request.recap.mission,instance_level:0
 msgid "Section"
 msgstr "Section"
 
@@ -46646,12 +46717,17 @@ msgstr "Spanish (PR) / Español (PR)"
 msgid "You cannot remove this restriction because it is in use in product(s)"
 msgstr "Vous ne pouvez pas supprimer cette restriction car elle est utilisée par le(s) produit (s)"
 
-#. modules: account, msf_instance
+#. modules: account, msf_instance, finance
 #: field:account.analytic.journal,name:0
 #: report:account.general.journal:0
 #: field:account.journal,name:0
 #: field:account.analytic.journal.fake,name:0
 #: field:account.journal.fake,name:0
+#: field:cash.request,journal_name:0
+#: field:cash.request.liquidity,journal_name:0
+#: field:cash.request.liquidity.bank,journal_name:0
+#: field:cash.request.liquidity.cash,journal_name:0
+#: field:cash.request.liquidity.cheque,journal_name:0
 msgid "Journal Name"
 msgstr "Nom du Journal"
 
@@ -51820,10 +51896,11 @@ msgstr "Asia/Amman"
 msgid "Account Entries Export"
 msgstr "Export Ecritures de Compte"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:337
+#: field:cash.request.liquidity.bank,bank_statement_balance_booking:0
 msgid "Bank Statement Balance in register currency"
-msgstr "Bank Statement Balance in register currency"
+msgstr "Solde du Relevé Bancaire dans la devise du registre"
 
 #. modules: process, base
 #: field:multi_company.default,expression:0
@@ -52636,10 +52713,14 @@ msgstr "Annuler les Ecritures d'Ouverture"
 msgid "You can not remove the admin user as it is used internally for resources created by OpenERP (updates, module installation, ...)"
 msgstr "Vous ne pouvez pas supprimer l'utilisateur 'admin' car il est utilisé en interne pour les ressources créées par OpenERP (mises à jour, installation de module, ...)"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:344
+#: field:cash.request.liquidity,calculated_balance_functional:0
+#: field:cash.request.liquidity.bank,calculated_balance_functional:0
+#: field:cash.request.liquidity.cash,calculated_balance_functional:0
+#: field:cash.request.liquidity.cheque,calculated_balance_functional:0
 msgid "Calculated Balance in functional currency"
-msgstr "Calculated Balance in functional currency"
+msgstr "Solde Calculé en devise fonctionnelle"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:35
@@ -52745,6 +52826,7 @@ msgstr "Balance Agée Partenaire"
 #: field:wizard.import.cheque.lines,account_id:0
 #: field:wizard.import.invoice.lines,account_id:0
 #: field:wizard.invoice.line,account_id:0
+#: field:cash.request.expense,account_id:0
 #: report:sale.order.allocation.report:0
 #: report:account.partner.balance:0
 #: report:addons/account/report/account_partner_ledger.mako:273
@@ -55004,7 +55086,7 @@ msgstr "Bons de Commande (Fusionnés)"
 msgid "Company Website"
 msgstr "Site web de la Société"
 
-#. modules: account_override, sync_client, base, account_mcdb, analytic_distribution
+#. modules: account_override, sync_client, base, account_mcdb, analytic_distribution, finance
 #: view:account.mcdb:0
 #: field:account.chart,instance_header:0
 #: report:addons/account_override/report/account_chart_export.mako:105
@@ -55013,6 +55095,7 @@ msgstr "Site web de la Société"
 #: model:ir.actions.act_window,name:base.action_workflow_instance_form
 #: model:ir.ui.menu,name:base.menu_workflow_instance
 #: field:sync.client.entity_group,entity_ids:0
+#: view:cash.request:0
 msgid "Instances"
 msgstr "Instances"
 
@@ -58040,7 +58123,7 @@ msgstr "Messages"
 msgid "Proforma Invoices"
 msgstr "Proforma Invoices"
 
-#. modules: account, msf_instance, register_accounting, base, msf_tools, mission_stock, sync_client
+#. modules: account, msf_instance, register_accounting, base, msf_tools, mission_stock, sync_client, finance
 #: view:account.bank.statement:0
 #: field:workflow.workitem,inst_id:0
 #: field:stock.mission.report,instance_id:0
@@ -58059,6 +58142,7 @@ msgstr "Proforma Invoices"
 #: field:sync.monitor,instance_id:0
 #: field:sync.version.instance.monitor,instance_id:0
 #: report:addons/account/report/account_liquidity_balance.mako:156
+#: field:cash.request.payable,instance_id:0
 msgid "Instance"
 msgstr "Instance"
 
@@ -58699,10 +58783,11 @@ msgstr "Lignes de corrections d'écritures comptables"
 msgid "Account Aged Trial balance Report"
 msgstr "Compte - Rapport du Solde de la Balance Agée"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:486
+#: field:cash.request.liquidity.cheque,pending_cheque_amount_booking:0
 msgid "Pending cheque amount in register currency"
-msgstr "Pending cheque amount in register currency"
+msgstr "Montant des chèques en attente dans la devise du registre"
 
 #. modules: threshold_value, procurement_report
 #: view:procurement.purchase.compute.all:0
@@ -60479,8 +60564,9 @@ msgstr "Dans les Modules"
 msgid "Budget name:"
 msgstr "Nom du budget:"
 
-#. module: base
+#. modules: base, finance
 #: field:res.partner.bank,acc_number:0
+#: field:cash.request,account_number:0
 msgid "Account Number"
 msgstr "Numéro de Compte"
 
@@ -61840,7 +61926,7 @@ msgstr "Champ Interne"
 msgid "Coefficent for parent"
 msgstr "Coefficient pour le parent"
 
-#. modules: analytic, account, register_accounting, account_voucher, msf_doc_import
+#. modules: analytic, account, register_accounting, account_voucher, msf_doc_import, finance
 #: field:account.account,credit:0
 #: report:account.account.balance:0
 #: report:account.account.balance.landscape:0
@@ -61866,6 +61952,9 @@ msgstr "Coefficient pour le parent"
 #: field:wizard.register.import.lines,credit:0
 #: report:addons/account/report/account_partner_ledger.mako:0
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
+#: view:account.partner.balance.tree:0
+#: field:account.partner.balance.tree,credit:0
+#: field:cash.request.payable,credit:0
 msgid "Credit"
 msgstr "Crédit"
 
@@ -65124,8 +65213,9 @@ msgstr "RAPPORT D'ALLOCATION DE LA CDT"
 msgid "Expected UoM to receive"
 msgstr "UdM attendue en réception"
 
-#. module: account
+#. modules: account, finance
 #: view:account.move:0
+#: view:cash.request:0
 msgid "Total Credit"
 msgstr "Total Crédit"
 
@@ -67042,13 +67132,18 @@ msgstr "Remise (%)"
 msgid "Attach a certificate of donation"
 msgstr "Joindre un certificat de donation"
 
-#. modules: res_currency_functional, msf_accrual, account
+#. modules: res_currency_functional, msf_accrual, account, finance
 #: field:msf.accrual.line,functional_currency_id:0
 #: field:account.move,functional_currency_id:0
 #: field:purchase.order,functional_currency_id:0
 #: field:purchase.order.line,functional_currency_id:0
 #: field:sale.order,functional_currency_id:0
 #: field:sale.order.line,functional_currency_id:0
+#: field:cash.request.liquidity,functional_currency_id:0
+#: field:cash.request.liquidity.bank,functional_currency_id:0
+#: field:cash.request.liquidity.cash,functional_currency_id:0
+#: field:cash.request.liquidity.cheque,functional_currency_id:0
+#: field:cash.request.liquidity.total,functional_currency_id:0
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:297
 msgid "Functional Currency"
 msgstr "Devise fonctionnelle"
@@ -68597,10 +68692,19 @@ msgstr "Factures générées pour un bon de commande"
 msgid "Install Terms"
 msgstr "Termes d'installations"
 
-#. modules: msf_field_access_rights, base, msf_instance
+#. modules: msf_field_access_rights, base, msf_instance, finance
 #: selection:res.groups,level:0
 #: selection:msf_field_access_rights.field_access_rule,instance_level:0
 #: selection:msf.instance,level:0
+#: selection:cash.request.commitment,instance_level:0
+#: selection:cash.request.expense,prop_instance_level:0
+#: selection:cash.request.liquidity,instance_level:0
+#: selection:cash.request.liquidity.bank,instance_level:0
+#: selection:cash.request.liquidity.cash,instance_level:0
+#: selection:cash.request.liquidity.cheque,instance_level:0
+#: selection:cash.request.payable,instance_level:0
+#: selection:cash.request.recap.expense,instance_level:0
+#: selection:cash.request.recap.mission,instance_level:0
 msgid "Project"
 msgstr "Projet"
 
@@ -68813,7 +68917,7 @@ msgstr "Frais"
 msgid "Line %s: %s"
 msgstr "Ligne %s : %s"
 
-#. modules: analytic, account, register_accounting, account_voucher, msf_doc_import
+#. modules: analytic, account, register_accounting, account_voucher, msf_doc_import, finance
 #: field:account.account,debit:0
 #: report:account.account.balance:0
 #: report:account.account.balance.landscape:0
@@ -68840,6 +68944,9 @@ msgstr "Ligne %s : %s"
 #: field:wizard.register.import.lines,debit:0
 #: report:addons/account/report/account_partner_ledger.mako:0
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
+#: view:account.partner.balance.tree:0
+#: field:account.partner.balance.tree,debit:0
+#: field:cash.request.payable,debit:0
 msgid "Debit"
 msgstr "Débit"
 
@@ -69509,7 +69616,7 @@ msgstr "The creation of a new invoice failed."
 msgid "You have to define a valid UOM, i.e. not \"To be define\"."
 msgstr "You have to define a valid UOM, i.e. not \"To be define\"."
 
-#. modules: account_override, account, base, msf_instance
+#. modules: account_override, account, base, msf_instance, finance
 #: selection:account.bank.accounts.wizard,account_type:0
 #: selection:account.journal,type:0
 #: selection:account.move,journal_type:0
@@ -69518,6 +69625,12 @@ msgstr "You have to define a valid UOM, i.e. not \"To be define\"."
 #: view:res.bank:0
 #: field:res.partner.bank,bank:0
 #: selection:account.journal.fake,type:0
+#: view:cash.request:0
+#: field:cash.request,bank_journal_id:0
+#: selection:cash.request.liquidity,type:0
+#: selection:cash.request.liquidity.bank,type:0
+#: selection:cash.request.liquidity.cash,type:0
+#: selection:cash.request.liquidity.cheque,type:0
 msgid "Bank"
 msgstr "Banque"
 
@@ -70962,7 +71075,7 @@ msgstr "Objet Source"
 msgid "Expected Pack Date"
 msgstr "Date Prévue de Colisage"
 
-#. modules: tender_flow, analytic_distribution_supply, product_nomenclature, financing_contract, msf_tools, account_hq_entries, export_import_lang, account_override, procurement_cycle, account_journal, register_accounting, mission_stock, return_claim, sync_client, account_mcdb, res_currency_tables, supplier_catalogue, stock_schedule, procurement_request, spreadsheet_xml, unifield_setup, purchase_compare_rfq, stock_batch_recall, purchase_followup, stock_override, msf_doc_import, analytic_distribution, msf_order_date, msf_cross_docking, reason_types_moves, purchase_allocation_report, msf_homere_interface, msf_instance, account_reconciliation, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, sale_override, base, account_subscription, res_currency_functional, msf_budget, account_corrections, account, msf_outgoing, stock_move_tracking, msf_partner, product_attributes, order_nomenclature, documents_done, sale, msf_config_locations, sales_followup, sourcing, msf_custom_settings, product_list, object_query, stock, msf_profile
+#. modules: tender_flow, analytic_distribution_supply, product_nomenclature, financing_contract, msf_tools, account_hq_entries, export_import_lang, account_override, procurement_cycle, account_journal, register_accounting, mission_stock, return_claim, sync_client, account_mcdb, res_currency_tables, supplier_catalogue, stock_schedule, procurement_request, spreadsheet_xml, unifield_setup, purchase_compare_rfq, stock_batch_recall, purchase_followup, stock_override, msf_doc_import, analytic_distribution, msf_order_date, msf_cross_docking, reason_types_moves, purchase_allocation_report, msf_homere_interface, msf_instance, account_reconciliation, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, sale_override, base, account_subscription, res_currency_functional, msf_budget, account_corrections, account, msf_outgoing, stock_move_tracking, msf_partner, product_attributes, order_nomenclature, documents_done, sale, msf_config_locations, sales_followup, sourcing, msf_custom_settings, product_list, object_query, stock, msf_profile, finance
 #: code:addons/account/account.py:387
 #: code:addons/account/account.py:1008
 #: code:addons/account/account.py:1012
@@ -71768,6 +71881,13 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/unifield_setup/installer/restrictive_country.py:138
 #: code:addons/unifield_setup/setup_configuration.py:110
 #: code:addons/account_mcdb/account_period_state.py:178
+#: code:addons/finance/account.py:103
+#: code:addons/finance/cash_request.py:261
+#: code:addons/finance/cash_request.py:268
+#: code:addons/finance/cash_request.py:270
+#: code:addons/finance/cash_request.py:455
+#: code:addons/finance/cash_request.py:575
+#: code:addons/finance/stock.py:63
 #: view:allocation.stock.setup:0
 #: field:allocation.stock.setup,error_central_ok:0
 #: field:allocation.stock.setup,error_cross_ok:0
@@ -72587,7 +72707,7 @@ msgstr "Assistant d'exécution du bon de picking"
 msgid "Transport mode"
 msgstr "Transport mode"
 
-#. modules: account_override, msf_profile, base, purchase, msf_outgoing, account
+#. modules: account_override, msf_profile, base, purchase, msf_outgoing, account, finance
 #: view:account.invoice:0
 #: view:res.bank:0
 #: field:res.config.users,address_id:0
@@ -72602,6 +72722,7 @@ msgstr "Transport mode"
 #: view:res.users:0
 #: field:purchase.order,partner_address_id:0
 #: field:account.journal,bank_address:0
+#: field:cash.request,bank_address:0
 msgid "Address"
 msgstr "Adresse"
 
@@ -73112,10 +73233,11 @@ msgstr "Vous ne pouvez pas décocher la case Section parce que cette devise est 
 msgid "Origin"
 msgstr "Origine"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
+#: view:cash.request:0
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:460
 msgid "Pending Cheques"
-msgstr "Pending Cheques"
+msgstr "Chèques en Attente"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:376
@@ -74024,10 +74146,11 @@ msgstr "Evaluations Périodiques"
 msgid "Header Distrib.?"
 msgstr "Header Distrib.?"
 
-#. modules: sale_override, account, product_nomenclature
+#. modules: sale_override, account, product_nomenclature, finance
 #: selection:account.automatic.reconcile,power:0
 #: selection:product.nomenclature,sub_level:0
 #: selection:sale.order,split_type_sale_order:0
+#: report:cash.request.export:0
 msgid "3"
 msgstr "3"
 
@@ -74705,7 +74828,7 @@ msgstr "Modifié"
 msgid "# of lines imported"
 msgstr "# de lignes importées"
 
-#. modules: account_override, msf_supply_doc_export, supplier_catalogue, purchase, product, msf_outgoing, purchase_override, supplier_catalogue, sale, account, kit, purchase_allocation_report, order_types, tender_flow, register_accounting, stock, msf_doc_import
+#. modules: account_override, msf_supply_doc_export, supplier_catalogue, purchase, product, msf_outgoing, purchase_override, supplier_catalogue, sale, account, kit, purchase_allocation_report, order_types, tender_flow, register_accounting, stock, msf_doc_import, finance
 #: report:allocation.invoices.report:0
 #: report:po.follow.up_rml:0
 #: report:addons/supplier_catalogue/report/report_supplier_catalogue_lines_xls.mako:74
@@ -74740,6 +74863,7 @@ msgstr "# de lignes importées"
 #: field:wizard.simu.import.po.line,initial_unit_price:0
 #: field:account.direct.invoice.wizard.line,price_unit:0
 #: report:addons/sale/report/sale_donation_stock_moves_report_xls.mako:117
+#: field:cash.request.expense,unit_price:0
 #, python-format
 msgid "Unit Price"
 msgstr "Prix Unitaire"
@@ -75217,10 +75341,11 @@ msgstr "Limitation"
 msgid "High"
 msgstr "Elevé"
 
-#. module: account_voucher
+#. modules: account_voucher, finance
 #: report:voucher.print:0
+#: report:cash.request.export:0
 msgid "State:"
-msgstr "Statut:"
+msgstr "Statut :"
 
 #. module: product_list
 #: view:product.to.list:0
@@ -76616,10 +76741,13 @@ msgstr "Suivi commande terrain"
 msgid "Digits"
 msgstr "Chiffres"
 
-#. modules: account, register_accounting, account_mcdb
+#. modules: account, register_accounting, account_mcdb, finance
 #: selection:account.journal.column,field:0
 #: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:78
 #: report:addons/register_accounting/report/open_advances_xls.mako:145
+#: view:cash.request.liquidity.bank:0
+#: view:cash.request.liquidity.cash:0
+#: view:cash.request.liquidity.cheque:0
 msgid "Proprietary Instance"
 msgstr "Instance Propriétaire"
 
@@ -76761,10 +76889,11 @@ msgstr "Traçabilité en Aval"
 msgid "Packing list"
 msgstr "Packing list"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:480
+#: field:cash.request.liquidity.cheque,bank_journal_code:0
 msgid "Bank Journal Code"
-msgstr "Bank Journal Code"
+msgstr "Code du Journal de Banque"
 
 #. module: stock
 #: model:ir.actions.act_window,name:stock.action_picking_tree6
@@ -79434,8 +79563,9 @@ msgstr "Pas de fournisseur séléctionné !"
 msgid "Del. Conf. date"
 msgstr "Date de Livraison Confirmée"
 
-#. module: stock_override
+#. modules: stock_override, finance
 #: report:destruction.location:0
+#: report:cash.request.export:0
 msgid "Name:"
 msgstr "Nom :"
 
@@ -80300,13 +80430,22 @@ msgstr "Indiquez le sujet. Vous pouvez utiliser les champs de l'objet, ex. : `Bo
 msgid "Workflow On"
 msgstr "Plan de travail Sur"
 
-#. modules: msf_budget, account_reconciliation, msf_instance, msf_field_access_rights
+#. modules: msf_budget, account_reconciliation, msf_instance, msf_field_access_rights, finance
 #: selection:account.move.reconcile,multi_instance_level_creation:0
 #: view:msf.budget:0
 #: selection:msf.budget,instance_type:0
 #: selection:msf_field_access_rights.field_access_rule,instance_level:0
 #: selection:account.analytic.account,current_instance_type:0
 #: selection:msf.instance,level:0
+#: selection:cash.request.commitment,instance_level:0
+#: selection:cash.request.expense,prop_instance_level:0
+#: selection:cash.request.liquidity,instance_level:0
+#: selection:cash.request.liquidity.bank,instance_level:0
+#: selection:cash.request.liquidity.cash,instance_level:0
+#: selection:cash.request.liquidity.cheque,instance_level:0
+#: selection:cash.request.payable,instance_level:0
+#: selection:cash.request.recap.expense,instance_level:0
+#: selection:cash.request.recap.mission,instance_level:0
 msgid "Coordo"
 msgstr "Coordo"
 
@@ -80899,7 +81038,7 @@ msgstr "Les écritures de Paiement sont la deuxième partie du lettrage."
 msgid "Select a supplier"
 msgstr "Sélectionner un fournisseur"
 
-#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, base, register_accounting, msf_doc_import, return_claim, stock, analytic_distribution, msf_homere_interface
+#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, base, register_accounting, msf_doc_import, return_claim, stock, analytic_distribution, msf_homere_interface, finance
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
 #: selection:account.subscription,state:0
@@ -80946,6 +81085,8 @@ msgstr "Sélectionner un fournisseur"
 #: view:stock.picking:0
 #: selection:wizard.import.invoice.line,state:0
 #: selection:hr.payroll.validation,state:0
+#: view:cash.request:0
+#: selection:cash.request,state:0
 msgid "Done"
 msgstr "Terminé"
 
@@ -81285,7 +81426,7 @@ msgstr "Mis au Rebut"
 msgid "Booking currency"
 msgstr "Devise d'enregistrement"
 
-#. modules: tender_flow, process, financing_contract, account_voucher, export_import_lang, account_override, purchase_allocation_report, register_accounting, transport_mgmt, return_claim, sync_client, account_mcdb, res_currency_tables, procurement_request, stock_forecast, analytic, purchase_followup, stock_override, msf_doc_import, useability_dashboard_and_menu, analytic_distribution, account_payment, msf_homere_interface, hr, account_reconciliation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_budget, purchase, account, msf_outgoing, sale_override, documents_done, sale, sales_followup, procurement, msf_audittrail, stock
+#. modules: tender_flow, process, financing_contract, account_voucher, export_import_lang, account_override, purchase_allocation_report, register_accounting, transport_mgmt, return_claim, sync_client, account_mcdb, res_currency_tables, procurement_request, stock_forecast, analytic, purchase_followup, stock_override, msf_doc_import, useability_dashboard_and_menu, analytic_distribution, account_payment, msf_homere_interface, hr, account_reconciliation, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_budget, purchase, account, msf_outgoing, sale_override, documents_done, sale, sales_followup, procurement, msf_audittrail, stock, finance
 #: view:account.bank.statement:0
 #: field:account.bank.statement,state:0
 #: field:account.entries.report,move_state:0
@@ -81426,6 +81567,7 @@ msgstr "Devise d'enregistrement"
 #: field:tender.line,state:0
 #: field:international.transport.cost.report,order_state:0
 #: field:hr.payroll.validation,state:0
+#: field:cash.request,state:0
 #: view:sale.order:0
 #, python-format
 msgid "State"
@@ -81762,10 +81904,11 @@ msgstr "Expédié"
 msgid "In Kind Donation"
 msgstr "In Kind Donation"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:348
+#: field:cash.request.liquidity.cash,cashbox_balance_functional:0
 msgid "Cash Box Balance in functional currency"
-msgstr "Cash Box Balance in functional currency"
+msgstr "Solde de Caisse en devise fonctionnelle"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -82995,11 +83138,15 @@ msgstr "Indian/Mauritius"
 msgid "The Kitting Order %s has been confirmed."
 msgstr "La Commande d'Assemblage de Kit  %s a été confirmée"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:341
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:489
+#: field:cash.request.liquidity,booking_currency_id:0
+#: field:cash.request.liquidity.bank,booking_currency_id:0
+#: field:cash.request.liquidity.cash,booking_currency_id:0
+#: field:cash.request.liquidity.cheque,booking_currency_id:0
 msgid "Register Currency"
-msgstr "Register Currency"
+msgstr "Devise du Registre"
 
 #. modules: msf_instance, unifield_setup
 #: field:res.company,second_time:0
@@ -85329,7 +85476,7 @@ msgstr "Can't execute this method"
 msgid "GMDN Code"
 msgstr "GMDN Code"
 
-#. modules: account_override, account, financing_contract, register_accounting, account_corrections, analytic
+#. modules: account_override, account, financing_contract, register_accounting, account_corrections, analytic, finance
 #: view:account.bank.statement:0
 #: selection:account.bank.statement,state:0
 #: view:account.fiscalyear:0
@@ -85349,6 +85496,7 @@ msgstr "GMDN Code"
 #: selection:wizard.import.cheque,state:0
 #: selection:wizard.import.invoice,state:0
 #: selection:wizard.register.creation,state:0
+#: selection:cash.request,state:0
 #, python-format
 msgid "Open"
 msgstr "Ouvert"
@@ -86702,10 +86850,11 @@ msgstr "Créditeurs"
 msgid "From assigned to backorder."
 msgstr "De attribué à reliquat de commande."
 
-#. module: msf_instance
+#. modules: msf_instance, finance
 #: field:msf.instance,current_instance_level:0
+#: field:cash.request,current_instance_level:0
 msgid "Current Instance Level"
-msgstr "Current Instance Level"
+msgstr "Niveau de l'Instance Actuelle"
 
 #. modules: msf_order_date, purchase, account, partner_modification, msf_partner, supplier_catalogue, product, purchase_override, account_override, sale_override, sourcing, base, register_accounting, sync_so, return_claim, stock
 #: constraint:res.partner:0
@@ -88386,10 +88535,12 @@ msgstr "Cette catégorie de commande n'est pas cohérente avec le(s) produit(s) 
 msgid "Kit Creation"
 msgstr "Création d'un Kit "
 
-#. modules: account_override, vertical_integration, board
+#. modules: account_override, vertical_integration, board, finance
 #: report:addons/account_override/report/open_invoices_xls.mako:257
 #: report:addons/board/report/integrity.mako:78
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:257
+#: field:cash.request.expense,prop_instance_id:0
+#: field:cash.request.recap.expense,instance_id:0
 msgid "Prop. Instance"
 msgstr "Instance Prop."
 
@@ -89951,7 +90102,7 @@ msgstr "Ceci est le délai moyen (en jours) entre la confirmation de la commande
 msgid "Internal Notes"
 msgstr "Notes internes"
 
-#. modules: msf_budget, purchase, account, account_payment, account_mcdb, procurement_request, financing_contract, account_voucher, sale, msf_button_access_rights, register_accounting, msf_doc_import, analytic_distribution
+#. modules: msf_budget, purchase, account, account_payment, account_mcdb, procurement_request, financing_contract, account_voucher, sale, msf_button_access_rights, register_accounting, msf_doc_import, analytic_distribution, finance
 #: report:account.analytic.account.balance:0
 #: report:account.analytic.account.inverted.balance:0
 #: report:account.analytic.account.quantity_cost_ledger:0
@@ -89989,6 +90140,8 @@ msgstr "Notes internes"
 #: view:wizard.import.invoice:0
 #: field:wizard.invoice.date,check_total:0
 #: field:sale.order,amount_total:0
+#: field:cash.request.commitment,total_commitment:0
+#: report:cash.request.export:0
 #: view:sale.order.line:0
 #, python-format
 msgid "Total"
@@ -90325,7 +90478,7 @@ msgstr "Annuler la Demande de Devis"
 msgid "Composition List cannot be inactive."
 msgstr "Liste de Composition ne peut être inactive"
 
-#. modules: account_corrections, account, msf_instance, account_mcdb
+#. modules: account_corrections, account, msf_instance, account_mcdb, finance
 #: field:account.analytic.journal,code:0
 #: field:account.analytic.line,journal_id:0
 #: field:account.move.line,journal_id:0
@@ -90340,6 +90493,11 @@ msgstr "Liste de Composition ne peut être inactive"
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:62
 #: report:addons/account_mcdb/report/report_account_move_line_xls.mako:57
 #: field:account.analytic.journal.fake,code:0
+#: field:cash.request,journal_code:0
+#: field:cash.request.liquidity,journal_code:0
+#: field:cash.request.liquidity.bank,journal_code:0
+#: field:cash.request.liquidity.cash,journal_code:0
+#: field:cash.request.liquidity.cheque,journal_code:0
 #, python-format
 msgid "Journal Code"
 msgstr "Code Journal"
@@ -92652,13 +92810,17 @@ msgstr "File"
 msgid "Employee form and structure"
 msgstr "Employé - Formulaire et structure "
 
-#. modules: account_override, account, msf_instance
+#. modules: account_override, account, msf_instance, finance
 #: selection:account.journal,type:0
 #: selection:account.move,journal_type:0
 #: selection:account.move.line,journal_type:0
 #: selection:account.journal.fake,type:0
+#: selection:cash.request.liquidity,type:0
+#: selection:cash.request.liquidity.bank,type:0
+#: selection:cash.request.liquidity.cash,type:0
+#: selection:cash.request.liquidity.cheque,type:0
 msgid "Cheque"
-msgstr "Cheque"
+msgstr "Chèque"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -94928,7 +95090,7 @@ msgstr "sync.version.instance.monitor"
 msgid "Picking Ticket subflow."
 msgstr "Sous-flux du Bon de Picking"
 
-#. modules: account, base, register_accounting, sync_client
+#. modules: account, base, register_accounting, sync_client, finance
 #: view:account.bank.statement:0
 #: view:publisher_warranty.contract.wizard:0
 #: view:account.bank.statement:0
@@ -94942,6 +95104,10 @@ msgstr "Sous-flux du Bon de Picking"
 #: view:sync.client.register_entity:0
 #: selection:sync.client.register_entity,state:0
 #: field:wizard.register.opening.confirmation,register_id:0
+#: field:cash.request.liquidity,register_id:0
+#: field:cash.request.liquidity.bank,register_id:0
+#: field:cash.request.liquidity.cash,register_id:0
+#: field:cash.request.liquidity.cheque,register_id:0
 msgid "Register"
 msgstr "Registre"
 
@@ -96646,10 +96812,11 @@ msgstr "Webkit - Rendu "
 msgid "Corresponding picking object is not an Incoming Shipment. Registration of claim cannot be processed."
 msgstr "Objet de prélèvement correspondant n'est pas une Livraison Entrante. L'enregistrement de la réclamation ne peut être traité"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: report:addons/register_accounting/report/liquidity_position_xls.mako:483
+#: field:cash.request.liquidity.cheque,bank_journal_name:0
 msgid "Bank Journal Name"
-msgstr "Bank Journal Name"
+msgstr "Nom du Journal de Banque"
 
 #. module: partner_modification
 #: field:res.partner,procurement_lt:0
@@ -99673,8 +99840,12 @@ msgstr "Écriture Comptable Manuelle"
 msgid "Do you want to open the register with the following opening balance?"
 msgstr "Voulez-vous ouvrir le registre avec le solde d'ouverture suivant ?"
 
-#. module: register_accounting
+#. modules: register_accounting, finance
 #: field:wizard.register.opening.confirmation,register_type:0
+#: field:cash.request.liquidity,type:0
+#: field:cash.request.liquidity.bank,type:0
+#: field:cash.request.liquidity.cash,type:0
+#: field:cash.request.liquidity.cheque,type:0
 msgid "Register Type"
 msgstr "Type de Registre"
 
@@ -99851,8 +100022,9 @@ msgstr "Mettre à jour la Description pour les Lignes"
 msgid "Update Lines"
 msgstr "Mettre à jour les Lignes"
 
-#. module: account
+#. modules: account, finance
 #: field:account.journal,bank_swift_code:0
+#: field:cash.request,swift_code:0
 msgid "Swift Code"
 msgstr "Code Swift"
 
@@ -100058,8 +100230,14 @@ msgstr "Export Excel du Suivi des Changements des Bons de Commande"
 msgid "Price in functional currency"
 msgstr "Prix dans la devise fonctionnelle"
 
-#. modules: purchase_followup
+#. modules: purchase_followup, finance
 #: report:addons/purchase_followup/report/po_track_changes_report_xls.mako:242
+#: field:cash.request.expense,currency_id:0
+#: view:cash.request.liquidity.bank:0
+#: view:cash.request.liquidity.cash:0
+#: view:cash.request.liquidity.cheque:0
+#: field:cash.request.total.transfer.line,currency_id:0
+#: field:cash.request.transfer.currency,currency_id:0
 msgid "Currency"
 msgstr "Devise"
 
@@ -100258,3 +100436,703 @@ msgstr "Import IN, écran de simulation"
 #: view:wizard.import.in.simulation.screen:0
 msgid "Import, pick & pack"
 msgstr "Importer, Pick et Colissage"
+
+#. module: finance
+#: field:cash.request.payable,account_move_line_ids:0
+msgid "Account Move Lines"
+msgstr "Lignes d'Ecriture Comptable"
+
+#. module: finance
+#: help:cash.request,security_envelope:0
+msgid "Amount to encode in functional currency"
+msgstr "Montant à saisir en devise fonctionnelle"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Amount:"
+msgstr "Montant :"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Authorizations"
+msgstr "Autorisations"
+
+#. module: finance
+#: field:cash.request.payable,balance:0
+msgid "Balance in functional currency"
+msgstr "Solde en devise fonctionnelle"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Bank - See details for subtotals"
+msgstr "Banque - Voir le détail pour les sous-totaux"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Bank:"
+msgstr "Banque :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Banking"
+msgstr "Banque"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Banking references"
+msgstr "Références de la Banque"
+
+#. module: finance
+#: field:cash.request.expense,is_budgeted:0
+msgid "Budgeted"
+msgstr "Budgétisé"
+
+#. module: finance
+#: field:cash.request.recap.expense,budget_expense_m:0
+msgid "Budgeted expenses for the period M"
+msgstr "Dépenses budgétisées pour la période M"
+
+#. module: finance
+#: field:cash.request.recap.expense,budget_expense_m1:0
+msgid "Budgeted expenses for the period M+1"
+msgstr "Dépenses budgétisées pour la période M+1"
+
+#. module: finance
+#: field:cash.request.recap.expense,budget_expense_m2:0
+msgid "Budgeted expenses for the period M+2"
+msgstr "Dépenses budgétisées pour la période M+2"
+
+#. module: finance
+#: field:cash.request.recap.expense,budget_expense_m3:0
+msgid "Budgeted expenses for the period M+3"
+msgstr "Dépenses budgétisées pour la période M+3"
+
+#. module: finance
+#: field:cash.request,buffer:0
+msgid "Buffer (%)"
+msgstr "Buffer (%)"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Buffer:"
+msgstr "Buffer :"
+
+#. module: finance
+#: view:cash.request:0
+#: selection:cash.request.liquidity,type:0
+#: selection:cash.request.liquidity.bank,type:0
+#: selection:cash.request.liquidity.cash,type:0
+#: selection:cash.request.liquidity.cheque,type:0
+msgid "Cash"
+msgstr "Caisse"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Cash - See details for subtotals"
+msgstr "Caisse - Voir le détail pour les sous-totaux"
+
+#. module: finance
+#: view:cash.request:0
+#: field:cash.request.commitment,cash_request_id:0
+#: field:cash.request.expense,cash_request_id:0
+#: field:cash.request.liquidity,cash_request_id:0
+#: field:cash.request.liquidity.bank,cash_request_id:0
+#: field:cash.request.liquidity.cash,cash_request_id:0
+#: field:cash.request.liquidity.cheque,cash_request_id:0
+#: field:cash.request.liquidity.total,cash_request_id:0
+#: field:cash.request.payable,cash_request_id:0
+#: field:cash.request.recap.expense,cash_request_id:0
+#: field:cash.request.recap.mission,cash_request_id:0
+#: field:cash.request.total.transfer.line,cash_request_id:0
+#: field:cash.request.transfer.currency,cash_request_id:0
+#: model:ir.actions.act_window,name:finance.action_cash_request_tree
+#: model:ir.model,name:finance.model_cash_request
+#: model:ir.ui.menu,name:finance.menu_action_cash_request_tree
+msgid "Cash Request"
+msgstr "Cash Request"
+
+#. module: finance
+#: model:ir.actions.report.xml,name:finance.cash_request_export
+msgid "Cash Request - Export PDF"
+msgstr "Cash Request - Export PDF"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Cash Request Validation"
+msgstr "Validation Cash Request"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:575
+#, python-format
+msgid "Cash Requests can only be deleted in Draft state."
+msgstr "Les Cash Requests ne peuvent être supprimées qu'à l'état Brouillon."
+
+#. module: finance
+#: field:cash.request.recap.mission,liquidity_amount:0
+msgid "Cash available in mission"
+msgstr "Liquidités disponibles dans la mission"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Cash available in mission:"
+msgstr "Liquidités disponibles dans la mission :"
+
+#. module: finance
+#: view:cash.request:0
+#: field:cash.request.recap.mission,commitment_amount:0
+msgid "Commitment"
+msgstr "Engagement"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_commitment
+msgid "Commitment Line for Cash Request"
+msgstr "Ligne d'Engagement pour la Cash Request"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Commitment:"
+msgstr "Engagement :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Compute recap lines & total to transfer"
+msgstr "Calculer les lignes de récap. et le total à transférer"
+
+#. module: finance
+#: field:cash.request,consolidation_currency_id:0
+msgid "Consolidation Currency"
+msgstr "Devise de Consolidation"
+
+#. module: finance
+#: field:cash.request,consolidation_currency_name:0
+msgid "Consolidation Currency Name"
+msgstr "Nom de la Devise de Consolidation"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Consolidation Currency:"
+msgstr "Devise de Consolidation :"
+
+#. module: finance
+#: field:cash.request,transfer_currency_ids:0
+msgid "Currency of Transfers"
+msgstr "Devise de Virement"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_transfer_currency
+msgid "Currency of Transfers for Cash Request"
+msgstr "Devise de Virement pour la Cash Request"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Currency of Transfers:"
+msgstr "Devise de Virement :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Engagement Entries in func. currency"
+msgstr "Ecritures d'Engagement en devise fonc."
+
+#. module: finance
+#: field:cash.request.recap.mission,expense_amount:0
+msgid "Foreseen expenses"
+msgstr "Dépenses prévues"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Foreseen expenses:"
+msgstr "Dépenses prévues :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Generate"
+msgstr "Générer"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Grand Total"
+msgstr "Total Général"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Grand Total Functional"
+msgstr "Total Général Fonctionnel"
+
+#. module: finance
+#: field:cash.request.liquidity.total,amount_functional:0
+msgid "Grand Total Functional Currency"
+msgstr "Total Général Devise Fonctionnelle"
+
+#. module: finance
+#: field:cash.request.liquidity.total,amount_booking:0
+msgid "Grand Total Register Currency"
+msgstr "Total Général dans la Devise du Registre"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Grand Total per Currency"
+msgstr "Total Général par Devise"
+
+#. module: finance
+#: view:cash.request:0
+msgid ""
+"Have you clicked on \"Compute recap lines & total to transfer\" to get the "
+"accurate Total to transfer?"
+msgstr ""
+"Avez-vous cliqué sur \"Calculer les lignes de récap. et le total à transférer\" pour avoir le "
+"Total exact à transférer ?"
+
+#. module: finance
+#: help:cash.request,transfer_to_come:0
+msgid ""
+"In case a transfer is on its way and not yet received. In functional "
+"currency."
+msgstr ""
+"Dans le cas où un virement est en cours et pas encore réceptionné. En devise "
+"fonctionnelle."
+
+#. module: finance
+#: field:cash.request.commitment,instance_id:0
+msgid "Instance Code"
+msgstr "Code de l'Instance"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Instance Code:"
+msgstr "Code de l'Instance :"
+
+#. module: finance
+#: field:cash.request.expense,consumer_instance_id:0
+msgid "Instance Consumer"
+msgstr "Instance Consommatrice"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Instance Name:"
+msgstr "Nom de l'Instance :"
+
+#. module: finance
+#: field:cash.request.recap.mission,instance_id:0
+msgid "Instance code / Place of payment"
+msgstr "Code de l'Instance / Lieu du paiement"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Instance code / Place of payment:"
+msgstr "Code de l'Instance / Lieu du paiement :"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Level:"
+msgstr "Niveau :"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_total_transfer_line
+msgid "Line of Total to transfer for Cash Request"
+msgstr "Ligne de Total à transférer pour la Cash Request"
+
+#. module: finance
+#: field:cash.request,recap_mission_ids:0
+msgid "Lines of Recap Mission"
+msgstr "Lignes de Récap Mission"
+
+#. module: finance
+#: field:cash.request,total_to_transfer_line_ids:0
+msgid "Lines of Total Cash Request to transfer"
+msgstr "Lignes de Total Cash Request à transférer"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:596
+#, python-format
+msgid "Liquidity Position - Bank"
+msgstr "Point de Trésorerie - Banque"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:591
+#, python-format
+msgid "Liquidity Position - Cash"
+msgstr "Point de Trésorerie - Caisse"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:601
+#, python-format
+msgid "Liquidity Position - Pending Cheques"
+msgstr "Point de Trésorerie - Chèques en Attente"
+
+#. module: finance
+#: field:cash.request,liquidity_bank_ids:0
+msgid "Liquidity Position Bank"
+msgstr "Point de Trésorerie Banque"
+
+#. module: finance
+#: field:cash.request,liquidity_cash_ids:0
+msgid "Liquidity Position Cash"
+msgstr "Point de Trésorerie Caisse"
+
+#. module: finance
+#: field:cash.request,liquidity_cheque_ids:0
+msgid "Liquidity Position Cheque"
+msgstr "Point de Trésorerie Chèques"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_liquidity_total
+msgid "Liquidity Position Grand Total per Currency for Cash Request"
+msgstr "Total Général Point de Trésorerie par Devise pour la Cash Request"
+
+#. module: finance
+#: field:cash.request,liquidity_total_ids:0
+msgid "Liquidity Position Total"
+msgstr "Point de Trésorerie Total"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_liquidity
+#: model:ir.model,name:finance.model_cash_request_liquidity_bank
+#: model:ir.model,name:finance.model_cash_request_liquidity_cash
+#: model:ir.model,name:finance.model_cash_request_liquidity_cheque
+msgid "Liquidity Position for Cash Request"
+msgstr "Point de Trésorerie pour la Cash Request"
+
+#. module: finance
+#: field:cash.request.expense,is_local_expense:0
+msgid "Local Expense"
+msgstr "Dépense Locale"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Main Tab"
+msgstr "Onglet Principal"
+
+#. module: finance
+#: field:cash.request,instance_ids:0
+#: report:cash.request.export:0
+msgid "Mission Settings"
+msgstr "Paramètres Mission"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Mission:"
+msgstr "Mission :"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Month:"
+msgstr "Mois :"
+
+#. module: finance
+#: view:cash.request:0
+#: field:cash.request,past_transfer_ids:0
+msgid "Past Transfers"
+msgstr "Virements précédents"
+
+#. module: finance
+#: field:cash.request.recap.mission,payable_amount:0
+msgid "Payable Invoices"
+msgstr "Factures Fournisseurs"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Payable Invoices:"
+msgstr "Factures Fournisseurs :"
+
+#. module: finance
+#: view:cash.request:0
+#: field:cash.request,payable_ids:0
+msgid "Payables"
+msgstr "Fournisseurs"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_payable
+msgid "Payables for Cash Request"
+msgstr "Entrées fournisseurs pour la Cash Request"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Pending Cheques - See details for subtotals"
+msgstr "Chèques en Attente - Voir le détail pour les sous-totaux"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Planned Expense"
+msgstr "Dépense Prévue"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Planned Expenses entries"
+msgstr "Dépenses Prévues"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_expense
+msgid "Planned Expenses for Cash Request"
+msgstr "Dépenses Prévues pour la Cash Request"
+
+#. module: finance
+#: field:cash.request.recap.expense,expense_total:0
+msgid "Planned Expenses for the period M"
+msgstr "Dépenses Prévues pour la période M"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Planned expense for the coming period"
+msgstr "Dépense prévue pour la période à venir"
+
+#. module: finance
+#: field:cash.request,planned_expense_ids:0
+msgid "Planned expenses entries"
+msgstr "Dépenses prévues"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:270
+#, python-format
+msgid ""
+"Please indicate the percentage for each currency of transfers selected."
+msgstr ""
+"Veuillez indiquer le pourcentage pour chaque devise de virement sélectionnée."
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Position:"
+msgstr "Poste :"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Proprietary instance:"
+msgstr "Instance propriétaire :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Recap"
+msgstr "Récap"
+
+#. module: finance
+#: view:cash.request:0
+#: report:cash.request.export:0
+msgid "Recap Mission"
+msgstr "Récap Mission"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_recap_mission
+#: model:ir.model,name:finance.model_recap_mission
+msgid "Recap Mission Line for Cash Request"
+msgstr "Récap Ligne de Mission pour la Cash Request"
+
+#. module: finance
+#: model:ir.model,name:finance.model_cash_request_recap_expense
+msgid "Recap Planned Expenses for Cash Request"
+msgstr "Récap Dépenses Prévues pour la Cash Request"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Recap Planned Expenses in func. currency"
+msgstr "Récap Dépenses Prévues en devise fonc."
+
+#. module: finance
+#: field:cash.request,recap_expense_ids:0
+msgid "Recap Planned expenses"
+msgstr "Récap Dépenses prévues"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Request Date:"
+msgstr "Date de la Demande :"
+
+#. module: finance
+#: field:cash.request,security_envelope:0
+msgid "Security Envelopes"
+msgstr "Enveloppes de Sécurité"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Security Envelopes:"
+msgstr "Enveloppes de Sécurité :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Settings"
+msgstr "Paramètres"
+
+#. module: finance
+#: view:cash.request:0
+#: report:cash.request.export:0
+msgid "Split per currencies"
+msgstr "Répartition par devises"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:455
+#, python-format
+msgid "The date of the Cash Request must be the date of the day."
+msgstr "La date de la Cash Request doit être celle du jour."
+
+#. module: finance
+#: code:addons/finance/cash_request.py:129
+#: constraint:cash.request:0
+#, python-format
+msgid "The percentage in the Buffer field is incorrect."
+msgstr "Le pourcentage dans le champ Buffer est incorrect."
+
+#. module: finance
+#: code:addons/finance/cash_request.py:672
+#: constraint:cash.request.transfer.currency:0
+#, python-format
+msgid "The percentage of the currency is incorrect."
+msgstr "Le pourcentage de la devise est incorrect."
+
+#. module: finance
+#: code:addons/finance/cash_request.py:268
+#, python-format
+msgid "The total percentage of the currencies of transfers is incorrect."
+msgstr "Le pourcentage total des devises de virements est incorrect."
+
+#. module: finance
+#: view:cash.request:0
+msgid "Top Proprietary Instance"
+msgstr "Instance Propriétaire Parente"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Total Balance"
+msgstr "Solde Total"
+
+#. module: finance
+#: view:cash.request.liquidity.bank:0
+msgid "Total Bank Statement Balance Booking"
+msgstr "Solde Total du Relevé Bancaire en Devise d'Enreg."
+
+#. module: finance
+#: view:cash.request:0
+#: view:cash.request.liquidity.bank:0
+msgid "Total Bank Statement Balance Functional"
+msgstr "Solde Total du Relevé Bancaire en Devise Fonc."
+
+#. module: finance
+#: field:cash.request.expense,total_booking:0
+msgid "Total Booking Cur."
+msgstr "Total Devise d'Enreg."
+
+#. module: finance
+#: view:cash.request.liquidity.bank:0
+#: view:cash.request.liquidity.cash:0
+msgid "Total Calculated Balance Booking"
+msgstr "Total Solde Calculé en Devise d'Enreg."
+
+#. module: finance
+#: view:cash.request:0
+#: view:cash.request.liquidity.bank:0
+#: view:cash.request.liquidity.cash:0
+msgid "Total Calculated Balance Functional"
+msgstr "Total Solde Calculé en Devise Fonctionnelle"
+
+#. module: finance
+#: field:cash.request,total_to_transfer:0
+msgid "Total Cash Request to transfer"
+msgstr "Total Cash Request à tranférer"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Total Cash Request to transfer:"
+msgstr "Total Cash Request à transférer :"
+
+#. module: finance
+#: field:cash.request.recap.mission,total:0
+msgid "Total Cash requested"
+msgstr "Total Cash demandé"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Total Cash requested:"
+msgstr "Total Cash demandé :"
+
+#. module: finance
+#: view:cash.request.liquidity.cash:0
+msgid "Total Cashbox Balance Booking"
+msgstr "Total Solde de Caisse en Devise d'Enreg."
+
+#. module: finance
+#: view:cash.request:0
+#: view:cash.request.liquidity.cash:0
+msgid "Total Cashbox Balance Functional"
+msgstr "Total Solde de Caisse en Devise Fonctionnelle"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Total Commitment"
+msgstr "Total Engagement"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Total Engagement in Func. currency for the month to come"
+msgstr "Total Engagement en devise Fonc. pour le mois à venir"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Total Expenses"
+msgstr "Total des Dépenses"
+
+#. module: finance
+#: field:cash.request.expense,total_functional:0
+msgid "Total Functional Cur."
+msgstr "Total Devise Fonc."
+
+#. module: finance
+#: view:cash.request:0
+msgid "Total Liquidity"
+msgstr "Total Liquidités"
+
+#. module: finance
+#: view:cash.request.liquidity.bank:0
+#: view:cash.request.liquidity.cash:0
+msgid "Total Opening Balance"
+msgstr "Total Solde d'Ouverture"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Total Payable"
+msgstr "Total Fournisseurs"
+
+#. module: finance
+#: view:cash.request.liquidity.cheque:0
+msgid "Total Pending Cheques Booking"
+msgstr "Total Chèques en Attente en Devise d'Enreg."
+
+#. module: finance
+#: view:cash.request:0
+#: view:cash.request.liquidity.cheque:0
+msgid "Total Pending Cheques Functional"
+msgstr "Total Chèques en Attente en Devise Fonc."
+
+#. module: finance
+#: field:cash.request,transfer_to_come:0
+msgid "Total Transfer to come"
+msgstr "Total Virements à venir"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Total Transfer to come:"
+msgstr "Total Virements à venir :"
+
+#. module: finance
+#: field:cash.request,transfer_account_id:0
+msgid "Transfer Account Code"
+msgstr "Code du Compte pour Virement"
+
+#. module: finance
+#: report:cash.request.export:0
+msgid "Transfer Account Code:"
+msgstr "Code du Compte pour Virement :"
+
+#. module: finance
+#: view:cash.request:0
+msgid "Transfers Follow-up"
+msgstr "Suivi des Virements"
+
+#. module: finance
+#: code:addons/finance/cash_request.py:677
+#: sql_constraint:cash.request.transfer.currency:0
+#, python-format
+msgid "You have already selected this currency."
+msgstr "Vous avez déjà sélectionné cette devise."
+
+#. module: finance
+#: code:addons/finance/cash_request.py:261
+#, python-format
+msgid "You must select at least one currency of transfers."
+msgstr "Vous devez sélectionner au moins une devise de virement."

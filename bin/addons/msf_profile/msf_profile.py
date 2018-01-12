@@ -109,10 +109,10 @@ class patch_scripts(osv.osv):
             'name': 'FO line updates PO line',
             'server_id': 999,
             'model': 'sale.order.line',
-            'domain': "[('order_id.partner_type', '!=', 'external'), ('state', '!=', 'draft')]",
+            'domain': "[('order_id.partner_type', '!=', 'external'), ('state', '!=', 'draft'), ('product_uom_qty', '!=', 0.0)]",
             'sequence_number': 12,
             'remote_call': 'purchase.order.line.sol_update_original_pol',
-            'arguments': "['resourced_original_line/id', 'resourced_original_remote_line','sync_sourced_origin', 'sync_local_id', 'sync_linked_pol', 'order_id/name', 'product_id/id', 'product_id/name', 'name', 'state','product_uom_qty', 'product_uom', 'price_unit', 'analytic_distribution_id/id','comment','have_analytic_distribution_from_header','line_number', 'nomen_manda_0/id','nomen_manda_1/id','nomen_manda_2/id','nomen_manda_3/id', 'nomenclature_description','notes','default_name','default_code','date_planned','is_line_split', 'original_line_id/id', 'confirmed_delivery_date', 'stock_take_date', 'cancel_split_ok', 'modification_comment']",
+            'arguments': "['resourced_original_line/id', 'resourced_original_remote_line','sync_sourced_origin', 'sync_local_id', 'sync_linked_pol', 'order_id/name', 'product_id/id', 'product_id/name', 'name', 'state','product_uom_qty', 'product_uom', 'price_unit', 'in_name_goods_return', 'analytic_distribution_id/id','comment','have_analytic_distribution_from_header','line_number', 'nomen_manda_0/id','nomen_manda_1/id','nomen_manda_2/id','nomen_manda_3/id', 'nomenclature_description','notes','default_name','default_code','date_planned','is_line_split', 'original_line_id/id', 'confirmed_delivery_date', 'stock_take_date', 'cancel_split_ok', 'modification_comment']",
             'destination_name': 'partner_id',
             'active': True,
             'type': 'MISSION',
@@ -213,7 +213,7 @@ class patch_scripts(osv.osv):
 
 
         # do not re-generate messages
-        cr.execute("select date_trunc('second', create_date) from sync_monitor where msg_push_send='ok' order by id desc limit 1")
+        cr.execute("select date_trunc('second', max(create_date)) from sync_client_message_to_send")
         create_date = [x[0] for x in cr.fetchall()]
         if create_date:
             cr.execute("update ir_model_data set sync_date=%s where module='sd' and model in ('purchase.order', 'sale.order', 'sale.order.line', 'purchase.order.line')", (create_date[0],))
@@ -221,6 +221,52 @@ class patch_scripts(osv.osv):
         # Set sync id on POL/SOL
         cr.execute("update purchase_order_line set sync_linked_sol=regexp_replace(sync_order_line_db_id,'/FO([0-9-]+)_([0-9]+)$', '/FO\\1/\\2') where sync_order_line_db_id ~ '/FO([0-9-]+)_([0-9]+)$' ")
         cr.execute("update sale_order_line set sync_linked_pol=regexp_replace(source_sync_line_id,'/PO([0-9-]+)_([0-9]+)$', '/PO\\1/\\2') where source_sync_line_id ~ '/PO([0-9-]+)_([0-9]+)$'")
+
+
+        acl_file = os.path.join(tools.config['root_path'], 'addons/msf_profile/migrations/7.0_acl.txt')
+        if not os.path.exists(acl_file):
+            self._logger.warn("File %s not found" % acl_file)
+        else:
+            all_acl = []
+            fd = open(acl_file)
+            for line in fd.readlines():
+                line = line.strip()
+                if line:
+                    all_acl.append(line)
+            update_module = self.pool.get('sync.server.update')
+            if update_module:
+                # we are on a sync server
+                # delete depecrated acl to prevent NR on new created instance
+                cr.execute('''delete from sync_server_update where sdref in %s''', (tuple(all_acl),))
+            else:
+                user_obj = self.pool.get('res.users')
+                usr = user_obj.browse(cr, uid, [uid])[0]
+                level_current = False
+
+                if usr and usr.company_id and usr.company_id.instance_id:
+                    level_current = usr.company_id.instance_id.level
+                # only at hq ?
+                if level_current == 'section':
+                    for line in all_acl:
+                        if line.startswith('_msf_profile/field_access_rule_line'):
+                            # FARL change of field xmlid, force update on this FARL
+                            cr.execute('''update ir_model_data set touched='[''field_name'']', last_modification=NOW() where name=%s''' , (line, ))
+                        elif line.startswith('_msf_profile_sale_override'):
+                            # ACL xmlid changed, force update
+                            cr.execute('''update ir_model_data set touched='[''name'']', last_modification=NOW() where name=%s''' , (line.replace('sale_override', 'sale'), ))
+
+        cr.commit()
+        return True
+
+
+    def delete_commitment(self, cr, uid, *a, **b):
+        journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI')])
+        if journal_ids:
+            aa_obj = self.pool.get('account.analytic.line')
+            aa_ids = aa_obj.search(cr, uid, [('journal_id', 'in', journal_ids)])
+            self._logger.warn("Delete %d Commitment" % len(aa_ids))
+            if aa_ids:
+                aa_obj.unlink(cr, uid, aa_ids)
         return True
 
     def us_3306(self, cr, uid, *a, **b):
@@ -333,6 +379,15 @@ class patch_scripts(osv.osv):
 
     def us_3516_change_damage_reason_type_incoming_ok(self, cr, uid, *a, **b):
         cr.execute("UPDATE stock_reason_type SET incoming_ok = 't' WHERE name = 'Damage'")
+        cr.execute("UPDATE return_claim SET old_version='t' WHERE state!='draft'")
+        return True
+
+    def us_3879_set_pricelist_id_for_ir(self, cr, uid, *a, **b):
+        currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+        pricelist_id = self.pool.get('product.pricelist').search(cr, uid, [('type', '=', 'sale'),
+                                                                           ('currency_id', '=', currency_id)], limit=1)[0]
+
+        cr.execute("UPDATE sale_order SET pricelist_id = %s WHERE procurement_request = 't'", (pricelist_id,))
         return True
 
     # OLD patches

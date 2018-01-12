@@ -58,7 +58,7 @@ class purchase_order_line(osv.osv):
                 # update the PO line with new qty
                 self.write(cr, uid, [pol.original_line_id.id], {'product_qty': new_qty}, context=context)
 
-                # update the linked IN if has:
+                # update IN moves of the original pol:
                 domain = [('purchase_line_id', '=', pol.original_line_id.id), ('type', '=', 'in'), ('state', '=', 'assigned')]
                 linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
                 if linked_in_move:
@@ -68,6 +68,28 @@ class purchase_order_line(osv.osv):
                     sys_int_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
                     if sys_int_move:
                         self.pool.get('stock.move').write(cr, uid, sys_int_move, {'product_qty': new_qty, 'product_uos_qty': new_qty}, context=context)
+
+                # cancel IN moves of the current split pol:
+                domain = [('purchase_line_id', '=', pol.id), ('type', '=', 'in'), ('state', '=', 'assigned')]
+                linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
+                if linked_in_move:
+                    self.pool.get('stock.move').action_cancel(cr, uid, linked_in_move, context=context)  
+
+        return True
+
+
+    def check_unit_price(self, cr, uid, ids, context=None):
+        '''
+        made some checks on unit price before validating the PO line
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, fields_to_fetch=['price_unit'], context=context):
+            if not pol.price_unit:
+                raise osv.except_osv(_('Warning'), _('You cannot validate a PO line with 0.0 as price unit !'))
 
         return True
 
@@ -81,6 +103,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         for pol in self.browse(cr, uid, ids, context=context):
+            to_trigger = False
             # linked FO line already exists ?
             # => if yes update it, else create new
             create_line = False
@@ -96,6 +119,8 @@ class purchase_order_line(osv.osv):
                 if not so_id:
                     continue # no sale order linked to our PO line
                 sale_order = self.pool.get('sale.order').browse(cr, uid, so_id, context=context)
+                if sale_order.state == 'cancel' and sale_order.procurement_request:
+                    to_trigger = True
                 create_line = True
             elif pol.linked_sol_id:
                 sale_order = pol.linked_sol_id.order_id
@@ -169,8 +194,26 @@ class purchase_order_line(osv.osv):
                 sol_values.update(self.get_split_info(cr, uid, pol, context))
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
+
+                if to_trigger:
+                    # IR is cancel but a new line is added, trigger a new wkf
+                    # UC: IR > PO > FO (full claim retrun + replacement on IN)
+                    cr.execute("update sale_order set state='draft' where id=%s", (so_id,))
+
+                # if OUT move already exists for this sale.order.line, then the split going to be created must be linked to
+                # the right OUT move (moves are already splits at this level):
+                if sol_values['is_line_split']:
+                    linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
+                        ('sale_line_id', '=', sol_values['original_line_id']), 
+                        ('type', '=', 'out')], 
+                        context=context)
+                    if len(linked_out_moves) > 1:
+                        for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
+                            if out_move.state in ('assigned', 'confirmed') and out_move.product_qty == sol_values['product_uom_qty']:
+                                self.pool.get('stock.move').write(cr, uid, [out_move.id], {'sale_line_id': new_sol}, context=context)
             else: # update FO line
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
+
 
         return True
 
@@ -371,6 +414,7 @@ class purchase_order_line(osv.osv):
         # checks before validating the line:
         self.check_analytic_distribution(cr, uid, ids, context=context)
         self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
+        self.check_unit_price(cr, uid, ids, context=context)
 
         # update FO lines:
         self.update_fo_lines(cr, uid, ids, context=context)
@@ -593,10 +637,10 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
+
             if pol.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel', cr)
-
-            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
 
@@ -615,10 +659,10 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
+
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
                 wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'cancel_r', cr)
-
-            self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel_r'}, context=context)
 

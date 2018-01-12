@@ -106,7 +106,7 @@ class local_message_rule(osv.osv):
         return False
 
     def get_rule_by_remote_call(self, cr, uid, remote_call, context=None):
-        rules = self.search(cr, uid, [('remote_call', '=', remote_call)], context=context)
+        rules = self.search(cr, uid, [('remote_call', '=', remote_call)], order='active desc, id', context=context)
         if rules:
             return self.browse(cr, uid, rules, context=context)[0]
         return False

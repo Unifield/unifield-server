@@ -1117,7 +1117,7 @@ class stock_picking(osv.osv):
         payment_term_id = False
         partner =  picking.address_id and picking.address_id.partner_id
 
-        if picking.partner_id.partner_type == 'internal':
+        if picking.partner_id.partner_type in ('esc', 'internal'):
             return False, False
 
         if picking.claim:
@@ -2538,6 +2538,10 @@ class stock_move(osv.osv):
                 self.action_cancel(cr, uid, internal_move, context=context)
 
         self.write(cr, uid, ids, {'state': 'cancel', 'move_dest_id': False})
+
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['sale_line_id'], context=context):
+            if move.sale_line_id:
+                wf_service.trg_write(uid, 'sale.order.line', move.sale_line_id.id, cr)
 
         if not context.get('call_unlink',False):
             picking_to_write = []

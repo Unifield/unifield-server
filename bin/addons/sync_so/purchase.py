@@ -40,12 +40,43 @@ class purchase_order_line_sync(osv.osv):
             ret[pol['id']] = '%s/%s' % (pol['order_id'][1], pol['id'])
         return ret
 
+    def _has_pol_been_synched(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        has the given PO line been already synchronized ?
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        res = {}
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.order_id.partner_id.partner_type not in ['internal','section','intermission']:
+                res[pol.id] = False
+            elif pol.state == 'draft':
+                res[pol.id] = False
+            elif pol.state.startswith('validated'):
+                pol_identifier = self.get_sd_ref(cr, uid, pol.id, context=context)
+                sent_ok = self.pool.get('sync.client.message_to_send').search_exist(cr, uid, [
+                    ('sent', '=', True),
+                    ('remote_call', '=', 'sale.order.line.create_so_line'),
+                    ('identifier', 'like', pol_identifier),
+                ], context=context)
+                res[pol.id] = sent_ok or pol.order_id.push_fo
+            else:
+                res[pol.id] = True
+
+        return res
+
+
     _columns = {
         'original_purchase_line_id': fields.text(string='Original purchase line id'),
         'dest_partner_id': fields.related('order_id', 'dest_partner_id', string='Destination partner', readonly=True, type='many2one', relation='res.partner', store=True),
         'sync_linked_sol': fields.char(size=256, string='Linked sale order line at synchro'),
         'sync_local_id': fields.function(_get_sync_local_id, type='char', method=True, string='ID', help='for internal use only'),
+        'has_pol_been_synched': fields.function(_has_pol_been_synched, type='boolean', method=True, string='Synched ?'),
     }
+
 
     def sol_update_original_pol(self, cr, uid, source, sol_info, context=None):
         '''
@@ -123,7 +154,7 @@ class purchase_order_line_sync(osv.osv):
                 orig_pol = self.search(cr, uid, [('sync_linked_sol', '=', sync_linked_sol)], context=context)
                 if not orig_pol:
                     raise Exception, "Original PO line not found when trying to split the PO line"
-                orig_pol_info = self.browse(cr, uid, orig_pol[0], fields_to_fetch=['linked_sol_id', 'line_number', 'origin'], context=context)
+                orig_pol_info = self.browse(cr, uid, orig_pol[0], fields_to_fetch=['linked_sol_id', 'line_number', 'origin', 'state'], context=context)
                 pol_values['original_line_id'] = orig_pol[0]
                 pol_values['line_number'] = orig_pol_info.line_number
                 if orig_pol_info.linked_sol_id:
@@ -137,6 +168,15 @@ class purchase_order_line_sync(osv.osv):
             # so we have to create this new PO line:
             pol_values['set_as_sourced_n'] = True if not sol_dict.get('resourced_original_line') else False
             new_pol = self.create(cr, uid, pol_values, context=context)
+
+            # if original pol has already been confirmed (and so has linked IN moves), then we re-attach moves to the right new split pol:
+            if sol_dict['is_line_split']:
+                linked_in_moves = self.pool.get('stock.move').search(cr, uid, [('purchase_line_id', '=', orig_pol[0]), ('type', '=', 'in')], context=context)
+                if len(linked_in_moves) > 1:
+                    for in_move in self.pool.get('stock.move').browse(cr, uid, linked_in_moves, context=context):
+                        if in_move.state in ('assigned', 'confirmed') and pol_values['product_qty'] == in_move.product_qty:
+                            self.pool.get('stock.move').write(cr, uid, [in_move.id], {'purchase_line_id': new_pol}, context=context)
+
             if sol_dict['in_name_goods_return'] and not sol_dict['is_line_split']:  # update the stock moves PO line id
                 in_name = sol_dict['in_name_goods_return'].split('.')[-1]
                 pick_id = pick_obj.search(cr, uid, [('name', '=', in_name)], limit=1, context=context)[0]
@@ -173,7 +213,6 @@ class purchase_order_line_sync(osv.osv):
         logging.getLogger('------sync.purchase.order.line').info(message)
 
         return message
-
 
     def confirmed_dpo_service_lines_update_in_po(self, cr, uid, source, line_info, context=None):
         """
@@ -323,8 +362,7 @@ class purchase_order_sync(osv.osv):
         sync_msg_obj = self.pool.get('sync.client.message_to_send')
         for po in self.browse(cr, uid, ids, context=context):
             res[po.id] = False
-            if po.state == 'validated' \
-                    and po.partner_id and po.partner_id.partner_type != 'esc':  # uftp-88 PO for ESC partner are never to synchronised, no warning msg in PO form
+            if po.state == 'validated' and po.partner_id and po.partner_id.partner_type != 'esc':  # uftp-88 PO for ESC partner are never synchronised, no warning msg in PO form
                 po_identifier = self.get_sd_ref(cr, uid, po.id, context=context)
                 sync_msg_ids = sync_msg_obj.search(
                     cr, uid,

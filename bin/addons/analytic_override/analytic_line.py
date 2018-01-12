@@ -121,7 +121,7 @@ class account_analytic_line(osv.osv):
         'is_reallocated': fields.boolean('Reallocated?'),
         'date': fields.date('Posting Date', required=True, select=True, readonly=True),
         'document_date': fields.date('Document Date', readonly=True, required=True),
-        'functional_currency_id': fields.related('company_id', 'currency_id', string="Func. Currency", type="many2one", relation="res.currency", readonly=True),
+        'functional_currency_id': fields.related('company_id', 'currency_id', string="Func. Currency", type="many2one", relation="res.currency", readonly=True, write_relate=False),
         'amount': fields.float('Func. Amount', required=True, digits_compute=dp.get_precision('Account'),
                                help='Calculated by multiplying the quantity and the price given in the Product\'s cost price. Always expressed in the company main currency.', readonly=True),
         'exported': fields.boolean("Exported"),

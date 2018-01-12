@@ -143,7 +143,7 @@
                         <field name="shipped_rate" invisible="True"/>
                         <field name="push_fo" invisible="1"/>
                         <field name="is_a_counterpart" invisible="1"/>
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p'])]}"/>
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         <field name="priority" attrs="{'readonly': [('state', 'not in', ['draft', 'draft_p', 'validated'])]}"/>
                         <newline/>
                         <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" attrs="{'readonly': [('state', '!=', 'draft')]}"/>

@@ -1670,7 +1670,15 @@ class shipment(osv.osv):
                 # closing FO lines:
                 for stock_move in packing.move_lines:
                     if stock_move.sale_line_id:
-                        wf_service.trg_validate(uid, 'sale.order.line', stock_move.sale_line_id.id, 'done', cr)
+                        open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
+                            ('sale_line_id', '=', stock_move.sale_line_id.id),
+                            ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                            ('type', '=', 'out'),
+                            ('id', '!=', stock_move.id),
+                            ('product_qty', '!=', 0.0),
+                        ], context=context)
+                        if not open_moves:
+                            wf_service.trg_validate(uid, 'sale.order.line', stock_move.sale_line_id.id, 'done', cr)
 
             # Create automatically the invoice
             self.shipment_create_invoice(cr, uid, shipment.id, context=context)
@@ -3364,7 +3372,6 @@ class stock_picking(osv.osv):
             new_picking_id = False
             processed_moves = []
             move_data = {}
-
             for line in wizard.move_ids:
                 move = line.move_id
 
@@ -3406,7 +3413,12 @@ class stock_picking(osv.osv):
                     'location_id': line.location_id and line.location_id.id,
                 }
 
-                if wizard.register_a_claim and wizard.claim_replacement_picking_expected:
+                # If claim expects replacement
+                # or claim is from INT created by processing an IN to Stock instead of Cross Docking
+                if wizard.register_a_claim and (wizard.claim_replacement_picking_expected
+                                                or (picking.type == 'internal'
+                                                    and move.purchase_line_id.linked_sol_id.order_id.procurement_request
+                                                    and wizard.claim_type in ('scrap', 'quarantine', 'return'))):
                     values.update({
                         'purchase_line_id': move.purchase_line_id and move.purchase_line_id.id or False,
                     })
@@ -3425,8 +3437,7 @@ class stock_picking(osv.osv):
                     # Update the original move
                     move_obj.write(cr, uid, [move.id], values, context=context)
                     processed_moves.append(move.id)
-                    if move.sale_line_id:
-                        wf_service.trg_validate(uid, 'sale.order.line', move.sale_line_id.id, 'done', cr)
+
 
             if not len(move_data):
                 pick_type = 'Internal picking'
@@ -3469,6 +3480,7 @@ class stock_picking(osv.osv):
                 move_obj.write(cr, uid, processed_moves, {'picking_id': new_picking_id}, context=context)
 
             # At first we confirm the new picking (if necessary)
+            pick_to_check = False
             if new_picking_id:
                 self.write(cr, uid, [picking.id], {'backorder_id': new_picking_id}, context=context)
 
@@ -3503,6 +3515,7 @@ class stock_picking(osv.osv):
                     # Then we finish the picking
                     self.action_move(cr, uid, [new_picking_id])
                     wf_service.trg_validate(uid, 'stock.picking', new_picking_id, 'button_done', cr)
+                    pick_to_check = new_picking_id
                 # UF-1617: Hook a method to create the sync messages for some extra objects: batch number, asset once the OUT/partial is done
                 self._hook_create_sync_messages(cr, uid, new_picking_id, context)
 
@@ -3532,6 +3545,7 @@ class stock_picking(osv.osv):
                     self.action_move(cr, uid, [picking.id])
                     wf_service.trg_validate(uid, 'stock.picking', picking.id, 'button_done', cr)
                     update_vals = {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}
+                    pick_to_check = picking.id
                     if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
                         update_vals.update({'already_replicated': False})
                     self.write(cr, uid, picking.id, update_vals)
@@ -3541,6 +3555,19 @@ class stock_picking(osv.osv):
 
                 delivered_pack_id = picking.id
 
+            if pick_to_check:
+                sale_line_id_checked = {}
+                for move in self.browse(cr, uid, pick_to_check, fields_to_fetch=['move_lines'], context=context).move_lines:
+                    if move.sale_line_id and move.sale_line_id.id not in sale_line_id_checked:
+                        open_moves = self.pool.get('stock.move').search_exist(cr, uid, [
+                            ('sale_line_id', '=', move.sale_line_id.id),
+                            ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                            ('type', '=', 'out'),
+                            ('id', '!=', move.id),
+                        ], context=context)
+                        if not open_moves:
+                            sale_line_id_checked[move.sale_line_id.id] = True
+                            wf_service.trg_validate(uid, 'sale.order.line', move.sale_line_id.id, 'done', cr)
             # UF-1617: set the delivered_pack_id (new or original) to become already_shipped
             self.write(cr, uid, [delivered_pack_id], {'already_shipped': True})
 
@@ -3553,7 +3580,6 @@ class stock_picking(osv.osv):
         # US-379: point 2) Generate RW messages manually and put into the queue when a partial OUT is done
         if usb_entity == self.REMOTE_WAREHOUSE and not context.get('sync_message_execution', False):
             self._manual_create_rw_messages(cr, uid, context=context)
-
         return res
 
     @check_cp_rw
@@ -5073,6 +5099,17 @@ class stock_move(osv.osv):
                     # all in lines processed or will be processed for this po line
                     wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.id, 'done', cr)
 
+                if move.purchase_line_id.is_line_split and move.purchase_line_id.original_line_id:
+                    # check if the original PO line can be set to done
+                    not_done_moves = self.pool.get('stock.move').search(cr, uid, [
+                        ('purchase_line_id', '=', move.purchase_line_id.original_line_id.id),
+                        ('state', 'not in', ['cancel', 'cancel_r', 'done']),
+                        ('picking_id.type', '=', 'in'),
+                    ], context=context)
+                    if (not not_done_moves) or all([x in ids for x in not_done_moves]):
+                        # all in lines processed or will be processed for this po line
+                        wf_service.trg_validate(uid, 'purchase.order.line', move.purchase_line_id.original_line_id.id, 'done', cr)
+
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                     # If the line will be sourced in another way, do not cancel the OUT move
@@ -5100,12 +5137,13 @@ class stock_move(osv.osv):
                 self.pool.get('purchase.order.line').update_fo_lines(cr, uid, [move.purchase_line_id.id], context=context)
 
             elif move.sale_line_id and (pick_type == 'internal' or (pick_type == 'out' and subtype_ok)):
+                resource = move.has_to_be_resourced or move.picking_id.has_to_be_resourced
                 diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.sale_line_id.product_uom.id)
                 if diff_qty:
-                    if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
+                    if resource:
                         sol_obj.add_resource_line(cr, uid, move.sale_line_id.id, move.sale_line_id.order_id.id, diff_qty, context=context)
                     if move.id not in context.get('not_resource_move', []):
-                        sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=move.has_to_be_resourced, context=context)
+                        sol_obj.update_or_cancel_line(cr, uid, move.sale_line_id.id, diff_qty, resource=resource, context=context)
 
         self.action_done(cr, uid, move_to_done, context=context)
 

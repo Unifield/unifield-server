@@ -122,6 +122,20 @@ class sale_order(osv.osv):
 
         return super(sale_order, self).copy(cr, uid, id, default=default, context=context)
 
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        if 'order_line' not in default:
+            default['order_line'] = []
+            sol_obj = self.pool.get('sale.order.line')
+            line_ids = sol_obj.search(cr, uid, [('order_id', '=', id), ('state', 'not in', ['cancel', 'cancel_r'])], context=context)
+            line_ids.sort()
+            for line_id in line_ids:
+                d = sol_obj.copy_data(cr, uid, line_id, context=context)
+                if d:
+                    default['order_line'].append((0, 0, d))
+
+        return super(sale_order, self).copy_data(cr, uid, id, default, context)
 
     def _amount_line_tax(self, cr, uid, line, context=None):
         val = 0.0
@@ -1147,32 +1161,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         Launch the wizard to re-source lines
         '''
-        # Objects
-        wiz_obj = self.pool.get('sale.order.cancelation.wizard')
-
-        # Variables
-        wf_service = netsvc.LocalService("workflow")
-
-        if not context:
+        if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for order in self.browse(cr, uid, ids, context=context):
-            if order.state == 'validated' and len(order.order_line) > 0:
-                wiz_id = wiz_obj.create(cr, uid, {'order_id': order.id}, context=context)
-                return {'type': 'ir.actions.act_window',
-                        'res_model': 'sale.order.cancelation.wizard',
-                        'view_type': 'form',
-                        'view_mode': 'form',
-                        'target': 'new',
-                        'res_id': wiz_id,
-                        'context': context}
+        sale_order = self.browse(cr, uid, ids[0], context=context)
+        sol_ids = [sol.id for sol in sale_order.order_line]
 
-            wf_service.trg_validate(uid, 'sale.order', order.id, 'cancel', cr)
-
-        return True
+        context.update({'line_ids': sol_ids})
+        return self.pool.get('sale.order.line').open_delete_sale_order_line_wizard(cr, uid, sol_ids, context=context)
 
     def change_currency(self, cr, uid, ids, context=None):
         '''
@@ -2089,11 +2087,6 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
 
-        # do not copy canceled sale.order.line:
-        sol = self.browse(cr, uid, id, fields_to_fetch=['state'], context=context)
-        if sol.state in ['cancel', 'cancel_r']:
-            return False
-
         # if the po link is not in default, we set both to False (both values are closely related)
         if 'so_back_update_dest_po_id_sale_order_line' not in default:
             default.update({
@@ -2462,7 +2455,7 @@ class sale_order_line(osv.osv):
                 self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
         else:
             # Update the line and the procurement
-            self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource=False, context=context)
+            self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, context=context)
 
         so_to_cancel_id = False
         if context.get('cancel_type', False) != 'update_out' and so_obj._get_ready_to_cancel(cr, uid, order, context=context)[order]:
