@@ -534,10 +534,11 @@ class account_analytic_account(osv.osv):
         'current_instance_type': lambda self, cr, uid, c: self.pool.get('res.users').browse(cr, uid, uid, c).company_id.instance_id.level,
     }
 
-    def check_fp(self, cr, uid, vals, context=None):
+    def check_fp(self, cr, uid, vals, to_update=False, context=None):
         """
         Check that FP have an instance_id
         Check that the given instance is not section level!
+        If to_update is True and no instance_id is in vals: update vals with the id of the current instance
         """
         if context is None:
             context = {}
@@ -554,6 +555,8 @@ class account_analytic_account(osv.osv):
                 if not current_instance or current_instance.level == 'section':
                     raise osv.except_osv(_('Error'), _('Proprietary Instance is mandatory for FP accounts!'))
                 instance_id = current_instance.id
+                if to_update:
+                    vals.update({'instance_id': instance_id})
             instance_level = self.pool.get('msf.instance').browse(cr, uid, instance_id).level
             if instance_level == 'section':
                 raise osv.except_osv(_('Warning'), _('Proprietary Instance for FP accounts should be only COORDO and/or MISSION'))
@@ -567,7 +570,7 @@ class account_analytic_account(osv.osv):
             context = {}
         # Check that instance_id is filled in for FP
         if context.get('from_web', False) is True:
-            self.check_fp(cr, uid, vals, context=context)
+            self.check_fp(cr, uid, vals, to_update=True, context=context)
         return super(account_analytic_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
