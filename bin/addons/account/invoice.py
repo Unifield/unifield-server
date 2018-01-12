@@ -447,6 +447,8 @@ class account_invoice(osv.osv):
                     ctx = self.get_log_context(cr, uid, context=ctx)
                 if 'type' in vals:
                     ctx.update({'type': vals['type']})
+                if '_terp_view_name' in ctx:
+                    del ctx['_terp_view_name']
                 message = _("Invoice '%s' is waiting for validation.") % name
                 self.log(cr, uid, inv_id, message, context=ctx)
             return res
