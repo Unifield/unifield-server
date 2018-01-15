@@ -208,7 +208,7 @@ class stock_card_wizard(osv.osv_memory):
             pi_counting_line_to_add.setdefault(line.inventory_id.date_done or line.inventory_id.date_confirmed, []).append({
                 'card_id': ids[0],
                 'date_done': line.inventory_id.date_done or line.inventory_id.date_confirmed,
-                'doc_ref': line.inventory_id.name,
+                'doc_ref': 'INV:' + str(line.inventory_id.id) + ':' + line.inventory_id.name,
                 'origin': False,
                 'qty_in': 0,
                 'qty_out': 0,
