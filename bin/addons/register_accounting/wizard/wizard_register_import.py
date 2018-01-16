@@ -234,6 +234,9 @@ class wizard_register_import(osv.osv_memory):
         processed = 0
         errors = []
         cheque_numbers = []
+        employee_obj = self.pool.get('hr.employee')
+        journal_obj = self.pool.get('account.journal')
+        partner_obj = self.pool.get('res.partner')
         try:
             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
@@ -309,7 +312,7 @@ class wizard_register_import(osv.osv_memory):
                 if isinstance(instance_ids, (int, long)):
                     instance_ids = [instance_ids]
                 # Check second info: journal's code
-                journal_ids = self.pool.get('account.journal').search(cr, uid, [('code', '=', journal_code)])
+                journal_ids = journal_obj.search(cr, uid, [('code', '=', journal_code)])
                 if not journal_ids or len(journal_ids) > 1:
                     raise osv.except_osv(_('Warning'), _('Journal %s not found.') % (journal_code or '',))
                 if isinstance(journal_ids, (int, long)):
@@ -454,34 +457,56 @@ class wizard_register_import(osv.osv_memory):
                             cheque_numbers.append(r_cheque_number)
                         else:
                             errors.append(_('Line %s. Cheque number is missing') % (current_line_num,))
-                    # Check that Third party exists (if not empty)
+
+                    # Check Account/Third Party compatibility regarding the Account "Type for specific treatment"
                     partner_type = 'partner'
-                    if line[cols['third_party']]:
-                        if type_for_register == 'advance':
-                            tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['third_party']])])
-                            partner_type = 'employee'
-                        elif type_for_register in ['transfer', 'transfer_same']:
-                            tp_ids = self.pool.get('account.journal').search(cr, uid, [('code', '=', line[cols['third_party']])])
-                            if tp_ids:
+                    tp_ids = []
+                    has_specific_type = type_for_register in ['advance', 'transfer', 'transfer_same', 'down_payment', 'payroll'] or False
+                    if has_specific_type:
+                        if line[cols['third_party']]:
+                            # Type Operational Advance ==> EMPLOYEE required
+                            if type_for_register == 'advance':
+                                tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
+                                partner_type = 'employee'
+                            # Type Internal transfer ==> JOURNAL required
+                            elif type_for_register in ['transfer', 'transfer_same']:
+                                tp_ids = journal_obj.search(cr, uid, [('code', '=', line[cols['third_party']])], context=context)
                                 partner_type = 'journal'
-                                tp_journal = self.pool.get('account.journal').browse(cr, uid, tp_ids, context=context)[0]
-                                if type_for_register == 'transfer':
-                                    if tp_journal.currency.id == register_currency:
-                                        errors.append(_('Line %s. A Transfer Journal must have a different currency than the register.') % (current_line_num,))
-                                if type_for_register == 'transfer_same':
-                                    if tp_journal.currency.id != register_currency:
-                                        errors.append(_('Line %s. A Transfer Same Journal must have the same currency as the register.') % (current_line_num,))
-                        else:
-                            tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['third_party']])])
-                            partner_type = 'partner'
+                                if tp_ids:
+                                    tp_journal = journal_obj.browse(cr, uid, tp_ids, fields_to_fetch=['currency'], context=context)[0]
+                                    if type_for_register == 'transfer':
+                                        if tp_journal.currency.id == register_currency:
+                                            errors.append(_('Line %s. A Transfer Journal must have a different currency than the register.') % (current_line_num,))
+                                            continue
+                                    if type_for_register == 'transfer_same':
+                                        if tp_journal.currency.id != register_currency:
+                                            errors.append(_('Line %s. A Transfer Same Journal must have the same currency as the register.') % (current_line_num,))
+                                            continue
+                            # Type DP or payroll ==> PARTNER required
+                            elif type_for_register in ['down_payment', 'payroll']:
+                                tp_ids = partner_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
+                                partner_type = 'partner'
+                        # Any type for Spec. Treatment listed above ==> EMPTY partner NOT allowed
                         if not tp_ids:
-                            # Search now if employee exists
-                            tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['third_party']])])
+                            errors.append(
+                                _("Line %s. Third Party %s not found or not compatible with the Type for specific"
+                                  " treatment of the account '%s - %s'.") % (current_line_num, line[cols['third_party']] or '',
+                                                                             account['code'], account['name'],))
+                            continue
+                    elif line[cols['third_party']]:
+                        # if the account has no specific type, search for a partner, then an employee and then a journal
+                        tp_ids = partner_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
+                        partner_type = 'partner'
+                        if not tp_ids:
+                            tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
                             partner_type = 'employee'
-                            # If really not, raise an error for this line
-                            if not tp_ids:
-                                errors.append(_('Line %s. Third party not found: %s') % (current_line_num, line[cols['third_party']],))
-                                continue
+                        if not tp_ids:
+                            tp_ids = journal_obj.search(cr, uid, [('code', '=', line[cols['third_party']])], context=context)
+                            partner_type = 'journal'
+                        if not tp_ids:
+                            errors.append(_('Line %s. Third party not found: %s') % (current_line_num, line[cols['third_party']],))
+                            continue
+                    if tp_ids:
                         r_partner = tp_ids[0]
 
                     # US-672 TP compat with account

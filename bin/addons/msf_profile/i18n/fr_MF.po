@@ -101136,3 +101136,9 @@ msgstr "Vous avez déjà sélectionné cette devise."
 #, python-format
 msgid "You must select at least one currency of transfers."
 msgstr "Vous devez sélectionner au moins une devise de virement."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:490
+#, python-format
+msgid "Line %s. Third Party %s not found or not compatible with the Type for specific treatment of the account '%s - %s'."
+msgstr "Ligne %s. Tiers %s non trouvé ou non compatible avec le Type pour traitement spécifique du compte '%s - %s'."
