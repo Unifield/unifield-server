@@ -1740,16 +1740,6 @@ class account_invoice_line(osv.osv):
             'account_analytic_id':line.account_analytic_id.id,
             'taxes':line.invoice_line_tax_id,
         }
-    #
-    # Set the tax field according to the account and the fiscal position
-    #
-    def onchange_account_id(self, cr, uid, ids, fposition_id, account_id):
-        if not account_id:
-            return {}
-        taxes = self.pool.get('account.account').browse(cr, uid, account_id).tax_ids
-        fpos = fposition_id and self.pool.get('account.fiscal.position').browse(cr, uid, fposition_id) or False
-        res = self.pool.get('account.fiscal.position').map_tax(cr, uid, fpos, taxes)
-        return {'value':{'invoice_line_tax_id': res}}
 
 account_invoice_line()
 
