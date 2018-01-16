@@ -204,6 +204,30 @@ class supplier_catalogue(osv.osv):
 
         return res
 
+
+    def unlink(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        entity_identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
+
+        # forbid supplier catalogue coming from higher instance level to be manually deleted:
+        to_unlink = set()
+        for catalogue in self.browse(cr, uid, ids, context=context):
+            catalogue_sd_ref = self.get_sd_ref(cr, uid, catalogue.id)
+            if catalogue_sd_ref and catalogue_sd_ref.startswith(entity_identifier) or context.get('sync_update_execution', False):
+                to_unlink.add(catalogue.id)
+            else:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Warning! You cannot delete a synched supplier catalogue created in a higher instance level.')
+                    )
+
+        return super(supplier_catalogue, self).unlink(cr, uid, list(to_unlink), context=context)
+
+
     def write(self, cr, uid, ids, vals, context=None):
         '''
         Update the supplierinfo and pricelist line according to the
