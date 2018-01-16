@@ -654,7 +654,6 @@ class PhysicalInventory(osv.osv):
         line_items = []
 
         for row_index, row in enumerate(counting_sheet_file.getRows()):
-
             # === Process header ===
 
             if row_index == 2:
@@ -685,8 +684,8 @@ class PhysicalInventory(osv.osv):
 
             # Check number of columns
             if len(row) != 10:
-                add_error(_("""_(Reference is different to inventory reference, You should have exactly 9 columns in this order:
-Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Date*, Specification*, BN Management*, , ED Management*"""), row_index)
+                add_error(_("""Reference is different to inventory reference, you should have exactly 10 columns in this order:
+Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date, Specification, BN Management, ED Management"""), row_index)
                 break
 
             # Check line number
@@ -832,6 +831,11 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         for row_index, row in enumerate(discrepancy_report_file.getRows()):
             if row_index < 10:
                 continue
+            if len(row) != 20:
+                    add_error(_("""Reference is different to inventory reference, you should have exactly 20 columns in this order:
+Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theorical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Comments / actions (in case of discrepancy)"""),
+                              row_index, len(row))
+                    break
             adjustment_type = row.cells[18].data
             if adjustment_type:
                 reason_ids = reason_type_obj.search(cr, uid, [('name', '=like', adjustment_type)], context=context)
