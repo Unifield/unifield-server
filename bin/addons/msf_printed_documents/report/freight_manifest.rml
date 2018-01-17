@@ -481,10 +481,13 @@
 
 
         <section>
-            <blockTable colWidths="170.0,75.0,220.0,45.0,51.0,50.0,56.0,35.0,35.0,35.0" style="LinesTable2" repeatRows="1" >
+            <blockTable colWidths="150.0,160.0,65.0,180.0,30.0,51.0,45.0,46.0,15.0,15.0,15.0" style="LinesTable2" repeatRows="1" >
 
 
                 <tr >
+                    <td>
+                        <para style="TextInformation5" alignment="CENTER">Our ref</para>
+                    </td>
                     <td>
                         <para style="TextInformation5" alignment="CENTER">Your ref</para>
                     </td>
@@ -524,6 +527,9 @@
                         <para style="LinesBlue">[[ line['ref'] ]]</para>
                     </td>
                     <td>
+                        <para style="LinesBlue">[[ line['po_ref'] ]]</para>
+                    </td>
+                    <td>
                         <para style="LinesBlue">[[ line['ppl'] ]]</para>
                     </td>
                     <td>
@@ -555,7 +561,7 @@
         </section>
 
 
-        <blockTable colWidths="465.0,45.0,51.0,50.0,126.0,35.0" style="ItemsTitle2">
+        <blockTable colWidths="555.0,30.0,51.0,45.0,61.0,30.0" style="ItemsTitle2">
             <tr>
                 <td>
                     <para style="TextInformation3" alignment="CENTER">Sub-total</para>

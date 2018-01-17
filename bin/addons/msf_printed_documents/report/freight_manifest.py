@@ -88,6 +88,7 @@ class freight_manifest(report_sxw.rml_parse):
             self.valtot += line.total_amount
 
             line_ref = line and line.sale_order_id and line.sale_order_id.name or False
+            line_po_ref = line and line.sale_order_id and line.sale_order_id.client_order_ref or False
             line_pl = line and line.ppl_id and line.ppl_id.name or False
 
             kc = ""
@@ -107,6 +108,7 @@ class freight_manifest(report_sxw.rml_parse):
             if line_pl not in line_obj[line_ref]:
                 line_obj[line_ref][line_pl] = {
                     'desc': '',
+                    'po_ref': '',
                     'parcels': 0,
                     'kgs': 0,
                     'm3': 0,
@@ -117,6 +119,7 @@ class freight_manifest(report_sxw.rml_parse):
                 }
 
             line_obj[line_ref][line_pl]['desc'] = line.description_ppl or ''
+            line_obj[line_ref][line_pl]['po_ref'] = line_po_ref or ''
             line_obj[line_ref][line_pl]['parcels'] += line.num_of_packs or 0
             line_obj[line_ref][line_pl]['kgs'] += line.total_weight or 0.0
             line_obj[line_ref][line_pl]['m3'] += line.total_volume/1000.0 or 0.0
@@ -132,6 +135,7 @@ class freight_manifest(report_sxw.rml_parse):
             for ppl in line_obj[ref]:
                 current = {
                     'ref': ref,
+                    'po_ref': line_obj[ref][ppl]['po_ref'],
                     'ppl': ppl,
                     'desc': line_obj[ref][ppl]['desc'],
                     'parcels': line_obj[ref][ppl]['parcels'],
