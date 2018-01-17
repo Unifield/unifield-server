@@ -45,7 +45,7 @@ from msf_order_date import TRANSPORT_TYPE
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 
-NB_OF_HEADER_LINES = 20
+NB_OF_HEADER_LINES = 21
 NB_LINES_COLUMNS = 19
 
 
