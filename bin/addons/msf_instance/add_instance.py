@@ -428,20 +428,21 @@ class account_bank_statement(osv.osv):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
-        res = []
+        res = True
         fields_list = ['closing_balance_frozen', 'balance_end_real', 'balance_start', 'ending_details_ids']
         for reg in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
             # if the End-of-the-Month Balance has already been confirmed for a register, ignore changes on fields that
             # should be read-only in that case (cover the use case of concurrent changes by 2 users)
+            newvals = vals.copy()
             if reg.closing_balance_frozen:
                 # update the values for each register
-                if 'balance_end_real' in vals:
-                    vals['balance_end_real'] = reg.balance_end_real
-                if 'balance_start' in vals:
-                    vals['balance_start'] = reg.balance_start
-                if 'ending_details_ids' in vals:
-                    vals['ending_details_ids'] = reg.ending_details_ids
-            res.append(super(account_bank_statement, self).write(cr, uid, [reg.id], vals, context=context))
+                if 'balance_end_real' in newvals:
+                    newvals['balance_end_real'] = reg.balance_end_real
+                if 'balance_start' in newvals:
+                    newvals['balance_start'] = reg.balance_start
+                if 'ending_details_ids' in newvals:
+                    newvals['ending_details_ids'] = reg.ending_details_ids
+            res = res and super(account_bank_statement, self).write(cr, uid, [reg.id], newvals, context=context)
         return res
 
 account_bank_statement()
