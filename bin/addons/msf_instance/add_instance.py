@@ -513,7 +513,24 @@ class account_cashbox_line(osv.osv):
             vals['instance_id'] = register.get('instance_id')[0]
         return super(account_cashbox_line, self).write(cr, uid, ids, vals, context=context)
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        CashBox Line Deletion method
+        The deletion isn't triggered for Closing Balance Lines linked to a reg. with a Confirmed month-end cash count
+        (covers the use case of concurrent changes by 2 users)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = True
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['ending_id'], context=context):
+            if not line.ending_id or not line.ending_id.closing_balance_frozen:
+                res = res and super(account_cashbox_line, self).unlink(cr, uid, [line.id], context=context)
+        return res
+
 account_cashbox_line()
+
 
 class account_analytic_account(osv.osv):
     _name = 'account.analytic.account'
