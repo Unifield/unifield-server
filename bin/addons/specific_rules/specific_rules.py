@@ -682,6 +682,20 @@ class stock_move(osv.osv):
         """
         return True
 
+    def is_out_move_linked_to_dpo(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+        move = self.browse(cr, uid, ids[0], context=context)
+        if move.sale_line_id:
+            pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('linked_sol_id', '=', move.sale_line_id.id)], context=context)
+            for pol in self.pool.get('purchase.order.line').browse(cr, uid, pol_ids, context=context):
+                if pol.order_id.order_type == 'direct':
+                    return True
+
+        return False
+
     def _check_tracking(self, cr, uid, ids, context=None):
         """
         check for batch management
@@ -690,10 +704,10 @@ class stock_move(osv.osv):
         for move in self.browse(cr, uid, ids, context=context):
             if move.state == 'done' and move.location_id.id != move.location_dest_id.id:
                 if move.product_id.batch_management:
-                    if not move.prodlot_id and move.product_qty:
+                    if not move.prodlot_id and move.product_qty and not self.is_out_move_linked_to_dpo(cr, uid, move.id, context=context):
                         raise osv.except_osv(_('Error!'),  _('You must assign a Batch Number for this product (Batch Number Mandatory).'))
                 if move.product_id.perishable:
-                    if not move.prodlot_id and move.product_qty:
+                    if not move.prodlot_id and move.product_qty and not self.is_out_move_linked_to_dpo(cr, uid, move.id, context=context):
                         raise osv.except_osv(_('Error!'),  _('You must assign an Expiry Date for this product (Expiry Date Mandatory).'))
             if move.prodlot_id:
                 if not move.product_id.perishable and not move.product_id.batch_management:
