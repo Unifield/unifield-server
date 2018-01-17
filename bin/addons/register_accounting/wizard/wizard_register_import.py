@@ -494,15 +494,13 @@ class wizard_register_import(osv.osv_memory):
                                                                              account['code'], account['name'],))
                             continue
                     elif line[cols['third_party']]:
-                        # if the account has no specific type, search for a partner, then an employee and then a journal
+                        # if the account has no specific type, search for a partner, then an employee
+                        # (the journal type is ignored in that case. If used it should trigger an error message)
                         tp_ids = partner_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
                         partner_type = 'partner'
                         if not tp_ids:
                             tp_ids = employee_obj.search(cr, uid, [('name', '=', line[cols['third_party']])], context=context)
                             partner_type = 'employee'
-                        if not tp_ids:
-                            tp_ids = journal_obj.search(cr, uid, [('code', '=', line[cols['third_party']])], context=context)
-                            partner_type = 'journal'
                         if not tp_ids:
                             errors.append(_('Line %s. Third party not found: %s') % (current_line_num, line[cols['third_party']],))
                             continue
