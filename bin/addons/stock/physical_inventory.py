@@ -103,6 +103,7 @@ class PhysicalInventory(osv.osv):
         'date': fields.datetime('Creation Date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'responsible': fields.char('Responsible', size=128, required=False),
         'date_done': fields.datetime('Date done', readonly=True),
+        'date_confirmed': fields.datetime('Date confirmed', readonly=True),
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
                                         'product_id', 'inventory_id', string="Product selection"),
         'discrepancy_line_ids': fields.one2many('physical.inventory.discrepancy', 'inventory_id', 'Discrepancy lines',
@@ -1061,7 +1062,11 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
 
             message = _('Inventory') + " '" + inv['name'] + "' " + _("is validated.")
             self.log(cr, uid, inv['id'], message)
-            self.write(cr, uid, [inv['id']], {'state': 'confirmed', 'move_ids': [(6, 0, move_ids)]})
+            self.write(cr, uid, [inv['id']], {
+                'state': 'confirmed', 
+                'move_ids': [(6, 0, move_ids)], 
+                'date_confirmed': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
+            })
             for line_id, move_id in discrepancy_to_move.items():
                 inv_line_obj.write(cr, uid, [line_id], {'move_id': move_id}, context=context)
 
