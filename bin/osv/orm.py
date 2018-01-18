@@ -3322,25 +3322,28 @@ class orm(orm_template):
                 sm = {self._name: (lambda self, cr, uid, ids, c={}: ids, None, 10, None)}
             else:
                 sm = self._columns[store_field].store
-            for object, aa in sm.items():
-                if len(aa) == 4:
-                    (fnct, fields2, order, length) = aa
-                elif len(aa) == 3:
-                    (fnct, fields2, order) = aa
-                    length = None
-                else:
-                    raise except_orm('Error',
-                                     ('Invalid function definition %s in object %s !\nYou must use the definition: store={object:(fnct, fields, priority, time length)}.' % (store_field, self._name)))
-                self.pool._store_function.setdefault(object, [])
-                ok = True
-                for x, y, z, e, f, l in self.pool._store_function[object]:
-                    if (x==self._name) and (y==store_field) and (e==fields2):
-                        if f == order:
-                            ok = False
-                            break
-                if ok:
-                    self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
-                    self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
+            for object, aa_list in sm.items():
+                if isinstance(aa_list, tuple):
+                    aa_list = [aa_list]
+                for aa in aa_list:
+                    if len(aa) == 4:
+                        (fnct, fields2, order, length) = aa
+                    elif len(aa) == 3:
+                        (fnct, fields2, order) = aa
+                        length = None
+                    else:
+                        raise except_orm('Error',
+                                         ('Invalid function definition %s in object %s !\nYou must use the definition: store={object:(fnct, fields, priority, time length)}.' % (store_field, self._name)))
+                    self.pool._store_function.setdefault(object, [])
+                    ok = True
+                    for x, y, z, e, f, l in self.pool._store_function[object]:
+                        if (x==self._name) and (y==store_field) and (e==fields2):
+                            if f == order:
+                                ok = False
+                                break
+                    if ok:
+                        self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
+                        self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
 
         for (key, null, msg) in self._sql_constraints:
             self.pool._sql_error[self._table+'_'+key] = msg
