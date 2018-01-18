@@ -532,7 +532,7 @@ class purchase_order_line(osv.osv):
                 # create incoming shipment (IN):
                 in_id = self.pool.get('stock.picking').search(cr, uid, [
                     ('purchase_id', '=', pol.order_id.id),
-                    ('state', 'not in', ['done', 'cancel']),
+                    ('state', 'not in', ['done', 'cancel', 'shipped']),
                     ('type', '=', 'in'),
                 ])
                 created = False
