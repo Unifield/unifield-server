@@ -24,14 +24,14 @@
         <field name="ready_to_ship_date"></field>
         % endif
         <field name="dest_address_id" key="name,parent.partner_id">
-        <field name="name">${o.dest_address_id and o.dest_address_id.name or ''|x}</field>
-        <field name="street">${o.dest_address_id and o.dest_address_id.street or ''|x}</field>
-        <field name="street2">${o.dest_address_id and o.dest_address_id.street2 or ''|x}</field>
-        <field name="zip">${o.dest_address_id and o.dest_address_id.zip or ''|x}</field>
-        <field name="city">${o.dest_address_id and o.dest_address_id.city or ''|x}</field>
-        <field name="country_id" key="name">
-            <field name="name">${o.dest_address_id and o.dest_address_id.country_id and o.dest_address_id.country_id.name or ''|x}</field>
-        </field>
+            <field name="delivery_name">${o.dest_address_id and o.dest_address_id.name or ''|x}</field>
+            % if o.order_type == 'direct' and o.partner_id.partner_type == 'esc':
+            <field name="delivery_address">${o.customer_id and o.customer_id.name or ''|x}</field>
+            % else:
+            <field name="delivery_address">${getInstanceName()|x}</field>
+            % endif
+            <field name="customer_name">${o.customer_id and getCustomerAddress(o.customer_id.id) or ''|x}</field>
+            <field name="customer_address">${o.customer_id and o.customer_id.name or ''|x}</field>
         </field>
         % if o.shipment_date and o.shipment_date not in (False, 'False'):
         <field name="shipment_date">${o.shipment_date|n}</field>

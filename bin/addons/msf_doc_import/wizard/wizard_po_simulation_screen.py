@@ -45,7 +45,7 @@ from msf_order_date import TRANSPORT_TYPE
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 
-NB_OF_HEADER_LINES = 21
+NB_OF_HEADER_LINES = 19
 NB_LINES_COLUMNS = 19
 
 
@@ -80,8 +80,8 @@ LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
 HEADER_COLUMNS = [(1, _('Order Reference'), 'mandatory'),
                   (5, _('Supplier Reference'), 'optionnal'),
                   (9, _('Ready To Ship Date'), 'optionnal'),
-                  (16, _('Shipment Date'), 'optionnal'),
-                  (20, _('Message ESC'), 'optionnal')
+                  (14, _('Shipment Date'), 'optionnal'),
+                  (18, _('Message ESC'), 'optionnal')
                   ]
 
 
@@ -720,26 +720,20 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
     a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                             values_header_errors.append(err_msg)
 
-                # Line 10: Address name
+                # Line 10: Delivery address name
                 # Nothing to do
 
-                # Line 11: Address street
+                # Line 11: Delivery address
                 # Nothing to do
 
-                # Line 12: Address street 2
+                # Line 12: Customer address name
                 # Nothing to do
 
-                # Line 13: Zip
+                # Line 13: Customer address
                 # Nothing to do
 
-                # Line 14: City
-                # Nothing to do
-
-                # Line 15: Country
-                # Nothing to do
-
-                # Line 16: Shipment date
-                shipment_date = values.get(16, [])[1]
+                # Line 14: Shipment date
+                shipment_date = values.get(14, [])[1]
                 if shipment_date:
                     if type(shipment_date) == type(DateTime.now()):
                         shipment_date = shipment_date.strftime('%Y-%m-%d')
@@ -749,24 +743,24 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                             time.strptime(shipment_date, '%Y-%m-%d')
                             header_values['imp_shipment_date'] = shipment_date
                         except:
-                            err_msg = _('Line 9 of the file: The date \'%s\' is not \
+                            err_msg = _('Line 14 of the file: The date \'%s\' is not \
     a valid date. A date must be formatted like \'YYYY-MM-DD\'') % shipment_date
                             values_header_errors.append(err_msg)
 
-                # Line 17: Notes
+                # Line 15: Notes
                 # UFTP-59
                 if wiz.filetype != 'excel':
-                    header_values['imp_notes'] = values.get(17, [])[1]
+                    header_values['imp_notes'] = values.get(15, [])[1]
 
-                # Line 18: Origin
+                # Line 16: Origin
                 # Nothing to do
 
-                # Line 19: Project Ref.
+                # Line 17: Project Ref.
                 # Nothing to do
 
-                # Line 20: Message ESC Header
+                # Line 18: Message ESC Header
                 if wiz.filetype != 'excel':
-                    header_values['imp_message_esc'] = values.get(20, [])[1]
+                    header_values['imp_message_esc'] = values.get(18, [])[1]
 
 
                 '''

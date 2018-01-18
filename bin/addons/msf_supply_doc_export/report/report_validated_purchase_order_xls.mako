@@ -123,28 +123,24 @@
         % endif
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Address name')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery address name')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.name or ''|x}</Data></Cell>
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Address street')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.street or ''|x}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery address')}</Data></Cell>
+        % if o.order_type == 'direct' and o.partner_id.partner_type == 'esc':
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.customer_id and o.customer_id.name or ''|x}</Data></Cell>
+        % else:
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${getInstanceName()|x}</Data></Cell>
+        % endif
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Address street 2')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.street2 or ''|x}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Customer address name')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.customer_id and getCustomerAddress(o.customer_id.id) or ''|x}</Data></Cell>
     </Row>
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Zip')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.zip or ''|x}</Data></Cell>
-    </Row>
-    <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('City')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.city or ''|x}</Data></Cell>
-    </Row>
-    <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Country')}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.dest_address_id and o.dest_address_id.country_id and o.dest_address_id.country_id.name or ''|x}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Customer address')}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.customer_id and o.customer_id.name or ''|x}</Data></Cell>
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Shipment Date')}</Data></Cell>
