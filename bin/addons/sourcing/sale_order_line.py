@@ -1740,6 +1740,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                             'original_uom': sourcing_line.original_uom.id,
                         })
                     self.pool.get('tender.line').create(cr, uid, tender_values, context=context)
+                else:
+                    raise osv.except_osv(_('Error'), _('Line %s of order %s, please select a PO/CFT in the Order Sourcing Tool') % (sourcing_line.line_number, sourcing_line.order_id.name))
 
                 wf_service.trg_validate(uid, 'sale.order.line', sourcing_line.id, 'sourced', cr)
 
