@@ -12,11 +12,13 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         'inventory_id': fields.many2one('physical.inventory', 'Inventory', readonly=True),
         'prefill_bn': fields.boolean('Prefill Batch Numbers'),
         'prefill_ed': fields.boolean('Prefill Expiry Dates'),
+        'only_with_stock_level': fields.boolean('Only count lines with stock above 0'),
     }
 
     _defaults = {
         'prefill_bn': True,
-        'prefill_ed': True
+        'prefill_ed': True,
+        'only_with_stock_level': False,
     }
 
     def create(self, cr, user, vals, context=None):
@@ -44,6 +46,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         # Get the selected option
         prefill_bn = read_single(self._name, wizard_id, 'prefill_bn')
         prefill_ed = read_single(self._name, wizard_id, 'prefill_ed')
+        only_with_stock_level = read_single(self._name, wizard_id, 'only_with_stock_level')
 
         # Get location, products selected, and existing inventory lines
         inventory_id = read_single(self._name, wizard_id, "inventory_id")
@@ -62,28 +65,32 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
         inventory_counting_lines_to_create = []
         for product_id in product_ids:
-            bn_and_eds_for_this_product = bn_and_eds[product_id]
-            # If no bn / ed related to this product, create a single inventory
-            # line
-            if len(bn_and_eds_for_this_product) == 0:
-                values = { "line_no": len(inventory_counting_lines_to_create) + 1,
-                           "inventory_id": inventory_id,
-                           "product_id": product_id,
-                           "batch_number": False,
-                           "expiry_date": False
-                           }
-                inventory_counting_lines_to_create.append(values)
-            # Otherwise, create an inventory line for this product ~and~ for
-            # each BN/ED
+            # Check the stock on location if only_with_stock_level is True
+            if only_with_stock_level and not self.positive_stock_on_location(cr, uid, location_id, product_id, context=context):
+                continue
             else:
-                for bn_and_ed in bn_and_eds_for_this_product:
+                bn_and_eds_for_this_product = bn_and_eds[product_id]
+                # If no bn / ed related to this product, create a single inventory
+                # line
+                if len(bn_and_eds_for_this_product) == 0:
                     values = { "line_no": len(inventory_counting_lines_to_create) + 1,
                                "inventory_id": inventory_id,
                                "product_id": product_id,
-                               "batch_number": bn_and_ed[0] if prefill_bn else False,
-                               "expiry_date":  bn_and_ed[1] if prefill_ed else False
+                               "batch_number": False,
+                               "expiry_date": False
                                }
                     inventory_counting_lines_to_create.append(values)
+                # Otherwise, create an inventory line for this product ~and~ for
+                # each BN/ED
+                else:
+                    for bn_and_ed in bn_and_eds_for_this_product:
+                        values = { "line_no": len(inventory_counting_lines_to_create) + 1,
+                                   "inventory_id": inventory_id,
+                                   "product_id": product_id,
+                                   "batch_number": bn_and_ed[0] if prefill_bn else False,
+                                   "expiry_date":  bn_and_ed[1] if prefill_ed else False
+                                   }
+                        inventory_counting_lines_to_create.append(values)
 
         # Get the existing inventory counting lines (to be cleared)
 
@@ -174,6 +181,26 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                                        "location_dest_id"])
 
         return moves_at_location
+
+    def positive_stock_on_location(self, cr, uid, location_id, product_id, context=False):
+        '''
+        Check if the product's stock on the inventory's location is > 0
+        '''
+        if not context:
+            context = {}
+
+        product_obj = self.pool.get('product.product')
+        positive_stock = True
+
+        ctx = context.copy()
+        ctx['location'] = location_id
+        ctx['compute_child'] = True
+
+        product_qty = product_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_available'], context=ctx).qty_available
+        if product_qty <= 0:
+            positive_stock = False
+
+        return positive_stock
 
 physical_inventory_generate_counting_sheet()
 
