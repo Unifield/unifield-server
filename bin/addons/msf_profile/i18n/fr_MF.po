@@ -101136,3 +101136,10 @@ msgstr "Vous avez déjà sélectionné cette devise."
 #, python-format
 msgid "You must select at least one currency of transfers."
 msgstr "Vous devez sélectionner au moins une devise de virement."
+
+#. modules: purchase, sale
+#: code:addons/purchase/purchase_workflow.py:413
+#: code:addons/sale/sale_workflow.py:491
+#, python-format
+msgid "You can't use taxes with an intermission partner."
+msgstr "Vous ne pouvez pas utiliser de taxes avec un partenaire intermission."

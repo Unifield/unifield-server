@@ -478,6 +478,17 @@ class sale_order_line(osv.osv):
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
         return True
 
+    def check_fo_tax(self, cr, uid, ids, context=None):
+        """
+        Prevents from validating a FO with taxes when using an Intermission partner
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for fo_line in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'tax_id'], context=context):
+            if fo_line.tax_id and fo_line.order_id.partner_type == 'intermission':
+                raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
 
     def action_validate(self, cr, uid, ids, context=None):
         '''
@@ -487,6 +498,8 @@ class sale_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids] 
+
+        self.check_fo_tax(cr, uid, ids, context=context)
 
         for sol in self.browse(cr, uid, ids, context=context):
             to_write = {}

@@ -400,6 +400,17 @@ class purchase_order_line(osv.osv):
 
         return True
 
+    def check_po_tax(self, cr, uid, ids, context=None):
+        """
+        Prevents from validating a PO with taxes when using an Intermission partner
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for po_line in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'taxes_id'], context=context):
+            if po_line.taxes_id and po_line.order_id.partner_type == 'intermission':
+                raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
 
     def action_validate(self, cr, uid, ids, context=None):
         '''
@@ -415,6 +426,7 @@ class purchase_order_line(osv.osv):
         self.check_analytic_distribution(cr, uid, ids, context=context)
         self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
         self.check_unit_price(cr, uid, ids, context=context)
+        self.check_po_tax(cr, uid, ids, context=context)
 
         # update FO lines:
         self.update_fo_lines(cr, uid, ids, context=context)
