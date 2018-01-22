@@ -12,7 +12,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         'inventory_id': fields.many2one('physical.inventory', 'Inventory', readonly=True),
         'prefill_bn': fields.boolean('Prefill Batch Numbers'),
         'prefill_ed': fields.boolean('Prefill Expiry Dates'),
-        'only_with_stock_level': fields.boolean('Only count lines with stock above 0'),
+        'only_with_stock_level': fields.boolean('Only count lines with stock different than 0'),
     }
 
     _defaults = {
@@ -59,14 +59,13 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         location_id = inventory["location_id"][0]
         product_ids = inventory["product_ids"]
 
-        bn_and_eds = self.get_BN_and_ED_for_products_at_location(cr, uid, location_id, product_ids, context=context)
+        bn_and_eds = self.get_BN_and_ED_for_products_at_location(cr, uid, location_id, product_ids, only_with_stock_level, context=context)
 
         # Prepare the inventory lines to be created
 
         inventory_counting_lines_to_create = []
         for product_id in product_ids:
-            # Check the stock on location if only_with_stock_level is True
-            if only_with_stock_level and not self.positive_stock_on_location(cr, uid, location_id, product_id, context=context):
+            if only_with_stock_level and self.not_zero_stock_on_location(cr, uid, location_id, product_id, context=context):
                 continue
             else:
                 bn_and_eds_for_this_product = bn_and_eds[product_id]
@@ -114,14 +113,18 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-
-    def get_BN_and_ED_for_products_at_location(self, cr, uid, location_id, product_ids, context=None):
+    def get_BN_and_ED_for_products_at_location(self, cr, uid, location_id, product_ids, only_with_stock_level, context=None):
         context = context if context else {}
         def read_many(model, ids, columns):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)
 
+        # Add location to the copied context
+        ctx = context.copy()
+        ctx['location'] = location_id
+        ctx['compute_child'] = True
+
         # Get the moves at location, related to these products
-        moves_at_location = self.get_moves_at_location(cr, uid, location_id, context=context)
+        moves_at_location = self.get_moves_at_location(cr, uid, location_id, context=ctx)
 
         moves_at_location_for_products = [ m for m in moves_at_location
                                            if m["product_id"][0] in product_ids ]
@@ -139,6 +142,8 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         for move in moves_at_location_for_products:
 
             product_id = move["product_id"][0]
+            product_qty = self.pool.get('product.product').browse(cr, uid, product_id, fields_to_fetch=['qty_available'],
+                                                                  context=ctx).qty_available
 
             batch_number = move["prodlot_id"][1] if isinstance(move["prodlot_id"], tuple) else False
             expired_date = move["expired_date"]
@@ -147,10 +152,10 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
             if batch_number and batch_number.startswith("MSFBN"):
                 batch_number = False
 
-            BN_and_ED[product_id].add((batch_number, expired_date))
+            if not only_with_stock_level or (only_with_stock_level and product_qty != 0):
+                BN_and_ED[product_id].add((batch_number, expired_date))
 
         return BN_and_ED
-
 
     # FIXME : this is copy/pasta from the other wizard ...
     # Should be factorized, probably in physical inventory, or stock somewhere.
@@ -182,25 +187,26 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
         return moves_at_location
 
-    def positive_stock_on_location(self, cr, uid, location_id, product_id, context=False):
+    def not_zero_stock_on_location(self, cr, uid, location_id, product_id, context=False):
         '''
-        Check if the product's stock on the inventory's location is > 0
+        Check if the product's stock on the inventory's location is != 0
         '''
         if not context:
             context = {}
 
         product_obj = self.pool.get('product.product')
-        positive_stock = True
+        not_zero = True
 
         ctx = context.copy()
         ctx['location'] = location_id
         ctx['compute_child'] = True
 
         product_qty = product_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_available'], context=ctx).qty_available
-        if product_qty <= 0:
-            positive_stock = False
+        if product_qty == 0:
+            not_zero = False
 
-        return positive_stock
+        return not_zero
+
 
 physical_inventory_generate_counting_sheet()
 
