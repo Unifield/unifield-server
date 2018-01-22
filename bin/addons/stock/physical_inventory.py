@@ -655,7 +655,6 @@ class PhysicalInventory(osv.osv):
         line_items = []
 
         for row_index, row in enumerate(counting_sheet_file.getRows()):
-
             # === Process header ===
 
             if row_index == 2:
@@ -686,8 +685,8 @@ class PhysicalInventory(osv.osv):
 
             # Check number of columns
             if len(row) != 10:
-                add_error(_("""_(Reference is different to inventory reference, You should have exactly 9 columns in this order:
-Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Date*, Specification*, BN Management*, , ED Management*"""), row_index)
+                add_error(_("""Reference is different to inventory reference, you should have exactly 10 columns in this order:
+Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date, Specification, BN Management, ED Management"""), row_index)
                 break
 
             # Check line number
@@ -833,6 +832,11 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
         for row_index, row in enumerate(discrepancy_report_file.getRows()):
             if row_index < 10:
                 continue
+            if len(row) != 20:
+                add_error(_("""Reference is different to inventory reference, you should have exactly 20 columns in this order:
+Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theorical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Comments / actions (in case of discrepancy)"""),
+                          row_index, len(row))
+                break
             adjustment_type = row.cells[18].data
             if adjustment_type:
                 adjustement_split = adjustment_type.split(' ')
@@ -906,7 +910,13 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
     def action_recount(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
-        self.write(cr, uid, ids, {'state': 'counting'}, context=context)
+        discrep_line_obj = self.pool.get('physical.inventory.discrepancy')
+        # Remove discrepancies and reset discrepancies_generated boolean
+        for inv_id in ids:
+            discrep_line_ids = discrep_line_obj.search(cr, uid, [('inventory_id', '=', inv_id)], context=context)
+            if len(discrep_line_ids) > 0:
+                discrep_line_obj.unlink(cr, uid, discrep_line_ids, context=context)
+        self.write(cr, uid, ids, {'state': 'counting', 'discrepancies_generated': False}, context=context)
         return {}
 
     def action_validate(self, cr, uid, ids, context=None):
