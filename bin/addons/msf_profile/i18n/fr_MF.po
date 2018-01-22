@@ -101136,3 +101136,27 @@ msgstr "Vous avez déjà sélectionné cette devise."
 #, python-format
 msgid "You must select at least one currency of transfers."
 msgstr "Vous devez sélectionner au moins une devise de virement."
+
+#. module: account
+#: code:addons/account/account.py:740
+#, python-format
+msgid "Default Debit and Credit Accounts are mandatory for the journal %s."
+msgstr "Les Comptes de Débit et Crédit par défaut sont obligatoires pour le journal %s."
+
+#. module: account
+#: code:addons/account/account.py:758
+#, python-format
+msgid "The corresponding Bank Journal is mandatory for the journal %s."
+msgstr "Le Journal de Banque correspondant est obligatoire pour le journal %s."
+
+#. module: account
+#: code:addons/account/account.py:749
+#, python-format
+msgid "The currency is mandatory for the journal %s."
+msgstr "La devise est obligatoire pour le journal %s."
+
+#. module: account
+#: code:addons/account/account.py:727
+#, python-format
+msgid "The Analytic Journal is mandatory for the journal %s."
+msgstr "Le Journal Analytique est obligatoire pour le journal %s."
