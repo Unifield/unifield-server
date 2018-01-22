@@ -3203,8 +3203,13 @@ class orm(orm_template):
                             if isinstance(f, fields.function):
                                 order = 10
                                 if f.store is not True:
-                                    order = f.store[f.store.keys()[0]][2]
-                                todo_update_store.append((order, f, k))
+                                    store_info = f.store[f.store.keys()[0]]
+                                    if isinstance(store_info, list):
+                                        order = store_info[0][2]
+                                    else:
+                                        order = store_info[2]
+                                else:
+                                    todo_update_store.append((order, f, k))
 
                             # and add constraints if needed
                             elif isinstance(f, fields.many2one):
