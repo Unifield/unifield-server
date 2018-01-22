@@ -691,6 +691,72 @@ class account_journal(osv.osv):
         default['name'] = (journal['name'] or '') + '(copy)'
         return super(account_journal, self).copy(cr, uid, id, default, context=context)
 
+    def _check_journal_constraints(self, cr, uid, vals, journal_id=None, context=None):
+        """
+        Checks the consistency of the journal created if not in a context of synchro
+        Raises a warning if one required condition isn't met.
+        """
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            journal_type = journal_code = ''
+            has_analytic_journal = has_debit_acc = has_credit_acc = has_bank_journal = has_currency = False
+            old_journal = None
+            # get existing journal data (in case of a write)
+            # Note: pieces of data from old journal are used ONLY if they aren't being modified NOR REMOVED (cf vals)
+            if journal_id:
+                fields_list = ['type', 'analytic_journal_id', 'default_debit_account_id', 'default_credit_account_id',
+                               'bank_journal_id', 'code', 'currency']
+                old_journal = self.browse(cr, uid, journal_id, fields_to_fetch=fields_list, context=context)
+            if 'type' in vals:
+                journal_type = vals.get('type', '')
+            elif old_journal:
+                journal_type = old_journal.type or ''
+            if 'code' in vals:
+                journal_code = vals.get('code', '')
+            elif old_journal:
+                journal_code = old_journal.code or ''
+            # check on analytic journal
+            if journal_type not in ['situation', 'stock']:
+                if 'analytic_journal_id' in vals:
+                    has_analytic_journal = vals.get('analytic_journal_id', False)
+                elif old_journal:
+                    has_analytic_journal = old_journal.analytic_journal_id or False
+                if not has_analytic_journal:
+                    raise osv.except_osv(_('Warning'),
+                                         _('The Analytic Journal is mandatory for the journal %s.') % journal_code)
+            # check on default debit/credit accounts
+            if journal_type in ['bank', 'cash', 'cheque', 'cur_adj']:
+                if 'default_debit_account_id' in vals:
+                    has_debit_acc = vals.get('default_debit_account_id', False)
+                elif old_journal:
+                    has_debit_acc = old_journal.default_debit_account_id or False
+                if 'default_credit_account_id' in vals:
+                    has_credit_acc = vals.get('default_credit_account_id', False)
+                elif old_journal:
+                    has_credit_acc = old_journal.default_credit_account_id or False
+                if not has_debit_acc or not has_credit_acc:
+                    raise osv.except_osv(_('Warning'),
+                                         _('Default Debit and Credit Accounts are mandatory for the journal %s.') % journal_code)
+            # check on currency
+            if journal_type in ['bank', 'cash', 'cheque']:
+                if 'currency' in vals:
+                    has_currency = vals.get('currency', False)
+                elif old_journal:
+                    has_currency = old_journal.currency or False
+                if not has_currency:
+                    raise osv.except_osv(_('Warning'),
+                                         _('The currency is mandatory for the journal %s.') % journal_code)
+            # check on corresponding bank journal for a cheque journal
+            if journal_type == 'cheque':
+                if 'bank_journal_id' in vals:
+                    has_bank_journal = vals.get('bank_journal_id', False)
+                elif old_journal:
+                    has_bank_journal = old_journal.bank_journal_id or False
+                if not has_bank_journal:
+                    raise osv.except_osv(_('Warning'),
+                                         _('The corresponding Bank Journal is mandatory for the journal %s.') % journal_code)
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -703,6 +769,7 @@ class account_journal(osv.osv):
                     raise osv.except_osv(_('Warning !'), _('You cannot modify company of this journal as its related record exist in Entry Lines'))
             if not journal.is_current_instance and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
+            self._check_journal_constraints(cr, uid, vals, journal_id=journal.id, context=context)
         return super(account_journal, self).write(cr, uid, ids, vals, context=context)
 
     def create_sequence(self, cr, uid, vals, context=None):
@@ -739,6 +806,7 @@ class account_journal(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if not 'sequence_id' in vals or not vals['sequence_id']:
             vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
+        self._check_journal_constraints(cr, uid, vals, context=context)
         return super(account_journal, self).create(cr, uid, vals, context)
 
     def name_get(self, cr, user, ids, context=None):
