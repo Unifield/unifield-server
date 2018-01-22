@@ -1446,7 +1446,6 @@ class purchase_order(osv.osv):
                     order_infos['origin'] = (order_infos['origin'] or '') + ' ' + porder.origin
             order_infos = self._hook_order_infos(cr, uid, order_infos=order_infos, order_id=porder)
 
-            no_proc_ids = []
             for order_line in porder.order_line:
                 line_key = make_key(order_line, ('id', 'order_id', 'name', 'date_planned', 'taxes_id', 'price_unit', 'notes', 'product_id', 'move_dest_id', 'account_analytic_id'))
                 o_line = order_infos['order_line'].setdefault(line_key, {})
@@ -1463,11 +1462,6 @@ class purchase_order(osv.osv):
                         o_line[field] = field_val
                     o_line['uom_factor'] = order_line.product_uom and order_line.product_uom.factor or 1.0
                     o_line = self._hook_o_line_value(cr, uid, o_line=o_line, order_line=order_line)
-                if order_line.linked_sol_id:
-                    no_proc_ids.append(order_line.id)
-
-            if no_proc_ids:
-                line_obj.write(cr, uid, no_proc_ids, {'linked_sol_id': False}, context=context)
 
         allorders = []
         orders_info = {}
@@ -1489,9 +1483,14 @@ class purchase_order(osv.osv):
             allorders.append(neworder_id)
 
             # make triggers pointing to the old orders point to the new order
-            for old_id in old_ids:
-                wf_service.trg_redirect(uid, 'purchase.order', old_id, neworder_id, cr)
-                wf_service.trg_validate(uid, 'purchase.order', old_id, 'purchase_cancel', cr)
+            for old_po in self.pool.get('purchase.order').browse(cr, uid, old_ids, fields_to_fetch=['order_line'], context=context):
+                for old_pol in old_po.order_line:
+                    # if pol has a linked sol, then we set it to null before cancelling in order not to cancel the sol (because sol will be
+                    # linked to newly created PO line):
+                    if old_pol.linked_sol_id:
+                        self.pool.get('purchase.order.line').write(cr, uid, [old_pol.id], {'linked_sol_id': False}, context=context)
+                    wf_service.trg_validate(uid, 'purchase.order.line', old_pol.id, 'cancel', cr)
+
         return orders_info
 
     def purchase_cancel(self, cr, uid, ids, context=None):
