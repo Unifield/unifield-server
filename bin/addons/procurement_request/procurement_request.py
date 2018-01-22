@@ -24,6 +24,7 @@ import time
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
+import netsvc
 
 from msf_order_date.order_dates import compute_rts
 
@@ -874,6 +875,10 @@ class procurement_request_line(osv.osv):
             value.update({'product_ok': True})
             domain = {'product_uom':[], 'supplier': []}
         return {'value': value, 'domain': domain}
+
+    def validated_ir(self, cr, uid, ids, context=None):
+        netsvc.LocalService("workflow").trg_validate(uid, 'sale.order.line', ids, 'validated', cr)
+        return True
 
 procurement_request_line()
 

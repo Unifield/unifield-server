@@ -629,6 +629,9 @@ class sale_order(osv.osv):
 
         return True
 
+    def validate_ir_lines(self, cr, uid, ids, context=None):
+        return self.validate_lines(cr, uid, ids, context)
+
     def wkf_split(self, cr, uid, ids, context=None):
         return True
 

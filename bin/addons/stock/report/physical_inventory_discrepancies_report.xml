@@ -585,7 +585,7 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s20"><Data ss:Type="String">Inventory Name </Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><Data ss:Type="String">${ objects[0].name or '' }</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s72"><Data ss:Type="String">${ objects[0].name or '' |x}</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:Index="8" ss:StyleID="s20"><Data ss:Type="String">Inventory date</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
@@ -597,7 +597,7 @@
       ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s20"><Data ss:Type="String">Location</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s21"><Data ss:Type="String">${ objects[0].location_id and objects[0].location_id.name or '' }</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s21"><Data ss:Type="String">${ objects[0].location_id and objects[0].location_id.name or '' |x }</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="8.25">
@@ -663,7 +663,7 @@
    <Row ss:Height="15.75">
     <Cell ss:Index="3" ss:StyleID="s20"><Data ss:Type="String">Inventory resp Name</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s72"><Data ss:Type="String">${ objects[0].responsible or '' }</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
+    <Cell ss:StyleID="s72"><Data ss:Type="String">${ objects[0].responsible or '' |x }</Data><NamedCell ss:Name="Print_Titles"/><NamedCell
       ss:Name="Print_Area"/></Cell>
     <Cell ss:Index="8" ss:StyleID="s25"><Data ss:Type="String">Signature of responsible </Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
@@ -818,19 +818,20 @@
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s45"><Data ss:Type="String">Comments / actions (in case of discrepancy)</Data><NamedCell
       ss:Name="Print_Titles"/><NamedCell ss:Name="Print_Area"/></Cell>
+<% index = 0 %>
    </Row>
    % for index,item in enumerate(objects[0].discrepancy_line_ids):
    <Row>
     <Cell ss:StyleID="s30"><Data ss:Type="String">${item.line_no}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s30"><Data ss:Type="String">${item.nomen_manda_2 and item.nomen_manda_2.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s31"><Data ss:Type="String">${item.product_id and item.product_id.code or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s31"><Data ss:Type="String">${item.product_id and item.product_id.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s38"><Data ss:Type="String">${item.product_uom_id and item.product_uom_id.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s30"><Data ss:Type="String">${item.nomen_manda_2 and item.nomen_manda_2.name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s31"><Data ss:Type="String">${item.product_id and item.product_id.code or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s31"><Data ss:Type="String">${item.product_id and item.product_id.name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s38"><Data ss:Type="String">${item.product_uom_id and item.product_uom_id.name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s43"><Data ss:Type="String">${item.standard_price}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s43"><Data ss:Type="String">${item.currency_id and item.currency_id.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s43"><Data ss:Type="String">${item.currency_id and item.currency_id.name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s30"><Data ss:Type="String">${item.theoretical_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s31"><Data ss:Type="String">${item.counted_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s38"><Data ss:Type="String">${item.batch_number or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s38"><Data ss:Type="String">${item.batch_number or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s32"><Data ss:Type="String">${item.expiry_date or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s43"><Data ss:Type="String">${item.discrepancy_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s43"><Data ss:Type="String">${item.discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
@@ -839,8 +840,8 @@
     <Cell ss:StyleID="s36"><Data ss:Type="String">${item.total_product_counted_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s36"><Data ss:Type="String">${item.total_product_discrepancy_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s46"><Data ss:Type="String">${item.total_product_discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s50"><Data ss:Type="String">${item.reason_type_id and item.reason_type_id.name or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s48"><Data ss:Type="String">${item.comment or ''}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s50"><Data ss:Type="String">${item.reason_type_id and item.reason_type_id.complete_name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s48"><Data ss:Type="String">${item.comment or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
    % endfor
   </Table>
@@ -878,5 +879,11 @@
    <ProtectObjects>False</ProtectObjects>
    <ProtectScenarios>False</ProtectScenarios>
   </WorksheetOptions>
+  <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
+    <Range>R11C19:R${index+11}C19</Range>
+    <Type>List</Type>
+    <CellRangeList/>
+    <Value>&quot;${get_adjustement()|x}&quot;</Value>
+  </DataValidation>
  </Worksheet>
 </Workbook>

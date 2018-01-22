@@ -1627,9 +1627,13 @@ class purchase_order_line(osv.osv):
 
         msf_pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
 
+        import_commitments = self.pool.get('unifield.setup.configuration').get_config(cr, uid).import_commitments
         for pol in self.browse(cr, uid, ids, context=context):
             # only create CV for external and ESC partners:
             if pol.order_id.partner_id.partner_type not in ['external', 'esc']:
+                return False
+
+            if pol.order_id.partner_id.partner_type == 'esc' and import_commitments:
                 return False
 
             commitment_voucher_id = self.pool.get('account.commitment').search(cr, uid, [('purchase_id', '=', pol.order_id.id), ('state', '=', 'draft')], context=context)
