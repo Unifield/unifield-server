@@ -229,28 +229,9 @@ class procurement_request(osv.osv):
             if ir.procurement_request:
                 curr_browse = self.pool.get('res.users').browse(cr, uid, [uid], context)[0].company_id.currency_id
                 for line in ir.order_line:
-                    val += line.price_subtotal
+                    if line.state not in ('cancel', 'cancel_r'):
+                        val += line.price_subtotal
                 res[ir.id] = cur_obj.round(cr, uid, curr_browse.rounding, val)
-        return res
-
-    def _amount_all(self, cr, uid, ids, field_name, arg, context=None):
-        '''
-        Override the method to return 0.0 if the sale.order is a prcourement request
-        '''
-        res = {}
-        new_ids = []
-
-        for order in self.browse(cr, uid, ids, context=context):
-            if order.procurement_request:
-                res[order.id] = {}
-                res[order.id]['amount_tax'] = 0.0
-                res[order.id]['amount_total'] = 0.0
-                res[order.id]['amount_untaxed'] = 0.0
-            else:
-                new_ids.append(order.id)
-
-        res.update(super(procurement_request, self)._amount_all(cr, uid, new_ids, field_name, arg, context=context))
-
         return res
 
     def _amount_by_type(self, cr, uid, ids, field_name, arg, context=None):
@@ -292,14 +273,6 @@ class procurement_request(osv.osv):
 
         return super(procurement_request, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
 
-    #@@@ override sale.sale.order._get_order
-    # Not modified method, but simply add here to fix an error on amount_total field
-    def _get_order(self, cr, uid, ids, context=None):
-        result = {}
-        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, context=context):
-            result[line.order_id.id] = True
-        return result.keys()
-    #@@@end override
 
     _columns = {
         'date_order': fields.date('Ordered Date', required=True, readonly=False, select=True, states={}),
@@ -317,42 +290,9 @@ class procurement_request(osv.osv):
             readonly=True,
         ),
         'ir_total_amount': fields.function(_ir_amount_all, method=True, digits_compute=dp.get_precision('Sale Price'), string='Indicative Total Value'),
-        'amount_untaxed': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Sale Price'), string='Untaxed Amount',
-                                          store={
-            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
-        },
-            multi='sums', help="The amount without tax."),
-        'amount_tax': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Sale Price'), string='Taxes',
-                                      store={
-            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
-        },
-            multi='sums', help="The tax amount."),
-        'amount_total': fields.function(_amount_all, method=True, digits_compute=dp.get_precision('Sale Price'), string='Total',
-                                        store={
-            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
-        },
-            multi='sums', help="The total amount."),
-        'purchase_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Purchase Total',
-                                           store={
-            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
-        },
-            multi='by_type', help="The amount of lines sourced on order"),
-        'stock_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total',
-                                        store={
-            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
-        },
-            multi='by_type', help="The amount of lines sourced from stock"),
-        'proc_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total',
-                                       store={
-            'sale.order': (lambda self, cr, uid, ids, c=None: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty', 'type'], 10),
-        },
-            multi='by_type', help="The amount of lines sourced from stock"),
+        'purchase_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Purchase Total', help="The amount of lines sourced on order", multi='by_type'),
+        'stock_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total', help="The amount of lines sourced from stock", multi='by_type'),
+        'proc_amount': fields.function(_amount_by_type, method=True, digits_compute=dp.get_precision('Sale Price'), string='Stock Total', help="The amount of lines sourced from stock", multi='by_type'),
         'name': fields.char('Order Reference', size=64, required=True, readonly=True, select=True),
         'is_ir_from_po_cancel': fields.boolean('Is IR from a PO cancelled', invisible=True),  # UFTP-82: flagging we are in an IR and its PO is cancelled
     }

@@ -152,15 +152,16 @@ class sale_order(osv.osv):
                 'amount_tax': 0.0,
                 'amount_total': 0.0,
             }
-            val = val1 = 0.0
-            cur = order.pricelist_id.currency_id
-            for line in order.order_line:
-                if line.state not in ('cancel', 'cancel_r'):
-                    val1 += line.price_subtotal
-                    val += self._amount_line_tax(cr, uid, line, context=context)
-            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, val)
-            res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, val1)
-            res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
+            if not order.procurement_request:
+                val = val1 = 0.0
+                cur = order.pricelist_id.currency_id
+                for line in order.order_line:
+                    if line.state not in ('cancel', 'cancel_r'):
+                        val1 += line.price_subtotal
+                        val += self._amount_line_tax(cr, uid, line, context=context)
+                res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, val)
+                res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, val1)
+                res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
         return res
 
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
