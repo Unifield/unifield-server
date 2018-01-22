@@ -45,8 +45,8 @@ from msf_order_date import TRANSPORT_TYPE
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 
-NB_OF_HEADER_LINES = 19
-NB_LINES_COLUMNS = 19
+NB_OF_HEADER_LINES = 20
+NB_LINES_COLUMNS = 20
 
 
 PRODUCT_CODE_ID = {}
@@ -448,7 +448,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                                  'product_code', 'product_name',
                                  'product_qty', 'product_uom',
                                  'price_unit', 'currency_id',
-                                 'origin', 'comment', 'date_planned',
+                                 'origin', 'stock_take_date','comment', 'date_planned',
                                  'confirmed_delivery_date',
                                  'nomen_manda_0', 'nomen_manda_1',
                                  'nomen_manda_2',
@@ -687,11 +687,14 @@ information must be on at least %s columns. The line %s has %s columns') % (x, n
                 # Line 6: Details
                 # Nothing to do
 
-                # Line 7: Delivery Requested Date
+                # Line 7: Stock take date
                 # Nothing to do
 
-                # Line 8: Transport mode
-                transport_mode = values.get(8, [])[1]
+                # Line 8: Delivery Requested Date
+                # Nothing to do
+
+                # Line 9: Transport mode
+                transport_mode = values.get(9, [])[1]
                 if transport_mode:
                     transport_select = self.fields_get(cr, uid, ['imp_transport_mode'], context=context)
                     for x in transport_select['imp_transport_mode']['selection']:
@@ -700,13 +703,13 @@ information must be on at least %s columns. The line %s has %s columns') % (x, n
                             break
                     else:
                         possible_mode = ', '.join(x[1] for x in transport_select['imp_transport_mode']['selection'] if x[1])
-                        err_msg = _('Line 8 of the file: The transport mode \'%s\' is not \
+                        err_msg = _('Line 9 of the file: The transport mode \'%s\' is not \
 a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_mode)
                         values_header_errors.append(err_msg)
 
 
-                # Line 9: RTS Date
-                rts_date = values.get(9, [])[1]
+                # Line 10: RTS Date
+                rts_date = values.get(10, [])[1]
                 if rts_date:
                     if type(rts_date) == type(DateTime.now()):
                         rts_date = rts_date.strftime('%Y-%m-%d')
@@ -716,24 +719,24 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                             time.strptime(rts_date, '%Y-%m-%d')
                             header_values['imp_ready_to_ship_date'] = rts_date
                         except:
-                            err_msg = _('Line 9 of the file: The date \'%s\' is not \
+                            err_msg = _('Line 10 of the file: The date \'%s\' is not \
     a valid date. A date must be formatted like \'YYYY-MM-DD\'') % rts_date
                             values_header_errors.append(err_msg)
 
-                # Line 10: Delivery address name
+                # Line 11: Delivery address name
                 # Nothing to do
 
-                # Line 11: Delivery address
+                # Line 12: Delivery address
                 # Nothing to do
 
-                # Line 12: Customer address name
+                # Line 13: Customer address name
                 # Nothing to do
 
-                # Line 13: Customer address
+                # Line 14: Customer address
                 # Nothing to do
 
-                # Line 14: Shipment date
-                shipment_date = values.get(14, [])[1]
+                # Line 15: Shipment date
+                shipment_date = values.get(15, [])[1]
                 if shipment_date:
                     if type(shipment_date) == type(DateTime.now()):
                         shipment_date = shipment_date.strftime('%Y-%m-%d')
@@ -743,25 +746,27 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                             time.strptime(shipment_date, '%Y-%m-%d')
                             header_values['imp_shipment_date'] = shipment_date
                         except:
-                            err_msg = _('Line 14 of the file: The date \'%s\' is not \
+                            err_msg = _('Line 15 of the file: The date \'%s\' is not \
     a valid date. A date must be formatted like \'YYYY-MM-DD\'') % shipment_date
                             values_header_errors.append(err_msg)
 
-                # Line 15: Notes
+                # Line 16: Notes
                 # UFTP-59
                 if wiz.filetype != 'excel':
-                    header_values['imp_notes'] = values.get(15, [])[1]
+                    header_values['imp_notes'] = values.get(16, [])[1]
 
-                # Line 16: Origin
+                # Line 17: Origin
                 # Nothing to do
 
-                # Line 17: Project Ref.
+                # Line 18: Project Ref.
                 # Nothing to do
 
-                # Line 18: Message ESC Header
+                # Line 19: Message ESC Header
                 if wiz.filetype != 'excel':
-                    header_values['imp_message_esc'] = values.get(18, [])[1]
+                    header_values['imp_message_esc'] = values.get(19, [])[1]
 
+                # Line 20: Sourcing group
+                # Nothing to do
 
                 '''
                 The header values have been imported, start the importation of

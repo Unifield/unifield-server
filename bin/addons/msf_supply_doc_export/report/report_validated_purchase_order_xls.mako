@@ -103,6 +103,10 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
     </Row>
     <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Stock Take Date')}</Data></Cell>
+        <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.stock_take_date|n}T00:00:00.000</Data></Cell>
+    </Row>
+    <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Requested Date')}</Data></Cell>
         % if isDate(o.delivery_requested_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
@@ -219,6 +223,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price Unit*')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency*')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Origin*')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Stock Take Date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery requested date')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery confirmed date*')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Nomen Name')}</Data></Cell>
@@ -256,6 +261,7 @@
             <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or 0.00)|x}</Data></Cell>
             <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.pricelist_id.currency_id.name or '')|x}</Data></Cell>
             <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin or '')|x}</Data></Cell>
+            <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.stock_take_date|n}T00:00:00.000</Data></Cell>
             % if isDate(line.date_planned):
             <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date_planned|n}T00:00:00.000</Data></Cell>
             % elif isDate(o.delivery_requested_date):
