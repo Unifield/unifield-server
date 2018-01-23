@@ -101160,3 +101160,9 @@ msgstr "La devise est obligatoire pour le journal %s."
 #, python-format
 msgid "The Analytic Journal is mandatory for the journal %s."
 msgstr "Le Journal Analytique est obligatoire pour le journal %s."
+
+#. module: account
+#: code:addons/account/account.py:766
+#, python-format
+msgid "The current instance should be used as Proprietary Instance for the journal %s."
+msgstr "L'instance actuelle devrait être utilisée comme Instance Propriétaire pour le journal %s."

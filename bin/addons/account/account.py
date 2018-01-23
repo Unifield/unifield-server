@@ -698,6 +698,7 @@ class account_journal(osv.osv):
         """
         if context is None:
             context = {}
+        res_obj = self.pool.get('res.users')
         if not context.get('sync_update_execution'):
             journal_type = journal_code = ''
             has_analytic_journal = has_debit_acc = has_credit_acc = has_bank_journal = has_currency = False
@@ -756,6 +757,13 @@ class account_journal(osv.osv):
                 if not has_bank_journal:
                     raise osv.except_osv(_('Warning'),
                                          _('The corresponding Bank Journal is mandatory for the journal %s.') % journal_code)
+            # check on Proprietary Instance at import time
+            if context.get('from_import_data', False):
+                company = res_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
+                current_instance_id = company.instance_id and company.instance_id.id
+                if 'instance_id' not in vals or vals.get('instance_id') != current_instance_id:
+                    raise osv.except_osv(_('Warning'),
+                                         _('The current instance should be used as Proprietary Instance for the journal %s.') % journal_code)
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
