@@ -247,14 +247,15 @@ class procurement_request(osv.osv):
 
         line_ids = line_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
 
-        for line_data in line_obj.read(cr, uid, line_ids, ['product_uom_qty', 'cost_price', 'order_id', 'type'], context=context):
-            order_id = line_data['order_id'][0]
-            line_amount = line_data['product_uom_qty'] * line_data['cost_price']
-            res[order_id]['proc_amount'] += line_amount
-            if line_data['type'] == 'make_to_stock':
-                res[order_id]['stock_amount'] += line_amount
-            else:
-                res[order_id]['purchase_amount'] += line_amount
+        for line_data in line_obj.read(cr, uid, line_ids, ['price_subtotal', 'order_id', 'type', 'state'], context=context):
+            if line_data['state'] not in ('cancel', 'cancel_r'):
+                order_id = line_data['order_id'][0]
+                line_amount = line_data['price_subtotal'] or 0
+                res[order_id]['proc_amount'] += line_amount
+                if line_data['type'] == 'make_to_stock':
+                    res[order_id]['stock_amount'] += line_amount
+                else:
+                    res[order_id]['purchase_amount'] += line_amount
 
         return res
 
