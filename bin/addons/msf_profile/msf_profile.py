@@ -83,7 +83,7 @@ class patch_scripts(osv.osv):
                     pass
             cr.execute("""
                 select fo.id from sale_order fo where fo.partner_type not in ('external', 'esc') and procurement_request='f' and coalesce(fo.client_order_ref, '')=''
-                and fo.id in (select res_id from ir_model_data where model='sale.order' and (sync_date > last_modification and sync_date is not null))
+                and fo.state != 'cancel' and fo.id in (select res_id from ir_model_data where model='sale.order' and (sync_date > last_modification and sync_date is not null))
                 and fo.id not in %s
                 """, (tuple(fo_sent), ))
             to_touch = [x[0] for x in cr.fetchall()]
