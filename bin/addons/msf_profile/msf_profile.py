@@ -52,7 +52,11 @@ class patch_scripts(osv.osv):
     }
 
     def gen_pick(self, cr, uid, *a, **b):
-        cr.execute("""select l.id,l.line_number, o.name, o.state                                                                                                                                                                                                                                          from sale_order_line l                                                                                                                                                                                                                                                         inner join sale_order o on o.id = l.order_id                                                                                                                                                                                                                                   left join product_product p on p.id=l.product_id                                                                                                                                                                                                                               left join product_template t on t.id=p.product_tmpl_id
+        cr.execute("""select l.id,l.line_number, o.name, o.state, l.state
+        from sale_order_line l
+        inner join sale_order o on o.id = l.order_id
+        left join product_product p on p.id=l.product_id
+        left join product_template t on t.id=p.product_tmpl_id
         left join stock_move m on m.sale_line_id=l.id
         left join purchase_order_line pol on pol.linked_sol_id = l.id
         where l.state in ('confirmed', 'done')
@@ -62,11 +66,16 @@ class patch_scripts(osv.osv):
         and o.split_type_sale_order!='original_sale_order'
         and l.write_date > '2018-01-10 00:00:00'""")
         to_conf = []
+        state_dict = {}
         for x in cr.fetchall():
             to_conf.append(x[0])
+            state_dict.setdefault(x[4], [])
+            state_dict[x[4]].append(x[0])
             self._logger.warn("Gen pick for FO %s, line %s (line id:%s)" % (x[2], x[1], x[0]))
         if to_conf:
             self.pool.get('sale.order.line').action_confirmed(cr, uid, to_conf, {})
+        for state in state_dict:
+            self.pool.get('sale.order.line').write(cr, uid, state_dict[state], {'state': state}, {})
         return True
 
     def trigger_pofomsg(self, cr, uid, *a, **b):
