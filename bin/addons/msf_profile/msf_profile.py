@@ -51,6 +51,20 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF7.1 patches
+    def recompute_amount(self, cr, uid, *a, **b):
+        cr.execute("select min(id) from purchase_order_line where state in ('cancel', 'cancel_r') group by order_id")
+        pol_ids = [x[0] for x in cr.fetchall()]
+        if pol_ids:
+            self.pool.get('purchase.order.line')._call_store_function(cr, uid, pol_ids, keys=['state'])
+            self._logger.warn("Recompute amount on %d POs" % (len(pol_ids), ))
+
+        cr.execute("select min(id) from sale_order_line where state in ('cancel', 'cancel_r') group by order_id")
+        sol_ids = [x[0] for x in cr.fetchall()]
+        if sol_ids:
+            self.pool.get('sale.order.line')._call_store_function(cr, uid, sol_ids, keys=['state'])
+            self._logger.warn("Recompute amount on %d SOs" % (len(sol_ids), ))
+
     # UF7.0 patches
     def post_sll(self, cr, uid, *a, **b):
         # set constraint on ir_ui_view
