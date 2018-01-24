@@ -85,7 +85,7 @@ class patch_scripts(osv.osv):
                 select fo.id from sale_order fo, res_partner p where
                 p.id = fo.partner_id and p.partner_type not in ('external', 'esc') and procurement_request='f' and coalesce(fo.client_order_ref, '')=''
                 and fo.state != 'cancel' and fo.id in (select res_id from ir_model_data where model='sale.order' and (sync_date > last_modification and sync_date is not null))
-                and (fo.state not in 'done' or fo.id in (select order_id from sale_order_line where coalesce(write_date, create_date) > '2018-01-14 18:00:00'))
+                and (fo.state != 'done' or fo.id in (select order_id from sale_order_line where coalesce(write_date, create_date) > '2018-01-14 18:00:00'))
                 and fo.id not in %s
                 """, (tuple(fo_sent), ))
             to_touch = [x[0] for x in cr.fetchall()]
