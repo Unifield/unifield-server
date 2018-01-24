@@ -69,6 +69,51 @@ class patch_scripts(osv.osv):
             self.pool.get('sale.order.line').action_confirmed(cr, uid, to_conf, {})
         return True
 
+    def trigger_pofomsg(self, cr, uid, *a, **b):
+        sync_client_obj = self.pool.get('sync.client.entity')
+        if sync_client_obj:
+            cr.execute("select identifier from sync_client_message_to_send where remote_call='sale.order.create_so'")
+            po_sent = [0]
+            for x in cr.fetchall():
+                po_id = x[0].split('/')[-1].split('_')[0]
+                try:
+                    po_sent.append(int(po_id))
+                except:
+                    pass
+            cr.execute("""
+                select po.id from purchase_order po where po.partner_type not in ('external', 'esc') and po.split_po='f'
+                and po.state in ('draft', 'draft-p', 'validated_p', 'validated') and po.id in (select res_id from ir_model_data where model='purchase.order' and (sync_date > last_modification and sync_date is not null))
+                and po.id not in %s
+                """, (tuple(po_sent), ))
+            to_touch = [x[0] for x in cr.fetchall()]
+            self._logger.warn("PO to touch: %s" % (','.join([str(x) for x in to_touch]),))
+            if to_touch:
+                cr.execute("update ir_model_data set last_modification=NOW() where res_id in %s and model='purchase.order'", (tuple(to_touch),))
+            cr.commit()
+
+            cr.execute("select identifier from sync_client_message_to_send where remote_call='purchase.order.normal_fo_create_po'")
+            fo_sent = [0]
+            for x in cr.fetchall():
+                fo_id = x[0].split('/')[-1].split('_')[0]
+                try:
+                    fo_sent.append(int(fo_id))
+                except:
+                    pass
+            cr.execute("""
+                select fo.id from sale_order fo, res_partner p where
+                p.id = fo.partner_id and p.partner_type not in ('external', 'esc') and procurement_request='f' and coalesce(fo.client_order_ref, '')=''
+                and fo.state != 'cancel' and fo.id in (select res_id from ir_model_data where model='sale.order' and (sync_date > last_modification and sync_date is not null))
+                and (fo.state != 'done' or fo.id in (select order_id from sale_order_line where coalesce(write_date, create_date) > '2018-01-14 18:00:00'))
+                and fo.id not in %s
+                """, (tuple(fo_sent), ))
+            to_touch = [x[0] for x in cr.fetchall()]
+            self._logger.warn("FO to touch: %s" % (','.join([str(x) for x in to_touch]),))
+            if to_touch:
+                cr.execute("update ir_model_data set last_modification=NOW() where res_id in %s and model='sale.order'", (tuple(to_touch),))
+            cr.commit()
+
+            return True
+
     # UF7.0 patches
     def post_sll(self, cr, uid, *a, **b):
         # set constraint on ir_ui_view
