@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="gen_pick" model="patch.scripts">
+            <field name="method">gen_pick</field>
+        </record>
         <!-- UF7.0 -->
         <record id="post_sll" model="patch.scripts">
             <field name="method">post_sll</field>
