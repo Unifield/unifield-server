@@ -308,8 +308,11 @@ class account_cash_statement(osv.osv):
         return super(account_cash_statement, self).onchange_journal_id(cr, uid, statement_id, journal_id, context=context)
 
     def _equal_balance(self, cr, uid, cash_id, context=None):
+        if context is None:
+            context = {}
         statement = self.browse(cr, uid, cash_id, context=context)
-        self.write(cr, uid, [cash_id], {'balance_end_real': statement.balance_end})
+        context.update({'from_cash_statement_equal_balance': True})
+        self.write(cr, uid, [cash_id], {'balance_end_real': statement.balance_end}, context=context)
         statement.balance_end_real = statement.balance_end
         if abs(statement.balance_end - statement.balance_end_cash) > 10**-4:
             return False

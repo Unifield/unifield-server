@@ -425,6 +425,8 @@ class account_bank_statement(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if context is None:
+            context = {}
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
@@ -435,7 +437,8 @@ class account_bank_statement(osv.osv):
             newvals = vals.copy()
             if reg.closing_balance_frozen:
                 # remove the values for each register with a confirmed balance
-                if 'balance_end_real' in newvals:
+                # Note: at Cashbox closing the balance_end_real is set to the reg.balance_end value: keep this change
+                if 'balance_end_real' in newvals and not context.get('from_cash_statement_equal_balance', False):
                     del newvals['balance_end_real']
                 if 'balance_start' in newvals:
                     del newvals['balance_start']
