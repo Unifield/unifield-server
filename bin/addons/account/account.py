@@ -701,8 +701,8 @@ class account_journal(osv.osv):
         res_obj = self.pool.get('res.users')
         if not context.get('sync_update_execution'):
             journal_type = journal_code = ''
-            has_analytic_journal = has_debit_acc = has_credit_acc = has_bank_journal = has_currency = False
-            old_journal = None
+            has_analytic_journal = has_debit_acc = has_credit_acc = False
+            old_journal = bank_journal_id = currency_id = None
             # get existing journal data (in case of a write)
             # Note: pieces of data from old journal are used ONLY if they aren't being modified NOR REMOVED (cf vals)
             if journal_id:
@@ -742,21 +742,25 @@ class account_journal(osv.osv):
             # check on currency
             if journal_type in ['bank', 'cash', 'cheque']:
                 if 'currency' in vals:
-                    has_currency = vals.get('currency', False)
+                    currency_id = vals.get('currency', False)
                 elif old_journal:
-                    has_currency = old_journal.currency or False
-                if not has_currency:
+                    currency_id = old_journal.currency and old_journal.currency.id or False
+                if not currency_id:
                     raise osv.except_osv(_('Warning'),
                                          _('The currency is mandatory for the journal %s.') % journal_code)
             # check on corresponding bank journal for a cheque journal
             if journal_type == 'cheque':
                 if 'bank_journal_id' in vals:
-                    has_bank_journal = vals.get('bank_journal_id', False)
+                    bank_journal_id = vals.get('bank_journal_id', False)
                 elif old_journal:
-                    has_bank_journal = old_journal.bank_journal_id or False
-                if not has_bank_journal:
+                    bank_journal_id = old_journal.bank_journal_id and old_journal.bank_journal_id.id or False
+                if not bank_journal_id:
                     raise osv.except_osv(_('Warning'),
                                          _('The corresponding Bank Journal is mandatory for the journal %s.') % journal_code)
+                elif currency_id != self.browse(cr, uid, bank_journal_id, fields_to_fetch=['currency'], context=context).currency.id:
+                    raise osv.except_osv(_('Warning'),
+                                         _('The Corresponding Bank Journal must have the same currency as the journal %s.') % journal_code)
+
             # check on Proprietary Instance at import time
             if context.get('from_import_data', False):
                 company = res_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id

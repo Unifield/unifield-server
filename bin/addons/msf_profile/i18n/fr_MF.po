@@ -101150,6 +101150,12 @@ msgid "The corresponding Bank Journal is mandatory for the journal %s."
 msgstr "Le Journal de Banque correspondant est obligatoire pour le journal %s."
 
 #. module: account
+#: code:addons/account/account.py:762
+#, python-format
+msgid "The Corresponding Bank Journal must have the same currency as the journal %s."
+msgstr "Le Journal de Banque correspondant doit avoir la même devise que le journal %s."
+
+#. module: account
 #: code:addons/account/account.py:749
 #, python-format
 msgid "The currency is mandatory for the journal %s."
