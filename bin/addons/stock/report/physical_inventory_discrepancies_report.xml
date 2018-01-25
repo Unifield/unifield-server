@@ -840,7 +840,7 @@
     <Cell ss:StyleID="s36"><Data ss:Type="String">${item.total_product_counted_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s36"><Data ss:Type="String">${item.total_product_discrepancy_qty}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s46"><Data ss:Type="String">${item.total_product_discrepancy_value}</Data><NamedCell ss:Name="Print_Area"/></Cell>
-    <Cell ss:StyleID="s50"><Data ss:Type="String">${item.reason_type_id and item.reason_type_id.name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
+    <Cell ss:StyleID="s50"><Data ss:Type="String">${item.reason_type_id and item.reason_type_id.complete_name or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
     <Cell ss:StyleID="s48"><Data ss:Type="String">${item.comment or ''|x}</Data><NamedCell ss:Name="Print_Area"/></Cell>
    </Row>
    % endfor
@@ -879,5 +879,11 @@
    <ProtectObjects>False</ProtectObjects>
    <ProtectScenarios>False</ProtectScenarios>
   </WorksheetOptions>
+  <DataValidation xmlns="urn:schemas-microsoft-com:office:excel">
+    <Range>R11C19:R${index+11}C19</Range>
+    <Type>List</Type>
+    <CellRangeList/>
+    <Value>&quot;${get_adjustement()|x}&quot;</Value>
+  </DataValidation>
  </Worksheet>
 </Workbook>
