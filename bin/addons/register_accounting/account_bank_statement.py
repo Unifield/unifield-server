@@ -2353,7 +2353,7 @@ class account_bank_statement_line(osv.osv):
                             absl.amount_in - abs(imported_total_amount) > 0.001:
                         raise osv.except_osv(_('Warning'),
                                              _('You can not hard post with an amount greater'
-                                               ' than total of imported invoices'))
+                                               ' than total of imported invoices: Entry %s') % absl.sequence_for_reference or '')
 
                 # Update analytic lines
                 if absl.account_id.is_analytic_addicted:
