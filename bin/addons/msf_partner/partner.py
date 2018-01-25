@@ -594,6 +594,35 @@ class res_partner(osv.osv):
             +[_('%s (Journal Item)') % (aml['move_id'] and aml['move_id'][1] or '') for aml in aml_obj.read(cr, uid, aml_ids, ['move_id'])]
         )
 
+    def check_partner_unicity(self, cr, uid, vals, partner_id=None, context=None):
+        """
+        If the partner name is already used, check that the city is not empty AND not used by another partner with the
+        same name. The checks are case insensitive and done with active and inactive partners.
+        """
+        if context is None:
+            context = {}
+        old_partner = None
+        partner_name = city = ''
+        if partner_id:
+            old_partner = self.browse(cr, uid, partner_id, fields_to_fetch=['name', 'city'], context=context)
+        if 'name' in vals:
+            partner_name = vals.get('name', '')
+        elif old_partner:
+            partner_name = old_partner.name
+        if 'address' in vals:
+            city = len(vals['address']) == 1 and len(vals['address'][0]) == 3 and vals['address'][0][2].get('city') or ''
+        elif old_partner:
+            city = old_partner.city or ''
+        partner_domain = partner_id and [('id', '!=', partner_id)] or []
+        partner_domain.append(('name', '=ilike', partner_name))
+        context.update({'active_test': False})
+        duplicate_partner_ids = self.search(cr, uid, partner_domain, order='NO_ORDER', context=context)
+        if duplicate_partner_ids:
+            if not city or self.search_exist(cr, uid, [('id', 'in', duplicate_partner_ids), ('city', '=ilike', city)], context=context):
+                raise osv.except_osv(_('Warning'),
+                                     _("The partner can't be saved because already exists under the same name for "
+                                       "the same city. Please change the partner name or city or use the existing partner."))
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -630,7 +659,8 @@ class res_partner(osv.osv):
 
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
-
+        for partner_id in ids:
+            self.check_partner_unicity(cr, uid, vals, partner_id=partner_id, context=context)
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
@@ -660,7 +690,7 @@ class res_partner(osv.osv):
 
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
-
+        self.check_partner_unicity(cr, uid, vals, context=context)
         return super(res_partner, self).create(cr, uid, vals, context=context)
 
 

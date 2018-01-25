@@ -101136,3 +101136,9 @@ msgstr "Vous avez déjà sélectionné cette devise."
 #, python-format
 msgid "You must select at least one currency of transfers."
 msgstr "Vous devez sélectionner au moins une devise de virement."
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:623
+#, python-format
+msgid "The partner can't be saved because already exists under the same name for the same city. Please change the partner name or city or use the existing partner."
+msgstr "Le partenaire ne peut pas être enregistré car il existe déjà sous le même nom pour la même ville. Veuillez changer le nom du partenaire ou la ville, ou bien utiliser le partenaire existant."
