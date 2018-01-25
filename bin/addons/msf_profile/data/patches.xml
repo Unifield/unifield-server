@@ -46,6 +46,9 @@
         <record id="gen_pick" model="patch.scripts">
             <field name="method">gen_pick</field>
         </record>
+        <record id="close_pol_already_processed" model="patch.scripts">
+            <field name="method">close_pol_already_processed</field>
+        </record>
 
         <!-- OLD -->
 

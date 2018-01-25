@@ -52,6 +52,13 @@ class patch_scripts(osv.osv):
     }
 
     def gen_pick(self, cr, uid, *a, **b):
+        c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        instance_name = c and c.instance_id and c.instance_id.code
+        if instance_name == 'SO_SOMA':
+            self._logger.warn("SO_SOMA_OCA fix PO00027 to FO00013-1")
+            self.pool.get('purchase.order.line').write(cr, uid, [499, 500, 501, 502], {'origin': '17/NL/SO001/FO00013-1'})
+            self.pool.get('purchase.order.line').action_confirmed(cr, uid, [499, 500, 501, 502])
+
         cr.execute("""select l.id,l.line_number, o.name, o.state, l.state
         from sale_order_line l
         inner join sale_order o on o.id = l.order_id
@@ -155,6 +162,20 @@ class patch_scripts(osv.osv):
 
             cr.commit()
             return True
+
+    def close_pol_already_processed(self, cr, uid, *a, **b):
+        wf_service = netsvc.LocalService("workflow")
+        cr.execute("select l.id, l.order_id, l.product_qty, o.name, l.line_number from purchase_order_line l, purchase_order o where l.order_id=o.id and l.state='confirmed'")
+        for x in cr.fetchall():
+            cr.execute('''select sum(product_qty) from stock_picking p, stock_move m
+            where m.picking_id = p.id and p.type='in' and p.state in ('done', 'cancel', 'cancel_r')
+            and p.purchase_id = %s and m.purchase_line_id = %s''', (x[1], x[0]))
+            res = cr.fetchone()
+            if res and res[0] and res[0] >= x[2]:
+                self._logger.warn("PO line to close: PO %s, line number: %s, poline id %s" % (x[3], x[4], x[0]))
+                wf_service.trg_validate(uid, 'purchase.order.line', x[0], 'done', cr)
+        cr.commit()
+        return True
 
     # UF7.0 patches
     def post_sll(self, cr, uid, *a, **b):
