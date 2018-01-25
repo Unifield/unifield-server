@@ -131,12 +131,26 @@ class patch_scripts(osv.osv):
                      and o.procurement_request='f'
                      and o.split_type_sale_order!='original_sale_order'
             ''')
-            to_trigger = []
             for x in cr.fetchall():
                 self._logger.warn("Fo line trigger confirmed msg FO: %s, line num %s, line id %s" % (x[2], x[1], x[0]))
-                to_trigger.append(x[0])
                 self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', x[0], {},
                                                                                       'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context={})
+
+
+            # trigger sync msg for validated po lines
+            cr.execute('''
+                select l.id, l.line_number, o.name
+                from purchase_order_line l, purchase_order o where
+                     l.order_id=o.id and l.state = 'validated' and l.write_date>'2018-01-10' and o.partner_type not in ('esc', 'external') and l.write_date is not null
+                     and l.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='sale.order.line.create_so_line' and identifier ~ '/[0-9-]+_[0-9]+$')
+                     and o.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='sale.order.create_so' and arguments like '%order_line%' and identifier ~ '/[0-9-]+_[0-9]+$')
+            ''')
+            to_touch = []
+            for x in cr.fetchall():
+                self._logger.warn("PO line to touch: %s, line num %s, line id %s" % (x[2], x[1], x[0]))
+                to_touch.append(x[0])
+            if to_touch:
+                cr.execute("update ir_model_data set last_modification=NOW() where res_id in %s and model='purchase.order.line'", (tuple(to_touch),))
 
 
             cr.commit()
