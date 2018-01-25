@@ -64,7 +64,8 @@ class patch_scripts(osv.osv):
         and m.id is null
         and pol.state != 'cancel'
         and o.split_type_sale_order!='original_sale_order'
-        and l.write_date > '2018-01-10 00:00:00'""")
+        and l.write_date > '2018-01-10 00:00:00'
+        and l.write_date is not null""")
         to_conf = []
         state_dict = {}
         for x in cr.fetchall():
@@ -120,15 +121,16 @@ class patch_scripts(osv.osv):
                 cr.execute("update ir_model_data set last_modification=NOW() where res_id in %s and model='sale.order'", (tuple(to_touch),))
 
 
+            # trigger sync msg for confirmed FO line
             cr.execute('''
                 select l.id, l.line_number, o.name
-                from sale_order_line l, sale_order o where 
-                     l.order_id=o.id and l.state in ('done', 'confirmed') and l.write_date>'2018-01-10'
-                     and l.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='purchase.order.line.sol_update_original_pol')
-                     and o.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='purchase.order.update_split_po')
+                from sale_order_line l, sale_order o where
+                     l.order_id=o.id and l.state in ('done', 'confirmed') and l.write_date>'2018-01-10' and l.write_date is not null
+                     and l.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='purchase.order.line.sol_update_original_pol' and identifier ~ '/[0-9-]+_[0-9]+$')
+                     and o.id not in (select regexp_replace(identifier,'.*/([0-9]+)_[0-9]+', '\\1')::integer from sync_client_message_to_send where remote_call='purchase.order.update_split_po' and identifier ~ '/[0-9-]+_[0-9]+$')
                      and o.procurement_request='f'
                      and o.split_type_sale_order!='original_sale_order'
-	    ''')
+            ''')
             to_trigger = []
             for x in cr.fetchall():
                 self._logger.warn("Fo line trigger confirmed msg FO: %s, line num %s, line id %s" % (x[2], x[1], x[0]))
