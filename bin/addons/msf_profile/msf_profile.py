@@ -65,6 +65,28 @@ class patch_scripts(osv.osv):
             self.pool.get('sale.order.line')._call_store_function(cr, uid, sol_ids, keys=['state'])
             self._logger.warn("Recompute amount on %d SOs" % (len(sol_ids), ))
 
+    def cancel_out_moves_linked_to_pol_less_than_confirmed(self, cr, uid, *a, **b):
+        cr.execute('''
+            select distinct sm.id
+            from purchase_order_line pol, sale_order_line sol, stock_move sm, sale_order so, purchase_order po, stock_picking sp
+            where pol.linked_sol_id = sol.id
+            and sm.sale_line_id = sol.id
+            and so.id = sol.order_id
+            and po.id = pol.order_id
+            and sp.id = sm.picking_id
+            and sm.type = 'out'
+            and so.order_type != 'loan'
+            and so.procurement_request is true
+            and pol.state not in ('confirmed', 'done', 'cancel', 'cancel_r')
+            and so.state not in ('done', 'cancel')
+            and po.rfq_ok is false
+        ''')
+        out_moves_to_cancel = [x[0] for x in cr.fetchall()]
+        self._logger.warn("Cancel out moves with id: %d" % (len(out_moves_to_cancel), ))
+        if out_moves_to_cancel:
+            self.pool.get('stock.move').action_cancel(cr, uid, out_moves_to_cancel)
+
+
     # UF7.0 patches
     def post_sll(self, cr, uid, *a, **b):
         # set constraint on ir_ui_view

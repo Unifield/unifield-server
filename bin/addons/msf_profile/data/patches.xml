@@ -5,6 +5,9 @@
         <record id="compute_amount" model="patch.scripts">
             <field name="method">recompute_amount</field>
         </record>
+        <record id="cancel_out_moves_linked_to_pol_less_than_confirmed" model="patch.scripts">
+            <field name="method">cancel_out_moves_linked_to_pol_less_than_confirmed</field>
+        </record>
 
         <!-- UF7.0 -->
         <record id="post_sll" model="patch.scripts">
