@@ -441,8 +441,6 @@ class wizard_import_in_simulation_screen(osv.osv):
                         error.append(_('Line %s, column %s, value %s is mandatory') % (index, nb+1, x[0]))
                     if row.cells[nb].data and x[3] == 'int':
                         try:
-                            if row.cells[nb].type == 'float':
-                                raise
                             int(row.cells[nb].data)
                         except:
                             error.append(_('Line %s, column %s, integer expected, found %s') % (index, nb+1, row.cells[nb].data))
