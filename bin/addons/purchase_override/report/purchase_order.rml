@@ -228,7 +228,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Total Lines : [[ len(objects[0].order_line) ]]</para>
+                    <para style="TextInformation">Total Lines : [[ len([x for x in objects[0].order_line if x.state not in ('cancel', 'cancel_r')]) ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
