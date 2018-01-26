@@ -82,7 +82,7 @@ class patch_scripts(osv.osv):
             and po.rfq_ok is false
         ''')
         out_moves_to_cancel = [x[0] for x in cr.fetchall()]
-        self._logger.warn("Cancel out moves with id: %d" % (len(out_moves_to_cancel), ))
+        self._logger.warn("Cancel out moves with id: %s" % (len(out_moves_to_cancel), ))
         if out_moves_to_cancel:
             self.pool.get('stock.move').action_cancel(cr, uid, out_moves_to_cancel)
 
