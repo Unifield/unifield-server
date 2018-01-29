@@ -21,7 +21,8 @@
                         <button name="do_reset" type="object" string="Reset" attrs="{'invisible':[('draft','!=',True)]}" icon="gtk-go-forward" />
                         <button name="do_save_draft" type="object" string="Save as draft" icon="gtk-go-forward" />
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
-                        <button name="do_validate_picking" type="object" string="Validate Picking" icon="gtk-go-forward" />
+                        <button name="do_validate_picking_and_stay" type="object" string="Validate Picking" icon="gtk-go-forward" />
+                        <button name="do_validate_picking" type="object" string="Validate Picking &amp; continue with Packing" icon="gtk-go-forward" />
                     </group>
                 </form>
             </field>

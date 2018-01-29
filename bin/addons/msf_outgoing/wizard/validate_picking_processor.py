@@ -44,6 +44,14 @@ class validate_picking_processor(osv.osv):
         'draft': fields.boolean('Draft'),
     }
 
+    def do_validate_picking_and_stay(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        context.update({'stay_at_pick_step': True})
+        return self.do_validate_picking(cr, uid, ids, context=context)
+
     """
     Model methods
     """
@@ -100,7 +108,9 @@ class validate_picking_processor(osv.osv):
         self.integrity_check_prodlot(cr, uid, ids, context=context)
         # call stock_picking method which returns action call
 
-        return picking_obj.do_validate_picking(cr, uid, ids, context=context)
+        res = picking_obj.do_validate_picking(cr, uid, ids, context=context) 
+
+        return res if not context.get('stay_at_pick_step', False) else {'type': 'ir.actions.act_window_close'}
 
     def integrity_check_prodlot(self, cr, uid, ids, context=None):
         """
