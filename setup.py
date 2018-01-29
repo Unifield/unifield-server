@@ -93,6 +93,13 @@ setup(
     license=license,
     python_requires = ">=2.7.12",
     install_requires=[
+        "pypiwin32==219;platform_system=='Windows'",
+        "cheroot==6.0.0",
+        "MarkupSafe==1.0",
+        "more-itertools==4.0.1",
+        "portend==2.2",
+        "six==1.11.0",
+        "tempora==1.10",
         "CherryPy==10.2.1",
         "Mako==1.0.6",
         "Babel==2.4.0",
