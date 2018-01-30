@@ -165,7 +165,8 @@ class wizard_import_pick_line(osv.osv_memory):
                         src_value = check_line.compute_location_value(cr, uid, to_write=to_write, loc_obj=loc_obj, pick_type=picking.type,
                                                                       product_id=to_write['product_id'], check_type='src',
                                                                       row=row, cell_nb=8, context=context)
-                        to_write.update({'location_id': src_value['location_id'], 'error_list': src_value['error_list'],})
+                        to_write.update({'location_id': src_value['location_id'], 'is_ext_cu': src_value['is_ext_cu'],
+                                         'error_list': src_value['error_list'],})
                         if not src_value['location_id']:
                             raise osv.except_osv(_('Error'), '\n'.join(x for x in p_value['error_list']))
 

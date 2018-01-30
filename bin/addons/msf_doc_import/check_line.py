@@ -27,6 +27,7 @@ from tools.translate import _
 from mx import DateTime
 import logging
 import pooler
+import tools
 
 def get_xml(value):
     new_value = []
@@ -203,8 +204,9 @@ def compute_location_value(cr, uid, **kwargs):
     context = kwargs.get('context', {})
     loc_id = None
     loc_name = None
+    ext_cu = False
     msg = ''
-    if row.cells[cell_nb] and str(row.cells[cell_nb]) != str(None):
+    if row.cells[cell_nb] and tools.ustr(row.cells[cell_nb]) != tools.ustr(None):
         if row.cells[cell_nb].type == 'str':
             loc_name = row.cells[cell_nb].data.strip()
             if loc_name:
@@ -228,10 +230,17 @@ def compute_location_value(cr, uid, **kwargs):
                     domain.extend([('id', '=', pack_loc_id)])
 
                 loc_ids = loc_obj.search(cr, uid, domain, context=context)
+                loc_by_name_ids = loc_obj.search(cr, uid, [('name', '=ilike', loc_name)], context=context)
                 if loc_ids:
                     loc_id = loc_ids[0]
-                elif loc_obj.search(cr, uid, [('name', '=ilike', loc_name)]):
-                    error_list.append(_('The Location "%s" is not compatible with the product of the stock move.') % loc_name)
+                elif loc_by_name_ids:
+                    loc_by_name = loc_obj.browse(cr, uid, loc_by_name_ids[0], context=context)
+                    if pick_type == 'in' and loc_by_name.location_category == 'consumption_unit' \
+                            and loc_by_name.usage == 'customer':
+                        loc_id = loc_by_name.id
+                        ext_cu = True
+                    else:
+                        error_list.append(_('The Location "%s" is not compatible with the product of the stock move.') % loc_name)
                 else:
                     error_list.append(_('The Location "%s" does not exist on this instance.') % loc_name)
 
@@ -239,7 +248,7 @@ def compute_location_value(cr, uid, **kwargs):
             msg = _('The Location Name has to be string.')
         if not loc_name:
             error_list.append(msg or _('The location was not valid.'))
-    return {'location_id': loc_id, 'error_list': error_list}
+    return {'location_id': loc_id, 'is_ext_cu': ext_cu, 'error_list': error_list}
 
 
 def product_value(cr, uid, **kwargs):
