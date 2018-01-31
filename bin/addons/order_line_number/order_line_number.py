@@ -115,9 +115,19 @@ class sale_order_line(osv.osv):
         # either line_number is not specified or set to False from copy, we need a new value
         if vals.get('order_id', False):
             if not vals.get('line_number', False):
+                # get max line number of all sol of the same order:
+                cr.execute('''
+                    select order_id, max(line_number)
+                    from sale_order_line
+                    where order_id = %s
+                    group by order_id
+                ''', (vals['order_id'],))
+                res = cr.fetchone()
                 # new number needed - gather the line number from the sequence
                 sequence_id = so_obj.read(cr, uid, [vals['order_id']], ['sequence_id'], context=context)[0]['sequence_id'][0]
                 line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
+                while line and res and int(line) <= res[1]:
+                    line = seq_pool.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
                 vals.update({'line_number': line})
 
         # create the new sale order line
