@@ -567,7 +567,7 @@
             <field name="name">view.audittrail.log.line.register.search</field>
             <field name="model">audittrail.log.line</field>
             <field name="type">search</field>
-            <field name="priority" eval="19"/>
+            <field name="priority" eval="19"/>  <!-- view not used by default (for other objets than registers) -->
             <field name="arch" type="xml">
                 <search string="Search Log">
                     <group col="10" colspan="4">
