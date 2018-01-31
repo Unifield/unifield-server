@@ -127,7 +127,7 @@ def compute_asset_value(cr, uid, **kwargs):
             msg = 'The Asset Name has to be a string.'
         if not asset_name:
             error_list.append(msg or 'The Asset was not valid.')
-    return {'asset_id': asset_id, 'error_list': error_list}
+    return {'asset_id': asset_id, 'error_list': tools.ustr(error_list)}
 
 
 def compute_batch_value(cr, uid, **kwargs):
@@ -156,7 +156,7 @@ def compute_batch_value(cr, uid, **kwargs):
             msg = 'The Batch Number has to be string.'
         if not prodlot_id:
             error_list.append(msg or 'The Batch Number was not valid.')
-    return {'prodlot_id': prodlot_id, 'expired_date': expired_date, 'error_list': error_list}
+    return {'prodlot_id': prodlot_id, 'expired_date': expired_date, 'error_list': tools.ustr(error_list)}
 
 
 def compute_kit_value(cr, uid, **kwargs):
@@ -186,7 +186,7 @@ def compute_kit_value(cr, uid, **kwargs):
             msg = _('The Kit Name has to be a string')
         if not kit_name:
             error_list.append(msg or _('The kit was not valid.'))
-    return {'kit_id': kit_id, 'error_list': error_list}
+    return {'kit_id': kit_id, 'error_list': tools.ustr(error_list)}
 
 
 def compute_location_value(cr, uid, **kwargs):
@@ -240,7 +240,7 @@ def compute_location_value(cr, uid, **kwargs):
             msg = _('The Location Name has to be string.')
         if not loc_name:
             error_list.append(msg or _('The location was not valid.'))
-    return {'location_id': loc_id, 'error_list': error_list}
+    return {'location_id': loc_id, 'error_list': tools.ustr(error_list)}
 
 
 def product_value(cr, uid, **kwargs):
@@ -290,8 +290,8 @@ def product_value(cr, uid, **kwargs):
         comment += _(' Product Code to be defined')
         error_list.append(_('The Product\'s Code has to be defined'))
     return {
-        'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit': price_unit,
-        'cost_price': cost_price, 'product_code':product_code}
+        'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': tools.ustr(error_list),
+        'price_unit': price_unit, 'cost_price': cost_price, 'product_code':product_code}
 
 
 def quantity_value(**kwargs):
@@ -323,7 +323,7 @@ def quantity_value(**kwargs):
     # if the cell is empty
     except IndexError:
         warning_list.append(_('The Product Quantity was not set. It is set to 1 by default.'))
-    return {'product_qty': product_qty, 'error_list': error_list, 'warning_list': warning_list}
+    return {'product_qty': product_qty, 'error_list': tools.ustr(error_list), 'warning_list': warning_list}
 
 
 def number_value(**kwargs):
@@ -357,7 +357,7 @@ def number_value(**kwargs):
     except IndexError:
         warning_list.append(_('%s was not set. It is set to %d by default.') % (field_desc, default, ))
     res = {
-        'error_list': error_list,
+        'error_list': tools.ustr(error_list),
         'warning_list': warning_list
     }
     res[field_name] = res_val
@@ -410,7 +410,7 @@ def compute_uom_value(cr, uid, **kwargs):
             uom_id = product_obj.browse(cr, uid, [default_code])[0].uom_id.id
         else:
             uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
-    return {'uom_id': uom_id, 'error_list': error_list}
+    return {'uom_id': uom_id, 'error_list': tools.ustr(error_list)}
 
 
 def compute_price_value(**kwargs):
@@ -448,7 +448,8 @@ def compute_price_value(**kwargs):
             warning_list.append(_('The Price Unit was not set, we have taken the default "%s" of the product.') % price)
         else:
             error_list.append(_('Neither Price nor Product found.'))
-    return {'cost_price': cost_price, 'price_unit': price_unit, 'error_list': error_list, 'warning_list': warning_list, 'price_unit_defined': price_unit_defined}
+    return {'cost_price': cost_price, 'price_unit': price_unit, 'error_list': tools.ustr(error_list),
+            'warning_list': warning_list, 'price_unit_defined': price_unit_defined}
 
 
 def compute_date_value(**kwargs):
@@ -471,7 +472,7 @@ def compute_date_value(**kwargs):
     # if nothing is found at the line index (empty cell)
     except IndexError:
         warning_list.append(_('The delivery requested date format was not correct. The date from the header has been taken.'))
-    return {'date_planned': date_planned, 'error_list': error_list, 'warning_list': warning_list}
+    return {'date_planned': date_planned, 'error_list': tools.ustr(error_list), 'warning_list': warning_list}
 
 
 def compute_confirmed_delivery_date_value(**kwargs):
@@ -494,7 +495,8 @@ def compute_confirmed_delivery_date_value(**kwargs):
     # if nothing is found at the line index (empty cell)
     except IndexError:
         warning_list.append(_('The confirmed delivery date format was not correct. The date from the header has been taken (if any)'))
-    return {'confirmed_delivery_date': confirmed_delivery_date, 'error_list': error_list, 'warning_list': warning_list}
+    return {'confirmed_delivery_date': confirmed_delivery_date, 'error_list': tools.ustr(error_list),
+            'warning_list': warning_list}
 
 
 def compute_batch_expiry_value(cr, uid, **kwargs):
@@ -575,7 +577,8 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
     if bn_ids:
         batch_number = bn_ids[0]
 
-    return {'prodlot_id': batch_number, 'expired_date': expiry_date, 'error_list': error_list, 'warning_list': warning_list}
+    return {'prodlot_id': batch_number, 'expired_date': expiry_date, 'error_list': tools.ustr(error_list),
+            'warning_list': warning_list}
 
 
 
@@ -678,7 +681,7 @@ def line_number_value(**kwargs):
             line_number = row.cells[cell_nb].data
     except IndexError:
         error_list.append(_("No line number present so generated by system"))
-    return {'line_number': line_number, 'error_list': error_list}
+    return {'line_number': line_number, 'error_list': tools.ustr(error_list)}
 
 
 

@@ -34,6 +34,7 @@ import pooler
 from ..register_tools import open_register_view
 from lxml import etree
 import logging
+import tools
 
 
 class wizard_register_import(osv.osv_memory):
@@ -165,7 +166,7 @@ class wizard_register_import(osv.osv_memory):
                     'statement_id':        register_id,
                 }
                 if cheque_number:
-                    vals['cheque_number'] = str(cheque_number)
+                    vals['cheque_number'] = tools.ustr(cheque_number)
                 else:
                     vals['cheque_number'] = ''
                 absl_id = absl_obj.create(cr, uid, vals, context)
@@ -425,7 +426,7 @@ class wizard_register_import(osv.osv_memory):
                         errors.append(_('Line %s: Posting date \'%s\' is not in the same period as given register.') % (current_line_num, r_date))
                         continue
                     # Check G/L account
-                    account_code = str(line[cols['account']]).split(' ') and str(line[cols['account']]).split(' ')[0] or str(line[cols['account']])
+                    account_code = tools.ustr(line[cols['account']]).split(' ') and tools.ustr(line[cols['account']]).split(' ')[0] or tools.ustr(line[cols['account']])
                     account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code)])
                     if not account_ids:
                         errors.append(_('Line %s. G/L account %s not found!') % (current_line_num, account_code,))
@@ -633,12 +634,12 @@ class wizard_register_import(osv.osv_memory):
         except osv.except_osv as osv_error:
             logging.getLogger('import register').warn('OSV Exception', exc_info=True)
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occurred %s: %s") % (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
+            self.write(cr, uid, ids, {'message': _("An error occurred %s: %s") % (osv_error.name, tools.ustr(osv_error.value)), 'state': 'done', 'progression': 100.0})
             cr.close(True)
         except Exception as e:
             logging.getLogger('import register').warn('Exception', exc_info=True)
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occurred: %s") % (e and e.args and e.args[0] or ''), 'state': 'done', 'progression': 100.0})
+            self.write(cr, uid, ids, {'message': _("An error occurred: %s") % (e and e.args and tools.ustr(e.args[0]) or ''), 'state': 'done', 'progression': 100.0})
             cr.close(True)
         return True
 

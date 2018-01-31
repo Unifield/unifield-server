@@ -21,6 +21,7 @@
 import threading
 import logging
 import pooler
+import tools
 from osv import osv, fields
 from tools.translate import _
 import base64
@@ -267,17 +268,19 @@ class wizard_import_invoice_line(osv.osv_memory):
                     self.created_lines += 1
 
                 except osv.except_osv as osv_error:
-                    osv_value = osv_error.value
+                    osv_value = tools.ustr(osv_error.value)
                     osv_name = osv_error.name
                     add_message(_("Line %s in the Excel file: %s: %s\n") % (line_num, osv_name, osv_value))
                     cr.rollback()
                     continue
                 except UnicodeEncodeError as e:
+                    e = tools.ustr(e)
                     add_message(_("""Line %s in the Excel file, uncaught error: %s\n""") % (line_num, e))
                     logging.getLogger('import purchase order').error('Error %s' % e)
                     cr.rollback()
                     continue
                 except Exception as e:
+                    e = tools.ustr(e)
                     add_message(_("""Line %s in the Excel file, uncaught error: %s\n""") % (line_num, e))
                     logging.getLogger('import purchase order').error('Error %s' % e)
                     cr.rollback()

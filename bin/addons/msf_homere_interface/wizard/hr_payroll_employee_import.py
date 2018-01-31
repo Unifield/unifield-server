@@ -37,6 +37,8 @@ from lxml import etree
 import subprocess
 import os
 import shutil
+import datetime
+import tools
 
 def get_7z():
     if os.name == 'nt':
@@ -224,9 +226,20 @@ class hr_payroll_employee_import(osv.osv_memory):
 
         # Check employees
 
+        # check data type
+        try:
+            int_staff_id = int(staff_id)
+        except ValueError as e:
+            raise osv.except_osv(_('Error'), _('id_staff (%s) must be an integer.') % (tools.ustr(staff_id),))
+        if uniq_id != 'empty':
+            try:
+                int_uniq_id = int(uniq_id)
+            except ValueError as e:
+                raise osv.except_osv(_('Error'), _('uniq_id (%s) must be an integer.') % (tools.ustr(uniq_id),))
+
         # US-1404: check duplicates on the import files itself
         # => as not already in db
-        check_key = missioncode + staff_id + uniq_id
+        check_key = tools.ustr(missioncode) + tools.ustr(staff_id) + tools.ustr(uniq_id)
         if check_key in registered_keys:
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {
                 'wizard_id': wizard_id,
@@ -348,7 +361,6 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'photo': False,
                 'identification_id': code_staff or False,
                 'notes': commentaire and ustr(commentaire) or '',
-                'birthday': datenaissance or False,
                 'work_email': email or False,
                 # Do "NOM, Prenom"
                 'name': employee_name,
@@ -357,9 +369,11 @@ class hr_payroll_employee_import(osv.osv_memory):
                 'work_phone': tel_bureau or False,
                 'private_phone': tel_prive or False,
             }
-            # Update Birthday if equal to 0000-00-00
-            if datenaissance and datenaissance == '0000-00-00':
-                vals.update({'birthday': False,})
+            # check and set birthday
+            if not datenaissance or datenaissance == '0000-00-00' or not isinstance(datenaissance, datetime.date):
+                vals.update({'birthday': False})
+            else:
+                vals.update({'birthday': datenaissance})
             # Update Nationality
             if nation:
                 n_ids = self.pool.get('res.country').search(cr, uid, [('code', '=', ustr(nation))])
@@ -445,10 +459,21 @@ class hr_payroll_employee_import(osv.osv_memory):
                 continue
             vals = {
                 'homere_codeterrain': line.get('codeterrain') or False,
-                'homere_id_staff': line.get('id_staff') or False,
                 'homere_id_unique': line.get('id_unique') or 'empty',
                 'current': False,
             }
+
+            homere_id_staff = line.get('id_staff', False)
+            if not homere_id_staff:
+                vals.update({'homere_id_staff': False})
+            else:
+                try:
+                    homere_id_staff = int(homere_id_staff)
+                    vals.update({'homere_id_staff': homere_id_staff})
+                except ValueError as e:
+                    raise osv.except_osv(_('Error'), _('id_staff (%s) must be an integer.')
+                                         % (tools.ustr(homere_id_staff),))
+
             # Update values for current field
             if line.get('contratencours'):
                 if line.get('contratencours') == 'O':
@@ -456,7 +481,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             # Update values for datedeb and datefin fields
             for field in [('datedeb', 'date_start'), ('datefin', 'date_end')]:
                 if line.get(field[0]):
-                    if line.get(field[0]) == '0000-00-00':
+                    if line.get(field[0]) == '0000-00-00' or not isinstance(line.get(field[0]), datetime.date):
                         vals.update({field[1]: False})
                     else:
                         vals.update({field[1]: line.get(field[0])})

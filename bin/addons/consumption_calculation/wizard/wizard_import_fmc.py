@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
+import tools
 
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
@@ -131,7 +132,7 @@ Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Un
                 product_id = p_value['default_code']
             else:
                 product_id = False
-                error += _('Line %s in your Excel file ignored: Product Code [%s] not found ! Details: %s \n') % (line_num, row[0], p_value['error_list'])
+                error += _('Line %s in your Excel file ignored: Product Code [%s] not found ! Details: %s \n') % (line_num, tools.ustr(row[0]), p_value['error_list'])
 
             # Cell 3: Quantity (FMC)
             if row.cells[4] and row.cells[4].data:
@@ -140,7 +141,7 @@ Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Un
                 elif isinstance(row.cells[4].data, (int, long, float)):
                     fmc = row.cells[4].data
                 else:
-                    error += _("Line %s in your Excel file ignored: FMC should be a number and not %s \n") % (line_num, row.cells[4].data)
+                    error += _("Line %s in your Excel file ignored: FMC should be a number and not %s \n") % (line_num, tools.ustr(row.cells[4]).data)
 
             # Cell 5: Date (Valid Until)
             if row[6] and row[6].data:
@@ -148,12 +149,12 @@ Product Code*, Product Description*, UoM, AMC, FMC, Safety Stock (qty), Valid Un
                     valid_until = row[6].data
                 else:
                     try:
-                        valid_until = time.strftime('%Y-%m-%d', time.strptime(str(row[6]), '%d/%m/%Y'))
+                        valid_until = time.strftime('%Y-%m-%d', time.strptime(tools.ustr(row[6]), '%d/%m/%Y'))
                     except ValueError:
                         try:
-                            valid_until = time.strftime('%Y-%b-%d', time.strptime(str(row[6]), '%d/%b/%Y'))
+                            valid_until = time.strftime('%Y-%b-%d', time.strptime(tools.ustr(row[6]), '%d/%b/%Y'))
                         except ValueError as e:
-                            error += _("Line %s in your Excel file: expiry date %s has a wrong format. Details: %s' \n") % (line_num, row[6], e)
+                            error += _("Line %s in your Excel file: expiry date %s has a wrong format. Details: %s' \n") % (line_num, tools.ustr(row[6]), e)
 
             error += '\n'.join(to_write['error_list'])
             if error:
