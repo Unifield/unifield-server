@@ -7730,7 +7730,6 @@ msgstr "Africa/Mbabane"
 #: field:sync.client.message_rule,sequence_number:0
 #: field:sync.client.rule,sequence_number:0
 #: view:sync.client.update_received:0
-#: view:audittrail.log.line:0
 msgid "Sequence"
 msgstr "Séquence"
 
@@ -18128,7 +18127,7 @@ msgstr "Choisissez ici l'Unité de Mesure dans laquelle les prix et les quantit�
 #: field:sync.client.update_received,sequence_number:0
 #, python-format
 msgid "Sequence"
-msgstr "Sequence"
+msgstr "Séquence"
 
 #. module: msf_outgoing
 #: view:internal.picking.processor:0
