@@ -562,6 +562,33 @@
             </field>
         </record>
 
+        <!-- Track Changes Search View for Registers -->
+        <record id="view_audittrail_log_line_register_search" model="ir.ui.view">
+            <field name="name">view.audittrail.log.line.register.search</field>
+            <field name="model">audittrail.log.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="19"/>
+            <field name="arch" type="xml">
+                <search string="Search Log">
+                    <group col="10" colspan="4">
+                        <group colspan="2">
+                            <filter string="Creation" icon="gtk-new" domain="[('method', 'in', ['create'])]" context="{}"/>
+                            <filter string="Modification" icon="gtk-edit" domain="[('method', 'in', ['write'])]" context="{}"/>
+                            <filter string="Deletion" icon="gtk-undelete" domain="[('method', 'in', ['unlink'])]" context="{}"/>
+                        </group>
+                        <field name="log" colspan="4"/>
+                        <field name="timestamp" colspan="4"/>
+                        <newline />
+                        <field name="sub_obj_name" colspan="2"/>
+                        <field name="trans_field_description" colspan="2"/>
+                        <field name="old_value_text" colspan="2"/>
+                        <field name="new_value_text" colspan="2"/>
+                        <field name="user_id" colspan="1"/>
+                        <field name="other_column" string="Sequence" colspan="1"/>
+                    </group>
+                </search>
+            </field>
+        </record>
 
         <!-- Bank Statement Track changes view (US-1587 -->
         <record id="view_audittrail_log_line_other_column_tree" model="ir.ui.view">

@@ -7730,6 +7730,7 @@ msgstr "Africa/Mbabane"
 #: field:sync.client.message_rule,sequence_number:0
 #: field:sync.client.rule,sequence_number:0
 #: view:sync.client.update_received:0
+#: view:audittrail.log.line:0
 msgid "Sequence"
 msgstr "Séquence"
 
@@ -24993,7 +24994,7 @@ msgstr "I/MI date du bon"
 msgid "Add Location and create new one"
 msgstr "Ajouter une Zone et créer une nouvelle"
 
-#. module: msf_audittrail
+#. modules: msf_audittrail, register_accounting
 #: view:audittrail.log.line:0
 msgid "Search Log"
 msgstr "Rechercher Journal de bord"
@@ -43024,7 +43025,7 @@ msgstr "Solde Compte"
 msgid "Items :"
 msgstr "Items :"
 
-#. modules: msf_audittrail, stock
+#. modules: msf_audittrail, stock, register_accounting
 #: view:audittrail.log.line:0
 #: selection:audittrail.log.line,method:0
 #: view:stock.move:0
@@ -81740,7 +81741,7 @@ msgstr "Asia/Chongqing"
 msgid "Move"
 msgstr "Transaction"
 
-#. modules: product_attributes, product, msf_audittrail, sync_client
+#. modules: product_attributes, product, msf_audittrail, sync_client, register_accounting
 #: view:audittrail.log.line:0
 #: selection:audittrail.log.line,method:0
 #: view:product.product:0
@@ -87733,7 +87734,7 @@ msgstr "Analytique"
 msgid "French (CH) / Français (CH)"
 msgstr "French (CH) / Français (CH)"
 
-#. module: msf_audittrail
+#. modules: msf_audittrail, register_accounting
 #: view:audittrail.log.line:0
 #: selection:audittrail.log.line,method:0
 msgid "Deletion"

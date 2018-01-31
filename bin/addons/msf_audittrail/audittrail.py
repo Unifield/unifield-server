@@ -829,13 +829,13 @@ class audittrail_log_line(osv.osv):
         """
         if context is None:
             context = {}
-
-        if view_type == 'tree' and\
-                context.get('active_model') in\
-                ('account.bank.statement', 'account.bank.statement.line'):
+        if context.get('active_model') in ('account.bank.statement', 'account.bank.statement.line'):
+            # Register Track Changes
             dataobj = self.pool.get('ir.model.data')
-            dummy, view_id = dataobj.get_object_reference(cr, 1, 'register_accounting', 'view_audittrail_log_line_other_column_tree')
-
+            if view_type == 'tree':
+                dummy, view_id = dataobj.get_object_reference(cr, 1, 'register_accounting', 'view_audittrail_log_line_other_column_tree')
+            elif view_type == 'search':
+                dummy, view_id = dataobj.get_object_reference(cr, 1, 'register_accounting', 'view_audittrail_log_line_register_search')
         elif view_type == 'tree' and\
                 context.get('active_model') in\
                 ('account.move', 'account.move.line'):
