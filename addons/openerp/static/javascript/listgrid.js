@@ -1176,8 +1176,9 @@ MochiKit.Base.update(ListView.prototype, {
 });
 
 function validateList(_list) {
+    /// here
     var $list = jQuery('[id="' + _list + '"]').removeAttr('current_id');
-    var $check = jQuery('table.grid[id="'+_list+'_grid'+'"] tr.grid-row[record] td.grid-cell:not(.selector)').find('input, select');
+    var $check = jQuery('table.grid[id="'+_list+'_grid'+'"] tr.grid-row[record] td.grid-cell:not(.selector)').find('input[readonly!="readonly"], select[readonly!="readonly"]');
     $check.change(function() {
         $list.attr(
             'current_id',
