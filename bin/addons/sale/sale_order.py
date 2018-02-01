@@ -444,7 +444,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         result = {}
         for so in self.browse(cr, uid, ids, context=context):
-            result[so.id] = so.state
+            if so.draft_cancelled:
+                result[so.id] = 'cancel'
+            else:
+                result[so.id] = so.state
 
         return result
 
@@ -466,11 +469,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             for sol in so.order_line:
                 sol_states = set([sol.state for sol in so.order_line])
 
-            if not sol_states:
+            if so.draft_cancelled:
+                res[so.id] = 'cancel'
+            elif not sol_states:
                 res[so.id] = 'draft'
             elif all([s.startswith('cancel') for s in sol_states]): # if all lines are cancelled then the FO is cancelled
                 res[so.id] = 'cancel'
-            else: # else compute the less advanced state:
+            else:  # else compute the less advanced state:
                 sol_states.discard('cancel')
                 sol_states.discard('cancel_r')
 
@@ -628,6 +633,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'stock_take_date': fields.date(string='Date of Stock Take', required=False),
         'claim_name_goods_return': fields.char(string='Customer Claim Name', help='Name of the claim that created the IN-replacement/-missing which created the FO', size=512),
+        'draft_cancelled': fields.boolean(string='State', readonly=True)
     }
 
     _defaults = {
@@ -650,7 +656,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'active': True,
         'no_line': lambda *a: True,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
-
+        'draft_cancelled': False,
     }
     _sql_constraints = [
         ('name_uniq', 'unique(name)', 'Order Reference must be unique !'),
@@ -1188,8 +1194,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         sale_order = self.browse(cr, uid, ids[0], context=context)
         sol_ids = [sol.id for sol in sale_order.order_line]
 
-        context.update({'line_ids': sol_ids})
-        return self.pool.get('sale.order.line').open_delete_sale_order_line_wizard(cr, uid, sol_ids, context=context)
+        if len(sol_ids) > 0:
+            context.update({'lines_ids': sol_ids})
+            return self.pool.get('sale.order.line').open_delete_sale_order_line_wizard(cr, uid, sol_ids, context=context)
+        else:
+            self.write(cr, uid, sale_order.id, {'draft_cancelled': True}, context=context)
+            return True
 
     def change_currency(self, cr, uid, ids, context=None):
         '''
