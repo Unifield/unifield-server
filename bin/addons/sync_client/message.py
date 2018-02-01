@@ -235,12 +235,12 @@ class message_to_send(osv.osv):
 
         # either use rule filter_method or domain to find records for message
         if rule.filter_method:
-            obj_ids_temp = getattr(self.pool.get(rule.model), rule.filter_method)(cr, uid, rule, context=context)
+            obj_ids_temp_order = getattr(self.pool.get(rule.model), rule.filter_method)(cr, uid, rule, context=context)
         else:
             domain = rule.domain and eval(rule.domain) or []
-            obj_ids_temp = self.pool.get(rule.model).search_ext(cr, uid, domain, order=order, context=context)
+            obj_ids_temp_order = self.pool.get(rule.model).search_ext(cr, uid, domain, order=order, context=context)
 
-        obj_ids_temp = self.pool.get(rule.model).need_to_push(cr, uid, obj_ids_temp)
+        obj_ids_temp = self.pool.get(rule.model).need_to_push(cr, uid, obj_ids_temp_order)
 
         '''
             Add only real new messages to sync those haven't been synced before! This reduces significantly the cost of calculating the args (which is heavy)
@@ -250,7 +250,7 @@ class message_to_send(osv.osv):
         identifiers = self._generate_message_uuid(cr, uid, rule.model, obj_ids_temp, rule.server_id, context=context)
 
         # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
-        obj_ids = [obj_id for obj_id in obj_ids_temp if not \
+        obj_ids = [obj_id for obj_id in obj_ids_temp_order if obj_id in obj_ids_temp and not \
                    self.search(cr, uid, [('identifier', '=',
                                           identifiers[obj_id])], context=context)]
 

@@ -228,7 +228,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation">Total Lines : [[ len(objects[0].order_line) ]]</para>
+                    <para style="TextInformation">Total Lines : [[ len([x for x in objects[0].order_line if x.state not in ('cancel', 'cancel_r')]) ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -598,7 +598,7 @@
 
         <section>
             <blockTable colWidths="20.0,62.5,62.5,290.5,115.0,55.5,60.0,51.0,55.0" style="LinesTable">
-                [[ repeatIn(objects[0].order_line, 'line') ]]
+                [[ repeatIn(filter_lines(objects[0]), 'line') ]]
                 <tr>
                     <td>
                         <para style="LinesBlue">[[ line.line_number ]]</para>
