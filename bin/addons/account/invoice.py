@@ -60,12 +60,6 @@ class account_invoice(osv.osv):
                                  limit=1)
         return res and res[0] or False
 
-    def _get_currency(self, cr, uid, context=None):
-        user = pooler.get_pool(cr.dbname).get('res.users').browse(cr, uid, [uid], context=context)[0]
-        if user.company_id:
-            return user.company_id.currency_id.id
-        return pooler.get_pool(cr.dbname).get('res.currency').search(cr, uid, [('rate','=', 1.0)])[0]
-
     def _get_journal_analytic(self, cr, uid, type_inv, context=None):
         type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale', 'in_refund': 'purchase'}
         tt = type2journal.get(type_inv, 'sale')
@@ -365,7 +359,6 @@ class account_invoice(osv.osv):
         'type': _get_type,
         'state': 'draft',
         'journal_id': _get_journal,
-        'currency_id': _get_currency,
         'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.invoice', context=c),
         'reference_type': 'none',
         'check_total': 0.0,
@@ -660,12 +653,6 @@ class account_invoice(osv.osv):
                 val['currency_id'] = False
             else:
                 val['currency_id'] = currency.id
-        if company_id:
-            company = self.pool.get('res.company').browse(cr, uid, company_id)
-            if company.currency_id.company_id and company.currency_id.company_id.id != company_id:
-                val['currency_id'] = False
-            else:
-                val['currency_id'] = company.currency_id.id
         return {'value': val, 'domain': dom}
 
     # go from canceled state to draft state
