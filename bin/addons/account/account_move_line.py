@@ -1315,9 +1315,10 @@ class account_move_line(osv.osv):
         Returns a JI view with all the JIs related to the selected one, i.e.:
         1) those having the same Entry Sequence as the selected JI (including the selected JI itself)
         2) those having the same reference as one of the JIs found in 1)
-        3) those being partially or totally reconciled with one of the JIs found in 1)
-        4) those whose reference contains EXACTLY the Entry Sequence of the selected JI
-        5) those having the same Entry Sequence as one of the JIs found in 2), 3) or 4)
+        3) those having an Entry Sequence matching exactly with the reference of one of the JIs found in 1)
+        4) those being partially or totally reconciled with one of the JIs found in 1)
+        5) those whose reference contains EXACTLY the Entry Sequence of the selected JI
+        6) those having the same Entry Sequence as one of the JIs found in 2), 3) 4) or 5)
         """
         if context is None:
             context = {}
@@ -1328,6 +1329,7 @@ class account_move_line(osv.osv):
             raise osv.except_osv(_('Error'),
                                  _('The related entries feature can only be used with one Journal Item.'))
         ir_model_obj = self.pool.get('ir.model.data')
+        am_obj = self.pool.get('account.move')
         related_amls = set()
         selected_aml = self.browse(cr, uid, ids[0], fields_to_fetch=['move_id'], context=context)
         selected_entry_seq = selected_aml.move_id.name
@@ -1346,9 +1348,13 @@ class account_move_line(osv.osv):
             aml.reconcile_id and set_of_reconcile_ids.add(aml.reconcile_id.id)
             aml.reconcile_partial_id and set_of_reconcile_ids.add(aml.reconcile_partial_id.id)
 
-        domain_related_jis = ['|', '|', '|',
+        # JEs with Entry Sequence = ref of one of the JIs of the account_move
+        je_ids = am_obj.search(cr, uid, [('name', 'in', list(set_of_refs))], order='NO_ORDER', context=context)
+
+        domain_related_jis = ['|', '|', '|', '|',
                               '&', ('ref', 'in', list(set_of_refs)), ('ref', '!=', ''),
                               ('ref', '=', selected_entry_seq),
+                              ('move_id', 'in', je_ids),
                               ('reconcile_id', 'in', list(set_of_reconcile_ids)),
                               ('reconcile_partial_id', 'in', list(set_of_reconcile_ids))]
         related_ji_ids = self.search(cr, uid, domain_related_jis, order='NO_ORDER', context=context)
