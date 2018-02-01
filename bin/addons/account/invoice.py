@@ -548,17 +548,6 @@ class account_invoice(osv.osv):
             result['value'].update(to_update['value'])
         return result
 
-    def onchange_journal_id(self, cr, uid, ids, journal_id=False):
-        result = {}
-        if journal_id:
-            journal = self.pool.get('account.journal').browse(cr, uid, journal_id)
-            currency_id = journal.currency and journal.currency.id or journal.company_id.currency_id.id
-            result = {'value': {
-                'currency_id': currency_id,
-            }
-            }
-        return result
-
     def get_due_date(self, cr, uid, payment_term_id, date_invoice, context=None):
         """
         If a payment_term_id is given, returns the due date based on the payment term and the invoice date,
