@@ -43,6 +43,17 @@
             <field name="method">us_3879_set_pricelist_id_for_ir</field>
         </record>
 
+        <!-- UF7.1 -->
+        <record id="US-4036" model="patch.scripts">
+            <field name="method">trigger_pofomsg</field>
+        </record>
+        <record id="gen_pick" model="patch.scripts">
+            <field name="method">gen_pick</field>
+        </record>
+        <record id="close_pol_already_processed" model="patch.scripts">
+            <field name="method">close_pol_already_processed</field>
+        </record>
+
         <!-- OLD -->
 
         <record id="us_3048_patch" model="patch.scripts">
