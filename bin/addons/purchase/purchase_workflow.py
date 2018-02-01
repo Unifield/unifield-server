@@ -78,6 +78,27 @@ class purchase_order_line(osv.osv):
         return True
 
 
+    def cancel_related_in_moves(self, cr, uid, ids, context=None):
+        '''
+        check if PO line has related IN moves, if it is the case, then cancel them
+        '''
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for pol in self.browse(cr, uid, ids, context=context):
+            related_in_moves = self.pool.get('stock.move').search(cr, uid, [
+                ('purchase_line_id', '=', pol.id), 
+                ('type', '=', 'in'),
+                ('state', 'not in', ['done', 'cancel']),
+            ], context=context)
+            if related_in_moves:
+                self.pool.get('stock.move').action_cancel(cr, uid, related_in_moves, context=context)
+
+        return True
+
+
     def check_unit_price(self, cr, uid, ids, context=None):
         '''
         made some checks on unit price before validating the PO line
@@ -637,6 +658,7 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.cancel_related_in_moves(cr, uid, pol.id, context=context)
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
             if pol.linked_sol_id:
@@ -659,6 +681,7 @@ class purchase_order_line(osv.osv):
 
         # cancel the linked SO line too:
         for pol in self.browse(cr, uid, ids, context=context):
+            self.cancel_related_in_moves(cr, uid, pol.id, context=context)
             self.check_and_update_original_line_at_split_cancellation(cr, uid, pol.id, context=context)
 
             if pol.linked_sol_id and not pol.linked_sol_id.state.startswith('cancel'):
