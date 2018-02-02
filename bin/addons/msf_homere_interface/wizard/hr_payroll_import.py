@@ -136,6 +136,9 @@ class hr_payroll_import(osv.osv_memory):
         error_message = ""
         partner_obj = self.pool.get('res.partner')
 
+        # strip spaces in all columns
+        for i in range(len(data)):
+            data[i] = data[i].strip()
         if len(data) == 13:
             accounting_code, description, second_description, third, expense, receipt, project, financing_line, \
                 financing_contract, date, currency, project, analytic_line = zip(data)
