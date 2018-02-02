@@ -480,9 +480,9 @@ class purchase_order_line(osv.osv):
 
         self.update_fo_lines(cr, uid, ids, context=context)
         # update linked sol (same instance) to sourced-sy (if has)
-        for po in self.browse(cr, uid, ids, context=context):
-            if po.linked_sol_id:
-                wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_sy', cr)
+        for pol in self.browse(cr, uid, ids, context=context):
+            if pol.linked_sol_id:
+                wf_service.trg_validate(uid, 'sale.order.line', pol.linked_sol_id.id, 'sourced_sy', cr)
 
         return True
 
@@ -671,7 +671,7 @@ class purchase_order_line(osv.osv):
 
     def action_cancel_r(self, cr, uid, ids, context=None):
         '''
-        Wkf method called when getting the cancel state
+        Wkf method called when getting the cancel_r state
         '''
         if context is None:
             context = {}
