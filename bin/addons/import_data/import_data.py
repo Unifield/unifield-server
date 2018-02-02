@@ -249,9 +249,9 @@ class import_data(osv.osv_memory):
             cr.execute('''
                 SELECT n.id, coalesce(t.value,n.name), n.parent_id 
                 FROM product_nomenclature n 
-                LEFT JOIN ir_translation t ON t.lang='%s' AND t.name='product.nomenclature,name' AND t.res_id=n.id 
+                LEFT JOIN ir_translation t ON t.lang='en_MF' AND t.name='product.nomenclature,name' AND t.res_id=n.id 
                 ORDER BY n.level;
-            ''' % (current_lang,))
+            ''')
             for nv in cr.dictfetchall():
                 self._cache[dbname]['product.nomenclature']['name'].update({nv['coalesce']: nv['id']})
                 if nv['parent_id'] and temp_nomen_by_id.get(nv['parent_id'], False):
@@ -296,24 +296,8 @@ class import_data(osv.osv_memory):
             relation = fields_def[list_obj[0]]['relation']
             if impobj._name == 'product.product' and value in self._cache.get(dbname, {}).get(relation, {}).get(list_obj[1], {}):
                 return self._cache[dbname][relation][list_obj[1]][value]
-
             new_obj = self.pool.get(relation)
-            if relation == 'product.nomenclature':  # find nomenclature through translation
-                split_nomen = value.split(' | ')
-                ir_tr_obj = self.pool.get('ir.translation')
-                untranslated_value = ''
-                for n, nomen in enumerate(split_nomen):
-                    ir_tr_ids = ir_tr_obj.search(cr, uid, [('value', '=', nomen)], limit=1, context=context)
-                    if len(ir_tr_ids) > 0:
-                        nomen = ir_tr_obj.browse(cr, uid, ir_tr_ids[0], fields_to_fetch=['src'], context=context).src
-                    if n > 0:
-                        untranslated_value += ' | ' + nomen
-                    else:
-                        untranslated_value += nomen
-                newids = new_obj.search(cr, uid, [(list_obj[1], '=', untranslated_value)], limit=1, context=context)
-            else:
-                newids = new_obj.search(cr, uid, [(list_obj[1], '=', value)], limit=1)
-
+            newids = new_obj.search(cr, uid, [(list_obj[1], '=', value)], limit=1)
             if not newids:
                 # no obj
                 raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
