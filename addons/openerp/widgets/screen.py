@@ -33,7 +33,7 @@ class Screen(TinyInputWidget):
 
     params = ['model', 'state', 'id', 'ids', 'view_id', 'view_ids', 'view_mode', 'view_type', 'domain',
               'context', 'limit', 'offset', 'count', 'approximation',
-              'group_by_ctx', 'action_id', 'target_action_id']
+              'group_by_ctx', 'action_id', 'target_action_id', 'auto_refresh']
 
     member_widgets = ['widget']
 
@@ -43,7 +43,7 @@ class Screen(TinyInputWidget):
         params = params or cherrypy.request.terp_params
         prefix = prefix or (params.prefix or '')
         super(Screen, self).__init__(prefix=prefix, name=name)
-
+        self.auto_refresh  = params.auto_refresh or ''
         self.model         = params.model
         self.state         = params.state or None
         self.id            = params.id or False

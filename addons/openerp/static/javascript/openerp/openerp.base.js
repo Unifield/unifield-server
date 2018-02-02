@@ -431,3 +431,5 @@ jQuery(document).bind({
 
     }
 });
+
+var global_list_refresh;
