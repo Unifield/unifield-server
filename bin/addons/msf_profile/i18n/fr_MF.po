@@ -101136,3 +101136,9 @@ msgstr "Vous avez déjà sélectionné cette devise."
 #, python-format
 msgid "You must select at least one currency of transfers."
 msgstr "Vous devez sélectionner au moins une devise de virement."
+
+#. module: account_corrections
+#: code:addons/account_corrections/account_move_line.py:567
+#, python-format
+msgid "No OD-Extra Accounting Analytic Journal found!"
+msgstr "Aucun Journal Analytique de type OD-Extra Accounting n'a été trouvé !"
