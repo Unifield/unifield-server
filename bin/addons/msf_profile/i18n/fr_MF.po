@@ -101148,3 +101148,10 @@ msgstr "Aucun Journal Analytique de type OD-Extra Accounting n'a été trouvé !
 #, python-format
 msgid "Line %s. Third Party %s not found or not compatible with the Type for specific treatment of the account '%s - %s'."
 msgstr "Ligne %s. Tiers %s non trouvé ou non compatible avec le Type pour traitement spécifique du compte '%s - %s'."
+
+#. modules: purchase, sale
+#: code:addons/purchase/purchase_workflow.py:413
+#: code:addons/sale/sale_workflow.py:491
+#, python-format
+msgid "You can't use taxes with an intermission partner."
+msgstr "Vous ne pouvez pas utiliser de taxes avec un partenaire intermission."
