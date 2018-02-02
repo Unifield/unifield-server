@@ -147,8 +147,7 @@
                         <field name="journal_id" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True)]}" />
                         <field name="number" readonly="1"/>
                         <field name="type" invisible="1"/>
-                        <field name="currency_id" invisible="1" />
-                        <field name="fake_currency_id" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
+                        <field name="currency_id" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
                         <newline/>
                         <field name="partner_id" domain="[('supplier', '=', True)]" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
 

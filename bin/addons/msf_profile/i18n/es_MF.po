@@ -63069,7 +63069,6 @@ msgstr "¡Los módulos seleccionados han sido actualizados/ instalados!"
 #: report:account.bank.statement.line_csv:0
 #: field:account.mcdb,currency_id:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:252
-#: field:account.invoice,fake_currency_id:0
 #: model:ir.model,name:account_override.model_res_currency
 #: report:payment.order:0
 #: field:account.model,currency_id:0

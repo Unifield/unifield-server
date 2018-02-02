@@ -233,7 +233,6 @@ class account_invoice(osv.osv):
         'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
         'partner_move_line': fields.one2many('account.move.line', 'invoice_partner_link', string="Partner move line", readonly=True),
         'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", hide_default_menu=True, readonly="True"),
-        'fake_currency_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="res.currency", string="Currency", readonly="True"),
         'have_donation_certificate': fields.function(_get_have_donation_certificate, method=True, type='boolean', string="Have a Certificate of donation?"),
         'purchase_list': fields.boolean(string='Purchase List ?', help='Check this box if the invoice comes from a purchase list', readonly=True, states={'draft':[('readonly',False)]}),
         'virtual_currency_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Currency",
@@ -457,7 +456,7 @@ class account_invoice(osv.osv):
 
     def default_get(self, cr, uid, fields, context=None):
         """
-        Fill in fake currency for intermission invoice (in context).
+        Fill in account and journal for intermission invoice
         """
         defaults = super(account_invoice, self).default_get(cr, uid, fields, context=context)
         if context and context.get('is_intermission', False):
@@ -468,10 +467,6 @@ class account_invoice(osv.osv):
                     defaults = {}
                 user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
                 if user and user[0] and user[0].company_id:
-                    # get company default currency
-                    if user[0].company_id.currency_id:
-                        defaults['fake_currency_id'] = user[0].company_id.currency_id.id
-                        defaults['currency_id'] = defaults['fake_currency_id']
                     # get 'intermission counter part' account
                     if user[0].company_id.intermission_default_counterpart:
                         defaults['account_id'] = user[0].company_id.intermission_default_counterpart.id
