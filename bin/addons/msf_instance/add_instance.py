@@ -425,10 +425,27 @@ class account_bank_statement(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if context is None:
+            context = {}
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
-        return super(account_bank_statement, self).write(cr, uid, ids, vals, context=context)
+        res = True
+        for reg in self.browse(cr, uid, ids, fields_to_fetch=['closing_balance_frozen'], context=context):
+            # if the End-of-the-Month Balance has already been confirmed for a register, ignore changes on fields that
+            # should be read-only in that case (cover the use case of concurrent changes by 2 users)
+            newvals = vals.copy()
+            if reg.closing_balance_frozen:
+                # remove the values for each register with a confirmed balance
+                # Note: at Cashbox closing the balance_end_real is set to the reg.balance_end value: keep this change
+                if 'balance_end_real' in newvals and not context.get('from_cash_statement_equal_balance', False):
+                    del newvals['balance_end_real']
+                if 'balance_start' in newvals:
+                    del newvals['balance_start']
+                if 'ending_details_ids' in newvals:
+                    del newvals['ending_details_ids']
+            res = res and super(account_bank_statement, self).write(cr, uid, [reg.id], newvals, context=context)
+        return res
 
 account_bank_statement()
 
@@ -499,7 +516,24 @@ class account_cashbox_line(osv.osv):
             vals['instance_id'] = register.get('instance_id')[0]
         return super(account_cashbox_line, self).write(cr, uid, ids, vals, context=context)
 
+    def unlink(self, cr, uid, ids, context=None):
+        """
+        CashBox Line Deletion method
+        The deletion isn't triggered for Closing Balance Lines linked to a reg. with a Confirmed month-end cash count
+        (covers the use case of concurrent changes by 2 users)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        res = True
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['ending_id'], context=context):
+            if not line.ending_id or not line.ending_id.closing_balance_frozen:
+                res = res and super(account_cashbox_line, self).unlink(cr, uid, [line.id], context=context)
+        return res
+
 account_cashbox_line()
+
 
 class account_analytic_account(osv.osv):
     _name = 'account.analytic.account'
