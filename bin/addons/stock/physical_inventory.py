@@ -1143,7 +1143,7 @@ class PhysicalInventoryCounting(osv.osv):
         'is_cs': fields.related('product_id', 'is_cs', string='CS', type='boolean', readonly=True),
 
         # Batch / Expiry date
-        'batch_number': fields.char(_('Batch number'), size=30),
+        'batch_number': fields.char(_('Batch number'), size=64),
         'expiry_date': fields.date(string=_('Expiry date')),
 
         # Specific to inventory
