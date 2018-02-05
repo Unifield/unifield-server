@@ -1144,7 +1144,7 @@ class PhysicalInventoryCounting(osv.osv):
 
         # Batch / Expiry date
         'batch_number': fields.char(_('Batch number'), size=30),
-        'expiry_date': fields.date(string=_('Expiry date')),
+        'expiry_date': fields.date(string=_('Expiry date'), readonly=True),
 
         # Specific to inventory
         'line_no': fields.integer(string=_('Line #'), readonly=True),
