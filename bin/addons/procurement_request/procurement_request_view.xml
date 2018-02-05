@@ -12,9 +12,16 @@
                     <field name="sourcing_trace_ok" invisible="1" />
                     <group colspan="6" attrs="{'invisible': [('state', 'not in', ['validated', 'validated_p'])]}">
                         <html>
-                            <p style="text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                            <p id="message_ir_validated" style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
                                WARNING: This document has already been validated, are you sure you wish to modify after validation?
                             </p>
+                            <script language="javascript">
+                                var editable = $('#_terp_editable').val();
+                                if (editable == "True") {
+                                    msg_dom = $('#message_ir_validated');
+                                    msg_dom.show();
+                                }
+                            </script>
                         </html>
                     </group>
                     <group col="6" colspan="4" name="header">
