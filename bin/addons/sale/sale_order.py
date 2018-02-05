@@ -528,7 +528,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
         'state': fields.function(_get_less_advanced_sol_state, string='Order State', method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
-                                     'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+                                     'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line','draft_cancelled'], 10),
                                      'sale.order.line': (_get_order, ['state'], 10),    
                                  },
                                  select=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'."
