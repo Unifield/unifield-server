@@ -248,6 +248,7 @@ class account_analytic_line(osv.osv):
         aml_obj = self.pool.get('account.move.line')
         invoice_line_obj = self.pool.get('account.invoice.line')
         aal_obj = self.pool.get('account.analytic.line')
+        aal_account_obj = self.pool.get('account.analytic.account')
         # SP-50: If data is synchronized from another instance, just create it with the given document_date
         if context.get('update_mode') in ['init', 'update']:
             if not context.get('sync_update_execution', False) or not vals.get('document_date', False):
@@ -265,10 +266,14 @@ class account_analytic_line(osv.osv):
                 reversed_inv_line = invoice_line_obj.browse(cr, uid, related_ji.invoice_line_id.reversed_invoice_line_id.id,
                                                             fields_to_fetch=['move_lines'], context=context)
                 reversed_aml_id = reversed_inv_line.move_lines and reversed_inv_line.move_lines[0].id or False
+                # use a Funding Pool as Free1/2 are not synched to HQ
+                fp_account_ids = aal_account_obj.search(cr, uid, [('category', '=', 'FUNDING'), ('type', '=', 'normal')],
+                                                        order='NO_ORDER', context=context)
+                reversed_aal_dom = [('move_id', '=', reversed_aml_id), ('account_id', 'in', fp_account_ids)]
                 # the reversal_origin is used to keep the chain with previous AJIs so if several AJIs are linked to a JI
                 # the reversed AJI used is the same for all AJIs = the first one found by id
-                reversed_aal_ids = reversed_aml_id and aal_obj.search(cr, uid, [('move_id', '=', reversed_aml_id)],
-                                                                      order='id', limit=1, context=context)
+                reversed_aal_ids = reversed_aml_id and aal_obj.search(cr, uid, reversed_aal_dom, order='id', limit=1,
+                                                                      context=context)
                 if reversed_aal_ids:
                     vals['reversal_origin'] = reversed_aal_ids[0]  # reversal_origin_txt will be automatically updated
         # Default behaviour
