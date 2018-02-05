@@ -101136,3 +101136,13 @@ msgstr "Vous avez déjà sélectionné cette devise."
 #, python-format
 msgid "You must select at least one currency of transfers."
 msgstr "Vous devez sélectionner au moins une devise de virement."
+
+#. module: account_override
+#: field:account.invoice.line,reversed_invoice_line_id:0
+msgid "Reversed Invoice Line"
+msgstr "Ligne de facture contrepassée"
+
+#. module: account_override
+#: help:account.invoice.line,reversed_invoice_line_id:0
+msgid "Invoice line that has been reversed by this one through a \"refund cancel\" or \"refund modify\""
+msgstr "Ligne de facture qui a été contrepassée par celle-ci via un avoir de type \"annulation\" ou \"modification\""
