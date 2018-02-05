@@ -234,7 +234,15 @@ receivable, item have not been corrected, item have not been reversed and accoun
                         downstream_line_ids.append(reversal_ids)
                     sline_ids = search_ids
                 else:
-                    sline_ids = None
+                    # use case of a refund cancel/modify: no COR line exists but the "reversal" line should appear in the wizard
+                    si_reversal_domain = [('reversal_line_id', operator, sline_ids), ('invoice_line_id', '!=', False)]
+                    search_reversal_ids = self.search(cr, uid, si_reversal_domain, order='NO_ORDER', context=context)
+                    if search_reversal_ids:
+                        # Add line to result
+                        downstream_line_ids.append(search_reversal_ids)
+                        sline_ids = search_reversal_ids
+                    else:
+                        sline_ids = None
             # Add search result to res
             res[str(ml.id)] = list(set(flatten(upstream_line_ids) + flatten(downstream_line_ids))) # downstream_line_ids needs to be simplify with flatten
         return res
