@@ -365,7 +365,7 @@ class account_invoice(osv.osv):
                             ' before invoice validation')
                     )
 
-    def _refund_cleanup_lines(self, cr, uid, lines):
+    def _refund_cleanup_lines(self, cr, uid, lines, context=None):
         """
         Remove useless fields
         """
@@ -374,7 +374,7 @@ class account_invoice(osv.osv):
                 del line['move_lines']
             if line.get('import_invoice_id',False):
                 del line['import_invoice_id']
-        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines)
+        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines, context=context)
         return res
 
     def check_po_link(self, cr, uid, ids, context=None):
@@ -1525,6 +1525,9 @@ class account_invoice_line(osv.osv):
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
         'reference': fields.char(string="Reference", size=64),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        'reversed_invoice_line_id': fields.many2one('account.invoice.line', string='Reversed Invoice Line',
+                                                    help='Invoice line that has been reversed by this one through a '
+                                                         '"refund cancel" or "refund modify"'),
     }
 
     _defaults = {

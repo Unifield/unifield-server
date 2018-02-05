@@ -1265,8 +1265,12 @@ class account_invoice(osv.osv):
             ids = self.search(cr, user, [('name',operator,name)] + args, limit=limit, context=context)
         return self.name_get(cr, user, ids, context)
 
-    def _refund_cleanup_lines(self, cr, uid, lines):
+    def _refund_cleanup_lines(self, cr, uid, lines, context=None):
+        if context is None:
+            context = {}
         for line in lines:
+            if context.get('refund_mode', '') in ['cancel', 'modify']:
+                line['reversed_invoice_line_id'] = line['id']  # store a link to the original invoice line
             del line['id']
             del line['invoice_id']
             for field in ('company_id', 'partner_id', 'account_id', 'product_id',
@@ -1301,7 +1305,9 @@ class account_invoice(osv.osv):
             return False
         return data
 
-    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None):
+    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None, context=None):
+        if context is None:
+            context = {}
         invoices = self.read(cr, uid, ids, self._hook_fields_for_refund(cr, uid))
         obj_invoice_line = self.pool.get('account.invoice.line')
         obj_invoice_tax = self.pool.get('account.invoice.tax')
@@ -1318,7 +1324,7 @@ class account_invoice(osv.osv):
             }
 
             invoice_lines = obj_invoice_line.read(cr, uid, invoice['invoice_line'])
-            invoice_lines = self._refund_cleanup_lines(cr, uid, invoice_lines)
+            invoice_lines = self._refund_cleanup_lines(cr, uid, invoice_lines, context=context)
 
             tax_lines = obj_invoice_tax.read(cr, uid, invoice['tax_line'])
             tax_lines = self._refund_cleanup_lines(cr, uid, tax_lines)

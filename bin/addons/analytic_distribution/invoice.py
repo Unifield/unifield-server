@@ -103,11 +103,11 @@ class account_invoice(osv.osv):
                 data['analytic_distribution_id'] = False
         return data
 
-    def _refund_cleanup_lines(self, cr, uid, lines):
+    def _refund_cleanup_lines(self, cr, uid, lines, context=None):
         """
         Add right analytic distribution values on each lines
         """
-        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines)
+        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines, context=context)
         for el in res:
             if el[2]:
                 # Give analytic distribution on line
@@ -144,10 +144,12 @@ class account_invoice(osv.osv):
                 default.update({'analytic_distribution_id': new_distrib_id})
         return super(account_invoice, self).copy(cr, uid, inv_id, default, context)
 
-    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None):
+    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None, context=None):
         """
         Reverse lines for given invoice
         """
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         for inv in self.browse(cr, uid, ids):
@@ -156,7 +158,7 @@ class account_invoice(osv.osv):
                 raise osv.except_osv(_('Error'), _("Posting date for the refund is before the invoice's posting date!"))
             if document_date and document_date < inv.document_date:
                 raise osv.except_osv(_('Error'), _("Document date for the refund is before the invoice's document date!"))
-        return super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id, document_date)
+        return super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id, document_date, context=context)
 
     def line_get_convert(self, cr, uid, x, part, date, context=None):
         res = super(account_invoice, self).line_get_convert(cr, uid, x, part, date, context=context)

@@ -93,11 +93,11 @@ class account_invoice_refund(osv.osv_memory):
         res = self.pool.get('account.invoice').create(cr, uid, data, {})
         return res
 
-    def _hook_create_refund(self, cr, uid, inv_ids, date, period, description, journal_id, form):
+    def _hook_create_refund(self, cr, uid, inv_ids, date, period, description, journal_id, form, context=None):
         """
         Permits to adapt refund creation
         """
-        return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id)
+        return self.pool.get('account.invoice').refund(cr, uid, inv_ids, date, period, description, journal_id, context=context)
 
     def _hook_get_period_from_date(self, cr, uid, invoice_id, date=False, period=False):
         """
@@ -185,7 +185,9 @@ class account_invoice_refund(osv.osv_memory):
                     raise osv.except_osv(_('Data Insufficient !'), \
                                          _('No Period found on Invoice!'))
 
-                refund_id = self._hook_create_refund(cr, uid, [inv.id], date, period, description, journal_id, form)
+                context.update({'refund_mode': mode})
+                refund_id = self._hook_create_refund(cr, uid, [inv.id], date, period, description, journal_id, form, context=context)
+                del context['refund_mode']
                 refund = inv_obj.browse(cr, uid, refund_id[0], context=context)
                 inv_obj.write(cr, uid, [refund.id], {'date_due': date,
                                                      'check_total': inv.check_total})
