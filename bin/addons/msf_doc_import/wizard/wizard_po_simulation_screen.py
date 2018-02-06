@@ -1350,7 +1350,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 errors.append(_('PO line #%s has been confirmed or cancelled and consequently is not editable') % line.in_line_number)
 
             # Comment
-            write_vals['imp_comment'] = values[14] and values[14].strip()
+            write_vals['imp_comment'] = values[15] and values[15].strip()
 
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
@@ -1480,7 +1480,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     write_vals['type_change'] = 'error'
 
             # Delivery Requested Date
-            drd_value = values[9]
+            drd_value = values[10]
             if drd_value and type(drd_value) == type(DateTime.now()):
                 write_vals['imp_drd'] = drd_value.strftime('%Y-%m-%d')
             elif drd_value and isinstance(drd_value, str):
@@ -1497,7 +1497,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['type_change'] = 'error'
 
             # Delivery Confirmed Date
-            dcd_value = values[10]
+            dcd_value = values[11]
             if dcd_value and type(dcd_value) == type(DateTime.now()):
                 write_vals['imp_dcd'] = dcd_value.strftime('%Y-%m-%d')
             elif dcd_value and isinstance(dcd_value, str):
@@ -1514,12 +1514,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 write_vals['type_change'] = 'error'
 
             # Project Ref.
-            write_vals['imp_project_ref'] = values[16]
+            write_vals['imp_project_ref'] = values[17]
 
             # Message ESC1
-            write_vals['imp_esc1'] = values[17]
+            write_vals['imp_esc1'] = values[18]
             # Message ESC2
-            write_vals['imp_esc2'] = values[18]
+            write_vals['imp_esc2'] = values[19]
 
             if line.error_msg:
                 write_vals['type_change'] = 'error'
