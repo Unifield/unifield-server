@@ -154,7 +154,7 @@
                     <para style="TextInfoBoldRight">Monthly Consumption</para>
                 </td>
                 <td>
-                    <para style="TextInfoBoldRight">[[ getRmlNextMonth(objects[0]) ]]</para>
+                    <para style="TextInfoBoldRight">Expired Qty</para>
                 </td>
                 <td>
                     <para style="TextInfoBoldRight">[[ getRmlNextMonth(objects[0]) ]]</para>
@@ -190,7 +190,7 @@
                     <para style="TextInfoRight">[[ formatLang(line.consumption or 0.00) ]]</para>
                 </td>
                 <td>
-                    <para style="TextInfoRight">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>
+                    <para style="TextInfoRight">[[ getExpiredQty(line.in_stock, line.total_expired) ]]</para>
                 </td>
                 <td>
                     <para style="TextInfoRight">[[ getRmlLineItemNextMonth(objects[0], line) ]]</para>

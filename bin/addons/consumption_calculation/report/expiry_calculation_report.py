@@ -21,6 +21,7 @@
 
 import time
 import calendar
+import tools
 
 from report import report_sxw
 from report_webkit.webkit_report import WebKitParser
@@ -52,6 +53,8 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
             #'getTotal': self._get_total,
             'getAddress': self._get_instance_addr,
             'getCurrency': self._get_currency,
+            'getExpiredQty': self._get_expired_qty,
+            'isExpiredDate': self.is_expired_date,
             'toDate': self.str_to_time,
         })
         self._dates_context = {}
@@ -214,15 +217,18 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
         if isinstance(items_ids, (int, long)):
             items_ids = [items_ids]
         res = ''
-        if items_ids:
-            item = item_obj.browse(self.cr, self.uid, items_ids)[0]
-            aqty = item.available_qty
-            if not aqty:
-                aqty = 0.
-            if item.expired_qty:
-                res = "%s (%s)" % (self.formatLang(aqty), self.formatLang(item.expired_qty), )
-            else:
-                res = self.formatLang(aqty)
+        if line.in_stock != line.total_expired:
+            if items_ids:
+                item = item_obj.browse(self.cr, self.uid, items_ids)[0]
+                aqty = item.available_qty
+                if not aqty:
+                    aqty = 0.
+                if item.expired_qty:
+                    res = "%s (%s)" % (self.formatLang(aqty), self.formatLang(item.expired_qty), )
+                else:
+                    res = self.formatLang(aqty)
+        else:
+            res = '0.00'
         return res
 
     def _get_instance_addr(self):
@@ -231,6 +237,18 @@ class product_likely_expire_report_parser(report_sxw.rml_parse):
 
     def _get_currency(self):
         return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.currency_id.name
+
+    def _get_expired_qty(self, in_stock_qty, total_expired_qty):
+        if in_stock_qty and total_expired_qty and in_stock_qty == total_expired_qty:
+            return tools.ustr(in_stock_qty) + ' (' + tools.ustr(total_expired_qty) + ')'
+        else:
+            return '0.00'
+
+    def is_expired_date(self, expiry_date):
+        res = False
+        if time.strftime("%Y-%m-%d") > self.str_to_time(expiry_date):
+            res = True
+        return res
 
     def str_to_time(self, dtime=False):
         if not dtime:

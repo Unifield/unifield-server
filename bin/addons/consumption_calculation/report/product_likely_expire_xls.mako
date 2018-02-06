@@ -112,6 +112,7 @@ if cols < 0:
 <Cell ss:StyleID="header"><Data ss:Type="String">Product Code</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">Product Description</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">Monthly Consumption</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">Expired Qty</Data></Cell>
 % for d, d_str in dates:
 <Cell ss:StyleID="header"><Data ss:Type="String">${d_str|x}</Data></Cell>
 % endfor
@@ -125,13 +126,18 @@ if cols < 0:
 <Cell ss:StyleID="line"><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
 <Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.consumption or 0.}</Data></Cell>
+<Cell ss:StyleID="line"><Data ss:Type="String">${getExpiredQty(line.in_stock, line.total_expired)}</Data></Cell>
 % for i in getLineItems(line):
     ## line items
-    % if i.expired_qty:
-    <Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(i.available_qty) or 0.00} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
-    % endif
-    % if not i.expired_qty:
-    <Cell ss:StyleID="line"><Data ss:Type="Number">${i.available_qty or 0.00}</Data></Cell>
+    % if getExpiredQty(line.in_stock, line.total_expired) != '0.00':
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${0.00}</Data></Cell>
+    % else:
+        % if i.expired_qty:
+        <Cell ss:StyleID="line"><Data ss:Type="String">${formatLang(i.available_qty) or 0.00} (${(formatLang(i.expired_qty) or 0.00)})</Data></Cell>
+        % endif
+        % if not i.expired_qty:
+        <Cell ss:StyleID="line"><Data ss:Type="Number">${i.available_qty or 0.00}</Data></Cell>
+        % endif
     % endif
 % endfor
 <Cell ss:StyleID="line_number"><Data ss:Type="Number">${line.in_stock or 0.}</Data></Cell>
@@ -154,6 +160,40 @@ if cols < 0:
 </Row>
 </Table>
 % endfor
+<x:WorksheetOptions/>
+</ss:Worksheet>
+<ss:Worksheet ss:Name="Expired">
+<Table x:FullColumns="1" x:FullRows="1">
+<Column ss:AutoFitWidth="1" ss:Width="120" />
+<Column ss:AutoFitWidth="1" ss:Width="250" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Row>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Product Code</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Product Description</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Batch Number</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Date</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Location</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Available Qty</Data></Cell>
+<Cell ss:StyleID="header" ><Data ss:Type="String">Expiry Qty</Data></Cell>
+</Row>
+% for il in getMonthItemLines(o, d):
+% if isExpiredDate(il.expired_date) and il.available_qty == il.expired_qty:
+<Row>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.default_code or ''|x}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.name or ''|x}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${il.lot_id.name}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${(formatLang(il.expired_date, date=True) or '')}</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">${il.location_id.name}</Data></Cell>
+<Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.available_qty or 0.}</Data></Cell>
+<Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.expired_qty or 0.}</Data></Cell>
+</Row>
+% endif
+% endfor
+</Table>
 <x:WorksheetOptions/>
 </ss:Worksheet>
 % for d, d_str in dates:
@@ -180,6 +220,15 @@ worksheet_name = d_str.replace('/', '-')
 </Row>
 % for il in getMonthItemLines(o, d):
 <Row>
+% if isExpiredDate(il.expired_date) and il.available_qty == il.expired_qty:
+<Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String">ALREADY EXPIRED PRODUCT REMOVED</Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+<Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+% else:
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.default_code or ''|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.item_id.line_id.product_id.name or ''|x}</Data></Cell>
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.lot_id.name}</Data></Cell>
@@ -187,6 +236,7 @@ worksheet_name = d_str.replace('/', '-')
 <Cell ss:StyleID="line" ><Data ss:Type="String">${il.location_id.name}</Data></Cell>
 <Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.available_qty or 0.}</Data></Cell>
 <Cell ss:StyleID="line_number" ><Data ss:Type="Number">${il.expired_qty or 0.}</Data></Cell>
+% endif
 </Row>
 % endfor
 </Table>
