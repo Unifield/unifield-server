@@ -1327,7 +1327,7 @@ class account_invoice(osv.osv):
             invoice_lines = self._refund_cleanup_lines(cr, uid, invoice_lines, context=context)
 
             tax_lines = obj_invoice_tax.read(cr, uid, invoice['tax_line'])
-            tax_lines = self._refund_cleanup_lines(cr, uid, tax_lines)
+            tax_lines = self._refund_cleanup_lines(cr, uid, tax_lines, context=context)
             if journal_id:
                 refund_journal_ids = [journal_id]
             elif invoice['type'] == 'in_invoice':
