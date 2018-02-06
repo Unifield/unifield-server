@@ -187,7 +187,7 @@ class account_invoice_refund(osv.osv_memory):
 
                 context.update({'refund_mode': mode})
                 refund_id = self._hook_create_refund(cr, uid, [inv.id], date, period, description, journal_id, form, context=context)
-                del context['refund_mode']
+                del context['refund_mode']  # ignore it for the remaining process (in particular for the SI created in a refund modify...)
                 refund = inv_obj.browse(cr, uid, refund_id[0], context=context)
                 inv_obj.write(cr, uid, [refund.id], {'date_due': date,
                                                      'check_total': inv.check_total})
