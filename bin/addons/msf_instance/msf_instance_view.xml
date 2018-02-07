@@ -378,13 +378,15 @@
             <field name="type">tree</field>
             <field name="priority" eval="110" />
             <field name="arch" type="xml">
-                <tree editable="top" hide_delete_button="1" hide_new_button="1" string="Cloud Backup Config">
+                <tree editable="top" hide_delete_button="1" hide_new_button="1" string="Cloud Backup Config" colors="red: not has_config">
                     <field name="code" readonly="1"/>
                     <field name="name" readonly="1"/>
                     <field name="cloud_url" widget="url"/>
-                    <field name="cloud_login" />
-                    <field name="cloud_set_password" password="1"/>
-                    <field name="cloud_schedule_time" widget="float_time"/>
+                    <field name="has_id" invisible="1" />
+                    <field name="has_config" invisible="1" />
+                    <field name="cloud_login" attrs="{'readonly': [('has_id', '=', False)]}"/>
+                    <field name="cloud_set_password" password="1" attrs="{'readonly': [('has_id', '=', False)]}"/>
+                    <field name="cloud_schedule_time" widget="float_time" attrs="{'readonly': [('has_id', '=', False)]}"/>
                     <button name="test_connection" icon="terp-mail-forward" string="Test Connection" type="object" />
                 </tree>
             </field>
@@ -397,6 +399,7 @@
             <field name="priority" eval="110" />
             <field name="arch" type="xml">
                 <search>
+                    <filter string="Not configured" icon="terp-emblem-important" domain="[('has_config','=',False)]"/>
                     <field name="code"/>
                     <field name="name"/>
                     <field name="cloud_url" />
@@ -411,7 +414,7 @@
             <field name="res_model">msf.instance.cloud</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('state', '=', 'active'), ('instance_identifier', '!=', False)]</field>
+            <field name="domain">[('state', '=', 'active')]</field>
             <field name="search_view_id" ref="view_msf_instance_backup_search" />
             <field name="view_id" ref="view_msf_instance_backup_tree" />
         </record>

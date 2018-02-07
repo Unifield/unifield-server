@@ -476,12 +476,42 @@ class msf_instance_cloud(osv.osv):
 
         return ret
 
+    def _get_has_id(self, cr, uid, ids, fields, arg, context=None):
+        ret = {}
+        for instance in self.read(cr, uid, ids, ['instance_identifier'], context=context):
+            ret[instance['id']] = bool(instance['instance_identifier'])
+        return ret
+
+    def _get_has_config(self, cr, uid, ids, fields, arg, context=None):
+        ret = {}
+        fields = ['instance_identifier', 'cloud_url', 'cloud_login', 'cloud_password']
+        for instance in self.read(cr, uid, ids, fields, context=context):
+            ret[instance['id']] = True
+            for field in fields:
+                if not instance[field]:
+                    ret[instance['id']] = False
+                    break
+        return ret
+
+    def _search_has_config(self, cr, uid, obj, name, args, context=None):
+        if not args:
+            return []
+
+        if args[0][1] != '=':
+             raise osv.except_osv(_('Error'), _('Filter not implemented'))
+
+        if args[0][2]:
+            return  [('instance_identifier', '!=', False), ('cloud_url', '!=', False), ('cloud_login', '!=', False), ('cloud_password', '!=', False)]
+
+        return ['|', '|', '|', ('instance_identifier', '=', False), ('cloud_url', '=', False), ('cloud_login', '=', False), ('cloud_password', '=', False)]
     _columns = {
         'cloud_url': fields.char('Cloud URL', size=256),
         'cloud_login': fields.char('Cloud Login', size=256),
         'cloud_password': fields.char('Cloud Password', size=256),
         'cloud_schedule_time': fields.float('Schedule task time'),
         'cloud_set_password': fields.function(_get_cloud_set_password, type='char', size=256, fnct_inv=_set_cloud_password, method=True, string='Password'),
+        'has_id': fields.function(_get_has_id, type='boolean', string='Has identifier', method=True),
+        'has_config': fields.function(_get_has_config, string='Is configured', method=True, type='boolean', fnct_search=_search_has_config),
     }
 
     def get_backup_connection(self, cr, uid, ids, context=None):
