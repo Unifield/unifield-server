@@ -3440,7 +3440,7 @@ msgstr "Nom du partenaire"
 #. module: sync_client
 #: field:backup.config,afterautomaticsync:0
 msgid "Backup after automatic sync"
-msgstr "Backup after automatic sync"
+msgstr "Sauvegarde après sync automatique"
 
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_product_product_import_line_qty
@@ -12053,7 +12053,7 @@ msgstr "Indique les différentes manières d'emballer le même produit. Cela n'a
 #. module: sync_client
 #: field:backup.config,scheduledbackup:0
 msgid "Scheduled backup"
-msgstr "Scheduled backup"
+msgstr "Sauvegarde planifiée"
 
 #. module: base
 #: model:res.currency,currency_name:base.TOP
@@ -16378,11 +16378,12 @@ msgstr "\n"
 msgid "Change password"
 msgstr "Changer le mot de passe"
 
-#. modules: sync_client, base
+#. modules: sync_client, base, msf_instance
 #: field:partner.sms.send,password:0
 #: field:res.config.users,password:0
 #: field:res.users,password:0
 #: field:sync.client.sync_server_connection,password:0
+#: field:msf.instance.cloud,cloud_set_password:0
 msgid "Password"
 msgstr "Mot de passe"
 
@@ -17803,7 +17804,7 @@ msgstr "Valeur en cours"
 #. module: sync_client
 #: field:backup.config,aftermanualsync:0
 msgid "Backup after manual sync"
-msgstr "Backup after manual sync"
+msgstr "Sauvegarde après sync manuelle"
 
 #. module: account
 #: selection:account.automatic.reconcile,power:0
@@ -20490,7 +20491,7 @@ msgstr "Note de débit"
 msgid "Sync order line DB Id of the splitted line"
 msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 
-#. modules: tender_flow, product_nomenclature, process, financing_contract, product_asset, product_attributes, mission_stock, return_claim, analytic_override, account_mcdb, supplier_catalogue, stock_override, unifield_setup, analytic, report_webkit, product_list, analytic_distribution, product, reason_types_moves, account_payment, msf_homere_interface, hr, msf_instance, consumption_calculation, register_accounting, specific_rules, kit, sale_override, base, msf_tools, procurement_report, msf_budget, sales_followup, account, msf_outgoing, resource, msf_field_access_rights, documents_done, sale, procurement, sourcing, msf_button_access_rights, object_query, stock, msf_profile, finance
+#. modules: tender_flow, product_nomenclature, process, financing_contract, product_asset, product_attributes, mission_stock, return_claim, analytic_override, account_mcdb, supplier_catalogue, stock_override, unifield_setup, analytic, report_webkit, product_list, analytic_distribution, product, reason_types_moves, account_payment, msf_homere_interface, hr, msf_instance, consumption_calculation, register_accounting, specific_rules, kit, sale_override, base, msf_tools, procurement_report, msf_budget, sales_followup, account, msf_outgoing, resource, msf_field_access_rights, documents_done, sale, procurement, sourcing, msf_button_access_rights, object_query, stock, msf_profile, finance, account_override, procurement_request
 #: field:account.account,name:0
 #: field:account.account.template,name:0
 #: report:account.analytic.account.inverted.balance:0
@@ -20630,6 +20631,12 @@ msgstr "Sync l'ID de la ligne de commande DB de la ligne divisée"
 #: field:unifield.setup.configuration,name:0
 #: report:addons/account/report/account_liquidity_balance.mako:162
 #: field:cash.request,name:0
+#: field:msf.instance.cloud,name:0
+#: report:addons/account_override/report/account_chart_export.mako:136
+#: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:146
+#: report:addons/mission_stock/report/stock_mission_report_xls.mako:50
+#: view:msf.budget.summary.line:0
+#: report:procurement.request.report:0
 #, python-format
 msgid "Name"
 msgstr "Nom"
@@ -26970,12 +26977,6 @@ msgstr "Demande de Devis : "
 #: view:account.account.template:0
 msgid "Default taxes"
 msgstr "Taxes par défaut"
-
-#. module: sync_client
-#: view:backup.config:0
-#: model:ir.model,name:sync_client.model_backup_config
-msgid "Backup configuration"
-msgstr "Backup configuration"
 
 #. module: sync_client
 #: view:sync.monitor:0
@@ -39561,7 +39562,7 @@ msgstr "Batch name"
 #. module: sync_client
 #: field:backup.config,beforeautomaticsync:0
 msgid "Backup before automatic sync"
-msgstr "Backup before automatic sync"
+msgstr "Sauvegarde avant la sync automatique"
 
 #. modules: procurement, sale
 #: field:procurement.order,product_uos:0
@@ -44172,7 +44173,7 @@ msgstr "Zones Virtuelles"
 #. module: sync_client
 #: field:backup.config,beforemanualsync:0
 msgid "Backup before manual sync"
-msgstr "Backup before manual sync"
+msgstr "Sauvegarde avant sync manuelle"
 
 #. modules: msf_outgoing, msf_button_access_rights
 #: view:msf_button_access_rights.view_config_wizard_install_results:0
@@ -58438,7 +58439,7 @@ msgstr "CAYMAN ISLANDS DOLLAR"
 msgid "Progress"
 msgstr "Avancement"
 
-#. modules: delivery_mechanism, tender_flow, financing_contract, return_claim, msf_accrual, supplier_catalogue, import_data, stock_forecast, msf_doc_import, stock, msf_cross_docking, product, stock_override, account_reconciliation, consumption_calculation, kit, sale_override, base, delete_button, res_currency_functional, msf_budget, account, msf_outgoing, stock_move_tracking, msf_partner, sale, msf_config_locations
+#. modules: delivery_mechanism, tender_flow, financing_contract, return_claim, msf_accrual, supplier_catalogue, import_data, stock_forecast, msf_doc_import, stock, msf_cross_docking, product, stock_override, account_reconciliation, consumption_calculation, kit, sale_override, base, delete_button, res_currency_functional, msf_budget, account, msf_outgoing, stock_move_tracking, msf_partner, sale, msf_config_locations, msf_instance
 #: code:addons/account/account.py:560
 #: code:addons/account/account.py:573
 #: code:addons/account/account.py:576
@@ -58681,6 +58682,14 @@ msgstr "Avancement"
 #: code:addons/tender_flow/tender_flow.py:502
 #: code:addons/tender_flow/tender_flow.py:511
 #: code:addons/tender_flow/tender_flow.py:589
+#: code:addons/msf_instance/msf_instance.py:459
+#: code:addons/msf_instance/msf_instance.py:475
+#: code:addons/msf_instance/msf_instance.py:543
+#: code:addons/msf_instance/msf_instance.py:547
+#: code:addons/msf_instance/msf_instance.py:553
+#: code:addons/msf_instance/msf_instance.py:558
+#: code:addons/msf_instance/msf_instance.py:572
+#: code:addons/msf_instance/msf_instance.py:577
 #, python-format
 msgid "Warning !"
 msgstr "Avertissement !"
@@ -63430,9 +63439,11 @@ msgstr "Etc/GMT-5"
 #: code:addons/vertical_integration/report/hq_report_ocp.py:240
 #: code:addons/vertical_integration/report/hq_report_ocp_matching.py:138
 #: code:addons/vertical_integration/wizard/ocb_export.py:77
+#: code:addons/msf_instance/account.py:137
+#: code:addons/msf_instance/add_instance.py:596
 #, python-format
 msgid "Warning"
-msgstr "Warning"
+msgstr "Avertissement"
 
 #. module: msf_outgoing
 #: view:stock.incoming.processor:0
@@ -69027,7 +69038,7 @@ msgstr "Validé Par"
 #. module: sync_client
 #: field:sync.version.instance.monitor,backup_date:0
 msgid "Backup Date"
-msgstr "Backup Date"
+msgstr "Date de la Sauvegarde"
 
 #. module: product
 #: view:product.product:0
@@ -70440,6 +70451,10 @@ msgstr "Navajo"
 #: field:sync.client.rule,active:0
 #: field:sync.client.sync_server_connection,active:0
 #: field:threshold.value,active:0
+#: view:msf.instance:0
+#: selection:msf.instance.cloud,state:0
+#: field:sync.client.message_rule,active:0
+#: selection:sync.version.instance.monitor,instance_state:0
 msgid "Active"
 msgstr "Actif"
 
@@ -70816,7 +70831,7 @@ msgstr "Etc/GMT+12"
 #. module: sync_client
 #: field:backup.config,beforepatching:0
 msgid "Before patching"
-msgstr "Before patching"
+msgstr "Avant le patch"
 
 #. module: account
 #: view:account.fiscalyear.close.state:0
@@ -79994,7 +80009,7 @@ msgstr "Adresse Professionnelle"
 msgid "Confirm the selected invoices"
 msgstr "Confirmer les factures sélectionnées"
 
-#. modules: account_override, msf_doc_import, account, consumption_calculation, msf_tools
+#. modules: account_override, msf_doc_import, account, consumption_calculation, msf_tools, msf_instance
 #: selection:account.journal.column,field:0
 #: report:addons/account_override/report/open_invoices_xls.mako:310
 #: field:real.average.consumption,state:0
@@ -80015,6 +80030,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:export.report.inconsistencies,state:0
 #: field:export.report.stopped.products,state:0
 #: field:wizard.import.invoice.line,state:0
+#: field:msf.instance.cloud,state:0
 msgid "State"
 msgstr "État"
 
@@ -85992,7 +86008,7 @@ msgstr "Africa/Abidjan"
 #: view:backup.config:0
 #: model:ir.ui.menu,name:sync_client.syncback_menu
 msgid "Backup"
-msgstr "Backup"
+msgstr "Sauvegarder"
 
 #. module: kit
 #: model:ir.actions.act_window,name:kit.kit_composition_theoretical_action
@@ -86380,7 +86396,7 @@ msgstr "Changer en"
 #: field:backup.download,path:0
 #: field:sync.client.logs,path:0
 msgid "File path"
-msgstr "File path"
+msgstr "Chemin du fichier"
 
 #. module: account
 #: selection:account.journal.column,field:0
@@ -90893,15 +90909,6 @@ msgstr "Produit - Modèles"
 #: selection:sale.order,order_policy:0
 msgid "Invoice From The Picking"
 msgstr "Facture A partir du Picking"
-
-#. modules: account_override, mission_stock, procurement_request, msf_budget, analytic_distribution
-#: report:addons/account_override/report/account_chart_export.mako:136
-#: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:146
-#: report:addons/mission_stock/report/stock_mission_report_xls.mako:50
-#: view:msf.budget.summary.line:0
-#: report:procurement.request.report:0
-msgid "Name"
-msgstr "Name"
 
 #. modules: msf_doc_import, purchase_override
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:74
@@ -101155,3 +101162,133 @@ msgstr "Ligne %s. Tiers %s non trouvé ou non compatible avec le Type pour trait
 #, python-format
 msgid "You can't use taxes with an intermission partner."
 msgstr "Vous ne pouvez pas utiliser de taxes avec un partenaire intermission."
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:547
+#, python-format
+msgid "Password is not set!"
+msgstr "Mot de passe absent"
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:577
+#, python-format
+msgid "Unable to delete a test file: %s"
+msgstr "Impossible de supprimer un fichier de test: %s"
+
+#. module: msf_instance
+#: field:msf.instance.cloud,current_instance_level:0
+msgid "Current Instance Level"
+msgstr "Niveau de l'instance"
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:572
+#, python-format
+msgid "Unable to upload a test file: %s"
+msgstr "Impossible d'envoyer un fichier de test: %s"
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:543
+#, python-format
+msgid "URL is not set!"
+msgstr "URL absente !"
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:644
+#, python-format
+msgid "Backup %s was already sent to the cloud"
+msgstr "Fichier de sauvegarde déjà envoyé dans le cloud."
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:553
+#, python-format
+msgid "Unable to parse url: %s"
+msgstr "Impossible d'analyser l'URL: %s"
+
+#. module: sync_client
+#: view:backup.config:0
+#: model:ir.model,name:sync_client.model_backup_config
+msgid "Backup configuration"
+msgstr "configuration de la sauvegarde"
+
+#. module: msf_instance
+#: field:msf.instance.cloud,has_config:0
+msgid "Is configured"
+msgstr "Est configuré"
+
+#. modules: sync_client, msf_instance
+#: model:ir.actions.act_window,name:msf_instance.action_msf_instance_backup
+#: view:msf.instance.cloud:0
+#: model:ir.ui.menu,name:sync_client.msf_instance_backup
+msgid "Cloud Backup Config"
+msgstr "Configuration de la sauvegarde dans le Cloud"
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:579
+#, python-format
+msgid "Connection to remote storage is OK"
+msgstr "La connexion au site distant est OK"
+
+#. module: sync_client
+#: view:backup.config:0
+msgid "Send Last Backup to remote"
+msgstr "Envoyer la dernière sauvegarde à distance"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,cloud_date:0
+msgid "Cloud Date"
+msgstr "Date du Cloud"
+
+#. module: msf_instance
+#: field:msf.instance.cloud,cloud_password:0
+msgid "Cloud Password"
+msgstr "Mot de passe du Cloud"
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:475
+#, python-format
+msgid "Unable to decode password"
+msgstr "Impossible de décoder le mot de passe"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,cloud_backup:0
+msgid "Cloud Dump"
+msgstr "Sauvegarde Cloud"
+
+#. module: msf_instance
+#: field:msf.instance.cloud,cloud_login:0
+msgid "Cloud Login"
+msgstr "Utilisateur Cloud"
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:558
+#, python-format
+msgid "Unable to connect: %s"
+msgstr "Impossible de se connecter: %s"
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:622
+#, python-format
+msgid "Only production instances are allowed !"
+msgstr "Seules les instances de production sont autorisées !"
+
+#. module: msf_instance
+#: view:msf.instance.cloud:0
+msgid "Test Connection"
+msgstr "Tester la connexion"
+
+#. module: msf_instance
+#: field:msf.instance.cloud,cloud_schedule_time:0
+msgid "Schedule task time"
+msgstr "Heure de la planification"
+
+#. module: msf_instance
+#: view:msf.instance.cloud:0
+msgid "Not configured"
+msgstr "Non Configuré"
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:545
+#, python-format
+msgid "login is not set!"
+msgstr "L'utilisateur n'est pas renseigné !"
+
