@@ -37,7 +37,7 @@ class BackupConfig(osv.osv):
     _name = "backup.config"
     _description = "Backup configuration"
     _pg_psw_env_var_is_set = False
-
+    _error = ''
     _logger = logging.getLogger('sync.client')
 
     _columns = {
@@ -62,13 +62,16 @@ class BackupConfig(osv.osv):
     def _send_to_cloud_bg(self, cr, uid, context=None):
         new_cr = pooler.get_db(cr.dbname).cursor()
         try:
-            self.pool.get('msf.instance.cloud').send_backup(new_cr, cr, uid, context)
+            self.pool.get('msf.instance.cloud').send_backup(new_cr, uid, context)
+        except Exception, e:
+            self._error = e
         finally:
             new_cr.commit()
             new_cr.close(True)
         return True
 
     def send_to_cloud(self, cr, uid, ids, context=None):
+        self._error = ''
         new_thread = threading.Thread(
             target=self._send_to_cloud_bg,
             args=(cr, uid, context)
@@ -77,6 +80,8 @@ class BackupConfig(osv.osv):
         new_thread.join(10.0)
         if new_thread.isAlive():
             raise osv.except_osv(_('OK'), _('Process to send backup is in progress ... please check Version Instances Monitor'))
+        if self._error:
+            raise self._error
         return True
 
 
