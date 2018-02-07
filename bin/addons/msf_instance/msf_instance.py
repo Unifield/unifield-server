@@ -537,6 +537,19 @@ class msf_instance_cloud(osv.osv):
         'filter_by_level': fields.function(_get_filter_by_level, string='Filter Instance', method=True, type='boolean', internal=True, fnct_search=_search_filter_by_level),
     }
 
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution'):
+            if not vals.get('instance'):
+                raise osv.except_osv(_('Warning !'), 'Instance not set in update')
+            instance_ids = self.pool.get('msf.instance').search(cr, uid, [('instance', '=', vals['instance']), ('active', 'in', ['t', 'f'])], context=context)
+            if not instance_ids:
+                raise osv.except_osv(_('Warning !'), 'Instance %s not found' % (vals['instance'], ))
+            super(msf_instance_cloud, self).write(cr, uid, instance_ids[0], vals, context)
+            return instance_ids[0]
+
+        return super(msf_instance_cloud, self).create(cr, uid, vals, context)
     def get_backup_connection(self, cr, uid, ids, context=None):
         info = self._get_cloud_info(cr, uid, ids[0])
         if not info.get('url'):
