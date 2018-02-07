@@ -365,7 +365,7 @@ class account_invoice(osv.osv):
                             ' before invoice validation')
                     )
 
-    def _refund_cleanup_lines(self, cr, uid, lines, context=None):
+    def _refund_cleanup_lines(self, cr, uid, lines, is_account_inv_line=False, context=None):
         """
         Remove useless fields
         """
@@ -374,7 +374,7 @@ class account_invoice(osv.osv):
                 del line['move_lines']
             if line.get('import_invoice_id',False):
                 del line['import_invoice_id']
-        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines, context=context)
+        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines, is_account_inv_line=is_account_inv_line, context=context)
         return res
 
     def check_po_link(self, cr, uid, ids, context=None):

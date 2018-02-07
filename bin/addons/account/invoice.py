@@ -1265,13 +1265,20 @@ class account_invoice(osv.osv):
             ids = self.search(cr, user, [('name',operator,name)] + args, limit=limit, context=context)
         return self.name_get(cr, user, ids, context)
 
-    def _refund_cleanup_lines(self, cr, uid, lines, context=None):
+    def _refund_cleanup_lines(self, cr, uid, lines, is_account_inv_line=False, context=None):
         if context is None:
             context = {}
+        account_obj = self.pool.get('account.account')
         for line in lines:
-            # in case of a refund cancel/modify, mark each SR line as reversal of the corresponding SI line
-            if context.get('refund_mode', '') in ['cancel', 'modify']:
-                line['reversed_invoice_line_id'] = line['id']  # store a link to the original invoice line
+            # in case of a refund cancel/modify, mark each SR line as reversal of the corresponding SI line IF it's an
+            # account.invoice.line with an account having the type Income or Expense (EXCLUDE Extra-accounting expenses)
+            if is_account_inv_line and context.get('refund_mode', '') in ['cancel', 'modify'] and line['account_id']:
+                account_id = type(line['account_id']) == tuple and line['account_id'][0] or line['account_id']
+                account = account_obj.browse(cr, uid, account_id,
+                                             fields_to_fetch=['user_type_code', 'user_type_report_type'], context=context)
+                if account.user_type_code == 'income' or \
+                        (account.user_type_code == 'expense' and account.user_type_report_type != 'none'):
+                    line['reversed_invoice_line_id'] = line['id']  # store a link to the original invoice line
             del line['id']
             del line['invoice_id']
             for field in ('company_id', 'partner_id', 'account_id', 'product_id',
@@ -1325,7 +1332,7 @@ class account_invoice(osv.osv):
             }
 
             invoice_lines = obj_invoice_line.read(cr, uid, invoice['invoice_line'])
-            invoice_lines = self._refund_cleanup_lines(cr, uid, invoice_lines, context=context)
+            invoice_lines = self._refund_cleanup_lines(cr, uid, invoice_lines, is_account_inv_line=True, context=context)
 
             tax_lines = obj_invoice_tax.read(cr, uid, invoice['tax_line'])
             tax_lines = self._refund_cleanup_lines(cr, uid, tax_lines, context=context)

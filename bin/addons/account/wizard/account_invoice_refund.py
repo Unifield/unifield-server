@@ -217,7 +217,7 @@ class account_invoice_refund(osv.osv_memory):
                         invoice = inv_obj.read(cr, uid, inv.id, self._hook_fields_for_modify_refund(cr, uid), context=context)
                         del invoice['id']
                         invoice_lines = inv_line_obj.read(cr, uid, invoice['invoice_line'], context=context)
-                        invoice_lines = inv_obj._refund_cleanup_lines(cr, uid, invoice_lines, context=context)
+                        invoice_lines = inv_obj._refund_cleanup_lines(cr, uid, invoice_lines, is_account_inv_line=True, context=context)
                         tax_lines = inv_tax_obj.read(cr, uid, invoice['tax_line'], context=context)
                         tax_lines = inv_obj._refund_cleanup_lines(cr, uid, tax_lines, context=context)
                         source_doc = invoice.get('number', False)
@@ -247,6 +247,12 @@ class account_invoice_refund(osv.osv_memory):
                     ml_list = [ml.id for ml in movelines if not (ml.account_id.id == inv.account_id.id and
                                                                  abs(abs(inv.amount_total) - abs(ml.amount_currency)) <= 10**-3)]
                     account_m_line_obj.set_as_corrected(cr, uid, ml_list, manual=False, context=None)
+                    # all JI lines of the SI and SR (including header) should be not corrigible, no matter if they
+                    # are marked as corrected, reversed...
+                    ji_ids = []
+                    ji_ids.extend([si_ji.id for si_ji in movelines])
+                    ji_ids.extend([sr_ji.id for sr_ji in refund.move_id.line_id])
+                    account_m_line_obj.write(cr, uid, ji_ids, {'is_si_refund': True}, context=context)
 
             if inv.type in ('out_invoice', 'out_refund'):
                 xml_id = 'action_invoice_tree3'

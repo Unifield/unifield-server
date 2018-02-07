@@ -103,11 +103,11 @@ class account_invoice(osv.osv):
                 data['analytic_distribution_id'] = False
         return data
 
-    def _refund_cleanup_lines(self, cr, uid, lines, context=None):
+    def _refund_cleanup_lines(self, cr, uid, lines, is_account_inv_line=False, context=None):
         """
         Add right analytic distribution values on each lines
         """
-        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines, context=context)
+        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines, is_account_inv_line=is_account_inv_line, context=context)
         for el in res:
             if el[2]:
                 # Give analytic distribution on line

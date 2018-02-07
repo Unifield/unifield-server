@@ -338,6 +338,8 @@ class account_move_line(osv.osv):
                                         readonly=True, size=128, store=False, write_relate=False,
                                         string="Sequence"),
         'imported': fields.related('move_id', 'imported', string='Imported', type='boolean', required=False, readonly=True),
+        'is_si_refund': fields.boolean('Is SI refund line', help="In case of a refund Cancel or Modify, all the lines linked "
+                                                                 "to the original SI and to the SR created are marked as 'is_si_refund'"),
     }
 
     _defaults = {

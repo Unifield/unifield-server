@@ -122,6 +122,10 @@ class account_move_line(osv.osv):
             if ml.journal_id.type in ('revaluation', 'system', ):
                 res[ml.id] = False
                 continue
+            # False if the line is linked to a SI refund cancel (SI line or SR line)
+            if ml.is_si_refund:
+                res[ml.id] = False
+                continue
             # False if the move line is partially or totally reconciled
             if ml.reconcile_id or ml.reconcile_partial_id:
                 res[ml.id] = False
