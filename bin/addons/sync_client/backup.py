@@ -29,6 +29,8 @@ from updater import get_server_version
 import release
 import time
 import logging
+import pooler
+import threading
 
 class BackupConfig(osv.osv):
     """ Backup configurations """
@@ -57,8 +59,26 @@ class BackupConfig(osv.osv):
         'beforepatching': False,
     }
 
+    def _send_to_cloud_bg(self, cr, uid, context=None):
+        new_cr = pooler.get_db(cr.dbname).cursor()
+        try:
+            self.pool.get('msf.instance.cloud').send_backup(new_cr, cr, uid, context)
+        finally:
+            new_cr.commit()
+            new_cr.close(True)
+        return True
+
     def send_to_cloud(self, cr, uid, ids, context=None):
-        return self.pool.get('msf.instance.cloud').send_backup(cr, uid, context)
+        new_thread = threading.Thread(
+            target=self._send_to_cloud_bg,
+            args=(cr, uid, context)
+        )
+        new_thread.start()
+        new_thread.join(10.0)
+        if new_thread.isAlive():
+            raise osv.except_osv(_('OK'), _('Process to send backup is in progress ... please check Version Instances Monitor'))
+        return True
+
 
     def get_server_version(self, cr, uid, context=None):
         revisions = self.pool.get('sync_client.version')
