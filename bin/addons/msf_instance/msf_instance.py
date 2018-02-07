@@ -543,7 +543,7 @@ class msf_instance_cloud(osv.osv):
         if context.get('sync_update_execution'):
             if not vals.get('instance'):
                 raise osv.except_osv(_('Warning !'), 'Instance not set in update')
-            instance_ids = self.pool.get('msf.instance').search(cr, uid, [('instance', '=', vals['instance']), ('active', 'in', ['t', 'f'])], context=context)
+            instance_ids = self.pool.get('msf.instance').search(cr, uid, [('instance', '=', vals['instance'])], context=context)
             if not instance_ids:
                 raise osv.except_osv(_('Warning !'), 'Instance %s not found' % (vals['instance'], ))
             super(msf_instance_cloud, self).write(cr, uid, instance_ids[0], vals, context)
