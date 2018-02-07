@@ -101146,3 +101146,13 @@ msgstr "Ligne de facture contrepassée"
 #: help:account.invoice.line,reversed_invoice_line_id:0
 msgid "Invoice line that has been reversed by this one through a \"refund cancel\" or \"refund modify\""
 msgstr "Ligne de facture qui a été contrepassée par celle-ci via un avoir de type \"annulation\" ou \"modification\""
+
+#. module: account_override
+#: field:account.move.line,is_si_refund:0
+msgid "Is a SI refund line"
+msgstr "Est une ligne de remboursement de facture"
+
+#. module: account_override
+#: help:account.move.line,is_si_refund:0
+msgid "In case of a refund Cancel or Modify all the lines linked to the original SI and to the SR created are marked as 'is_si_refund'"
+msgstr "Dans le cas d'un avoir de type annulation ou modification, toutes les lignes liées à la facture d'origine ou à l'avoir créé sont marquées comme 'is_si_refund'"
