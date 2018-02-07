@@ -350,6 +350,7 @@ class account_move_line(osv.osv):
         'exported': lambda *a: False,
         'corrected_upstream': lambda *a: False,
         'line_number': lambda *a: 0,
+        'is_si_refund': lambda *a: False,
     }
 
     _order = 'move_id DESC'
