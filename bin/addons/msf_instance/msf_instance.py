@@ -21,6 +21,8 @@
 
 from osv import fields, osv
 from tools.translate import _
+from tools import misc
+from tools import config
 from binascii import unhexlify, hexlify
 import simplecrypt
 import StringIO
@@ -28,6 +30,9 @@ from tools import webdav
 import zipfile
 from tempfile import NamedTemporaryFile
 from urlparse import urlparse
+import cgi
+from mx import DateTime
+import logging
 
 class msf_instance(osv.osv):
     _name = 'msf.instance'
@@ -156,38 +161,6 @@ class msf_instance(osv.osv):
                 res.append(arg)
         return res
 
-    _empty_pass = 'X' * 10
-    def _get_cloud_set_password(self, cr, uid, ids, fields, arg, context=None):
-        ret = {}
-        for x in self.read(cr, uid, ids, ['cloud_password'], context=context):
-            ret[x['id']] = x['cloud_password'] and self._empty_pass or False
-        return ret
-
-    def _set_cloud_password(self, cr, uid, id, name, value, arg, context):
-        if not value:
-            self.write(cr, uid, id, {'cloud_password': False})
-        elif value != self._empty_pass:
-            identifier = self.read(cr, uid, id, ['instance_identifier'], context=context)['instance_identifier']
-            if not identifier:
-                raise osv.except_osv(_('Warning !'), _('Unable to store password if Instance identifier is not set.'))
-            cr_password = hexlify(simplecrypt.encrypt(identifier, value))
-            self.write(cr, uid, id, {'cloud_password': cr_password}, context=context)
-        return True
-
-    def _get_cloud_info(self, cr, uid, id, context=None):
-        d = self.read(cr, uid, id, ['instance_identifier', 'cloud_password', 'cloud_url', 'cloud_login'], context=context)
-        ret = {
-            'url': d['cloud_url'],
-            'login': d['cloud_login'],
-            'password': False
-        }
-        if d['cloud_password'] and d['instance_identifier']:
-            try:
-                ret['password'] = simplecrypt.decrypt(d['instance_identifier'], unhexlify(d['cloud_password']))
-            except:
-                raise osv.except_osv(_('Warning !'), _('Unable to decode password'))
-
-        return ret
 
     _columns = {
         'level': fields.selection([('section', 'Section'),
@@ -223,11 +196,6 @@ class msf_instance(osv.osv):
                                                    relation='msf.instance',
                                                    fnct_search=_search_instance_to_display_ids),
 
-        'cloud_url': fields.char('Cloud URL', size=256),
-        'cloud_login': fields.char('Cloud Login', size=256),
-        'cloud_password': fields.char('Cloud Password', size=256),
-        'cloud_schedule_time': fields.float('Schedule task time'),
-        'cloud_set_password': fields.function(_get_cloud_set_password, type='char', size=256, fnct_inv=_set_cloud_password, method=True, string='Password'),
     }
 
     _defaults = {
@@ -465,7 +433,58 @@ class msf_instance(osv.osv):
         return res
 
 
-    def test_connection(self, cr, uid, ids, context=None):
+msf_instance()
+
+class msf_instance_cloud(osv.osv):
+    # split cloud config from msf.instance objet to not disturb msf.instance sync
+    _inherit = 'msf.instance'
+    _table = 'msf_instance'
+    _name = 'msf.instance.cloud'
+
+    _logger = logging.getLogger('msf.instance.cloud')
+    _empty_pass = 'X' * 10
+
+    def _get_cloud_set_password(self, cr, uid, ids, fields, arg, context=None):
+        ret = {}
+        for x in self.read(cr, uid, ids, ['cloud_password'], context=context):
+            ret[x['id']] = x['cloud_password'] and self._empty_pass or False
+        return ret
+
+    def _set_cloud_password(self, cr, uid, id, name, value, arg, context):
+        if not value:
+            self.write(cr, uid, id, {'cloud_password': False})
+        elif value != self._empty_pass:
+            identifier = self.read(cr, uid, id, ['instance_identifier'], context=context)['instance_identifier']
+            if not identifier:
+                raise osv.except_osv(_('Warning !'), _('Unable to store password if Instance identifier is not set.'))
+            cr_password = hexlify(simplecrypt.encrypt(identifier, value))
+            self.write(cr, uid, id, {'cloud_password': cr_password}, context=context)
+        return True
+
+    def _get_cloud_info(self, cr, uid, id, context=None):
+        d = self.read(cr, uid, id, ['instance_identifier', 'cloud_password', 'cloud_url', 'cloud_login'], context=context)
+        ret = {
+            'url': d['cloud_url'],
+            'login': d['cloud_login'],
+            'password': False
+        }
+        if d['cloud_password'] and d['instance_identifier']:
+            try:
+                ret['password'] = simplecrypt.decrypt(d['instance_identifier'], unhexlify(d['cloud_password']))
+            except:
+                raise osv.except_osv(_('Warning !'), _('Unable to decode password'))
+
+        return ret
+
+    _columns = {
+        'cloud_url': fields.char('Cloud URL', size=256),
+        'cloud_login': fields.char('Cloud Login', size=256),
+        'cloud_password': fields.char('Cloud Password', size=256),
+        'cloud_schedule_time': fields.float('Schedule task time'),
+        'cloud_set_password': fields.function(_get_cloud_set_password, type='char', size=256, fnct_inv=_set_cloud_password, method=True, string='Password'),
+    }
+
+    def get_backup_connection(self, cr, uid, ids, context=None):
         info = self._get_cloud_info(cr, uid, ids[0])
         if not info.get('url'):
             raise osv.except_osv(_('Warning !'), _('URL is not set!'))
@@ -474,16 +493,22 @@ class msf_instance(osv.osv):
         if not info.get('password'):
             raise osv.except_osv(_('Warning !'), _('Password is not set!'))
 
+        if not info['url'].endswith('/'):
+            info['url'] = '%s/' % info['url']
         url = urlparse(info['url'])
         if not url.netloc:
             raise osv.except_osv(_('Warning !'), _('Unable to parse url: %s') % (info['url']))
 
         try:
-            dav = webdav.Client(url.netloc, port=url.port, protocol=url.scheme, username=info['login'], password=info['password'], path=url.path, onedrive=True)
+            dav = webdav.Client(url.netloc, port=url.port, protocol=url.scheme, username=info['login'], password=cgi.escape(info['password']), path=url.path, onedrive=True)
         except webdav.ConnectionFailed, e:
             raise osv.except_osv(_('Warning !'), _('Unable to connect: %s') % (e.message))
 
-        test_file_name = 'test-file.txt'
+        return dav
+
+    def test_connection(self, cr, uid, ids, context=None):
+        dav = self.get_backup_connection(cr, uid, ids, context=None)
+        test_file_name = 'test-file111.txt'
         locale_file = StringIO.StringIO()
         locale_file.write('TEST UF')
         locale_file.seek(0)
@@ -497,93 +522,94 @@ class msf_instance(osv.osv):
         except webdav.ConnectionFailed, e:
             raise osv.except_osv(_('Warning !'), _('Unable to delete a test file: %s') % (e.message))
 
+        raise osv.except_osv(_('OK'), _('Connection to remote storage is OK'))
+
+        return True
+
+    def _activate_cron(self, cr, uid, ids, context=None):
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        if local_instance and local_instance.id in ids:
+            fields = ['cloud_url', 'cloud_login', 'cloud_password', 'instance_identifier']
+            myself = self.read(cr, uid, local_instance.id, fields+['cloud_schedule_time'], context=context)
+            to_activate = True
+            for field in fields:
+                if not myself[field]:
+                    to_activate = False
+                    break
+
+            cron_data = self.pool.get('ir.model.data').get_object(cr, uid, 'msf_instance', 'ir_cron_remote_backup')
+            to_write = {}
+            if not to_activate and cron_data.active:
+                to_write['active'] = False
+            elif to_activate:
+                if not cron_data.active:
+                    to_write['active'] = True
+
+                next_cron = DateTime.strptime(cron_data.nextcall, '%Y-%m-%d %H:%M:%S')
+                if not cron_data.active or abs(next_cron.hour + next_cron.minute/60. - myself['cloud_schedule_time']) > 0.1:
+                    next_time = DateTime.now() + DateTime.RelativeDateTime(minute=0, second=0, hour=myself['cloud_schedule_time'])
+                    if next_time < DateTime.now():
+                        next_time += DateTime.RelativeDateTime(days=1)
+                    to_write['nextcall'] = next_time.strftime('%Y-%m-%d %H:%M:%S')
+            if to_write:
+                self._logger.info('Update scheduled task to send backup: active: %s, next call: %s (previous active: %s, next: %s)' % (to_write.get('active', ''), to_write.get('nextcall', ''), cron_data.active, cron_data.nextcall))
+                self.pool.get('ir.cron').write(cr, uid, [cron_data.id], to_write, context=context)
+
+        return True
+
+    def send_backup(self, cr, uid, context=None):
+        day_abr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        monitor = self.pool.get('sync.version.instance.monitor')
+        bck_download = self.pool.get('backup.download')
+
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+
+        if not config.get('send_to_onedrive') and not misc.use_prod_sync(cr):
+            raise osv.except_osv(_('Warning'), _('Only production instances are allowed !'))
+
+        if not local_instance:
+            msg = _('No instance defined on company')
+            self._logger.info(msg)
+            raise osv.except_osv(_('Warning'), msg)
+
+
+        bck_download.populate(cr, 1, context=context)
+        # Only my dump
+        bck_ids = bck_download.search(cr, uid, [('name', 'like', '%s%%' % local_instance.code)], limit=1)
+        if not bck_ids:
+            msg = _('No dump found')
+            self._logger.info(msg)
+            raise osv.except_osv(_('Warning'), msg)
+
+        bck = bck_download.read(cr, uid, bck_ids[0], ['path', 'name'])
+
+        monitor_ids = monitor.search(cr, uid, [('instance_id', '=', local_instance.id)], context=context)
+        if monitor_ids:
+            previous_backup = monitor.read(cr, uid, monitor_ids[0], ['cloud_backup'])['cloud_backup']
+            if previous_backup == bck['name']:
+                raise osv.except_osv(_('Warning'), _('Backup %s was already sent to the cloud') % (bck['name'], ))
+
+        dav = self.get_backup_connection(cr, uid, [local_instance.id], context=None)
+
         temp_fileobj = NamedTemporaryFile('w+b', delete=True)
         z = zipfile.ZipFile(temp_fileobj, "w")
-        z.write('/tmp/OCBPK124-20180205-170411-A-UF7.1.dump', arcname='OCBPK124-20180205-170411-A-UF7.1.dump')
+        z.write(bck['path'], arcname=bck['name'])
         z.close()
         temp_fileobj.seek(0)
-        dav.upload(temp_fileobj, 'OCBPK124.zip')
+
+        today = DateTime.now()
+        dav.upload(temp_fileobj, '%s-%s.zip' % (local_instance.code, day_abr[today.day_of_week]))
         temp_fileobj.close()
-        print 'OK'
+
+        monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name']})
         return True
 
-        """
-        #z = zipstream.ZipFile(compression=zipstream.ZIP_DEFLATED, mode='w')
-        #z.write('/tmp/SYNC_SERVER.dump', arcname='OCBPK124-20180205-170411-A-UF7.1.dump')
-        z = open('/tmp/SYNC_SERVER.dump', 'rb')
-        #with open('/tmp/zipfile.zip', 'wb') as f:
-        #    for data in z:
-        #        f.write(data)
-        dav.upload(z, 'OCBPK124.zip')
-        print 'OK1'
+    _constraints = [
+        (_activate_cron, 'Sync cron task', []),
+    ]
 
-        z = zipstream.ZipFile(compression=zipstream.ZIP_DEFLATED, mode='w')
-        z.write('/tmp/SYNC_SERVER.dump', arcname='OCBPK124-20180205-170411-A-UF7.1.dump')
-        dav.upload(z, 'OCBPK124.zip')
-        print 'OK2'
+msf_instance_cloud()
 
-        return True
-        """
-
-        """
-        info = FileCreationInformation()
-        info.content = 'Test UF %s' % time.strftime('%Y-%m-%d %H:%M:%S')
-        info.url = 'TEST.txt'
-        info.overwrite = True
-        rel =  web.get_folder_by_server_relative_url('Documents')
-        upload_file = rel.files.add(info)
-        rel.context.execute_query()
-
-        upload_file.delete_object()
-        rel.context.execute_query()
-        """
-
-        """
-        info = FileCreationInformation()
-        f = open('/tmp/OCBPK124-20180205-170411-A-UF7.1.dump', 'rb')
-        info.content = f
-        info.url = 'OCBPK124-20180205-170411-A-UF7.1.dump'
-        rel.files.add(info)
-        rel.context.execute_query()
-        return True
-        """
-
-        """
-        ctx_auth = AuthenticationContext(info['url'])
-        if ctx_auth.acquire_token_for_user(info['login'], info['password']):
-            request = ClientRequest(ctx_auth)
-            options = RequestOptions("{0}/_api/web/".format(info['url']))
-            options.set_header('Accept', 'application/json')
-            options.set_header('Content-Type', 'application/json')
-            data = request.execute_query_direct(options)
-            print options
-            s = json.loads(data.content)
-            web_title = s['Title']
-            print "Web title: " + web_title
-        else:
-            print ctx_auth.get_last_error()
-            print info
-        return True
-        """
-        """
-        webdav = easywebdav.connect(info['url'], username=info['login'], password=info['password'], protocol='https')
-        try:
-            path = '/'.join(info['url'].split('/')[1:])
-            webdav.ls('/')
-        except Exception, e:
-            raise osv.except_osv(_('Warning !'), _('Unable to list %s: %s' % (path, e)))
-
-        try:
-            locale_file = StringIO.StringIO()
-            locale_file.write('TEST UF')
-            remote_name = 'test-uf-%s' % (time.strftime('%Y-%m-%d-%H%M'), )
-            webdav.upload(locale_file, remote_name)
-        except Exception, e:
-            raise osv.except_osv(_('Warning !'), _('Unable to upload a file %s' % e))
-        return True
-        """
-
-msf_instance()
 
 class res_users(osv.osv):
     _inherit = 'res.users'

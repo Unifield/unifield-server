@@ -320,7 +320,9 @@ class sync_version_instance_monitor(osv.osv):
                                                     ('active', 'Active'),
                                                     ('inactive', 'Inactive')],
                                          string='Instance State',
-                                         readonly=True, store=True)
+                                         readonly=True, store=True),
+        'cloud_date': fields.datetime('Cloud Date', readonly=True),
+        'cloud_backup': fields.char('Cloud Dump', size=256, readonly=True),
     }
 
     _defaults = {

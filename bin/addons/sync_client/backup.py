@@ -57,6 +57,9 @@ class BackupConfig(osv.osv):
         'beforepatching': False,
     }
 
+    def send_to_cloud(self, cr, uid, ids, context=None):
+        return self.pool.get('msf.instance.cloud').send_backup(cr, uid, context)
+
     def get_server_version(self, cr, uid, context=None):
         revisions = self.pool.get('sync_client.version')
         if not revisions:

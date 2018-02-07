@@ -36,6 +36,7 @@
             <field name="scheduledbackup"/>
             </group>
             <button type="object" string="Backup" name="button_exp_dump" />
+            <button type="object" string="Sent Last Backup to remote" name="send_to_cloud" />
         </form>
       </field>
     </record>
