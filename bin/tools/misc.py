@@ -173,6 +173,10 @@ def pg_dump(db_name, outfile=False):
     except Exception:
         _logger.error('Dump', exc_info=1)
         if outfile:
+            try:
+                os.remove(outfile)
+            except:
+                pass
             res = -1
     finally:
         _set_env_pg(remove=True)

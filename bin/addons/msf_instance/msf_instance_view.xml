@@ -372,21 +372,41 @@
             </field>
         </record>
 
+        <record id="view_msf_instance_backup_form" model="ir.ui.view">
+            <field name="name">msf.instance.backup.form"</field>
+            <field name="model">msf.instance.cloud</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Cloud Backup Config">
+                    <field name="code" readonly="1"/>
+                    <field name="name" readonly="1"/>
+                    <field name="cloud_url" widget="url" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="is_editable" invisible="1" />
+                    <field name="has_config" invisible="1" />
+                    <field name="cloud_login" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_set_password" password="1" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_schedule_time" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <newline />
+                    <button name="test_connection" icon="terp-mail-forward" string="Test Connection" type="object" colspan="2"/>
+                </form>
+            </field>
+        </record>
+
         <record id="view_msf_instance_backup_tree" model="ir.ui.view">
             <field name="name">msf.instance.tree</field>
             <field name="model">msf.instance.cloud</field>
             <field name="type">tree</field>
             <field name="priority" eval="110" />
             <field name="arch" type="xml">
-                <tree editable="top" hide_delete_button="1" hide_new_button="1" string="Cloud Backup Config" colors="red: not has_config">
+                <tree editable="top" hide_delete_button="1" hide_new_button="1" string="Cloud Backup Config" noteditable="not is_editable" colors="red: not has_config">
                     <field name="code" readonly="1"/>
                     <field name="name" readonly="1"/>
-                    <field name="cloud_url" widget="url"/>
-                    <field name="has_id" invisible="1" />
+                    <field name="cloud_url" widget="url" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="is_editable" invisible="1" />
                     <field name="has_config" invisible="1" />
-                    <field name="cloud_login" attrs="{'readonly': [('has_id', '=', False)]}"/>
-                    <field name="cloud_set_password" password="1" attrs="{'readonly': [('has_id', '=', False)]}"/>
-                    <field name="cloud_schedule_time" widget="float_time" attrs="{'readonly': [('has_id', '=', False)]}"/>
+                    <field name="cloud_login" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_set_password" password="1" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+                    <field name="cloud_schedule_time" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <button name="test_connection" icon="terp-mail-forward" string="Test Connection" type="object" />
                 </tree>
             </field>
@@ -414,7 +434,7 @@
             <field name="res_model">msf.instance.cloud</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('state', '=', 'active')]</field>
+            <field name="domain">[('state', '=', 'active'), ('filter_by_level', '=', True)]</field>
             <field name="search_view_id" ref="view_msf_instance_backup_search" />
             <field name="view_id" ref="view_msf_instance_backup_tree" />
         </record>

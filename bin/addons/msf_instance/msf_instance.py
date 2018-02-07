@@ -476,8 +476,16 @@ class msf_instance_cloud(osv.osv):
 
         return ret
 
-    def _get_has_id(self, cr, uid, ids, fields, arg, context=None):
+    def _get_is_editable(self, cr, uid, ids, fields, arg, context=None):
         ret = {}
+
+        # editable at HQ only
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        if not local_instance or local_instance.level != 'section':
+            for id in ids:
+                ret[id] = False
+            return ret
+
         for instance in self.read(cr, uid, ids, ['instance_identifier'], context=context):
             ret[instance['id']] = bool(instance['instance_identifier'])
         return ret
@@ -504,14 +512,29 @@ class msf_instance_cloud(osv.osv):
             return  [('instance_identifier', '!=', False), ('cloud_url', '!=', False), ('cloud_login', '!=', False), ('cloud_password', '!=', False)]
 
         return ['|', '|', '|', ('instance_identifier', '=', False), ('cloud_url', '=', False), ('cloud_login', '=', False), ('cloud_password', '=', False)]
+
+    def _get_filter_by_level(self, cr, uid, ids, fields, arg, context=None):
+        ret = {}
+        for id in ids:
+            ret[id] = False
+        return ret
+
+    def _search_filter_by_level(self, cr, uid, ids, fields, arg, context=None):
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        if not local_instance or local_instance.level != 'section':
+            return [('id', '=', local_instance and local_instance.id or 0)]
+
+        return []
+
     _columns = {
         'cloud_url': fields.char('Cloud URL', size=256),
         'cloud_login': fields.char('Cloud Login', size=256),
         'cloud_password': fields.char('Cloud Password', size=256),
         'cloud_schedule_time': fields.float('Schedule task time'),
         'cloud_set_password': fields.function(_get_cloud_set_password, type='char', size=256, fnct_inv=_set_cloud_password, method=True, string='Password'),
-        'has_id': fields.function(_get_has_id, type='boolean', string='Has identifier', method=True),
+        'is_editable': fields.function(_get_is_editable, type='boolean', string='Has identifier', method=True),
         'has_config': fields.function(_get_has_config, string='Is configured', method=True, type='boolean', fnct_search=_search_has_config),
+        'filter_by_level': fields.function(_get_filter_by_level, string='Filter Instance', method=True, type='boolean', internal=True, fnct_search=_search_filter_by_level),
     }
 
     def get_backup_connection(self, cr, uid, ids, context=None):
@@ -537,8 +560,9 @@ class msf_instance_cloud(osv.osv):
         return dav
 
     def test_connection(self, cr, uid, ids, context=None):
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         dav = self.get_backup_connection(cr, uid, ids, context=None)
-        test_file_name = 'test-file111.txt'
+        test_file_name = 'test-file-%s.txt' % (local_instance.instance, )
         locale_file = StringIO.StringIO()
         locale_file.write('TEST UF')
         locale_file.seek(0)
@@ -605,7 +629,7 @@ class msf_instance_cloud(osv.osv):
 
         bck_download.populate(cr, 1, context=context)
         # Only my dump
-        bck_ids = bck_download.search(cr, uid, [('name', 'like', '%s%%' % local_instance.code)], limit=1)
+        bck_ids = bck_download.search(cr, uid, [('name', 'like', '%s%%' % local_instance.instance)], limit=1)
         if not bck_ids:
             msg = _('No dump found')
             self._logger.info(msg)
@@ -628,11 +652,13 @@ class msf_instance_cloud(osv.osv):
         temp_fileobj.seek(0)
 
         today = DateTime.now()
-        dav.upload(temp_fileobj, '%s-%s.zip' % (local_instance.code, day_abr[today.day_of_week]))
+        dav.upload(temp_fileobj, '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week]))
         temp_fileobj.close()
 
         monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name']})
         return True
+
+
 
     _constraints = [
         (_activate_cron, 'Sync cron task', []),
