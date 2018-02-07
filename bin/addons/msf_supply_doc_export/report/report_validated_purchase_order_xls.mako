@@ -132,7 +132,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery address')}</Data></Cell>
-        % if o.order_type == 'direct' and o.partner_id.partner_type == 'esc':
+        % if o.order_type == 'direct':
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.customer_id and o.customer_id.name or ''|x}</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String">${getInstanceName()|x}</Data></Cell>
