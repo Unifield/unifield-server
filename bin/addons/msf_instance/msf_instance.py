@@ -506,7 +506,7 @@ class msf_instance_cloud(osv.osv):
             return []
 
         if args[0][1] != '=':
-             raise osv.except_osv(_('Error'), _('Filter not implemented'))
+            raise osv.except_osv(_('Error'), _('Filter not implemented'))
 
         if args[0][2]:
             return  [('instance_identifier', '!=', False), ('cloud_url', '!=', False), ('cloud_login', '!=', False), ('cloud_password', '!=', False)]
@@ -659,6 +659,9 @@ class msf_instance_cloud(osv.osv):
         return True
 
 
+    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
+        d = self.pool.get('msf.instance').get_sd_ref(cr, uid, res_id)
+        return d.replace('/msf_instance/', '/msf_instance_cloud/')
 
     _constraints = [
         (_activate_cron, 'Sync cron task', []),
