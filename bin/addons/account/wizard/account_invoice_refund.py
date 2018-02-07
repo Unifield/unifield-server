@@ -252,7 +252,8 @@ class account_invoice_refund(osv.osv_memory):
                     ji_ids = []
                     ji_ids.extend([si_ji.id for si_ji in movelines])
                     ji_ids.extend([sr_ji.id for sr_ji in refund.move_id.line_id])
-                    account_m_line_obj.write(cr, uid, ji_ids, {'is_si_refund': True}, context=context)
+                    # write on JIs without recreating AJIs
+                    account_m_line_obj.write(cr, uid, ji_ids, {'is_si_refund': True}, context=context, check=False, update_check=False)
 
             if inv.type in ('out_invoice', 'out_refund'):
                 xml_id = 'action_invoice_tree3'
