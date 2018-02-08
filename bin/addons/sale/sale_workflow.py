@@ -163,7 +163,6 @@ class sale_order_line(osv.osv):
 
         new_sol_id = False
         for sol in self.browse(cr, uid, ids, context=context):
-<<<<<<< TREE
             if self.has_to_create_resourced_line(cr, uid, sol.id, context=context):
                 new_sol_id = self.copy(cr, uid, sol.id, {
                     'resourced_original_line': sol.id, 
@@ -171,19 +170,8 @@ class sale_order_line(osv.osv):
                     'resourced_at_state': sol.state,
                     'is_line_split': False,
                     'analytic_distribution_id': sol.analytic_distribution_id.id or False,
-                    'date_planned': sol.date_planned,
                 }, context=context)
                 wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
-=======
-            new_sol_id = self.copy(cr, uid, sol.id, {
-                'resourced_original_line': sol.id,
-                'resourced_original_remote_line': sol.sync_linked_pol,
-                'resourced_at_state': sol.state,
-                'is_line_split': False,
-                'analytic_distribution_id': sol.analytic_distribution_id.id or False,
-            }, context=context)
-            wf_service.trg_validate(uid, 'sale.order.line', new_sol_id, 'validated', cr)
->>>>>>> MERGE-SOURCE
 
         return new_sol_id
 
