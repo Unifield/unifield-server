@@ -1620,12 +1620,6 @@ msgstr "The reference '%s' put in the Origin field doesn't match with a confirme
 msgid "Hour"
 msgstr "Heure"
 
-#. module: sync_client
-#: code:addons/sync_client/backup.py:158
-#, python-format
-msgid "Error! Cannot perform the backup"
-msgstr "Error! Cannot perform the backup"
-
 #. module: financing_contract
 #: report:addons/financing_contract/report/financing_interactive_xls.mako:400
 #: report:addons/financing_contract/report/project_expenses_xls.mako:405
@@ -70160,7 +70154,7 @@ msgstr "Inclure les soldes initiaux"
 #: code:addons/sync_client/backup.py:173
 #, python-format
 msgid "The selected path doesn't exist!"
-msgstr "The selected path doesn't exist!"
+msgstr "Le chemin indiqué n'existe pas !"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/account_move_line.py:335
@@ -82186,7 +82180,7 @@ msgstr "5.  %y, %Y ==> 08, 2008"
 #: code:addons/sync_client/backup.py:156
 #, python-format
 msgid "Error! Cannot perform the backup."
-msgstr "Error! Cannot perform the backup."
+msgstr "Erreur! Impossible d'effectuer la sauvegarde."
 
 #. module: documents_done
 #: field:documents.done.problem.line,doc_state:0
@@ -94052,7 +94046,7 @@ msgstr "Type pour traitement spécifique"
 #. module: sync_client
 #: field:backup.config,name:0
 msgid "Path to backup to"
-msgstr "Path to backup to"
+msgstr "Chemin de destination de la sauvegarde"
 
 #. module: register_accounting
 #: code:addons/register_accounting/account_move_line.py:255
@@ -101292,3 +101286,56 @@ msgstr "Non Configuré"
 msgid "login is not set!"
 msgstr "L'utilisateur n'est pas renseigné !"
 
+#. module: sync_client
+#: code:addons/sync_client/backup.py:215
+#, python-format
+msgid "Error! Cannot perform the backup"
+msgstr "Erreur ! Impossible d'effectuer la sauvegarde"
+
+#. module: sync_client
+#: field:backup.config,cloud_size:0
+#: field:sync.version.instance.monitor,cloud_size:0
+msgid "Cloud Size"
+msgstr "Taille Cloud"
+
+#. module: sync_client
+#: field:backup.config,cloud_date:0
+msgid "Last Cloud Date"
+msgstr "Date dernier Cloud"
+
+#. module: sync_client
+#: field:sync.version.instance.monitor,cloud_error:0
+msgid "Cloud last error"
+msgstr "Dernière erreur Cloud"
+
+#. module: sync_client
+#: field:backup.config,backup_size:0
+#: field:sync.version.instance.monitor,backup_size:0
+msgid "Backup Size"
+msgstr "Taille Sauvegarde"
+
+#. module: sync_client
+#: field:backup.config,cloud_backup:0
+msgid "Last Cloud"
+msgstr "Dernier Cloud"
+
+#. module: sync_client
+#: code:addons/sync_client/backup.py:110
+#, python-format
+msgid "Process to send backup is in progress ... please check Version Instances Monitor"
+msgstr "Processus d'envoi passé en arrière plan ... vérifier le Monituer d'Instances"
+
+#. module: sync_client
+#: field:backup.config,cloud_error:0
+msgid "Cloud Error"
+msgstr "Erreur Cloud"
+
+#. module: sync_client
+#: field:backup.config,backup_date:0
+msgid "Last Backup Date"
+msgstr "Date de la dernière sauvegarde"
+
+#. module: sync_client
+#: field:backup.config,backup_path:0
+msgid "Last Backup"
+msgstr "Dernière Sauvegarde"
