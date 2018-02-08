@@ -323,6 +323,7 @@ class sync_version_instance_monitor(osv.osv):
                                          readonly=True, store=True),
         'cloud_date': fields.datetime('Cloud Date', readonly=True),
         'cloud_backup': fields.char('Cloud Dump', size=256, readonly=True),
+        'cloud_error': fields.text('Cloud last error'),
     }
 
     _defaults = {

@@ -630,46 +630,54 @@ class msf_instance_cloud(osv.osv):
         bck_download = self.pool.get('backup.download')
 
         local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
-
-        if not config.get('send_to_onedrive') and not misc.use_prod_sync(cr):
-            raise osv.except_osv(_('Warning'), _('Only production instances are allowed !'))
-
-        if not local_instance:
-            msg = _('No instance defined on company')
-            self._logger.info(msg)
-            raise osv.except_osv(_('Warning'), msg)
-
-
-        bck_download.populate(cr, 1, context=context)
-        # Only my dump
-        bck_ids = bck_download.search(cr, uid, [('name', 'like', '%s%%' % local_instance.instance)], limit=1)
-        if not bck_ids:
-            msg = _('No dump found')
-            self._logger.info(msg)
-            raise osv.except_osv(_('Warning'), msg)
-
-        bck = bck_download.read(cr, uid, bck_ids[0], ['path', 'name'])
-
         monitor_ids = monitor.search(cr, uid, [('instance_id', '=', local_instance.id)], context=context)
-        if monitor_ids:
-            previous_backup = monitor.read(cr, uid, monitor_ids[0], ['cloud_backup'])['cloud_backup']
-            if previous_backup == bck['name']:
-                raise osv.except_osv(_('Warning'), _('Backup %s was already sent to the cloud') % (bck['name'], ))
 
-        dav = self.get_backup_connection(cr, uid, [local_instance.id], context=None)
+        try:
+            if not config.get('send_to_onedrive') and not misc.use_prod_sync(cr):
+                raise osv.except_osv(_('Warning'), _('Only production instances are allowed !'))
 
-        temp_fileobj = NamedTemporaryFile('w+b', delete=True)
-        z = zipfile.ZipFile(temp_fileobj, "w")
-        z.write(bck['path'], arcname=bck['name'])
-        z.close()
-        temp_fileobj.seek(0)
+            if not local_instance:
+                msg = _('No instance defined on company')
+                self._logger.info(msg)
+                raise osv.except_osv(_('Warning'), msg)
 
-        today = DateTime.now()
-        dav.upload(temp_fileobj, '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week]))
-        temp_fileobj.close()
 
-        monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name']})
-        return True
+            bck_download.populate(cr, 1, context=context)
+            # Only my dump
+            bck_ids = bck_download.search(cr, uid, [('name', 'like', '%s%%' % local_instance.instance)], limit=1)
+            if not bck_ids:
+                msg = _('No dump found')
+                self._logger.info(msg)
+                raise osv.except_osv(_('Warning'), msg)
+
+            bck = bck_download.read(cr, uid, bck_ids[0], ['path', 'name'])
+
+            if monitor_ids:
+                previous_backup = monitor.read(cr, uid, monitor_ids[0], ['cloud_backup'])['cloud_backup']
+                if previous_backup == bck['name']:
+                    raise osv.except_osv(_('Warning'), _('Backup %s was already sent to the cloud') % (bck['name'], ))
+
+            dav = self.get_backup_connection(cr, uid, [local_instance.id], context=None)
+
+            temp_fileobj = NamedTemporaryFile('w+b', delete=True)
+            z = zipfile.ZipFile(temp_fileobj, "w")
+            z.write(bck['path'], arcname=bck['name'])
+            z.close()
+            temp_fileobj.seek(0)
+
+            today = DateTime.now()
+            dav.upload(temp_fileobj, '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week]))
+            temp_fileobj.close()
+
+            monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name'], 'cloud_error': ''})
+            return True
+
+        except Exception, e:
+            cr.rollback()
+            if monitor_ids:
+                monitor.write(cr, uid, monitor_ids, {'cloud_error': '%s'%e})
+                cr.commit()
+            raise
 
 
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):

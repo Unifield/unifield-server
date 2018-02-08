@@ -36,8 +36,34 @@
             <field name="scheduledbackup"/>
             </group>
             <button type="object" string="Backup" name="button_exp_dump" icon="db_dump.png" />
-            <button type="object" string="Send Last Backup to remote" name="send_to_cloud" icon="cloud.png"/>
-        </form>
+			<button type="object" string="Send Last Backup to remote" name="send_to_cloud" icon="cloud.png"/>
+			<group col="4" colspan="6">
+			<group colspan="4">
+				<html>
+					<br /><br />
+				</html>
+			</group>
+			<separator colspan="4" string="Backup" />
+			<field name="backup_date" />
+			<field name="backup_path" />
+			<group colspan="4">
+				<html>
+					<br /><br />
+				</html>
+			</group>
+			<separator colspan="4" string="Cloud" />
+			<field name="cloud_url" widget="url" />
+			<newline />
+			<field name="cloud_date" />
+			<field name="cloud_backup" />
+			<group colspan="4">
+				<html>
+					<br /><br />
+				</html>
+			</group>
+			<field name="cloud_error" colspan="4" widget="full_text"/>
+			</group>
+		</form>
       </field>
     </record>
 

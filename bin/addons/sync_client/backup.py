@@ -40,6 +40,26 @@ class BackupConfig(osv.osv):
     _error = ''
     _logger = logging.getLogger('sync.client')
 
+    def _get_bck_info(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        for _id in ids:
+            ret[_id] = {'cloud_date': False, 'cloud_backup': False, 'cloud_url': False, 'cloud_error': False, 'backup_date': False, 'backup_path': False}
+
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        if local_instance:
+            cl = self.pool.get('msf.instance.cloud').read(cr, uid, local_instance.id, ['cloud_url'], context=context)
+            for _id in ids:
+                ret[_id]['cloud_url'] = cl['cloud_url']
+
+            verion_obj = self.pool.get('sync.version.instance.monitor')
+            v_id = verion_obj.search(cr, uid, [('instance_id', '=', local_instance.id)], context=context)
+            if v_id:
+                v_info = verion_obj.read(cr, uid, v_id[0], ['backup_path', 'backup_date', 'cloud_date', 'cloud_backup', 'cloud_error'], context=context)
+                for _id in ids:
+                    del(v_info['id'])
+                    ret[_id].update(v_info)
+        return ret
+
     _columns = {
         'name' : fields.char('Path to backup to', size=254),
         'beforemanualsync':fields.boolean('Backup before manual sync'),
@@ -48,6 +68,12 @@ class BackupConfig(osv.osv):
         'afterautomaticsync':fields.boolean('Backup after automatic sync'),
         'scheduledbackup':fields.boolean('Scheduled backup'),
         'beforepatching': fields.boolean('Before patching'),
+        'cloud_date': fields.function(_get_bck_info, type='datetime', string='Last Cloud Date', method=True, multi='cloud'),
+        'cloud_backup': fields.function(_get_bck_info, type='char', string='Last Cloud', method=True, multi='cloud'),
+        'cloud_url': fields.function(_get_bck_info, type='char', string='Cloud URL', method=True, multi='cloud'),
+        'cloud_error': fields.function(_get_bck_info, type='text', string='Cloud Error', method=True, multi='cloud'),
+        'backup_date': fields.function(_get_bck_info, type='datetime', string='Last Backup Date', method=True, multi='cloud'),
+        'backup_path': fields.function(_get_bck_info, type='char', string='Last Backup', method=True, multi='cloud'),
     }
 
     _defaults = {
