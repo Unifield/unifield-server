@@ -346,9 +346,6 @@ class sync_version_instance_monitor(osv.osv):
         # look for existing entrie for this instance
         ids = self.search(cr, uid, [('instance_id', '=', instance_id)], limit=1)
         if ids:
-            # update existing
-            if 'backup_date' not in vals:
-                vals.update({'backup_date': fields.datetime.now()})
             super(osv.osv, self).write(cr, uid, ids[0], vals)
             return ids[0]
         else:
