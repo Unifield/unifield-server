@@ -49,7 +49,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         for pol in self.browse(cr, uid, ids, context=context):
@@ -112,7 +112,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         for pol in self.browse(cr, uid, ids, fields_to_fetch=['price_unit'], context=context):
@@ -127,7 +127,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         for pol in self.browse(cr, uid, ids, context=context):
@@ -145,7 +145,7 @@ class purchase_order_line(osv.osv):
                     ], context=context)
                     so_id = so_id and so_id[0] or False
                 if not so_id:
-                    continue # no sale order linked to our PO line
+                    continue  # no sale order linked to our PO line
                 sale_order = self.pool.get('sale.order').browse(cr, uid, so_id, context=context)
                 if sale_order.state == 'cancel' and sale_order.procurement_request:
                     to_trigger = True
@@ -154,7 +154,7 @@ class purchase_order_line(osv.osv):
                 sale_order = pol.linked_sol_id.order_id
             else:
                 # case of PO line from scratch, nothing to update
-                continue 
+                continue
 
             # convert from currency of pol to currency of sol
             price_unit_converted = self.pool.get('res.currency').compute(cr, uid, pol.currency_id.id, sale_order.currency_id.id, pol.price_unit or 0.0,
@@ -232,14 +232,14 @@ class purchase_order_line(osv.osv):
                 # the right OUT move (moves are already splits at this level):
                 if sol_values['is_line_split']:
                     linked_out_moves = self.pool.get('stock.move').search(cr, uid, [
-                        ('sale_line_id', '=', sol_values['original_line_id']), 
-                        ('type', '=', 'out')], 
+                        ('sale_line_id', '=', sol_values['original_line_id']),
+                        ('type', '=', 'out')],
                         context=context)
                     if len(linked_out_moves) > 1:
                         for out_move in self.pool.get('stock.move').browse(cr, uid, linked_out_moves, context=context):
                             if out_move.state in ('assigned', 'confirmed') and out_move.product_qty == sol_values['product_uom_qty']:
                                 self.pool.get('stock.move').write(cr, uid, [out_move.id], {'sale_line_id': new_sol}, context=context)
-            else: # update FO line
+            else:  # update FO line
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
 
 
@@ -254,7 +254,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         if not fo_id:
             raise Exception, "No parent Sale Order given for the new Sale Order line"
@@ -333,10 +333,10 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         if not ids:
-            raise Exception , "No PO line given"
+            raise Exception, "No PO line given"
 
         # load common data into context:
         self.pool.get('data.tools').load_common_data(cr, uid, ids, context=context)
@@ -360,7 +360,7 @@ class purchase_order_line(osv.osv):
         pick_id = self.pool.get('stock.picking').create(cr, uid, pick_values, context=context)
 
         # log picking creation
-        self.pool.get('stock.picking').log(cr, uid, pick_id, _('The new internal Picking %s has been created.')%name)
+        self.pool.get('stock.picking').log(cr, uid, pick_id, _('The new internal Picking %s has been created.') % name)
 
         return pick_id
 
@@ -371,7 +371,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -411,7 +411,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         self.write(cr, uid, ids, {'state': 'validated_n'}, context=context)
 
@@ -428,6 +428,17 @@ class purchase_order_line(osv.osv):
 
         return True
 
+    def check_po_tax(self, cr, uid, ids, context=None):
+        """
+        Prevents from validating a PO with taxes when using an Intermission partner
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for po_line in self.browse(cr, uid, ids, fields_to_fetch=['order_id', 'taxes_id'], context=context):
+            if po_line.taxes_id and po_line.order_id.partner_type == 'intermission':
+                raise osv.except_osv(_('Error'), _("You can't use taxes with an intermission partner."))
 
     def action_validate(self, cr, uid, ids, context=None):
         '''
@@ -435,7 +446,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -443,6 +454,7 @@ class purchase_order_line(osv.osv):
         self.check_analytic_distribution(cr, uid, ids, context=context)
         self.check_if_stock_take_date_with_esc_partner(cr, uid, ids, context=context)
         self.check_unit_price(cr, uid, ids, context=context)
+        self.check_po_tax(cr, uid, ids, context=context)
 
         # update FO lines:
         self.update_fo_lines(cr, uid, ids, context=context)
@@ -479,7 +491,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -500,13 +512,13 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
         self.write(cr, uid, ids, {'state': 'sourced_v'}, context=context)
 
-        #update linked sol (same instance) to sourced-v (if has)
+        # update linked sol (same instance) to sourced-v (if has)
         for po in self.browse(cr, uid, ids, context=context):
             if po.linked_sol_id:
                 wf_service.trg_validate(uid, 'sale.order.line', po.linked_sol_id.id, 'sourced_v', cr)
@@ -520,7 +532,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         self.write(cr, uid, ids, {'state': 'sourced_n'}, context=context)
@@ -575,9 +587,9 @@ class purchase_order_line(osv.osv):
                     self.pool.get('stock.move').in_action_confirm(cr, uid, incoming_move_id, context)
 
                 # create internal moves (INT):
-                if pol.order_id.location_id.input_ok and pol.product_id.type not in ('service_recep', 'consu'): 
+                if pol.order_id.location_id.input_ok and pol.product_id.type not in ('service_recep', 'consu'):
                     internal_pick = self.pool.get('stock.picking').search(cr, uid, [
-                        ('type', '=', 'internal'), 
+                        ('type', '=', 'internal'),
                         ('purchase_id', '=', pol.order_id.id),
                         ('state', 'not in', ['done', 'cancel']),
                     ], context=context)
@@ -632,7 +644,7 @@ class purchase_order_line(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
@@ -641,8 +653,8 @@ class purchase_order_line(osv.osv):
 
         for pol in self.browse(cr, uid, ids, context=context):
             # no PICK/OUT needed in this cases; close SO line:
-            internal_ir = pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal' or False # PO line from Internal IR
-            dpo = pol.order_id.order_type == 'direct' or False # direct PO
+            internal_ir = pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.order_id.location_requestor_id.usage == 'internal' or False  # PO line from Internal IR
+            dpo = pol.order_id.order_type == 'direct' or False  # direct PO
             ir_non_stockable = pol.linked_sol_id and pol.linked_sol_id.order_id.procurement_request and pol.linked_sol_id.product_id.type in ('consu', 'service', 'service_recep') or False
 
             if internal_ir or dpo or ir_non_stockable:
@@ -730,7 +742,7 @@ class purchase_order(osv.osv):
         """
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
 
         for po in self.browse(cr, uid, ids, context=context):
@@ -745,7 +757,7 @@ class purchase_order(osv.osv):
         '''
         if context is None:
             context = {}
-        if isinstance(ids, (int,long)):
+        if isinstance(ids, (int, long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
 
