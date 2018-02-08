@@ -53,7 +53,7 @@
 				</html>
 			</group>
 			<separator colspan="6" string="Cloud" />
-			<field name="cloud_url" widget="url" />
+			<field name="cloud_url" widget="url" colspan="6"/>
 			<newline />
 			<field name="cloud_date" />
 			<field name="cloud_backup" />
