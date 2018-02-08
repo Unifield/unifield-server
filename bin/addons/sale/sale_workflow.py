@@ -642,12 +642,8 @@ class sale_order_line(osv.osv):
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         # generate sync message for resourced line:
-<<<<<<< TREE
         if resourced_sol:
             self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', resourced_sol, return_info, 
-=======
-        self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', resourced_sol, return_info,
->>>>>>> MERGE-SOURCE
                                                                               'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
