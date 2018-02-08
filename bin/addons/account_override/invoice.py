@@ -1456,6 +1456,22 @@ class account_invoice(osv.osv):
             raise osv.except_osv(_('Error'),
                                  "\n".join(header_errors + lines_errors))
 
+    def has_one_line_reconciled(self, cr, uid, account_inv_ids, context=None):
+        """
+        Returns True if one of the account.invoice docs whose ids are in parameter has a line which is fully reconciled
+        (header, lines, taxes at header or line level)
+        """
+        if context is None:
+            context = {}
+        if isinstance(account_inv_ids, (int, long, )):
+            account_inv_ids = [account_inv_ids]
+        aml_obj = self.pool.get('account.move.line')
+        aml_ids = aml_obj.search(cr, uid, [('invoice', 'in', account_inv_ids)], order='NO_ORDER', context=context)
+        if aml_obj.search_exist(cr, uid, [('id', 'in', aml_ids), ('reconcile_id', '!=', False)]):
+            return True
+        return False
+
+
 account_invoice()
 
 
