@@ -1467,7 +1467,7 @@ class account_invoice(osv.osv):
             account_inv_ids = [account_inv_ids]
         aml_obj = self.pool.get('account.move.line')
         aml_ids = aml_obj.search(cr, uid, [('invoice', 'in', account_inv_ids)], order='NO_ORDER', context=context)
-        if aml_obj.search_exist(cr, uid, [('id', 'in', aml_ids), ('reconcile_id', '!=', False)]):
+        if aml_obj.search_exist(cr, uid, [('id', 'in', aml_ids), ('reconcile_id', '!=', False)], context=context):
             return True
         return False
 
