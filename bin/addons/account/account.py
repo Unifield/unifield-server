@@ -739,7 +739,7 @@ class account_journal(osv.osv):
                     company = res_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
                     current_instance_id = company.instance_id and company.instance_id.id
                     # do the check only if a prop. instance has been given (if not the current instance is used by default)
-                    if journal.instance_id != current_instance_id:
+                    if journal.instance_id.id != current_instance_id:
                         raise osv.except_osv(_('Warning'),
                                              _('The current instance should be used as Proprietary Instance for the journal %s.') % journal_code)
 
