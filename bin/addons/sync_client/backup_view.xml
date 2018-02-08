@@ -45,8 +45,8 @@
 			<group col="6" colspan="6">
 			<separator colspan="6" string="Backup" />
 			<field name="backup_date" />
-			<field name="backup_path" />
 			<field name="backup_size" widget="human_size"/>
+			<field name="backup_path" coslpan="6" />
 			<group colspan="6">
 				<html>
 					<br /><br />
