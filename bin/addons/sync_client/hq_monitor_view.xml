@@ -62,8 +62,10 @@
                     <field name="version" />
                     <field name="backup_date" />
                     <field name="backup_path" />
+                    <field name="backup_size" widget="human_size" />
                     <field name="cloud_date" />
                     <field name="cloud_backup" />
+                    <field name="cloud_size" widget="human_size" />
                     <field name="instance_state" />
                 </tree>
             </field>

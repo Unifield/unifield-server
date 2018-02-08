@@ -43,7 +43,7 @@ class BackupConfig(osv.osv):
     def _get_bck_info(self, cr, uid, ids, field_name, args, context=None):
         ret = {}
         for _id in ids:
-            ret[_id] = {'cloud_date': False, 'cloud_backup': False, 'cloud_url': False, 'cloud_error': False, 'backup_date': False, 'backup_path': False}
+            ret[_id] = {'cloud_date': False, 'cloud_backup': False, 'cloud_url': False, 'cloud_error': False, 'backup_date': False, 'backup_path': False, 'backup_size': False}
 
         local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         if local_instance:
@@ -54,7 +54,7 @@ class BackupConfig(osv.osv):
             verion_obj = self.pool.get('sync.version.instance.monitor')
             v_id = verion_obj.search(cr, uid, [('instance_id', '=', local_instance.id)], context=context)
             if v_id:
-                v_info = verion_obj.read(cr, uid, v_id[0], ['backup_path', 'backup_date', 'cloud_date', 'cloud_backup', 'cloud_error'], context=context)
+                v_info = verion_obj.read(cr, uid, v_id[0], ['backup_path', 'backup_date', 'cloud_date', 'cloud_backup', 'cloud_error', 'backup_size', 'cloud_size'], context=context)
                 for _id in ids:
                     del(v_info['id'])
                     ret[_id].update(v_info)
@@ -71,9 +71,11 @@ class BackupConfig(osv.osv):
         'cloud_date': fields.function(_get_bck_info, type='datetime', string='Last Cloud Date', method=True, multi='cloud'),
         'cloud_backup': fields.function(_get_bck_info, type='char', string='Last Cloud', method=True, multi='cloud'),
         'cloud_url': fields.function(_get_bck_info, type='char', string='Cloud URL', method=True, multi='cloud'),
+        'cloud_size': fields.function(_get_bck_info, type='float', string='Cloud Size', method=True, multi='cloud'),
         'cloud_error': fields.function(_get_bck_info, type='text', string='Cloud Error', method=True, multi='cloud'),
         'backup_date': fields.function(_get_bck_info, type='datetime', string='Last Backup Date', method=True, multi='cloud'),
         'backup_path': fields.function(_get_bck_info, type='char', string='Last Backup', method=True, multi='cloud'),
+        'backup_size': fields.function(_get_bck_info, type='float', string='Backup Size', method=True, multi='cloud'),
     }
 
     _defaults = {
@@ -179,10 +181,8 @@ class BackupConfig(osv.osv):
                                        (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"),
                                         suffix, version))
                 version_instance_module = self.pool.get('sync.version.instance.monitor')
-                vals = {'version': version,
-                        'backup_path': outfile}
 
-                version_instance_module.create(cr, uid, vals, context=context)
+                version_instance_module.create(cr, uid, {'version': version}, context=context)
 
                 bkpfile = open(outfile,"wb")
                 bkpfile.close()
@@ -198,6 +198,7 @@ class BackupConfig(osv.osv):
                 cr.commit()
 
             res = tools.pg_dump(cr.dbname, outfile)
+            version_instance_module.create(cr, uid, {'backup_path': outfile, 'backup_size': os.path.getsize(outfile)}, context=context)
 
             # check the backup file
             error = None

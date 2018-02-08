@@ -315,6 +315,7 @@ class sync_version_instance_monitor(osv.osv):
         'backup_path': fields.char('Backup Location', size=128),
         'backup_date': fields.datetime("Backup Date", readonly=True,
                                        required=True),
+        'backup_size': fields.integer('Backup Size', readonly=True),
         'instance_state': fields.related('instance_id', 'state', type='selection',
                                          selection=[('draft', 'Draft'),
                                                     ('active', 'Active'),
@@ -323,7 +324,8 @@ class sync_version_instance_monitor(osv.osv):
                                          readonly=True, store=True),
         'cloud_date': fields.datetime('Cloud Date', readonly=True),
         'cloud_backup': fields.char('Cloud Dump', size=256, readonly=True),
-        'cloud_error': fields.text('Cloud last error'),
+        'cloud_error': fields.text('Cloud last error', readonly=True),
+        'cloud_size': fields.integer('Cloud Size', readonly=True),
     }
 
     _defaults = {

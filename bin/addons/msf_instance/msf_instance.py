@@ -33,6 +33,8 @@ from urlparse import urlparse
 import cgi
 from mx import DateTime
 import logging
+import os
+
 
 class msf_instance(osv.osv):
     _name = 'msf.instance'
@@ -665,11 +667,12 @@ class msf_instance_cloud(osv.osv):
             z.close()
             temp_fileobj.seek(0)
 
+            zip_size = os.path.getsize(temp_fileobj.name)
             today = DateTime.now()
             dav.upload(temp_fileobj, '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week]))
             temp_fileobj.close()
 
-            monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name'], 'cloud_error': ''})
+            monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name'], 'cloud_error': '', 'cloud_size': zip_size})
             return True
 
         except Exception, e:
