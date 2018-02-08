@@ -662,7 +662,7 @@ class msf_instance_cloud(osv.osv):
             dav = self.get_backup_connection(cr, uid, [local_instance.id], context=None)
 
             temp_fileobj = NamedTemporaryFile('w+b', delete=True)
-            z = zipfile.ZipFile(temp_fileobj, "w")
+            z = zipfile.ZipFile(temp_fileobj, "w", compression=zipfile.ZIP_DEFLATED)
             z.write(bck['path'], arcname=bck['name'])
             z.close()
             temp_fileobj.seek(0)
