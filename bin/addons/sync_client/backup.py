@@ -198,7 +198,7 @@ class BackupConfig(osv.osv):
                 cr.commit()
 
             res = tools.pg_dump(cr.dbname, outfile)
-            version_instance_module.create(cr, uid, {'backup_path': outfile, 'backup_size': os.path.getsize(outfile), 'backup_date': datetime.now().strftime("%Y-%m-%d %H%:M:%S")}, context=context)
+            version_instance_module.create(cr, uid, {'backup_path': outfile, 'backup_size': os.path.getsize(outfile), 'backup_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
 
             # check the backup file
             error = None
