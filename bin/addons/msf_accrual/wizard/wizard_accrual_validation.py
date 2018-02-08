@@ -62,11 +62,11 @@ class wizard_accrual_validation(osv.osv_memory):
                         raise osv.except_osv(_('Warning !'), _("The reversal period '%s' is not open!" % reversal_period.name))
 
                 # post the accrual
-                accrual_line_obj.accrual_post(cr, uid, context['active_ids'], context=context)
+                accrual_line_obj.accrual_post(cr, uid, [accrual_line.id], context=context)
                 # post its reversal only if it is a reversing accrual
                 if accrual_line.accrual_type == 'reversing_accrual':
                     reversal_date = (datetime.datetime.strptime(accrual_line.date, '%Y-%m-%d') + relativedelta(days=1)).strftime('%Y-%m-%d')
-                    accrual_line_obj.accrual_reversal_post(cr, uid, context['active_ids'], reversal_date,
+                    accrual_line_obj.accrual_reversal_post(cr, uid, [accrual_line.id], reversal_date,
                                                            reversal_date, context=context)
                 
         # close the wizard
