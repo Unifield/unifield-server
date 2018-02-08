@@ -770,6 +770,28 @@ class account_journal(osv.osv):
                     raise osv.except_osv(_('Warning'),
                                          _('The current instance should be used as Proprietary Instance for the journal %s.') % journal_code)
 
+    def _remove_unnecessary_links(self, cr, uid, vals, journal_id=None, context=None):
+        """
+        Remove the irrelevant links from the dict vals. Ex: create a Cheque journal, and then change its type
+        to Purchase => the link to the Corresponding bank journal should be removed.
+        """
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            journal_type = ''
+            if 'type' in vals:
+                journal_type = vals.get('type', '')
+            elif journal_id:
+                journal_type = self.browse(cr, uid, journal_id, fields_to_fetch=['type'], context=context).type or ''
+            if journal_type != 'cheque':
+                vals['bank_journal_id'] = False
+            if journal_type != 'bank':
+                vals.update({'bank_account_name': '',
+                             'bank_account_number': '',
+                             'bank_swift_code': '',
+                             'bank_address': '',
+                             })
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -783,6 +805,7 @@ class account_journal(osv.osv):
             if not journal.is_current_instance and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
             self._check_journal_constraints(cr, uid, vals, journal_id=journal.id, context=context)
+            self._remove_unnecessary_links(cr, uid, vals, journal_id=journal.id, context=context)
         return super(account_journal, self).write(cr, uid, ids, vals, context=context)
 
     def create_sequence(self, cr, uid, vals, context=None):
@@ -820,6 +843,7 @@ class account_journal(osv.osv):
         if not 'sequence_id' in vals or not vals['sequence_id']:
             vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
         self._check_journal_constraints(cr, uid, vals, context=context)
+        self._remove_unnecessary_links(cr, uid, vals, context=context)
         return super(account_journal, self).create(cr, uid, vals, context)
 
     def name_get(self, cr, user, ids, context=None):
