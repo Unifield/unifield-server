@@ -186,7 +186,7 @@ class purchase_order_line_allocation_report(osv.osv):
                     ON
                     sol.order_id = so.id
                 WHERE pol.analytic_distribution_id IS NOT NULL
-		    AND po.rfq_ok = 'f')
+		    AND po.rfq_ok = 'f' AND pol.state not in ('cancel', 'cancel_r'))
                 UNION
                 (SELECT 
                     po.id AS order_id,
@@ -246,7 +246,7 @@ class purchase_order_line_allocation_report(osv.osv):
                     sol.order_id = so.id
                 WHERE 
                     pol.analytic_distribution_id IS NULL
-		    AND po.rfq_ok = 'f')) AS al
+		    AND po.rfq_ok = 'f' AND pol.state not in ('cancel', 'cancel_r'))) AS al
             );""")
 
 purchase_order_line_allocation_report()
