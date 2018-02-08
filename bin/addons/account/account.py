@@ -730,9 +730,12 @@ class account_journal(osv.osv):
                     if not bank_journal_id:
                         raise osv.except_osv(_('Warning'),
                                              _('The corresponding Bank Journal is mandatory for the journal %s.') % journal_code)
-                    elif currency_id != self.browse(cr, uid, bank_journal_id, fields_to_fetch=['currency'], context=context).currency.id:
-                        raise osv.except_osv(_('Warning'),
-                                             _('The Corresponding Bank Journal must have the same currency as the journal %s.') % journal_code)
+                    else:
+                        bank_currency = self.browse(cr, uid, bank_journal_id, fields_to_fetch=['currency'], context=context).currency
+                        bank_currency_id = bank_currency and bank_currency.id or False
+                        if not bank_currency_id or currency_id != bank_currency_id:
+                            raise osv.except_osv(_('Warning'),
+                                                 _('The Corresponding Bank Journal must have the same currency as the journal %s.') % journal_code)
 
                 # check on Proprietary Instance at import time
                 if context.get('from_import_data', False):
