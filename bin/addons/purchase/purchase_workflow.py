@@ -73,7 +73,14 @@ class purchase_order_line(osv.osv):
                 domain = [('purchase_line_id', '=', pol.id), ('type', '=', 'in'), ('state', '=', 'assigned')]
                 linked_in_move = self.pool.get('stock.move').search(cr, uid, domain, context=context)
                 if linked_in_move:
-                    self.pool.get('stock.move').action_cancel(cr, uid, linked_in_move, context=context)  
+                    self.pool.get('stock.move').action_cancel(cr, uid, linked_in_move, context=context)
+
+                # update qty on linked sale.order.line if has:
+                if pol.original_line_id.linked_sol_id:
+                    self.pool.get('sale.order.line').write(cr, uid, [pol.original_line_id.linked_sol_id.id], {
+                        'product_uom_qty': new_qty, 
+                        'product_uos_qty': new_qty, 
+                    }, context=context)
 
         return True
 

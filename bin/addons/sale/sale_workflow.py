@@ -386,7 +386,6 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int,long)):
             ids = [ids]
         wf_service = netsvc.LocalService("workflow")
-
         pick_to_check = set()
         for sol in self.browse(cr, uid, ids, context=context):
             out_moves_to_cancel = self.pool.get('stock.move').search(cr, uid, [
