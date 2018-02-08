@@ -726,12 +726,11 @@ class account_journal(osv.osv):
                                              _('The currency is mandatory for the journal %s.') % journal_code)
                 # check on corresponding bank journal for a cheque journal
                 if journal_type == 'cheque':
-                    bank_journal_id = journal.bank_journal_id and journal.bank_journal_id.id or False
-                    if not bank_journal_id:
+                    if not journal.bank_journal_id:
                         raise osv.except_osv(_('Warning'),
                                              _('The corresponding Bank Journal is mandatory for the journal %s.') % journal_code)
                     else:
-                        bank_currency = self.browse(cr, uid, bank_journal_id, fields_to_fetch=['currency'], context=context).currency
+                        bank_currency = journal.bank_journal_id.currency
                         bank_currency_id = bank_currency and bank_currency.id or False
                         if not bank_currency_id or currency_id != bank_currency_id:
                             raise osv.except_osv(_('Warning'),
@@ -741,7 +740,7 @@ class account_journal(osv.osv):
                 if context.get('from_import_data', False):
                     company = res_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
                     current_instance_id = company.instance_id and company.instance_id.id
-                    # do the check only if a prop. instance has been given (if not the current instance is used by default)
+
                     if journal.instance_id.id != current_instance_id:
                         raise osv.except_osv(_('Warning'),
                                              _('The current instance should be used as Proprietary Instance for the journal %s.') % journal_code)
