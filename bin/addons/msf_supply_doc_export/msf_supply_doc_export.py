@@ -161,7 +161,7 @@ class validated_purchase_order_report_xls(report_sxw.rml_parse):
 
     def getCustomerAddress(self, customer_id):
         part_addr_obj = self.pool.get('res.partner.address')
-        part_addr_id = part_addr_obj.search(self.cr, self.uid, [('partner_id', '=', customer_id)], limit=1)[0]
+        part_addr_id = part_addr_obj.search(self.cr, self.uid, [('partner_id', '=', customer_id), ('type', '=', 'default')], limit=1)[0]
 
         return part_addr_obj.browse(self.cr, self.uid, part_addr_id).name
 

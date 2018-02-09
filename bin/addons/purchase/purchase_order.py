@@ -635,8 +635,8 @@ class purchase_order(osv.osv):
         'customer_ref': fields.function(_get_customer_ref, fnct_search=_src_customer_ref, method=True, string='Customer Ref.', type='text', store=False),
         'line_count': fields.function(_get_line_count, method=True, type='integer', string="Line count", store=False),
 
-        'date_approve':fields.date('Date Approved', readonly=1, select=True, help="Date on which purchase order has been approved"),
-        'dest_address_id':fields.many2one('res.partner.address', 'Destination Address',
+        'date_approve': fields.date('Date Approved', readonly=1, select=True, help="Date on which purchase order has been approved"),
+        'dest_address_id': fields.many2one('res.partner.address', 'Destination Address',
                                           help="Put an address if you want to deliver directly from the supplier to the customer." \
                                           "In this case, it will remove the warehouse link and set the customer location."
                                           ),
