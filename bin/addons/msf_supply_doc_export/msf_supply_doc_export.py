@@ -134,6 +134,7 @@ class validated_purchase_order_report_xls(report_sxw.rml_parse):
             'getInstanceName': self.getInstanceName,
             'getCustomerAddress': self.getCustomerAddress,
             'getInstanceAddress': self.getInstanceAddress,
+            'getContactName': self.getContactName,
         })
 
     def set_context(self, objects, data, ids, report_type = None):
@@ -161,9 +162,17 @@ class validated_purchase_order_report_xls(report_sxw.rml_parse):
 
     def getCustomerAddress(self, customer_id):
         part_addr_obj = self.pool.get('res.partner.address')
-        part_addr_id = part_addr_obj.search(self.cr, self.uid, [('partner_id', '=', customer_id), ('type', '=', 'default')], limit=1)[0]
+        part_addr_id = part_addr_obj.search(self.cr, self.uid, [('partner_id', '=', customer_id)], limit=1)[0]
 
         return part_addr_obj.browse(self.cr, self.uid, part_addr_id).name
+
+    def getContactName(self, partner_id):
+        addr_id = self.pool.get('res.partner.address').search(self.cr, self.uid, [('partner_id', '=', partner_id)])
+        res = ''
+        if addr_id:
+            res = self.pool.get('res.partner.address').read(self.cr, self.uid, addr_id)[0]['name']
+        return res
+
 
 SpreadsheetReport('report.validated.purchase.order_xls', 'purchase.order', 'addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako', parser=validated_purchase_order_report_xls)
 
