@@ -154,181 +154,180 @@ class import_commitment_wizard(osv.osv_memory):
             default_founding_pool_id = default_founding_pool_id[0]
 
             now = False
-            if len(journal_ids) > 0:
-                # read file
-                for wizard in self.browse(cr, uid, ids, context=context):
-                    if not wizard.import_file:
-                        raise osv.except_osv(_('Error'), _('Nothing to import.'))
-                    import_file = base64.decodestring(wizard.import_file)
-                    import_string = StringIO.StringIO(import_file)
-                    import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
-                    total_line = len(import_data) - 1
-                    nb = 0
-                    sequence_number = 1
-                    for line in import_data[1:]:
-                        nb += 1
-
-                        if nb % 100 == 0:
-                            self.write(cr, uid, ids, {'progress': '%s of %s lines.' % (nb, total_line)})
-
-                        vals = {'imported_commitment': True,
-                                'instance_id': instance_id,
-                                'journal_id': journal_ids[0],
-                                'imported_entry_sequence': 'ENGI-' + str(sequence_number).zfill(6)}
-                        raise_msg_prefix = "Line %d: " % (sequence_number, )
-
-                        # retrieve values
-                        try:
-                            description, reference, document_date, date, account_code, destination, \
-                                cost_center, funding_pool, third_party,  booking_amount, booking_currency = line
-                        except ValueError, e:
-                            raise osv.except_osv(_('Error'), raise_msg_prefix + _('Unknown format.'))
-
-                        # Dates
-                        if not date:
-                            if not now:
-                                # 1st use of default posting/doc date from now
-                                now = time.strftime('%Y-%m-%d')
-                                check_date_not_in_hq_closed_period(self.pool, cr,
-                                                                   uid, now, sequence_number, context=context)
-                            line_date = now  # now by default
-                        else:
-                            try:
-                                line_date = time.strftime('%Y-%m-%d', time.strptime(date, '%d/%m/%Y'))
-                            except ValueError, e:
-                                raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Posting date wrong format for date: %s: %s') % (date, e)))
-                        period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
-                        if not period_ids:
-                            raise osv.except_osv(_('Warning'), raise_msg_prefix + (_('No open period found for given date: %s') % (date,)))
-                        vals['date'] = line_date
-                        if not document_date:
-                            if not now:
-                                # 1st use of default posting/doc date from now
-                                now = time.strftime('%Y-%m-%d')
-                                check_date_not_in_hq_closed_period(self.pool, cr,
-                                                                   uid, now, sequence_number, context=context)
-                            line_document_date = now  # now by default
-                        else:
-                            try:
-                                line_document_date = time.strftime('%Y-%m-%d', time.strptime(document_date, '%d/%m/%Y'))
-                            except ValueError, e:
-                                raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Document date wrong format for date: %s: %s') % (document_date, e)))
-                        vals['document_date'] = line_document_date
-
-                        # G/L account
-                        if account_code:
-                            account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code), ('type', '!=', 'view')])
-                            if not account_ids:
-                                raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Account code %s doesn\'t exist!') % (tools.ustr(account_code),)))
-                            vals.update({'general_account_id': account_ids[0]})
-                        else:
-                            raise osv.except_osv(_('Error'), raise_msg_prefix + _('No account code found!'))
-                        # Destination
-                        if destination:
-                            dest_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', destination), ('name', '=', destination), ('type', '!=', 'view')])
-                            if dest_id:
-                                vals.update({'destination_id': dest_id[0]})
-                            else:
-                                raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Destination "%s" doesn\'t exist!') % (destination,)))
-                        else:
-                            # try to get default account destination by default
-                            account_br = self.pool.get('account.account').browse(cr,
-                                                                                 uid, account_ids[0])
-                            if account_br.default_destination_id:
-                                vals['destination_id'] = account_br.default_destination_id.id
-                                dest_id = [vals['destination_id']]
-                            else:
-                                msg = _("No destination code found and no default destination for account %s !") % account_code
-                                raise osv.except_osv(_('Error'), raise_msg_prefix + msg)
-                        # Cost Center
-                        if cost_center:
-                            cc_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center), ('type', '!=', 'view')])
-                            if cc_id:
-                                vals.update({'cost_center_id': cc_id[0]})
-                            else:
-                                raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Cost Center "%s" doesn\'t exist!') % (cost_center,)))
-                        else:
-                            raise osv.except_osv(_('Error'), raise_msg_prefix + _('No cost center code found!'))
-                        # Funding Pool
-                        if funding_pool:
-                            fp_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool), ('type', '!=', 'view')])
-                            if fp_id:
-                                vals.update({'account_id': fp_id[0]})
-                            else:
-                                raise osv.except_osv(_('Error'), raise_msg_prefix +_(('Funding Pool "%s" doesn\'t exist!') % (funding_pool,)))
-                        else:
-                            vals['account_id'] = default_founding_pool_id
-                            fp_id = [default_founding_pool_id]
-                        # description
-                        if description:
-                            vals.update({'name': description})
-                            # Fetch reference
-                        if reference:
-                            vals.update({'ref': reference})
-                        # Fetch 3rd party
-                        if third_party:
-                            vals.update({'imported_partner_txt': third_party})
-                            # Search if 3RD party exists as partner
-                            partner_domain = [('name', '=', third_party), ('partner_type', '=', 'esc'), ('active', 'in', ['t', 'f'])]
-                            if not self.pool.get('res.partner').search_exist(cr, uid, partner_domain, context=context):
-                                raise osv.except_osv(_('Error'), raise_msg_prefix + (_('No ESC partner found for code %s !') % (third_party)))
-                        # currency
-                        if booking_currency:
-                            currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_currency), ('active', 'in', [False, True])])
-                            if not currency_ids:
-                                raise osv.except_osv(_('Error'), raise_msg_prefix + (_('This currency was not found or is not active: %s') % (booking_currency,)))
-                            if currency_ids and currency_ids[0]:
-                                vals.update({'currency_id': currency_ids[0]})
-                                # Functional currency
-                                if functional_currency_obj.name == booking_currency:
-                                    vals.update({'amount': -float(booking_amount)})
-                                else:
-                                    # lookup id for code
-                                    line_currency_id = self.pool.get('res.currency').search(cr,uid,[('name','=',booking_currency)])[0]
-                                    date_context = {'date': line_date }
-                                    converted_amount = self.pool.get('res.currency').compute(
-                                        cr,
-                                        uid,
-                                        line_currency_id,
-                                        functional_currency_obj.id,
-                                        -float(booking_amount),
-                                        round=True,
-                                        context=date_context
-                                    )
-                                    vals.update({'amount': converted_amount})
-                        else:
-                            raise osv.except_osv(_('Error'), raise_msg_prefix +_('No booking currency found!'))
-                        # Fetch amount
-                        if booking_amount:
-                            vals.update({'amount_currency': -float(booking_amount)})
-                        else:
-                            raise osv.except_osv(_('Error'), raise_msg_prefix + _('No booking amount found!'))
-
-                        # Check AJI consistency
-                        no_compat = analytic_obj.check_dest_cc_fp_compatibility(cr,
-                                                                                uid, False,
-                                                                                dest_id=dest_id[0], cc_id=cc_id[0], fp_id=fp_id[0],
-                                                                                from_import=True,
-                                                                                from_import_general_account_id=account_ids[0],
-                                                                                from_import_posting_date=line_date,
-                                                                                context=context)
-                        if no_compat:
-                            no_compat = no_compat[0]
-                            # no compatible AD
-                            msg = _("Dest / Cost Center / Funding Pool are not" \
-                                    " compatible for entry name:'%s', ref:'%s'" \
-                                    " reason: '%s'")
-                            raise osv.except_osv(_('Error'), msg % (
-                                vals.get('name', ''), vals.get('ref', ''),
-                                no_compat[2] or '', )
-                            )
-
-                        analytic_obj.create(cr, uid, vals, context=context)
-                        sequence_number += 1
-
-            else:
+            if not journal_ids:
                 raise osv.except_osv(_('Error'), _('Analytic Journal ENGI doesn\'t exist!'))
+            for wizard in self.browse(cr, uid, ids, context=context):
+                if not wizard.import_file:
+                    raise osv.except_osv(_('Error'), _('Nothing to import.'))
+                import_file = base64.decodestring(wizard.import_file)
+                import_string = StringIO.StringIO(import_file)
+                import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
+                total_line = len(import_data) - 1
+                nb = 0
+                sequence_number = 1
+                for line in import_data[1:]:
+                    nb += 1
 
+                    if nb % 100 == 0:
+                        self.write(cr, uid, ids, {'progress': '%s of %s lines.' % (nb, total_line)})
+
+                    vals = {'imported_commitment': True,
+                            'instance_id': instance_id,
+                            'journal_id': journal_ids[0],
+                            'imported_entry_sequence': 'ENGI-' + str(sequence_number).zfill(6)}
+                    raise_msg_prefix = "Line %d: " % (sequence_number, )
+
+                    # retrieve values
+                    try:
+                        description, reference, document_date, date, account_code, destination, \
+                            cost_center, funding_pool, third_party,  booking_amount, booking_currency = line
+                    except ValueError, e:
+                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('Unknown format.'))
+
+                    # Dates
+                    if not date:
+                        if not now:
+                            # 1st use of default posting/doc date from now
+                            now = time.strftime('%Y-%m-%d')
+                            check_date_not_in_hq_closed_period(self.pool, cr,
+                                                               uid, now, sequence_number, context=context)
+                        line_date = now  # now by default
+                    else:
+                        try:
+                            line_date = time.strftime('%Y-%m-%d', time.strptime(date, '%d/%m/%Y'))
+                        except ValueError, e:
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Posting date wrong format for date: %s: %s') % (date, e)))
+                    period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, line_date)
+                    if not period_ids:
+                        raise osv.except_osv(_('Warning'), raise_msg_prefix + (_('No open period found for given date: %s') % (date,)))
+                    vals['date'] = line_date
+                    if not document_date:
+                        if not now:
+                            # 1st use of default posting/doc date from now
+                            now = time.strftime('%Y-%m-%d')
+                            check_date_not_in_hq_closed_period(self.pool, cr,
+                                                               uid, now, sequence_number, context=context)
+                        line_document_date = now  # now by default
+                    else:
+                        try:
+                            line_document_date = time.strftime('%Y-%m-%d', time.strptime(document_date, '%d/%m/%Y'))
+                        except ValueError, e:
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Document date wrong format for date: %s: %s') % (document_date, e)))
+                    vals['document_date'] = line_document_date
+
+                    # G/L account
+                    if account_code:
+                        account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code), ('type', '!=', 'view')])
+                        if not account_ids:
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Account code %s doesn\'t exist!') % (tools.ustr(account_code),)))
+                        vals.update({'general_account_id': account_ids[0]})
+                    else:
+                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('No account code found!'))
+                    # Destination
+                    if destination:
+                        dest_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', destination), ('name', '=', destination), ('type', '!=', 'view')])
+                        if dest_id:
+                            vals.update({'destination_id': dest_id[0]})
+                        else:
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Destination "%s" doesn\'t exist!') % (destination,)))
+                    else:
+                        # try to get default account destination by default
+                        account_br = self.pool.get('account.account').browse(cr,
+                                                                             uid, account_ids[0])
+                        if account_br.default_destination_id:
+                            vals['destination_id'] = account_br.default_destination_id.id
+                            dest_id = [vals['destination_id']]
+                        else:
+                            msg = _("No destination code found and no default destination for account %s !") % account_code
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + msg)
+                    # Cost Center
+                    if cost_center:
+                        cc_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', cost_center), ('name', '=', cost_center), ('type', '!=', 'view')])
+                        if cc_id:
+                            vals.update({'cost_center_id': cc_id[0]})
+                        else:
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Cost Center "%s" doesn\'t exist!') % (cost_center,)))
+                    else:
+                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('No cost center code found!'))
+                    # Funding Pool
+                    if funding_pool:
+                        fp_id = self.pool.get('account.analytic.account').search(cr, uid, ['|', ('code', '=', funding_pool), ('name', '=', funding_pool), ('type', '!=', 'view')])
+                        if fp_id:
+                            vals.update({'account_id': fp_id[0]})
+                        else:
+                            raise osv.except_osv(_('Error'), raise_msg_prefix +_(('Funding Pool "%s" doesn\'t exist!') % (funding_pool,)))
+                    else:
+                        vals['account_id'] = default_founding_pool_id
+                        fp_id = [default_founding_pool_id]
+                    # description
+                    if description:
+                        vals.update({'name': description})
+                        # Fetch reference
+                    if reference:
+                        vals.update({'ref': reference})
+                    # Fetch 3rd party
+                    if third_party:
+                        vals.update({'imported_partner_txt': third_party})
+                        # Search if 3RD party exists as partner
+                        partner_domain = [('name', '=', third_party), ('partner_type', '=', 'esc'), ('active', 'in', ['t', 'f'])]
+                        if not self.pool.get('res.partner').search_exist(cr, uid, partner_domain, context=context):
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('No ESC partner found for code %s !') % (third_party)))
+                    # currency
+                    if booking_currency:
+                        currency_ids = self.pool.get('res.currency').search(cr, uid, [('name', '=', booking_currency), ('active', 'in', [False, True])])
+                        if not currency_ids:
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('This currency was not found or is not active: %s') % (booking_currency,)))
+                        if currency_ids and currency_ids[0]:
+                            vals.update({'currency_id': currency_ids[0]})
+                            # Functional currency
+                            if functional_currency_obj.name == booking_currency:
+                                vals.update({'amount': -float(booking_amount)})
+                            else:
+                                # lookup id for code
+                                line_currency_id = self.pool.get('res.currency').search(cr,uid,[('name','=',booking_currency)])[0]
+                                date_context = {'date': line_date }
+                                converted_amount = self.pool.get('res.currency').compute(
+                                    cr,
+                                    uid,
+                                    line_currency_id,
+                                    functional_currency_obj.id,
+                                    -float(booking_amount),
+                                    round=True,
+                                    context=date_context
+                                )
+                                vals.update({'amount': converted_amount})
+                    else:
+                        raise osv.except_osv(_('Error'), raise_msg_prefix +_('No booking currency found!'))
+                    # Fetch amount
+                    if booking_amount:
+                        vals.update({'amount_currency': -float(booking_amount)})
+                    else:
+                        raise osv.except_osv(_('Error'), raise_msg_prefix + _('No booking amount found!'))
+
+                    # Check AJI consistency
+                    no_compat = analytic_obj.check_dest_cc_fp_compatibility(cr,
+                                                                            uid, False,
+                                                                            dest_id=dest_id[0], cc_id=cc_id[0], fp_id=fp_id[0],
+                                                                            from_import=True,
+                                                                            from_import_general_account_id=account_ids[0],
+                                                                            from_import_posting_date=line_date,
+                                                                            context=context)
+                    if no_compat:
+                        no_compat = no_compat[0]
+                        # no compatible AD
+                        msg = _("Dest / Cost Center / Funding Pool are not" \
+                                " compatible for entry name:'%s', ref:'%s'" \
+                                " reason: '%s'")
+                        raise osv.except_osv(_('Error'), msg % (
+                            vals.get('name', ''), vals.get('ref', ''),
+                            no_compat[2] or '', )
+                        )
+
+                    analytic_obj.create(cr, uid, vals, context=context)
+                    sequence_number += 1
+
+
+            self.write(cr, uid, ids, {'progress': 'deleting %s previous AJIs' % (len(to_be_deleted_ids), )})
             analytic_obj.unlink(cr, uid, to_be_deleted_ids, context=context)
             self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_ERROR',  '%d lines imported.' % (nb,))
             self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_DATE', time.strftime('%Y-%m-%d %H:%M:%S'))
