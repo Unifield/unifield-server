@@ -69,9 +69,10 @@ class purchase_order(osv.osv):
             val = val1 = 0.0
             cur = order.pricelist_id.currency_id
             for line in order.order_line:
-                val1 += line.price_subtotal
-                for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, order.partner_address_id.id, line.product_id.id, order.partner_id)['taxes']:
-                    val += c.get('amount', 0.0)
+                if line.state not in ('cancel', 'cancel_r'):
+                    val1 += line.price_subtotal
+                    for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, order.partner_address_id.id, line.product_id.id, order.partner_id)['taxes']:
+                        val += c.get('amount', 0.0)
             res[order.id]['amount_tax']=cur_obj.round(cr, uid, cur.rounding, val)
             res[order.id]['amount_untaxed']=cur_obj.round(cr, uid, cur.rounding, val1)
             res[order.id]['amount_total']=res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
@@ -179,10 +180,18 @@ class purchase_order(osv.osv):
 
         return res
 
+
     def _get_order(self, cr, uid, ids, context=None):
         result = {}
-        for line in self.pool.get('purchase.order.line').browse(cr, uid, ids, context=context):
+        for line in self.pool.get('purchase.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context):
             result[line.order_id.id] = True
+        return result.keys()
+
+    def _get_order_state_changed(self, cr, uid, ids, context=None):
+        result = {}
+        for line in self.pool.get('purchase.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id', 'state'], context=context):
+            if line.state in ('cancel', 'cancel_r'):
+                result[line.order_id.id] = True
         return result.keys()
 
     def _get_allocation_setup(self, cr, uid, ids, field_name, args, context=None):
@@ -666,15 +675,24 @@ class purchase_order(osv.osv):
                                                ),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Purchase Price'), string='Untaxed Amount',
                                           store={
-            'purchase.order.line': (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
+            'purchase.order.line': [
+                (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
+                (_get_order_state_changed, ['state'], 10),
+            ]
         }, multi="sums", help="The amount without tax"),
         'amount_tax': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Purchase Price'), string='Taxes',
                                       store={
-            'purchase.order.line': (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
+            'purchase.order.line': [
+                (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
+                (_get_order_state_changed, ['state'], 10),
+            ]
         }, multi="sums", help="The tax amount"),
         'amount_total': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Purchase Price'), string='Total',
                                         store={
-            'purchase.order.line': (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
+            'purchase.order.line': [
+                (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
+                (_get_order_state_changed, ['state'], 10),
+            ]
         }, multi="sums",help="The total amount"),
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position'),
         'create_uid':  fields.many2one('res.users', 'Responsible'),
