@@ -1237,11 +1237,21 @@ class product_attributes(osv.osv):
                         _('Error'),
                         _('White spaces are not allowed in product code'),
                     )
+                if any(char.islower() for char in vals['default_code']):
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Lowercase letters are not allowed in product code'),
+                    )
         if vals.get('xmlid_code'):
             if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
                 raise osv.except_osv(
                     _('Error'),
                     _('White spaces are not allowed in XML ID code'),
+                )
+            if any(char.islower() for char in vals['xmlid_code']):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Lowercase letters are not allowed in XML ID code'),
                 )
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
