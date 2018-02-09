@@ -190,6 +190,8 @@ class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
             'maxADLines': self.get_max_ad_lines,
             'getInstanceName': self.getInstanceName,
             'getCustomerAddress': self.getCustomerAddress,
+            'getContactName': self.getContactName,
+            'getInstanceAddress': self.getInstanceAddress,
         })
 
     def set_context(self, objects, data, ids, report_type = None):
@@ -206,13 +208,28 @@ class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
         return max_ad_lines
 
     def getInstanceName(self):
-        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.name
+        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.instance
 
     def getCustomerAddress(self, customer_id):
         part_addr_obj = self.pool.get('res.partner.address')
         part_addr_id = part_addr_obj.search(self.cr, self.uid, [('partner_id', '=', customer_id)], limit=1)[0]
 
         return part_addr_obj.browse(self.cr, self.uid, part_addr_id).name
+
+    def getContactName(self, partner_id):
+        addr_id = self.pool.get('res.partner.address').search(self.cr, self.uid, [('partner_id', '=', partner_id)])
+        res = ''
+        if addr_id:
+            res = self.pool.get('res.partner.address').read(self.cr, self.uid, addr_id)[0]['name']
+        return res
+
+    def getInstanceAddress(self):
+        part_addr_id = self.pool.get('res.partner.address').search(self.cr, self.uid, [('partner_id', '=', self.uid)], limit=1)
+        part_addr = False
+        if part_addr_id:
+            part_addr = self.pool.get('res.partner.address').browse(self.cr, self.uid, part_addr_id)[0]
+        return part_addr.name if part_addr else ''
+
 
 class validated_purchase_order_report_xml(WebKitParser):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):

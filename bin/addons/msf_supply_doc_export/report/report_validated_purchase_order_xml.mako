@@ -25,14 +25,26 @@
         <field name="ready_to_ship_date"></field>
         % endif
         <field name="dest_address_id" key="name,parent.partner_id">
+            % if o.order_type == 'direct':
+            <field name="delivery_name">${getContactName(o.dest_partner_id.id)|x}</field>
+            % else:
             <field name="delivery_name">${o.dest_address_id and o.dest_address_id.name or ''|x}</field>
-            % if o.order_type == 'direct' and o.partner_id.partner_type == 'esc':
-            <field name="delivery_address">${o.customer_id and o.customer_id.name or ''|x}</field>
+            % endif
+            % if o.order_type == 'direct':
+            <field name="delivery_address">${o.dest_partner_id and o.dest_partner_id.name or ''|x}</field>
             % else:
             <field name="delivery_address">${getInstanceName()|x}</field>
             % endif
+            % if o.order_type == 'direct':
+            <field name="customer_name">${getInstanceAddress() or ''|x}</field>
+            % else:
             <field name="customer_name">${o.customer_id and getCustomerAddress(o.customer_id.id) or ''|x}</field>
+            % endif
+            % if o.order_type == 'direct':
+            <field name="customer_address">${getInstanceName()|x}</field>
+            % else:
             <field name="customer_address">${o.customer_id and o.customer_id.name or ''|x}</field>
+            % endif
         </field>
         % if o.shipment_date and o.shipment_date not in (False, 'False'):
         <field name="shipment_date">${o.shipment_date|n}</field>
