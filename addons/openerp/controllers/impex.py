@@ -412,6 +412,9 @@ class ImpEx(SecuredController):
                 # the original domain for the view (for instance from SI: do not show Supplier Refunds nor DI)
                 if 'original_domain' in ctx:
                     domain.extend(ctx['original_domain'])
+                # take also into account the "Filters => New Filter(s)" which have been selected
+                if 'new_filter_domain' in ctx:
+                    domain.extend(ctx['new_filter_domain'])
             else:
                 ids = params.ids or []
 

@@ -217,8 +217,12 @@ def execute_report(name, **data):
             ctx['report_fromfile'] = 1
         # Use not only the domain corresponding to the filters selected but also the original domain for the view
         # (for instance from AJI View: get only FP lines and not Free1/2)
-        if ctx.get('original_domain', False) and ctx.get('search_domain', False):
-            ctx['search_domain'].extend(ctx['original_domain'])
+        # and the "Filters => New Filter(s)" which have been selected
+        if 'search_domain' in ctx:
+            if ctx.get('original_domain', False):
+                ctx['search_domain'].extend(ctx['original_domain'])
+            if ctx.get('new_filter_domain', False):
+                ctx['search_domain'].extend(ctx['new_filter_domain'])
         report_id = rpc.session.execute('report', 'report', name, ids, datas, ctx)
         state = False
         attempt = 0

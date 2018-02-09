@@ -403,6 +403,8 @@ class Search(Form):
             # would later be used on the account.analytic.lines/account.move.lines and lead to an inconsistent SQL request
             original_domain = all_domains.get('original_domain') and expr_eval(all_domains.get('original_domain')) or []
             ctx.update({'original_domain': original_domain})
+            # store the "Filters => New Filter(s)" which have been selected
+            ctx.update({'new_filter_domain': ncustom_domain})
 
         return dict(domain=ustr(domain), context=ustr(ctx), search_data=ustr(search_data), filter_domain=ustr(ncustom_domain))
 
