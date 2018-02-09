@@ -67,17 +67,19 @@ class import_commitment_wizard(osv.osv_memory):
             return {
                 'start_date': d[0]['start_date'],
                 'progress':  d[0]['progress'],
+                'in_progress': False,
             }
 
         d = super(import_commitment_wizard, self).default_get(cr, uid, fields, context)
         ir_config = self.pool.get('ir.config_parameter')
         d['last_stop'] = ir_config.get_param(cr, 1, 'LAST_COMMIT_DATE')
         d['last_error'] = ir_config.get_param(cr, 1, 'LAST_COMMIT_ERROR')
+        d['in_progress'] = False
         return d
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         if view_type == 'form':
-            if self.search_exist(cr, 1, [('in_progress', '=', True)]):
+            if self.search(cr, 1, [('in_progress', '=', True)]):
                 view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'import_commitment_wizard_progress_view')[1]
 
         return super(import_commitment_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
