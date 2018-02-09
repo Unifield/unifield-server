@@ -114,7 +114,8 @@ class BackupConfig(osv.osv):
 
 
     def test_cloud(self, cr, uid, ids, context=None):
-        return self.pool.get('msf.instance.cloud').test_connection(cr, uid, ids, context)
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        return self.pool.get('msf.instance.cloud').test_connection(cr, uid, [local_instance.id], context)
 
     def get_server_version(self, cr, uid, context=None):
         revisions = self.pool.get('sync_client.version')
