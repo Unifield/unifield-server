@@ -58,6 +58,7 @@
 			<field name="cloud_date" />
 			<field name="cloud_backup" />
 			<field name="cloud_size" widget="human_size"/>
+			<button colspan="2" icon="monitor.png" name="test_cloud" string="Test Cloud" type="object" />
 			<group colspan="6">
 				<html>
 					<br /><br />

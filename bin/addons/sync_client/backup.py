@@ -113,6 +113,9 @@ class BackupConfig(osv.osv):
         return True
 
 
+    def test_cloud(self, cr, uid, ids, context=None):
+        return self.pool.get('msf.instance.cloud').test_connection(cr, uid, ids, context)
+
     def get_server_version(self, cr, uid, context=None):
         revisions = self.pool.get('sync_client.version')
         if not revisions:
