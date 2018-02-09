@@ -530,9 +530,16 @@ class msf_instance_cloud(osv.osv):
 
     def copy_to_all(self, cr, uid, ids, context=None):
         info = self._get_cloud_info(cr, uid, ids[0], context=context)
+        sc_info = self.read(cr, uid, ids[0], ['delay_minute', 'cloud_schedule_time'])
         to_write = self.search(cr, uid, [('instance_identifier', '!=', False), ('filter_by_level', '=', True), ('id', '!=', ids[0])], context=context)
+        init_time = sc_info['cloud_schedule_time'] or 0
         for x in to_write:
-            self.write(cr, uid, x, {'cloud_url': info['url'] , 'cloud_login': info['login'], 'cloud_password':  info['password']}, context=context)
+            data = {'cloud_url': info['url'] , 'cloud_login': info['login'], 'cloud_password':  info['password'], 'delay_minute': -1}
+            if sc_info['delay_minute'] != -1:
+                init_time += (sc_info['delay_minute'] or 0) / 60.
+                init_time = init_time % 24
+                data['cloud_schedule_time'] = init_time
+            self.write(cr, uid, x, data, context=context)
 
         return True
 
@@ -545,6 +552,7 @@ class msf_instance_cloud(osv.osv):
         'is_editable': fields.function(_get_is_editable, type='boolean', string='Has identifier', method=True),
         'has_config': fields.function(_get_has_config, string='Is configured', method=True, type='boolean', fnct_search=_search_has_config),
         'filter_by_level': fields.function(_get_filter_by_level, string='Filter Instance', method=True, type='boolean', internal=True, fnct_search=_search_filter_by_level),
+        'delay_minute': fields.integer('Delay (in minutes) to add on schedule time', help="Set '-1' to leave Schedule task time untouched"),
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -560,6 +568,7 @@ class msf_instance_cloud(osv.osv):
             return instance_ids[0]
 
         return super(msf_instance_cloud, self).create(cr, uid, vals, context)
+
     def get_backup_connection(self, cr, uid, ids, context=None):
         info = self._get_cloud_info(cr, uid, ids[0])
         if not info.get('url'):
