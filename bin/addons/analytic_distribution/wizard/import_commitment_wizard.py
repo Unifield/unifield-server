@@ -162,7 +162,7 @@ class import_commitment_wizard(osv.osv_memory):
                     import_file = base64.decodestring(wizard.import_file)
                     import_string = StringIO.StringIO(import_file)
                     import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
-                    total_line = len(import_data)
+                    total_line = len(import_data) - 1
                     nb = 0
                     sequence_number = 1
                     for line in import_data[1:]:
