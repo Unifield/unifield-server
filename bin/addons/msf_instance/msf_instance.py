@@ -528,11 +528,19 @@ class msf_instance_cloud(osv.osv):
 
         return []
 
+    def copy_to_all(self, cr, uid, ids, context=None):
+        info = self._get_cloud_info(cr, uid, ids[0], context=context)
+        to_write = self.search(cr, uid, [('instance_identifier', '!=', False), ('filter_by_level', '=', True), ('id', '!=', ids[0])], context=context)
+        for x in to_write:
+            self.write(cr, uid, x, {'cloud_url': info['url'] , 'cloud_login': info['login'], 'cloud_password':  info['password']}, context=context)
+
+        return True
+
     _columns = {
         'cloud_url': fields.char('Cloud URL', size=256),
         'cloud_login': fields.char('Cloud Login', size=256),
         'cloud_password': fields.char('Cloud Password', size=256),
-        'cloud_schedule_time': fields.float('Schedule task time'),
+        'cloud_schedule_time': fields.float('Schedule task time', help="Remote time"),
         'cloud_set_password': fields.function(_get_cloud_set_password, type='char', size=256, fnct_inv=_set_cloud_password, method=True, string='Password'),
         'is_editable': fields.function(_get_is_editable, type='boolean', string='Has identifier', method=True),
         'has_config': fields.function(_get_has_config, string='Is configured', method=True, type='boolean', fnct_search=_search_has_config),

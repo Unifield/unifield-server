@@ -384,7 +384,8 @@
                     <field name="is_editable" invisible="1" />
                     <field name="has_config" invisible="1" />
                     <field name="cloud_login" attrs="{'readonly': [('is_editable', '=', False)]}"/>
-                    <field name="cloud_set_password" password="1" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+					<field name="cloud_set_password" password="1" attrs="{'readonly': [('is_editable', '=', False)]}"/>
+					<button name="copy_to_all" type="object" attrs="{'invisible': ['|', ('is_editable', '=', False), ('has_config', '=', False)]}" icon="gtk-copy" string="Duplicate Config to all instances" confirm="This will override all instances configuration." />
                     <field name="cloud_schedule_time" widget="float_time" attrs="{'readonly': [('is_editable', '=', False)]}"/>
                     <newline />
                     <button name="test_connection" icon="monitor.png" string="Test Connection" type="object" colspan="2"/>
