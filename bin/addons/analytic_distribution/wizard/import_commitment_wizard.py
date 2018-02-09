@@ -104,7 +104,7 @@ class import_commitment_wizard(osv.osv_memory):
             if self.search(cr, 1, [('in_progress', '=', True)]):
                 return True
 
-            self.write(cr, uid, ids, {'in_progress': True, 'start_date': time.strftime('%Y-%m-%d %H:%H:%S'), 'error': False}, context=context)
+            self.write(cr, uid, ids, {'in_progress': True, 'start_date': time.strftime('%Y-%m-%d %H:%M:%S'), 'error': False}, context=context)
             new_thread = threading.Thread(target=self.import_csv_commitment_lines_bg, args=(cr, uid, ids, context))
             new_thread.start()
             new_thread.join(10.0)
