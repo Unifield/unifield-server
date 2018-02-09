@@ -150,7 +150,7 @@ class validated_purchase_order_report_xls(report_sxw.rml_parse):
         return max_ad_lines
 
     def getInstanceName(self):
-        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.name
+        return self.pool.get('res.users').browse(self.cr, self.uid, self.uid).company_id.instance_id.instance
 
     def getInstanceAddress(self):
         part_addr_id = self.pool.get('res.partner.address').search(self.cr, self.uid, [('partner_id', '=', self.uid)], limit=1)
