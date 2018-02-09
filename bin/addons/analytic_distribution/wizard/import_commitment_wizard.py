@@ -27,6 +27,7 @@ import csv
 import time
 import threading
 import pooler
+import tools
 
 
 class import_commitment_wizard(osv.osv_memory):
@@ -110,7 +111,7 @@ class import_commitment_wizard(osv.osv_memory):
             else:
                 error = self.read(cr, uid, ids[0], ['error'])['error']
                 if error:
-                    raise error
+                    raise osv.except_osv(_('Error'), tools.ustr(error))
                 # US-97: go to tree with intl engagements as default
                 return self.open_ana_lines(cr, uid, ids, context)
         except:
@@ -216,7 +217,7 @@ class import_commitment_wizard(osv.osv_memory):
                         if account_code:
                             account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code), ('type', '!=', 'view')])
                             if not account_ids:
-                                raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Account code %s doesn\'t exist!') % (account_code,)))
+                                raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Account code %s doesn\'t exist!') % (tools.ustr(account_code),)))
                             vals.update({'general_account_id': account_ids[0]})
                         else:
                             raise osv.except_osv(_('Error'), raise_msg_prefix + _('No account code found!'))
@@ -331,9 +332,10 @@ class import_commitment_wizard(osv.osv_memory):
             self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_DATE', time.strftime('%Y-%m-%d %H:%M:%S'))
 
         except Exception, e:
-            self.write(cr, 1, ids, {'in_progress': False, 'error': e})
+            msg = hasattr(e, 'value') and e.value or e.message
+            self.write(cr, 1, ids, {'in_progress': False, 'error': tools.ustr(msg)})
             cr.rollback()
-            self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_ERROR',  e)
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_ERROR',  tools.ustr(msg))
             self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_DATE', time.strftime('%Y-%m-%d %H:%M:%S'))
         finally:
             self.write(cr, 1, ids, {'in_progress': False})
