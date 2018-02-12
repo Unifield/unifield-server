@@ -251,7 +251,7 @@ class msf_import_export(osv.osv_memory):
 
 
             if child_field == 'id':
-                field_type == 'String'
+                field_type = 'String'
             else:
                 field_type = fields_get_dict[child_model][child_field]['type']
             if field_type == 'boolean':
@@ -791,7 +791,7 @@ WHERE n3.level = 3)
         for line_number in sorted(import_warnings.keys()):
             warnings = import_warnings[line_number]
             for warn in warnings:
-                warn_msg += _('Line %s: %s') % (line, warn)
+                warn_msg += _('Line %s: %s') % (line_number, warn)
                 if not warn_msg.endswith('\n'):
                     warn_msg += '\n'
 
