@@ -761,6 +761,11 @@ WHERE n3.level = 3)
                 elif impobj._name == 'product.category':
                     ids_to_update = impobj.search(cr, uid, [('msfid', '=',
                         data['msfid'])], order='NO_ORDER')
+                elif impobj._name == 'supplier.catalogue':
+                    ids_to_update = impobj.search(cr, uid, [
+                        ('name', '=', data['name']),
+                        ('partner_id', '=', data['partner_id']),
+                    ], order='NO_ORDER')
 
                 if ids_to_update:
                     #UF-2170: remove the standard price value from the list for update product case
