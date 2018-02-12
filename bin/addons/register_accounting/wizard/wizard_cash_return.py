@@ -295,8 +295,12 @@ class wizard_cash_return(osv.osv_memory):
     _name = "wizard.cash.return"
     _description = "A wizard that link some advance lines to some account move lines"
 
-    def changeline(self, cr, uid, ids, lines, returned_amount, date, reference, additional_amount, context=None):
+    def changeline(self, cr, uid, ids, lines, returned_amount, invoices, date, reference, additional_amount, context=None):
         total_amount = returned_amount or 0.0
+        # add the amount of invoice lines
+        for invoice in invoices:
+            if len(invoice) > 2:
+                total_amount += invoice[2].get('amount', 0.0)
         for line in lines:
             if line[0] == 1:
                 total_amount += line[2].get('amount',0)
@@ -627,6 +631,9 @@ class wizard_cash_return(osv.osv_memory):
 
         new_lines = []
         total = wizard.returned_amount or 0.  # reuse current amount when adding new line
+        # add the amount of advance lines
+        for adv_line in wizard.advance_line_ids:
+            total += adv_line.amount or 0.0
         added_invoice_ids = [
             wil.invoice_id.id for wil in wizard.invoice_line_ids ]
         for invoice in invoices:

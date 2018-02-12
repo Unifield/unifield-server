@@ -42,7 +42,7 @@
                         <button string="Clean invoices" name="clean_invoices" type="object" icon="gtk-clear" />
                     </group>
                     <newline />
-                    <field name='advance_line_ids' nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount, date, reference, additional_amount)"/>
+                    <field name='advance_line_ids' nolabel="1" colspan="4" on_change="changeline(advance_line_ids, returned_amount, invoice_line_ids, date, reference, additional_amount)"/>
                     <newline />
                     <field name="total_amount"/>
                     <newline />
