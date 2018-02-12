@@ -68,21 +68,25 @@ class import_data(osv.osv_memory):
         aa_obj = self.pool.get('account.account')
         context = {}
 
-        family_msfid = data.get('family_id', False)
-        if family_msfid:
-            nomen_ids = n_obj.search(cr, uid, [('msfid', '=', family_msfid)], limit=1, context=context)
+        msfid = data.get('msfid', False)
+        if msfid:
+            nomen_ids = n_obj.search(cr, uid, [('msfid', '=', msfid)], limit=1, context=context)
             if nomen_ids:
                 data['family_id'] = nomen_ids[0]
             else:
                 raise osv.except_osv(_('Warning !'),
                                      _('Product category MSFID "%s" not found')
-                                     % (family_msfid))
+                                     % (msfid))
         else:
             raise osv.except_osv(_('Warning !'),
                                  _('Product category MSFID required'))
 
         paec_code = data.get('property_account_expense_categ', False)
         if paec_code:
+            if isinstance(paec_code, (str,unicode)):
+                re_res = re.findall(r'[0-9]+', paec_code)
+                if re_res:
+                    paec_code = re_res[0]
             paec_ids = aa_obj.search(cr, uid, [('code', '=', paec_code)], context=context)
             if paec_ids:
                 data['property_account_expense_categ'] = paec_ids[0]
@@ -95,6 +99,10 @@ class import_data(osv.osv_memory):
 
         paic_code = data.get('property_account_income_categ', False)
         if paic_code:
+            if isinstance(paic_code, (str,unicode)):
+                re_res = re.findall(r'[0-9]+', paic_code)
+                if re_res:
+                    paic_code = re_res[0]
             paic_ids = aa_obj.search(cr, uid, [('code', '=', paic_code)], context=context)
             if paic_ids:
                 data['property_account_income_categ'] = paic_ids[0]
@@ -107,6 +115,10 @@ class import_data(osv.osv_memory):
 
         dea_code = data.get('donation_expense_account', False)
         if dea_code:
+            if isinstance(dea_code, (str,unicode)):
+                re_res = re.findall(r'[0-9]+', dea_code)
+                if re_res:
+                    dea_code = re_res[0]
             dea_ids = aa_obj.search(cr, uid, [('code', '=', dea_code)], context=context)
             if dea_ids:
                 data['donation_expense_account'] = dea_ids[0]
