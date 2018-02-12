@@ -64263,11 +64263,6 @@ msgstr "Achat - Plans Analytiques "
 msgid "Fiscal Year to close"
 msgstr "Exercice comptable à Clôturer"
 
-#. module: register_accounting
-#: field:wizard.cash.return,display_invoice:0
-msgid "Display Invoice"
-msgstr "Afficher Facture"
-
 #. module: product
 #: field:product.template,type:0
 msgid "Product Type"
