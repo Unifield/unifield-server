@@ -1265,8 +1265,20 @@ class account_invoice(osv.osv):
             ids = self.search(cr, user, [('name',operator,name)] + args, limit=limit, context=context)
         return self.name_get(cr, user, ids, context)
 
-    def _refund_cleanup_lines(self, cr, uid, lines):
+    def _refund_cleanup_lines(self, cr, uid, lines, is_account_inv_line=False, context=None):
+        if context is None:
+            context = {}
+        account_obj = self.pool.get('account.account')
         for line in lines:
+            # in case of a refund cancel/modify, mark each SR line as reversal of the corresponding SI line IF it's an
+            # account.invoice.line with an account having the type Income or Expense (EXCLUDE Extra-accounting expenses)
+            if is_account_inv_line and context.get('refund_mode', '') in ['cancel', 'modify'] and line['account_id']:
+                account_id = type(line['account_id']) == tuple and line['account_id'][0] or line['account_id']
+                account = account_obj.browse(cr, uid, account_id,
+                                             fields_to_fetch=['user_type_code', 'user_type_report_type'], context=context)
+                if account.user_type_code == 'income' or \
+                        (account.user_type_code == 'expense' and account.user_type_report_type != 'none'):
+                    line['reversed_invoice_line_id'] = line['id']  # store a link to the original invoice line
             del line['id']
             del line['invoice_id']
             for field in ('company_id', 'partner_id', 'account_id', 'product_id',
@@ -1301,7 +1313,9 @@ class account_invoice(osv.osv):
             return False
         return data
 
-    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None):
+    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None, context=None):
+        if context is None:
+            context = {}
         invoices = self.read(cr, uid, ids, self._hook_fields_for_refund(cr, uid))
         obj_invoice_line = self.pool.get('account.invoice.line')
         obj_invoice_tax = self.pool.get('account.invoice.tax')
@@ -1318,10 +1332,10 @@ class account_invoice(osv.osv):
             }
 
             invoice_lines = obj_invoice_line.read(cr, uid, invoice['invoice_line'])
-            invoice_lines = self._refund_cleanup_lines(cr, uid, invoice_lines)
+            invoice_lines = self._refund_cleanup_lines(cr, uid, invoice_lines, is_account_inv_line=True, context=context)
 
             tax_lines = obj_invoice_tax.read(cr, uid, invoice['tax_line'])
-            tax_lines = self._refund_cleanup_lines(cr, uid, tax_lines)
+            tax_lines = self._refund_cleanup_lines(cr, uid, tax_lines, context=context)
             if journal_id:
                 refund_journal_ids = [journal_id]
             elif invoice['type'] == 'in_invoice':
