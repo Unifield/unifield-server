@@ -277,9 +277,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
         lines_to_confirm = []
         for wiz in self.browse(cr, uid, ids, context=context):
             for sol in wiz.line_ids:
-                if sol.order_id.procurement_request and wiz.po_cft == 'dpo':
-                    raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
-                lines_to_confirm.append(sol.id)
+                if sol.state in ['validated', 'validated_p']:
+                    if sol.order_id.procurement_request and wiz.po_cft == 'dpo':
+                        raise osv.except_osv(_('Error'), _('You cannot choose Direct Purchase Order as method to source Internal Request lines.'))
+                    lines_to_confirm.append(sol.id)
 
         line_obj.confirmLine(cr, uid, lines_to_confirm, context=context)
 

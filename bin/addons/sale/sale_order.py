@@ -152,14 +152,16 @@ class sale_order(osv.osv):
                 'amount_tax': 0.0,
                 'amount_total': 0.0,
             }
-            val = val1 = 0.0
-            cur = order.pricelist_id.currency_id
-            for line in order.order_line:
-                val1 += line.price_subtotal
-                val += self._amount_line_tax(cr, uid, line, context=context)
-            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, val)
-            res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, val1)
-            res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
+            if not order.procurement_request:
+                val = val1 = 0.0
+                cur = order.pricelist_id.currency_id
+                for line in order.order_line:
+                    if line.state not in ('cancel', 'cancel_r'):
+                        val1 += line.price_subtotal
+                        val += self._amount_line_tax(cr, uid, line, context=context)
+                res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, val)
+                res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, val1)
+                res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
         return res
 
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
@@ -261,8 +263,16 @@ class sale_order(osv.osv):
 
     def _get_order(self, cr, uid, ids, context=None):
         result = {}
-        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, context=context):
+        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context):
             result[line.order_id.id] = True
+        return result.keys()
+
+    def _get_order_state(self, cr, uid, ids, context=None):
+        # recompute FO amount total only if state switches to cancel(_r)
+        result = {}
+        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id', 'state'],context=context):
+            if line.state in ('cancel', 'cancel_r'):
+                result[line.order_id.id] = True
         return result.keys()
 
     def _check_browse_param(self, param, method):
@@ -535,19 +545,28 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
                                           store = {
             'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            'sale.order.line': [
+                (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+                (_get_order_state, ['state'], 10),
+            ]
         },
             multi='sums', help="The amount without tax."),
         'amount_tax': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Taxes',
                                       store = {
             'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            'sale.order.line': [
+                (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+                (_get_order_state, ['state'], 10),
+            ]
         },
             multi='sums', help="The tax amount."),
         'amount_total': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Total',
                                         store = {
             'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            'sale.order.line': [
+                (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+                (_get_order_state, ['state'], 10),
+            ]
         },
             multi='sums', help="The total amount."),
 
