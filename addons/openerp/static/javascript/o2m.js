@@ -63,9 +63,15 @@ var One2Many = function(name, inline) {
         'callback': $this.attr('callback'),
         'change_default': $this.attr('change_default')
     });
-    $list.bind('before-redisplay.o2m', function () {
-        onChange(name);
-    });
+
+    // If no "before-redisplay" binding already exist for this list,
+    // add one
+    if (!("events" in $list.data()) || !("before-redisplay" in $list.data().events))
+    {
+        $list.bind('before-redisplay.o2m', function () {
+            onChange(name);
+        });
+    }
 };
 
 One2Many.prototype = {
@@ -184,6 +190,7 @@ One2Many.prototype = {
     },
 
     setReadonly: function(readonly) {
+
         var btn=MochiKit.DOM.getElement(this.name+'_btn_');
         var grid=MochiKit.DOM.getElement(this.name+'_grid');
         var edit=MochiKit.DOM.getElement(this.name + '/_terp_editable');
@@ -191,18 +198,26 @@ One2Many.prototype = {
         if (readonly) {
             jQuery('table.one2many[id$="'+this.name+'"]').addClass('m2o_readonly');
             if(btn){btn.style.display='none';}
+            
             MochiKit.Base.map(function (el) {el.style.visibility='hidden';},MochiKit.Selector.findChildElements(grid,['.selector']));
             edit.value= 0;
-            if (rows && rows.length) {
-                rows.each(function(index, row) {
-                    jQuery(row).unbind('click');});
-            }
+
+            // Not disabling clicks on line dynamically (in browser) to be
+            // consistent with previous behaviors. In many cases (e.g. FO, SI,
+            // ...) we want o2m to be readonly (no New button) but the lines
+            // to be clickable anyway to see a popup with detailed about the 
+            // line, so this doesnt make sense disabling the click.
+            //if (rows && rows.length) {
+            //  rows.each(function(index, row) {
+            //  jQuery(row).unbind('click');});
+            //}
         }
         else{
             if(btn){btn.style.display='';}
             MochiKit.Base.map(function (el) {el.style.visibility='';},MochiKit.Selector.findChildElements(grid,['.selector']));
             edit.value = 1;
         }
+
     },
 
     save: function (id) {
@@ -252,7 +267,13 @@ One2Many.prototype = {
         });
         $frame.load(function() {
             $frame_content = $frame.contents();
-            $frame_content.find("[autofocus='autofocus']").focus();
+            if ($frame_content.find("[autofocus='autofocus']").lenght) {
+                // if a field have an autofocus attribute, set the focus on it
+                $frame_content.find("[autofocus='autofocus']").focus();
+            }
+            else {
+                $frame.focus();  // set the focus on the whole frame
+            }
         });
         var $form = jQuery('<form>', {
             method: 'POST',

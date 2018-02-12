@@ -91,8 +91,15 @@ setup(
     url=url,
     download_url=download_url,
     license=license,
-    python_requires = ">=2.7.13",
+    python_requires = ">=2.7.12",
     install_requires=[
+        "pypiwin32==219;platform_system=='Windows'",
+        "cheroot==6.0.0",
+        "MarkupSafe==1.0",
+        "more-itertools==4.0.1",
+        "portend==2.2",
+        "six==1.11.0",
+        "tempora==1.10",
         "CherryPy==10.2.1",
         "Mako==1.0.6",
         "Babel==2.4.0",
@@ -126,6 +133,7 @@ setup(
                 + find_data_files('addons/view_diagram')
                 + find_data_files('addons/view_graph')
                 + find_data_files('addons/widget_ckeditor')
+                + find_data_files('addons/sync_client_web')
                 + find_data_files('doc', patterns='')
                 + find_data_files('openobject', patterns=r'.+\.(cfg|css|js|mako|gif|png|jpg|ico)')
                 + find_data_files('revprox', patterns='')

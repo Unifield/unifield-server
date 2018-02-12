@@ -23,7 +23,6 @@
                 </table>
             </td>
         </tr>
-        
         <tr>
             <td>
                 <div class="footer_tool_box">
@@ -31,16 +30,16 @@
                         <tr>
                             % if form.screen.editable:
                                 <td class="save_close">
-                                    <button onclick="submit_form('save_and_close'); return false;" style="height: 20px;" class="button-a">${_("Save & Close")}</button>
+                                    <button onclick="submit_form('save_and_close'); return false;" style="height: 20px;" class="button-a oe_form_button_save_close">${_("Save & Close")}</button>
                                 </td>
                                 % if not params.hide_new_button:
                                 <td class="save_close">
-                                    <button onclick="submit_form('save'); return false;" style="height: 20px;" class="button-a">${_("Save & New")}</button>
+                                    <button onclick="submit_form('save'); return false;" style="height: 20px;" class="button-a oe_form_button_save_create">${_("Save & New")}</button>
                                 </td>
                                 % endif
                             % endif
                             <td class="save_close">
-                            	<button class="button-a" style="height: 20px;" onclick="jQuery.o2m('close'); return false;">${_("Cancel")}</button>
+                            	<button class="button-a oe_form_button_cancel" style="height: 20px;" onclick="jQuery.o2m('close'); return false;">${_("Cancel")}</button>
                             </td>
                             <td width="100%">
                             </td>

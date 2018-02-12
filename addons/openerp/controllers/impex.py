@@ -457,7 +457,7 @@ class ImpEx(SecuredController):
         tree.show_headers = False
         return dict(error=error, records=records, success=success,
                     model=params.model, source=params.source,
-                    tree=tree, fields=kw.get('fields', {}))
+                    tree=tree, fields=kw.get('fields', {}), ctx=ctx)
 
     @expose()
     def detect_data(self, csvfile, csvsep, csvdel, csvcode, csvskip, **kw):
@@ -566,7 +566,7 @@ class ImpEx(SecuredController):
                 **kw)
 
         datas = []
-        ctx = dict(rpc.session.context)
+        ctx = dict((params.context or {}), **rpc.session.context)
 
         if not isinstance(fields, list):
             fields = [fields]

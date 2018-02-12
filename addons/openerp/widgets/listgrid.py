@@ -40,7 +40,10 @@ class List(TinyWidget):
     template = "/openerp/widgets/templates/listgrid/listgrid.mako"
     params = ['name', 'data', 'columns', 'headers', 'model', 'selectable', 'editable', 'noteditable', 'resequencable',
               'pageable', 'selector', 'source', 'offset', 'limit', 'show_links', 'editors', 'view_mode',
-              'hiddens', 'edit_inline', 'field_total', 'field_real_total', 'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m', 'dashboard', 'impex', 'hide_new_button', 'hide_delete_button', 'hide_edit_button', 'notselectable']
+              'hiddens', 'edit_inline', 'field_total', 'field_real_total',
+              'link', 'checkbox_name', 'm2m', 'min_rows', 'string', 'o2m',
+              'dashboard', 'impex', 'hide_new_button', 'hide_delete_button',
+              'hide_edit_button', 'notselectable', 'filter_selector', 'button_attrs' ]
 
     member_widgets = ['pager', 'buttons', 'editors', 'concurrency_info']
 
@@ -102,6 +105,7 @@ class List(TinyWidget):
         self.concurrency_info = None
         self.selector = None
         self.force_readonly = kw.get('force_readonly', False)
+        self.filter_selector = kw.get('filter_selector', None)
 
         terp_params = getattr(cherrypy.request, 'terp_params', {})
         if terp_params:
@@ -124,6 +128,8 @@ class List(TinyWidget):
         root = dom.childNodes[0]
 
         attrs = node_attributes(root)
+
+        self.button_attrs = attrs.get('button_attrs', None)
 
         # Get the hide status of some buttons - by default buttons are shown
         self.hide_new_button = False
@@ -304,6 +310,7 @@ class List(TinyWidget):
         if self.pageable and len(self.data) > self.limit and self.limit != -1:
             self.data = self.data[self.offset:]
             self.data = self.data[:min(self.limit, len(self.data))]
+
 
     def do_sum(self, data, field):
         sum = 0.0
@@ -744,6 +751,14 @@ class Button(TinyInputWidget):
 
         self.width = attrs.get('width', 16)
 
+        self.header = attrs.get('header', False)
+
+
+    def params_header(self):
+
+        return dict(header=True,       \
+                    visible=self.header);
+
     def params_from(self, data):
 
         id = data.get('id')
@@ -757,7 +772,9 @@ class Button(TinyInputWidget):
                 state = ustr(state)
             visible = state in self.states
 
-        return dict(id=id, visible=visible)
+        return dict(header=False,  \
+                    id=id,         \
+                    visible=visible)
 
     def update_params(self, params):
         super(Button, self).update_params(params)

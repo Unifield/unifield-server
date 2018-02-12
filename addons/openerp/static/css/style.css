@@ -400,10 +400,13 @@ button.inactive {
     color: #999999;
 }
 
-*[disabled] {
+*[disabled="true"] {
     color: #999;
 }
 
+*[disabled="1"] {
+    color: #999;
+}
 .button-b[disabled], 
 .button-b[disabled]:hover {
 	background: none repeat scroll 0 0 #FFFFFF;

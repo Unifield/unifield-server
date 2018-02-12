@@ -351,7 +351,7 @@ register_widget(Label, ["label"])
 class Char(TinyInputWidget):
 
     template = "/openerp/widgets/form/templates/char.mako"
-    params = ['password', 'size']
+    params = ['password', 'size', 'readonly_before_state']
 
     def __init__(self, **attrs):
 
@@ -504,7 +504,7 @@ register_widget(ProgressBar, ["progressbar"])
 class Selection(TinyInputWidget):
     template = "/openerp/widgets/form/templates/selection.mako"
 
-    params = ['options', 'search_context', 'type2', 'operator']
+    params = ['options', 'search_context', 'type2', 'operator', 'readonly_before_state']
     options = []
     search_context = {}
 

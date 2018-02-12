@@ -1,7 +1,7 @@
 <%inherit file="/openerp/controllers/templates/base_dispatch.mako"/>
 
 <%def name="header()">
-    <link rel="stylesheet" type="text/css" href="/openerp/static/css/database.css"/>
+    <link rel="stylesheet" type="text/css" href="/openerp/static/css/database.css?v=7.0"/>
     <style type="text/css">
         .form-container {
             margin: 0 auto;

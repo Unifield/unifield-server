@@ -25,6 +25,15 @@
             /*
             % endif
             */
+            /*
+            % if auto_refresh :
+            */
+            setTimeout(function() {
+                location.reload();
+            }, ${auto_refresh}*1000);
+            /*
+            % endif
+            */
             setTimeout(function() {
                 jQuery('[autofocus="autofocus"]').focus();
             }, 10);
@@ -95,10 +104,10 @@
                     % endif
 
                     % if obj_process:
-	                    <a class="help" href="${py.url('/view_diagram/process', res_model=form.screen.model, title=form.screen.string, res_id=form.screen.id)}"
-	                       title="${_('Corporate Intelligence...')}">
-	                        <small>Help</small>
-	                    </a>
+                        <a class="help" href="${py.url('/view_diagram/process', res_model=form.screen.model, title=form.screen.string, res_id=form.screen.id)}"
+                           title="${_('Corporate Intelligence...')}">
+                            <small>Help</small>
+                        </a>
                     % endif
                     % if form.screen.view_type == 'form' and form.logs.logs:
                       <a id="show_server_logs" class="logs" href="javascript: void(0)"
@@ -115,37 +124,37 @@
                     <ul class="inline-b left w50">
                         % if buttons.new:
                         <li title="${_('Create a new resource')}">
-                            <a href="javascript: void(0);" onclick="editRecord(null)" class="button-a">${_("New")}</a>
+                            <a href="javascript: void(0);" onclick="editRecord(null)" class="button-a oe_form_button_create">${_("New")}</a>
                         </li>
                         % endif
                         % if buttons.edit:
                         <li title="${_('Edit this resource')}">
-                            <a href="javascript: void(0);" onclick="editRecord(${form.screen.id or 'null'})" class="button-a">${_("Edit")}</a>
+                            <a href="javascript: void(0);" onclick="editRecord(${form.screen.id or 'null'})" class="button-a oe_form_button_edit">${_("Edit")}</a>
                         </li>
                         % endif
                         % if buttons.save:
                         <li title="${_('Save this resource')}">
-                            <a href="javascript: void(0);" onclick="submit_form('save')" class="button-a">${_("Save")}</a>
+                            <a href="javascript: void(0);" onclick="submit_form('save')" class="button-a oe_form_button_save">${_("Save")}</a>
                         </li>
                         % endif
                         % if buttons.save and not form.screen.widget.hide_button_edit:
                         <li title="${_('Save & Edit this resource')}">
-                            <a href="javascript: void(0);" onclick="submit_form('save_and_edit')" class="button-a">${_("Save & Edit")}</a>
+                            <a href="javascript: void(0);" onclick="submit_form('save_and_edit')" class="button-a oe_form_button_save_edit">${_("Save & Edit")}</a>
                         </li>
                         % endif
                         % if buttons.edit and form.screen.view_type== 'form' and buttons.duplicate:
                         <li title="${_('Duplicate this resource')}">
-                            <a href="javascript: void(0);" onclick="submit_form('duplicate')" class="button-a">${_("Duplicate")}</a>
+                            <a href="javascript: void(0);" onclick="submit_form('duplicate')" class="button-a oe_form_button_duplicate">${_("Duplicate")}</a>
                         </li>
                         % endif
                         % if buttons.delete:
                         <li title="${_('Delete this resource')}">
-                            <a href="javascript: void(0);" onclick="submit_form('delete')" class="button-a">${_("Delete")}</a>
+                            <a href="javascript: void(0);" onclick="submit_form('delete')" class="button-a oe_form_button_delete">${_("Delete")}</a>
                         </li>
                         % endif
                         % if buttons.cancel:
                         <li title="${_('Cancel editing the current resource')}">
-                            <a href="javascript: void(0);" onclick="submit_form('cancel')" class="button-a">${_("Cancel")}</a>
+                            <a href="javascript: void(0);" onclick="submit_form('cancel')" class="button-a oe_form_button_cancel">${_("Cancel")}</a>
                         </li>
                         % endif
                         % if buttons.create_node:
@@ -166,6 +175,7 @@
                     % if buttons.pager:
                         ${pager.display()}
                     % endif
+
                 </div>
                 % endif
                 <div${ " class='non-editable'" if not form.screen.editable and form.screen.view_type == 'form' else "" | n }>${form.display()}</div>
@@ -209,6 +219,10 @@
                 $hide.click();
                 return false;
             })
+
+            % if tg_errors:
+            error_display(_("The form contains errors."));
+            % endif
         })
     </script>
 </%def>

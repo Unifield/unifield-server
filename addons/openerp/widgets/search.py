@@ -260,7 +260,7 @@ class Search(TinyInputWidget):
             for field_name, field in self.fields.iteritems()
             if field['type'] != 'binary'
             if field.get('selectable')
-            if not field.get('internal')
+            if not field.get('internal') or not expr_eval(field.get('internal'), ctx)
         ]
 
         if self.fields_list:
@@ -420,7 +420,7 @@ class Search(TinyInputWidget):
                                 elif model:
                                     try:
                                         value = rpc.name_get(model, default_search, self.context)
-                                    except Exception,e:
+                                    except Exception:
                                         value = defval
                                     defval = value or ''
 

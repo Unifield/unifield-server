@@ -254,6 +254,7 @@ class many2one(BaseValidator):
 class one2many(formencode.validators.FancyValidator):
 
     if_empty = []
+    accept_iterator = True
 
 
 # Let some FormEncode strings goes into message catalog.

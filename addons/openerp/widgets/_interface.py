@@ -133,7 +133,8 @@ class TinyInputWidget(TinyWidget, InputWidget):
         'onchange',
         'kind',
         'hide_default_menu',
-        'filters' # filter buttons within an input widget, part of the same implicit "group"
+        'filters', # filter buttons within an input widget, part of the same implicit "group"
+        'readonly_before_state'
     ]
 
     select = False
@@ -167,6 +168,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
 
         self.translatable = attrs.get('translate', False)
 
+        self.readonly_before_state = self.readonly
         self.set_state(attrs.get('state', 'draft'))
 
         self.callback = attrs.get('on_change', None)

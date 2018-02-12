@@ -273,7 +273,8 @@ class Form(SecuredController):
             tips = tips
 
         is_dashboard = form.screen.is_dashboard or False
-        return dict(form=form, pager=pager, buttons=buttons, path=self.path, can_shortcut=can_shortcut, shortcut_ids=shortcut_ids, display_name=display_name, title=title, tips=tips, obj_process=obj_process, is_dashboard=is_dashboard, sidebar_closed=params._terp_sidebar_closed, sidebar_open=params.sidebar_open)
+
+        return dict(form=form, pager=pager, buttons=buttons, path=self.path, can_shortcut=can_shortcut, shortcut_ids=shortcut_ids, display_name=display_name, title=title, tips=tips, obj_process=obj_process, is_dashboard=is_dashboard, sidebar_closed=params._terp_sidebar_closed, sidebar_open=params.sidebar_open, auto_refresh=params.auto_refresh, tg_errors=tg_errors)
 
     @expose('json', methods=('POST',))
     def close_or_disable_tips(self):

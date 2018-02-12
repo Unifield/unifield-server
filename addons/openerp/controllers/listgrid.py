@@ -342,19 +342,20 @@ class List(SecuredController):
         btype = params.button_type
         ctx = dict((params.context or {}), **rpc.session.context)
 
-        id = params.id
+        ids = params.id or []
+        if not isinstance(ids, list):
+            ids = [ids]
+
         model = params.model
 
-        id = (id or False) and int(id)
-        ids = (id or []) and [id]
         list_grid = params.list_grid or '_terp_list'
         try:
 
             if btype == 'workflow':
-                res = rpc.session.execute('object', 'exec_workflow', model, name, id)
+                res = rpc.session.execute('object', 'exec_workflow', model, name, ids)
                 if isinstance(res, dict):
                     import actions
-                    return actions.execute(res, ids=[id])
+                    return actions.execute(res, ids=ids)
                 else:
                     return dict(reload=True, list_grid=list_grid)
 
@@ -363,11 +364,12 @@ class List(SecuredController):
                 ctx.update(rpc.session.context.copy())
                 if list_grid != '_terp_list':
                     ctx['from_list_grid'] = list_grid
+
                 res = rpc.session.execute('object', 'execute', model, name, ids, ctx)
 
                 if isinstance(res, dict):
                     import actions
-                    return actions.execute(res, ids=[id])
+                    return actions.execute(res, ids=ids)
                 else:
                     return dict(reload=True, list_grid=list_grid)
 
@@ -381,7 +383,11 @@ class List(SecuredController):
                     cherrypy.session['wizard_parent_form'] = '/form'
                     cherrypy.session['wizard_parent_params'] = params
 
-                res = actions.execute_by_id(action_id, type=action_type, model=model, id=id, ids=ids, context=ctx or {})
+                # Only one ID used for now. To be adapted at some point if
+                # we need to support this kind of action on multiple ids at the
+                # same time.
+                id_ = ids[0] if ids else False
+                res = actions.execute_by_id(action_id, type=action_type, model=model, id=id_, ids=ids, context=ctx or {})
 
                 if res:
                     return res

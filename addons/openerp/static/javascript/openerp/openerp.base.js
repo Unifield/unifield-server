@@ -153,6 +153,10 @@ function doLoadingSuccess(app, url) {
                 if (parsed.reload) {
                     if (parsed.list_grid) {
                         new ListView(parsed.list_grid).reload();
+                        var o2mlist = openobject.dom.get('_o2m_' + parsed.list_grid);
+                        if (o2mlist) {
+                            onChange(o2mlist);
+                        }
                     } else {
                         window.location.reload();
                     }
@@ -174,6 +178,7 @@ function doLoadingSuccess(app, url) {
         }
         form_hookStateChange();
         form_hookAttrChange();
+        $("[onload]").trigger('onload');
     };
 }
 
@@ -187,13 +192,14 @@ function openAction(action_url, target, terp_id, keep_open) {
     var $dialogs = jQuery('.action-dialog');
     switch(target) {
         case 'new':
-            jQuery.frame_dialog({
+            $frame = jQuery.frame_dialog({
                 src: action_url,
                 'class': 'action-dialog'
             }, null, {
                 width: '90%',
                 height: '95%'
             });
+            $frame.focus();
             if (terp_id && !$dialogs.length) {
                 if (jQuery('#_terp_id').val() == 'False') {
                     // we are opening an action on an unsaved record,
@@ -216,11 +222,6 @@ function openAction(action_url, target, terp_id, keep_open) {
                 // 'terp_id' is related to the model from that dialog, not the
                 // base model
             	window.top.editRecord(terp_id);
-            }
-            else {
-                // no terp_id specified, or within a dialog: simply reload the
-                // current view on base model
-                jQuery("#view-selector .active").click();
             }
             break;
         case 'iframe':

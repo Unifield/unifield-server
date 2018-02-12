@@ -2368,3 +2368,23 @@ img.no_image {
 #toggle-fullscreen-mode.closed {
     background: url("../images/stock/gtk-leave-fullscreen.png") no-repeat scroll 0 0 transparent;
 }
+
+#communication_banner {
+    font-weight: bold;
+    font-size: 1.2em;
+    height: 2em;
+    text-align: center;
+    background: rgb(255, 165, 0);
+    background: rgba(255, 165, 0, .6);
+    white-space: pre-line;
+}
+
+#shortcut_message {
+    font-weight: bold;
+    font-size: 1.2em;
+    height: 2em;
+    text-align: center;
+    background: rgb(184, 222, 130);
+    background: rgba(184, 222, 130, .6);
+    white-space: pre-line;
+}

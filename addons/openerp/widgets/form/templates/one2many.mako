@@ -9,7 +9,7 @@
         o2m_css_class = 'o2m_box'
 %>
 <table border="0" id="_o2m_${name}" width="100%" class="one2many ${o2m_css_class}" detail="${(screen.view_type == 'tree' or 0) and len(screen.widget.editors)}"
-        ${py.attrs(attrs)}>
+        ${py.attrs(attrs, fld_readonly=1 if readonly_before_state else 0)}>
     % if screen.editable and not readonly and view_type == 'form':
     <tr>
         <td class="o2m_cell">
@@ -18,7 +18,7 @@
 	               	<td class="pagerbar-cell" align="left" width="${pager_width}">
 	               		<div class="pagerbar-header">
 	               			<strong>${screen.string}</strong>
-	               			<a class="button-a" href="javascript: void(0)" title="${_('Create new record...')}" onclick="new One2Many('${name}', ${(screen.view_type == 'tree' or 0) and len(screen.widget.editors)}).create(); return false;">${_('New')}</a>
+	               			<a class="button-a oe_form_button_create" href="javascript: void(0)" title="${_('Create new record...')}" onclick="new One2Many('${name}', ${(screen.view_type == 'tree' or 0) and len(screen.widget.editors)}).create(); return false;">${_('New')}</a>
 	               			%if id:
 	               				<a class="button-a" href="javascript: void(0);" title="${_('Delete record...')}" onclick="new One2Many('${name}', ${(screen.view_type == 'tree' or 0) and len(screen.widget.editors)}).remove(${id}); return false;">${_("Delete")}</a>
 	               			%endif
@@ -58,6 +58,7 @@
         <td class="o2m_cell">
             <input type="hidden" name="${name}/__id" id="${name}/__id" value="${id}" ${py.disabled(screen.view_type!="form")}/>
             <input type="hidden" name="${name}/_terp_default_get_ctx" id="${name}/_terp_default_get_ctx" value="${default_get_ctx}"/>
+            <input type="hidden" name="${name}/_terp_previously_selected" id="${name}/_terp_previously_selected" />
             % if default_value:
             	<input type="hidden" name="_terp_default_o2m/${name}" id="_terp_default_o2m/${name}" value="${default_value}"/>
             %endif

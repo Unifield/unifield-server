@@ -88,9 +88,7 @@
         function do_import_cmp(){
             do_pre_submit()
             jQuery('#view_form').attr({
-                'action': openobject.http.getURL('/openerp/impex/exp', {
-                    'import_compat': jQuery('#import_compat').val()
-                })
+                'action': openobject.http.getURL('/openerp/impex/exp')
             }).submit();
         }
 
@@ -288,7 +286,7 @@
                 <table width="100%">
                     <tr>
                         <td class="imp-header" align="right">
-                            <a class="button-a" href="javascript: void(0)" onclick="window.frameElement.close()">${_("Cancel")}</a>
+                            <a class="button-a oe_form_button_cancel" href="javascript: void(0)" onclick="window.frameElement.close()">${_("Cancel")}</a>
                             <a class="button-a" href="javascript: void(0)" onclick="do_export('view_form')">${_("Export to File")}</a>
                         </td>
                         <td width="5%"></td>

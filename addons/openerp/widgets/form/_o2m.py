@@ -18,13 +18,12 @@
 #  You can see the MPL licence at: http://www.mozilla.org/MPL/MPL-1.1.html
 #
 ###############################################################################
-import time
-import copy
 import cherrypy
 
 from openerp.utils import TinyDict, expr_eval, rpc, node_attributes
 from openerp.widgets import TinyInputWidget, register_widget
 from openerp.widgets.screen import Screen
+from openerp.validators import one2many
 import xml.dom.minidom
 
 
@@ -83,7 +82,7 @@ class O2M(TinyInputWidget):
     template = "/openerp/widgets/form/templates/one2many.mako"
     params = ['id', 'parent_id', 'new_attrs', 'pager_info', 'switch_to',
               'default_get_ctx', 'source', 'view_type', 'default_value',
-              'edition']
+              'edition', 'readonly_before_state']
     member_widgets = ['screen']
 
     form = None
@@ -141,12 +140,34 @@ class O2M(TinyInputWidget):
         if view_type == view_mode[-1]: self.switch_to = view_mode[0]
 
         ids = attrs.get('value') or []
+
         if not isinstance(ids, list):
             ids = [ids]
 
         current.offset = current.offset or 0
         current.limit = current.limit or 50
-        current.count = len(ids or [])
+
+
+        self.filter_selector = attrs.get('filter_selector', None)
+        if self.filter_selector:
+            self.filter_selector = eval(self.filter_selector)
+
+            # If we have a filter selector, and no domain yet, use the first
+            # filter as default
+            if current.domain == None:
+                # Expect filter_selector to be a non-empty list
+                # of (name, domain)
+                assert len(self.filter_selector) > 0
+                assert len(self.filter_selector[0]) == 2
+                default_domain = self.filter_selector[0][1]
+                current.domain = [default_domain]
+
+
+        if not current.domain:
+            current.count = len(ids or [])
+        else:
+            domain = current.domain + [('id', 'in', ids)]
+            current.count = rpc.RPCProxy(self.model).search_count(domain, current.context)
 
         if not current.force_limit:
             arch = attrs.get('views', {}).get('tree', {}).get('arch')
@@ -156,7 +177,7 @@ class O2M(TinyInputWidget):
                 if tree_attribute.get('limit'):
                     current.limit = tree_attribute.get('limit')
 
-        if current.limit != -1 and not params.sort_key:
+        if current.limit != -1 and not params.sort_key and not current.domain:
             ids = ids[current.offset: current.offset+current.limit]
 
         if ids:
@@ -169,23 +190,30 @@ class O2M(TinyInputWidget):
                 ids = []
             elif isinstance(ids[0], tuple):
                 [current_id[1] for current_id in ids]
-        
+
         id = (ids or None) and ids[0]
-        
-        if self.name == self.source or self.name == params.source:
-            if params.sort_key and ids:
-                domain = current.domain or []
-                domain.append(('id', 'in', ids))
+
+        if self.name == self.source or self.name == params.source or current.domain:
+            if (params.sort_key or current.domain) and ids:
+                domain = (current.domain or []) + [('id', 'in', ids)]
+
                 limit = current.limit
                 if current.limit == -1:
                     limit = 0
-                ids = rpc.RPCProxy(self.model).search(domain, current.offset, limit, params.sort_key + ' '+params.sort_order+',id', current.context)
-                id = ids[0]
+
+                if params.sort_key:
+                    sort_key_order = params.sort_key + ' '+params.sort_order+',id'
+                else:
+                    sort_key_order = False
+
+                ids = rpc.RPCProxy(self.model).search(domain, current.offset, limit, sort_key_order, current.context)
+                id = ids[0] if ids else None
+
         if current and params.source and isinstance(params.source, basestring) and self.name in params.source.split('/'):
             id = current.id
 
         id = id or None
-                
+
         current.model = self.model
         current.id = id
         current.ids = ids
@@ -229,11 +257,17 @@ class O2M(TinyInputWidget):
         if self.view_type == 'tree' and pparams:
             self.editable = bool(pparams.id)
 
+        selectable = int(attrs.get("o2m_selectable", 0))
+
+        if selectable:
+            self.validator = one2many
+
         self.screen = Screen(current, prefix=self.name, views_preloaded=view,
                              editable=self.editable, readonly=self.readonly,
-                             selectable=0, nolinks=self.link, _o2m=1,
-                             force_readonly=self.force_readonly)
-        
+                             selectable=selectable, nolinks=self.link, _o2m=1,
+                             force_readonly=self.force_readonly,
+                             filter_selector=self.filter_selector)
+
         self.id = id
         self.ids = ids
 

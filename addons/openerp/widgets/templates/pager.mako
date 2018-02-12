@@ -4,12 +4,12 @@
 <div class="pager">
     <p id="_${name+str(pager_id)}_link_span" class="paging">
         % if prev:
-        <a href="#first" action="first" relation="${name}" onclick="validate_action(this, pager_action); return false;">
+        <a href="#first" class="oe_button_pager" action="first" relation="${name}" onclick="validate_action(this, pager_action); return false;">
         % endif
         <span class="first nav${' ' if prev else ' inactive'}">${_("<< First")}</span>
         % if prev:
         </a>
-        <a href="#previous" action="previous" relation="${name}" onclick="validate_action(this, pager_action); return false;">
+        <a href="#previous" class="oe_button_pager" action="previous" relation="${name}" onclick="validate_action(this, pager_action); return false;">
         % endif
         <span class="prev nav${' ' if prev else ' inactive'}">${_("< Previous")}</span>
         % if prev:
@@ -19,14 +19,14 @@
             ${page_info} ${_('of')} ${approximation and '~' or ''}${count}
         </span>
         % if next:
-        <a href="#next" action="next" relation="${name}" onclick="validate_action(this, pager_action); return false;">
+        <a href="#next" class="oe_button_pager" action="next" relation="${name}" onclick="validate_action(this, pager_action); return false;">
         % endif
         <span class="next nav${' ' if next else ' inactive'}">${_("Next >")}</span>
         % if next:
         </a>
         % endif
         % if next and not approximation:
-        <a href="#last" action="last" relation="${name}" onclick="validate_action(this, pager_action); return false;">
+        <a href="#last" class="oe_button_pager" action="last" relation="${name}" onclick="validate_action(this, pager_action); return false;">
         % endif
         % if not approximation:
         <span class="last nav ${' ' if next else ' inactive'}">${_("Last >>")}</span>

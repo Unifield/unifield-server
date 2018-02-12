@@ -35,7 +35,7 @@
             % endfor
             <td class="grid-cell selector" style="text-align: center; padding: 0;">
                 <img alt="save record" src="/openerp/static/images/listgrid/save_inline.gif"
-                    class="listImage editors" border="0" title="${_('Update')}"
+                    class="listImage editors oe_form_button_save_line" border="0" title="${_('Update')}"
                     onclick="${object}.save(${(data and data['id']) or 'null'})"/>
             </td>
         </tr>
@@ -51,15 +51,15 @@
     %>
     % if editors:
         <tr class="grid-row inline_editors ${row_class} ${data['id'] and data['id'] in noteditable and 'noteditable' or ''}" record="${data['id']}"
-        % if data['id'] in notselectable: 
-            notselectable=1 
-        % endif 
+        % if data['id'] in notselectable:
+            notselectable=1
+        % endif
         >
     % else:
-        <tr class="grid-row ${row_class}" record="${data['id']}" 
-        % if data['id'] in notselectable: 
-            notselectable=1 
-        % endif 
+        <tr class="grid-row ${row_class}" record="${data['id']}"
+        % if data['id'] in notselectable:
+            notselectable=1
+        % endif
         >
     % endif
     % if selector:
@@ -168,13 +168,16 @@
                                         % elif o2m:
                                            % if not hide_new_button:
                                             <button title="${_('Create new record.')}" id="${name}_btn_"
-                                                onclick="listgridValidation('${name}', '${o2m or 0}', -1); return false;" type="button">
+                                                % if button_attrs:
+                                                attrs="${button_attrs}"
+                                                % endif
+                                                onclick="listgridValidation('${name}', '${o2m or 0}', -1); return false;" type="button" class="oe_form_button_create">
                                                     ${_('New')}
                                             </button>
                                            % endif
                                         % else:
                                             % if not dashboard and not hide_new_button:
-                                                <button id="${name}_new" title="${_('Create new record.')}" type="button">${_('New')}</button>
+                                                <button id="${name}_new" title="${_('Create new record.')}" class="oe_form_button_create" type="button">${_('New')}</button>
                                                 % if editors:
                                                     <script type="text/javascript">
                                                         jQuery('[id=${name}_new]').click(function() {
@@ -215,6 +218,19 @@
                                         % endif
                                     </td>
                                 % endif
+                                % if filter_selector:
+                                <td class="pager-cell" style="width: 90%">
+                                    <div class="pager">
+                                         <select id="${name}_filter" 
+                                                class="paging ignore_changes_when_leaving_page" 
+                                                onchange="new ListView('${name}').update_filter()" 
+                                                onload="new ListView('${name}').update_filter()">
+                                    </div>
+                                    % for filtername, domain in filter_selector:
+                                        <option domain="${domain}">${filtername}</option>
+                                    % endfor
+                                </td>
+                                % endif 
                                 <td class="pager-cell" style="width: 90%">
                                     ${pager.display()}
                                 </td>
@@ -243,7 +259,13 @@
                                 % endif
                                 % for (field, field_attrs) in headers:
                                     % if field == 'button':
-                                        <th class="grid-cell"><div style="width: 0;"></div></th>
+                                        % if selector:
+                                            <th class="grid-cell">
+                                                ${buttons[field_attrs-1].display(parent_grid=name, **buttons[field_attrs-1].params_header())}
+                                            </th>
+                                        % else:
+                                            <th class="grid-cell"><div style="width: 0;"></div></th>
+                                        % endif
                                     % elif (field_attrs.get('function') and not field_attrs.get('store') and not field_attrs.get('allow_sort')) or field_attrs.get('not_sortable'):
                                         <th id="grid-data-column/${(name != '_terp_list' or None) and (name + '/')}${field}" class="grid-cell ${field_attrs.get('type', 'char')}" kind="${field_attrs.get('type', 'char')}">${field_attrs['string']}</th>
                                     % else:
@@ -362,6 +384,11 @@
                            jQuery('table[id=${name}_grid] tr.grid-row').each(function(index, row) {
                                if (! jQuery(row).hasClass('noteditable')) {
                                jQuery(row).click(function(event) {
+                                   if (jQuery('table[id=${name}]').hasClass("readonlyfield")
+                                   &&  jQuery(row).hasClass("inline_editors"))
+                                   {
+                                       return;
+                                   }
                                    if (!jQuery(event.target).is(':input, img, option, a.listImage-container, td.m2o_coplition')) {
                                        var record_id = parseInt(jQuery(row).attr('record'), 10) || -1;
                                        listgridValidation('${name}','${o2m or 0}', record_id);

@@ -281,6 +281,30 @@ MochiKit.Base.update(ListView.prototype, {
 
 // pagination & reordering
 MochiKit.Base.update(ListView.prototype, {
+    
+    update_filter: function() {
+
+        var filter = $(openobject.dom.get(this.name + '_filter'))[0];
+        var selected_filter_index = filter.selectedIndex;
+        var selected_filter_domain = filter[selected_filter_index].getAttribute("domain");
+        var terp_domains = openobject.dom.get(this.name + '/_terp_domain');
+
+        // TODO : in the future, if needed, properly add the domain to the
+        // existing domain list to be able to support multiple filters ?
+        var new_domains = "["+selected_filter_domain+"]";
+
+        // If we don't need to update anything, return immediately...
+        if (new_domains == terp_domains.value)
+        {
+            return;
+        }
+        
+        terp_domains.value = "["+selected_filter_domain+"]";
+
+        if(this.ids.length) {
+            this.reload();
+        }
+    },
 
     sort_by_order: function(column, field) {
         var $img = jQuery(field).find('img');
@@ -583,6 +607,21 @@ MochiKit.Base.update(ListView.prototype, {
     onButtonClick: function(name, btype, id, sure, context) {
         if (sure && !confirm(sure)) {
             return;
+        }
+
+        // If id is not a number, we have an Array() of selected values
+        if (typeof id !== "number")
+        {
+            if (id.length > 0)
+            { 
+                id ="["+ id.join() + "]" 
+            }
+            // Ignore click if no id is given (e.g. we clicked on the button
+            // in header but did not select any line)
+            else
+            {
+                return;
+            }
         }
 
         var self = this;
@@ -970,6 +1009,8 @@ MochiKit.Base.update(ListView.prototype, {
                     // Without that the tag '<div class="box-a list-a">' would be duplicated each time
                     $list.parent().parent().replaceWith(obj.view);
 
+                    form_hookAttrChange($(idSelector(self.name)).find("[attrs]"));
+
                     if (previous_not_editable) {
                         //console.log('Set readonly');
                         new One2Many(self.name).setReadonly(true);
@@ -1048,6 +1089,21 @@ MochiKit.Base.update(ListView.prototype, {
                                 : 'arrow_up.gif'
                             )}));
                 }
+
+
+                var filter = $(openobject.dom.get(self.name + '_filter'))[0];
+                var terp_domains = openobject.dom.get(self.name + '/_terp_domain');
+                if ((filter) && (terp_domains.value))
+                {
+                    $(filter).find('option').each(function(index, element) {
+                        if ("["+element.getAttribute('domain')+"]" == terp_domains.value)
+                        {
+                            filter.selectedIndex = index;
+                        }
+                    })
+                }
+
+
                 updateConcurrencyInfo(obj.concurrency_info || {});
             }
         });
@@ -1079,7 +1135,7 @@ MochiKit.Base.update(ListView.prototype, {
         // (US-1290) JI and JE export: always exclude Initial Balance entries
         var domain = openobject.dom.get('_terp_search_domain').value;
         if(this.model == 'account.move.line' || this.model == 'account.move') {
-            if(domain != "None") {
+            if(domain != '[]' && domain.startsWith('[')) {
                 domain = domain.substring(0, domain.length-1);  // remove the last "]"
                 domain += ", ('period_id.number', '>', 0), ]";
             }
@@ -1101,7 +1157,7 @@ MochiKit.Base.update(ListView.prototype, {
         }, null, {
             height: '98%',
             max_height: 600
-        });
+        }).focus();
     },
 
     importData: function() {
@@ -1115,7 +1171,7 @@ MochiKit.Base.update(ListView.prototype, {
             height: '98%',
             max_height: 550,
             width: '95%'
-        });
+        }).focus();
     }
 });
 

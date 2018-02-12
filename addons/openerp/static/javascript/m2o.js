@@ -358,7 +358,7 @@ ManyToOne.prototype.on_keydown = function(evt) {
     }
 
     // F2
-    if(evt.which == 113 || (evt.which == 13 && !this.text.value && !jQuery(this.text).hasClass('listfields'))) {
+    if(evt.which == 113 || (evt.which == 13 && !this.text.value)) {
         this.select(evt);
         evt.stopPropagation();
         evt.preventDefault();
@@ -606,7 +606,7 @@ ManyToOne.prototype.getOnclick = function(evt) {
         } else {
             url = '/openerp/search/new';
         }
-        return $.frame_dialog({
+        var $frame = $.frame_dialog({
                 src: openobject.http.getURL(url, options)
             }, {
                 'source-window': $this[0],
@@ -616,6 +616,8 @@ ManyToOne.prototype.getOnclick = function(evt) {
                 max_width: 1200,
                 height: '95%'
             });
+        $frame.focus();
+        return $frame;
     }
 
     /**
@@ -681,7 +683,7 @@ ManyToOne.prototype.getOnclick = function(evt) {
         if(arguments[0] === "close") {
             return close($this, arguments[1]);
         } else {
-            return open($this, arguments[0]);
+            return open($this, arguments[0]).focus();
         }
     };
 })(jQuery);

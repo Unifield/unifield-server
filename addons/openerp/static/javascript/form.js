@@ -97,6 +97,27 @@ function openRecord(id, src, target, readonly){
 
     var prefix = src && src != '_terp_list' ? src + '/' : '';
 
+    // Here we do a sanity check that there aren't multiple element with
+    // the same id 'prefix/_terp_model'
+    // If this is the case, we introduce some delay (call back the same
+    // function later)
+    //
+    // This can happen in some asynchronous edge-case where the DOM is not 
+    // fully loaded yet and in particular there's a remaining element with 
+    // _terp_model =  ir.ui.menu
+    // which might trigger the opening of a completely unrealted view
+    //
+    // You might reproduce the issue by monitoring the value of
+    //    openobject.dom.get(prefix + '_terp_model').value
+    // when loading for instance the list of Commitment Vouchers
+    //
+    // See https://jira.unifield.org/browse/US-3589
+    //
+    if ($("[id="+prefix+"_terp_model]").length > 1) {
+        callLater(0.1, openRecord, id, src, target, readonly);
+        return;
+    }
+
     var args = {
         'model': openobject.dom.get(prefix + '_terp_model').value,
         'id': id || 'False',
@@ -162,14 +183,9 @@ function editSelectedRecord(){
 }
 
 function switchView(view_type, src){
-	if (view_type=='diagram' && !jQuery('#_terp_ids').val()) {
+    if (view_type=='diagram' && !jQuery('#_terp_ids').val()) {
     	alert('There are no records to display diagram view.')
     	return;
-    }
-
-    var args = {
-        '_terp_source': src,
-        '_terp_source_view_type': view_type
     }
 
     if (openobject.dom.get('_terp_list')) {
@@ -178,9 +194,10 @@ function switchView(view_type, src){
             openobject.dom.get('_terp_id').value = ids[0];
         }
     }
+
     submit_form(get_form_action('switch', {
-        '_terp_source': src,
-        '_terp_source_view_type': view_type
+            '_terp_source': src,
+            '_terp_source_view_type': view_type
     }));
 }
 
@@ -259,11 +276,11 @@ function validate_binary_size(form){
 }
 
 
-function error_display(msg) {
+function error_display(msg, title='Warning Message') {
     var error = jQuery("<table>",{'width': '100%', 'height': '100%'}
                 ).append(
                     jQuery("<tr>").append(
-                        jQuery("<td>", {'colspan': 2, 'class': 'error_message_header'}).text(_('Warning Message'))
+                        jQuery("<td>", {'colspan': 2, 'class': 'error_message_header'}).text(_(title))
                     ),
                     jQuery("<tr>").append(
                         jQuery("<td>", {'css': 'padding: 4px 2px;'}).append(
@@ -279,7 +296,13 @@ function error_display(msg) {
                             .text('OK')
                         )
                 ));
-    window.top.jQuery.fancybox(error, {scrolling: 'no'});
+    error.find('.button-a').focus()
+    window.top.jQuery.fancybox(error, {
+        scrolling: 'no',
+        onComplete: function () {
+            $(this).find(".button-a").focus()
+        }
+    });
 }
 
 function get_sidebar_status(args, noterp) {
@@ -574,14 +597,76 @@ function getFormParams(name){
     return frm;
 }
 
+
+
+//
+// The onChange / onChangePop is triggered by some elements when their content
+// changes. It will trigger the python function defined in the "callback"
+// attribute (e.g. callback="order_line_change") on the server's side
+// (e.g. the function order_line_change in sale/sale_order.py)
+//
+// N.B. : in the HTML, the "callback" attribute actually corresponds to the
+// "on_change" attribute in the XML view.
+//
+// Since many onChange events can be triggered at the same time and/or during 
+// an AJAX request, onChange will add item to a set of element to be updated.
+// Then onChangePop will be called regularly until there's no ongoing AJAX
+// request.
+//
+// The choice of the data structure for onChangeQueue (i.e. Set()) was motivated
+// to :
+// - guarantee uniqueness of elements in the queue (e.g. avoid updating the same
+// object hundreds of time in a row !)
+// - at the time of writing this, there does not seem to be any constrain on
+// the queue being ordered/unordered
+//
+
+var onChangeQueue = new Set();
+
 function onChange(caller){
-    if (openobject.http.AJAX_COUNT > 0) {
-        callLater(1, onChange, caller);
+
+    // Do not register multiple pending onChange call for the same object...
+    if (onChangeQueue.has(caller))
+    {
         return;
     }
 
+    // Register a pending call
+    onChangeQueue.add(caller);
+
+    // Apply the call when possible
+    onChangePop(caller);
+
+}
+
+function onChangePop(caller){
+
+    if (openobject.http.AJAX_COUNT > 0) {
+        // Delay the call
+        callLater(1, onChangePop, caller);
+        return;
+    }
+    
+    onChangeQueue.delete(caller);
+    
     var $caller = jQuery(openobject.dom.get(caller));
     var $form = $caller.closest('form');
+
+    // From http://bazaar.launchpad.net/~openerp-dev/openobject-client-web/6.0-opw-4079-cpa/revision/4726
+    // Running onChange on a one2many with a lines being currently edited
+    // triggers some issue. To fix that, simply save/remove the line before
+    // continuing 
+    if (($('tr.editors').length) && (!$caller.closest('tr.editors').length)) 
+    {
+        var edit_line_id = $('tr.editors').attr('record');
+        if(edit_line_id != "-1"){
+            o2m_id = $('tr.editors').closest('.gridview').attr('id');
+            new One2Many(o2m_id).save(edit_line_id);
+        }
+        $('tr.editors').remove();
+    }
+
+
     var callback = $caller.attr('callback');
     var change_default = $caller.attr('change_default');
 
@@ -832,6 +917,32 @@ function onChange(caller){
                             }
                         }
                         break;
+                    case 'char':
+
+                        fld.value = value;
+                        fld.setAttribute("value",value);
+
+                        // In 'Edit' mode, this is a <select> 
+                        if (fld.nodeName == "SELECT")
+                        {
+                            $(fld).val(value)
+                        }
+                        // In 'Read' mode, this is a <span>
+                        else
+                        {
+
+                            if ((obj['display_strings']) 
+                            &&  (obj['display_strings'][k]) 
+                            &&  (obj['display_strings'][k][value]))
+                            {
+                                fld.innerHTML = obj['display_strings'][k][value];
+                            }
+                            else
+                            {
+                                fld.innerHTML = value;
+                            }
+                        }
+                        break;
                     default:
                     // do nothing on default
                 }
@@ -938,7 +1049,18 @@ function eval_domain_context_request(options){
         }
 
         if (obj.error) {
-            return error_popup(obj.error)
+            // 'TinyForm' error case : obj.error is a string
+            if (obj.error_field) {
+                // Retrieve the label associated to the label and display the
+                // error
+                var error_field_label = $('label[for="'+obj.error_field+'"]').text().trim()
+                return error_display(error_field_label+" : "+obj.error);
+            }
+            // General exception case (no obj.error_field given)
+            // obj.error is a full HTML page (and error_popup will display it)
+            else {
+                return error_popup(obj); 
+            }
         }
 
         return obj;
@@ -1320,9 +1442,8 @@ function removeAttachment() {
         dataType: 'json',
         success: function(obj) {
             if(obj.error) {
-                error_popup(obj.error);
+                error_display(obj.error);
             }
-
             $attachment_line.remove();
         }
     });
@@ -1491,8 +1612,22 @@ function toggle_shortcut(){
 }
 
 
+// This function is triggered when a change occurs in a form. If some info
+// changed, it will set a flag 'is_form_changed' to true, such that later,
+// if user attempts to leave the page with unsaved changes, it will warn/ask
+// the user about them. (c.f. validate_action)
 function validateForm(){
     jQuery('#view_form table tr td:first').find('input:not([type=hidden]), select').change(function(e, automatic){
+
+        // Ignore some items
+        // (e.g. paging filters like the 'Show/hide cancel' selector for 
+        // order lines)
+        var eClassList = e.currentTarget.classList;
+        if (eClassList.contains("ignore_changes_when_leaving_page")
+        ||  eClassList.contains("readonlyfield"))
+        {
+            return;
+        }
         if (!automatic) {
             jQuery('#view_form').data('is_form_changed', true);
         }

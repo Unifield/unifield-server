@@ -31,7 +31,8 @@ class M2OLabel(InputWidgetLabel):
 
 class M2O(TinyInputWidget):
     template = "/openerp/widgets/form/templates/many2one.mako"
-    params=['relation', 'text', 'domain', 'context', 'link', 'readonly', 'default_focus']
+    params=['relation', 'text', 'domain', 'context', 'link', 'readonly',
+            'default_focus', 'readonly_before_state']
 
     domain = []
     context = {}

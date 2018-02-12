@@ -39,3 +39,22 @@ table.tooltip .tipExtra {
     font-size: 12px;
 }
 
+
+.shortcut_tooltip {
+    padding: 4px;
+    text-align: center;
+    font-family: sans-serif;
+    font-size: 11px;
+    color: #666666;
+    z-index: 1000;
+    border-radius: 6px;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    background: #FCF9A7;
+    border: 1px solid #999;
+    max-width: 500px;
+    opacity: 1;
+    -webkit-transition: opacity 1000ms linear;
+    transition: opacity 1000ms linear;
+    font-weight: bold;
+}

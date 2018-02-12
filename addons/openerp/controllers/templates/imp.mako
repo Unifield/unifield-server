@@ -4,7 +4,7 @@
     <title>Import Data</title>
 
     <link rel="stylesheet" type="text/css" href="/openerp/static/css/impex.css"/>
-    <link rel="stylesheet" type="text/css" href="/openerp/static/css/database.css"/>
+    <link rel="stylesheet" type="text/css" href="/openerp/static/css/database.css?v=7.0"/>
 
     <script type="text/javascript">
         function import_results(detection) {
@@ -71,6 +71,7 @@
     <input type="hidden" id="_terp_model" name="_terp_model" value="${model}"/>
     <input type="hidden" id="_terp_ids" name="_terp_ids" value="[]"/>
     <input type="hidden" id="_terp_fields2" name="_terp_fields2" value="[]"/>
+    <input type="hidden" id="_terp_context" name="_terp_context" value="${ctx}"/>
 
     <table class="view" cellspacing="5" border="0" width="100%">
         <tr>
@@ -202,7 +203,7 @@
                 <table width="100%">
                     <tr>
                         <td class="imp-header" align="left">
-                            <a class="button-a" href="javascript: void(0)" onclick="window.frameElement.close()">${_("Close")}</a>
+                            <a class="button-a oe_form_button_cancel" href="javascript: void(0)" onclick="window.frameElement.close()">${_("Close")}</a>
                             <a class="button-a" href="javascript: void(0)" onclick="do_import();">${_("Import File")}</a>
                         </td>
                         <td width="5%"></td>

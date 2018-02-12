@@ -156,6 +156,23 @@ Many2Many.prototype = {
         $field.add(this.text)
                 .attr('readOnly', readonly)
                 .toggleClass('readonlyfield', readonly);
+
+        var btn=MochiKit.DOM.getElement(this.name+'_add_records');
+        var grid=MochiKit.DOM.getElement(this.name+'_grid');
+        var edit=MochiKit.DOM.getElement(this.name + '/_terp_editable');
+        var rows = jQuery('table[id='+this.name+'_grid] tr.grid-row');
+        if (readonly)
+        {
+            MochiKit.Base.map(function (el) {el.style.visibility='hidden';},MochiKit.Selector.findChildElements(grid,['.selector']));
+            if(btn){btn.style.display='none';}
+            edit.value= 0;
+        }
+        else
+        {
+            if(btn){btn.style.display='';}
+            MochiKit.Base.map(function (el) {el.style.visibility='';},MochiKit.Selector.findChildElements(grid,['.selector']));
+            edit.value = 1;
+        }
     },
 
     addRecords: function () {
@@ -190,7 +207,7 @@ Many2Many.prototype = {
         } else {
             url = '/openerp/search/new';
         }
-        return $.frame_dialog({
+        var $frame = $.frame_dialog({
                 src: openobject.http.getURL(url, options)
             }, {
                 'source-window': $this[0],
@@ -199,6 +216,8 @@ Many2Many.prototype = {
                 width: '90%',
                 height: '95%'
             });
+        $frame.focus();
+        return $frame;
     }
 
     /**
