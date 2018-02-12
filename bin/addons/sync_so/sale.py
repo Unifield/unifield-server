@@ -29,10 +29,47 @@ from sync_client import get_sale_purchase_logger
 
 class sale_order_line_sync(osv.osv):
     _inherit = "sale.order.line"
+    _logger = logging.getLogger('------sync.sale.order.line')
+
+    def _get_sync_local_id(self, cr, uid, ids, field_name, args, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        ret = {}
+        for sol in self.read(cr, uid, ids, ['order_id'], context=context):
+            ret[sol['id']] = '%s/%s' % (sol['order_id'][1], sol['id'])
+        return ret
 
     _columns = {
         'source_sync_line_id': fields.text(string='Sync DB id of the PO origin line'),
+        'sync_local_id': fields.function(_get_sync_local_id, type='char', method=True, string='ID', help='for internal use only'),
+        'sync_linked_pol': fields.char(size=256, string='Linked purchase order line at synchro', select=1),
+        'resourced_original_remote_line': fields.char(size=256, string='Orig customer PO line', select=1, help='INTERNAL USE: id of the remote cancelled and resourced line, the parent of the current line. Usefull to fill the field resourced_original_line in the other instance'),
     }
+
+    def create_so_line(self, cr, uid, source, line_info, context=None):
+        if context is None:
+            context = {}
+        pol_dict = line_info.to_dict()
+
+        # search for the parent sale.order:
+        order_ref = '%s.%s' % (source, pol_dict['order_id']['name'])
+        sale_order_ids = self.pool.get('sale.order').search(cr, uid, [('client_order_ref', '=', order_ref)])
+        if not sale_order_ids:
+            raise Exception, "Cannot find the parent FO with client order ref = %s" % order_ref
+        so_name = self.pool.get('sale.order').read(cr, uid, sale_order_ids[0], ['name'], context=context)['name'] or ''
+
+        # from purchase.order.line to sale.order.line:
+        sol_values = self.pool.get('so.po.common').get_line_data(cr, uid, source, line_info, context)
+        sol_values['order_id'] = sale_order_ids[0]
+        sol_values['sync_linked_pol'] = pol_dict.get('sync_local_id', False)
+        if 'line_number' in sol_values:
+            del(sol_values['line_number'])
+        new_sol_id = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
+
+        message = ": New line #%s (id:%s) added to Sale Order %s ::" % (pol_dict['line_number'], new_sol_id, so_name)
+        self._logger.info(message)
+
+        return message
 
 sale_order_line_sync()
 
@@ -83,14 +120,14 @@ class sale_order_sync(osv.osv):
 
     _columns = {
         'received': fields.boolean('Received by Client', readonly=True),
-                'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
-                'sync_date': fields.function(
-                    _get_sync_date,
-                    method=True,
-                    string='Sync Date',
-                    type='datetime',
-                    store=False,
-                    readonly=True,
+        'fo_created_by_po_sync': fields.boolean('FO created by PO after SYNC', readonly=True),
+        'sync_date': fields.function(
+            _get_sync_date,
+            method=True,
+            string='Sync Date',
+            type='datetime',
+            store=False,
+            readonly=True,
         ),
     }
 
@@ -130,7 +167,7 @@ class sale_order_sync(osv.osv):
         # [utp-360] we set the confirmed_delivery_date to False directly in creation and not in modification
         order_line = []
         for line in header_result['order_line']:
-            line[2].update({'confirmed_delivery_date': False, 'source_sync_line_id': line[2]['sync_order_line_db_id']})
+            line[2].update({'confirmed_delivery_date': False, 'source_sync_line_id': line[2]['sync_order_line_db_id'], 'sync_linked_pol': so_po_common_obj.migrate_ref(line[2]['sync_order_line_db_id'])})
             order_line.append((0, 0, line[2]))
         header_result['order_line'] = order_line
 
@@ -376,12 +413,10 @@ class sale_order_sync(osv.osv):
         solccl_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'sale.order.line.cancel.create_line', context=context)
         nfo_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.normal_fo_create_po', context=context)
         vfo_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.validated_fo_update_original_po', context=context)
-        csp_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.create_split_po', context=context)
 
         solccl_model_obj = solccl_rule and self.pool.get(solccl_rule.model) or None
         nfo_model_obj = nfo_rule and self.pool.get(nfo_rule.model) or None
         vfo_model_obj = vfo_rule and self.pool.get(vfo_rule.model) or None
-        csp_model_obj = csp_rule and self.pool.get(csp_rule.model) or None
 
         if original_id:
             orig_partner = self.browse(cr, uid, original_id, context=context).partner_id
@@ -405,12 +440,6 @@ class sale_order_sync(osv.osv):
                     generate_msg_to_send(nfo_rule, nfo_model_obj, original_id, orig_partner)
             if vfo_model_obj and vfo_rule:
                 generate_msg_to_send(vfo_rule, vfo_model_obj, original_id, orig_partner)
-
-        if split_ids and csp_rule and csp_model_obj:
-            available_split_ids = self.search(cr, uid, eval(csp_rule.domain), context=context)
-            for fo in self.browse(cr, uid, split_ids, context=context):
-                if fo.id in available_split_ids:
-                    generate_msg_to_send(csp_rule, csp_model_obj, fo.id, fo.partner_id)
 
         return
 

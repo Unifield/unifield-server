@@ -31,8 +31,7 @@ from datetime import datetime
 from msf_partner import PARTNER_TYPE
 from msf_order_date import TRANSPORT_TYPE
 from msf_order_date import ZONE_SELECTION
-from purchase_override import PURCHASE_ORDER_STATE_SELECTION
-from sale_override import SALE_ORDER_STATE_SELECTION
+from sale import SALE_ORDER_STATE_SELECTION
 
 class res_partner(osv.osv):
     _name = 'res.partner'
@@ -417,8 +416,6 @@ def common_onchange_partner_id(self, cr, uid, ids, part=False, order_type=False,
     # call onchange_transport_type and update **VALUE** of res
     res_transport_type = self.onchange_transport_type(cr, uid, ids, part=part, transport_type=res['value']['transport_type'], requested_date=res['value']['delivery_requested_date'], context=context)
     res.setdefault('value', {}).update(res_transport_type.setdefault('value', {}))
-    # reset confirmed date
-    res.setdefault('value', {}).update({'delivery_confirmed_date': False, })
     # compute partner type
     partner_type = compute_partner_type(self, cr, uid, part=part, type=type, context=context)
     res.setdefault('value', {}).update({'partner_type': partner_type, })
@@ -437,13 +434,7 @@ def common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_da
     if context is None:
         context = {}
 
-    order_id = context.get('active_id', [])
-    if isinstance(order_id, (int, long)):
-        order_id = [order_id]
-
-
     return {'value': {'date_planned': requested_date, }}
-#                      'confirmed_delivery_date': confirmed_date}}
 
 def common_create(self, cr, uid, data, type, context=None):
     '''
@@ -477,441 +468,6 @@ def common_create(self, cr, uid, data, type, context=None):
     return data
 
 
-class purchase_order(osv.osv):
-    _name = 'purchase.order'
-    _inherit = 'purchase.order'
-
-    def write(self, cr, uid, ids, data, context=None):
-        '''
-        Checks if dates are good before writing
-        '''
-        if not ids:
-            return True
-        if context is None:
-            context = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        if not 'date_order' in data:
-            data.update({'date_order': self.browse(cr, uid, ids[0]).date_order})
-
-        # fill partner_type and zone
-        if data.get('partner_id', False):
-            partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'), context=context)
-            # partner type - always set
-            data.update({'partner_type': partner.partner_type, })
-            # internal type (zone) - always set
-            data.update({'internal_type': partner.zone, })
-            # erase delivery_confirmed_date if partner_type is internal or section and the date is not filled by synchro - considered updated by synchro by default
-            if partner.partner_type in ('internal', 'section') and not data.get('confirmed_date_by_synchro', True):
-                data.update({'delivery_confirmed_date': False, })
-
-        check_dates(self, cr, uid, data, context=context)
-
-        return super(purchase_order, self).write(cr, uid, ids, data, context=context)
-
-    def create(self, cr, uid, data, context=None):
-        '''
-        Checks if dates are good before creation
-
-        Delivery Requested Date: creation date + supplier lead time from partner (supplier_lt)
-        '''
-        if context is None:
-            context = {}
-        # common function for so and po
-        data = common_create(self, cr, uid, data, type=get_type(self), context=context)
-        # fill partner_type data
-        if data.get('partner_id', False):
-            partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id'), context=context)
-            # erase delivery_confirmed_date if partner_type is internal or section and the date is not filled by synchro - considered updated by synchro by default
-            if partner.partner_type in ('internal', 'section') and not data.get('confirmed_date_by_synchro', True):
-                data.update({'delivery_confirmed_date': False, })
-        # deprecated ?
-        check_dates(self, cr, uid, data, context=context)
-
-        return super(purchase_order, self).create(cr, uid, data, context=context)
-
-    def _get_receipt_date(self, cr, uid, ids, field_name, arg, context=None):
-        '''
-        Returns the date of the first picking for the the PO
-        '''
-        if context is None:
-            context = {}
-        res = {}
-        pick_obj = self.pool.get('stock.picking')
-
-        for order in self.browse(cr, uid, ids, context=context):
-            pick_ids = pick_obj.search(cr, uid, [('purchase_id', '=', order.id)], offset=0, limit=1, order='date_done', context=context)
-            if not pick_ids:
-                res[order.id] = False
-            else:
-                res[order.id] = pick_obj.browse(cr, uid, pick_ids[0]).date_done
-
-        return res
-
-    def _get_vals_order_dates(self, cr, uid, ids, field_name, arg, context=None):
-        '''
-        Return function values
-        '''
-        if context is None:
-            context = {}
-        res = {}
-
-        if isinstance(field_name, str):
-            field_name = [field_name]
-
-        for obj in self.browse(cr, uid, ids, context=context):
-            # default dic
-            res[obj.id] = {}
-            # default value
-            for f in field_name:
-                res[obj.id].update({f:False})
-            # get corresponding partner type
-            if obj.partner_id:
-                partner_type = obj.partner_id.partner_type
-                res[obj.id]['partner_type'] = partner_type
-
-        return res
-
-    _columns = {
-        'delivery_requested_date': fields.date(string='Delivery Requested Date', required=True),
-        'delivery_confirmed_date': fields.date(string='Delivery Confirmed Date'),
-        'ready_to_ship_date': fields.date(string='Ready To Ship Date'),
-        'shipment_date': fields.date(string='Shipment Date', help='Date on which picking is created at supplier'),
-        'arrival_date': fields.date(string='Arrival date in the country', help='Date of the arrival of the goods at custom'),
-        'receipt_date': fields.function(_get_receipt_date, type='date', method=True, store=True,
-                                        string='Receipt Date', help='for a PO, date of the first godd receipt.'),
-        # BETA - to know if the delivery_confirmed_date can be erased - to be confirmed
-        'confirmed_date_by_synchro': fields.boolean(string='Confirmed Date by Synchro'),
-        # FIELDS PART OF CREATE/WRITE methods
-        # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
-        'transport_type': fields.selection(selection=TRANSPORT_TYPE, string='Transport Mode',
-                                           help='Number of days this field has to be associated with a transport mode selection'),
-        # not a function because can be modified by user - **ONLY IN CREATE only if not in vals**
-        'est_transport_lead_time': fields.float(digits=(16, 2), string='Est. Transport Lead Time',
-                                                help="Estimated Transport Lead-Time in weeks"),
-        # not a function because a function value is only filled when saved, not with on change of partner id
-        # from partner_id object
-        'partner_type': fields.selection(string='Partner Type', selection=PARTNER_TYPE, readonly=True,),
-        # not a function because a function value is only filled when saved, not with on change of partner id
-        # from partner_id object
-        'internal_type': fields.selection(string='Type', selection=ZONE_SELECTION, readonly=True,),
-    }
-
-    _defaults = {
-        'date_order': lambda *a: time.strftime('%Y-%m-%d'),
-        'confirmed_date_by_synchro': False,
-    }
-
-    def copy(self, cr, uid, id, default=None, context=None):
-        new_id = super(purchase_order, self).copy(cr, uid, id, default, context)
-        if new_id:
-            data = self.read(cr, uid, new_id, ['order_line', 'delivery_requested_date'])
-            if data['order_line'] and data['delivery_requested_date']:
-                self.pool.get('purchase.order.line').write(cr, uid, data['order_line'], {'date_planned': data['delivery_requested_date']})
-        return new_id
-
-    def copy_data(self, cr, uid, id, default=None, context=None):
-        '''
-        erase dates
-        '''
-        if default is None:
-            default = {}
-        if context is None:
-            context = {}
-        fields_to_reset = ['delivery_requested_date', 'ready_to_ship_date', 'date_order', 'delivery_confirmed_date', 'arrival_date', 'shipment_date', 'arrival_date', 'date_approve']
-        to_del = []
-        for ftr in fields_to_reset:
-            if ftr not in default:
-                to_del.append(ftr)
-        res = super(purchase_order, self).copy_data(cr, uid, id, default=default, context=context)
-        for ftd in to_del:
-            if ftd in res:
-                del(res[ftd])
-        return res
-
-    def internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=None):
-        '''
-        Set the shipment date if the internal_type == international
-
-        deprecated
-        '''
-        if context is None:
-            context = {}
-        return {}
-        return {'value': common_internal_type_change(self, cr, uid, ids, internal_type, rts, shipment_date, context=context)}
-
-    def ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=None):
-        '''
-        Checks the entered value
-
-        deprecated
-        '''
-        if context is None:
-            context = {}
-        return {}
-        return common_ready_to_ship_change(self, cr, uid, ids, ready_to_ship, date_order, shipment, context=context)
-
-    def onchange_requested_date(self, cr, uid, ids, part=False, date_order=False, requested_date=False, transport_lt=0, order_type=False, context=None):
-        '''
-        Set the confirmed date with the requested date if the first is not fill
-        And the delivery_confirmed_date takes the value of the computed requested date by default only if order_type == 'purchase_list'
-        '''
-        if context is None:
-            context = {}
-        res = {}
-        res['value'] = {}
-        if order_type == 'purchase_list':
-            res['value'].update({'delivery_confirmed_date': requested_date})
-        else:
-            res['value'].update({'delivery_confirmed_date': False})
-        # compute ready to ship date
-        res = common_requested_date_change(self, cr, uid, ids, part=part, date_order=date_order, requested_date=requested_date, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
-        return res
-
-    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, categ, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
-        """
-        Set the delivery_confirmed_date if order_type == 'purchase_list'
-        """
-        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)
-        if not 'value' in res:
-            res['value'] = {}
-        if order_type == 'purchase_list' and delivery_requested_date:
-            res['value'].update({'delivery_confirmed_date': delivery_requested_date})
-        # UF-1440: Add today's date if no date and you choose "purchase_list" PO
-        elif order_type == 'purchase_list' and not delivery_requested_date:
-            res['value'].update({'delivery_requested_date': time.strftime('%Y-%m-%d'), 'delivery_confirmed_date': time.strftime('%Y-%m-%d')})
-        else:
-            res['value'].update({'delivery_confirmed_date': False})
-        return res
-
-    def onchange_transport_lt(self, cr, uid, ids, requested_date=False, transport_lt=0, context=None):
-        '''
-        Fills the Ready to ship date
-
-        SPRINT3 validated - YAML ok
-        '''
-        if context is None:
-            context = {}
-        res = {}
-        # compute ready to ship date
-        res = common_onchange_transport_lt(self, cr, uid, ids, requested_date=requested_date, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
-        return res
-
-    def onchange_date_order(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, context=None):
-        '''
-        date_order is changed (creation date)
-        '''
-        if context is None:
-            context = {}
-        res = {}
-        # compute requested date
-        res = common_onchange_date_order(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
-        return res
-
-    def onchange_transport_type(self, cr, uid, ids, part=False, transport_type=False, requested_date=False, context=None):
-        '''
-        transport type changed
-        requested date is in the signature because it is needed for children on_change call
-
-        '''
-        if context is None:
-            context = {}
-        res = {}
-        res = common_onchange_transport_type(self, cr, uid, ids, part=part, transport_type=transport_type, requested_date=requested_date, type=get_type(self), res=res, context=context)
-        return res
-
-    def onchange_partner_id(self, cr, uid, ids, part=False, date_order=False, transport_lt=0, context=None):
-        '''
-        Fills the Requested and Confirmed delivery dates
-
-        SPRINT3 validated - YAML ok
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-        res = super(purchase_order, self).onchange_partner_id(cr, uid, ids, part)
-        # compute requested date and transport type
-        res = common_onchange_partner_id(self, cr, uid, ids, part=part, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
-        return res
-
-    def requested_data(self, cr, uid, ids, context=None):
-        '''
-        data for requested
-        '''
-        if context is None:
-            context = {}
-        return {'name': _('Do you want to update the Requested Date of all order lines ?'), }
-
-    def confirmed_data(self, cr, uid, ids, context=None):
-        '''
-        data for confirmed
-        '''
-        if context is None:
-            context = {}
-        return {'name': _('Do you want to update the Confirmed Delivery Date of all order lines ?'), }
-
-    def stock_take_data(self, cr, uid, ids, context=None):
-        '''
-        data for confirmed for change line wizard
-        '''
-        if context is None:
-            context = {}
-        return {'name': _('Do you want to update the Date of Stock Take of all order lines ?'), }
-
-    def update_date(self, cr, uid, ids, context=None):
-        '''
-        open the update lines wizard
-        '''
-        # we need the context
-        if context is None:
-            context = {}
-        # field name
-        field_name = context.get('field_name', False)
-        assert field_name, 'The button is not correctly set.'
-        # data
-        data = getattr(self, field_name + '_data')(cr, uid, ids, context=context)
-        name = data['name']
-        model = 'update.lines'
-        wiz_obj = self.pool.get('wizard')
-        # open the selected wizard
-        return wiz_obj.open_wizard(cr, uid, ids, name=name, model=model, context=context)
-
-
-purchase_order()
-
-
-class purchase_order_line(osv.osv):
-    _name = 'purchase.order.line'
-    _inherit = 'purchase.order.line'
-
-    def _vals_get_order_date(self, cr, uid, ids, fields, arg, context=None):
-        '''
-        get values for functions
-        '''
-        if context is None:
-            context = {}
-        if isinstance(fields, str):
-            fields = [fields]
-
-        result = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            result[obj.id] = {}
-            for f in fields:
-                result[obj.id].update({f: False})
-            # po state
-            result[obj.id]['po_state_stored'] = obj.order_id.state
-            # po partner type
-            result[obj.id]['po_partner_type_stored'] = obj.order_id.partner_type
-
-        return result
-
-    def _get_line_ids_from_po_ids(self, cr, uid, ids, context=None):
-        '''
-        self is purchase.order
-        '''
-        if context is None:
-            context = {}
-        result = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', 'in', ids)], context=context)
-        return result
-
-    def _get_planned_date(self, cr, uid, context=None):
-        '''
-        Returns planned_date
-
-        SPRINT3 validated
-        '''
-        if context is None:
-            context = {}
-        order_obj = self.pool.get('purchase.order')
-        res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
-
-        if context.get('purchase_id', False):
-            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
-            res = po.delivery_requested_date
-
-        return res
-
-    def _get_confirmed_date(self, cr, uid, context=None):
-        '''
-        Returns confirmed date
-
-        SPRINT3 validated
-        '''
-        if context is None:
-            context = {}
-        order_obj = self.pool.get('purchase.order')
-        # The PO counterpart created should get for all line a delivery confirmed date blank
-        if context.get('is_a_counterpart') or context.get('purchase_id', False) and order_obj.browse(cr, uid, context.get('purchase_id'), context=context).is_a_counterpart:
-            return
-        res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
-
-        if context.get('purchase_id', False):
-            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
-            res = po.delivery_confirmed_date
-
-        return res
-
-    def _get_default_state(self, cr, uid, context=None):
-        '''
-        default value for state fields.related
-
-        why, beacause if we try to pass state in the context,
-        the context is simply reset without any values specified...
-        '''
-        if context is None:
-            context = {}
-        if context.get('purchase_id', False):
-            order_obj = self.pool.get('purchase.order')
-            po = order_obj.browse(cr, uid, context.get('purchase_id'), context=context)
-            return po.state
-
-        return False
-
-    _columns = {'date_planned': fields.date(string='Delivery Requested Date', required=True, select=True,
-                                            help='Header level dates has to be populated by default with the possibility of manual updates'),
-                'confirmed_delivery_date': fields.date(string='Delivery Confirmed Date',
-                                                       help='Header level dates has to be populated by default with the possibility of manual updates.'),
-                # not replacing the po_state from sale_followup - should ?
-                'po_state_stored': fields.related('order_id', 'state', type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, string='Po State', readonly=True,),
-                'po_partner_type_stored': fields.related('order_id', 'partner_type', type='selection', selection=PARTNER_TYPE, string='Po Partner Type', readonly=True,),
-                }
-
-    _defaults = {'po_state_stored': _get_default_state,
-                 'po_partner_type_stored': lambda obj, cr, uid, c: c and c.get('partner_type', False),
-                 'date_planned': _get_planned_date,
-                 'confirmed_delivery_date': _get_confirmed_date,
-                 }
-
-    def copy_data(self, cr, uid, id, default=None, context=None):
-        '''
-        erase dates
-        '''
-        if default is None:
-            default = {}
-        if context is None:
-            context = {}
-        if not context.get('keepDateAndDistrib'):
-            if 'confirmed_delivery_date' not in default:
-                default['confirmed_delivery_date'] = False
-            if 'date_planned' not in default:
-                default['date_planned'] = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
-        return super(purchase_order_line, self).copy_data(cr, uid, id, default=default, context=context)
-
-    def dates_change(self, cr, uid, ids, requested_date, confirmed_date, context=None):
-        '''
-        Checks if dates are later than header dates
-
-        deprecated
-        '''
-        if context is None:
-            context = {}
-        return common_dates_change_on_line(self, cr, uid, ids, requested_date, confirmed_date, 'purchase.order', context=context)
-
-purchase_order_line()
-
-
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
@@ -929,6 +485,8 @@ class sale_order(osv.osv):
 
         for order in self.browse(cr, uid, ids, context=context):
             # Fill partner type
+            if data.get('partner_id') and isinstance(data.get('partner_id'), basestring):
+                data['partner_id'] = int(data.get('partner_id'))
             partner = self.pool.get('res.partner').browse(cr, uid, data.get('partner_id', order.partner_id.id), context=context)
             # partner type - always set
             data.update({'partner_type': partner.partner_type, })
@@ -1097,6 +655,8 @@ class sale_order(osv.osv):
         res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part, order_type)
         # compute requested date and transport type
         res = common_onchange_partner_id(self, cr, uid, ids, part=part, order_type=order_type, date_order=date_order, transport_lt=transport_lt, type=get_type(self), res=res, context=context)
+        # reset confirmed date
+        res.setdefault('value', {}).update({'delivery_confirmed_date': False})
 
         if res.get('value', {}).get('pricelist_id') and part:
             if ids:
@@ -1180,26 +740,11 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
         order_obj = self.pool.get('sale.order')
-        res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
+        res = datetime.now().strftime('%Y-%m-%d')
 
         if context.get('sale_id', False):
             so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
             res = so.delivery_requested_date
-
-        return res
-
-    def _get_confirmed_date(self, cr, uid, context=None):
-        '''
-            Returns confirmed date
-        '''
-        if context is None:
-            context = {}
-        order_obj = self.pool.get('sale.order')
-        res = (datetime.now() + relativedelta(days=+2)).strftime('%Y-%m-%d')
-
-        if context.get('sale_id', False):
-            so = order_obj.browse(cr, uid, context.get('sale_id'), context=context)
-            res = so.delivery_confirmed_date
 
         return res
 
@@ -1239,7 +784,6 @@ class sale_order_line(osv.osv):
                 }
 
     _defaults = {'date_planned': _get_planned_date,
-                 'confirmed_delivery_date': _get_confirmed_date,
                  'so_state_stored': _get_default_state,
                  'type': lambda *a: 'make_to_order',
                  'product_uom': _get_uom_def,
@@ -1306,9 +850,6 @@ class procurement_order(osv.osv):
             context = {}
         values = super(procurement_order, self).po_values_hook(cr, uid, ids, context=context, *args, **kwargs)
         line = kwargs['line']
-        procurement = kwargs['procurement']
-        # update from yml flag
-        values['from_yml_test'] = procurement.from_yml_test
         # date_planned (requested date) = date_planned from procurement order (rts - prepartion lead time)
         # confirmed_delivery_date (confirmed date) = False
         # both values are taken from line

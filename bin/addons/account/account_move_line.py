@@ -544,6 +544,7 @@ class account_move_line(osv.osv):
         'amount_residual': fields.function(_amount_residual, method=True, string='Residual Amount', multi="residual", help="The residual amount on a receivable or payable of a journal entry expressed in the company currency."),
         'currency_id': fields.many2one('res.currency', 'Currency', help="The optional other currency if it is a multi-currency entry."),
         'period_id': fields.many2one('account.period', 'Period', required=True, select=2),
+        'fiscalyear_id': fields.related('period_id', 'fiscalyear_id', type='many2one', relation='account.fiscalyear', string='Fiscal Year', store=False),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True, select=1),
         'blocked': fields.boolean('Litigation', help="You can check this box to mark this journal item as a litigation with the associated partner"),
         'partner_id': fields.many2one('res.partner', 'Partner', select=1, ondelete='restrict'),
@@ -1010,9 +1011,6 @@ class account_move_line(osv.osv):
             result = super(account_move_line, self).unlink(cr, uid, [line.id], context=context)
             if check:
                 move_obj.validate(cr, uid, [line.move_id.id], context=context)
-            elif context.get('sync_update_execution'):
-                move_obj.validate_sync(cr, uid, [line.move_id.id], context=context)
-
         return result
 
     def _check_date(self, cr, uid, vals, context=None, check=True):

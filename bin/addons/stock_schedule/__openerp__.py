@@ -24,9 +24,9 @@
     "name": "Stock Replenishment Schedule",
     "version": "1.0",
     "depends": [
-                "base",
-                "stock",
-                "procurement",
+        "base",
+        "stock",
+        "procurement",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
@@ -44,15 +44,9 @@
     ],
     'demo_xml': [
     ],
-    "test": [
-        'test/daily_test.yml',
-        'test/weekly_test.yml',
-        'test/monthly_test.yml',
-        'test/yearly_test.yml',
-    ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

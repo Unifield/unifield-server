@@ -60,7 +60,7 @@ if os.name == 'nt':
                 "imaplib", "smtplib", "email", "yaml",
                 "uuid", "commands", "mx.DateTime", "json",
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
-                "psutil",
+                "psutil", "formencode",
             ],
             'dist_dir': 'dist',
             'excludes' : ["Tkconstants","Tkinter","tcl"],
@@ -124,6 +124,7 @@ def data_files():
         files.append(('.', [join('bin', 'histogram.py')]))
         files.append(('.', [join('bin', 'unifield-version.txt')]))
         files.append(('tools', [join('bin', 'tools', 'import_po.dtd')]))
+        files.append(('tools', [join('bin', 'tools', 'validators.py')]))
         files.append(('fonts', filter(isfile, glob.glob('bin/fonts/*'))))
         os.chdir('bin')
         for (dp, dn, names) in os.walk('addons'):
@@ -216,9 +217,15 @@ setup(name             = name,
       package_dir      = find_package_dirs(),
       python_requires = ">=2.7.12",
       install_requires = [
+          'cffi==1.11.4',
+          'MarkupSafe==1.0',
+          'pycparser==2.18',
+          'pyparsing==2.2.0',
+          'six==1.11.0',
           'lxml==3.7.3',
           'mako==1.0.6',
           'python-dateutil==2.6.0',
+          'formencode==1.3.1',
           'psycopg2==2.7.1',
           'pydot==1.2.3',
           'pytz==2017.2',

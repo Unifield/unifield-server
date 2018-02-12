@@ -35,16 +35,19 @@ class account_invoice_refund(osv.osv_memory):
         """
         # @@@override@account.wizard.account_invoice_refund.py
         obj_journal = self.pool.get('account.journal')
+        obj_inv = self.pool.get('account.invoice')
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         if context is None:
             context = {}
         args = [('type', '=', 'sale_refund')]
-        if context.get('type', False):
-            if context['type'] in ('in_invoice', 'in_refund'):
+        doc_to_refund_id = context.get('active_ids') and context['active_ids'][0]
+        if doc_to_refund_id:
+            source_type = obj_inv.read(cr, uid, doc_to_refund_id, ['type'], context=context)['type']
+            if source_type in ('in_invoice', 'in_refund'):
                 args = [('type', '=', 'purchase_refund')]
         if user.company_id.instance_id:
             args.append(('is_current_instance','=',True))
-        journal = obj_journal.search(cr, uid, args)
+        journal = obj_journal.search(cr, uid, args, order='id', limit=1, context=context)
         return journal and journal[0] or False
 
     def _get_document_date(self, cr, uid, context=None):
@@ -57,9 +60,13 @@ class account_invoice_refund(osv.osv_memory):
         return time.strftime('%Y-%m-%d')
 
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
         journal_obj = self.pool.get('account.journal')
         res = super(account_invoice_refund,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        jtype = context.get('journal_type', 'sale_refund')
+        jtype = 'sale_refund'
+        if context.get('journal_type'):
+            jtype = isinstance(context['journal_type'], list) and context['journal_type'][0] or context['journal_type']
         if jtype in ('sale', 'sale_refund'):
             jtype = 'sale_refund'
         else:
@@ -67,8 +74,10 @@ class account_invoice_refund(osv.osv_memory):
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
         for field in res['fields']:
             if field == 'journal_id' and user.company_id.instance_id:
-                journal_select = journal_obj._name_search(cr, uid, '', [('type', '=', jtype),('is_current_instance','=',True)], context=context, limit=None, name_get_uid=1)
+                journal_domain = [('type', '=', jtype), ('is_current_instance', '=', True)]
+                journal_select = journal_obj._name_search(cr, uid, '', journal_domain, context=context, limit=None, name_get_uid=1)
                 res['fields'][field]['selection'] = journal_select
+                res['fields'][field]['domain'] = journal_domain
         return res
 
     _columns = {

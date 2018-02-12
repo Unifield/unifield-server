@@ -243,10 +243,10 @@ class account_account(osv.osv):
         if args == [('restricted_area', '=', 'invoice_lines')]:
             # LINES of Stock Transfer Vouchers:
             # restrict to Expense/Income/Receivable accounts
-            if context_stv:
+            if context_stv or context.get('check_line_stv'):
                 arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
         elif args == [('restricted_area', '=', 'intermission_header')]:
-            if context_ivo:
+            if context_ivo or context.get('check_header_ivo'):
                 # HEADER of Intermission Voucher OUT:
                 # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash
                 # + prevent from using donation accounts
@@ -254,7 +254,7 @@ class account_account(osv.osv):
                        '|', '|', ('is_intermission_counterpart', '=', True),
                        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
                        '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash'])]
-            elif context_ivi:
+            elif context_ivi or context.get('check_header_ivi'):
                 # HEADER of Intermission Voucher IN:
                 # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables
                 # + prevent from using donation accounts
@@ -1062,10 +1062,6 @@ class account_move(osv.osv):
                         context[el] = vals.get(el)
                         ml_vals.update({el: vals.get(el)})
 
-                # UFTP-262: For manual_name (description on account.move), update "name" on account.move.line
-                if 'manual_name' in vals:
-                    ml_vals.update({'name': vals.get('manual_name', '')})
-
                 # Update document date AND date at the same time
                 if ml_vals:
                     ml_id_list  = [ml.id for ml in m.line_id]
@@ -1146,6 +1142,17 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot have two different currencies for the same Journal Entry!'))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 
+    def update_line_description(self, cr, uid, ids, context=None):
+        """
+        Updates the description of the JIs with the one of the JE
+        """
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        for m in self.browse(cr, uid, ids, fields_to_fetch=['manual_name', 'line_id'], context=context):
+            if m.manual_name and m.line_id:
+                aml_obj.write(cr, uid, [ml.id for ml in m.line_id], {'name': m.manual_name}, context=context)
+
     def copy(self, cr, uid, a_id, default={}, context=None):
         """
         Copy a manual journal entry
@@ -1215,6 +1222,7 @@ class account_move(osv.osv):
         user_id = hasattr(uid, 'realUid') and uid.realUid or uid
         # First delete move lines to avoid "check=True" problem on account_move_line item
         if to_delete:
+            context.update({'move_ids_to_delete': to_delete})
             ml_ids = self.pool.get('account.move.line').search(cr, user_id, [('move_id', 'in', to_delete)])
             if ml_ids:
                 if isinstance(ml_ids, (int, long)):

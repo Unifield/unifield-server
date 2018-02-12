@@ -25,7 +25,7 @@
     "category" : "Generic Modules/Projects & Services",
     # As account_override depends on account and analytic_override on analytic, no need for analytic and account dependances
     # TODO: Integrate analytic_distribution into FINANCE + check analytic_distribution dependancies
-    "depends" : ["analytic_override", "account_override"],
+    "depends" : ["analytic_override", "account_override", "purchase"],
     "description": """Module for defining analytic accounting object and commitment voucher.
     """,
     "init_xml" : [
@@ -45,17 +45,11 @@
         'funding_pool_report.xml',
     ],
     'test': [
-        'test/10_analytic_account_activable.yml',
-        'test/20_analytic_data.yml',
-        'test/30_check_dates.yml',
-        'test/bug_1681.yml',
-        'test/40_check_report.yml',
-        'test/bug_2217.yml',
     ],
     'demo_xml': [
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -37,6 +37,16 @@
                             </group>
                             <field name="analytic_distribution_id" invisible="1"/>
                             <field colspan="6" nolabel="1" name="lines_id" widget="one2many_list"/>
+                            <separator colspan="6" string="Legend (for the Model Name)"/>
+                            <group col="8" colspan="6">
+                                <group>
+                                    <label colspan="6" string="Year of the Posting Date: %%(year)s"/>
+                                    <label colspan="6" string="Month of the Posting Date: %%(month)s"/>
+                                    <label colspan="6" string="Year and Month of the Posting Date: %%(date)s"/>
+                                </group>
+                                <group></group>
+                                <group></group>
+                            </group>
                         </group>
                         <group>
                             <field name="has_any_bad_ad_line_exp_in" invisible="1" />
@@ -152,8 +162,9 @@
             <field name="type">tree</field>
             <field name="priority" eval="14"/>
             <field name="arch" type="xml">
-                <tree string="Recurring Entries To Validate" min_rows="100" hide_new_button="1" hide_delete_button="1"
-                colors="red:analytic_distribution_state not in ('valid')">
+                <tree string="Recurring Entries To Validate" min_rows="100"
+                      hide_new_button="1" hide_delete_button="1" hide_edit_button="1"
+                      colors="red:analytic_distribution_state not in ('valid')">
                     <field name="instance_id"/>
                     <field name="is_corrigible" invisible="1"/>
                     <field name="have_an_historic" invisible="1"/>

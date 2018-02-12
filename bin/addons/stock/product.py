@@ -98,14 +98,14 @@ class product_product(osv.osv):
                         journal_id = product.categ_id.property_stock_journal and product.categ_id.property_stock_journal.id or False
                     if not journal_id:
                         raise osv.except_osv(_('Error!'),
-                            _('There is no journal defined '\
-                                'on the product category: "%s" (id: %d)') % \
-                                (product.categ_id.name,
-                                    product.categ_id.id,))
+                                             _('There is no journal defined '\
+                                               'on the product category: "%s" (id: %d)') % \
+                                             (product.categ_id.name,
+                                              product.categ_id.id,))
                     move_id = move_obj.create(cr, uid, {
-                                'journal_id': journal_id,
-                                'company_id': company_id
-                                })
+                        'journal_id': journal_id,
+                        'company_id': company_id
+                    })
 
                     move_ids.append(move_id)
 
@@ -116,52 +116,52 @@ class product_product(osv.osv):
                                 property_stock_account_input.id
                         if not stock_input_acc:
                             stock_input_acc = product.categ_id.\
-                                    property_stock_account_input_categ.id
+                                property_stock_account_input_categ.id
                         if not stock_input_acc:
                             raise osv.except_osv(_('Error!'),
-                                    _('There is no stock input account defined ' \
-                                            'for this product: "%s" (id: %d)') % \
-                                            (product.name,
-                                                product.id,))
+                                                 _('There is no stock input account defined ' \
+                                                   'for this product: "%s" (id: %d)') % \
+                                                 (product.name,
+                                                  product.id,))
                         amount_diff = qty * diff
                         move_line_obj.create(cr, uid, {
-                                    'name': product.name,
-                                    'account_id': stock_input_acc,
-                                    'debit': amount_diff,
-                                    'move_id': move_id,
-                                    })
+                            'name': product.name,
+                            'account_id': stock_input_acc,
+                            'debit': amount_diff,
+                            'move_id': move_id,
+                        })
                         move_line_obj.create(cr, uid, {
-                                    'name': product.categ_id.name,
-                                    'account_id': account_variation_id,
-                                    'credit': amount_diff,
-                                    'move_id': move_id
-                                    })
+                            'name': product.categ_id.name,
+                            'account_id': account_variation_id,
+                            'credit': amount_diff,
+                            'move_id': move_id
+                        })
                     elif diff < 0:
                         if not stock_output_acc:
                             stock_output_acc = product.product_tmpl_id.\
                                 property_stock_account_output.id
                         if not stock_output_acc:
                             stock_output_acc = product.categ_id.\
-                                    property_stock_account_output_categ.id
+                                property_stock_account_output_categ.id
                         if not stock_output_acc:
                             raise osv.except_osv(_('Error!'),
-                                    _('There is no stock output account defined ' \
-                                            'for this product: "%s" (id: %d)') % \
-                                            (product.name,
-                                                product.id,))
+                                                 _('There is no stock output account defined ' \
+                                                   'for this product: "%s" (id: %d)') % \
+                                                 (product.name,
+                                                  product.id,))
                         amount_diff = qty * -diff
                         move_line_obj.create(cr, uid, {
-                                        'name': product.name,
-                                        'account_id': stock_output_acc,
-                                        'credit': amount_diff,
-                                        'move_id': move_id
-                                    })
+                            'name': product.name,
+                            'account_id': stock_output_acc,
+                            'credit': amount_diff,
+                            'move_id': move_id
+                        })
                         move_line_obj.create(cr, uid, {
-                                        'name': product.categ_id.name,
-                                        'account_id': account_variation_id,
-                                        'debit': amount_diff,
-                                        'move_id': move_id
-                                    })
+                            'name': product.categ_id.name,
+                            'account_id': account_variation_id,
+                            'debit': amount_diff,
+                            'move_id': move_id
+                        })
 
             self.write(cr, uid, rec_id, {'standard_price': new_price})
 
@@ -197,13 +197,13 @@ class product_product(osv.osv):
         if context.get('shop', False):
             sale_shop_obj = self.pool.get('sale.shop')
             warehouse_id = sale_shop_obj.read(cr, uid, int(context['shop']),
-                    ['warehouse_id'], context=context)['warehouse_id']
+                                              ['warehouse_id'], context=context)['warehouse_id']
             if warehouse_id:
                 context['warehouse'] = warehouse_id[0]
 
         if context.get('warehouse', False):
             lot_stock_id = stock_warehouse_obj.read(cr, uid, int(context['warehouse']),
-                    ['lot_stock_id'], context=context)['lot_stock_id']
+                                                    ['lot_stock_id'], context=context)['lot_stock_id']
             if lot_stock_id:
                 context['location'] = lot_stock_id[0]
 
@@ -212,10 +212,19 @@ class product_product(osv.osv):
                 location_ids = [context['location']]
             elif type(context['location']) in (type(''), type(u'')):
                 location_ids = stock_location_obj.search(cr, uid,
-                            [('name','ilike',context['location'])],
-                            order='NO_ORDER', context=context)
+                                                         [('name','ilike',context['location'])],
+                                                         order='NO_ORDER', context=context)
             else:
                 location_ids = context['location']
+        elif context.get('location_category', False) and context.get('location_usage', False):
+            location_category = context.get('location_category')
+            location_usage = context.get('location_usage')
+            assert isinstance(location_category, list)
+            assert isinstance(location_usage, list)
+            location_ids = stock_location_obj.search(cr, uid,
+                                                     [('location_category','in', location_category),
+                                                      ('usage', 'in', location_usage)],
+                                                     order='NO_ORDER', context=context)
         else:
             location_ids = []
             wids = stock_warehouse_obj.search(cr, uid, [], order='NO_ORDER', context=context)
@@ -225,8 +234,8 @@ class product_product(osv.osv):
         # build the list of ids of children of the location given by id
         if context.get('compute_child',True):
             child_location_ids = stock_location_obj.search(cr, uid,
-                    [('location_id', 'child_of', location_ids)],
-                    order='NO_ORDER')
+                                                           [('location_id', 'child_of', location_ids)],
+                                                           order='NO_ORDER')
             location_ids = child_location_ids or location_ids
 
         results = []
@@ -297,11 +306,11 @@ class product_product(osv.osv):
             context.update({'raise-exception': False})
             for amount, prod_id, prod_uom in results:
                 amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
-                         uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
+                                                  uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
                 res[prod_id] += amount
             for amount, prod_id, prod_uom in results2:
                 amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
-                         uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
+                                                  uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
                 res[prod_id] -= amount
         return res
 
@@ -342,10 +351,10 @@ class product_product(osv.osv):
         'track_outgoing': fields.boolean('Track Outgoing Lots', help="Forces to specify a Production Lot for all moves containing this product and going to a Customer Location"),
         'location_id': fields.dummy(string='Stock Location', relation='stock.location', type='many2one'),
         'valuation':fields.selection([('manual_periodic', 'Periodical (manual)'),
-                                        ('real_time','Real Time (automated)'),], 'Inventory Valuation',
-                                        help="If real-time valuation is enabled for a product, the system will automatically write journal entries corresponding to stock moves." \
-                                             "The inventory variation account set on the product category will represent the current inventory value, and the stock input and stock output account will hold the counterpart moves for incoming and outgoing products."
-                                        , required=True),
+                                      ('real_time','Real Time (automated)'),], 'Inventory Valuation',
+                                     help="If real-time valuation is enabled for a product, the system will automatically write journal entries corresponding to stock moves." \
+                                     "The inventory variation account set on the product category will represent the current inventory value, and the stock input and stock output account will hold the counterpart moves for incoming and outgoing products."
+                                     , required=True),
     }
 
     _defaults = {
@@ -358,7 +367,7 @@ class product_product(osv.osv):
             context = {}
         if ('location' in context) and context['location'] and type(context['location']) == type(1):
             location_info = self.pool.get('stock.location').read(cr, uid,
-                    context['location'], ['usage'])
+                                                                 context['location'], ['usage'])
             fields=res.get('fields',{})
             if fields:
                 if location_info['usage'] == 'supplier':
@@ -411,22 +420,22 @@ class product_template(osv.osv):
             string='Stock Output Account',
             help='When doing real-time inventory valuation, counterpart Journal Items for all outgoing stock moves will be posted in this account. If not set on the product, the one from the product category is used.'),
         'property_stock_procurement': fields.many2one('stock.location',
-            string='Procurement Location',
-            domain=[('usage','like','procurement')],
-            required=True,
-            help='For the current product, this stock location will be used, instead of the default on     e, \
+                                                      string='Procurement Location',
+                                                      domain=[('usage','like','procurement')],
+                                                      required=True,
+                                                      help='For the current product, this stock location will be used, instead of the default on     e, \
 as the source location for stock moves generated by procurements'),
         'property_stock_production': fields.many2one('stock.location',
-            string='Production Location',
-            domain=[('usage','like','production')],
-            required=True,
-            help='For the current product, this stock location will be used, instead of the default one     , \
+                                                     string='Production Location',
+                                                     domain=[('usage','like','production')],
+                                                     required=True,
+                                                     help='For the current product, this stock location will be used, instead of the default one     , \
 as the source location for stock moves generated by production orders'),
         'property_stock_inventory': fields.many2one('stock.location',
-            string='Inventory Location',
-            domain=[('usage','like','inventory')],
-            required=True,
-            help='For the current product, this stock location will be used, instead of the default one,      \
+                                                    string='Inventory Location',
+                                                    domain=[('usage','like','inventory')],
+                                                    required=True,
+                                                    help='For the current product, this stock location will be used, instead of the default one,      \
 as the source location for stock moves generated when you do an inventory'),
     }
 
@@ -454,23 +463,23 @@ class product_category(osv.osv):
     _inherit = 'product.category'
     _columns = {
         'property_stock_journal': fields.property('account.journal',
-            relation='account.journal', type='many2one',
-            string='Stock journal', method=True, view_load=True,
-            help="When doing real-time inventory valuation, this is the Accounting Journal in which entries will be automatically posted when stock moves are processed."),
+                                                  relation='account.journal', type='many2one',
+                                                  string='Stock journal', method=True, view_load=True,
+                                                  help="When doing real-time inventory valuation, this is the Accounting Journal in which entries will be automatically posted when stock moves are processed."),
         'property_stock_account_input_categ': fields.property('account.account',
-            type='many2one', relation='account.account',
-            string='Stock Input Account', method=True, view_load=True,
-            help='When doing real-time inventory valuation, counterpart Journal Items for all incoming stock moves will be posted in this account. This is the default value for all products in this category, it can also directly be set on each product.'),
+                                                              type='many2one', relation='account.account',
+                                                              string='Stock Input Account', method=True, view_load=True,
+                                                              help='When doing real-time inventory valuation, counterpart Journal Items for all incoming stock moves will be posted in this account. This is the default value for all products in this category, it can also directly be set on each product.'),
         'property_stock_account_output_categ': fields.property('account.account',
-            type='many2one', relation='account.account',
-            string='Stock Output Account', method=True, view_load=True,
-            help='When doing real-time inventory valuation, counterpart Journal Items for all outgoing stock moves will be posted in this account. This is the default value for all products in this category, it can also directly be set on each product.'),
+                                                               type='many2one', relation='account.account',
+                                                               string='Stock Output Account', method=True, view_load=True,
+                                                               help='When doing real-time inventory valuation, counterpart Journal Items for all outgoing stock moves will be posted in this account. This is the default value for all products in this category, it can also directly be set on each product.'),
         'property_stock_variation': fields.property('account.account',
-            type='many2one',
-            relation='account.account',
-            string="Stock Variation Account",
-            method=True, view_load=True,
-            help="When real-time inventory valuation is enabled on a product, this account will hold the current value of the products.",),
+                                                    type='many2one',
+                                                    relation='account.account',
+                                                    string="Stock Variation Account",
+                                                    method=True, view_load=True,
+                                                    help="When real-time inventory valuation is enabled on a product, this account will hold the current value of the products.",),
     }
 
 product_category()

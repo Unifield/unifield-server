@@ -35,8 +35,6 @@
         'account_journal_demo.xml'
     ],
     'test': [
-        'test/analytic_data.yml',
-        'test/account_journal.yml',
     ],
     'installable': True,
     'active': False,

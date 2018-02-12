@@ -16,30 +16,5 @@
             <field name="help">Sales Orders help you manage quotations and orders from your customers. OpenERP suggests that you start by creating a quotation. Once it is confirmed, the quotation will be converted into a Sales Order. OpenERP can handle several types of products so that a sales order may trigger tasks, delivery orders, manufacturing orders, purchases and so on. Based on the configuration of the sales order, a draft invoice will be generated so that you just have to confirm it when you want to bill your customer.</field>
         </record>
         
-        <!-- We remove "invoiced_rate" as it is N/A -->
-        <record id="sale.view_order_tree" model="ir.ui.view">
-            <field name="name">sale.order.tree</field>
-            <field name="model">sale.order</field>
-            <field name="type">tree</field>
-            <field name="priority">2</field>
-            <field name="arch" type="xml">
-                <tree string="Sales Orders" colors="grey:state=='cancel';blue:state in ('waiting_date','manual');red:state in ('invoice_except','shipping_except')">
-                    <field name="vat_ok" invisible="1" />
-                    <field name="name"/>
-                    <field name="date_order"/>
-                    <field name="client_order_ref" />
-                    <field name="partner_id"/>
-                    <field name="user_id" />
-                    <field name="picked_rate" widget="progressbar"/>
-                    <!-- WAS
-                    <field name="invoiced_rate" widget="progressbar"/>
-                     -->
-                    <field name="amount_untaxed" sum="Total Tax Excluded" attrs="{'invisible': [('vat_ok', '=', False)]}" />
-                    <field name="amount_total" sum="Total Tax Included"/>
-                    <field name="state"/>
-                </tree>
-            </field>
-        </record>
-        
     </data>
 </openerp>

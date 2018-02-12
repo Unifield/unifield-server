@@ -148,6 +148,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         'last_cor_was_only_analytic': fields.boolean(string="AD Corrected?",
                                                      invisible=True,
                                                      help="If true, this line has been corrected by an accounting correction wizard but with only an AD correction (no G/L correction)"),
+        'is_manually_corrected': fields.boolean('Is Manually Corrected'),
     }
 
     _defaults = {
@@ -156,6 +157,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         'have_an_historic': lambda *a: False,
         'is_corrigible': lambda *a: True,
         'last_cor_was_only_analytic': lambda *a: False,
+        'is_manually_corrected': lambda *a: False,
     }
 
     def copy(self, cr, uid, aml_id, default=None, context=None):
@@ -172,8 +174,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
             'state': 'draft',
             'have_an_historic': False,
             'corrected': False,
+            'corrected_upstream': False,
             'reversal': False,
             'last_cor_was_only_analytic': False,
+            'is_manually_corrected': False,
         })
         if 'exported' not in default:
             default['exported'] = False
@@ -280,7 +284,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
         wiz_obj = self.pool.get('wizard.journal.items.corrections')
         ml = self.browse(cr, uid, ids[0])
         # Create wizard
-        wizard = wiz_obj.create(cr, uid, {'move_line_id': ids[0]}, context=context)
+        wizard = wiz_obj.create(cr, uid, {'move_line_id': ids[0], 'from_ji': True}, context=context)
         # Change wizard state in order to change date requirement on wizard
         wiz_obj.write(cr, uid, [wizard], {'state': 'open'}, context=context)
         # Update context
@@ -316,6 +320,34 @@ receivable, item have not been corrected, item have not been reversed and accoun
             context={}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        # if JI was marked as corrected manually: display the Reverse Manual Corr. wizard instead of the History wizard
+        # except if it's a project line that was marked as Corrected in a upper level
+        reverse_corr_wiz_obj = self.pool.get('reverse.manual.correction.wizard')
+        user_obj = self.pool.get('res.users')
+        display_reverse_corr_wiz = False
+        if len(ids) == 1:
+            ml = self.read(cr, uid, ids[0], ['is_manually_corrected', 'corrected_upstream'], context=context)
+            if ml['is_manually_corrected']:
+                company = user_obj.browse(cr, uid, uid, context=context).company_id
+                level = company.instance_id and company.instance_id.level or ''
+                if not ml['corrected_upstream'] or level != 'project':
+                    display_reverse_corr_wiz = True
+        if display_reverse_corr_wiz:
+            context.update({
+                'active_id': ids[0],
+                'active_ids': ids,
+            })
+            reverse_corr_wizard = reverse_corr_wiz_obj.create(cr, uid, {}, context=context)
+            return {
+                'name': _("History Move Line"),  # same title as the History Wizard
+                'type': 'ir.actions.act_window',
+                'res_model': 'reverse.manual.correction.wizard',
+                'view_mode': 'form,tree',
+                'view_type': 'form',
+                'res_id': [reverse_corr_wizard],
+                'context': context,
+                'target': 'new',
+            }
         # Prepare some values
         domain_ids = []
         # Search ids to be open
@@ -495,6 +527,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
                                              ('is_current_instance', '=', True)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
+        j_ana_extra_ids = ana_j_obj.search(cr, uid, [('type', '=', 'extra'), ('is_current_instance', '=', True)], context=context)
+        j_ana_extra_id = j_ana_extra_ids and j_ana_extra_ids[0] or False
+
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context,
                                                             limit=1, order='date_start, name')
@@ -523,8 +558,13 @@ receivable, item have not been corrected, item have not been reversed and accoun
             journal_id = j_corr_id
             if is_inkind:
                 journal_id = j_extra_id
-            if not journal_id and is_inkind:
-                raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
+                j_ana_corr_id = j_ana_extra_id
+
+            if is_inkind:
+                if not journal_id:
+                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
+                elif not j_ana_extra_id:
+                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Analytic Journal found!'))
             elif not journal_id:
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
 
@@ -949,7 +989,41 @@ receivable, item have not been corrected, item have not been reversed and accoun
             self.write(cr, uid, ml_ids, {'corrected_upstream': True}, check=False, update_check=False, context=context)
         return True
 
+    def set_as_corrected(self, cr, uid, ji_ids, manual=True, context=None):
+        """
+        Sets the JIs and their related AJIs as Corrected according to the following rules:
+        - if one of the JIs or AJIs has already been corrected it raises an error
+        - if manual = True, the Correction will be set as Manual (= the user will be able to reverse it manually)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ji_ids, (int, long)):
+            ji_ids = [ji_ids]
+        aal_obj = self.pool.get('account.analytic.line')
+        for ji in self.browse(cr, uid, ji_ids, fields_to_fetch=['corrected', 'move_id'], context=context):
+            # check that the JI isn't already corrected
+            if ji.corrected:
+                raise osv.except_osv(_('Error'), _('The entry %s has already been corrected.') % ji.move_id.name)
+            # check that none of the AJIs linked to the JIs has already been reallocated
+            aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji.id)], order='NO_ORDER', context=context)
+            for aji in aal_obj.read(cr, uid, aji_ids, ['is_reallocated'], context=context):
+                if aji['is_reallocated']:
+                    raise osv.except_osv(_('Error'), _('One AJI related to the entry %s has already been corrected.') % ji.move_id.name)
+            # set the JI as corrected
+            manual_corr_vals = {'is_manually_corrected': manual,
+                                'corrected': True,  # is_corrigible will be seen as "False"
+                                'have_an_historic': True}
+            # write on JI without recreating AJIs
+            self.write(cr, uid, ji.id, manual_corr_vals, context=context, check=False, update_check=False)
+            # Set the "corrected_upstream" flag on the JI if necessary
+            # (so that project lines marked as corrected in a upper level can't be "uncorrected" in project)
+            self.corrected_upstream_marker(cr, uid, [ji.id], context=context)
+            # set the AJIs as corrected
+            aal_obj.write(cr, uid, aji_ids, {'is_reallocated': True}, context=context)
+
+
 account_move_line()
+
 
 class account_move(osv.osv):
     _name = 'account.move'
@@ -971,4 +1045,45 @@ class account_move(osv.osv):
         return reversed_move
 
 account_move()
+
+
+class reverse_manual_correction_wizard(osv.osv_memory):
+    _name = 'reverse.manual.correction.wizard'
+    _description = 'Manual Correction Reversal Wizard'
+
+    _columns = {
+    }
+
+    _defaults = {
+    }
+
+    def reverse_manual_correction(self, cr, uid, ids, context=None):
+        """
+        Cancels the "Manual Correction" on the JI and its AJIs so that they can be re-corrected
+        """
+        if context is None:
+            context = {}
+        aml_obj = self.pool.get('account.move.line')
+        aal_obj = self.pool.get('account.analytic.line')
+        ji_id = context.get('active_id', False)
+        if ji_id:
+            # set the JI as non-corrected
+            is_cor_line = False
+            if aml_obj.read(cr, uid, ji_id, ['corrected_line_id'], context=context)['corrected_line_id']:
+                # if a COR line was corrected manually: the History Wizard must still appear if manual corr. is removed
+                is_cor_line = True
+            reverse_corr_vals = {'is_manually_corrected': False,
+                                 'corrected': False,  # is_corrigible will be seen as "True"
+                                 'have_an_historic': is_cor_line,
+                                 'corrected_upstream': False}
+            # add a tag in context to allow the write on a system JI (ex: to cancel a manual corr. done on a SI line)
+            context.update({'from_manual_corr_reversal': True})
+            aml_obj.write(cr, uid, ji_id, reverse_corr_vals, context=context, check=False, update_check=False)
+            # set the AJIs as non-corrected
+            aji_ids = aal_obj.search(cr, uid, [('move_id', '=', ji_id)], order='NO_ORDER', context=context)
+            aal_obj.write(cr, uid, aji_ids, {'is_reallocated': False}, context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+
+reverse_manual_correction_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

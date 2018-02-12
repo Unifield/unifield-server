@@ -1,0 +1,199 @@
+<?xml version="1.0"?>
+<document filename="counting_sheet.pdf">
+  <template pageSize="(29.7cm,21.0cm)" title="Stock Inventory" author="" allowSplitting="20" showBoundary="0">
+    <pageTemplate id="first">
+      <frame id="first" x1="0" y1="0" width="29.7cm" height="21.0cm"/>
+    </pageTemplate>
+  </template>
+  <stylesheet>
+    <blockTableStyle id="TableTitle">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+    <blockTableStyle id="TableHeader">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+    </blockTableStyle>
+     <blockTableStyle id="TableItem">
+      <blockAlignment value="LEFT"/>
+      <blockValign value="TOP"/>
+      <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="9,-1"/>
+    </blockTableStyle>
+    <initialize>
+      <paraStyle name="all" alignment="justify"/>
+    </initialize>
+    <paraStyle name="default" rightIndent="0.0" leftIndent="0.0" fontName="Helvetica" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="0.0" spaceAfter="0.0"/>" fontName="Helvetica" fontSize="12.0" leading="15" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="title" fontName="Helvetica-Bold" fontSize="12.0" leading="15" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="table_header_label" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>    <paraStyle name="tbl_header_left" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="table_header_value" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>    <paraStyle name="tbl_header_left" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="LEFT" spaceBefore="6.0" spaceAfter="6.0"/>
+    <paraStyle name="table_item_header" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+    <paraStyle name="table_item_data" rightIndent="0.0" leftIndent="0.0" fontName="Helvetica" fontSize="9.0" leading="11" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0"/>
+  </stylesheet>
+  <story>
+  <pto>
+  <pto_header>
+    <blockTable colWidths="1.5cm,2.0cm,7.5cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm,2.0cm" style="TableItem">
+      <tr>
+        <td>
+          <para style="table_item_header">Line #</para>
+        </td>
+        <td>
+          <para style="table_item_header">Item code</para>
+        </td>
+        <td>
+          <para style="table_item_header">Description</para>
+        </td>
+        <td>
+          <para style="table_item_header">UoM</para>
+        </td>
+        <td>
+          <para style="table_item_header">Quantity counted</para>
+        </td>
+        <td>
+          <para style="table_item_header">Batch number</para>
+        </td>
+        <td>
+          <para style="table_item_header">Expiry date</para>
+        </td>
+        <td>
+          <para style="table_item_header">Specification</para>
+        </td>
+        <td>
+          <para style="table_item_header">BN managment</para>
+        </td>
+        <td>
+          <para style="table_item_header">ED managment</para>
+        </td>
+      </tr>
+    </blockTable>
+  </pto_header>
+    <para style="default">[[ repeatIn(objects,'o') ]] </para>
+    <blockTable colWidths="26.4cm" style="TableTitle">
+      <tr>
+        <td>
+          <para style="title">INVENTORY COUNTING SHEET</para>
+        </td>
+      </tr>
+    </blockTable>
+    <blockTable colWidths="7.0cm,7.0cm,7.0cm,7.0cm" style="TableHeader">
+      <tr>
+        <td>
+          <para style="table_header_label">Inventory counter name</para>
+        </td>
+        <td>
+          <para style="table_header_value">[[ o.responsible ]]</para>
+        </td>
+        <td>
+          <para style="table_header_label">Inventory date</para>
+        </td>
+        <td>
+          <para style="table_header_value">[[ formatLang(o.date,date_time=True) ]]</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="table_header_label">Inventory reference</para>
+        </td>
+        <td>
+          <para style="table_header_value">[[ o.ref ]]</para>
+        </td>
+        <td>
+          <para style="table_header_label">Location</para>
+        </td>
+        <td>
+          <para style="table_header_value">[[ o.location_id.name ]]</para>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <para style="table_header_label">Inventory name</para>
+        </td>
+        <td>
+          <para style="table_header_value">[[ o.name ]]</para>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+      </tr>
+    </blockTable>
+    <para style="default">
+      <font color="white"> </font>
+    </para>
+    <blockTable colWidths="1.5cm,2.0cm,7.5cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm,2.0cm" style="TableItem">
+      <tr>
+        <td>
+          <para style="table_item_header">Line #</para>
+        </td>
+        <td>
+          <para style="table_item_header">Item code</para>
+        </td>
+        <td>
+          <para style="table_item_header">Description</para>
+        </td>
+        <td>
+          <para style="table_item_header">UoM</para>
+        </td>
+        <td>
+          <para style="table_item_header">Quantity counted</para>
+        </td>
+        <td>
+          <para style="table_item_header">Batch number</para>
+        </td>
+        <td>
+          <para style="table_item_header">Expiry date</para>
+        </td>
+        <td>
+          <para style="table_item_header">Specification</para>
+        </td>
+        <td>
+          <para style="table_item_header">BN managment</para>
+        </td>
+        <td>
+          <para style="table_item_header">ED managment</para>
+        </td>
+      </tr>
+    </blockTable>
+    <section>
+      <para style="default">[[ repeatIn(o.counting_line_ids, 'p') ]]</para>
+      <blockTable colWidths="1.5cm,2.0cm,7.5cm,2.0cm,2.0cm,2.0cm,2.0cm,2.5cm,2.0cm,2.0cm" style="TableItem">
+        <tr>
+          <td>
+            <para style="table_item_data">[[ p.line_no ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ p.product_id and p.product_id.code or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ p.product_id and p.product_id.name or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ p.product_uom_id and p.product_uom_id.name or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ p.quantity or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ p.batch_number or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ formatLang(p.expiry_date, date=True)  or '' ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ display_product_attributes(p) ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ yesno(p.is_bn) ]]</para>
+          </td>
+          <td>
+            <para style="table_item_data">[[ yesno(p.is_ed) ]]</para>
+          </td>
+        </tr>
+      </blockTable>
+    </section>
+    <para style="default">
+      <font color="white"> </font>
+    </para>
+  </pto>
+  </story>
+</document>

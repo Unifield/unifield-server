@@ -22,18 +22,17 @@
 ##############################################################################
 
 from osv import osv
-import time
 from tools.translate import _
 
 class stock_picking(osv.osv):
     _name = 'stock.picking'
     _inherit = 'stock.picking'
 
-    def _invoice_line_hook(self, cr, uid, move_line, invoice_line_id):
+    def _invoice_line_hook(self, cr, uid, move_line, invoice_line_id, account_id):
         """
         BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
         """
-        res = super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id)
+        res = super(stock_picking, self)._invoice_line_hook(cr, uid, move_line, invoice_line_id, account_id)
 
         # Modify the product UoM and the quantity of line according to move attributes
         values = {'uos_id': move_line.product_uom.id,
@@ -75,45 +74,6 @@ class stock_picking(osv.osv):
                 self.pool.get('account.invoice.line').unlink(cr, uid, [invoice_line_id])
         return res
 
-    def _hook_invoice_vals_before_invoice_creation(self, cr, uid, ids, invoice_vals, picking):
-        """
-        Update journal by an inkind journal if we come from an inkind donation PO.
-        Update partner account
-        BE CAREFUL : For FO with PICK/PACK/SHIP, the invoice is not created on picking but on shipment
-        """
-        super(stock_picking, self)._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
-        if not invoice_vals.get('date_invoice',False):
-            invoice_vals['date_invoice'] = time.strftime('%Y-%m-%d',time.localtime())
-        journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'inkind'),
-                                                                        ('is_current_instance', '=', True)])
-        # From US-2391 Donations before expiry and Standard donations linked to an intersection partner generate a Donation
-        donation_intersection = picking and picking.purchase_id and picking.purchase_id.order_type in ['donation_exp', 'donation_st'] \
-            and picking.partner_id and picking.partner_id.partner_type == 'section'
-        if picking and picking.purchase_id and picking.purchase_id.order_type == "in_kind" or donation_intersection:
-            if not journal_ids:
-                raise osv.except_osv(_('Error'), _('No In-kind donation journal found!'))
-            account_id = picking.partner_id and picking.partner_id.donation_payable_account and picking.partner_id.donation_payable_account.id or False
-            if not account_id:
-                raise osv.except_osv(_('Error'), _('No Donation Payable account for this partner: %s') % (picking.partner_id.name or '',))
-            invoice_vals.update({'journal_id': journal_ids[0], 'account_id': account_id, 'is_inkind_donation': True,})
-        if picking and picking.partner_id and picking.partner_id.partner_type == 'intermission':
-            invoice_vals.update({'is_intermission': True})
-
-        if picking and picking.type == 'in' and picking.partner_id and (not picking.partner_id.property_account_payable or not picking.partner_id.property_account_receivable):
-            raise osv.except_osv(_('Error'), _('Partner of this incoming shipment has no account set. Please set appropriate accounts (receivable and payable) in order to process this IN'))
-
-        return invoice_vals
-
-    def action_invoice_create(self, cr, uid, ids, journal_id=False, group=False, type='out_invoice', context=None):
-        """
-        Add a link between stock picking and invoice
-        """
-        res = super(stock_picking, self).action_invoice_create(cr, uid, ids, journal_id, group, type, context)
-        for pick in self.browse(cr, uid, [x for x in res]):
-            inv_id = res[pick.id]
-            if inv_id:
-                self.pool.get('account.invoice').write(cr, uid, [inv_id], {'picking_id': pick.id})
-        return res
 
 stock_picking()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

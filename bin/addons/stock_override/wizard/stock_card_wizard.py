@@ -97,7 +97,10 @@ class stock_card_wizard(osv.osv_memory):
         loc_obj = self.pool.get('stock.location')
         product_obj = self.pool.get('product.product')
         line_obj = self.pool.get('stock.card.wizard.line')
-        inv_line_obj = self.pool.get('stock.inventory.line')
+        pi_line_obj = self.pool.get('physical.inventory.counting')
+        # 'Old' physical inventories
+        oldinv_line_obj = self.pool.get('stock.inventory.line')
+
 
         if not context:
             context = {}
@@ -131,6 +134,7 @@ class stock_card_wizard(osv.osv_memory):
                   ('prodlot_id', '=', prodlot_id),
                   ('state', '=', 'done')]
 
+        # "Old" physical inventory
         inv_dom = [
             ('product_id', '=', product.id),
             ('prod_lot_id', '=', prodlot_id),
@@ -138,28 +142,51 @@ class stock_card_wizard(osv.osv_memory):
             ('inventory_id.state', '=', 'done')
         ]
 
+        pi_counting_dom = [
+            ('product_id', '=', product.id),
+            ('prod_lot_id', '=', prodlot_id),
+            ('discrepancy', '=', False),
+            ('inventory_id.state', 'in', ['confirmed', 'closed'])
+        ]
+
+
         if card.from_date:
             domain.append(('date', '>=', card.from_date))
             inv_dom.append(('inventory_id.date_done', '>=', card.from_date))
+            pi_counting_dom.extend([
+                '|',
+                ('inventory_id.date_done', '>=', card.from_date), 
+                '&', 
+                ('inventory_id.state', '=', 'confirmed'), 
+                ('inventory_id.date_confirmed', '>=', card.from_date),
+            ])
 
         if card.to_date:
             domain.append(('date', '<=', card.to_date))
             inv_dom.append(('inventory_id.date_done', '<=', card.to_date + ' 23:59:00'))
+            pi_counting_dom.extend([
+                '|', 
+                ('inventory_id.date_done', '<=', card.to_date + ' 23:59:00'),
+                '&', 
+                ('inventory_id.state', '=', 'confirmed'),
+                ('inventory_id.date_confirmed', '>=', card.to_date),
+            ])
 
         if location_id:
             domain.extend(['|',
                            ('location_id', 'child_of', location_id),
                            ('location_dest_id', 'child_of', location_id)])
             inv_dom.append(('location_id', 'child_of', location_id))
+            pi_counting_dom.append(('inventory_id.location_id', 'child_of', location_id))
         else:
             domain.extend(['|',
                            ('location_id.usage', 'in', location_usage),
                            ('location_dest_id.usage', 'in', location_usage)])
 
-
-        inv_line_ids = inv_line_obj.search(cr, uid, inv_dom, context=context)
+        # Lines from "old" physical inventories
+        inv_line_ids = oldinv_line_obj.search(cr, uid, inv_dom, context=context)
         inv_line_to_add = {}
-        for line in inv_line_obj.browse(cr, uid, inv_line_ids, context=context):
+        for line in oldinv_line_obj.browse(cr, uid, inv_line_ids, context=context):
             inv_line_to_add.setdefault(line.inventory_id.date_done, []).append({
                 'card_id': ids[0],
                 'date_done': line.inventory_id.date_done,
@@ -172,9 +199,27 @@ class stock_card_wizard(osv.osv_memory):
                 'notes': '',
             })
 
-
         inv_line_dates = inv_line_to_add.keys()
         inv_line_dates.sort()
+
+        pi_counting_line_ids = pi_line_obj.search(cr, uid, pi_counting_dom, context=context)
+        pi_counting_line_to_add = {}
+        for line in pi_line_obj.browse(cr, uid, pi_counting_line_ids, context=context):
+            pi_counting_line_to_add.setdefault(line.inventory_id.date_done or line.inventory_id.date_confirmed, []).append({
+                'card_id': ids[0],
+                'date_done': line.inventory_id.date_done or line.inventory_id.date_confirmed,
+                'doc_ref': 'INV:' + str(line.inventory_id.id) + ':' + line.inventory_id.name,
+                'origin': False,
+                'qty_in': 0,
+                'qty_out': 0,
+                'balance': 0,
+                'src_dest': line.product_id.property_stock_inventory and line.product_id.property_stock_inventory.name or False,
+                'notes': '',
+            })
+
+        pi_counting_line_dates = pi_counting_line_to_add.keys()
+        pi_counting_line_dates.sort()
+
 
         # Create one line per stock move
         move_ids = move_obj.search(cr, uid, domain,order='date asc',
@@ -200,6 +245,11 @@ class stock_card_wizard(osv.osv_memory):
                     new_line['balance'] = initial_stock
                     line_obj.create(cr, uid, new_line, context=context)
 
+            while pi_counting_line_dates and pi_counting_line_dates[0] < move.date:
+                inv_data = pi_counting_line_dates.pop(0)
+                for new_line in pi_counting_line_to_add[inv_data]:
+                    new_line['balance'] = initial_stock
+                    line_obj.create(cr, uid, new_line, context=context)
 
             in_qty, out_qty = 0.00, 0.00
             move_location = False
@@ -231,7 +281,7 @@ class stock_card_wizard(osv.osv_memory):
 
             doc_ref = (move.picking_id and move.picking_id.name) or \
                       (move.init_inv_ids and move.init_inv_ids[0].name) or \
-                      (move.inventory_ids and move.inventory_ids[0].name) or ''
+                      (move.inventory_ids and move.inventory_ids[0].name) or move.name or ''
 
             line_values = {
                 'card_id': ids[0],
@@ -249,6 +299,11 @@ class stock_card_wizard(osv.osv_memory):
 
         for inv_date in inv_line_dates:
             for new_line in inv_line_to_add[inv_date]:
+                new_line['balance'] = initial_stock
+                line_obj.create(cr, uid, new_line, context=context)
+
+        for pi_counting_date in pi_counting_line_dates:
+            for new_line in pi_counting_line_to_add[pi_counting_date]:
                 new_line['balance'] = initial_stock
                 line_obj.create(cr, uid, new_line, context=context)
 

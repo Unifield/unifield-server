@@ -2248,8 +2248,9 @@ class orm_memory(orm_template):
         self.check_id = 0
         cr.execute('delete from wkf_instance where res_type=%s', (self._name,))
 
-    def _check_access(self, uid, object_id, mode):
-        if uid != 1 and self.datas[object_id]['internal.create_uid'] != uid:
+    def _check_access(self, cr, uid, object_id, mode):
+        user_obj = self.pool.get('res.users')
+        if uid != 1 and uid != user_obj._get_sync_user_id(cr) and self.datas[object_id]['internal.create_uid'] != uid:
             raise except_orm(_('AccessError'), '%s access is only allowed on your own records for osv_memory objects except for the super-user' % mode.capitalize())
 
     def vaccum(self, cr, uid, force=False):
@@ -2301,7 +2302,7 @@ class orm_memory(orm_template):
                 for f in fields_to_read:
                     record = self.datas.get(id)
                     if record:
-                        self._check_access(user, id, 'read')
+                        self._check_access(cr, user, id, 'read')
                         r[f] = record.get(f, False)
                         if r[f] and isinstance(self._columns[f], fields.binary) and context.get('bin_size', False):
                             r[f] = len(r[f])
@@ -2355,7 +2356,7 @@ class orm_memory(orm_template):
             else:
                 upd_todo.append(field)
         for object_id in ids:
-            self._check_access(user, object_id, mode='write')
+            self._check_access(cr, user, object_id, mode='write')
             try:
                 self.datas[object_id].update(vals2)
             except KeyError:
@@ -2565,7 +2566,7 @@ class orm_memory(orm_template):
 
     def unlink(self, cr, uid, ids, context=None):
         for id in ids:
-            self._check_access(uid, id, 'unlink')
+            self._check_access(cr, uid, id, 'unlink')
             self.datas.pop(id, None)
         if len(ids):
             cr.execute('delete from wkf_instance where res_type=%s and res_id IN %s', (self._name, tuple(ids)))
@@ -2576,7 +2577,7 @@ class orm_memory(orm_template):
         credentials = self.pool.get('res.users').name_get(cr, user, [user])[0]
         create_date = time.strftime('%Y-%m-%d %H:%M:%S')
         for id in ids:
-            self._check_access(user, id, 'read')
+            self._check_access(cr, user, id, 'read')
             result.append({
                 'create_uid': credentials,
                 'create_date': create_date,
@@ -2875,6 +2876,56 @@ class orm(orm_template):
         '''
         pass
 
+    def _create_fk(self, cr, col_name, field_def, update=False):
+        ref = self.pool.get(field_def._obj)._table
+        # ir_actions is inherited so foreign key doesn't work on it
+        if ref != 'ir_actions':
+            to_create = True
+            if update:
+                to_create = False
+                # check if fk already exist on should be changed
+                cr.execute('SELECT confdeltype, conname FROM pg_constraint as con, pg_class as cl1, pg_class as cl2, '
+                           'pg_attribute as att1, pg_attribute as att2 '
+                           'WHERE con.conrelid = cl1.oid '
+                           'AND cl1.relname = %s '
+                           'AND con.confrelid = cl2.oid '
+                           'AND cl2.relname = %s '
+                           'AND array_lower(con.conkey, 1) = 1 '
+                           'AND con.conkey[1] = att1.attnum '
+                           'AND att1.attrelid = cl1.oid '
+                           'AND att1.attname = %s '
+                           'AND array_lower(con.confkey, 1) = 1 '
+                           'AND con.confkey[1] = att2.attnum '
+                           'AND att2.attrelid = cl2.oid '
+                           'AND att2.attname = %s '
+                           "AND con.contype = 'f'", (self._table, ref, col_name, 'id'))
+                res2 = cr.dictfetchall()
+                if res2:
+                    if res2[0]['confdeltype'] != POSTGRES_CONFDELTYPES.get(field_def.ondelete.upper(), 'a'):
+                        cr.execute('ALTER TABLE "' + self._table + '" DROP CONSTRAINT "' + res2[0]['conname'] + '"')
+                        to_create = True
+
+            if to_create:
+                cr.execute('ALTER TABLE "%s" ADD FOREIGN KEY ("%s") REFERENCES "%s" ON DELETE %s' % (self._table, col_name, ref, field_def.ondelete))
+                self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE %s",
+                                    self._table, col_name, ref, field_def.ondelete)
+                cr.commit()
+
+    def _create_m2m_table(self, cr, f):
+        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
+        if not cr.dictfetchall():
+            if not self.pool.get(f._obj):
+                raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
+            ref = self.pool.get(f._obj)._table
+            cr.execute('CREATE TABLE "%s" ("%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, "%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, UNIQUE("%s","%s")) WITH OIDS' % (f._rel, f._id1, self._table, f._id2, ref, f._id1, f._id2))
+            cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id1, f._rel, f._id1))
+            cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id2, f._rel, f._id2))
+            cr.execute("COMMENT ON TABLE \"%s\" IS 'RELATION BETWEEN %s AND %s'" % (f._rel, self._table, ref))
+            cr.commit()
+            self.__schema.debug("Create table '%s': relation between '%s' and '%s'",
+                                f._rel, self._table, ref)
+
+
     def _auto_init(self, cr, context=None):
         if context is None:
             context = {}
@@ -2883,6 +2934,8 @@ class orm(orm_template):
         todo_end = []
         self._field_create(cr, context=context)
         to_migrate = []
+        missing_fk = {}
+        missing_m2m = {}
         if getattr(self, '_auto', True):
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             if not cr.rowcount:
@@ -2981,19 +3034,12 @@ class orm(orm_template):
                             self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE SET NULL",
                                                 self._obj, f._fields_id, f._table)
                 elif isinstance(f, fields.many2many):
-                    cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (f._rel,))
-                    if not cr.dictfetchall():
-                        if not self.pool.get(f._obj):
-                            raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
-                        ref = self.pool.get(f._obj)._table
-#                        ref = f._obj.replace('.', '_')
-                        cr.execute('CREATE TABLE "%s" ("%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, "%s" INTEGER NOT NULL REFERENCES "%s" ON DELETE CASCADE, UNIQUE("%s","%s")) WITH OIDS' % (f._rel, f._id1, self._table, f._id2, ref, f._id1, f._id2))
-                        cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id1, f._rel, f._id1))
-                        cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (f._rel, f._id2, f._rel, f._id2))
-                        cr.execute("COMMENT ON TABLE \"%s\" IS 'RELATION BETWEEN %s AND %s'" % (f._rel, self._table, ref))
-                        cr.commit()
-                        self.__schema.debug("Create table '%s': relation between '%s' and '%s'",
-                                            f._rel, self._table, ref)
+                    if not self.pool.get(f._obj):
+                        missing_m2m.setdefault(f._obj, [])
+                        missing_m2m[f._obj].append((self, f))
+                    else:
+                        self._create_m2m_table(cr, f)
+
                 else:
                     res = col_data.get(k, [])
                     res = res and [res] or []
@@ -3134,31 +3180,11 @@ class orm(orm_template):
                                 self.__schema.debug(msg, self._table, k, f._type)
 
                             if isinstance(f, fields.many2one):
-                                ref = self.pool.get(f._obj)._table
-                                if ref != 'ir_actions':
-                                    cr.execute('SELECT confdeltype, conname FROM pg_constraint as con, pg_class as cl1, pg_class as cl2, '
-                                               'pg_attribute as att1, pg_attribute as att2 '
-                                               'WHERE con.conrelid = cl1.oid '
-                                               'AND cl1.relname = %s '
-                                               'AND con.confrelid = cl2.oid '
-                                               'AND cl2.relname = %s '
-                                               'AND array_lower(con.conkey, 1) = 1 '
-                                               'AND con.conkey[1] = att1.attnum '
-                                               'AND att1.attrelid = cl1.oid '
-                                               'AND att1.attname = %s '
-                                               'AND array_lower(con.confkey, 1) = 1 '
-                                               'AND con.confkey[1] = att2.attnum '
-                                               'AND att2.attrelid = cl2.oid '
-                                               'AND att2.attname = %s '
-                                               "AND con.contype = 'f'", (self._table, ref, k, 'id'))
-                                    res2 = cr.dictfetchall()
-                                    if res2:
-                                        if res2[0]['confdeltype'] != POSTGRES_CONFDELTYPES.get(f.ondelete.upper(), 'a'):
-                                            cr.execute('ALTER TABLE "' + self._table + '" DROP CONSTRAINT "' + res2[0]['conname'] + '"')
-                                            cr.execute('ALTER TABLE "' + self._table + '" ADD FOREIGN KEY ("' + k + '") REFERENCES "' + ref + '" ON DELETE ' + f.ondelete)
-                                            cr.commit()
-                                            self.__schema.debug("Table '%s': column '%s': XXX",
-                                                                self._table, k)
+                                if self.pool.get(f._obj):
+                                    self._create_fk(cr, k, f, True)
+                                else:
+                                    missing_fk.setdefault(f._obj, [])
+                                    missing_fk[f._obj].append((self, k, f, True))
                     elif len(res) > 1:
                         netsvc.Logger().notifyChannel('orm', netsvc.LOG_ERROR, "Programming error, column %s->%s has multiple instances !" % (self._table, k))
                     else:
@@ -3185,20 +3211,22 @@ class orm(orm_template):
                             if isinstance(f, fields.function):
                                 order = 10
                                 if f.store is not True:
-                                    order = f.store[f.store.keys()[0]][2]
-                                todo_update_store.append((order, f, k))
+                                    store_info = f.store[f.store.keys()[0]]
+                                    if isinstance(store_info, list):
+                                        order = store_info[0][2]
+                                    else:
+                                        order = store_info[2]
+                                else:
+                                    todo_update_store.append((order, f, k))
 
                             # and add constraints if needed
                             elif isinstance(f, fields.many2one):
                                 if not self.pool.get(f._obj):
-                                    raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
-                                ref = self.pool.get(f._obj)._table
-#                                ref = f._obj.replace('.', '_')
-                                # ir_actions is inherited so foreign key doesn't work on it
-                                if ref != 'ir_actions':
-                                    cr.execute('ALTER TABLE "%s" ADD FOREIGN KEY ("%s") REFERENCES "%s" ON DELETE %s' % (self._table, k, ref, f.ondelete))
-                                    self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE %s",
-                                                        self._table, k, ref, f.ondelete)
+                                    missing_fk.setdefault(f._obj, [])
+                                    missing_fk[f._obj].append((self, k, f, False))
+                                else:
+                                    self._create_fk(cr, k, f, False)
+
                             if f.select:
                                 cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (self._table, k, self._table, k))
                             if f.required:
@@ -3285,7 +3313,7 @@ class orm(orm_template):
         if store_compute:
             self._parent_store_compute(cr)
             cr.commit()
-        return todo_end
+        return todo_end, missing_fk, missing_m2m
 
     def __init__(self, cr):
         super(orm, self).__init__(cr)
@@ -3307,25 +3335,28 @@ class orm(orm_template):
                 sm = {self._name: (lambda self, cr, uid, ids, c={}: ids, None, 10, None)}
             else:
                 sm = self._columns[store_field].store
-            for object, aa in sm.items():
-                if len(aa) == 4:
-                    (fnct, fields2, order, length) = aa
-                elif len(aa) == 3:
-                    (fnct, fields2, order) = aa
-                    length = None
-                else:
-                    raise except_orm('Error',
-                                     ('Invalid function definition %s in object %s !\nYou must use the definition: store={object:(fnct, fields, priority, time length)}.' % (store_field, self._name)))
-                self.pool._store_function.setdefault(object, [])
-                ok = True
-                for x, y, z, e, f, l in self.pool._store_function[object]:
-                    if (x==self._name) and (y==store_field) and (e==fields2):
-                        if f == order:
-                            ok = False
-                            break
-                if ok:
-                    self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
-                    self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
+            for object, aa_list in sm.items():
+                if isinstance(aa_list, tuple):
+                    aa_list = [aa_list]
+                for aa in aa_list:
+                    if len(aa) == 4:
+                        (fnct, fields2, order, length) = aa
+                    elif len(aa) == 3:
+                        (fnct, fields2, order) = aa
+                        length = None
+                    else:
+                        raise except_orm('Error',
+                                         ('Invalid function definition %s in object %s !\nYou must use the definition: store={object:(fnct, fields, priority, time length)}.' % (store_field, self._name)))
+                    self.pool._store_function.setdefault(object, [])
+                    ok = True
+                    for x, y, z, e, f, l in self.pool._store_function[object]:
+                        if (x==self._name) and (y==store_field) and (e==fields2):
+                            if f == order:
+                                ok = False
+                                break
+                    if ok:
+                        self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
+                        self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
 
         for (key, null, msg) in self._sql_constraints:
             self.pool._sql_error[self._table+'_'+key] = msg
@@ -3603,6 +3634,8 @@ class orm(orm_template):
                 res2 = self._columns[val[0]].get(cr, self, ids, val, user, context=context, values=res)
                 for pos in val:
                     for record in res:
+                        if not record['id'] in res2:
+                            raise Exception("Could not process key %s" % key)
                         if isinstance(res2[record['id']], str): res2[record['id']] = eval(res2[record['id']]) #TOCHECK : why got string instend of dict in python2.6
                         multi_fields = res2.get(record['id'],{})
                         if multi_fields:
@@ -3878,6 +3911,7 @@ class orm(orm_template):
         """
         if not ids:
             return True
+        assert isinstance(vals, dict), "orm.write() expects a dictionnary as 4th argument!"
         readonly = None
         for field in vals.copy():
             fobj = None

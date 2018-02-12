@@ -21,6 +21,7 @@
                             <newline/>
                             <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
                             <field name="currency" readonly="1"/>
+                            <field name="bank_account_number"/>
                             <newline/>
                             <field name="prev_reg_id" invisible="1"/>
                             <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>
@@ -184,7 +185,7 @@
                         <group col="8" colspan="4">
                             <field name="state" readonly="1"/>
                             <button name="button_dummy" states="draft,open" string="Compute" type="object" icon="terp-stock_format-scientific"/>
-                            <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
+                            <button name="button_open_register" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
                             <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                         </group>
                     </form>
@@ -282,7 +283,7 @@
                                         <field name="reconciled"/>
                                         <!-- UTP-482 operational advance linked confirmed PO -->
                                         <field name="cash_register_op_advance_po_id"
-                                            domain="[('state', 'in', ['approved']), ('currency_id', '=', parent.currency), ('order_type', 'in', ('regular','purchase_list','direct'))]" />
+                                            domain="[('has_confirmed_line', '=', True), ('currency_id', '=', parent.currency), ('order_type', 'in', ('regular','purchase_list'))]" />
                                         <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr"
                                             attrs="{'invisible': [('direct_invoice', '=', True)]}"
                                             context="context"/>
@@ -400,7 +401,7 @@
                         <group name="state" colspan="4">
                             <field name="state" colspan="4" readonly="True"/>
                         </group>
-                        <button name="button_open_cash" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
+                        <button name="button_open_register" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
                         <group name="open_state" colspan="4">
                             <button name="button_confirm_cash" states="open" string="Close Register" icon="gtk-ok" type="object" colspan="2" />
                         </group>
@@ -435,6 +436,11 @@
                     <field name="partner_id" invisible="1"/>
                     <field name="employee_id" invisible="1"/>
                     <field name="transfer_journal_id" invisible="1"/>
+                    <field name="display_analytic_button" invisible="1"/>
+                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object"
+                            icon="terp-stock_symbol-selection" context="context"
+                            attrs="{'readonly': [('from_import_cheque_id', '!=', False)],
+                                    'invisible': [('display_analytic_button', '=', False)]}"/>
                     <field name="amount_in"/>
                     <field name="amount_out"/>
                     <field name="currency_id" invisible="1"/>
@@ -596,7 +602,7 @@
                     <field name="balance_end" />
                     <field name="balance_end_real"/>
                     <field name="state"/>
-                    <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
+                    <button name="button_open_register" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                 </tree>
             </field>
@@ -640,7 +646,7 @@
                     <field name="msf_calculated_balance"/>
                     <field name="balance_end_cash" string="Cashbox balance" />
                     <field name="state"/>
-                    <button type="object" string="Open" name="button_open_cash" states="draft" icon="terp-gtk-go-back-rtl"/>
+                    <button type="object" string="Open" name="button_open_register" states="draft" icon="terp-gtk-go-back-rtl"/>
                     <button type="object" string="Close Register" name="button_confirm_cash" states="open" icon="terp-camera_test"/>
                 </tree>
             </field>
@@ -891,7 +897,7 @@
                     </notebook>
                     <group col="8" colspan="4">
                         <field name="state" readonly="1"/>
-                        <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
+                        <button name="button_open_register" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
                         <button name="button_confirm_cheque" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                     </group>
                 </form>
@@ -912,7 +918,7 @@
                     <field name="currency"/>
                     <field name="journal_id"/>
                     <field name="state"/>
-                    <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
+                    <button name="button_open_register" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_cheque" states="open" string="Close Register" type="object"  icon="terp-camera_test"/>
                 </tree>
             </field>

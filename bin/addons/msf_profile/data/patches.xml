@@ -1,9 +1,65 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF7.1 -->
+        <record id="compute_amount" model="patch.scripts">
+            <field name="method">recompute_amount</field>
+        </record>
+
+        <!-- UF7.0 -->
+        <record id="post_sll" model="patch.scripts">
+            <field name="method">post_sll</field>
+        </record>
+
+        <record id="us_3306" model="patch.scripts">
+            <field name="method">us_3306</field>
+        </record>
+
+        <record id="us_2676_patch" model="patch.scripts">
+            <field name="method">us_2676</field>
+        </record>
+
+        <record id="us_3345_remove_space_in_employee_name" model="patch.scripts">
+            <field name="method">us_3345_remove_space_in_employee_name</field>
+        </record>
+
+        <record id="us_3756_remove_space_partner" model="patch.scripts">
+            <field name="method">us_3756_remove_space_partner</field>
+        </record>
+
+        <record id="set_stock_level" model="patch.scripts">
+            <field name="method">set_stock_level</field>
+        </record>
+
+        <record id="us_3516_change_damage_reason_type_incoming_ok" model="patch.scripts">
+            <field name="method">us_3516_change_damage_reason_type_incoming_ok</field>
+        </record>
+
+        <record id="delete_commitment" model="patch.scripts">
+            <field name="method">delete_commitment</field>
+        </record>
+
+        <record id="us_3879_set_pricelist_id_for_ir" model="patch.scripts">
+            <field name="method">us_3879_set_pricelist_id_for_ir</field>
+        </record>
+
+        <!-- UF7.1 -->
+        <record id="US-4036" model="patch.scripts">
+            <field name="method">trigger_pofomsg</field>
+        </record>
+        <record id="gen_pick" model="patch.scripts">
+            <field name="method">gen_pick</field>
+        </record>
+        <record id="close_pol_already_processed" model="patch.scripts">
+            <field name="method">close_pol_already_processed</field>
+        </record>
+
+        <!-- OLD -->
+
         <record id="us_3048_patch" model="patch.scripts">
             <field name="method">us_3048_patch</field>
         </record>
+
 
         <record id="us_2647_patch" model="patch.scripts">
             <field name="method">us_2647</field>
@@ -205,5 +261,6 @@
         <record id="us_1562_rename_special_periods" model="patch.scripts">
             <field name="method">us_1562_rename_special_periods</field>
         </record>
+
     </data>
 </openerp>

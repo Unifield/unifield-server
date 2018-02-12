@@ -221,6 +221,7 @@
                             <field name="document_date" select="1"/>
                             <field name="date"/>
                             <field name="period_id"/>
+                            <field name="fiscalyear_id"/>
                         </group>
                         <newline/>
                         <group>
@@ -363,10 +364,12 @@
             <field name="model">account.analytic.journal</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Analytic Journal">
+                <form string="Analytic Journal" hide_duplicate_button="True" noteditable="is_current_instance==False">
+                    <field name="has_ajis" invisible="1"/>
+                    <field name="is_current_instance" invisible="1"/>
                     <field name="name" select="1" default_focus="1"/>
-                    <field name="code" select="1"/>
-                    <field name="type" select="2"/>
+                    <field name="code" select="1" attrs="{'readonly': [('has_ajis', '=', True)]}"/>
+                    <field name="type" select="2" attrs="{'readonly': [('has_ajis', '=', True)]}"/>
                     <field name="active" select="2"/>
                     <field name="company_id" groups="base.group_multi_company" widget="selection"/>
                 </form>

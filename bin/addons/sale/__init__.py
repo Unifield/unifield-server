@@ -23,11 +23,46 @@
 # Init Sales
 #----------------------------------------------------------
 
-import sale
+SALE_ORDER_LINE_STATE_SELECTION = [
+    ('draft', 'Draft'),
+    ('validated', 'Validated'),
+    ('sourced', 'Sourced'),
+    ('sourced_v', 'Sourced-v'),
+    ('sourced_sy', 'Sourced-sy'),
+    ('sourced_n', 'Sourced-n'),
+    ('confirmed', 'Confirmed'),
+    ('done', 'Closed'),
+    ('cancel', 'Cancelled'),
+    ('cancel_r', 'Cancelled-r'),
+]
+
+SALE_ORDER_STATE_SELECTION = [
+    ('draft', 'Draft'),
+    ('draft_p', 'Draft-p'),
+    ('validated', 'Validated'),
+    ('validated_p', 'Validated-p'),
+    ('sourced', 'Sourced'),
+    ('sourced_p', 'Sourced-p'),
+    ('confirmed', 'Confirmed'),
+    ('confirmed_p', 'Confirmed-p'),
+    ('done', 'Closed'),
+    ('cancel', 'Cancelled'),
+]
+
+SALE_ORDER_SPLIT_SELECTION = [
+    ('original_sale_order', 'Original'),
+    ('esc_split_sale_order', '1'), # ESC
+    ('stock_split_sale_order', '2'), # from Stock
+    ('local_purchase_split_sale_order', '3'), # Local Purchase
+]
+
+import sale_order
 import stock
 import sale_installer
 import wizard
 import report
 import company
+import res_partner
+import sale_workflow
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

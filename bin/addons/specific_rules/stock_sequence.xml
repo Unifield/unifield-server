@@ -2,9 +2,6 @@
 <openerp>
     <data noupdate="1">
 
-		<delete model="ir.sequence.type" id="stock.sequence_type_serial"/>
-		<delete model="ir.sequence" id="stock.sequence_production_lots"/>
-
         <record id="sequence_type_serial" model="ir.sequence.type">
             <field name="name">Batch Numbers</field>
             <field name="code">stock.lot.serial</field>

@@ -23,13 +23,11 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 
-import time
-
 
 class currency_setup(osv.osv_memory):
     _name = 'currency.setup'
     _inherit = 'res.config'
-    
+
     _columns = {
         'functional_id': fields.selection([('eur', 'EUR'), ('chf', 'CHF')], string='Functional currency',
                                           required=True),
@@ -45,7 +43,7 @@ class currency_setup(osv.osv_memory):
 
     def functional_on_change(self, cr, uid, ids, currency_id, context=None):
         return {'value': {'section_id': currency_id}}
-    
+
     def default_get(self, cr, uid, fields, context=None):
         if context is None:
             context = {}
@@ -53,10 +51,10 @@ class currency_setup(osv.osv_memory):
         Display the default value for delivery process
         '''
         res = super(currency_setup, self).default_get(cr, uid, fields, context=context)
-        
+
         company_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         esc_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'base', 'EUR')[1]
-        
+
         if company_id.currency_id.id == esc_id:
             res['functional_id'] = 'eur'
         else:
@@ -65,7 +63,7 @@ class currency_setup(osv.osv_memory):
         res['esc_id'] = esc_id
         res['section_id'] = res['functional_id']
         return res
-    
+
     def execute(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -101,7 +99,7 @@ class currency_setup(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No pricelist found for this currency !'))
 
         # Change the currencies on all internal partners
-        partner_ids = self.pool.get('res.partner').search(cr, uid, [('partner_type', '=', 'internal')])
+        partner_ids = self.pool.get('res.partner').search(cr, uid, [('partner_type', 'in', ['internal', 'intermission']), ('active', 'in', ['t', 'f'])])
         self.pool.get('res.partner').write(cr, uid, partner_ids, {'property_product_pricelist': sale_price_id[0],
                                                                   'property_product_pricelist_purchase': purchase_price_id[0]})
 
@@ -111,7 +109,7 @@ class currency_setup(osv.osv_memory):
         purchase_price_property_ids = self.pool.get('ir.property').search(cr, uid, [('res_id', '=', False), ('name', '=', 'property_product_pricelist_purchase')])
         self.pool.get('ir.property').write(cr, uid, purchase_price_property_ids, {'value': purchase_price_id[0]})
 
-        
+
         # Modify the currency on some already created objects
         # product_price_type
         price_type_ids = self.pool.get('product.price.type').search(cr, uid, [('currency_id', '=', 1)])

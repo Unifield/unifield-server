@@ -70,7 +70,7 @@ class wizard_closing_cashbox(osv.osv_memory):
                         if (not st.journal_id.default_credit_account_id) \
                                 or (not st.journal_id.default_debit_account_id):
                             raise osv.except_osv(_('Configuration Error !'),
-                                    _('Please verify that an account is defined in the journal.'))
+                                                 _('Please verify that an account is defined in the journal.'))
 
                         if not st.name == '/':
                             st_number = st.name
@@ -84,12 +84,12 @@ class wizard_closing_cashbox(osv.osv_memory):
                         for line in st.move_line_ids:
                             if line.state <> 'valid':
                                 raise osv.except_osv(_('Error !'),
-                                        _('The account entries lines are not in valid state.'))
+                                                     _('The account entries lines are not in valid state.'))
                         for st_line in st.line_ids:
                             if st_line.analytic_account_id:
                                 if not st.journal_id.analytic_journal_id:
                                     raise osv.except_osv(_('No Analytic Journal !'),_("You have to define an analytic journal on the '%s' journal!") \
-                                        % (st.journal_id.name,))
+                                                         % (st.journal_id.name,))
                     # @@@end
                             if not st_line.amount:
                                 continue
@@ -104,24 +104,5 @@ class wizard_closing_cashbox(osv.osv_memory):
 
 wizard_closing_cashbox()
 
-class cashbox_empty_opening(osv.osv_memory):
-
-    _name = 'wizard.open.empty.cashbox'
-    _columns = {
-        'be_sure': fields.boolean(string="You left the cashbox opening balance empty, do you want to open it anyway?", required=False ),
-    }
-
-    def button_open_empty_cashbox(self, cr, uid, ids, context=None):
-        # retrieve context active id (verification)
-        if context is None:
-            context = {}
-        ids = context.get('active_ids', False)
-
-        st_obj = self.pool.get('account.bank.statement')
-        res_id = st_obj.do_button_open_cash(cr, uid, ids, context)
-
-        return { 'type' : 'ir.actions.act_window_close', 'active_id' : res_id }
-
-cashbox_empty_opening()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

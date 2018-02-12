@@ -2,12 +2,12 @@
 <openerp>
     <data>
             
-        <record id="purchase_order_form_import" model="ir.ui.view">
-            <field name="name">purchase.order.form.import</field>
+        <record id="rfq_form_import" model="ir.ui.view">
+            <field name="name">rfq.form.import</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
             <field name="priority">110</field>
-            <field name="inherit_id" ref="purchase.purchase_order_form" />
+            <field name="inherit_id" ref="tender_flow.view_rfq_form" />
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form" position="attributes">
@@ -41,77 +41,15 @@
                         </tree>
                     </field>
                 </xpath>
-                <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="before" >
-                    <button name="wizard_import_po_line" string="Import RfQ lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'rfq_sent')]}"/>
+                <xpath expr="/form/notebook/page/field[@name='order_line']" position="before" >
+                    <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('rfq_state', '!=', 'draft')]}">
+                        <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" col="1" type="object"/>
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': ['|', ('po_from_fo', '=', True), ('po_from_ir', '=', True)]}" />
+                        <button name="button_remove_lines" string="Delete Lines" confirm="This document originated from an IR/FO, if you delete these products now, they will all be deleted. If you wish to Cancel &amp; Resource them, please do this line by line." icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': [('po_from_fo', '=', False), ('po_from_ir', '=', False)]}" />
+                        <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': rfq_ok}"/>
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
+                    </group>
                 </xpath>
-                <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']" position="before" >
-                  <group name="import" string=" Import Lines " colspan="1" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
-                    <button name="wizard_import_po_line" string="Import lines" icon="gtk-dnd" col="1" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
-                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': ['|', ('po_from_fo', '=', True), ('po_from_ir', '=', True)]}" />
-                    <button name="button_remove_lines" string="Delete Lines" confirm="This document originated from an IR/FO, if you delete these products now, they will all be deleted. If you wish to Cancel &amp; Resource them, please do this line by line." icon="gtk-remove" colspan="1" type="object" attrs="{'invisible': [('po_from_fo', '=', False), ('po_from_ir', '=', False)]}" />
-                    <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" context="{'rfq_ok': rfq_ok}"/>
-                    <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
-                </group>
-                <button name="wizard_import_file" string="Import PO confirmation" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
-                <button name="export_po_integration" string="Export PO Validated" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible':[('state', '!=', 'confirmed')]}"/>
-                </xpath>
-                </data>
-            </field>
-        </record>
-        
-        <record id="purchase_order_line_form" model="ir.ui.view">
-            <field name="name">purchase.order.line.form</field>
-            <field name="model">purchase.order.line</field>
-            <field name="type">form</field>
-            <field name="priority">40</field>
-            <field name="inherit_id" ref="purchase_override.purchase_order_line_form_view_inherit" />
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="//form//notebook" position="after">
-                        <field name="to_correct_ok" readonly="1" invisible="1"/>
-                        <field name="show_msg_ok" readonly="1" invisible="1"/>
-                        <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
-                            <html>
-                                <style>
-                                    #error_message_unifield 
-                                    {
-                                        border-style: solid;
-                                        border-width: 1px;
-                                        border-radius: 5px;
-                                        border-color: black;
-                                        background-color: #F0EBA4;
-                                    }
-
-                                    #view_form #error_message_unifield .readonlyfield
-                                    {
-                                        border-style: none;
-                                        padding: 5px;
-                                        color: red;
-                                        background-color: #F0EBA4;
-                                        font-weight: bold;
-                                        text-transform: uppercase;
-                                        width: 98%%;
-                                    }
-
-                                    #error_message_unifield p, #error_message_unifield span
-                                    {
-                                        height: 1em;
-                                        min-height: 1em;
-                                            color: red;
-                                        font-weight: bold;
-                                        text-transform: uppercase;
-                                        padding: 5px;
-                                        width: 90%%;
-                                    }
-                                </style>
-
-                                <div id="error_message_unifield">
-                                    <field name="text_error" nolabel="1" readonly="1" colspan="4" attrs="{'invisible': [('to_correct_ok', '=', False), '|', ('show_msg_ok', '!=',True)]}"/>
-                                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" nolabel="1" colspan="4"/>
-                                </div>
-                           </html>
-                       </group>
-                    </xpath>
                 </data>
             </field>
         </record>
