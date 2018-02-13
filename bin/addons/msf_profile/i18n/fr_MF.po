@@ -24722,10 +24722,10 @@ msgid "Missouri"
 msgstr "Missouri"
 
 #. module: register_accounting
-#: code:addons/register_accounting/account_bank_statement.py:2239
+#: code:addons/register_accounting/account_bank_statement.py:2355
 #, python-format
-msgid "You can not hard post with an amount greater than total of imported invoices"
-msgstr "You can not hard post with an amount greater than total of imported invoices"
+msgid "You can not hard post with an amount greater than total of imported invoices: Entry %s"
+msgstr "Vous ne pouvez pas comptabiliser définitivement avec un montant supérieur au total des factures importées : Ecriture %s"
 
 #. module: account_hq_entries
 #: view:hq.entries:0
