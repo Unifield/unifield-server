@@ -806,7 +806,8 @@ class wizard_cash_return(osv.osv_memory):
         self.verify_date(cr, uid, ids, context=context)
         # retrieve some values
         if abs(wizard.initial_amount + wizard.additional_amount -  wizard.total_amount) > 10**-3:
-            raise osv.except_osv(_('Warning'), _('Initial advance amount (%s) does not match the amount you justified (%s). First correct. Then press Compute button') % (wizard.initial_amount, wizard.total_amount))
+            adv_amount = (wizard.initial_amount or 0.0) + (wizard.additional_amount or 0.0)
+            raise osv.except_osv(_('Warning'), _('Advance amount (%s) does not match the amount you justified (%s). First correct. Then press Compute button.') % (adv_amount, wizard.total_amount or 0.0))
 
         # determine the advance return reference (for the advance closing entry and advance expense lines/SI lines)
         if wizard.reference:

@@ -36874,8 +36874,8 @@ msgstr "Manage the VAT"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:826
 #, python-format
-msgid "Initial advance amount (%s) does not match the amount you justified (%s). First correct. Then press Compute button"
-msgstr "Initial advance amount (%s) does not match the amount you justified (%s). First correct. Then press Compute button"
+msgid "Advance amount (%s) does not match the amount you justified (%s). First correct. Then press Compute button."
+msgstr "Le montant de l'avance (%s) ne correspond pas avec le montant que vous avez justifié (%s). Veuillez d'abord corriger. Puis cliquez sur le bouton Calculer."
 
 #. modules: account, stock_override, supplier_catalogue, consumption_calculation, purchase_override, base, register_accounting, stock, analytic_distribution
 #: field:account.analytic.chart,from_date:0
