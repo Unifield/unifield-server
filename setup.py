@@ -125,6 +125,7 @@ def data_files():
         files.append(('.', [join('bin', 'unifield-version.txt')]))
         files.append(('tools', [join('bin', 'tools', 'import_po.dtd')]))
         files.append(('tools', [join('bin', 'tools', 'validators.py')]))
+        files.append(('tools', [join('bin', 'tools', 'webdav.py')]))
         files.append(('fonts', filter(isfile, glob.glob('bin/fonts/*'))))
         os.chdir('bin')
         for (dp, dn, names) in os.walk('addons'):
