@@ -23,8 +23,12 @@ from osv import fields, osv
 from tools.translate import _
 from tools import misc
 from tools import config
-from binascii import unhexlify, hexlify
-import simplecrypt
+import base64
+import os
+from cryptography.fernet import Fernet
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import StringIO
 from tools import webdav
 import zipfile
@@ -32,7 +36,28 @@ from tempfile import NamedTemporaryFile
 from urlparse import urlparse
 from mx import DateTime
 import logging
-import os
+
+
+class crypt():
+    def __init__(self, password):
+        password = bytes(password)
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            iterations=100000,
+            salt=password,
+            backend=default_backend()
+        )
+        key = base64.urlsafe_b64encode(kdf.derive(password))
+        self.Fernet = Fernet(key)
+
+    def encrypt(self, string):
+        return self.Fernet.encrypt(string)
+
+    def decrypt(self, string):
+        return self.Fernet.decrypt(bytes(string))
+
+
 
 
 class msf_instance(osv.osv):
@@ -458,8 +483,8 @@ class msf_instance_cloud(osv.osv):
             identifier = self.read(cr, uid, id, ['instance_identifier'], context=context)['instance_identifier']
             if not identifier:
                 raise osv.except_osv(_('Warning !'), _('Unable to store password if Instance identifier is not set.'))
-            cr_password = hexlify(simplecrypt.encrypt(identifier, value))
-            self.write(cr, uid, id, {'cloud_password': cr_password}, context=context)
+            crypt_o = crypt(identifier)
+            self.write(cr, uid, id, {'cloud_password': crypt_o.encrypt(value)}, context=context)
         return True
 
     def _get_cloud_info(self, cr, uid, id, context=None):
@@ -471,8 +496,10 @@ class msf_instance_cloud(osv.osv):
         }
         if d['cloud_password'] and d['instance_identifier']:
             try:
-                ret['password'] = simplecrypt.decrypt(d['instance_identifier'], unhexlify(d['cloud_password']))
+                crypt_o = crypt(d['instance_identifier'])
+                ret['password'] = crypt_o.decrypt(d['cloud_password'])
             except:
+                raise
                 raise osv.except_osv(_('Warning !'), _('Unable to decode password'))
 
         return ret
@@ -533,7 +560,7 @@ class msf_instance_cloud(osv.osv):
         to_write = self.search(cr, uid, [('instance_identifier', '!=', False), ('filter_by_level', '=', True), ('id', '!=', ids[0])], context=context)
         init_time = sc_info['cloud_schedule_time'] or 0
         for x in to_write:
-            data = {'cloud_url': info['url'] , 'cloud_login': info['login'], 'cloud_password':  info['password'], 'delay_minute': -1}
+            data = {'cloud_url': info['url'] , 'cloud_login': info['login'], 'cloud_set_password':  info['password'], 'delay_minute': -1}
             if sc_info['delay_minute'] != -1:
                 init_time += (sc_info['delay_minute'] or 0) / 60.
                 init_time = init_time % 24
