@@ -754,9 +754,18 @@ class stock_picking(osv.osv):
 
             # Record the values that were chosen in the wizard, so they can be
             # used for inventory valuation of real-time valuation is enabled.
+            if move.sale_line_id:
+                price_currency_id = move.sale_line_id.order_id.pricelist_id.currency_id.id
+            elif move.purchase_line_id:
+                if move.purchase_line_id.linked_sol_id:
+                    price_currency_id = move.purchase_line_id.linked_sol_id.order_id.pricelist_id.currency_id.id
+                else:
+                    price_currency_id = move.purchase_line_id.order_id.currency_id.id
+            else:
+                price_currency_id = line.currency.id
             average_values = {
                 'price_unit': new_price,
-                'price_currency_id': line.currency.id,
+                'price_currency_id': price_currency_id,
             }
 
         return average_values, sptc_values
