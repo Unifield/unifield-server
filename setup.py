@@ -63,7 +63,7 @@ if os.name == 'nt':
                 "psutil", "formencode", "cryptography", "requests",
                 "office365", "certifi", "chardet", "ipaddress", "urllib3", "enum34"
             ],
-            "data_files": extra_files(),
+            #"data_files": extra_files(),
             'dist_dir': 'dist',
             'excludes': ["Tkconstants", "Tkinter", "tcl"],
             'dll_excludes': [
