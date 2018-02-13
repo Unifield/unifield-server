@@ -43,6 +43,19 @@ else:
     build_exe = _be(1, 2, 3)
     fancy_split = None
 
+def extra_files():
+    r = []
+    import certifi
+    main_path = os.path.relpath(os.path.dirname(certifi.__file__))
+    cert_path = os.path.join(main_path, 'cacert.pem')
+    r.append(('libs/certifi', [cert_path]))
+
+    import office365
+    main_path = os.path.relpath(os.path.dirname(office365.__file__))
+    xml_file = os.path.join(main_path, 'runtime/auth/SAML.xml')
+    r.append(('libs/office365/runtime/auth', [xml_file]))
+    return r
+
 def fixup_data_pytz_zoneinfo():
     r = {}
     import pytz

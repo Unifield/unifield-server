@@ -34,7 +34,7 @@ import glob
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 from distutils.sysconfig import get_python_lib
-from setup_py2exe_custom import custom_py2exe, fixup_data_pytz_zoneinfo
+from setup_py2exe_custom import custom_py2exe, fixup_data_pytz_zoneinfo, extra_files
 
 py2exe_keywords = {}
 if os.name == 'nt':
@@ -140,6 +140,7 @@ def data_files():
         #    files.append((root, [join(root, name) for name in names]))
         files.append(('.', [join('bin', 'import_xml.rng'), ]))
         files.extend(fixup_data_pytz_zoneinfo())
+        files.extend(extra_files())
     else:
         man_directory = join('share', 'man')
         files.append((join(man_directory, 'man1'), ['man/openerp-server.1']))
