@@ -61,7 +61,7 @@ if os.name == 'nt':
                 "uuid", "commands", "mx.DateTime", "json",
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
                 "psutil", "formencode", "cryptography", "requests",
-                "office365", "certifi", "chardet", "ipaddress", "urllib3", "enum34"
+                "office365", "certifi", "chardet", "ipaddress", "urllib3" 
             ],
             #"data_files": extra_files(),
             'dist_dir': 'dist',
