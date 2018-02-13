@@ -63,7 +63,6 @@ if os.name == 'nt':
                 "psutil", "formencode", "cryptography", "requests",
                 "office365", "certifi", "chardet", "ipaddress", "urllib3" 
             ],
-            #"data_files": extra_files(),
             'dist_dir': 'dist',
             'excludes': ["Tkconstants", "Tkinter", "tcl"],
             'dll_excludes': [
@@ -141,6 +140,7 @@ def data_files():
         #    files.append((root, [join(root, name) for name in names]))
         files.append(('.', [join('bin', 'import_xml.rng'), ]))
         files.extend(fixup_data_pytz_zoneinfo())
+        files.extend(extra_files())
     else:
         man_directory = join('share', 'man')
         files.append((join(man_directory, 'man1'), ['man/openerp-server.1']))
