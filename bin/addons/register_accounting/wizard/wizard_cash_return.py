@@ -434,12 +434,10 @@ class wizard_cash_return(osv.osv_memory):
             return {'value': values}
         if amount:
             total_amount = amount + 0.0
-            if invoices:
-                for invoice in invoices:
-                    total_amount += invoice[2].get('amount', 0.0)
-            if advances:
-                for advance in advances:
-                    total_amount += advance[2].get('amount', 0.0)
+            for invoice in invoices:
+                total_amount += invoice[2].get('amount', 0.0)
+            for advance in advances:
+                total_amount += advance[2].get('amount', 0.0)
             values.update({'total_amount': total_amount})
         # clear the additional amount if returned amount is updated
         if additional_amount <> 0:
