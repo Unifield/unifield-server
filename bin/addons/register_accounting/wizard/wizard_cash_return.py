@@ -312,7 +312,7 @@ class wizard_cash_return(osv.osv_memory):
 
     def _get_ok_with_confirm(self, cr, uid, ids, fieldname, args, context=None):
         """UFTP-24 display confirm message at wizard validation when linked
-        to a PO and no invoices selected (or advance lines added)"""
+        to a PO and no invoices selected"""
         res = {}
         if not ids:
             return res
@@ -320,8 +320,7 @@ class wizard_cash_return(osv.osv_memory):
             ids = [ids]
         fields = ['advance_linked_po_auto_invoice', 'invoice_line_ids', 'advance_line_ids']
         for r in self.read(cr, uid, ids, fields, context=context):
-            res[r['id']] = r['advance_linked_po_auto_invoice'] and \
-                (not r['invoice_line_ids'] or r['advance_line_ids'])
+            res[r['id']] = r['advance_linked_po_auto_invoice'] and not r['invoice_line_ids']
         return res
 
     _columns = {
