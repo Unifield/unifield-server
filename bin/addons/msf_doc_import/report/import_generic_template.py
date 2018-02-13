@@ -21,6 +21,7 @@
 
 from report import report_sxw
 from report_webkit.webkit_report import XlsWebKitParser
+from operator import itemgetter
 
 
 XlsWebKitParser(
@@ -71,6 +72,10 @@ class report_generic_export_parser(report_sxw.rml_parse):
             counter += len(ids_chunk)
             context['translate_selection_field'] = True
             rows.extend(model_obj.export_data(self.cr, self.uid, ids_chunk, fields, context=context)['datas'])
+
+        # sort supplier catalogue line
+        if model == 'supplier.catalogue.line':
+            rows = sorted(rows, key=itemgetter(1,0))
         return rows
 
 XlsWebKitParser(
