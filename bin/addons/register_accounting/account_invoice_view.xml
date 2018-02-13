@@ -11,7 +11,7 @@
             <field name="arch" type="xml">
                 <form string="Supplier Invoice">
                     <group colspan="4" col="6">
-                        <field name="journal_id" domain="[('is_current_instance','=',True),('type','=','purchase')]" on_change="onchange_journal_id(journal_id)"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type','=','purchase')]" />
                         <field name="number" readonly="1" />
                         <field name="type" invisible="1"/>
                         <field name="currency_id" readonly="1" />
@@ -144,11 +144,10 @@
                 <form string="Supplier Invoice" hide_save_button="1" hide_duplicate_button="1" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
                     <group colspan="4" col="8">
                         <field name="is_direct_invoice" invisible="1" readonly="1"/>
-                        <field name="journal_id" on_change="onchange_journal_id(journal_id)" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True)]}" />
+                        <field name="journal_id" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True)]}" />
                         <field name="number" readonly="1"/>
                         <field name="type" invisible="1"/>
-                        <field name="currency_id" invisible="1" />
-                        <field name="fake_currency_id" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
+                        <field name="currency_id" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
                         <newline/>
                         <field name="partner_id" domain="[('supplier', '=', True)]" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
 
@@ -289,8 +288,7 @@
             <field name="arch" type="xml">
                 <data>
                     <field name="journal_id" position="replace">
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"
-                               on_change="onchange_journal_id(journal_id)"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"/>
                     </field>
                     <button name="action_cancel_draft" position="replace"/>
                     <button name='invoice_open' position="replace">
@@ -322,8 +320,7 @@
                         </group>
                     </xpath>
                     <field name="journal_id" position="replace">
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"
-                               on_change="onchange_journal_id(journal_id)"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"/>
                         <field name="vat_ok" invisible="1" />
                     </field>
                     <button name="action_cancel_draft" position="replace"/>

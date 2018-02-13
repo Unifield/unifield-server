@@ -27,7 +27,7 @@
                 <form string="Supplier Invoice" noteditable="state=='paid'">
                     <group colspan="4" col="6">
                         <field name="is_direct_invoice" invisible="1" readonly="1"/>
-                        <field name="journal_id" domain="[('is_current_instance','=',True),('type','=','purchase')]" on_change="onchange_journal_id(journal_id)"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type','=','purchase')]"/>
                         <field name="number" readonly="1"/>
                         <field name="type" invisible="1"/>
                         <field name="currency_id" readonly="1" />

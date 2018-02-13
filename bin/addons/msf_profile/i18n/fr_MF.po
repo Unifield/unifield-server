@@ -91164,7 +91164,6 @@ msgstr "America/Anguilla"
 #: field:account.mcdb,currency_id:0
 #: code:addons/account_mcdb/report/account_mcdb_export.py:287
 #: report:addons/account_mcdb/report/report_account_bank_statement_line_xls.mako:57
-#: field:account.invoice,fake_currency_id:0
 #: field:account.invoice,virtual_currency_id:0
 #: model:ir.model,name:account_override.model_res_currency
 #: report:payment.order:0
@@ -91305,7 +91304,6 @@ msgstr "America/Anguilla"
 #: field:validate.move.processor,currency:0
 #: field:wizard.compare.rfq,currency_id:0
 #: field:account.direct.invoice.wizard,currency_id:0
-#: field:wizard.account.invoice,fake_currency_id:0
 #: field:wizard.account.invoice,virtual_currency_id:0
 #: field:claim.product.line,price_currency_claim_product_line:0
 #: field:claim.product.line,price_unit_claim_product_line:0
