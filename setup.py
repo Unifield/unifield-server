@@ -61,8 +61,9 @@ if os.name == 'nt':
                 "uuid", "commands", "mx.DateTime", "json",
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
                 "psutil", "formencode", "cryptography", "requests",
-                "office365"
+                "office365", "certifi", "chardet", "ipaddress", "urllib3", "enum34"
             ],
+            "data_files": extra_files(),
             'dist_dir': 'dist',
             'excludes': ["Tkconstants", "Tkinter", "tcl"],
             'dll_excludes': [
@@ -140,7 +141,6 @@ def data_files():
         #    files.append((root, [join(root, name) for name in names]))
         files.append(('.', [join('bin', 'import_xml.rng'), ]))
         files.extend(fixup_data_pytz_zoneinfo())
-        files.extend(extra_files())
     else:
         man_directory = join('share', 'man')
         files.append((join(man_directory, 'man1'), ['man/openerp-server.1']))
@@ -246,8 +246,11 @@ setup(name=name,
           'asn1crypto==0.24.0',
           'cryptography==2.1.4',
           'enum34==1.1.6',
+          'urllib3==1.22',
           'idna==2.6',
           'ipaddress==1.0.19',
+          'certifi==2018.1.18',
+          'chardet==3.0.4',
           'requests==2.18.4',
       ],
       **py2exe_keywords
