@@ -60,7 +60,7 @@ if os.name == 'nt':
                 "imaplib", "smtplib", "email", "yaml",
                 "uuid", "commands", "mx.DateTime", "json",
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
-                "psutil", "formencode",
+                "psutil", "formencode", "cryptography",
             ],
             'dist_dir': 'dist',
             'excludes': ["Tkconstants", "Tkinter", "tcl"],
