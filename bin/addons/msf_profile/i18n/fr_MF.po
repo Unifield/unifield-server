@@ -8323,8 +8323,9 @@ msgstr "Fin de période"
 msgid "Reception Analysis allows you to easily check and analyse your company order receptions and the performance of your supplier's deliveries."
 msgstr "L'analyse des Réceptions vous permet de facilement vérifier et analyser:  les réceptions des commandes de votre société &  les performances de livraison de votre fournisseur."
 
-#. module: msf_budget
+#. modules: msf_budget, analytic_distribution
 #: view:wizard.budget.import:0
+#: view:import.commitment.wizard:0
 msgid "Select a .CSV file to import."
 msgstr "Sélectionner un fichier.CSV à importer."
 
@@ -20088,10 +20089,11 @@ msgstr "Vous avez sélectionné une quantité de %d unités.\n"
 msgid "Invoice Wizard Lines"
 msgstr "Invoice Wizard Lines"
 
-#. module: delivery_mechanism
+#. modules: delivery_mechanism, analytic_distribution
+#: view:import.commitment.wizard:0
 #: view:stock.picking.processing.info:0
 msgid "Refresh"
-msgstr "Refresh"
+msgstr "Recharger"
 
 #. module: stock
 #: view:report.stock.move:0
@@ -35761,11 +35763,6 @@ msgstr "Original line"
 msgid "Calendar"
 msgstr "Calendrier"
 
-#. modules: vertical_integration, analytic_distribution
-#: field:import.commitment.wizard,import_file:0
-#: field:wizard.import.mapping,import_file:0
-msgid "CSV File"
-msgstr "CSV File"
 
 #. module: sourcing
 #: view:po.automation.config:0
@@ -66111,10 +66108,6 @@ msgstr "The product must be chosen before sourcing the line.\n"
 msgid "There are outstanding payroll entries in this period; you must validate them to field-close this period."
 msgstr "There are outstanding payroll entries in this period; you must validate them to field-close this period."
 
-#. module: analytic_distribution
-#: view:import.commitment.wizard:0
-msgid "Select a .CSV file to import."
-msgstr "Select a .CSV file to import."
 
 #. module: sourcing
 #: view:related.sourcing:0
@@ -80513,13 +80506,14 @@ msgstr "Le nom de la Zone doit être une chaîne."
 msgid "Import invoice"
 msgstr "Importer facture"
 
-#. modules: account, finance
+#. modules: account, finance, analytic_distribution
 #: field:wizard.account.partner.balance.tree,date_to:0
 #: report:account.partner.balance:0
 #: field:account.partner.balance,date_to:0
 #: field:account.partner.ledger,date_to:0
 #: report:account.third_party_ledger:0
 #: report:account.third_party_ledger_other:0
+#: field:import.commitment.wizard,last_stop:0
 msgid "End Date"
 msgstr "Date de Fin"
 
@@ -84250,11 +84244,13 @@ msgstr "Integrity status"
 msgid "Stock Variation Account"
 msgstr "Stock - Compte de Variations"
 
-#. modules: msf_budget, base, res_currency_tables
+#. modules: msf_budget, base, res_currency_tables, vertical_integration, analytic_distribution
 #: selection:base.language.export,format:0
 #: field:wizard.budget.import,import_file:0
 #: field:import.currencies,import_file:0
 #: field:import.table.currencies,import_file:0
+#: field:import.commitment.wizard,import_file:0
+#: field:wizard.import.mapping,import_file:0
 msgid "CSV File"
 msgstr "Fichier CSV"
 
@@ -86539,7 +86535,7 @@ msgstr "Fonc. Dev."
 #: model:ir.actions.act_window,name:analytic_distribution.action_import_commitment_wizard
 #: model:ir.ui.menu,name:analytic_distribution.menu_import_commitment
 msgid "Import Intl Commitments"
-msgstr "Import Intl Commitments"
+msgstr "Import des Engagements"
 
 #. module: account
 #: view:account.analytic.cost.ledger.journal.report:0
@@ -101155,3 +101151,43 @@ msgstr "Ligne %s. Tiers %s non trouvé ou non compatible avec le Type pour trait
 #, python-format
 msgid "You can't use taxes with an intermission partner."
 msgstr "Vous ne pouvez pas utiliser de taxes avec un partenaire intermission."
+
+#. module: account_override
+#: field:account.invoice.line,reversed_invoice_line_id:0
+msgid "Reversed Invoice Line"
+msgstr "Ligne de facture contrepassée"
+
+#. module: account_override
+#: help:account.invoice.line,reversed_invoice_line_id:0
+msgid "Invoice line that has been reversed by this one through a \"refund cancel\" or \"refund modify\""
+msgstr "Ligne de facture qui a été contrepassée par celle-ci via un avoir de type \"annulation\" ou \"modification\""
+
+#. module: account_override
+#: field:account.move.line,is_si_refund:0
+msgid "Is a SI refund line"
+msgstr "Est une ligne de remboursement de facture"
+
+#. module: account_override
+#: help:account.move.line,is_si_refund:0
+msgid "In case of a refund Cancel or Modify all the lines linked to the original SI and to the SR created are marked as 'is_si_refund'"
+msgstr "Dans le cas d'un avoir de type annulation ou modification, toutes les lignes liées à la facture d'origine ou à l'avoir créé sont marquées comme 'is_si_refund'"
+
+#. module: analytic_distribution
+#: view:import.commitment.wizard:0
+msgid "Import Intl Commitments is running in background ..."
+msgstr "L'import des Engagements s'effectue en tâche de fond ..."
+
+#. module: analytic_distribution
+#: view:import.commitment.wizard:0
+msgid "Previous import summary"
+msgstr "Résumé de l'import précédent"
+
+#. module: analytic_distribution
+#: view:import.commitment.wizard:0
+msgid "Open Last imported Commitments"
+msgstr "Ouvrir les derniers engagements importés"
+
+#. module: analytic_distribution
+#: field:import.commitment.wizard,progress:0
+msgid "Import in progress"
+msgstr "Import en cours"

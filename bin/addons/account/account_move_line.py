@@ -1151,6 +1151,7 @@ class account_move_line(osv.osv):
         move_obj = self.pool.get('account.move')
         cur_obj = self.pool.get('res.currency')
         journal_obj = self.pool.get('account.journal')
+        invoice_line_obj = self.pool.get('account.invoice.line')
         if context is None:
             context = {}
         move_date = False
@@ -1236,6 +1237,16 @@ class account_move_line(osv.osv):
                     'ref': vals.get('ref', False),
                     'user_id': uid
                 })]
+
+        # update the reversal in case of a refund cancel/modify
+        if vals.get('invoice_line_id', False):
+            inv_line = invoice_line_obj.browse(cr, uid, vals['invoice_line_id'],
+                                               fields_to_fetch=['reversed_invoice_line_id'], context=context)
+            if inv_line.reversed_invoice_line_id:
+                vals['reversal'] = True
+                reversed_amls = invoice_line_obj.browse(cr, uid, inv_line.reversed_invoice_line_id.id,
+                                                        fields_to_fetch=['move_lines'], context=context).move_lines
+                vals['reversal_line_id'] = reversed_amls and reversed_amls[0].id or False
 
         result = super(osv.osv, self).create(cr, uid, vals, context=context)
         # CREATE Taxes
