@@ -60,7 +60,8 @@ if os.name == 'nt':
                 "imaplib", "smtplib", "email", "yaml",
                 "uuid", "commands", "mx.DateTime", "json",
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
-                "psutil", "formencode", "cryptography",
+                "psutil", "formencode", "cryptography", "requests",
+                "Office365-REST-Python-Client"
             ],
             'dist_dir': 'dist',
             'excludes': ["Tkconstants", "Tkinter", "tcl"],
