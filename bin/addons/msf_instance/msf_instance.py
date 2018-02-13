@@ -30,7 +30,6 @@ from tools import webdav
 import zipfile
 from tempfile import NamedTemporaryFile
 from urlparse import urlparse
-import cgi
 from mx import DateTime
 import logging
 import os
@@ -578,14 +577,12 @@ class msf_instance_cloud(osv.osv):
         if not info.get('password'):
             raise osv.except_osv(_('Warning !'), _('Password is not set!'))
 
-        if not info['url'].endswith('/'):
-            info['url'] = '%s/' % info['url']
         url = urlparse(info['url'])
         if not url.netloc:
             raise osv.except_osv(_('Warning !'), _('Unable to parse url: %s') % (info['url']))
 
         try:
-            dav = webdav.Client(url.netloc, port=url.port, protocol=url.scheme, username=info['login'], password=cgi.escape(info['password']), path=url.path, onedrive=True)
+            dav = webdav.Client(url.netloc, port=url.port, protocol=url.scheme, username=info['login'], password=info['password'], path=url.path)
         except webdav.ConnectionFailed, e:
             raise osv.except_osv(_('Warning !'), _('Unable to connect: %s') % (e.message))
 
@@ -677,7 +674,6 @@ class msf_instance_cloud(osv.osv):
                     raise osv.except_osv(_('Warning'), _('Backup %s was already sent to the cloud') % (bck['name'], ))
 
             dav = self.get_backup_connection(cr, uid, [local_instance.id], context=None)
-
             temp_fileobj = NamedTemporaryFile('w+b', delete=True)
             z = zipfile.ZipFile(temp_fileobj, "w", compression=zipfile.ZIP_DEFLATED)
             z.write(bck['path'], arcname=bck['name'])
