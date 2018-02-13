@@ -755,7 +755,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 
             # Check duplicate line (Same product_id, batch_number, expirty_date)
             item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
-            if item in line_items:
+            if item in line_items and (batch_name or expiry_date):
                 add_error("""Duplicate line (same product, batch number and expiry date)""", row_index)
             else:
                 line_items.append(item)
@@ -801,7 +801,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                 'counting_line_ids': counting_sheet_lines
             }
             self.write(cr, uid, ids, vals, context=context)
-            result = wizard_obj.message_box(cr, uid, title='Information', message='Counting sheet succefully imported.')
+            result = wizard_obj.message_box(cr, uid, title='Information', message='Counting sheet successfully imported.')
         context['import_in_progress'] = False
 
         return result
@@ -879,7 +879,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
             vals = {'file_to_import2': False, 'discrepancy_line_ids': discrepancy_report_lines}
             self.write(cr, uid, ids, vals, context=context)
             result = wizard_obj.message_box(cr, uid, title='Information',
-                                            message='Discrepancy report succefully imported.')
+                                            message='Discrepancy report successfully imported.')
         context['import_in_progress'] = False
 
         return result
