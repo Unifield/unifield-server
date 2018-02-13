@@ -227,25 +227,23 @@ class mass_reallocation_wizard(osv.osv_memory):
             res['line_ids'] = context.get('active_ids')
             # Search which lines are eligible (add another criteria if we come from project)
             search_args = [
-                ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|',
+                ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|',
                 ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                 ('is_reversal', '=', True),
                 ('journal_id.type', 'in', ['engagement', 'revaluation']),
                 ('from_write_off', '=', True),
                 ('move_state', '=', 'draft'),
-                ('account_id.category', 'in', ['FREE1', 'FREE2'])
             ]
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             if company and company.instance_id and company.instance_id.level == 'project':
                 search_args = [
-                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|', '|',
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
                     ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                     ('is_reversal', '=', True),
                     ('journal_id.type', 'in', ['engagement', 'revaluation']),
                     ('from_write_off', '=', True),
                     ('move_state', '=', 'draft'),
                     ('move_id', '=', False),
-                    ('account_id.category', 'in', ['FREE1', 'FREE2']),
                     ('move_id.corrected_upstream', '=', True)
                 ]
 
@@ -340,25 +338,23 @@ class mass_reallocation_wizard(osv.osv_memory):
             if wiz.account_id.category == 'OC':
                 account_field_name = 'cost_center_id'
             search_args = [
-                ('id', 'in', to_process), '|', '|', '|', '|', '|', '|', '|',
+                ('id', 'in', to_process), '|', '|', '|', '|', '|', '|',
                 (account_field_name, '=', account_id),
                 ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                 ('is_reversal', '=', True),
                 ('journal_id.type', '=', 'engagement'),
                 ('from_write_off', '=', True),
                 ('move_state', '=', 'draft'),
-                ('account_id.category', 'in', ['FREE1', 'FREE2'])
             ]
             if level == 'project':
                 search_args = [
-                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|', '|',
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
                     ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                     ('is_reversal', '=', True),
                     ('journal_id.type', 'in', ['engagement', 'revaluation']),
                     ('from_write_off', '=', True),
                     ('move_state', '=', 'draft'),
                     ('move_id', '=', False),
-                    ('account_id.category', 'in', ['FREE1', 'FREE2']),
                     ('move_id.corrected_upstream', '=', True)
                 ]
             search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args)

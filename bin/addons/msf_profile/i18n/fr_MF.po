@@ -44996,11 +44996,6 @@ msgstr "La Séquence Principale doit être différente de la séquence en cours 
 msgid "One of the year-end revaluations has already been processed. The next one will be processed on the same period: %s."
 msgstr "One of the year-end revaluations has already been processed. The next one will be processed on the same period: %s."
 
-#. module: analytic_distribution
-#: view:mass.reallocation.wizard:0
-msgid "- Free 1 / Free 2 items"
-msgstr "- Free 1 / Free 2 items"
-
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/report/certificate_free_gift.py:62
 #, python-format
