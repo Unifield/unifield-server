@@ -18,12 +18,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-import time
 
-from osv import fields, osv
-import netsvc
-import pooler
-from osv.orm import browse_record, browse_null
+from osv import osv
 from tools.translate import _
 
 class purchase_order_group(osv.osv_memory):
@@ -45,8 +41,9 @@ class purchase_order_group(osv.osv_memory):
         res = super(purchase_order_group, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar,submenu=False)
         if context.get('active_model','') == 'purchase.order' and len(context['active_ids']) < 2:
             raise osv.except_osv(_('Warning'),
-            _('Please select multiple order to merge in the list view.'))
+                                 _('Please select multiple order to merge in the list view.'))
         return res
+
     def merge_orders(self, cr, uid, ids, context=None):
         """
              To merge similar type of purchase orders.
@@ -61,7 +58,6 @@ class purchase_order_group(osv.osv_memory):
 
         """
         order_obj = self.pool.get('purchase.order')
-        proc_obj = self.pool.get('procurement.order')
         mod_obj =self.pool.get('ir.model.data')
         if context is None:
             context = {}
@@ -69,11 +65,6 @@ class purchase_order_group(osv.osv_memory):
         id = mod_obj.read(cr, uid, result, ['res_id'])
 
         allorders = order_obj.do_merge(cr, uid, context.get('active_ids',[]), context)
-        for new_order in allorders:
-            proc_ids = proc_obj.search(cr, uid, [('purchase_id', 'in', allorders[new_order])], context=context)
-            for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
-                if proc.purchase_id:
-                    proc_obj.write(cr, uid, [proc.id], {'purchase_id': new_order}, context)
 
         return {
             'domain': "[('id','in', [" + ','.join(map(str, allorders.keys())) + "])]",
