@@ -45,12 +45,19 @@ else:
 
 def extra_files():
     r = []
-    import certifi
+    print('hhhhhhhhhhhhhhhhhhhhh')
+    try:
+        import certifi
+    except:
+        return []
     main_path = os.path.relpath(os.path.dirname(certifi.__file__))
     cert_path = os.path.join(main_path, 'cacert.pem')
     r.append(('libs/certifi', [cert_path]))
 
-    import office365
+    try:
+        import office365
+    except:
+        return []
     main_path = os.path.relpath(os.path.dirname(office365.__file__))
     xml_file = os.path.join(main_path, 'runtime/auth/SAML.xml')
     r.append(('libs/office365/runtime/auth', [xml_file]))
@@ -201,7 +208,6 @@ if hasattr(sys, 'frozen'):
                                               for reloc_prefix in self.collected_libs_data_relocate ]):
                 return (os.path.join(self.collected_libs_dir, l[0]), l[1])
             return l
-        print('********************** %s %s'% (dist, py_files))
         if dist.has_data_files():
             dist.data_files = [ fixup_location(f) for f in dist.data_files ]
 
