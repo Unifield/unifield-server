@@ -572,7 +572,7 @@ class msf_instance_cloud(osv.osv):
     _columns = {
         'cloud_url': fields.char('Cloud URL', size=256),
         'cloud_login': fields.char('Cloud Login', size=256),
-        'cloud_password': fields.char('Cloud Password', size=256),
+        'cloud_password': fields.char('Cloud Password', size=1024),
         'cloud_schedule_time': fields.float('Schedule task time', help="Remote time"),
         'cloud_set_password': fields.function(_get_cloud_set_password, type='char', size=256, fnct_inv=_set_cloud_password, method=True, string='Password'),
         'is_editable': fields.function(_get_is_editable, type='boolean', string='Has identifier', method=True),
