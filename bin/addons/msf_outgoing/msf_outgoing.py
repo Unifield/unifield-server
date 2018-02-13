@@ -1520,6 +1520,11 @@ class shipment(osv.osv):
             intermission = 'is_intermission' in invoice_vals and invoice_vals['is_intermission']
             is_ivo = out_invoice and not debit_note and not inkind_donation and intermission
             is_stv = out_invoice and not debit_note and not inkind_donation and not intermission
+
+            # US-3822 Block STV creation if the partner is internal
+            if is_stv and partner.partner_type == 'internal':
+                continue
+
             if is_ivo or is_stv:
                 origin_inv = 'origin' in invoice_vals and invoice_vals['origin'] or False
                 fo = move and move.sale_line_id and move.sale_line_id.order_id or False
