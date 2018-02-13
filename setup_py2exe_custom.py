@@ -45,7 +45,6 @@ else:
 
 def extra_files():
     r = []
-    print('hhhhhhhhhhhhhhhhhhhhh')
     try:
         import certifi
     except:
