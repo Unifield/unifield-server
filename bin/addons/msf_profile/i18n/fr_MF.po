@@ -101195,3 +101195,18 @@ msgstr "Import en cours"
 #, python-format
 msgid "No Product Category found for %s. Please contact an accounting member to create a new one for this family."
 msgstr "Aucune Catégorie de produit trouvée pour %s. Veuillez contacter un membre de l'équipe Finance pour créer une catégorie à cette famille de produit."
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "You receive dangerous goods products, please refer to the appropriate procedure."
+msgstr "Vous recevez des produits dangereux, merci de vous référer à la procédure appropriée."
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "You receive heat sensitive products, please refer to the appropriate procedure."
+msgstr "Vous recevez des produits sensibles à la chaleur, merci de vous référer à la procédure appropriée."
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure."
+msgstr "Vous recevez des produits dangereux et sensibles à la chaleur, merci de vous référer à la procédure appropriée."
