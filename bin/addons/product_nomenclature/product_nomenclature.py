@@ -491,7 +491,7 @@ class product_nomenclature(osv.osv):
         'active': True,
     }
 
-    _order = "sequence, id"
+    _order = "msfid, sequence, id"
 
     _sql_constraints = [('check_msfid_unique', 'unique (msfid)', 'MSFID must be unique !')]
 
