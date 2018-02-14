@@ -693,9 +693,13 @@ class account_invoice(osv.osv):
                 local_ctx.update(el[2])
         # UF-1112: Give all customer invoices a name as "Stock Transfer Voucher".
         if not message_changed and self.read(cr, uid, inv_id, ['type']).get('type', False) == 'out_invoice':
-            message = re.sub(pattern, 'Stock Transfer Voucher', message, 1)
+            if local_ctx.get('is_intermission', False):
+                message = re.sub(pattern, 'Intermission Voucher', message, 1)
+                local_ctx.update(intermission_ctx)
+            else:
+                message = re.sub(pattern, 'Stock Transfer Voucher', message, 1)
+                local_ctx.update(customer_ctx)
 
-            local_ctx.update(customer_ctx)
         # UF-1307: for supplier invoice log (from the incoming shipment), the context was not
         # filled with all the information; this leaded to having a "Sale" journal in the supplier
         # invoice if it was saved after coming from this link. Here's the fix.
