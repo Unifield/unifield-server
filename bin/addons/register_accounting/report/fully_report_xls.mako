@@ -904,8 +904,16 @@ endif
 <!-- Display analytic lines linked to this register line -->
 <%
 a_lines = False
+adv_return_aal = line.cash_return_move_line_id and line.cash_return_move_line_id.analytic_lines or []
+adv_return_fp_lines = []
+adv_return_free_lines = []
+for adv_return_l in adv_return_aal:
+    if adv_return_l.free_account:
+        adv_return_free_lines.append(adv_return_l)
+    else:
+        adv_return_fp_lines.append(adv_return_l)
 if line.fp_analytic_lines and not line.invoice_id and not line.imported_invoice_line_ids:
-    a_lines = line.cash_return_move_line_id and line.cash_return_move_line_id.analytic_lines or line.fp_analytic_lines
+    a_lines = adv_return_fp_lines or line.fp_analytic_lines
 %>
 % if a_lines:
 % for ana_line in sorted(a_lines, key=lambda x: x.id):
@@ -964,7 +972,7 @@ endif
 <%
 a_lines = False
 if line.free_analytic_lines and not line.invoice_id and not line.imported_invoice_line_ids:
-    a_lines = line.free_analytic_lines
+    a_lines = adv_return_free_lines or line.free_analytic_lines
 %>
 % if a_lines:
 % for ana_line in sorted(a_lines, key=lambda x: x.id):
