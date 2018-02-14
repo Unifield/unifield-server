@@ -733,9 +733,14 @@ stock moves will be posted in this account. If not set on the product, the one f
             if from_import_menu and nomen_obj._cache.get(cr.dbname, {}).get(vals['nomen_manda_2'], False):
                 vals['categ_id'] = nomen_obj._cache.get(cr.dbname, {}).get(vals['nomen_manda_2'], False)
             else:
-                vals['categ_id'] = self.pool.get('product.nomenclature').read(cr, uid, vals['nomen_manda_2'], ['category_id'], context=context)['category_id'][0]
-                if from_import_menu:
-                    nomen_obj._cache[cr.dbname][vals['nomen_manda_2']] = vals['categ_id']
+                categ_ids = self.pool.get('product.nomenclature').read(cr, uid, vals['nomen_manda_2'], ['category_id'], context=context)['category_id']
+                if categ_ids and len(categ_ids) > 0:
+                    vals['categ_id'] = categ_ids[0]
+                    if from_import_menu:
+                        nomen_obj._cache[cr.dbname][vals['nomen_manda_2']] = vals['categ_id']
+                else:
+                    raise osv.except_osv(_('Error'), _('No Product Category found for %s. Please contact an accounting member to create a new one for this family.')
+                                         % vals['nomenclature_description'])
         return super(product_template, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):

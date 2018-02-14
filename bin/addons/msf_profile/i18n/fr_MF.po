@@ -101189,3 +101189,9 @@ msgstr "Ouvrir les derniers engagements importés"
 #: field:import.commitment.wizard,progress:0
 msgid "Import in progress"
 msgstr "Import en cours"
+
+#. module: product_nomenclature
+#: code:addons/product_nomenclature/product_nomenclature.py:742
+#, python-format
+msgid "No Product Category found for %s. Please contact an accounting member to create a new one for this family."
+msgstr "Aucune Catégorie de produit trouvée pour %s. Veuillez contacter un membre de l'équipe Finance pour créer une catégorie à cette famille de produit."
