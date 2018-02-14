@@ -28,7 +28,13 @@ import common
 
 from tiny_socket import TinySocket
 from tiny_socket import TinySocketError
+from datetime import datetime, timedelta
+from collections import OrderedDict
 import cherrypy
+
+MAX_IP_COLLECTION = 50
+BLOCKED_MIN_COUNT = 5
+MAX_BAD_LOGIN = 5
 
 
 class NotLoggedIn(openobject.errors.TinyError, openobject.errors.AuthenticationError): pass
@@ -98,7 +104,7 @@ class RPCGateway(object):
             # try to convert into unicode string
             try:
                 return ustr(result)
-            except Exception, e:
+            except Exception:
                 return result
 
         elif isinstance(result, list):
@@ -226,6 +232,8 @@ class RPCSession(object):
     """
 
     __slots__ = ['host', 'port', 'protocol', 'storage', 'gateway']
+    connection_attempt_dict = OrderedDict()  # an OrderedDict is needed here to
+                                             # be able to remove old entries
 
     def __init__(self, host, port, protocol='socket', storage={}):
         """Create new instance of RPCSession.
@@ -300,13 +308,57 @@ class RPCSession(object):
     def number_update_modules(self, db):
         return self.execute_noauth('common', 'number_update_modules', db)
 
+    def unban(self, ip_address):
+        if ip_address in self.connection_attempt_dict:
+            self.connection_attempt_dict.pop(ip_address)
+
+    def is_banned(self, ip_address):
+        '''Return True if the ip is banned and cannot retry login before a
+        certain amount of time
+        '''
+        if ip_address in self.connection_attempt_dict and\
+                self.connection_attempt_dict[ip_address].get('fail_login_count') >= MAX_BAD_LOGIN:
+            current_time = datetime.now()
+            last_attempt_time = self.connection_attempt_dict[ip_address]['last_attempt_time']
+
+            if current_time - last_attempt_time > timedelta(minutes=BLOCKED_MIN_COUNT):
+                # the ip ban is over, delete it from the dict
+                self.unban(ip_address)
+                return False
+            return True
+        else:
+            return False
+
+    def fail_login_attempt(self, ip_address):
+        '''Increase the counter of fail login attemps'''
+        if ip_address in self.connection_attempt_dict:
+            self.connection_attempt_dict[ip_address]['fail_login_count'] += 1
+        else:
+            if len(self.connection_attempt_dict) >= MAX_IP_COLLECTION:
+                # the max size of the dict has been reach. To prevent fulfill
+                # the memory by multi-ip login attempt, remove the first imput
+                # element (FIFO) before to add a new one.
+                self.connection_attempt_dict.popitem(last=False)
+            self.connection_attempt_dict[ip_address] = {'fail_login_count': 1}
+        self.connection_attempt_dict[ip_address]['last_attempt_time'] = datetime.now()
+
     def login(self, db, user, password):
 
         if not (db and user and password):
             return -1
 
+        client_ip = cherrypy.request.wsgi_environ.get('HTTP_X_FORWARDED_FOR', False) \
+                 or cherrypy.request.wsgi_environ.get('REMOTE_ADDR', 'NO_IP_FOUND')
+
+        if self.is_banned(client_ip):
+            return -6
+
         try:
             uid = self.execute_noauth('common', 'login', db, user, password)
+            if uid is False:
+                self.fail_login_attempt(client_ip)
+            else:
+                self.unban(client_ip)
         except Exception, e:
             if e.title == 'updater.py':
                 return -2
@@ -344,7 +396,7 @@ class RPCSession(object):
     def logout(self):
         try:
             self.storage.clear()
-        except Exception, e:
+        except Exception:
             pass
 
     def is_logged(self):
@@ -380,6 +432,7 @@ class RPCSession(object):
             self.storage['remote_timezone'] = self.execute('common', 'timezone_get')
             try:
                 import pytz
+                assert pytz
             except:
                 raise common.warning(_('You select a timezone but OpenERP could not find pytz library!\nThe timezone functionality will be disable.'))
 

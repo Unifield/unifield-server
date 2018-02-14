@@ -517,6 +517,10 @@ msgstr "Base de données plus récente que la version d'UniField"
 msgid "Bad username or password"
 msgstr "Mauvais nom d'utilisateur ou mot de passe"
 
+#: controllers/utils.py:127 controllers/templates/login_ajax.mako:111
+msgid "Your IP have been blocked because of too many bad login attempts. It will be unblocked after %s minutes."
+msgstr "Votre IP à été bloquée à cause d'un trop grand nombre de connexion infructueuses. Elle sera débloquée dans %s minutes."
+
 #: controllers/view_log.py:32
 msgid "ID"
 msgstr "ID"
