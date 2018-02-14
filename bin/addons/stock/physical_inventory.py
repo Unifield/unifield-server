@@ -837,14 +837,12 @@ Line #, Product Code*, Product Description*, UoM*, Quantity*, Batch*, Expiry Dat
             if row_index < 10:
                 continue
 
+            # Check if product is non-stockable
             product_code = row.cells[2].data
-            product_ids = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
-            if len(product_ids) == 1:
-                # Check if product is non-stockable
-                product_tmpl_type = product_obj.browse(cr, uid, product_ids[0], fields_to_fetch=['product_tmpl_id'],
-                                                       context=context)['product_tmpl_id'].type
-                if product_tmpl_type in ('service_recep', 'consu'):
-                    add_error("""Impossible to import non-stockable product %s""" % product_code, row_index, 2)
+            if product_obj.search_exist(cr, uid, [('default_code', '=like', product_code),
+                                                      ('type', 'in', ['service_recep', 'consu'])],
+                                            context=context):
+                add_error(_("""Impossible to import non-stockable product %s""") % product_code, row_index, 2)
 
             adjustment_type = row.cells[18].data
             if adjustment_type:

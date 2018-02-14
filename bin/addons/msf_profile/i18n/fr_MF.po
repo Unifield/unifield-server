@@ -100283,3 +100283,9 @@ msgstr "Veuillez supprimer le produit non stockable %s pour pouvoir valider."
 #, python-format
 msgid "Impossible to import non-stockable products."
 msgstr "Impossible d'importer des produits non stockables."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:845
+#, python-format
+msgid "Impossible to import non-stockable product %s"
+msgstr "Impossible d'importer le produit non stockable %s"
