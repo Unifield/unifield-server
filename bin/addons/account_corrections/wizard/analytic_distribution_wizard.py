@@ -554,7 +554,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'account_id': line.analytic_id.id,
                     'amount_currency': amount_cur,
                     'amount': amount,
-                    'date': wizard.date,
+                    'date': orig_date,
                     'source_date': orig_date,
                     'document_date': orig_document_date,
                 })
@@ -573,7 +573,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                     'currency_id': ml and  ml.currency_id and ml.currency_id.id or company_currency_id,
                 })
                 # create the ana line
-                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=wizard.date, document_date=orig_document_date, source_date=orig_date, ref=ml.ref)
+                self.pool.get(obj_name).create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=orig_date, document_date=orig_document_date, source_date=orig_date, ref=ml.ref)
         # Set move line as corrected upstream if needed
         if to_reverse or to_override or to_create:
             self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [ml.id], context=context)
