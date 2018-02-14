@@ -218,8 +218,12 @@ class mass_reallocation_wizard(osv.osv_memory):
         res = super(mass_reallocation_wizard, self).default_get(cr, uid, fields, context=context)
 
         if context.get('search_domain', False):
+            # account.analytic.line: as soon as a search has been made the search_domain contains the criteria selected
+            # and the original_domain contains the filter on account category (FUNDING, FREE1...)
             aal_obj = self.pool.get('account.analytic.line')
-            args = context.get('search_domain')
+            args = context.get('search_domain', [])
+            if context.get('original_domain'):
+                args.extend(context['original_domain'])
             ids = aal_obj.search(cr, uid, args, context=context)
             context['active_ids'] = ids
 
