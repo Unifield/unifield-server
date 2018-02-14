@@ -515,6 +515,7 @@ class import_data(osv.osv_memory):
                                          })
             if req_id:
                 request_obj.request_send(cr, uid, [req_id])
+                request_obj.request_close(cr, uid, [req_id])
 
             if nb_error:
                 errorfile.seek(0)
