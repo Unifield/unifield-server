@@ -409,7 +409,8 @@ class PhysicalInventory(osv.osv):
                 existing_id = previous_discrepancies[product_batch_expirydate]["id"]
                 update_discrepancies[existing_id] = {
                     "line_no": line_no,
-                    "counted_qty": counted_qty
+                    "counted_qty": counted_qty,
+                    'counted_qty_is_empty': type(counted_qty) == type(False), # True if counted_qty is a boolean
                 }
             else:
                 new_discrepancies.append(
@@ -419,7 +420,8 @@ class PhysicalInventory(osv.osv):
                       "batch_number": product_batch_expirydate[1],
                       "expiry_date": product_batch_expirydate[2],
                       "theoretical_qty": theoretical_qty,
-                      "counted_qty": counted_qty
+                      "counted_qty": counted_qty,
+                      'counted_qty_is_empty': type(counted_qty) == type(False), # True if counted_qty is a boolean
                       })
 
         # Update discrepancy flags on counting lines
@@ -479,6 +481,7 @@ class PhysicalInventory(osv.osv):
                                         "batch_number",
                                         "expiry_date",
                                         "counted_qty",
+                                        'counted_qty_is_empty',
                                         "ignored"])
 
         anomalies = []
@@ -486,7 +489,7 @@ class PhysicalInventory(osv.osv):
             if line["ignored"]:
                 continue
             anomaly = False
-            if line["counted_qty"] == False:
+            if line["counted_qty_is_empty"]:
                 anomaly = "Quantity for line %s, %s is incorrect." % (line["line_no"], product_identity_str(line))
             if line["counted_qty"] < 0.0:
                 anomaly = "A line for %s was expected but not found." % product_identity_str(line)
@@ -1313,6 +1316,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'line_no': fields.integer(string=_('Line #'), readonly=True),
         'theoretical_qty': fields.float('Theoretical Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'counted_qty': fields.float('Counted Quantity', digits_compute=dp.get_precision('Product UoM')),
+        'counted_qty_is_empty': fields.boolean('False qty', readonly=True, help=_('Has field counted_qty been filled or is it empty ? (internal use)')),
         'discrepancy_qty': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Quantity")),
         'discrepancy_value': fields.function(_discrepancy, multi="discrepancy", method=True, type='float', string=_("Discrepancy Value")),
 
