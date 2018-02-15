@@ -246,7 +246,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         if isinstance(ids, (int,long)):
-            ids = [ids]    
+            ids = [ids]
 
         res = {}
         for po in self.browse(cr, uid, ids, context=context):
@@ -471,6 +471,7 @@ class purchase_order(osv.osv):
         if context is None:
             context =  {}
 
+        old_value = context.get('procurement_request', False)
         context['procurement_request'] = True
 
         res = {}
@@ -497,6 +498,7 @@ class purchase_order(osv.osv):
             else:
                 res[po.id] = json.dumps([x[0] for x in ORDER_TYPES_SELECTION])
 
+        context['procurement_request'] = old_value
         return res
 
     def _order_line_order_type(self, cr, uid, ids, context=None):
@@ -654,7 +656,7 @@ class purchase_order(osv.osv):
         'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
         'state': fields.function(_get_less_advanced_pol_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
-                                     'purchase.order.line': (_get_order, ['state'], 10), 
+                                     'purchase.order.line': (_get_order, ['state'], 10),
                                  },
                                  select=True,
                                  help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.",
@@ -967,7 +969,7 @@ class purchase_order(osv.osv):
                 customer_ids = self.pool.get('res.partner').search(cr, uid,
                                                                    [('name', operator, name)], context=context)
                 if customer_ids:
-                    # search for m2o 'dest_partner_id' dest_customer in PO (direct PO) 
+                    # search for m2o 'dest_partner_id' dest_customer in PO (direct PO)
                     po1_ids = ids.extend(self.search(cr, uid,
                                                      [('dest_partner_id', 'in', customer_ids)],
                                                      context=context))
