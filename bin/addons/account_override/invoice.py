@@ -233,7 +233,6 @@ class account_invoice(osv.osv):
         'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
         'partner_move_line': fields.one2many('account.move.line', 'invoice_partner_link', string="Partner move line", readonly=True),
         'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", hide_default_menu=True, readonly="True"),
-        'fake_currency_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="res.currency", string="Currency", readonly="True"),
         'have_donation_certificate': fields.function(_get_have_donation_certificate, method=True, type='boolean', string="Have a Certificate of donation?"),
         'purchase_list': fields.boolean(string='Purchase List ?', help='Check this box if the invoice comes from a purchase list', readonly=True, states={'draft':[('readonly',False)]}),
         'virtual_currency_id': fields.function(_get_virtual_fields, method=True, store=False, multi='virtual_fields', string="Currency",
@@ -365,7 +364,7 @@ class account_invoice(osv.osv):
                             ' before invoice validation')
                     )
 
-    def _refund_cleanup_lines(self, cr, uid, lines):
+    def _refund_cleanup_lines(self, cr, uid, lines, is_account_inv_line=False, context=None):
         """
         Remove useless fields
         """
@@ -374,7 +373,7 @@ class account_invoice(osv.osv):
                 del line['move_lines']
             if line.get('import_invoice_id',False):
                 del line['import_invoice_id']
-        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines)
+        res = super(account_invoice, self)._refund_cleanup_lines(cr, uid, lines, is_account_inv_line=is_account_inv_line, context=context)
         return res
 
     def check_po_link(self, cr, uid, ids, context=None):
@@ -457,7 +456,7 @@ class account_invoice(osv.osv):
 
     def default_get(self, cr, uid, fields, context=None):
         """
-        Fill in fake currency for intermission invoice (in context).
+        Fill in account and journal for intermission invoice
         """
         defaults = super(account_invoice, self).default_get(cr, uid, fields, context=context)
         if context and context.get('is_intermission', False):
@@ -468,10 +467,6 @@ class account_invoice(osv.osv):
                     defaults = {}
                 user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
                 if user and user[0] and user[0].company_id:
-                    # get company default currency
-                    if user[0].company_id.currency_id:
-                        defaults['fake_currency_id'] = user[0].company_id.currency_id.id
-                        defaults['currency_id'] = defaults['fake_currency_id']
                     # get 'intermission counter part' account
                     if user[0].company_id.intermission_default_counterpart:
                         defaults['account_id'] = user[0].company_id.intermission_default_counterpart.id
@@ -1456,6 +1451,22 @@ class account_invoice(osv.osv):
             raise osv.except_osv(_('Error'),
                                  "\n".join(header_errors + lines_errors))
 
+    def has_one_line_reconciled(self, cr, uid, account_inv_ids, context=None):
+        """
+        Returns True if one of the account.invoice docs whose ids are in parameter has a line which is fully reconciled
+        (header, lines, taxes at header or line level)
+        """
+        if context is None:
+            context = {}
+        if isinstance(account_inv_ids, (int, long, )):
+            account_inv_ids = [account_inv_ids]
+        aml_obj = self.pool.get('account.move.line')
+        aml_ids = aml_obj.search(cr, uid, [('invoice', 'in', account_inv_ids)], order='NO_ORDER', context=context)
+        if aml_obj.search_exist(cr, uid, [('id', 'in', aml_ids), ('reconcile_id', '!=', False)], context=context):
+            return True
+        return False
+
+
 account_invoice()
 
 
@@ -1525,6 +1536,9 @@ class account_invoice_line(osv.osv):
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
         'reference': fields.char(string="Reference", size=64),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        'reversed_invoice_line_id': fields.many2one('account.invoice.line', string='Reversed Invoice Line',
+                                                    help='Invoice line that has been reversed by this one through a '
+                                                         '"refund cancel" or "refund modify"'),
     }
 
     _defaults = {
@@ -1616,12 +1630,15 @@ class account_invoice_line(osv.osv):
 
     def copy_data(self, cr, uid, inv_id, default=None, context=None):
         """
-        Copy an invoice line without its move lines
+        Copy an invoice line without its move lines,
+        without the link to a reversed invoice line,
         and without link to PO/FO lines when the duplication is manual
         """
         if default is None:
             default = {}
-        default.update({'move_lines': False,})
+        default.update({'move_lines': False,
+                        'reversed_invoice_line_id': False,
+                        })
         # Manual duplication should generate a "manual document not created through the supply workflow"
         # so we don't keep the link to PO/FO at line level
         if context.get('from_button', False):

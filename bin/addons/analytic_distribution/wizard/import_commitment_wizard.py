@@ -25,6 +25,10 @@ import base64
 import StringIO
 import csv
 import time
+import threading
+import pooler
+import tools
+
 
 class import_commitment_wizard(osv.osv_memory):
     _name = 'import.commitment.wizard'
@@ -32,9 +36,92 @@ class import_commitment_wizard(osv.osv_memory):
 
     _columns = {
         'import_file': fields.binary("CSV File"),
+        'start_date': fields.datetime('Import Date', readonly='1'),
+        'in_progress': fields.boolean('In Progress', readonly='1'),
+        'error': fields.text('Error', readonly='1'),
+        'progress': fields.char('Import in progress', size=512, readonly='1'),
+        'last_stop': fields.datetime('End Date', readonly='1'),
+        'last_error': fields.datetime('Message', readonly='1'),
     }
 
+    _defaults = {
+        'in_progress': False,
+    }
+
+    def refresh(self, cr, uid, ids, context=None):
+        wiz_ids = self.search(cr, 1, [('in_progress', '=', True)])
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'import.commitment.wizard',
+            'res_id': wiz_ids and wiz_ids[0] or False,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': context or {},
+        }
+
+    def default_get(self, cr, uid, fields, context=None):
+        ids = self.search(cr, 1, [('in_progress', '=', True)])
+        if ids:
+            d = self.read(cr, 1, ids, ['start_date', 'progress'], context=context)
+            return {
+                'start_date': d[0]['start_date'],
+                'progress':  d[0]['progress'],
+                'in_progress': False,
+            }
+
+        d = super(import_commitment_wizard, self).default_get(cr, uid, fields, context)
+        ir_config = self.pool.get('ir.config_parameter')
+        d['last_stop'] = ir_config.get_param(cr, 1, 'LAST_COMMIT_DATE')
+        d['last_error'] = ir_config.get_param(cr, 1, 'LAST_COMMIT_ERROR')
+        d['in_progress'] = False
+        return d
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if view_type == 'form':
+            if self.search(cr, 1, [('in_progress', '=', True)]):
+                view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'import_commitment_wizard_progress_view')[1]
+
+        return super(import_commitment_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+
+    def open_ana_lines(self, cr, uid, ids, context=None):
+        action = self.pool.get('ir.actions.act_window').for_xml_id(cr, uid,
+                                                                   'analytic_distribution',
+                                                                   'action_engagement_line_tree',
+                                                                   context=context)
+        if action:
+            if action.get('context', False):
+                action['context'] = action['context'].replace(
+                    'search_default_engagements',
+                    'search_default_intl_engagements')
+            action['target'] = 'same'
+        else:
+            action = {'type' : 'ir.actions.act_window_close'}
+        return action
+
     def import_csv_commitment_lines(self, cr, uid, ids, context=None):
+        try:
+            if self.search(cr, 1, [('in_progress', '=', True)]):
+                return True
+
+            self.write(cr, uid, ids, {'in_progress': True, 'start_date': time.strftime('%Y-%m-%d %H:%M:%S'), 'error': False}, context=context)
+            new_thread = threading.Thread(target=self.import_csv_commitment_lines_bg, args=(cr, uid, ids, context))
+            new_thread.start()
+            new_thread.join(10.0)
+            if new_thread.isAlive():
+                return self.refresh(cr, uid, ids, context=context)
+            else:
+                error = self.read(cr, uid, ids[0], ['error'])['error']
+                if error:
+                    raise osv.except_osv(_('Error'), tools.ustr(error))
+                # US-97: go to tree with intl engagements as default
+                return self.open_ana_lines(cr, uid, ids, context)
+        except:
+            all_wiz = self.search(cr, 1, [])
+            self.write(cr, 1, all_wiz, {'in_progress': False}, context=context)
+            raise
+
+    def import_csv_commitment_lines_bg(self, old_cr, uid, ids, context=None):
         def check_date_not_in_hq_closed_period(pool, cr, uid, dt, line_index,
                                                context=None):
             domain = [
@@ -53,29 +140,37 @@ class import_commitment_wizard(osv.osv_memory):
 
         if context is None:
             context = {}
-        analytic_obj = self.pool.get('account.analytic.line')
-        instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
-        journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI'), ('is_current_instance', '=', True)], context=context)
-        to_be_deleted_ids = analytic_obj.search(cr, uid, [('imported_commitment', '=', True)], context=context)
-        functional_currency_obj = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
-        default_founding_pool_id = self.pool.get('account.analytic.account').search(
-            cr, uid,  [('category', '=', 'FUNDING'), ('code', '=', 'PF')], context=context)
-        if not default_founding_pool_id:
-            raise osv.except_osv(_('Error'), _('Default PF Funding Pool not found'))
-        default_founding_pool_id = default_founding_pool_id[0]
+        cr = pooler.get_db(old_cr.dbname).cursor()
+        try:
+            analytic_obj = self.pool.get('account.analytic.line')
+            instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
+            journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('code', '=', 'ENGI'), ('is_current_instance', '=', True)], context=context)
+            to_be_deleted_ids = analytic_obj.search(cr, uid, [('imported_commitment', '=', True)], context=context)
+            functional_currency_obj = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id
+            default_founding_pool_id = self.pool.get('account.analytic.account').search(
+                cr, uid,  [('category', '=', 'FUNDING'), ('code', '=', 'PF')], context=context)
+            if not default_founding_pool_id:
+                raise osv.except_osv(_('Error'), _('Default PF Funding Pool not found'))
+            default_founding_pool_id = default_founding_pool_id[0]
 
-        now = False
-        if len(journal_ids) > 0:
-            # read file
+            now = False
+            if not journal_ids:
+                raise osv.except_osv(_('Error'), _('Analytic Journal ENGI doesn\'t exist!'))
             for wizard in self.browse(cr, uid, ids, context=context):
                 if not wizard.import_file:
                     raise osv.except_osv(_('Error'), _('Nothing to import.'))
                 import_file = base64.decodestring(wizard.import_file)
                 import_string = StringIO.StringIO(import_file)
                 import_data = list(csv.reader(import_string, quoting=csv.QUOTE_ALL, delimiter=','))
-
+                total_line = len(import_data) - 1
+                nb = 0
                 sequence_number = 1
                 for line in import_data[1:]:
+                    nb += 1
+
+                    if nb % 100 == 0:
+                        self.write(cr, uid, ids, {'progress': '%s of %s lines.' % (nb, total_line)})
+
                     vals = {'imported_commitment': True,
                             'instance_id': instance_id,
                             'journal_id': journal_ids[0],
@@ -124,7 +219,7 @@ class import_commitment_wizard(osv.osv_memory):
                     if account_code:
                         account_ids = self.pool.get('account.account').search(cr, uid, [('code', '=', account_code), ('type', '!=', 'view')])
                         if not account_ids:
-                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Account code %s doesn\'t exist!') % (account_code,)))
+                            raise osv.except_osv(_('Error'), raise_msg_prefix + (_('Account code %s doesn\'t exist!') % (tools.ustr(account_code),)))
                         vals.update({'general_account_id': account_ids[0]})
                     else:
                         raise osv.except_osv(_('Error'), raise_msg_prefix + _('No account code found!'))
@@ -231,25 +326,23 @@ class import_commitment_wizard(osv.osv_memory):
                     analytic_obj.create(cr, uid, vals, context=context)
                     sequence_number += 1
 
-        else:
-            raise osv.except_osv(_('Error'), _('Analytic Journal ENGI doesn\'t exist!'))
 
-        analytic_obj.unlink(cr, uid, to_be_deleted_ids, context=context)
+            self.write(cr, uid, ids, {'progress': 'deleting %s previous AJIs' % (len(to_be_deleted_ids), )})
+            analytic_obj.unlink(cr, uid, to_be_deleted_ids, context=context)
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_ERROR',  '%d lines imported.' % (nb,))
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_DATE', time.strftime('%Y-%m-%d %H:%M:%S'))
 
-        # US-97: go to tree with intl engagements as default
-        action = self.pool.get('ir.actions.act_window').for_xml_id(cr, uid,
-                                                                   'analytic_distribution',
-                                                                   'action_engagement_line_tree',
-                                                                   context=context)
-        if action:
-            if action.get('context', False):
-                action['context'] = action['context'].replace(
-                    'search_default_engagements',
-                    'search_default_intl_engagements')
-            action['target'] = 'same'
-        else:
-            action = {'type' : 'ir.actions.act_window_close'}
-        return action
+        except Exception, e:
+            msg = hasattr(e, 'value') and e.value or e.message
+            self.write(cr, 1, ids, {'in_progress': False, 'error': tools.ustr(msg)})
+            cr.rollback()
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_ERROR',  tools.ustr(msg))
+            self.pool.get('ir.config_parameter').set_param(cr, 1, 'LAST_COMMIT_DATE', time.strftime('%Y-%m-%d %H:%M:%S'))
+        finally:
+            self.write(cr, 1, ids, {'in_progress': False})
+            cr.commit()
+            cr.close(True)
+
 
 import_commitment_wizard()
 
