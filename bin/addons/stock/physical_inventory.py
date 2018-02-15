@@ -1315,7 +1315,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'move_id': fields.integer(readonly=True)
     }
 
-    _order = "product_id asc, line_no asc"
+    _order = "line_no asc, product_id asc"
 
     def create(self, cr, user, vals, context=None):
         context = context is None and {} or context
