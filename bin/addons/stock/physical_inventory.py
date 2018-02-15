@@ -654,8 +654,13 @@ class PhysicalInventory(osv.osv):
         line_list = []
         line_items = []
 
+
         for row_index, row in enumerate(counting_sheet_file.getRows()):
             # === Process header ===
+            
+            # ignore empty line
+            if not row.cells:
+                continue
 
             if row_index == 2:
                 counting_sheet_header.update({
