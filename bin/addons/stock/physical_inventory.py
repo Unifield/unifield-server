@@ -965,8 +965,9 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
 
         for inv in self.read(cr, uid, ids, ['counting_line_ids',
                                             'discrepancy_line_ids',
-                                            'date',
-                                            'name'], context=context):
+                                            'date', 'name', 'state'], context=context):
+            if inv['state'] in ('confirmed', 'closed', 'cancel'):
+                raise osv.except_osv(_('Error'), _('You cannot confirm an inventory which is %s' % inv['state']))
             move_ids = []
 
             # gather all information needed for the lines treatment first to do less requests
