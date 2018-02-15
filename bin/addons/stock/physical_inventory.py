@@ -754,17 +754,17 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 
             # Check quantity
             quantity = row.cells[4].data
-            # if quantity is integer then convert to string otherwise it will not be imported:
-            if isinstance(quantity, int) and quantity == 0:
-                quantity = '0'
-            try:
-                quantity = counting_obj.quantity_validate(cr, quantity)
-            except NegativeValueError:
-                add_error(_('Quantity %s is negative') % quantity, row_index, 4)
-                quantity = 0.0
-            except ValueError:
-                quantity = 0.0
-                add_error(_('Quantity %s is not valid') % quantity, row_index, 4)
+            if quantity is not None:
+                if isinstance(quantity, int) and quantity == 0:
+                    quantity = '0'
+                try:
+                    quantity = counting_obj.quantity_validate(cr, quantity)
+                except NegativeValueError:
+                    add_error(_('Quantity %s is negative') % quantity, row_index, 4)
+                    quantity = 0.0
+                except ValueError:
+                    quantity = 0.0
+                    add_error(_('Quantity %s is not valid') % quantity, row_index, 4)
 
             product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
 
@@ -774,7 +774,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 
             # Check batch number
             batch_name = row.cells[5].data
-            if not batch_name and product_info['batch_management'] and float(quantity or 0) > 0:
+            if not batch_name and product_info['batch_management'] and quantity is not None:
                 add_error(_('Batch number is required'), row_index, 5)
 
             if batch_name and not product_info['batch_management']:
@@ -797,14 +797,14 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                         raise ValueError()
                 except ValueError:
                     add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
-            if not expiry_date and product_info['perishable'] and float(quantity or 0) > 0:
+            if not expiry_date and product_info['perishable'] and quantity is not None:
                 add_error(_('Expiry date is required'), row_index, 6)
 
             # Check duplicate line (Same product_id, batch_number, expirty_date)
             item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
-            if item in line_items and (batch_name or expiry_date):
+            if item in line_items:
                 add_error(_("""Duplicate line (same product, batch number and expiry date)"""), row_index)
-            else:
+            elif quantity is not None:
                 line_items.append(item)
 
             data = {
@@ -812,10 +812,12 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                 'product_id': product_id,
                 'batch_number': batch_name,
                 'expiry_date': expiry_date,
-                'quantity': quantity,
+                'quantity': False,
                 'product_uom_id': product_uom_id,
             }
 
+            if quantity is not None:
+                data['quantity'] = quantity
             # Check if line exist
             if line_no:
                 line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no)])
@@ -829,7 +831,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 
             if len(line_ids) > 0:
                 counting_sheet_lines.append((1, line_ids[0], data))
-            else:
+            elif quantity is not None:
                 counting_sheet_lines.append((0, 0, data))
 
         # endfor
