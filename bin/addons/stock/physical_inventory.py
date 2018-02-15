@@ -464,12 +464,12 @@ class PhysicalInventory(osv.osv):
             return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
         def read_many(model, ids, columns):
             return self.pool.get(model).read(cr, uid, ids, columns, context=context)
-        def product_identity_str(line):
-            str_ = "product '%s'" % line["product_id"][1]
+        def product_identity_str(line, context=context):
+            str_ = _("product '%s'") % line["product_id"][1]
             if line["batch_number"] or line["expiry_date"]:
-                str_ += " with Batch number '%s' and Expiry date '%s'"  % (line["batch_number"] or '', line["expiry_date"] or '')
+                str_ += _(" with Batch number '%s' and Expiry date '%s'") % (line["batch_number"] or '', line["expiry_date"] or '')
             else:
-                str_ += " (no batch number / expiry date)"
+                str_ += _(" (no batch number / expiry date)")
             return str_
 
         discrepancy_line_ids = read_single("physical.inventory", inventory_id, 'discrepancy_line_ids')
@@ -490,12 +490,13 @@ class PhysicalInventory(osv.osv):
                 continue
             anomaly = False
             if line["counted_qty_is_empty"]:
-                anomaly = "Quantity for line %s, %s is incorrect." % (line["line_no"], product_identity_str(line))
+                anomaly = _("Quantity for line %s, %s is incorrect.") % (line["line_no"], product_identity_str(line))
+
             if line["counted_qty"] < 0.0:
-                anomaly = "A line for %s was expected but not found." % product_identity_str(line)
+                anomaly = _("A line for %s was expected but not found.") % product_identity_str(line, context=context)
 
             if anomaly:
-                anomalies.append({"message": anomaly + " Ignore line or count as 0 ?",
+                anomalies.append({"message": anomaly + _(" Ignore line or count as 0 ?"),
                                   "line_id": line["id"]})
 
         if anomalies:
@@ -658,9 +659,9 @@ class PhysicalInventory(osv.osv):
 
         def add_error(message, file_row, file_col=None, is_warning=False):
             if file_col is not None:
-                _msg = 'Cell %s%d: %s' % (chr(0x41 + file_col), file_row + 1, message)
+                _msg = _('Cell %s%d: %s') % (chr(0x41 + file_col), file_row + 1, message)
             else:
-                _msg = 'Line %d: %s' % (file_row + 1, message)
+                _msg = _('Line %d: %s') % (file_row + 1, message)
             if is_warning:
                 counting_sheet_warnings.append(_msg)
             else:
@@ -718,7 +719,7 @@ class PhysicalInventory(osv.osv):
 
             # Check number of columns
             if len(row) != 10:
-                add_error(_("""Reference is different to inventory reference, you should have exactly 10 columns in this order:
+                add_error(_("""The number of columns is incorrect, you should have exactly 10 columns in this order:
 Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date, Specification, BN Management, ED Management"""), row_index)
                 break
 
@@ -728,11 +729,11 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                 try:
                     line_no = int(line_no)
                     if line_no in line_list:
-                        add_error("""Line number is duplicate. If you added a line, please keep the line number empty.""", row_index, 0)
+                        add_error(_("""Line number is duplicate. If you added a line, please keep the line number empty."""), row_index, 0)
                     line_list.append(line_no)
                 except ValueError:
                     line_no = None
-                    add_error("""Invalid line number""", row_index, 0)
+                    add_error(_("""Invalid line number"""), row_index, 0)
 
             # Check product_code
             product_code = row.cells[1].data
@@ -741,13 +742,13 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
             if len(product_ids) == 1:
                 product_id = product_ids[0]
             else:
-                add_error("""Product %s not found""" % product_code, row_index, 1)
+                add_error(_("""Product %s not found""") % product_code, row_index, 1)
 
             # Check UoM
             product_uom_id = False
             product_uom = row.cells[3].data
             if product_uom not in all_uom:
-                add_error("""UoM %s unknown""" % product_uom, row_index, 3)
+                add_error(_("""UoM %s unknown""") % product_uom, row_index, 3)
             else:
                 product_uom_id = all_uom[product_uom]
 
@@ -756,22 +757,22 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
             try:
                 quantity = counting_obj.quantity_validate(cr, quantity)
             except NegativeValueError:
-                add_error('Quantity %s is negative' % quantity, row_index, 4)
+                add_error(_('Quantity %s is negative') % quantity, row_index, 4)
                 quantity = 0.0
             except ValueError:
                 quantity = 0.0
-                add_error('Quantity %s is not valide' % quantity, row_index, 4)
+                add_error(_('Quantity %s is not valid') % quantity, row_index, 4)
 
             product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
 
             if product_info['uom_id'] and product_uom_id and product_info['uom_id'][0] != product_uom_id:
-                add_error("""Product %s, UoM %s does not conform to that of product in stock""" % (product_info['default_code'], product_uom), row_index, 3)
+                add_error(_("""Product %s, UoM %s does not conform to that of product in stock""") % (product_info['default_code'], product_uom), row_index, 3)
 
 
             # Check batch number
             batch_name = row.cells[5].data
             if not batch_name and product_info['batch_management'] and float(quantity or 0) > 0:
-                add_error('Batch number is required', row_index, 5)
+                add_error(_('Batch number is required'), row_index, 5)
 
             if batch_name and not product_info['batch_management']:
                 add_error(_("Product %s is not BN managed, BN ignored") % (product_info['default_code'], ), row_index, 5, is_warning=True)
@@ -792,14 +793,14 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                     else:
                         raise ValueError()
                 except ValueError:
-                    add_error("""Expiry date %s is not valide""" % expiry_date, row_index, 6)
+                    add_error(_("""Expiry date %s is not valid""") % expiry_date, row_index, 6)
             if not expiry_date and product_info['perishable'] and float(quantity or 0) > 0:
-                add_error('Expiry date is required', row_index, 6)
+                add_error(_('Expiry date is required'), row_index, 6)
 
             # Check duplicate line (Same product_id, batch_number, expirty_date)
             item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
             if item in line_items and (batch_name or expiry_date):
-                add_error("""Duplicate line (same product, batch number and expiry date)""", row_index)
+                add_error(_("""Duplicate line (same product, batch number and expiry date)"""), row_index)
             else:
                 line_items.append(item)
 
@@ -836,9 +837,9 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
             # Errors found, open message box for exlain
             self.write(cr, uid, ids, {'file_to_import': False}, context=context)
             if counting_sheet_warnings:
-                counting_sheet_errors.append("\nWarning")
+                counting_sheet_errors.append("\n%s" % _("Warning"))
                 counting_sheet_errors += counting_sheet_warnings
-            result = wizard_obj.message_box(cr, uid, title='Importation errors', message='\n'.join(counting_sheet_errors))
+            result = wizard_obj.message_box(cr, uid, title=_('Importation errors'), message='\n'.join(counting_sheet_errors))
         else:
             # No error found. Write counting lines on Inventory
             vals = {
@@ -847,7 +848,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                 'counting_line_ids': counting_sheet_lines
             }
             self.write(cr, uid, ids, vals, context=context)
-            counting_sheet_warnings.insert(0, 'Counting sheet successfully imported.')
+            counting_sheet_warnings.insert(0, _('Counting sheet successfully imported.'))
             result = wizard_obj.message_box(cr, uid, title='Information', message='\n'.join(counting_sheet_warnings))
         context['import_in_progress'] = False
 
@@ -862,7 +863,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
         discrepancy_report_errors = []
 
         def add_error(message, file_row, file_col):
-            discrepancy_report_errors.append('Cell %s%d: %s' % (chr(0x41 + file_col), file_row + 1, message))
+            discrepancy_report_errors.append(_('Cell %s%d: %s') % (chr(0x41 + file_col), file_row + 1, message))
 
         inventory_rec = self.browse(cr, uid, ids, context=context)[0]
         if not inventory_rec.file_to_import2:
@@ -880,7 +881,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
             if row_index < 10:
                 continue
             if len(row) != 20:
-                add_error(_("""Reference is different to inventory reference, you should have exactly 20 columns in this order:
+                add_error(_("""The number of columns is incorrect, you should have exactly 20 columns in this order:
 Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theorical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Comments / actions (in case of discrepancy)"""),
                           row_index, len(row))
                 break
@@ -898,7 +899,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                     reason_ids = []
 
                 if not reason_ids:
-                    add_error('Unknown adjustment type %s' % adjustment_type, row_index, 18)
+                    add_error(_('Unknown adjustment type %s') % adjustment_type, row_index, 18)
                     adjustment_type = False
 
             comment = row.cells[19].data
@@ -908,7 +909,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
             if line_ids:
                 line_no = line_ids[0]
             else:
-                add_error('Unknown line no %s' % line_no, row_index, 0)
+                add_error(_('Unknown line no %s') % line_no, row_index, 0)
                 line_no = False
 
             discrepancy_report_lines.append((1, line_no, {'reason_type_id': adjustment_type, 'comment': comment}))
@@ -919,14 +920,14 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         if discrepancy_report_errors:
             # Errors found, open message box for exlain
             self.write(cr, uid, ids, {'file_to_import2': False}, context=context)
-            result = wizard_obj.message_box(cr, uid, title='Importation errors',
+            result = wizard_obj.message_box(cr, uid, title=_('Importation errors'),
                                             message='\n'.join(discrepancy_report_errors))
         else:
             # No error found. update comment and reason for discrepancies lines on Inventory
             vals = {'file_to_import2': False, 'discrepancy_line_ids': discrepancy_report_lines}
             self.write(cr, uid, ids, vals, context=context)
             result = wizard_obj.message_box(cr, uid, title='Information',
-                                            message='Discrepancy report successfully imported.')
+                                            message=_('Discrepancy report successfully imported.'))
         context['import_in_progress'] = False
 
         return result
@@ -1045,12 +1046,12 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
             errors = []
             for line in line_read:
                 if not line['ignored'] and not line['reason_type_id']:
-                    errors.append('Line %d: Adjustement type missing' % line['line_no'])
+                    errors.append(_('Line %d: Adjustement type missing') % line['line_no'])
 
             if errors:
                 # Errors found, open message box for exlain
                 wizard_obj = self.pool.get('physical.inventory.import.wizard')
-                return wizard_obj.message_box(cr, uid, title='Confirmation errors', message='\n'.join(errors))
+                return wizard_obj.message_box(cr, uid, title=_('Confirmation errors'), message='\n'.join(errors))
 
 
             def get_prodlot_id(bn, ed):
@@ -1163,7 +1164,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
                                                  _('You can not cancel inventory which has any account move with posted state.'))
                         account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
-            self.infolog(cr, uid, "The Physical inventory id:%s (%s) has been cancelled" % (inv.id, inv.name))
+            self.infolog(cr, uid, _("The Physical inventory id:%s (%s) has been cancelled") % (inv.id, inv.name))
         return {}
 
 
