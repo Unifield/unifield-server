@@ -545,16 +545,19 @@ class PhysicalInventory(osv.osv):
             discrepancies.write(cr, uid, count_ids, {'counted_qty': 0.0, 'ignored': False})
 
     def get_stock_for_products_at_location(self, cr, uid, product_ids, location_id, context=None):
-        context = context if context else {}
-
-        def read_many(model, ids, columns):
-            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
-
-        def search(model, domain):
-            return self.pool.get(model).search(cr, uid, domain, context=context)
+        if context is None:
+            context = {}
 
         assert isinstance(product_ids, list)
         assert isinstance(location_id, int)
+
+        move_obj = self.pool.get('stock.move')
+        prod_obj = self.pool.get('product.product')
+        uom_obj = self.pool.get('product.uom')
+
+        default_uom = {}
+        for prod in prod_obj.read(cr, uid, product_ids, ['uom_id'], context=context):
+            default_uom[prod['id']] = prod['uom_id'][0]
 
         # Get all the moves for in/out of that location for the products
         move_for_products_at_location = ['&', '&', '|',
@@ -563,15 +566,16 @@ class PhysicalInventory(osv.osv):
                                          ("product_id", 'in', product_ids),
                                          ('state', '=', 'done')]
 
-        moves_at_location_ids = search("stock.move", move_for_products_at_location)
-        moves_at_location = read_many("stock.move",
-                                      moves_at_location_ids,
+        moves_at_location_ids = move_obj.search(cr, uid, move_for_products_at_location, context=context)
+        moves_at_location = move_obj.read(cr, uid, moves_at_location_ids,
                                       ["product_id",
                                        "product_qty",
                                        "prodlot_id",
                                        "expired_date",
                                        "location_id",
-                                       "location_dest_id"])
+                                       "product_uom",
+                                       "location_dest_id"],
+                                       context=context)
 
         # Sum all lines to get a set of (product, batchnumber) -> qty
         stocks = {}
@@ -596,13 +600,16 @@ class PhysicalInventory(osv.osv):
             move_out = (move["location_id"][0] == location_id)
             move_in = (move["location_dest_id"][0] == location_id)
 
+            if move_in and move_out:
+                continue
+
+            if move['product_uom'] and default_uom.get(product_id) and move['product_uom'][0] != default_uom[product_id]:
+                product_qty = uom_obj._compute_qty(cr, uid, move['product_uom'][0], product_qty, default_uom[product_id])
+
             if move_in:
                 stocks[product_batch_expirydate] += product_qty
             elif move_out:
                 stocks[product_batch_expirydate] -= product_qty
-            else:
-                # This shouldnt happen
-                pass
 
         return stocks
 
