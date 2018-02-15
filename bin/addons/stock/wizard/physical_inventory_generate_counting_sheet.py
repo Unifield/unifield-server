@@ -2,6 +2,7 @@
 
 from osv import fields, osv
 from tools.translate import _
+import time
 assert _
 
 class physical_inventory_generate_counting_sheet(osv.osv_memory):
@@ -64,14 +65,16 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         # Prepare the inventory lines to be created
 
         inventory_counting_lines_to_create = []
+        current_prodlot_id = False
         for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
-            if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product.id, context=context):
-                continue
-            else:
-                bn_and_eds_for_this_product = bn_and_eds[product.id]
-                # If no bn / ed related to this product, create a single inventory
-                # line
-                if not product.batch_management and not product.perishable:
+            bn_and_eds_for_this_product = bn_and_eds[product.id]
+            # If no bn / ed related to this product, create a single inventory
+            # line
+            if not product.batch_management and not product.perishable:
+                if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product.id,
+                                                                                 current_prodlot_id, context=context):
+                    continue
+                else:
                     values = {
                         "line_no": len(inventory_counting_lines_to_create) + 1,
                         "inventory_id": inventory_id,
@@ -80,15 +83,22 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                         "expiry_date": False
                     }
                     inventory_counting_lines_to_create.append(values)
-                # Otherwise, create an inventory line for this product ~and~ for
-                # each BN/ED
-                else:
-                    for bn_and_ed in bn_and_eds_for_this_product:
+            # Otherwise, create an inventory line for this product ~and~ for
+            # each BN/ED
+            else:
+                for bn_and_ed in bn_and_eds_for_this_product:
+                    current_prodlot = bn_and_ed[0] if prefill_bn else False
+                    current_prodlot_id = self.pool.get('stock.production.lot').search(cr, uid, [('name', '=', current_prodlot)],
+                                                                                      context=context)[0] if prefill_bn else False
+                    if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product.id,
+                                                                                     current_prodlot_id, context=context):
+                        continue
+                    else:
                         values = {
                             "line_no": len(inventory_counting_lines_to_create) + 1,
                             "inventory_id": inventory_id,
                             "product_id": product.id,
-                            "batch_number": bn_and_ed[0] if prefill_bn else False,
+                            "batch_number": current_prodlot,
                             "expiry_date":  bn_and_ed[1] if prefill_ed else False
                         }
                         inventory_counting_lines_to_create.append(values)
@@ -189,21 +199,39 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
 
         return moves_at_location
 
-    def not_zero_stock_on_location(self, cr, uid, location_id, product_id, context=False):
+    def not_zero_stock_on_location(self, cr, uid, location_id, product_id, prodlot_id, context=False):
         '''
         Check if the product's stock on the inventory's location is != 0
         '''
         if not context:
             context = {}
 
-        product_obj = self.pool.get('product.product')
+        move_obj = self.pool.get('stock.move')
+        uom_obj = self.pool.get('product.uom')
         not_zero = True
 
-        ctx = context.copy()
-        ctx['location'] = location_id
-        ctx['compute_child'] = True
+        domain = [('product_id', '=', product_id), ('prodlot_id', '=', prodlot_id), ('state', '=', 'done'),
+                  '|', ('location_id', '=', location_id), ('location_dest_id', '=', location_id)]
+        move_ids = move_obj.search(cr, uid, domain, context=context)
 
-        product_qty = product_obj.browse(cr, uid, product_id, fields_to_fetch=['qty_available'], context=ctx).qty_available
+        product_qty = 0.00
+        used_fields = ['location_id', 'location_dest_id', 'product_id', 'product_qty', 'product_uom']
+        for move in move_obj.browse(cr, uid, move_ids, fields_to_fetch=used_fields, context=context):
+            # If the move is from the same location as destination
+            if move.location_dest_id.id == move.location_id.id or move.product_qty == 0.00:
+                continue
+
+            if move.product_uom.id != move.product_id.uom_id.id:
+                to_unit = move.product_id.uom_id.id
+                qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, to_unit)
+            else:
+                qty = move.product_qty
+
+            if move.location_dest_id.id == location_id:  # IN qty
+                product_qty += qty
+            elif move.location_id.id == location_id:  # OUT qty
+                product_qty -= qty
+
         if product_qty == 0:
             not_zero = False
 
