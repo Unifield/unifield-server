@@ -978,14 +978,14 @@ class Entity(osv.osv):
         messages_count = 0
         logger_index = None
         while True:
-            packet = messages.get_message_packet(cr, uid, max_packet_size, context=context)
+            msg_ids, packet = messages.get_message_packet(cr, uid, max_packet_size, context=context)
             if not packet:
                 break
             messages_count += len(packet)
             res = proxy.send_message(uuid, self._hardware_id, packet, {'md5': get_md5(packet)})
             if not res[0]:
                 raise Exception, res[1]
-            messages.packet_sent(cr, uid, packet, context=context)
+            messages.packet_sent(cr, uid, msg_ids, context=context)
             if logger and messages_count:
                 if logger_index is None: logger_index = logger.append()
                 logger.replace(logger_index, _("Message(s) sent: %d/%d") % (messages_count, messages_max))

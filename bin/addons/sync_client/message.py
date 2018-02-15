@@ -319,7 +319,7 @@ class message_to_send(osv.osv):
     """
     def get_message_packet(self, cr, uid, max_size, context=None):
         packet = []
-
+        msg_ids = []
         for message in self.browse(cr, uid,
                                    self.search(cr, uid, [('sent', '=', False)],
                                                limit=max_size, order='id asc', context=context),
@@ -342,16 +342,15 @@ class message_to_send(osv.osv):
                 'dest' : message.destination_name,
                 'args' : message.arguments,
             })
+            msg_ids.append(message.id)
 
-        return packet
+        return msg_ids, packet
 
 
-    def packet_sent(self, cr, uid, packet, context=None):
-        message_uuids = [data['id'] for data in packet]
-        ids = self.search(cr, uid, [('identifier', 'in', message_uuids)],
-                          order='NO_ORDER', context=context)
+    def packet_sent(self, cr, uid, ids, context=None):
         if ids:
             self.write(cr, uid, ids, {'sent' : True, 'sent_date' : fields.datetime.now()}, context=context)
+        return True
 
     _order = 'create_date desc, id desc'
 
