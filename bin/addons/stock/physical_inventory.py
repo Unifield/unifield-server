@@ -365,9 +365,9 @@ class PhysicalInventory(osv.osv):
         update_discrepancies = {}
         counting_lines_with_no_discrepancy = []
 
+        new_product_line_no = 0
         # For each of them, compare the theoretical and counted qty
         for product_batch_expirydate in all_product_batch_expirydate:
-
             # If the key is not known, assume 0
             theoretical_qty = theoretical_quantities.get(product_batch_expirydate, 0.0)
             counted_qty = counted_quantities.get(product_batch_expirydate, -1.0)
@@ -380,19 +380,19 @@ class PhysicalInventory(osv.osv):
                     counting_lines_with_no_discrepancy.append(counting_line_id)
                 continue
 
-            # If this product/batch is known in the counting line, use
-            # the existing line number
+            # If this product/batch is known in the counting line, use the existing line number
             if product_batch_expirydate in counting_lines_per_product_batch_expirtydate:
                 this_product_batch_expirydate = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]
                 line_no = this_product_batch_expirydate["line_no"]
-
-            # Otherwise, create additional line numbers starting from
-            # the total of existing lines
-            else:
-                # FIXME : propably does not guarrantee uniqueness and
-                # 'incremenctaliness' of line_no in some edge cases when
-                # discrepancy report is regenerated multiple times...
-                line_no = len(counted_quantities) + 1 + len(new_discrepancies)
+            else:  # Otherwise, create additional line numbers starting from the total of existing lines
+                new_product_line_no += 1
+                if len(counting_lines_per_product_batch_expirtydate) > 0:
+                    # get highest line_no
+                    line_no = counting_lines_per_product_batch_expirtydate[
+                                  sorted(counting_lines_per_product_batch_expirtydate)[-1]
+                              ]['line_no'] + new_product_line_no
+                else:
+                    line_no = new_product_line_no
 
             if product_batch_expirydate in previous_discrepancies:
                 previous_discrepancies[product_batch_expirydate]["todelete"] = False
@@ -402,7 +402,7 @@ class PhysicalInventory(osv.osv):
                     "counted_qty": counted_qty
                 }
             else:
-                new_discrepancies.append( \
+                new_discrepancies.append(
                     { "inventory_id": inventory_id,
                       "line_no": line_no,
                       "product_id": product_batch_expirydate[0],
@@ -755,7 +755,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 
             # Check duplicate line (Same product_id, batch_number, expirty_date)
             item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
-            if item in line_items:
+            if item in line_items and (batch_name or expiry_date):
                 add_error("""Duplicate line (same product, batch number and expiry date)""", row_index)
             else:
                 line_items.append(item)
@@ -801,7 +801,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                 'counting_line_ids': counting_sheet_lines
             }
             self.write(cr, uid, ids, vals, context=context)
-            result = wizard_obj.message_box(cr, uid, title='Information', message='Counting sheet succefully imported.')
+            result = wizard_obj.message_box(cr, uid, title='Information', message='Counting sheet successfully imported.')
         context['import_in_progress'] = False
 
         return result
@@ -879,7 +879,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
             vals = {'file_to_import2': False, 'discrepancy_line_ids': discrepancy_report_lines}
             self.write(cr, uid, ids, vals, context=context)
             result = wizard_obj.message_box(cr, uid, title='Information',
-                                            message='Discrepancy report succefully imported.')
+                                            message='Discrepancy report successfully imported.')
         context['import_in_progress'] = False
 
         return result
@@ -1315,7 +1315,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'move_id': fields.integer(readonly=True)
     }
 
-    _order = "product_id asc, line_no asc"
+    _order = "line_no asc, product_id asc"
 
     def create(self, cr, user, vals, context=None):
         context = context is None and {} or context
