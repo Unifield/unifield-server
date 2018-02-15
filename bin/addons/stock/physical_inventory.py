@@ -654,8 +654,13 @@ class PhysicalInventory(osv.osv):
         line_list = []
         line_items = []
 
+
         for row_index, row in enumerate(counting_sheet_file.getRows()):
             # === Process header ===
+            
+            # ignore empty line
+            if not row.cells:
+                continue
 
             if row_index == 2:
                 counting_sheet_header.update({
@@ -1143,7 +1148,7 @@ class PhysicalInventoryCounting(osv.osv):
         'is_cs': fields.related('product_id', 'is_cs', string='CS', type='boolean', readonly=True),
 
         # Batch / Expiry date
-        'batch_number': fields.char(_('Batch number'), size=30),
+        'batch_number': fields.char(_('Batch number'), size=64),
         'expiry_date': fields.date(string=_('Expiry date')),
 
         # Specific to inventory
