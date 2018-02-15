@@ -537,5 +537,81 @@ class account_move_reconcile(osv.osv):
                     cr.execute(sql, (name, tuple(p+t)))
         return res
 
+    def create_reconciliation_log(self, cr, uid, aml_id, old_reconcile_txt, new_reconcile_txt, context=None):
+        """
+        Create Audit Trail Log Line for JI reconciliation/unreconciliation
+        = log the value of the field reconcile_txt (which is not updated by the classic 'write' method)
+        """
+        if context is None:
+            context = {}
+        ir_model_obj = self.pool.get('ir.model')
+        ir_model_fields_obj = self.pool.get('ir.model.fields')
+        log_sequence_obj = self.pool.get('audittrail.log.sequence')
+        aml_obj = self.pool.get('account.move.line')
+        audit_line_obj = self.pool.get('audittrail.log.line')
+        rule_obj = self.pool.get('audittrail.rule')
+        object_ids = ir_model_obj.search(cr, uid, [('model', '=', 'account.move')], context=context)
+        object_id = object_ids and object_ids[0] or False
+        fct_object_ids = ir_model_obj.search(cr, uid, [('model', '=', 'account.move.line')], context=context)
+        fct_object_id = fct_object_ids and fct_object_ids[0] or False
+        if object_id and fct_object_id:
+            model_id = ir_model_obj.search(cr, uid, [('model', '=', 'account.move.line')], context=context)[0]
+            # ensure that the rule exists for JI
+            rule_ids = rule_obj.search(cr, uid, [('object_id', '=', model_id)], context=context)
+            rule_id = rule_ids and rule_ids[0] or False
+            if not rule_id:
+                return
+            rule = rule_obj.browse(cr, uid, rule_id, context=context)
+            # get the id of the field 'reconcile_txt'
+            field_ids = ir_model_fields_obj.search(cr, uid, [('name', '=', 'reconcile_txt'),
+                                                             ('model_id', '=', fct_object_id)], limit=1, context=context)
+            field_id = field_ids and field_ids[0] or False
+            if not field_id:
+                return
+            # ensure that 'reconcile_txt' is listed in the fields to trace
+            for field in rule.field_ids:
+                if field.id == field_id:
+                    break
+            else:
+                return
+            # get next sequence
+            aml = aml_obj.browse(cr, uid, aml_id, fields_to_fetch=['move_id', 'name'], context=context)
+            domain = [
+                ('model', '=', 'account.move'),
+                ('res_id', '=', aml.move_id.id),
+            ]
+            log_sequence = log_sequence_obj.search(cr, uid, domain, context=context)
+            if log_sequence:
+                log_seq = log_sequence_obj.browse(cr, uid, log_sequence[0], fields_to_fetch=['sequence'], context=context).sequence
+                # get new id
+                log = log_seq.get_id(code_or_id='id')
+            else:
+                log = False
+            vals = {
+                'user_id': uid,
+                'method': 'write',
+                'name': _('Reconciliation'),
+                'object_id': object_id,
+                'res_id': aml.move_id.id,
+                'fct_object_id': fct_object_id,
+                'fct_res_id': aml_id,
+                'sub_obj_name': aml.name,
+                'other_column': aml.move_id.name,
+                'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'field_description': _('Reconciliation'),
+                'trans_field_description': _('Reconciliation'),
+                'new_value': new_reconcile_txt,
+                'new_value_text': new_reconcile_txt,
+                'new_value_fct': False,
+                'old_value': old_reconcile_txt,
+                'old_value_text': old_reconcile_txt,
+                'old_value_fct': False,
+                'rule_id': rule_id,
+                'field_id': field_id,
+                'log': log,
+            }
+            audit_line_obj.create(cr, uid, vals, context=context)
+
+
 account_move_reconcile()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

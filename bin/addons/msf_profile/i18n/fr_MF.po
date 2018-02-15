@@ -588,13 +588,14 @@ msgstr "Func. In"
 msgid "Partner move line"
 msgstr "Ligne de transaction Partenaire"
 
-#. modules: msf_processes, account, account_mcdb
+#. modules: msf_processes, account, account_mcdb, account_reconciliation
 #: view:account.automatic.reconcile:0
 #: view:account.move:0
 #: view:account.move.line:0
 #: view:account.move.line.reconcile:0
 #: view:account.move.line.reconcile.select:0
 #: code:addons/account/wizard/account_move_line_reconcile_select.py:45
+#: code:addons/account_reconciliation/account_move_line.py:596
 #: model:ir.ui.menu,name:account.periodical_processing_reconciliation
 #: model:process.node,name:account.process_node_reconciliation0
 #: model:process.node,name:account.process_node_supplierreconciliation0
