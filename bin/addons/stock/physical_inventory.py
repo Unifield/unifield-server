@@ -361,13 +361,23 @@ class PhysicalInventory(osv.osv):
         all_product_batch_expirydate = set().union(theoretical_quantities,
                                                    counted_quantities)
 
+        # filter the case we had an entry with BN when product is not (anymore) BN mandatory:
+        filtered_all_product_batch_expirydate = set()
+        for prod_id, batch_n, exp_date in all_product_batch_expirydate:
+            prod_data = self.pool.get('product.product').read(cr, uid, prod_id, ['batch_management', 'perishable'])
+            if batch_n and exp_date and not prod_data['batch_management'] and not prod_data['perishable']:
+                continue
+            else:
+                filtered_all_product_batch_expirydate.add((prod_id, batch_n, exp_date))
+
+
         new_discrepancies = []
         update_discrepancies = {}
         counting_lines_with_no_discrepancy = []
 
         new_product_line_no = 0
         # For each of them, compare the theoretical and counted qty
-        for product_batch_expirydate in all_product_batch_expirydate:
+        for product_batch_expirydate in filtered_all_product_batch_expirydate:
             # If the key is not known, assume 0
             theoretical_qty = theoretical_quantities.get(product_batch_expirydate, 0.0)
             counted_qty = counted_quantities.get(product_batch_expirydate, -1.0)
