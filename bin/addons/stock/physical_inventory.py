@@ -365,9 +365,9 @@ class PhysicalInventory(osv.osv):
         update_discrepancies = {}
         counting_lines_with_no_discrepancy = []
 
+        new_product_line_no = 0
         # For each of them, compare the theoretical and counted qty
         for product_batch_expirydate in all_product_batch_expirydate:
-
             # If the key is not known, assume 0
             theoretical_qty = theoretical_quantities.get(product_batch_expirydate, 0.0)
             counted_qty = counted_quantities.get(product_batch_expirydate, -1.0)
@@ -380,19 +380,19 @@ class PhysicalInventory(osv.osv):
                     counting_lines_with_no_discrepancy.append(counting_line_id)
                 continue
 
-            # If this product/batch is known in the counting line, use
-            # the existing line number
+            # If this product/batch is known in the counting line, use the existing line number
             if product_batch_expirydate in counting_lines_per_product_batch_expirtydate:
                 this_product_batch_expirydate = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]
                 line_no = this_product_batch_expirydate["line_no"]
-
-            # Otherwise, create additional line numbers starting from
-            # the total of existing lines
-            else:
-                # FIXME : propably does not guarrantee uniqueness and
-                # 'incremenctaliness' of line_no in some edge cases when
-                # discrepancy report is regenerated multiple times...
-                line_no = len(counted_quantities) + 1 + len(new_discrepancies)
+            else:  # Otherwise, create additional line numbers starting from the total of existing lines
+                new_product_line_no += 1
+                if len(counting_lines_per_product_batch_expirtydate) > 0:
+                    # get highest line_no
+                    line_no = counting_lines_per_product_batch_expirtydate[
+                                  sorted(counting_lines_per_product_batch_expirtydate)[-1]
+                              ]['line_no'] + new_product_line_no
+                else:
+                    line_no = new_product_line_no
 
             if product_batch_expirydate in previous_discrepancies:
                 previous_discrepancies[product_batch_expirydate]["todelete"] = False
@@ -402,7 +402,7 @@ class PhysicalInventory(osv.osv):
                     "counted_qty": counted_qty
                 }
             else:
-                new_discrepancies.append( \
+                new_discrepancies.append(
                     { "inventory_id": inventory_id,
                       "line_no": line_no,
                       "product_id": product_batch_expirydate[0],
