@@ -568,14 +568,14 @@ class PhysicalInventory(osv.osv):
 
         moves_at_location_ids = move_obj.search(cr, uid, move_for_products_at_location, context=context)
         moves_at_location = move_obj.read(cr, uid, moves_at_location_ids,
-                                      ["product_id",
-                                       "product_qty",
-                                       "prodlot_id",
-                                       "expired_date",
-                                       "location_id",
-                                       "product_uom",
-                                       "location_dest_id"],
-                                       context=context)
+                                          ["product_id",
+                                           "product_qty",
+                                           "prodlot_id",
+                                           "expired_date",
+                                           "location_id",
+                                           "product_uom",
+                                           "location_dest_id"],
+                                          context=context)
 
         # Sum all lines to get a set of (product, batchnumber) -> qty
         stocks = {}
@@ -1111,8 +1111,8 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
             message = _('Inventory') + " '" + inv['name'] + "' " + _("is validated.")
             self.log(cr, uid, inv['id'], message)
             self.write(cr, uid, [inv['id']], {
-                'state': 'confirmed', 
-                'move_ids': [(6, 0, move_ids)], 
+                'state': 'confirmed',
+                'move_ids': [(6, 0, move_ids)],
                 'date_confirmed': time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
             })
             for line_id, move_id in discrepancy_to_move.items():
