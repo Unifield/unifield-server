@@ -61,14 +61,14 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         # Prepare the inventory lines to be created
 
         inventory_counting_lines_to_create = []
-        for product_id in product_ids:
-            bn_and_eds_for_this_product = bn_and_eds[product_id]
+        for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
+            bn_and_eds_for_this_product = bn_and_eds[product.id]
             # If no bn / ed related to this product, create a single inventory
             # line
-            if len(bn_and_eds_for_this_product) == 0:
+            if not product.batch_management and not product.perishable:
                 values = { "line_no": len(inventory_counting_lines_to_create) + 1,
                            "inventory_id": inventory_id,
-                           "product_id": product_id,
+                           "product_id": product.id,
                            "batch_number": False,
                            "expiry_date": False
                            }
@@ -79,7 +79,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                 for bn_and_ed in bn_and_eds_for_this_product:
                     values = { "line_no": len(inventory_counting_lines_to_create) + 1,
                                "inventory_id": inventory_id,
-                               "product_id": product_id,
+                               "product_id": product.id,
                                "batch_number": bn_and_ed[0] if prefill_bn else False,
                                "expiry_date":  bn_and_ed[1] if prefill_ed else False
                                }
