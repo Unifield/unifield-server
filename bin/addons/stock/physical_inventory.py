@@ -754,6 +754,9 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 
             # Check quantity
             quantity = row.cells[4].data
+            # if quantity is integer then convert to string otherwise it will not be imported:
+            if isinstance(quantity, int) and quantity == 0:
+                quantity = '0'
             try:
                 quantity = counting_obj.quantity_validate(cr, quantity)
             except NegativeValueError:
