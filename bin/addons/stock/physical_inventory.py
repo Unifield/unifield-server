@@ -641,13 +641,17 @@ class PhysicalInventory(osv.osv):
         counting_sheet_header = {}
         counting_sheet_lines = []
         counting_sheet_errors = []
+        counting_sheet_warnings = []
 
-        def add_error(message, file_row, file_col=None):
+        def add_error(message, file_row, file_col=None, is_warning=False):
             if file_col is not None:
                 _msg = 'Cell %s%d: %s' % (chr(0x41 + file_col), file_row + 1, message)
             else:
                 _msg = 'Line %d: %s' % (file_row + 1, message)
-            counting_sheet_errors.append(_msg)
+            if is_warning:
+                counting_sheet_warnings.append(_msg)
+            else:
+                counting_sheet_errors.append(_msg)
 
         inventory_rec = self.browse(cr, uid, ids, context=context)[0]
         if not inventory_rec.file_to_import:
@@ -660,6 +664,11 @@ class PhysicalInventory(osv.osv):
 
         line_list = []
         line_items = []
+
+        all_uom = {}
+        uom_ids = product_uom_obj.search(cr, uid, [], context=context)
+        for uom in product_uom_obj.read(cr, uid, uom_ids, ['name'], context=context):
+            all_uom[uom['name']] = uom['id']
 
         for row_index, row in enumerate(counting_sheet_file.getRows()):
             # === Process header ===
@@ -720,11 +729,10 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
             # Check UoM
             product_uom_id = False
             product_uom = row.cells[3].data
-            product_uom_ids = product_uom_obj.search(cr, uid, [('name', '=like', product_uom)])
-            if len(product_uom_ids) == 1:
-                product_uom_id = product_uom_ids[0]
-            else:
+            if product_uom not in all_uom:
                 add_error("""UoM %s unknown""" % product_uom, row_index, 3)
+            else:
+                product_uom_id = all_uom[product_uom]
 
             # Check quantity
             quantity = row.cells[4].data
@@ -737,16 +745,27 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                 quantity = 0.0
                 add_error('Quantity %s is not valide' % quantity, row_index, 4)
 
-            product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable'])
+            product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
+
+            if product_info['uom_id'] and product_uom_id and product_info['uom_id'][0] != product_uom_id:
+                add_error("""Product %s, UoM %s does not conform to that of product in stock""" % (product_info['default_code'], product_uom), row_index, 3)
+
 
             # Check batch number
             batch_name = row.cells[5].data
             if not batch_name and product_info['batch_management'] and float(quantity or 0) > 0:
                 add_error('Batch number is required', row_index, 5)
 
+            if batch_name and not product_info['batch_management']:
+                add_error(_("Product %s is not BN managed, BN ignored") % (product_info['default_code'], ), row_index, 5, is_warning=True)
+                batch_name = False
+
             # Check expiry date
             expiry_date = row.cells[6].data
-            if expiry_date:
+            if expiry_date and not product_info['perishable']:
+                add_error(_("Product %s is not ED managed, ED ignored") % (product_info['default_code'], ), row_index, 6, is_warning=True)
+                expiry_date = False
+            elif expiry_date:
                 expiry_date_type = row.cells[6].type
                 try:
                     if expiry_date_type == 'datetime':
@@ -799,6 +818,9 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
         if counting_sheet_errors:
             # Errors found, open message box for exlain
             self.write(cr, uid, ids, {'file_to_import': False}, context=context)
+            if counting_sheet_warnings:
+                counting_sheet_errors.append("\nWarning")
+                counting_sheet_errors += counting_sheet_warnings
             result = wizard_obj.message_box(cr, uid, title='Importation errors', message='\n'.join(counting_sheet_errors))
         else:
             # No error found. Write counting lines on Inventory
@@ -808,7 +830,8 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                 'counting_line_ids': counting_sheet_lines
             }
             self.write(cr, uid, ids, vals, context=context)
-            result = wizard_obj.message_box(cr, uid, title='Information', message='Counting sheet succefully imported.')
+            counting_sheet_warnings.insert(0, 'Counting sheet succefully imported.')
+            result = wizard_obj.message_box(cr, uid, title='Information', message='\n'.join(counting_sheet_warnings))
         context['import_in_progress'] = False
 
         return result
