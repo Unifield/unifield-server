@@ -833,7 +833,8 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
         wizard_obj = self.pool.get('physical.inventory.import.wizard')
         if counting_sheet_errors:
             # Errors found, open message box for exlain
-            self.write(cr, uid, ids, {'file_to_import': False}, context=context)
+            #self.write(cr, uid, ids, {'file_to_import': False}, context=context)
+            cr.execute('update physical_inventory set file_to_import=NULL where id=%s', (ids[0], ))
             if counting_sheet_warnings:
                 counting_sheet_errors.append("\n%s" % _("Warning"))
                 counting_sheet_errors += counting_sheet_warnings
@@ -917,7 +918,8 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         wizard_obj = self.pool.get('physical.inventory.import.wizard')
         if discrepancy_report_errors:
             # Errors found, open message box for exlain
-            self.write(cr, uid, ids, {'file_to_import2': False}, context=context)
+            #self.write(cr, uid, ids, {'file_to_import2': False}, context=context)
+            cr.execute('update physical_inventory set file_to_import2=NULL where id=%s', (ids[0], ))
             result = wizard_obj.message_box(cr, uid, title=_('Importation errors'),
                                             message='\n'.join(discrepancy_report_errors))
         else:
@@ -1164,7 +1166,6 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
             self.infolog(cr, uid, _("The Physical inventory id:%s (%s) has been cancelled") % (inv.id, inv.name))
         return {}
-
 
 PhysicalInventory()
 
