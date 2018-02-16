@@ -496,6 +496,12 @@ class account_move_reconcile(osv.osv):
         """
         if not context:
             context = {}
+        aml_obj = self.pool.get('account.move.line')
+        # store the old reconcile_txt for each JI before the new reconciliation is created
+        aml_rec = {}
+        for line in vals.get('line_id', []):
+            if len(line) > 1:
+                aml_rec[line[1]] = aml_obj.browse(cr, uid, line[1], fields_to_fetch=['reconcile_txt'], context=context).reconcile_txt or ''
         res = super(account_move_reconcile, self).create(cr, uid, vals, context)
         if res:
             tmp_res = res
@@ -511,6 +517,10 @@ class account_move_reconcile(osv.osv):
                 if p or t:
                     sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"
                     cr.execute(sql, (name, tuple(p+t)))
+                    # create the related "Track Changes" line
+                    for aml_id in p + t:
+                        old_reconcile_txt = aml_rec and aml_rec.get(aml_id) or ''
+                        self.create_reconciliation_log(cr, uid, aml_id, old_reconcile_txt, name, context=context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -550,18 +560,19 @@ class account_move_reconcile(osv.osv):
         aml_obj = self.pool.get('account.move.line')
         audit_line_obj = self.pool.get('audittrail.log.line')
         rule_obj = self.pool.get('audittrail.rule')
-        object_ids = ir_model_obj.search(cr, uid, [('model', '=', 'account.move')], context=context)
+        object_ids = ir_model_obj.search(cr, uid, [('model', '=', 'account.move')], limit=1, context=context)
         object_id = object_ids and object_ids[0] or False
-        fct_object_ids = ir_model_obj.search(cr, uid, [('model', '=', 'account.move.line')], context=context)
+        fct_object_ids = ir_model_obj.search(cr, uid, [('model', '=', 'account.move.line')], limit=1, context=context)
         fct_object_id = fct_object_ids and fct_object_ids[0] or False
         if object_id and fct_object_id:
-            model_id = ir_model_obj.search(cr, uid, [('model', '=', 'account.move.line')], context=context)[0]
+            model_ids = ir_model_obj.search(cr, uid, [('model', '=', 'account.move.line')], limit=1, context=context)
+            model_id = model_ids and model_ids[0] or False
             # ensure that the rule exists for JI
-            rule_ids = rule_obj.search(cr, uid, [('object_id', '=', model_id)], context=context)
+            rule_ids = rule_obj.search(cr, uid, [('object_id', '=', model_id)], limit=1, context=context)
             rule_id = rule_ids and rule_ids[0] or False
             if not rule_id:
                 return
-            rule = rule_obj.browse(cr, uid, rule_id, context=context)
+            rule = rule_obj.browse(cr, uid, rule_id, fields_to_fetch=['field_ids'], context=context)
             # get the id of the field 'reconcile_txt'
             field_ids = ir_model_fields_obj.search(cr, uid, [('name', '=', 'reconcile_txt'),
                                                              ('model_id', '=', fct_object_id)], limit=1, context=context)
@@ -580,9 +591,10 @@ class account_move_reconcile(osv.osv):
                 ('model', '=', 'account.move'),
                 ('res_id', '=', aml.move_id.id),
             ]
-            log_sequence = log_sequence_obj.search(cr, uid, domain, context=context)
-            if log_sequence:
-                log_seq = log_sequence_obj.browse(cr, uid, log_sequence[0], fields_to_fetch=['sequence'], context=context).sequence
+            log_sequence_ids = log_sequence_obj.search(cr, uid, domain, limit=1, context=context)
+            log_sequence_id = log_sequence_ids and log_sequence_ids[0] or False
+            if log_sequence_id:
+                log_seq = log_sequence_obj.browse(cr, uid, log_sequence_id, fields_to_fetch=['sequence'], context=context).sequence
                 # get new id
                 log = log_seq.get_id(code_or_id='id')
             else:
