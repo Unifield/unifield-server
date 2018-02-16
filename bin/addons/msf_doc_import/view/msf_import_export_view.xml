@@ -8,12 +8,17 @@
         <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="Import / Export">
-                <group>
+                <group colspan="4" col="4">
                     <field name="display_file_import" invisible="1" />
                     <field name="display_file_export" invisible="1" />
                     <field name="csv_button" invisible="1" />
                     <field name="state" invisible="1" />
-                    <field name='model_list_selection' on_change="domain_type_change(model_list_selection)" />
+                    <group colspan="2" col="2">
+                        <field name='model_list_selection' on_change="domain_type_change(model_list_selection)" />
+                        <field name='supplier_catalogue_id' attrs="{'invisible': [('model_list_selection', '!=', 'supplier_catalogues')]}" />
+                    </group>
+                    <group colspan="2" col="2">
+                    </group>
                 </group>
                 <group col="4" colspan="4">
                     <field name="hide_download_3_entries" invisible="1" />

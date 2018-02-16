@@ -69,6 +69,7 @@ class msf_import_export(osv.osv_memory):
         'hide_download_all_entries': fields.boolean('Hide export all entries button'),
         'display_import_buttons': fields.boolean('Display import buttons'),
         'csv_button': fields.boolean('Import from CSV'),
+        'supplier_catalogue_id': fields.many2one('supplier.catalogue', string='Supplier catalogue'),
     }
 
     _default = {
