@@ -685,7 +685,7 @@ class res_partner(osv.osv):
         new_id = super(res_partner, self).create(cr, uid, vals, context=context)
 
         # US-3945: checking user's rights
-        if not context.get('sync_update_execution'):
+        if not context.get('sync_update_execution') or uid != 1:
             access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
             instance_level = _get_instance_level(self, cr, uid)
 
