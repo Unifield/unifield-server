@@ -32,6 +32,13 @@ class PhysicalInventory(osv.osv):
     _name = 'physical.inventory'
     _description = 'Physical Inventory'
 
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if context.get('button') in ('import_xls_discrepancy_report', 'import_counting_sheet') and '__last_update' in context:
+            del context['__last_update']
+        return super(PhysicalInventory, self).write(cr, uid, ids, vals, context)
+
     def _inventory_totals(self, cr, uid, ids, field_names, arg, context=None):
         context = context is None and {} or context
         def read_many(model, ids, columns):
