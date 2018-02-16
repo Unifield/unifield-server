@@ -101189,3 +101189,15 @@ msgstr "Ouvrir les derniers engagements importés"
 #: field:import.commitment.wizard,progress:0
 msgid "Import in progress"
 msgstr "Import en cours"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:731
+#, python-format
+msgid "Access Denied"
+msgstr "Accès Refusé"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:732
+#, python-format
+msgid "You can not create this document (res.partner) ! Be sure your user belongs to one of these groups: Administration / Access Rights, Sup_Demand_Manager, Sup_Purchase_Manager, Sup_Supply_Config, Sup_Supply_System_Administrator, Fin_Config_Coordo, Fin_Config_Project, Fin_Config_Full, Sup_Purchase_Sup."
+msgstr "Vous ne pouvez pas créer ce document (res.partner) ! Vérifiez que votre utilisateur appartient bien à l'un de ces groupes: Administration / Access Rights, Sup_Demand_Manager, Sup_Purchase_Manager, Sup_Supply_Config, Sup_Supply_System_Administrator, Fin_Config_Coordo, Fin_Config_Project, Fin_Config_Full, Sup_Purchase_Sup."

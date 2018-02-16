@@ -633,7 +633,28 @@ class res_partner(osv.osv):
 
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
+    def _record_matches_domain(self, cr, record_id, domain):
+        """
+        Make a search with domain + id = id. If we get the ID in the result, the domain matches the record
+        """
+        # convert domain from string to list
+        if isinstance(domain, (str, unicode)):
+            domain = eval(domain)
+
+        # if domain is True or False or empty list, no domain specified, therefore record matches all domains
+        if isinstance(domain, bool) or not domain:
+            return True
+
+        # add id = record_id to domain
+        domain.insert(0, ('id', '=', record_id))
+        domain.insert(0, '&')
+
+        # perform search and return bool based on whether or not the record_id was in the
+        return record_id in self.search(cr, 1, domain)
+
     def create(self, cr, uid, vals, context=None):
+        fields_to_create = vals.keys()
+
         if context is None:
             context = {}
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
@@ -661,8 +682,62 @@ class res_partner(osv.osv):
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
 
-        return super(res_partner, self).create(cr, uid, vals, context=context)
+        new_id = super(res_partner, self).create(cr, uid, vals, context=context)
 
+        # US-3945: checking user's rights
+        if not context.get('sync_update_execution'):
+            access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
+            instance_level = _get_instance_level(self, cr, uid)
+
+            if instance_level:  # get rules for this model, instance and user
+                model_name = self._name
+                groups = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'], context=context)['groups_id']
+
+                rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
+                if not rules_pool:
+                    return new_id
+
+                rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name),
+                                                         ('instance_level', '=', instance_level), '|',
+                                                         ('group_ids', 'in', groups), ('group_ids', '=', False)])
+
+                # do we have rules that apply to this user and model?
+                if rules_search:
+                    line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search)])
+                    if not line_ids:
+                        return new_id
+                    rules_search = rules_pool.search(cr, 1, [('field_access_rule_line_ids', 'in', line_ids)])
+                    rules = rules_pool.browse(cr, 1, rules_search)
+
+                    # for each rule, check the record against the rule domain.
+                    rules_to_check = []
+                    for rule in rules:
+                        if self._record_matches_domain(cr, new_id, rule.domain_text):
+                            rules_to_check.append(rule.id)
+
+                    no_write_access_fields = []
+                    if rules_to_check:
+                        # get the fields with write_access=False
+                        cr.execute("""SELECT DISTINCT field_name
+                              FROM msf_field_access_rights_field_access_rule_line
+                              WHERE write_access='f' AND
+                              field_access_rule in %s AND
+                              field_name in %s
+                        """, (tuple(rules_to_check), tuple(fields_to_create)))
+                        no_write_access_fields = [x[0] for x in cr.fetchall()]
+
+                    if no_write_access_fields:
+                        # throw access denied error
+                        raise osv.except_osv(_('Access Denied'),
+                                             _('You can not create this document (res.partner) ! Be sure your user belongs to one of these groups: Administration / Access Rights, Sup_Demand_Manager, Sup_Purchase_Manager, Sup_Supply_Config, Sup_Supply_System_Administrator, Fin_Config_Coordo, Fin_Config_Project, Fin_Config_Full, Sup_Purchase_Sup.'))
+                    else:
+                        return new_id
+                else:
+                    return new_id
+            else:
+                return new_id
+        else:
+            return new_id
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
