@@ -16,9 +16,9 @@
                     <group colspan="2" col="2">
                         <field name='model_list_selection' on_change="domain_type_change(model_list_selection)" />
                         <field name='supplier_catalogue_id' attrs="{'invisible': [('model_list_selection', '!=', 'supplier_catalogues')]}" />
+                        <field name='product_list_id' attrs="{'invisible': [('model_list_selection', '!=', 'product_list')]}" />
                     </group>
-                    <group colspan="2" col="2">
-                    </group>
+                    <group colspan="2" col="2"></group>
                 </group>
                 <group col="4" colspan="4">
                     <field name="hide_download_3_entries" invisible="1" />
