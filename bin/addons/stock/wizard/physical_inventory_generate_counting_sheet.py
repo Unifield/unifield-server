@@ -80,9 +80,20 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                         "expiry_date": False
                     }
                     inventory_counting_lines_to_create.append(values)
-            # Otherwise, create an inventory line for this product ~and~ for
-            # each BN/ED
+            elif not bn_and_eds[product_id]:
+                # BN/ED product with no stock move in this location
+                if not only_with_stock_level:
+                    values = {
+                        "line_no": len(inventory_counting_lines_to_create) + 1,
+                        "inventory_id": inventory_id,
+                        "product_id": product_id,
+                        "batch_number": False,
+                        "expiry_date": False
+                    }
+                    inventory_counting_lines_to_create.append(values)
             else:
+                # Otherwise, create an inventory line for this product ~and~ for
+                # each BN/ED
                 for bn_and_ed in bn_and_eds_for_this_product:
                     if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product_id,
                                                                                      bn_and_ed[2], context=context):
