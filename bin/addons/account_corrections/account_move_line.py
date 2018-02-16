@@ -122,6 +122,10 @@ class account_move_line(osv.osv):
             if ml.journal_id.type in ('revaluation', 'system', ):
                 res[ml.id] = False
                 continue
+            # False if the line is linked to a SI refund cancel (SI line or SR line)
+            if ml.is_si_refund:
+                res[ml.id] = False
+                continue
             # False if the move line is partially or totally reconciled
             if ml.reconcile_id or ml.reconcile_partial_id:
                 res[ml.id] = False
@@ -234,7 +238,17 @@ receivable, item have not been corrected, item have not been reversed and accoun
                         downstream_line_ids.append(reversal_ids)
                     sline_ids = search_ids
                 else:
-                    sline_ids = None
+                    # use case of a refund cancel/modify: no COR line exists but the "reversal" line should appear in the wizard
+                    search_reversal_ids = \
+                        self.search(cr, uid,
+                                    [('reversal_line_id', operator, sline_ids)],  # invoice_line_id not used as won't exist in upper inst.
+                                    order='NO_ORDER', context=context)
+                    if search_reversal_ids:
+                        # Add line to result
+                        downstream_line_ids.append(search_reversal_ids)
+                        sline_ids = search_reversal_ids
+                    else:
+                        sline_ids = None
             # Add search result to res
             res[str(ml.id)] = list(set(flatten(upstream_line_ids) + flatten(downstream_line_ids))) # downstream_line_ids needs to be simplify with flatten
         return res
