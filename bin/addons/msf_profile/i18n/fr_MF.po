@@ -85702,7 +85702,7 @@ msgstr "Vous n'êtes pas en mesure de créer des écritures de paie"
 #. module: stock
 #: view:physical.inventory.import.wizard:0
 msgid "Count all as 0"
-msgstr "Les calculer tous comme à 0"
+msgstr "Compter les lignes comme étant à 0"
 
 #. module: base
 #: help:res.config.users,menu_tips:0
@@ -106718,7 +106718,7 @@ msgstr "Vous devez sélectionner au moins une devise de virement."
 #. module: stock
 #: field:physical.inventory.generate.counting.sheet,only_with_stock_level:0
 msgid "Only count lines with stock different than 0"
-msgstr "Commpter uniquement les produits avec un niveau de stock différent de 0."
+msgstr "Compter uniquement les produits avec un niveau de stock différent de 0."
 
 #. module: stock
 #: code:addons/stock/physical_inventory.py:784
