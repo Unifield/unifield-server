@@ -759,7 +759,10 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                     quantity = 0.0
                     add_error(_('Quantity %s is not valid') % quantity, row_index, 4)
 
-            product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
+            if product_id:
+                product_info = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable', 'default_code', 'uom_id'])
+            else:
+                product_info = {'batch_management': False, 'perishable': False, 'default_code': product_code, 'uom_id': False}
 
             if product_info['uom_id'] and product_uom_id and product_info['uom_id'][0] != product_uom_id:
                 add_error(_("""Product %s, UoM %s does not conform to that of product in stock""") % (product_info['default_code'], product_uom), row_index, 3)
