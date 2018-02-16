@@ -796,7 +796,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
             # Check duplicate line (Same product_id, batch_number, expirty_date)
             item = '%d-%s-%s' % (product_id or -1, batch_name or '', expiry_date or '')
             if item in line_items:
-                add_error(_("""Duplicate line (same product, batch number and expiry date)"""), row_index)
+                add_error(_("""Product %s, Duplicate line (same product, batch number and expiry date)""") % product_info['default_code'], row_index)
             elif quantity is not None:
                 line_items.append(item)
 

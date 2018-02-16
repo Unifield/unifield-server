@@ -73157,8 +73157,8 @@ msgstr "Le Multiple de la Quantité doit être plus grand que zéro."
 #. module: stock
 #: code:addons/stock/physical_inventory.py:759
 #, python-format
-msgid "Duplicate line (same product, batch number and expiry date)"
-msgstr "Ligne dupliquée (même produit, numéro de lot et date d'expiration)"
+msgid "Product %s, Duplicate line (same product, batch number and expiry date)"
+msgstr "Produit %s, Ligne dupliquée (même produit, numéro de lot et date d'expiration)"
 
 #. module: msf_budget
 #: field:wizard.local.expenses,start_period_id:0
