@@ -236,12 +236,6 @@ class PhysicalInventory(osv.osv):
         Choose to include batch numbers / expiry date or not
         """
         context = context is None and {} or context
-        def read_single(model, id_, column):
-            return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
-        def create(model, vals):
-            return self.pool.get(model).create(cr, uid, vals, context=context)
-        def view(module, view):
-            return self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view)[1]
 
         # Prepare values to feed the wizard with
         assert len(ids) == 1
@@ -249,12 +243,11 @@ class PhysicalInventory(osv.osv):
 
         # Create the wizard
         wiz_model = 'physical.inventory.generate.counting.sheet'
-        wiz_values = {"inventory_id": inventory_id}
-        wiz_id = create(wiz_model, wiz_values)
+        wiz_id = self.pool.get(wiz_model).create(cr, uid, {'inventory_id': inventory_id}, context=context)
         context['wizard_id'] = wiz_id
 
         # Get the view reference
-        view_id = view('stock', 'physical_inventory_generate_counting_sheet')
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'physical_inventory_generate_counting_sheet')[1]
 
         # Return a description of the wizard view
         return {'type': 'ir.actions.act_window',
@@ -319,6 +312,7 @@ class PhysicalInventory(osv.osv):
         # Create a similar dictionnary for counted quantities
         counting_lines_per_product_batch_expirtydate = {}
         counted_quantities = {}
+        max_line_no = 0
         for line in counting_lines:
 
             product_batch_expirydate = (line["product_id"][0],
@@ -332,6 +326,8 @@ class PhysicalInventory(osv.osv):
                 "line_id": line["id"],
                 "line_no": line["line_no"]
             }
+            if line["line_no"] > max_line_no:
+                max_line_no = line["line_no"]
 
         # Create a similar dictionnary for existing discrepancies
         previous_discrepancy_line_ids = inventory["discrepancy_line_ids"]
@@ -361,11 +357,15 @@ class PhysicalInventory(osv.osv):
         all_product_batch_expirydate = set().union(theoretical_quantities,
                                                    counted_quantities)
 
+        bn_ed_prod_ids = [x[0] for x in all_product_batch_expirydate if x[1] or x[2]]
+        prod_info = {}
+        for prod in self.pool.get('product.product').read(cr, uid, bn_ed_prod_ids, ['batch_management', 'perishable'], context=context):
+            prod_info[prod['id']] = prod
+
         # filter the case we had an entry with BN when product is not (anymore) BN mandatory:
         filtered_all_product_batch_expirydate = set()
         for prod_id, batch_n, exp_date in all_product_batch_expirydate:
-            prod_data = self.pool.get('product.product').read(cr, uid, prod_id, ['batch_management', 'perishable'])
-            if batch_n and exp_date and not prod_data['batch_management'] and not prod_data['perishable']:
+            if batch_n and not prod_info[prod_id]['batch_management'] or exp_date and not prod_info[prod_id]['perishable']:
                 continue
             else:
                 filtered_all_product_batch_expirydate.add((prod_id, batch_n, exp_date))
@@ -375,7 +375,6 @@ class PhysicalInventory(osv.osv):
         update_discrepancies = {}
         counting_lines_with_no_discrepancy = []
 
-        new_product_line_no = 0
         # For each of them, compare the theoretical and counted qty
         for product_batch_expirydate in filtered_all_product_batch_expirydate:
             # If the key is not known, assume 0
@@ -384,7 +383,7 @@ class PhysicalInventory(osv.osv):
 
             # If no discrepancy, nothing to do
             # (Use a continue to save 1 indentation level..)
-            if counted_qty == theoretical_qty:
+            if counted_qty == theoretical_qty or theoretical_qty == 0 and counted_qty == -1:
                 if product_batch_expirydate in counting_lines_per_product_batch_expirtydate:
                     counting_line_id = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]["line_id"]
                     counting_lines_with_no_discrepancy.append(counting_line_id)
@@ -395,14 +394,8 @@ class PhysicalInventory(osv.osv):
                 this_product_batch_expirydate = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]
                 line_no = this_product_batch_expirydate["line_no"]
             else:  # Otherwise, create additional line numbers starting from the total of existing lines
-                new_product_line_no += 1
-                if len(counting_lines_per_product_batch_expirtydate) > 0:
-                    # get highest line_no
-                    line_no = counting_lines_per_product_batch_expirtydate[
-                                  sorted(counting_lines_per_product_batch_expirtydate)[-1]
-                              ]['line_no'] + new_product_line_no
-                else:
-                    line_no = new_product_line_no
+                max_line_no += 1
+                line_no = max_line_no
 
             if product_batch_expirydate in previous_discrepancies:
                 previous_discrepancies[product_batch_expirydate]["todelete"] = False
