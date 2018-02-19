@@ -95,6 +95,18 @@
 
         <Table x:FullColumns="1" x:FullRows="1">
 
+            <% header_info_data = getHeaderInfo(data['model'], data['prod_list_id'], data['supp_cata_id'], data['context']) %>
+            % for header_info in header_info_data:
+                <Row>
+                    <Cell ss:StyleID="header">
+                        <Data ss:Type="String">${header_info[0]}</Data>
+                    </Cell>
+                    <Cell ss:StyleID="header">
+                        <Data ss:Type="String">${header_info[1]}</Data>
+                    </Cell>
+                </Row>
+            % endfor
+
             <% rows = getRows(data['model'], data['fields'], data.get('nb_lines'), data.get('domain'), data.get('template_only', False), data['context']) %>
             <% headers = getHeaders(data['model'], data['fields'], rows, data['context']) %>
             % for col in headers:

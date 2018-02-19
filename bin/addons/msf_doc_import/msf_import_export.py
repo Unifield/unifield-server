@@ -125,6 +125,8 @@ class msf_import_export(osv.osv_memory):
             'template_only': template_only,
             'domain': domain,
             'target_filename': self.get_filename(cr, uid, model, selection, template_only),
+            'prod_list_id': wiz.product_list_id.id,
+            'supp_cata_id': wiz.supplier_catalogue_id.id,
         }
         return {
             'type': 'ir.actions.report.xml',

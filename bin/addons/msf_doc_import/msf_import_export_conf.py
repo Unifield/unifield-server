@@ -250,6 +250,16 @@ MODEL_DATA_DICT = {
         ],
     },
     'product_list': {
+        'header_info': [
+            'type',
+            'ref',
+            'name',
+            'description',
+            'standard_list_ok',
+            'order_list_print_ok',
+            'warehouse_id',
+            'location_id',
+        ],
         'header_list': [
             'name',
             'type',
@@ -300,6 +310,13 @@ MODEL_DATA_DICT = {
         ],
     },
     'supplier_catalogues': {
+        'header_info': [
+            'name',
+            'partner_id',
+            'currency_id',
+            'period_from',
+            'period_to',
+        ],
         'header_list': [
             'name',
             'period_from',
