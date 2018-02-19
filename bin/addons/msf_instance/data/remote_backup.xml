@@ -11,7 +11,7 @@
             <field eval="0" name="doall"/>
             <field eval="0" name="active"/>
             <field eval="1" name="interval_number"/>
-            <field name="model">msf.instance</field>
+            <field name="model">msf.instance.cloud</field>
         </record>
 
     </data>
