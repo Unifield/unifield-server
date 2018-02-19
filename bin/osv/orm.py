@@ -1472,6 +1472,19 @@ class orm_template(object):
                     trans = translation_obj._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
                 if trans:
                     node.set('string', trans)
+            if node.get('filter_selector'):
+                try:
+                    filter_eval = eval(node.get('filter_selector'))
+                    if filter_eval:
+                        trans_filter_eval = []
+                        for x in filter_eval:
+                            trans_x = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], x[0])
+                            trans_filter_eval.append((trans_x, x[1]))
+                        node.set('filter_selector', '%s'%trans_filter_eval)
+                except:
+                    logger = netsvc.Logger()
+                    logger.notifyChannel("translate.view", netsvc.LOG_WARNING, "Unable to translate %s" % node.get('filter_selector'))
+
             if node.tag == 'translate':
                 parent = node.getparent()
                 source = node.text

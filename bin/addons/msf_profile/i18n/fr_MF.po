@@ -5920,7 +5920,7 @@ msgstr "Donor code"
 msgid "The number of columns is incorrect, you should have exactly 10 columns in this order:\n"
 "Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date, Specification, BN Management, ED Management"
 msgstr "Le nombre de colonnes est incorrect, il doit y avoir exactement 10 colonnes dans cet ordre:\n"
-"Num. Ligne, Code Produit, Description, UdM, Quantité comptée, Numéro de Lot, Date d'Expiration, Spécification, Gestion NL, Gestion DE"
+"Num. Ligne, Code Produit, Description, UdM, Quantité comptée, Numéro de Lot, Date d'Expiration, Spécification, Gestion NL, Gestion EXP"
 
 #. module: account
 #: help:account.bank.statement,balance_end_real:0
@@ -23428,7 +23428,7 @@ msgstr "Valeur de disponibilité"
 #. module: stock
 #: report:addons/stock/report/physical_inventory_counting_sheet_xls.mako:467
 msgid "ED Management"
-msgstr "Gestion DE"
+msgstr "Gestion EXP"
 
 #. module: account
 #: field:account.tax,account_collected_id:0
@@ -79761,7 +79761,7 @@ msgstr "Sélection de produits"
 #: view:physical.inventory:0
 #: view:physical.inventory.select.products:0
 msgid "ED mandatory"
-msgstr "DE obligatoire"
+msgstr "EXP obligatoire"
 
 #. modules: sales_followup, msf_audittrail, purchase_followup
 #: field:audittrail.log.line,sub_obj_name:0
@@ -100851,7 +100851,7 @@ msgstr "Les retours de prélèvements ne sont possibles que si le statut du pré
 #: view:physical.inventory:0
 #: field:physical.inventory.counting,is_ed:0
 msgid "ED"
-msgstr "DE"
+msgstr "EXP"
 
 #. modules: purchase, purchase_followup
 #: field:purchase.order,partner_ref:0
@@ -103042,7 +103042,7 @@ msgstr "Pacific/Majuro"
 #. module: stock
 #: report:physical_inventory_counting_sheet_pdf:0
 msgid "ED managment"
-msgstr "Gestion DE"
+msgstr "Gestion EXP"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -106724,7 +106724,7 @@ msgstr "Compter uniquement les produits avec un niveau de stock différent de 0.
 #: code:addons/stock/physical_inventory.py:784
 #, python-format
 msgid "Product %s is not ED managed, ED ignored"
-msgstr "Produit %s n'a pas le gestion des DE, date ignorée"
+msgstr "Produit %s n'a pas de gestion des EXP, date ignorée"
 
 #. module: stock
 #: code:addons/stock/physical_inventory.py:1054
@@ -106762,5 +106762,17 @@ msgstr "Produit %s n'a pas de gestion des lots, Lot ignoré"
 msgid "You cannot confirm an inventory which is %s"
 msgstr "Vous ne pouvez pas confirmé un inventaire qui est %s"
 
+#. module: stock
+#: view:physical.inventory:0
+msgid "Show ignored only"
+msgstr "Afficher ignorées seulement"
 
+#. module: stock
+#: view:physical.inventory:0
+msgid "Show all"
+msgstr "Tout afficher"
 
+#. module: stock
+#: view:physical.inventory:0
+msgid "Hide ignored"
+msgstr "Cacher lignes ignorées"
