@@ -121,7 +121,7 @@ class PhysicalInventory(osv.osv):
         'location_id': fields.many2one('stock.location', 'Location', required=True, readonly=True,
                                        states={'draft': [('readonly', False)]}),
         'move_ids': fields.many2many('stock.move', 'physical_inventory_move_rel', 'inventory_id', 'move_id',
-                                     'Created Moves', readonly=True),
+                                     'Created Moves', readonly=True, order_by="id"),
         'state': fields.selection(PHYSICAL_INVENTORIES_STATES, 'State', readonly=True, select=True),
         'company_id': fields.many2one('res.company', 'Company', readonly=True, select=True, required=True,
                                       states={'draft': [('readonly', False)]}),
@@ -1163,7 +1163,7 @@ PhysicalInventory()
 class PhysicalInventoryCounting(osv.osv):
     _name = 'physical.inventory.counting'
     _description = 'Physical Inventory Counting Line'
-    _order = 'line_no'
+    _order = 'default_code, line_no, id'
 
     _columns = {
         # Link to inventory
@@ -1172,6 +1172,7 @@ class PhysicalInventoryCounting(osv.osv):
         # Product
         'product_id': fields.many2one('product.product', _('Product'), required=True, select=True,
                                       domain=[('type', '<>', 'service')]),
+        'default_code': fields.related('product_id', 'default_code',  type='char', size=64, readonly=True, select=True, write_relate=False, store=True),
         'product_uom_id': fields.many2one('product.uom', _('Product UOM'), required=True),
         'standard_price': fields.float(_("Unit Price"), readonly=True),
         'currency_id': fields.many2one('res.currency', "Currency", readonly=True),
@@ -1266,7 +1267,7 @@ PhysicalInventoryCounting()
 class PhysicalInventoryDiscrepancy(osv.osv):
     _name = 'physical.inventory.discrepancy'
     _description = 'Physical Inventory Discrepancy Line'
-    _order = "line_no asc, product_id asc"
+    _order = "default_code, line_no, id"
 
     def _discrepancy(self, cr, uid, ids, field_names, arg, context=None):
         context = context is None and {} or context
@@ -1320,6 +1321,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # Product
         'product_id': fields.many2one('product.product', 'Product', required=True),
+        'default_code': fields.related('product_id', 'default_code',  type='char', size=64, readonly=True, select=True, write_relate=False, store=True),
 
         'product_uom_id': fields.many2one('product.uom', 'UOM', required=True, readonly=True),
 
