@@ -15,8 +15,8 @@
                     <field name="state" invisible="1" />
                     <group colspan="2" col="2">
                         <field name='model_list_selection' on_change="domain_type_change(model_list_selection)" />
-                        <field name='supplier_catalogue_id' attrs="{'invisible': [('model_list_selection', '!=', 'supplier_catalogue_update')]}" />
-                        <field name='product_list_id' attrs="{'invisible': [('model_list_selection', '!=', 'product_list_update')]}" />
+                        <field name='supplier_catalogue_id' attrs="{'invisible': [('model_list_selection', '!=', 'supplier_catalogue_update')], 'required': [('model_list_selection', '=', 'supplier_catalogue_update')]}" />
+                        <field name='product_list_id' attrs="{'invisible': [('model_list_selection', '!=', 'product_list_update')], 'required': [('model_list_selection', '=', 'product_list_update')]}" />
                     </group>
                     <group colspan="2" col="2"></group>
                 </group>

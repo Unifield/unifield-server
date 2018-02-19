@@ -58,6 +58,11 @@
     <ss:Worksheet ss:Name="${data.get('model_name', _('Sheet 1'))|x}" ss:Protected="0">
 
         <Table x:FullColumns="1" x:FullRows="1">
+            <% rows = getRows(data) %>
+            <% headers = getHeaders(data['model'], data['fields'], rows, data['context']) %>
+            % for col in headers:
+            <Column ss:AutoFitWidth="1" ss:Width="${col[2] or 70|x}" ss:StyleID="${col[1]|x}" />
+            % endfor
 
             <% header_info_data = getHeaderInfo(data['model'], data['prod_list_id'], data['supp_cata_id'], data['context']) %>
             % for header_info in header_info_data:
@@ -71,11 +76,6 @@
                 </Row>
             % endfor
 
-            <% rows = getRows(data) %>
-            <% headers = getHeaders(data['model'], data['fields'], rows, data['context']) %>
-            % for col in headers:
-            <Column ss:AutoFitWidth="1" ss:Width="${col[2] or 70|x}" ss:StyleID="${col[1]|x}" />
-            % endfor
 
             <Row>
             % for col in headers:
