@@ -51,6 +51,25 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def flag_pi(self, cr, uid, *a, **b):
+        cr.execute('''select distinct i.id, p.default_code from
+            physical_inventory_discrepancy d,
+            physical_inventory i,
+            product_product p,
+            stock_move m
+            left join stock_production_lot lot on lot.id=m.prodlot_id
+            where d.inventory_id=i.id and d.product_id = p.id and m.product_id=d.product_id and
+                m.location_id=i.location_id and m.location_dest_id=i.location_id and
+                m.state='done' and coalesce(m.expired_date, '2999-01-01')=coalesce(d.expiry_date, '2999-01-01') and coalesce(lot.name,'')=coalesce(d.batch_number,'') and d.ignored='f'
+        ''')
+        pi = {}
+        for x in cr.fetchall():
+            pi.setdefault(x[0], []).append(x[1])
+
+        for pi_id in pi:
+            cr.execute('''update physical_inventory set bad_stock_msg=%s, has_bad_stock='f' where id=%s''', ('\n'.join(pi[pi_id]), pi_id))
+
+        return True
     # UF7.1 patches
     def recompute_amount(self, cr, uid, *a, **b):
         cr.execute("select min(id) from purchase_order_line where state in ('cancel', 'cancel_r') group by order_id")

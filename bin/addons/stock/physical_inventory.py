@@ -140,6 +140,8 @@ class PhysicalInventory(osv.osv):
         'inventory_lines_absvalue':           fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Absolute value of inventory")),
         'discrepancy_lines_absvalue':         fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Absolute value of discrepancies")),
         'discrepancy_lines_percent_absvalue': fields.function(_inventory_totals, multi="inventory_total", method=True, type='float',   string=_("Percent of absolute value of discrepancies")),
+        'bad_stock_msg': fields.text('Bad Stock', readonly=1),
+        'has_bad_stock': fields.boolean('Has bad Stock', readonly=1),
     }
 
     _defaults = {
@@ -427,7 +429,7 @@ class PhysicalInventory(osv.osv):
         create_discrepancy_lines = [ (0,0,discrepancy) for discrepancy in new_discrepancies ]
 
         # Do the actual write
-        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': create_discrepancy_lines, 'discrepancies_generated': True}, context=context)
+        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': create_discrepancy_lines, 'discrepancies_generated': True, 'has_bad_stock': False}, context=context)
 
 
         self._update_total_product(cr, uid, inventory_id,
