@@ -1129,6 +1129,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
             # Close the moves
             move_obj.action_done(cr, uid, move_ids, context=context)
 
+        return True
 
     def action_cancel_draft(self, cr, uid, ids, context=None):
         """ Cancels the stock move and change inventory state to draft."""

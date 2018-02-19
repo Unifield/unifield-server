@@ -95,7 +95,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
             else:
                 # Otherwise, create an inventory line for this product ~and~ for
                 # each BN/ED
-                for bn_and_ed in bn_and_eds_for_this_product:
+                for bn_and_ed in sorted(bn_and_eds_for_this_product, key=lambda x: x[1] or x[0]):
                     if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product_id,
                                                                                      bn_and_ed[2], context=context):
                         continue
