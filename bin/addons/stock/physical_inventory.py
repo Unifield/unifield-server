@@ -173,6 +173,7 @@ class PhysicalInventory(osv.osv):
                            "file_to_import2",
                            "counting_line_ids",
                            "discrepancy_line_ids",
+                           "discrepancies_generated",
                            "move_ids"]
 
         for field in fields_to_empty:

@@ -163,11 +163,14 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         
         for move in move_obj.read(cr, uid, move_ids, ['product_id', 'prodlot_id', 'expired_date']):
             product_id = move["product_id"][0]
-      
-       
+
+
             if move['prodlot_id'] and move["prodlot_id"][1].startswith("MSFBN"):
                 batch_number = False
             else:
+                if not prod.get('batch_management'):
+                    # old move when this product was BN, not it's ED only so ignore this stock move
+                    continue
                 batch_number = move["prodlot_id"][1]
 
             key = (product_id, default_code_dict.get(product_id))
