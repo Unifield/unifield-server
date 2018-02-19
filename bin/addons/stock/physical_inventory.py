@@ -660,6 +660,7 @@ class PhysicalInventory(osv.osv):
         line_items = []
 
         all_uom = {}
+        cs_to_reset = []
         uom_ids = product_uom_obj.search(cr, uid, [], context=context)
         for uom in product_uom_obj.read(cr, uid, uom_ids, ['name'], context=context):
             all_uom[uom['name']] = uom['id']
@@ -803,7 +804,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                 data['quantity'] = quantity
             # Check if line exist
             if line_no:
-                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no)])
+                line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id), ('line_no', '=', line_no), ('product_id', '=', product_id)])
             else:
                 line_ids = counting_obj.search(cr, uid, [('inventory_id', '=', inventory_rec.id),
                                                          ('product_id', '=', product_id),
@@ -813,6 +814,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                     del data["line_no"]
 
             if len(line_ids) > 0:
+                cs_to_reset.append(line_ids[0])
                 counting_sheet_lines.append((1, line_ids[0], data))
             elif quantity is not None:
                 counting_sheet_lines.append((0, 0, data))
@@ -836,6 +838,9 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                 'responsible': counting_sheet_header.get('inventory_counter_name'),
                 'counting_line_ids': counting_sheet_lines
             }
+            # first reset batch number to prevent sql constraint error
+            if cs_to_reset:
+                counting_obj.write(cr, uid, cs_to_reset, {'batch_number': False}, context=context)
             self.write(cr, uid, ids, vals, context=context)
             counting_sheet_warnings.insert(0, _('Counting sheet successfully imported.'))
             result = wizard_obj.message_box(cr, uid, title='Information', message='\n'.join(counting_sheet_warnings))
