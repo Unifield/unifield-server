@@ -64,11 +64,12 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         # Prepare the inventory lines to be created
 
         inventory_counting_lines_to_create = []
-        for product_id in bn_and_eds.keys():
-            bn_and_eds_for_this_product = bn_and_eds[product_id]
+        for key in sorted(bn_and_eds.keys(), key=lambda x: x[1]):
+            product_id = key[0]
+            bn_and_eds_for_this_product = bn_and_eds[key]
             # If no bn / ed related to this product, create a single inventory
             # line
-            if bn_and_eds[product_id] == (False, False, False):
+            if bn_and_eds_for_this_product == (False, False, False):
                 if only_with_stock_level and not self.not_zero_stock_on_location(cr, uid, location_id, product_id, False, context=context):
                     continue
                 else:
@@ -80,7 +81,7 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
                         "expiry_date": False
                     }
                     inventory_counting_lines_to_create.append(values)
-            elif not bn_and_eds[product_id]:
+            elif not bn_and_eds_for_this_product:
                 # BN/ED product with no stock move in this location
                 if not only_with_stock_level:
                     values = {
@@ -140,12 +141,15 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
         prod_obj = self.pool.get('product.product')
 
         BN_and_ED = {}
-        for prod in prod_obj.read(cr, uid, product_ids, ['batch_management', 'perishable'], context=context):
+        default_code_dict = {}
+        for prod in prod_obj.read(cr, uid, product_ids, ['batch_management', 'perishable', 'default_code'], context=context):
+            default_code_dict[prod['id']] = prod['default_code']
+            key = (prod['id'], prod['default_code'])
             if not prod['batch_management'] and not prod['perishable']:
-                BN_and_ED[prod['id']] = (False, False, False)
+                BN_and_ED[key] = (False, False, False)
             else:
                 prod_info[prod['id']] = prod
-                BN_and_ED[prod['id']] = set()
+                BN_and_ED[key] = set()
        
         domain = ['&', '&', '|',
                     ('location_id', 'in', [location_id]),
@@ -166,7 +170,8 @@ class physical_inventory_generate_counting_sheet(osv.osv_memory):
             else:
                 batch_number = move["prodlot_id"][1]
 
-            BN_and_ED[product_id].add((batch_number, move["expired_date"], move["prodlot_id"][0]))
+            key = (product_id, default_code_dict.get(product_id))
+            BN_and_ED[key].add((batch_number, move["expired_date"], move["prodlot_id"][0]))
 
         return BN_and_ED
 
