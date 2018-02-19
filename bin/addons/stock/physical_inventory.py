@@ -31,6 +31,7 @@ class NegativeValueError(ValueError):
 class PhysicalInventory(osv.osv):
     _name = 'physical.inventory'
     _description = 'Physical Inventory'
+    _order = "ref desc, date desc"
 
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
@@ -150,7 +151,6 @@ class PhysicalInventory(osv.osv):
         c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c)
     }
 
-    _order = "ref desc, date desc"
 
     def create(self, cr, uid, values, context):
         context = context is None and {} or context
@@ -274,29 +274,29 @@ class PhysicalInventory(osv.osv):
         Analyze the counted lines to look for discrepancy, and fill the
         'discrepancy lines' accordingly.
         """
-        context = context if context else {}
-        def read_single(model, id_, column):
-            return self.pool.get(model).read(cr, uid, [id_], [column], context=context)[0][column]
-        def read_many(model, ids, columns):
-            return self.pool.get(model).read(cr, uid, ids, columns, context=context)
-        def write(model, id_, vals):
-            return self.pool.get(model).write(cr, uid, [id_], vals, context=context)
-        def write_many(model, ids, vals):
-            return self.pool.get(model).write(cr, uid, ids, vals, context=context)
+
+        if context is None:
+            context = {}
 
         # Get this inventory...
         assert len(inventory_ids) == 1
         inventory_id = inventory_ids[0]
 
+        physical_inventory_obj = self.pool.get('physical.inventory')
+        counting_obj = self.pool.get('physical.inventory.counting')
+
+        # delete all previous discepancies
+        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': [(6, 0, [])]}, context=context)
+
         # Get the location and counting lines
-        inventory = read_many(self._name, [inventory_id], [ "location_id",
+        inventory = physical_inventory_obj.read(cr, uid, [inventory_id], [ "location_id",
                                                             "discrepancy_line_ids",
-                                                            "counting_line_ids" ])[0]
+                                                            "counting_line_ids" ], context=context)[0]
 
         location_id = inventory["location_id"][0]
         counting_line_ids = inventory["counting_line_ids"]
 
-        counting_lines = read_many('physical.inventory.counting',
+        counting_lines = counting_obj.read(cr, uid,
                                    counting_line_ids,
                                    [ "line_no",
                                      "product_id",
@@ -305,7 +305,7 @@ class PhysicalInventory(osv.osv):
                                      "currency_id",
                                      "batch_number",
                                      "expiry_date",
-                                     "quantity"])
+                                     "quantity"], context=context)
 
         # Extract the list of (unique) product ids
         product_ids = [ line["product_id"][0] for line in counting_lines ]
@@ -320,6 +320,7 @@ class PhysicalInventory(osv.osv):
         counting_lines_per_product_batch_expirtydate = {}
         counted_quantities = {}
         max_line_no = 0
+        available_line_no = {}
         for line in counting_lines:
 
             product_batch_expirydate = (line["product_id"][0],
@@ -327,6 +328,9 @@ class PhysicalInventory(osv.osv):
                                         line["expiry_date"])
 
             qty = float(line["quantity"]) if line["quantity"] else False
+            if qty is False:
+                available_line_no.setdefault(line["product_id"][0], []).append(line["line_no"])
+
             counted_quantities[product_batch_expirydate] = qty
 
             counting_lines_per_product_batch_expirtydate[product_batch_expirydate] = {
@@ -335,26 +339,6 @@ class PhysicalInventory(osv.osv):
             }
             if line["line_no"] > max_line_no:
                 max_line_no = line["line_no"]
-
-        # Create a similar dictionnary for existing discrepancies
-        previous_discrepancy_line_ids = inventory["discrepancy_line_ids"]
-        previous_discrepancy_lines = read_many('physical.inventory.discrepancy',
-                                               previous_discrepancy_line_ids,
-                                               [ "product_id",
-                                                   "batch_number",
-                                                   "expiry_date",
-                                                   "ignored" ])
-
-        previous_discrepancies = {}
-        for line in previous_discrepancy_lines:
-            product_batch_expirydate = (line["product_id"][0],
-                                        line["batch_number"] or False,
-                                        line["expiry_date"])
-            previous_discrepancies[product_batch_expirydate] = {
-                "id": line["id"],
-                "ignored": line["ignored"],
-                "todelete": True
-            }
 
         ###################################################
         # Now, compare theoretical and counted quantities #
@@ -379,9 +363,8 @@ class PhysicalInventory(osv.osv):
 
 
         new_discrepancies = []
-        update_discrepancies = {}
         counting_lines_with_no_discrepancy = []
-
+        used_line_no = {}
         # For each of them, compare the theoretical and counted qty
         for product_batch_expirydate in filtered_all_product_batch_expirydate:
             # If the key is not known, assume 0
@@ -394,60 +377,56 @@ class PhysicalInventory(osv.osv):
                 if product_batch_expirydate in counting_lines_per_product_batch_expirtydate:
                     counting_line_id = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]["line_id"]
                     counting_lines_with_no_discrepancy.append(counting_line_id)
+                    used_line_no[counting_lines_per_product_batch_expirtydate[product_batch_expirydate]['line_no']] = True
                 continue
 
             # If this product/batch is known in the counting line, use the existing line number
             if product_batch_expirydate in counting_lines_per_product_batch_expirtydate:
                 this_product_batch_expirydate = counting_lines_per_product_batch_expirtydate[product_batch_expirydate]
                 line_no = this_product_batch_expirydate["line_no"]
-            else:  # Otherwise, create additional line numbers starting from the total of existing lines
-                max_line_no += 1
-                line_no = max_line_no
+                used_line_no[line_no] = True
+            else:  # Otherwise, we will try later to assign a line number that matched a C/S line
+                line_no = False
 
-            if product_batch_expirydate in previous_discrepancies:
-                previous_discrepancies[product_batch_expirydate]["todelete"] = False
-                existing_id = previous_discrepancies[product_batch_expirydate]["id"]
-                update_discrepancies[existing_id] = {
-                    "line_no": line_no,
-                    "counted_qty": counted_qty,
-                    'counted_qty_is_empty': type(counted_qty) == type(False), # True if counted_qty is a boolean
-                }
-            else:
-                new_discrepancies.append(
-                    { "inventory_id": inventory_id,
-                      "line_no": line_no,
-                      "product_id": product_batch_expirydate[0],
-                      "batch_number": product_batch_expirydate[1],
-                      "expiry_date": product_batch_expirydate[2],
-                      "theoretical_qty": theoretical_qty,
-                      "counted_qty": counted_qty,
-                      'counted_qty_is_empty': type(counted_qty) == type(False), # True if counted_qty is a boolean
-                      })
+            new_discrepancies.append(
+                { "inventory_id": inventory_id,
+                  "line_no": line_no,
+                  "product_id": product_batch_expirydate[0],
+                  "batch_number": product_batch_expirydate[1],
+                  "expiry_date": product_batch_expirydate[2],
+                  "theoretical_qty": theoretical_qty,
+                  "counted_qty": counted_qty,
+                  'counted_qty_is_empty': type(counted_qty) == type(False), # True if counted_qty is a boolean
+                  })
+
+        # assign line_no to lines
+        for discrepancy in new_discrepancies:
+            if not discrepancy['line_no']:
+                line_no = False
+                while available_line_no.get(discrepancy['product_id']):
+                    line_no = available_line_no.get(discrepancy['product_id']).pop(0)
+                    if line_no not in used_line_no:
+                        break
+                if not line_no:
+                    max_line_no += 1
+                    line_no = max_line_no
+                discrepancy['line_no'] = line_no
 
         # Update discrepancy flags on counting lines
         counting_lines_with_discrepancy = [ l["id"] for l in counting_lines if  not l["id"] in counting_lines_with_no_discrepancy ]
-        write_many("physical.inventory.counting", counting_lines_with_discrepancy,    {"discrepancy": True})
-        write_many("physical.inventory.counting", counting_lines_with_no_discrepancy, {"discrepancy": False})
+        counting_obj.write(cr, uid, counting_lines_with_discrepancy,    {"discrepancy": True}, context=context)
+        counting_obj.write(cr, uid, counting_lines_with_no_discrepancy, {"discrepancy": False}, context=context)
 
         # Sort discrepancies according to line number
         new_discrepancies = sorted(new_discrepancies, key=lambda d: d["line_no"])
 
         # Prepare the actual create/remove for discrepancy lines
         # 0 is for addition/creation
-        # 1 is for update
-        # 2 is the code for removal/deletion
 
         create_discrepancy_lines = [ (0,0,discrepancy) for discrepancy in new_discrepancies ]
-        update_discrepancy_lines = [ (1,id_,values) for id_, values in update_discrepancies.items() ]
-        delete_discrepancy_lines = [ (2,line["id"]) for line in previous_discrepancies.values() if line["todelete"] ]
-
-        todo = []
-        todo.extend(delete_discrepancy_lines)
-        todo.extend(update_discrepancy_lines)
-        todo.extend(create_discrepancy_lines)
 
         # Do the actual write
-        write("physical.inventory", inventory_id, {'discrepancy_line_ids': todo, 'discrepancies_generated': True})
+        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': create_discrepancy_lines, 'discrepancies_generated': True}, context=context)
 
 
         self._update_total_product(cr, uid, inventory_id,
@@ -1183,6 +1162,7 @@ PhysicalInventory()
 class PhysicalInventoryCounting(osv.osv):
     _name = 'physical.inventory.counting'
     _description = 'Physical Inventory Counting Line'
+    _order = 'line_no'
 
     _columns = {
         # Link to inventory
@@ -1205,7 +1185,7 @@ class PhysicalInventoryCounting(osv.osv):
         'expiry_date': fields.date(string=_('Expiry date')),
 
         # Specific to inventory
-        'line_no': fields.integer(string=_('Line #'), readonly=True),
+        'line_no': fields.integer(string=_('Line #'), readonly=True, select=1),
         'quantity': fields.char(_('Quantity'), size=15),
         'discrepancy': fields.boolean('Discrepancy found', readonly=True),
 
@@ -1285,7 +1265,7 @@ PhysicalInventoryCounting()
 class PhysicalInventoryDiscrepancy(osv.osv):
     _name = 'physical.inventory.discrepancy'
     _description = 'Physical Inventory Discrepancy Line'
-
+    _order = "line_no asc, product_id asc"
 
     def _discrepancy(self, cr, uid, ids, field_names, arg, context=None):
         context = context is None and {} or context
@@ -1353,7 +1333,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'expiry_date': fields.date(string=_('Expiry date')),
 
         # Count
-        'line_no': fields.integer(string=_('Line #'), readonly=True),
+        'line_no': fields.integer(string=_('Line #'), readonly=True, select=1),
         'theoretical_qty': fields.float('Theoretical Quantity', digits_compute=dp.get_precision('Product UoM'), readonly=True),
         'counted_qty': fields.float('Counted Quantity', digits_compute=dp.get_precision('Product UoM')),
         'counted_qty_is_empty': fields.boolean('False qty', readonly=True, help=_('Has field counted_qty been filled or is it empty ? (internal use)')),
@@ -1374,7 +1354,6 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'move_id': fields.integer(readonly=True)
     }
 
-    _order = "line_no asc, product_id asc"
 
     def create(self, cr, user, vals, context=None):
         context = context is None and {} or context
