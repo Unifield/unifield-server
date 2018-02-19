@@ -1252,10 +1252,14 @@ class PhysicalInventoryCounting(osv.osv):
 
     def on_change_product_id(self, cr, uid, ids, product_id, uom=False):
         """Changes UoM and quantity if product_id changes."""
+        bn = False
+        ed = False
         if product_id and not uom:
             product_rec = self.pool.get('product.product').browse(cr, uid, product_id)
             uom = product_rec.uom_id and product_rec.uom_id.id
-        return {'value': {'quantity': False, 'product_uom_id': product_id and uom}}
+            bn = product_rec.batch_management
+            ed = product_rec.perishable
+        return {'value': {'quantity': False, 'product_uom_id': product_id and uom, 'is_bn': bn, 'is_ed': ed}}
 
     def perm_write(self, cr, user, ids, fields, context=None):
         pass
