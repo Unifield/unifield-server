@@ -48,6 +48,11 @@ MODEL_DICT = {
         'domain_type': 'supply',
         'model': 'product.list.line',
     },
+    'product_list_update': {
+        'name': 'Products Lists Update',
+        'domain_type': 'supply',
+        'model': 'product.list.line',
+    },
     'suppliers': {
         'name': 'Suppliers',
         'domain_type': 'supply',
@@ -264,6 +269,14 @@ MODEL_DATA_DICT = {
             'order_list_print_ok',
             'warehouse_id',
             'location_id',
+        ],
+        'header_list': [
+            'name.default_code',
+            'name',
+            'comment',
+        ],
+        'required_field_list': [
+            'name',
         ],
     },
     'product_list': {

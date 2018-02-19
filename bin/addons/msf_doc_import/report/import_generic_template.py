@@ -84,7 +84,7 @@ class report_generic_export_parser(report_sxw.rml_parse):
             context = {}
 
         header_rows = []
-        if model == 'product.list' and prod_list_id:
+        if model == 'product.list.line' and prod_list_id:
             prod_list = self.pool.get('product.list').browse(self.cr, self.uid, prod_list_id, context=context)
             for field in MODEL_DATA_DICT['product_list_update'].get('header_info', []):
                 header_rows.append(
