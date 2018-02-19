@@ -499,7 +499,10 @@ class account_move_reconcile(osv.osv):
         aml_obj = self.pool.get('account.move.line')
         # store the old reconcile_txt for each JI before the new reconciliation is created
         aml_rec = {}
-        for line in vals.get('line_id', []):
+        aml_list = []
+        aml_list.extend(vals.get('line_id', []))
+        aml_list.extend(vals.get('line_partial_ids', []))
+        for line in aml_list:
             if len(line) > 1:
                 aml_rec[line[1]] = aml_obj.browse(cr, uid, line[1], fields_to_fetch=['reconcile_txt'], context=context).reconcile_txt or ''
         res = super(account_move_reconcile, self).create(cr, uid, vals, context)
@@ -533,6 +536,15 @@ class account_move_reconcile(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        aml_obj = self.pool.get('account.move.line')
+        # store the old reconcile_txt for each JI before the reconciliation is updated
+        aml_rec = {}
+        for rec in self.browse(cr, uid, ids, fields_to_fetch=['line_id', 'line_partial_ids'], context=context):
+            aml_list = []
+            aml_list.extend(rec.line_id)
+            aml_list.extend(rec.line_partial_ids)
+            for line in aml_list:
+                aml_rec[line.id] = aml_obj.browse(cr, uid, line.id, fields_to_fetch=['reconcile_txt'], context=context).reconcile_txt or ''
         res = super(account_move_reconcile, self).write(cr, uid, ids, vals, context)
         if res:
             for r in self.browse(cr, uid, ids):
@@ -545,6 +557,10 @@ class account_move_reconcile(osv.osv):
                 if p or t:
                     sql = "UPDATE " + self.pool.get('account.move.line')._table + " SET reconcile_txt = %s WHERE id in %s"
                     cr.execute(sql, (name, tuple(p+t)))
+                    # create the related "Track Changes" line
+                    for aml_id in p + t:
+                        old_reconcile_txt = aml_rec and aml_rec.get(aml_id) or ''
+                        self.create_reconciliation_log(cr, uid, aml_id, old_reconcile_txt, name, context=context)
         return res
 
     def create_reconciliation_log(self, cr, uid, aml_id, old_reconcile_txt, new_reconcile_txt, context=None):

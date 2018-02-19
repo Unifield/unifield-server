@@ -429,6 +429,8 @@ class account_move_line_compute_currency(osv.osv):
                                                      context=new_ctx).reconcile_date or None
                         cr.execute('UPDATE account_move_line SET reconcile_id=%s, reconcile_txt=%s, reconcile_date=%s WHERE id=%s',
                                    (reconciled.id, reconcile_txt or '', reconcile_date, partner_line_id))
+                        # create the related "Track Changes" line
+                        reconciled_obj.create_reconciliation_log(cr, uid, partner_line_id, '', reconcile_txt or '', context=context)
         return True
 
     def update_amounts(self, cr, uid, ids):
