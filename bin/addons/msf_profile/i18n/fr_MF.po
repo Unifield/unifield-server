@@ -100851,7 +100851,7 @@ msgstr "Les retours de prélèvements ne sont possibles que si le statut du pré
 #: view:physical.inventory:0
 #: field:physical.inventory.counting,is_ed:0
 msgid "ED"
-msgstr "DE"
+msgstr "EXP"
 
 #. modules: purchase, purchase_followup
 #: field:purchase.order,partner_ref:0
@@ -106762,5 +106762,7 @@ msgstr "Produit %s n'a pas de gestion des lots, Lot ignoré"
 msgid "You cannot confirm an inventory which is %s"
 msgstr "Vous ne pouvez pas confirmé un inventaire qui est %s"
 
-
-
+#. module: stock
+#: view:physical.inventory:0
+msgid "[('Hide ignored', ('ignored', '!=', True)), ('Show all', ''), ('Show ignored only', ('ignored', '=', True))]"
+msgstr "[('Cacher lignes ignorées', ('ignored', '!=', True)), ('Tout afficher', ''), ('Afficher ignorées seulement', ('ignored', '=', True))]"
