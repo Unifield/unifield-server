@@ -536,7 +536,6 @@ class account_move_reconcile(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        aml_obj = self.pool.get('account.move.line')
         # store the old reconcile_txt for each JI before the reconciliation is updated
         aml_rec = {}
         for rec in self.browse(cr, uid, ids, fields_to_fetch=['line_id', 'line_partial_ids'], context=context):
@@ -544,7 +543,7 @@ class account_move_reconcile(osv.osv):
             aml_list.extend(rec.line_id)
             aml_list.extend(rec.line_partial_ids)
             for line in aml_list:
-                aml_rec[line.id] = aml_obj.browse(cr, uid, line.id, fields_to_fetch=['reconcile_txt'], context=context).reconcile_txt or ''
+                aml_rec[line.id] = line.reconcile_txt or ''
         res = super(account_move_reconcile, self).write(cr, uid, ids, vals, context)
         if res:
             for r in self.browse(cr, uid, ids):
