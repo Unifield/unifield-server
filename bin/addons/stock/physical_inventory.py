@@ -939,6 +939,19 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
     def action_counted(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+
+        cr.execute('''select default_code, batch_number, expiry_date, count(*) from physical_inventory_counting
+            where quantity is not null and inventory_id in %s
+            group by inventory_id, default_code, batch_number, expiry_date
+            having count(*) > 1
+        ''', (tuple(ids),))
+        error = []
+        for x in cr.fetchall():
+            error.append(_('Product: %s, BN: %s, ED: %s : %d lines') % (x[0], x[1] or '-', x[2] or '-', x[3]))
+
+        if error:
+            raise osv.except_osv(_('Error'), _("Counting Sheet contains duplicated products:\n %s") % ("\n ".join(error)))
+
         self.write(cr, uid, ids, {'state': 'counted'}, context=context)
         return {}
 
