@@ -1355,7 +1355,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'currency_id': fields.many2one('res.currency', "Currency", readonly=True),
 
         # BN / ED
-        'batch_number': fields.char(_('Batch number'), size=30, readonly=True),
+        'batch_number': fields.char(_('Batch number'), size=64, readonly=True),
         'expiry_date': fields.date(string=_('Expiry date')),
 
         # Count
