@@ -127,6 +127,7 @@ class msf_import_export(osv.osv_memory):
             'target_filename': self.get_filename(cr, uid, model, selection, template_only),
             'prod_list_id': wiz.product_list_id.id,
             'supp_cata_id': wiz.supplier_catalogue_id.id,
+            'selection': wiz.model_list_selection,
         }
         return {
             'type': 'ir.actions.report.xml',
@@ -289,6 +290,8 @@ class msf_import_export(osv.osv_memory):
         if context is None:
             context = {}
         result = {'value': {}}
+        result['value']['supplier_catalogue_id'] = False
+        result['value']['product_list_id'] = False
         result['value']['display_file_import'] = True
         result['value']['display_file_export'] = True
         if model_list_selection:

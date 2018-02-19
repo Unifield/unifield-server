@@ -54,6 +54,11 @@ MODEL_DICT = {
         'model': 'res.partner',
         'domain': [('supplier', '=', True)],
         },
+    'supplier_catalogue_update': {
+        'name': 'Supplier Catalogue Update',
+        'domain_type': 'supply',
+        'model': 'supplier.catalogue.line',
+    },
     'supplier_catalogues': {
         'name': 'Supplier Catalogues',
         'domain_type': 'supply',
@@ -249,7 +254,7 @@ MODEL_DATA_DICT = {
             'msfid',
         ],
     },
-    'product_list': {
+    'product_list_update': {
         'header_info': [
             'type',
             'ref',
@@ -260,6 +265,8 @@ MODEL_DATA_DICT = {
             'warehouse_id',
             'location_id',
         ],
+    },
+    'product_list': {
         'header_list': [
             'name',
             'type',
@@ -309,7 +316,7 @@ MODEL_DATA_DICT = {
             'name',
         ],
     },
-    'supplier_catalogues': {
+    'supplier_catalogue_update': {
         'header_info': [
             'name',
             'partner_id',
@@ -317,6 +324,25 @@ MODEL_DATA_DICT = {
             'period_from',
             'period_to',
         ],
+        'header_list': [
+            'product_id.code',
+            'product_id.name',
+            'product_code',
+            'line_uom_id.name',
+            'min_qty',
+            'unit_price',
+            'rounding',
+            'min_order_qty',
+            'comment',
+        ],
+        'required_field_list': [
+            'product_id.code',
+            'line_uom_id.name',
+            'min_qty',
+            'unit_price',
+        ],
+    },
+    'supplier_catalogues': {
         'header_list': [
             'name',
             'period_from',

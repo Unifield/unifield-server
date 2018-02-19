@@ -58,7 +58,7 @@ class report_generic_export_parser(report_sxw.rml_parse):
             return field_desc
 
         def get_field_type(model, field):
-            ''' get displayable name for the given field '''
+            ''' get ttype for the given field '''
             field_id = self.pool.get('ir.model.fields').search(self.cr, self.uid, [('model', '=', model), ('name', '=', field)], context=context)
             ttype = None
             if field_id:
@@ -66,6 +66,7 @@ class report_generic_export_parser(report_sxw.rml_parse):
             return ttype
 
         def get_attr_name(obj, field):
+            ''' get displayable name for the given field '''
             attr = getattr(obj, field)
             res = attr
             ttype = get_field_type(obj._name, field)
@@ -85,13 +86,13 @@ class report_generic_export_parser(report_sxw.rml_parse):
         header_rows = []
         if model == 'product.list' and prod_list_id:
             prod_list = self.pool.get('product.list').browse(self.cr, self.uid, prod_list_id, context=context)
-            for field in MODEL_DATA_DICT['product_list'].get('header_info', []):
+            for field in MODEL_DATA_DICT['product_list_update'].get('header_info', []):
                 header_rows.append(
                     (get_field_name('product.list', field), get_attr_name(prod_list,field)) # (name, value)
                 )
-        elif model == 'supplier.catalogue' and supp_cata_id:
+        elif model == 'supplier.catalogue.line' and supp_cata_id:
             supp_cata = self.pool.get('supplier.catalogue').browse(self.cr, self.uid, supp_cata_id, context=context)            
-            for field in MODEL_DATA_DICT['supplier_catalogues'].get('header_info', []):
+            for field in MODEL_DATA_DICT['supplier_catalogue_update'].get('header_info', []):
                 header_rows.append(
                     (get_field_name('supplier.catalogue', field), get_attr_name(supp_cata,field)) # (name, value)
                 )
@@ -108,31 +109,38 @@ class report_generic_export_parser(report_sxw.rml_parse):
         return import_export_obj._get_headers(self.cr, self.uid, model,
                 selection=None, field_list=field_list, rows=rows, context=context)
 
-    def getRows(self, model, fields, nb_lines=None, domain=None,
-            template_only=False, context=None):
+    def getRows(self, data):
         """
         Return list of lines from given generic export
         """
+        context = data['context']
         if context is None:
             context={}
-        if template_only:
+        if data['template_only']:
             return []
-        if not domain:
-            domain = []
+        if not data['domain']:
+            data['domain'] = []
+        fields = data['fields']
+        model_obj = self.pool.get(data['model'])
+
+        # get ids:
+        if data['selection'] == 'supplier_catalogue_update' and data.get('supp_cata_id'):
+            data['domain'].append( ('catalogue_id', '=', data['supp_cata_id']) )
+        elif data['selection'] == 'product_list_update' and data.get('prod_list_id'):
+            data['domain'].append( ('list_id', '=', data['prod_list_id']) )
+        ids = model_obj.search(self.cr, self.uid, data['domain'], limit=data['nb_lines'])
+
+        # get rows:
         rows = []
-        counter = 0
         chunk_size = 100
-        model_obj = self.pool.get(model)
-        ids = model_obj.search(self.cr, self.uid, domain, limit=nb_lines)
         fields = [x.replace('.', '/') for x in fields]
         for i in range(0, len(ids), chunk_size):
             ids_chunk = ids[i:i + chunk_size]
-            counter += len(ids_chunk)
             context['translate_selection_field'] = True
             rows.extend(model_obj.export_data(self.cr, self.uid, ids_chunk, fields, context=context)['datas'])
 
         # sort supplier catalogue line
-        if model == 'supplier.catalogue.line':
+        if data['model'] == 'supplier.catalogue.line':
             rows = sorted(rows, key=itemgetter(1,0))
         return rows
 

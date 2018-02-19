@@ -28,64 +28,28 @@
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
             <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
             <Font ss:Bold="1" ss:Color="#000000" />
-            <Borders>
-              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-            </Borders>
             <Protection />
         </Style>
         <Style ss:ID="String">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-            </Borders>
             <Protection ss:Protected="0" />
         </Style>
         <Style ss:ID="Boolean">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-            </Borders>
             <Protection ss:Protected="0" />
         </Style>
         <Style ss:ID="Float">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-            </Borders>
             <NumberFormat ss:Format="Fixed" />
             <Protection ss:Protected="0" />
         </Style>
         <Style ss:ID="Number">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-            </Borders>
             <NumberFormat ss:Format="Fixed" />
             <Protection ss:Protected="0" />
         </Style>
         <Style ss:ID="DateTime">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            </Borders>
             <NumberFormat ss:Format="Short Date" />
             <Protection ss:Protected="0" />
         </Style>
@@ -107,7 +71,7 @@
                 </Row>
             % endfor
 
-            <% rows = getRows(data['model'], data['fields'], data.get('nb_lines'), data.get('domain'), data.get('template_only', False), data['context']) %>
+            <% rows = getRows(data) %>
             <% headers = getHeaders(data['model'], data['fields'], rows, data['context']) %>
             % for col in headers:
             <Column ss:AutoFitWidth="1" ss:Width="${col[2] or 70|x}" ss:StyleID="${col[1]|x}" />
