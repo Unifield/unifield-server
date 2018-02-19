@@ -234,12 +234,13 @@
             <field name="model">physical.inventory</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Physical Inventories" colors="grey:state in ('cancel')">
+                <tree string="Physical Inventories" colors="red:has_bad_stock;grey:state in ('cancel')">
                     <field name="ref"/>
                     <field name="name"/>
                     <field name="location_id"/>
                     <field name="date"/>
                     <field name="state"/>
+                    <field name="has_bad_stock" invisible="1" />
                 </tree>
             </field>
         </record>
