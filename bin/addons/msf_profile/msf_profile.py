@@ -67,7 +67,7 @@ class patch_scripts(osv.osv):
             pi.setdefault(x[0], []).append(x[1])
 
         for pi_id in pi:
-            cr.execute('''update physical_inventory set bad_stock_msg=%s, has_bad_stock='f' where id=%s''', ('\n'.join(pi[pi_id]), pi_id))
+            cr.execute('''update physical_inventory set bad_stock_msg=%s, has_bad_stock='t' where id=%s''', ('\n'.join(pi[pi_id]), pi_id))
 
         return True
     # UF7.1 patches

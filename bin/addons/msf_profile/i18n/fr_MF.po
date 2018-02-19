@@ -106776,3 +106776,25 @@ msgstr "Tout afficher"
 #: view:physical.inventory:0
 msgid "Hide ignored"
 msgstr "Cacher lignes ignorées"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "There is an issue with these product, please check the Theoretical Quantity and regenerate Discrepancy report to update it.<br/>\n"
+"                            Otherwise,proceed with your PI and then issue a new PI for this product to correct the Stock level"
+msgstr "Il y a un problème avec les produits suivants, veuillez vérifier la Quantité Théorique et regénérer les écarts pour les mettre à jour.<br/>\n"
+"                            Sinon veuillez créer un nouvel inventaire pour ce produit pour corriger le niveau de stock"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:952
+#, python-format
+msgid "Product: %s, BN: %s, ED: %s : %d lines"
+msgstr "Produit: %s, Lot: %s, Date: %s : %d lignes"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:955
+#, python-format
+msgid "Counting Sheet contains duplicated products:\n"
+" %s"
+msgstr "La Feuille de Comptage contient des produits dupliqués:\n"
+" %s"
+

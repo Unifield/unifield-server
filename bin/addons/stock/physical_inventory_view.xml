@@ -12,7 +12,7 @@
                     <group colspan="4" attrs="{'invisible': [('has_bad_stock', '=', False)]}">
                         <html>
                             <div style="text-align: center; v-align: middle;color:#f27d0c; font-weight:bold; font-size:1.2em">
-                                <p style="text-align: center; v-align: middle;"><translate>There is an issue with these product, please check the Theoretical Quantity and regenerate Discrepancy report to update it.<br />
+                                <p style="text-align: center; v-align: middle;"><translate>There is an issue with these products, please check the Theoretical Quantity and regenerate Discrepancy report to update it.<br />
                             Otherwise,proceed with your PI and then issue a new PI for this product to correct the Stock level</translate></p>
                             <field name="bad_stock_msg" widget="full_text" colspan="4" nolabel="1"/>
                             </div>
