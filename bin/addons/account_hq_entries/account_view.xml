@@ -189,6 +189,9 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='user_type']" position="after">
                     <field name="is_not_hq_correctible"/>
+                    <newline/>
+                    <label string="" colspan="2"/>
+                    <field name="is_not_ad_correctable"/>
                 </xpath>
             </field>
         </record>

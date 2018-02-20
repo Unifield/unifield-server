@@ -101189,3 +101189,13 @@ msgstr "Ouvrir les derniers engagements importés"
 #: field:import.commitment.wizard,progress:0
 msgid "Import in progress"
 msgstr "Import en cours"
+
+#. module: account_hq_entries
+#: field:account.account,is_not_ad_correctable:0
+msgid "Prevent correction on analytic distribution"
+msgstr "Empêcher la correction sur la distribution analytique"
+
+#. module: account_hq_entries
+#: help:account.account,is_not_ad_correctable:0
+msgid "If this option is checked AD correction on this account will be prevented in the HQ entries and via the correction wizard."
+msgstr "Si cette option est cochée la correction de la Distribution Analytique sur ce compte sera empêchée dans les Écritures HQ et via l'assistant de correction."
