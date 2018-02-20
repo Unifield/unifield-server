@@ -384,7 +384,7 @@ class msf_import_export(osv.osv_memory):
         # get displayble name with technical name in order to be able to check the import file:
         fields_needed = MODEL_DATA_DICT[wiz.model_list_selection].get('header_info') # technical name
         fields_needed_name = [self.get_displayable_name(cr, uid, parent_model, x, context=context) for x in fields_needed]
-        
+
         fields_gotten = []
         for index, row in enumerate(rows):
             if len(row.cells) > 2:
@@ -532,6 +532,10 @@ class msf_import_export(osv.osv_memory):
             }, context=context)
             wiz.total_lines_to_import = nb_rows
 
+            if MODEL_DATA_DICT[selection].get('header_info'):
+                for row in rows:
+                    if len(row.cells) > 2:
+                        break
             thread = threading.Thread(
                 target=self.bg_import,
                 args=(cr.dbname, uid, wiz, expected_headers, rows, context),
