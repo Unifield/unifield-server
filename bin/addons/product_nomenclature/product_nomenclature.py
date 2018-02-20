@@ -462,7 +462,7 @@ class product_nomenclature(osv.osv):
         'parent_id': fields.many2one('product.nomenclature', 'Parent Nomenclature', select=True),
         # TODO try to display child_ids on screen. which result ?
         'child_id': fields.one2many('product.nomenclature', 'parent_id', string='Child Nomenclatures'),
-        'sequence': fields.integer('Sequence', help="Gives the sequence order when displaying a list of product nomenclatures."),
+        'sequence': fields.integer('Sequence', help="Gives the sequence order when displaying a list of product nomenclatures.", select=1),
         'level': fields.integer('Level', size=256, select=1),
         'type': fields.selection([('mandatory', 'Mandatory'), ('optional', 'Optional')], 'Nomenclature Type', select=1),
         # corresponding level for optional levels, must be string, because integer 0 is treated as False, and thus required test fails
@@ -491,9 +491,18 @@ class product_nomenclature(osv.osv):
         'active': True,
     }
 
-    _order = "msfid, sequence, id"
+    _order = "sequence, level, msfid, id"
 
     _sql_constraints = [('check_msfid_unique', 'unique (msfid)', 'MSFID must be unique !')]
+
+
+    def _auto_init(self, cr, context=None):
+        super(product_nomenclature, self)._auto_init(cr, context)
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'product_nomenclature_sequence_level_msfid_id_idx'")
+        if not cr.fetchone():
+            cr.execute('CREATE INDEX product_nomenclature_sequence_level_msfid_id_idx ON product_nomenclature (sequence, level, msfid, id)')
+            cr.commit()
+
 
     def _check_recursion(self, cr, uid, ids, context=None):
         level = 100
