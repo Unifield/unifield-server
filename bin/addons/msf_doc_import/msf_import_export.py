@@ -500,7 +500,7 @@ class msf_import_export(osv.osv_memory):
 
         for wiz in self.browse(cr, uid, ids, context=context):
             rows, nb_rows = self.read_file(wiz, context=context)
-            head = rows.next()
+            head = context.get('row', rows.next())
             selection = wiz.model_list_selection
             model = MODEL_DICT[selection]['model']
 
