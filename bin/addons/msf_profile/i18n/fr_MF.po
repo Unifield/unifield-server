@@ -27275,8 +27275,8 @@ msgstr "Untaxed Amount:"
 
 #. module: account_hq_entries
 #: field:account.account,is_not_hq_correctible:0
-msgid "Can not be corrected on HQ entries"
-msgstr "Impossible à corriger dans les entrées HQ"
+msgid "Prevent correction on account codes"
+msgstr "Empêcher toutes corrections sur ce code comptable"
 
 #. module: base_setup
 #: help:base.setup.installer,auction:0
@@ -33145,8 +33145,8 @@ msgstr "Nom Entrepôt"
 
 #. module: account_hq_entries
 #: help:account.account,is_not_hq_correctible:0
-msgid "If checked, this attribute will prevent user from correcting the account on the entry imported from HQ system"
-msgstr "If checked, this attribute will prevent user from correcting the account on the entry imported from HQ system"
+msgid "If checked, this attribute will prevent the user from correcting the account on the entries"
+msgstr "Si cet attribut est coché, il empêchera l'utilisateur de corriger le compte sur les écritures"
 
 #. module: account_payment
 #: selection:payment.line,state:0
@@ -98531,13 +98531,13 @@ msgstr "Ligne %s. Le compte %s est de type 'Donations' ce qui est interdit."
 #, python-format
 msgid "Line %s: Some restrictions prevent account %s to be used to import this line:\n"
 "- the account cannot be of type 'View' or 'Liquidity'\n"
-"- account can not be corrected on HQ entries\n"
+"- account can not be set as 'Prevent correction on account codes'\n"
 "- 'Type for specific treatment' cannot be 'Donations'\n"
 "- 'Internal Type' should be different from 'Regular' OR 'Account Type' should be different from 'Stock'\n"
 "- 'Account Type' should be different from 'Expense' OR 'P&L / BS Category' not None."
 msgstr "Ligne %s: Des restrictions empêchent le compte %s d'être utilisé pour importer cette ligne :\n"
 "- le compte ne peut pas être de type 'Vue' ou 'Liquidités'\n"
-"- compte impossible à corriger dans les entrées HQ\n"
+"- le compte ne peut pas être défini comme 'Empêcher toutes corrections sur ce code comptable'\n"
 "- 'Type pour traitement spécifique' ne peut pas être 'Donations'\n"
 "- 'Type Interne' doit être différent de 'Normal' OU 'Type de Compte' doit être différent de 'Stock'\n"
 "- 'Type de Compte' doit être différent de 'Expense' OU 'Catégorie Bilan/Cte de Résultat' ne doit pas être vide."
@@ -98553,12 +98553,12 @@ msgstr "Le template d'import n'est pas reconnu, merci d'utiliser le même que le
 #, python-format
 msgid "Line %s: Some restrictions prevent account %s to be used to import this line:\n"
 "- the account cannot be of type 'View'\n"
-"- account can not be corrected on HQ entries\n"
+"- account can not be set as 'Prevent correction on account codes'\n"
 "- 'Account Type' should be in ('expense', 'income', 'receivables')\n"
 "- 'P&L / BS Category' cannot be None."
 msgstr "Ligne %s: Des restrictions empêchent le compte %s d'être utilisé pour importer cette ligne :\n"
 "- le compte ne peut pas être de type 'Vue'\n"
-"- compte impossible à corriger dans les entrées HQ\n"
+"- le compte ne peut pas être défini comme 'Empêcher toutes corrections sur ce code comptable'\n"
 "- 'Type de Compte' doit être de type 'expense', 'income' ou 'receivables'\n"
 "- 'Catégorie Bilan/Cte de Résultat' ne doit pas être vide."
 
@@ -99775,8 +99775,8 @@ msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:383
 #, python-format
-msgid "Line %s. The account \"%s - %s\" cannot be used because it is set as \"Can not be corrected on HQ entries\"."
-msgstr "Ligne %s. Le compte \"%s - %s\" ne peut pas être utilisé car il est défini comme \"Impossible à corriger dans les entrées HQ\"."
+msgid "Line %s. The account \"%s - %s\" cannot be used because it is set as \"Prevent correction on account codes\"."
+msgstr "Ligne %s. Le compte \"%s - %s\" ne peut pas être utilisé car il est défini comme \"Empêcher toutes corrections sur ce code comptable\"."
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:147

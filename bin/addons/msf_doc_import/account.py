@@ -393,10 +393,10 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account.code, account.name, ))
                         continue
 
-                    # US-3461 Accounts that can't be corrected on HQ entries are not allowed here
+                    # US-3461 Accounts that can't be corrected on Account Codes are not allowed here
                     if account.is_not_hq_correctible:
                         errors.append(_("Line %s. The account \"%s - %s\" cannot be used because it is set as "
-                                        "\"Can not be corrected on HQ entries\".") % (current_line_num, account.code, account.name,))
+                                        "\"Prevent correction on account codes\".") % (current_line_num, account.code, account.name,))
                         continue
 
                     # Check analytic axis only if G/L account is analytic-a-holic

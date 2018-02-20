@@ -29,7 +29,7 @@ class account_account(osv.osv):
     _inherit = 'account.account'
 
     _columns = {
-        'is_not_hq_correctible': fields.boolean("Can not be corrected on HQ entries", help='If checked, this attribute will prevent user from correcting the account on the entry imported from HQ system'),
+        'is_not_hq_correctible': fields.boolean("Prevent correction on account codes", help='If checked, this attribute will prevent the user from correcting the account on the entries'),
     }
 
 account_account()
