@@ -352,10 +352,48 @@ class msf_import_export(osv.osv_memory):
                 xml_string = base64.decodestring(obj['import_file'])
                 self.check_xml_syntax(cr, uid, xml_string, context=context)
                 rows, nb_rows = self.read_file(wiz, context=context)
-                head = rows.next()
-                self.check_missing_columns(cr, uid, wiz, head, context=context)
+                if MODEL_DATA_DICT[selection].get('header_info'):
+                    self.check_header_info(cr, uid, wiz, rows, context=context)
+                self.check_missing_columns(cr, uid, wiz, context.get('row', rows.next()), context=context)
         finally:
             fileobj.close()
+        return True
+
+    def check_header_info(self, cr, uid, wiz, rows, context=None):
+        '''
+        Check header info at the very top of the import document. 
+        Return True if its OK, else raise exception
+        '''
+        if context is None:
+            context = {}
+        model = MODEL_DICT[wiz.model_list_selection]['model']
+        parent_model = False
+        if model == 'supplier.catalogue.line':
+            parent_model = 'supplier.catalogue'
+        elif model == 'product.list.line':
+            parent_model = 'product.list'
+
+        # get displayble name with technical name in order to be able to check the import file:
+        fields_needed = MODEL_DATA_DICT[wiz.model_list_selection].get('header_info') # technical name
+        fields_needed_name = [] # displayable name
+        fields_get_dict = self.pool.get(parent_model).fields_get(cr, uid)
+        for f in fields_needed:
+            if f in fields_get_dict:
+                fields_needed_name.append(fields_get_dict[f].get('string', ''))
+
+        fields_gotten = []
+        for index, row in enumerate(rows):
+            if len(row.cells) > 2:
+                context['row'] = row
+                break # header info end
+            fields_gotten.append(row.cells[0].data)
+
+        if len(fields_gotten) != len(fields_needed_name):
+            raise osv.except_osv(_('Info'), _('Header info fields must be the following: %s' % ', '.join(fields_needed_name).strip(', ')))
+        for i, fn in enumerate(fields_needed_name):
+            if fields_gotten[i] != fn:
+                raise osv.except_osv(_('Info'), _('Line %s: Expected header column %s got %s') % (i, fn, fields_gotten[i]))
+
         return True
 
     def excel_col(self, col):
