@@ -359,6 +359,14 @@ class msf_import_export(osv.osv_memory):
             fileobj.close()
         return True
 
+    def get_displayable_name(self, cr, uid, model, field_name, context=None):
+        '''
+        returns displayable name with given technical name
+        '''
+        if context is None:
+            context = {}
+        return self.pool.get(model).fields_get(cr, uid, field_name).get(field_name, {}).get('string', False)
+
     def check_header_info(self, cr, uid, wiz, rows, context=None):
         '''
         Check header info at the very top of the import document. 
@@ -375,12 +383,8 @@ class msf_import_export(osv.osv_memory):
 
         # get displayble name with technical name in order to be able to check the import file:
         fields_needed = MODEL_DATA_DICT[wiz.model_list_selection].get('header_info') # technical name
-        fields_needed_name = [] # displayable name
-        fields_get_dict = self.pool.get(parent_model).fields_get(cr, uid)
-        for f in fields_needed:
-            if f in fields_get_dict:
-                fields_needed_name.append(fields_get_dict[f].get('string', ''))
-
+        fields_needed_name = [self.get_displayable_name(cr, uid, parent_model, x, context=context) for x in fields_needed]
+        
         fields_gotten = []
         for index, row in enumerate(rows):
             if len(row.cells) > 2:
@@ -500,7 +504,10 @@ class msf_import_export(osv.osv_memory):
 
         for wiz in self.browse(cr, uid, ids, context=context):
             rows, nb_rows = self.read_file(wiz, context=context)
-            head = context.get('row', rows.next())
+            if context.get('row'):
+                head = context.get('row')
+            else:
+                head = rows.next()
             selection = wiz.model_list_selection
             model = MODEL_DICT[selection]['model']
 
