@@ -530,7 +530,7 @@ class msf_import_export(osv.osv_memory):
                 'info_message': _('Import in progress, please leave this window open and press the button \'Update\' '
                                   'to show the progression of the import. Otherwise, you can continue to use Unifield'),
             }, context=context)
-            wiz.total_lines_to_import = nb_rows
+            wiz.total_lines_to_import = nb_rows - len(MODEL_DATA_DICT[selection].get('header_info', []))
 
             if MODEL_DATA_DICT[selection].get('header_info'):
                 for row in rows:
@@ -800,9 +800,9 @@ WHERE n3.level = 3)
                 if import_data_obj.post_hook.get(impobj._name):
                     import_data_obj.post_hook[impobj._name](impobj, cr, uid, data, line_data, header_codes)
 
+
                 # Search if an object already exist. If not, create it.
                 ids_to_update = []
-
                 if impobj._name == 'product.product':
                     # Allow to update the product, use xmlid_code or default_code
                     if 'xmlid_code' in data:
@@ -822,6 +822,13 @@ WHERE n3.level = 3)
                         ('name', '=', data['name']),
                         ('partner_id', '=', data['partner_id']),
                     ], order='NO_ORDER')
+
+                if import_brw.model_list_selection == 'supplier_catalogue_update':
+                    data['catalogue_id'] = import_brw.supplier_catalogue_id.id
+                    ids_to_update = impobj.search(cr, uid, [
+                        ('catalogue_id', '=', import_brw.supplier_catalogue_id.id), 
+                        ('line_number', '=', data['line_number']),
+                    ], context=context)
 
                 if ids_to_update:
                     #UF-2170: remove the standard price value from the list for update product case
