@@ -3581,7 +3581,11 @@ class orm(orm_template):
             else:
                 # order only when there is more than one id in ids
                 query = ''.join((query, ' ORDER BY ', order_by))
-                for sub_ids in cr.split_for_in_conditions(ids):
+                max_split = None
+                # number of C/S lines is big and using split breaks default order_by
+                if self._name == 'physical.inventory.counting':
+                    max_split = 3000
+                for sub_ids in cr.split_for_in_conditions(ids, max_split):
                     execute_request(res, query, rule_clause, sub_ids)
 
             context_lang = context and context.get('lang', False) or 'en_US'
