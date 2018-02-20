@@ -149,8 +149,8 @@ class PhysicalInventory(osv.osv):
         'date': lambda *a: time.strftime(DEFAULT_SERVER_DATETIME_FORMAT),
         'state': 'draft',
         'full_inventory': False,
-        'company_id': lambda self, cr, uid,
-        c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c)
+        'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c),
+        'has_bad_stock': False,
     }
 
 
@@ -171,6 +171,8 @@ class PhysicalInventory(osv.osv):
         fields_to_empty = ["ref",
                            "full_inventory",
                            "date_done",
+                           "bad_stock_msg",
+                           "has_bad_stock",
                            "file_to_import",
                            "file_to_import2",
                            "counting_line_ids",
