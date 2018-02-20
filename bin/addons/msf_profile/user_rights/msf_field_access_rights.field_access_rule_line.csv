@@ -78,7 +78,7 @@ PO Coordo,transport_mgmt.field_purchase_order_shipment_transport_ids,FALSE,FALSE
 PO Coordo,sale.field_sale_order_shipped,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/78
 PO Coordo,purchase.field_purchase_order_shipped_rate,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/79
 PO Coordo,product.field_product_template_state,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/80
-PO Coordo,tender_flow.field_purchase_order_tender_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/81
+PO Coordo,tender_flow.field_purchase_order_tender_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/81
 PO Coordo,transport_mgmt.field_purchase_order_total_price_include_transport,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/82
 PO Coordo,transport_mgmt.field_purchase_order_transport_cost,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/83
 PO Coordo,transport_mgmt.field_purchase_order_transport_currency_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/84
@@ -145,7 +145,7 @@ PO Project,procurement_request.field_sale_order_notes,TRUE,FALSE,FALSE,msf_profi
 PO Project,sale.field_sale_order_order_line,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/146
 PO Project,sale.field_sale_order_order_type,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/147
 PO Project,sale.field_sale_order_origin,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/148
-PO Project,tender_flow.field_purchase_order_origin_tender_id,FALSE,FALSE,FALSE,msf_profile/field_access_rule_line/149
+PO Project,tender_flow.field_purchase_order_origin_tender_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/149
 PO Project,purchase.field_purchase_order_partner_address_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/150
 PO Project,sale.field_sale_order_partner_id,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/151
 PO Project,product.field_product_product_partner_ref,TRUE,FALSE,FALSE,msf_profile/field_access_rule_line/152

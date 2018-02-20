@@ -1098,7 +1098,7 @@ class account_bank_statement_line(osv.osv):
                 # BKLG-60: reg line from advance return: display invoice(s) AJIs too
                 res.add(absl.invoice_id.move_id.id)
             elif not absl.invoice_id and absl.direct_invoice:
-                # US-512: 
+                # US-512:
                 # above case UTP-1039 was ok for temp posted direct invoice
                 # hard posted direct invoice regline case (and sync P1->C1)
                 if absl.direct_invoice_move_id:
@@ -2353,7 +2353,7 @@ class account_bank_statement_line(osv.osv):
                             absl.amount_in - abs(imported_total_amount) > 0.001:
                         raise osv.except_osv(_('Warning'),
                                              _('You can not hard post with an amount greater'
-                                               ' than total of imported invoices'))
+                                               ' than total of imported invoices: Entry %s') % absl.sequence_for_reference or '')
 
                 # Update analytic lines
                 if absl.account_id.is_analytic_addicted:
@@ -2572,7 +2572,7 @@ class account_bank_statement_line(osv.osv):
                     raise osv.except_osv(_('Error'), _('You are not allowed to delete hard posting lines!'))
                 else:
                     #US-960: No need to set the check flag to True when unlink a reg line, otherwise it could regenerate wrongly new AJIs!
-                    self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids], context=context, check=False) 
+                    self.pool.get('account.move').unlink(cr, uid, [x.id for x in st_line.move_ids], context=context, check=False)
             # Delete direct invoice if exists
             if st_line.direct_invoice and st_line.invoice_id and not context.get('from_direct_invoice', False):
                 # unlink moves and analytic lines before deleting the line

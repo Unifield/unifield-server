@@ -204,6 +204,30 @@ class supplier_catalogue(osv.osv):
 
         return res
 
+
+    def unlink(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if context is None:
+            context = {}
+
+        entity_identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
+
+        # forbid supplier catalogue coming from higher instance level to be manually deleted:
+        to_unlink = set()
+        for catalogue in self.browse(cr, uid, ids, context=context):
+            catalogue_sd_ref = self.get_sd_ref(cr, uid, catalogue.id)
+            if catalogue_sd_ref and catalogue_sd_ref.startswith(entity_identifier) or context.get('sync_update_execution', False):
+                to_unlink.add(catalogue.id)
+            else:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Warning! You cannot delete a synched supplier catalogue created in a higher instance level.')
+                )
+
+        return super(supplier_catalogue, self).unlink(cr, uid, list(to_unlink), context=context)
+
+
     def write(self, cr, uid, ids, vals, context=None):
         '''
         Update the supplierinfo and pricelist line according to the
@@ -884,7 +908,7 @@ class supplier_catalogue_line(osv.osv):
         if catalogue.partner_id.id == user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id:
             return vals
 
-        # Search if a product_supplierinfo exists for the catalogue, if not, create it 
+        # Search if a product_supplierinfo exists for the catalogue, if not, create it
         sup_ids = supinfo_obj.search(cr, uid, [('product_id', '=', tmpl_id),
                                                ('catalogue_id', '=', vals['catalogue_id'])],
                                      context=context)
@@ -1027,16 +1051,30 @@ class supplier_catalogue_line(osv.osv):
 
         return res
 
-    def unlink(self, cr, uid, line_id, context=None):
+    def unlink(self, cr, uid, ids, context=None):
         '''
         Remove the pricelist line on product supplier information tab
         If the product supplier information has no line, remove it
         '''
-        if isinstance(line_id, (int, long)):
-            line_id = [line_id]
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
-        for l in line_id:
-            line = self.browse(cr, uid, l, context=context)
+        entity_identifier = self.pool.get('sync.client.entity').get_entity(cr, uid, context).identifier
+
+        # forbid supplier catalogue line coming from higher instance level to be manually deleted:
+        to_unlink = set()
+        for cat_line in self.browse(cr, uid, ids, context=context):
+            cat_line_sd_ref = self.get_sd_ref(cr, uid, cat_line.id)
+            if cat_line_sd_ref and cat_line_sd_ref.startswith(entity_identifier) or context.get('sync_update_execution', False):
+                to_unlink.add(cat_line.id)
+            else:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Warning! You cannot delete a synched supplier catalogue line created in a higher instance level.')
+                )
+        to_unlink = list(to_unlink)
+
+        for line in self.browse(cr, uid, to_unlink, context=context):
             c = context is not None and context.copy() or {}
             c.update({'product_change': True})
             # Remove the pricelist line in product tab
@@ -1048,7 +1086,7 @@ class supplier_catalogue_line(osv.osv):
                 # Remove the supplier info
                 self.pool.get('product.supplierinfo').unlink(cr, uid, line.supplier_info_id.id, context=c)
 
-        return super(supplier_catalogue_line, self).unlink(cr, uid, line_id, context=context)
+        return super(supplier_catalogue_line, self).unlink(cr, uid, to_unlink, context=context)
 
     def _check_min_quantity(self, cr, uid, ids, context=None):
         '''

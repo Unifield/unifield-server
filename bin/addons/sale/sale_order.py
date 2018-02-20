@@ -152,14 +152,16 @@ class sale_order(osv.osv):
                 'amount_tax': 0.0,
                 'amount_total': 0.0,
             }
-            val = val1 = 0.0
-            cur = order.pricelist_id.currency_id
-            for line in order.order_line:
-                val1 += line.price_subtotal
-                val += self._amount_line_tax(cr, uid, line, context=context)
-            res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, val)
-            res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, val1)
-            res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
+            if not order.procurement_request:
+                val = val1 = 0.0
+                cur = order.pricelist_id.currency_id
+                for line in order.order_line:
+                    if line.state not in ('cancel', 'cancel_r'):
+                        val1 += line.price_subtotal
+                        val += self._amount_line_tax(cr, uid, line, context=context)
+                res[order.id]['amount_tax'] = cur_obj.round(cr, uid, cur.rounding, val)
+                res[order.id]['amount_untaxed'] = cur_obj.round(cr, uid, cur.rounding, val1)
+                res[order.id]['amount_total'] = res[order.id]['amount_untaxed'] + res[order.id]['amount_tax']
         return res
 
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
@@ -255,14 +257,22 @@ class sale_order(osv.osv):
                         amount_received += move_qty*line.price_unit
 
             if amount_total:
-                res[order.id] = (amount_received/amount_total)*100   
+                res[order.id] = (amount_received/amount_total)*100
 
         return res
 
     def _get_order(self, cr, uid, ids, context=None):
         result = {}
-        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, context=context):
+        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context):
             result[line.order_id.id] = True
+        return result.keys()
+
+    def _get_order_state(self, cr, uid, ids, context=None):
+        # recompute FO amount total only if state switches to cancel(_r)
+        result = {}
+        for line in self.pool.get('sale.order.line').browse(cr, uid, ids, fields_to_fetch=['order_id', 'state'],context=context):
+            if line.state in ('cancel', 'cancel_r'):
+                result[line.order_id.id] = True
         return result.keys()
 
     def _check_browse_param(self, param, method):
@@ -492,10 +502,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # SO state must not go back:
             if sos_obj.get_sequence(cr, uid, [], res[so.id]) < sos_obj.get_sequence(cr, uid, [], so.state):
                 res[so.id] = so.state
-                # add the '_p' if needed: 
+                # add the '_p' if needed:
                 if res[so.id] in ['draft', 'validated', 'confirmed']:
                     current_state_sequence = sols_obj.get_sequence(cr, uid, [], so.state)
-                    has_line_further = any([sols_obj.get_sequence(cr, uid, [], s, context=context) > current_state_sequence for s in sol_states]) 
+                    has_line_further = any([sols_obj.get_sequence(cr, uid, [], s, context=context) > current_state_sequence for s in sol_states])
                     if has_line_further:
                         res[so.id] = '%s_p' % res[so.id]
 
@@ -514,7 +524,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'state': fields.function(_get_less_advanced_sol_state, string='Order State', method=True, type='selection', selection=SALE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
                                      'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-                                     'sale.order.line': (_get_order, ['state'], 10),    
+                                     'sale.order.line': (_get_order, ['state'], 10),
                                  },
                                  select=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'."
                                  ),
@@ -535,19 +545,28 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
                                           store = {
             'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            'sale.order.line': [
+                (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+                (_get_order_state, ['state'], 10),
+            ]
         },
             multi='sums', help="The amount without tax."),
         'amount_tax': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Taxes',
                                       store = {
             'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            'sale.order.line': [
+                (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+                (_get_order_state, ['state'], 10),
+            ]
         },
             multi='sums', help="The tax amount."),
         'amount_total': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Total',
                                         store = {
             'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+            'sale.order.line': [
+                (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+                (_get_order_state, ['state'], 10),
+            ]
         },
             multi='sums', help="The total amount."),
 
@@ -2369,7 +2388,7 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
         wf_service = netsvc.LocalService("workflow")
-        signal = 'cancel_r' if resource else 'cancel' 
+        signal = 'cancel_r' if resource else 'cancel'
 
         for sol in self.browse(cr, uid, ids, context=context):
             orig_qty = sol.product_uom_qty
