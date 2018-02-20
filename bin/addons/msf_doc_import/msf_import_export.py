@@ -392,7 +392,7 @@ class msf_import_export(osv.osv_memory):
             raise osv.except_osv(_('Info'), _('Header info fields must be the following: %s' % ', '.join(fields_needed_name).strip(', ')))
         for i, fn in enumerate(fields_needed_name):
             if fields_gotten[i] != fn:
-                raise osv.except_osv(_('Info'), _('Line %s: Expected header column %s got %s') % (i, fn, fields_gotten[i]))
+                raise osv.except_osv(_('Info'), _('Line %s: Expected header column %s got %s') % (i+1, fn, fields_gotten[i]))
 
         return True
 
