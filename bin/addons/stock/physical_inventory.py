@@ -151,6 +151,7 @@ class PhysicalInventory(osv.osv):
         'full_inventory': False,
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'physical.inventory', context=c),
         'has_bad_stock': False,
+        'discrepancies_generated': False,
     }
 
 
