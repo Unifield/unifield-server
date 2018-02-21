@@ -58428,8 +58428,9 @@ msgstr "Tous les produits"
 msgid "CAYMAN ISLANDS DOLLAR"
 msgstr "CAYMAN ISLANDS DOLLAR"
 
-#. module: account
+#. modules: account, sync_client
 #: field:account.partner.reconcile.process,progress:0
+#: field:msf.instance.cloud.progress,name:0
 msgid "Progress"
 msgstr "Avancement"
 
@@ -69650,7 +69651,7 @@ msgstr "Seuls les Produits de Kit peuvent être utilisés pour les Kits."
 msgid "Imported notes"
 msgstr "Notes importées"
 
-#. modules: sales_followup, account, purchase_override, procurement_request, res_currency_tables, documents_done, product, kit, sale_override, base, purchase_followup, sale, msf_profile
+#. modules: sales_followup, account, purchase_override, procurement_request, res_currency_tables, documents_done, product, kit, sale_override, base, purchase_followup, sale, msf_profile, sync_client
 #: view:account.invoice.cancel:0
 #: view:account.invoice.confirm:0
 #: view:base.language.install:0
@@ -69671,6 +69672,7 @@ msgstr "Notes importées"
 #: view:sale.open.invoice:0
 #: view:sale.order.change.currency:0
 #: view:sale.order.followup:0
+#: view:msf.instance.cloud.progress:0
 msgid "Close"
 msgstr "Fermer"
 
@@ -81579,6 +81581,7 @@ msgstr "Devise d'enregistrement"
 #: field:hr.payroll.validation,state:0
 #: field:cash.request,state:0
 #: view:sale.order:0
+#: field:msf.instance.cloud.progress,state:0
 #, python-format
 msgid "State"
 msgstr "Statut"
@@ -101339,3 +101342,36 @@ msgstr "Date de la dernière sauvegarde"
 #: field:backup.config,backup_path:0
 msgid "Last Backup"
 msgstr "Dernière Sauvegarde"
+
+#. module: sync_client
+#: field:msf.instance.cloud.progress,start:0
+msgid "Start Time"
+msgstr "Date de début"
+
+#. module: sync_client
+#: code:addons/sync_client/backup.py:113
+#: view:msf.instance.cloud.progress:0
+#, python-format
+msgid "Upload in progress"
+msgstr "Envoi en cours"
+
+#. module: sync_client
+#: model:ir.model,name:sync_client.model_msf_instance_cloud_progress
+msgid "Upload backup"
+msgstr "Envoi de la sauvegarde"
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:729
+#, python-format
+msgid "Backup successfully sent!"
+msgstr "Sauvegarde entièrement envoyée!"
+
+#. module: msf_instance
+#: code:addons/msf_instance/msf_instance.py:744
+#, python-format
+msgid "Error during upload:\n"
+"%s"
+msgstr "Erreur durant l'envoi:\n"
+"%s"
+
+

@@ -726,7 +726,7 @@ class msf_instance_cloud(osv.osv):
 
             monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name'], 'cloud_error': '', 'cloud_size': zip_size})
             if progress_obj:
-                progress_obj.write({'state': 'Done', 'name': 100, 'message': 'Backup successfully sent!'})
+                progress_obj.write({'state': 'Done', 'name': 100, 'message': _('Backup successfully sent!')})
             self._logger.info('OneDrive: upload backup ended')
             return True
 
@@ -741,7 +741,7 @@ class msf_instance_cloud(osv.osv):
                 error = e
             self._logger.error('OneDrive: unable to upload backup %s' % misc.ustr(error))
             if progress_obj:
-                progress_obj.write({'state': 'Done', 'message': "Error during upload:\n%s" % (misc.ustr(error))})
+                progress_obj.write({'state': 'Done', 'message': _("Error during upload:\n%s") % (misc.ustr(error))})
             raise
 
 
