@@ -1051,6 +1051,7 @@ class orm_template(object):
                 return (-1, res, 'Line ' + str(position) +' : ' + '!\n'.join(warning), '')
 
             try:
+                context.update({'from_import_data': True})
                 ir_model_data_obj._update(cr, uid, self._name,
                                           current_module, res, mode=mode, xml_id=xml_id,
                                           noupdate=noupdate, res_id=res_id, context=context)

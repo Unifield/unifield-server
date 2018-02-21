@@ -125,8 +125,15 @@ class BackupConfig(osv.osv):
                                        (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"),
                                         suffix, version))
                 version_instance_module = self.pool.get('sync.version.instance.monitor')
+                postgres_disk_space = version_instance_module._get_default_postgresql_disk_space(cr,
+                                                                                                 uid)
+                unifield_disk_space = version_instance_module._get_default_unifield_disk_space(cr,
+                                                                                               uid)
                 vals = {'version': version,
-                        'backup_path': outfile}
+                        'backup_path': outfile,
+                        'postgresql_disk_space': postgres_disk_space,
+                        'unifield_disk_space': unifield_disk_space,
+                        }
 
                 version_instance_module.create(cr, uid, vals, context=context)
 

@@ -193,7 +193,7 @@ class import_data(osv.osv_memory):
             ('crossovered.budget','Budget'),
             ('account.budget.post','Budget Line'),
             ('product.supplierinfo', 'Supplier Info'),
-            ], 'Object' ,required=True),
+        ], 'Object' ,required=True),
         'config_logo': fields.binary('Image', readonly='1'),
         'import_mode': fields.selection([('update', 'Update'), ('create', 'Create')], string='Update or create ?'),
     }
@@ -258,42 +258,27 @@ class import_data(osv.osv_memory):
                                    'product.asset.type': {'name': {}},
                                    'product.international.status': {'name': {}},
                                    }
-            # Product nomenclature
-            cr.execute('SELECT name, id FROM product_nomenclature;')
+            # Product nomenclature and complete name
+            temp_nomen_by_id = {}
+            cr.execute('''
+                SELECT n.id, coalesce(t.value,n.name), n.parent_id 
+                FROM product_nomenclature n 
+                LEFT JOIN ir_translation t ON t.lang='en_MF' AND t.name='product.nomenclature,name' AND t.res_id=n.id 
+                ORDER BY n.level;
+            ''')
             for nv in cr.dictfetchall():
-                self._cache[dbname]['product.nomenclature']['name'].update({nv['name']: nv['id']})
+                self._cache[dbname]['product.nomenclature']['name'].update({nv['coalesce']: nv['id']})
+                if nv['parent_id'] and temp_nomen_by_id.get(nv['parent_id'], False):
+                    temp_full_name = temp_nomen_by_id[nv['parent_id']] + ' | ' + nv['coalesce']
+                    temp_nomen_by_id.update({nv['id']: temp_full_name})
+                    self._cache[dbname]['product.nomenclature']['complete_name'].update({temp_full_name: nv['id']})
+                else:
+                    temp_nomen_by_id.update({nv['id']: nv['coalesce']})
+                    self._cache[dbname]['product.nomenclature']['complete_name'].update({nv['coalesce']: nv['id']})
             # Product category
             cr.execute('SELECT id, family_id FROM product_category;')
             for pc in cr.dictfetchall():
                 self.pool.get('product.nomenclature')._cache[dbname].update({pc['family_id']: pc['id']})
-            # Product nomenclature complete name
-            cr.execute('''SELECT id, name FROM
-(
-(SELECT
-    n0.id, n0.name AS name
-FROM product_nomenclature n0
-WHERE n0.level = 0)
-UNION
-(SELECT n1.id, n0.name ||' | '|| n1.name AS name
-FROM product_nomenclature n1
-  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
-WHERE n1.level = 1)
-UNION
-(SELECT n2.id, n0.name ||' | '|| n1.name ||' | '|| n2.name AS name
-FROM product_nomenclature n1
-  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
-  LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id
-WHERE n2.level = 2)
-UNION
-(SELECT n3.id, n0.name ||' | '|| n1.name ||' | '|| n2.name ||' | '|| n3.name AS name
-FROM product_nomenclature n1
-  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
-  LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id
-  LEFT JOIN product_nomenclature n3 ON n3.parent_id = n2.id
-WHERE n3.level = 3)
-) AS cn''')
-            for cnv in cr.dictfetchall():
-                self._cache[dbname]['product.nomenclature']['complete_name'].update({cnv['name']: cnv['id']})
             # Product UoM
             cr.execute('SELECT name, id FROM product_uom;')
             for uv in cr.dictfetchall():
@@ -476,13 +461,13 @@ WHERE n3.level = 3)
                     if impobj._name == 'product.product':
                         # UF-2254: Allow to update the product, use xmlid_code now for searching
                         ids_to_update = impobj.search(cr, uid, [('xmlid_code',
-                            '=', data['xmlid_code'])], order='NO_ORDER')
+                                                                 '=', data['xmlid_code'])], order='NO_ORDER')
                     elif impobj._name == 'product.nomenclature':
                         ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                            data['msfid'])], order='NO_ORDER')
+                                                                 data['msfid'])], order='NO_ORDER')
                     elif impobj._name == 'product.category':
                         ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                            data['msfid'])], order='NO_ORDER')
+                                                                 data['msfid'])], order='NO_ORDER')
 
                     if ids_to_update:
                         #UF-2170: remove the standard price value from the list for update product case
@@ -538,13 +523,14 @@ WHERE n3.level = 3)
 
             request_obj = self.pool.get('res.request')
             req_id = request_obj.create(cr, uid,
-                {'name': "%s %s"%(import_type, objname,),
-                'act_from': uid,
-                'act_to': uid,
-                'body': summary,
-                })
+                                        {'name': "%s %s"%(import_type, objname,),
+                                         'act_from': uid,
+                                         'act_to': uid,
+                                         'body': summary,
+                                         })
             if req_id:
                 request_obj.request_send(cr, uid, [req_id])
+                request_obj.request_close(cr, uid, [req_id])
 
             if nb_error:
                 errorfile.seek(0)
@@ -589,7 +575,7 @@ class import_product(osv.osv_memory):
     def import_csv(self, cr, uid, ids, context=None):
         # UFTP-327
         fg = self.pool.get('product.product').fields_get(cr, uid,
-            fields=['default_code', 'xmlid_code'], context=context)
+                                                         fields=['default_code', 'xmlid_code'], context=context)
         if fg and 'default_code' in fg and 'size' in fg['default_code']:
             context['import_data_field_max_size'] = {
                 'default_code': fg['default_code']['size'],

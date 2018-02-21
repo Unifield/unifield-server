@@ -166,7 +166,7 @@
             <font color="white"> </font>
         </para>
 
-        <blockTable colWidths="22.0,100.0,60.0,50.0,60.0,60.0,50.0,100.0,60.0,50.0,75.0,75.0" style="LinesTable" repeatRows="1">
+        <blockTable colWidths="22.0,115.0,60.0,35.0,60.0,60.0,50.0,100.0,60.0,50.0,75.0,75.0" style="LinesTable" repeatRows="1">
             <tr>
                 <td>
                     <para style="TextInfoBoldCenter">#</para>

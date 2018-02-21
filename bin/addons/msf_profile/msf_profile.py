@@ -51,6 +51,20 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF8.0
+    def set_sequence_main_nomen(self, cr, uid, *a, **b):
+        nom = ['MED', 'LOG', 'LIB', 'SRV']
+        nom_obj = self.pool.get('product.nomenclature')
+        seq = 0
+
+        for name in nom:
+            seq += 10
+            nom_ids = nom_obj.search(cr, uid, [('level', '=', 0), ('name', '=', name)])
+            if nom_ids:
+                nom_obj.write(cr, uid, nom_ids, {'sequence': seq})
+
+        return True
+
     # UF7.1 patches
     def recompute_amount(self, cr, uid, *a, **b):
         cr.execute("select min(id) from purchase_order_line where state in ('cancel', 'cancel_r') group by order_id")

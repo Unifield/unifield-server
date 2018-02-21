@@ -20,30 +20,30 @@
                     <field name="contains_dg" invisible="1" />
                     <field name="contains_kc" invisible="1" />
                     <field name="draft" invisible="1" />
+                    <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', True), ('contains_kc', '=', False)]}">
+                        <html>
+                            <p style="text-align: center; v-align: middle;">
+                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                                        <span><translate>You receive heat sensitive products, please refer to the appropriate procedure.</translate></span>
+                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                            </p>
+                        </html>
+                    </group>
+                    <group colspan="4" attrs="{'invisible': ['|', ('contains_kc', '=', True), ('contains_dg', '=', False)]}">
+                        <html>
+                            <p style="text-align: center; v-align: middle;">
+                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                                        <span><translate>You receive dangerous goods products, please refer to the appropriate procedure.</translate></span>
+                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                            </p>
+                        </html>
+                    </group>
                     <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', False), ('contains_kc', '=', False)]}">
                         <html>
                             <p style="text-align: center; v-align: middle;">
-                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
-                                You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure.
-                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
-                            </p>
-                        </html>
-                    </group>
-                    <group colspan="4" attrs="{'invisible': ['|', ('contains_kc', '=', False), '&amp;', ('contains_kc', '=', True), ('contains_dg', '=', True)]}">
-                        <html>
-                            <p style="text-align: center; v-align: middle;">
-                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
-                                You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure.
-                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
-                            </p>
-                        </html>
-                    </group>
-                    <group colspan="4" attrs="{'invisible': ['|', ('contains_dg', '=', False), '&amp;', ('contains_dg', '=', True), ('contains_kc', '=', True)]}">
-                        <html>
-                            <p style="text-align: center; v-align: middle;">
-                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
-                                You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure.
-                                <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
+                                        <span><translate>You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure.</translate></span>
+                                    <img src="/openerp/static/images/stock/gtk-dialog-warning.png" height="12" width="12" />
                             </p>
                         </html>
                     </group>

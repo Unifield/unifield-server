@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF8.0 -->
+        <record id="set_sequence_main_nomen" model="patch.scripts">
+            <field name="method">set_sequence_main_nomen</field>
+        </record>
+
         <!-- UF7.1 -->
         <record id="compute_amount" model="patch.scripts">
             <field name="method">recompute_amount</field>

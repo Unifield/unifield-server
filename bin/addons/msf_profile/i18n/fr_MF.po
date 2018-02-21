@@ -18160,7 +18160,7 @@ msgstr "Choisissez ici l'Unité de Mesure dans laquelle les prix et les quantit�
 #: field:sync.client.update_received,sequence_number:0
 #, python-format
 msgid "Sequence"
-msgstr "Sequence"
+msgstr "Séquence"
 
 #. module: msf_outgoing
 #: view:internal.picking.processor:0
@@ -25030,7 +25030,7 @@ msgstr "I/MI date du bon"
 msgid "Add Location and create new one"
 msgstr "Ajouter une Zone et créer une nouvelle"
 
-#. module: msf_audittrail
+#. modules: msf_audittrail, register_accounting
 #: view:audittrail.log.line:0
 msgid "Search Log"
 msgstr "Rechercher Journal de bord"
@@ -43069,7 +43069,7 @@ msgstr "Solde Compte"
 msgid "Items :"
 msgstr "Items :"
 
-#. modules: msf_audittrail, stock
+#. modules: msf_audittrail, stock, register_accounting
 #: view:audittrail.log.line:0
 #: selection:audittrail.log.line,method:0
 #: view:stock.move:0
@@ -81843,7 +81843,7 @@ msgstr "Asia/Chongqing"
 msgid "Move"
 msgstr "Transaction"
 
-#. modules: product_attributes, product, msf_audittrail, sync_client
+#. modules: product_attributes, product, msf_audittrail, sync_client, register_accounting
 #: view:audittrail.log.line:0
 #: selection:audittrail.log.line,method:0
 #: view:product.product:0
@@ -87839,7 +87839,7 @@ msgstr "Analytique"
 msgid "French (CH) / Français (CH)"
 msgstr "French (CH) / Français (CH)"
 
-#. module: msf_audittrail
+#. modules: msf_audittrail, register_accounting
 #: view:audittrail.log.line:0
 #: selection:audittrail.log.line,method:0
 msgid "Deletion"
@@ -101434,6 +101434,42 @@ msgstr "Vous avez déjà sélectionné cette devise."
 msgid "You must select at least one currency of transfers."
 msgstr "Vous devez sélectionner au moins une devise de virement."
 
+#. module: account
+#: code:addons/account/account.py:740
+#, python-format
+msgid "Default Debit and Credit Accounts are mandatory for the journal %s."
+msgstr "Les Comptes de Débit et Crédit par défaut sont obligatoires pour le journal %s."
+
+#. module: account
+#: code:addons/account/account.py:758
+#, python-format
+msgid "The corresponding Bank Journal is mandatory for the journal %s."
+msgstr "Le Journal de Banque correspondant est obligatoire pour le journal %s."
+
+#. module: account
+#: code:addons/account/account.py:762
+#, python-format
+msgid "The Corresponding Bank Journal must have the same currency as the journal %s."
+msgstr "Le Journal de Banque correspondant doit avoir la même devise que le journal %s."
+
+#. module: account
+#: code:addons/account/account.py:749
+#, python-format
+msgid "The currency is mandatory for the journal %s."
+msgstr "La devise est obligatoire pour le journal %s."
+
+#. module: account
+#: code:addons/account/account.py:727
+#, python-format
+msgid "The Analytic Journal is mandatory for the journal %s."
+msgstr "Le Journal Analytique est obligatoire pour le journal %s."
+
+#. module: account
+#: code:addons/account/account.py:766
+#, python-format
+msgid "The current instance should be used as Proprietary Instance for the journal %s."
+msgstr "L'instance actuelle devrait être utilisée comme Instance Propriétaire pour le journal %s."
+
 #. module: account_corrections
 #: code:addons/account_corrections/account_move_line.py:567
 #, python-format
@@ -101492,3 +101528,24 @@ msgstr "Ouvrir les derniers engagements importés"
 #: field:import.commitment.wizard,progress:0
 msgid "Import in progress"
 msgstr "Import en cours"
+
+#. module: product_nomenclature
+#: code:addons/product_nomenclature/product_nomenclature.py:742
+#, python-format
+msgid "No Product Category found for %s. Please contact an accounting member to create a new one for this family."
+msgstr "Aucune Catégorie de produit trouvée pour %s. Veuillez contacter un membre de l'équipe Finance pour créer une catégorie à cette famille de produit."
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "You receive dangerous goods products, please refer to the appropriate procedure."
+msgstr "Vous recevez des produits dangereux, merci de vous référer à la procédure appropriée."
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "You receive heat sensitive products, please refer to the appropriate procedure."
+msgstr "Vous recevez des produits sensibles à la chaleur, merci de vous référer à la procédure appropriée."
+
+#. module: msf_outgoing
+#: view:stock.incoming.processor:0
+msgid "You receive heat sensitive and dangerous goods products, please refer to the appropriate procedure."
+msgstr "Vous recevez des produits dangereux et sensibles à la chaleur, merci de vous référer à la procédure appropriée."

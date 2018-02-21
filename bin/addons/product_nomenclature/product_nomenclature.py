@@ -462,7 +462,7 @@ class product_nomenclature(osv.osv):
         'parent_id': fields.many2one('product.nomenclature', 'Parent Nomenclature', select=True),
         # TODO try to display child_ids on screen. which result ?
         'child_id': fields.one2many('product.nomenclature', 'parent_id', string='Child Nomenclatures'),
-        'sequence': fields.integer('Sequence', help="Gives the sequence order when displaying a list of product nomenclatures."),
+        'sequence': fields.integer('Sequence', help="Gives the sequence order when displaying a list of product nomenclatures.", select=1),
         'level': fields.integer('Level', size=256, select=1),
         'type': fields.selection([('mandatory', 'Mandatory'), ('optional', 'Optional')], 'Nomenclature Type', select=1),
         # corresponding level for optional levels, must be string, because integer 0 is treated as False, and thus required test fails
@@ -491,9 +491,18 @@ class product_nomenclature(osv.osv):
         'active': True,
     }
 
-    _order = "sequence, id"
+    _order = "sequence, level, msfid, id"
 
     _sql_constraints = [('check_msfid_unique', 'unique (msfid)', 'MSFID must be unique !')]
+
+
+    def _auto_init(self, cr, context=None):
+        super(product_nomenclature, self)._auto_init(cr, context)
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'product_nomenclature_sequence_level_msfid_id_idx'")
+        if not cr.fetchone():
+            cr.execute('CREATE INDEX product_nomenclature_sequence_level_msfid_id_idx ON product_nomenclature (sequence, level, msfid, id)')
+            cr.commit()
+
 
     def _check_recursion(self, cr, uid, ids, context=None):
         level = 100
@@ -733,9 +742,14 @@ stock moves will be posted in this account. If not set on the product, the one f
             if from_import_menu and nomen_obj._cache.get(cr.dbname, {}).get(vals['nomen_manda_2'], False):
                 vals['categ_id'] = nomen_obj._cache.get(cr.dbname, {}).get(vals['nomen_manda_2'], False)
             else:
-                vals['categ_id'] = self.pool.get('product.nomenclature').read(cr, uid, vals['nomen_manda_2'], ['category_id'], context=context)['category_id'][0]
-                if from_import_menu:
-                    nomen_obj._cache[cr.dbname][vals['nomen_manda_2']] = vals['categ_id']
+                categ_ids = self.pool.get('product.nomenclature').read(cr, uid, vals['nomen_manda_2'], ['category_id'], context=context)['category_id']
+                if categ_ids and len(categ_ids) > 0:
+                    vals['categ_id'] = categ_ids[0]
+                    if from_import_menu:
+                        nomen_obj._cache[cr.dbname][vals['nomen_manda_2']] = vals['categ_id']
+                else:
+                    raise osv.except_osv(_('Error'), _('No Product Category found for %s. Please contact an accounting member to create a new one for this family.')
+                                         % vals['nomenclature_description'])
         return super(product_template, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
