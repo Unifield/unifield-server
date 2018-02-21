@@ -195,5 +195,34 @@ action = {
         <field name="parent_id" ref="syncback_menu"/>
         <field name="action" ref="backup_download_open_wiz"/>
     </record>
+
+    <record id="upload_backup_form" model="ir.ui.view">
+      <field name="name">msf.instance.cloud.progress.form</field>
+      <field name="model">msf.instance.cloud.progress</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form string="Upload in progress">
+              <field name="start" />
+              <newline />
+              <field name="name" widget="progressbar"/>
+              <newline />
+              <field name="state" invisible="1"/>
+              <newline />
+              <field name="message" nolabel="1" colspan="4" widget="full_text" />
+              <button type="special" special="cancel" string="Close" colspan="2" icon="gtk-cancel"/>
+            <html>
+              <script language="javascript">
+                $(document).ready(function() {
+                    if ($('#state').val() != 'Done') {
+                        setTimeout(function(){
+                         location = ''
+                        },600)
+                    }
+                });
+              </script>
+            </html>
+        </form>
+      </field>
+    </record>
     </data>
 </openerp>

@@ -37,7 +37,6 @@ from urlparse import urlparse
 from mx import DateTime
 import logging
 
-
 class crypt():
     def __init__(self, password):
         password = bytes(password)
@@ -467,7 +466,7 @@ class msf_instance_cloud(osv.osv):
     _table = 'msf_instance'
     _name = 'msf.instance.cloud'
 
-    _logger = logging.getLogger('msf.instance.cloud')
+    _logger = logging.getLogger('cloud.backup')
     _empty_pass = 'X' * 10
 
     def _get_cloud_set_password(self, cr, uid, ids, fields, arg, context=None):
@@ -667,14 +666,22 @@ class msf_instance_cloud(osv.osv):
 
         return True
 
-    def send_backup(self, cr, uid, context=None):
+    def send_backup(self, cr, uid, progress=False, context=None):
         day_abr = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
         monitor = self.pool.get('sync.version.instance.monitor')
         bck_download = self.pool.get('backup.download')
 
         local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
         monitor_ids = monitor.search(cr, uid, [('instance_id', '=', local_instance.id)], context=context)
-
+        param_obj = self.pool.get('ir.config_parameter')
+        buffer_size = param_obj.get_param(cr, 1, 'CLOUD_BUFFER_SIZE')
+        if not buffer_size:
+            buffer_size = 10 * 1024 * 1024
+            param_obj.set_param(cr, 1, 'CLOUD_BUFFER_SIZE',  buffer_size)
+            cr.commit()
+        buffer_size = int(buffer_size)
+        self._logger.info('OneDrive: upload backup started, buffer_size: %d bytes' % (buffer_size, ))
+        progress_obj = False
         try:
             if not config.get('send_to_onedrive') and not misc.use_prod_sync(cr):
                 raise osv.except_osv(_('Warning'), _('Only production instances are allowed !'))
@@ -709,10 +716,18 @@ class msf_instance_cloud(osv.osv):
 
             zip_size = os.path.getsize(temp_fileobj.name)
             today = DateTime.now()
-            dav.upload(temp_fileobj, '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week]))
+
+            if progress:
+                progress_obj = self.pool.get('msf.instance.cloud.progress').browse(cr, uid, progress)
+
+
+            dav.upload(temp_fileobj, '%s-%s.zip' % (local_instance.instance, day_abr[today.day_of_week]), buffer_size=buffer_size, log=True, progress_obj=progress_obj)
             temp_fileobj.close()
 
             monitor.create(cr, uid, {'cloud_date': today.strftime('%Y-%m-%d %H:%M:%S'), 'cloud_backup': bck['name'], 'cloud_error': '', 'cloud_size': zip_size})
+            if progress_obj:
+                progress_obj.write({'state': 'Done', 'name': 100, 'message': 'Backup successfully sent!'})
+            self._logger.info('OneDrive: upload backup ended')
             return True
 
         except Exception, e:
@@ -720,6 +735,13 @@ class msf_instance_cloud(osv.osv):
             if monitor_ids:
                 monitor.write(cr, uid, monitor_ids, {'cloud_error': '%s'%e})
                 cr.commit()
+            if isinstance(e, osv.except_osv):
+                error = e.value
+            else:
+                error = e
+            self._logger.error('OneDrive: unable to upload backup %s' % misc.ustr(error))
+            if progress_obj:
+                progress_obj.write({'state': 'Done', 'message': "Error during upload:\n%s" % (misc.ustr(error))})
             raise
 
 

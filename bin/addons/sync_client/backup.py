@@ -87,10 +87,10 @@ class BackupConfig(osv.osv):
         'beforepatching': False,
     }
 
-    def _send_to_cloud_bg(self, cr, uid, context=None):
+    def _send_to_cloud_bg(self, cr, uid, wiz_id, context=None):
         new_cr = pooler.get_db(cr.dbname).cursor()
         try:
-            self.pool.get('msf.instance.cloud').send_backup(new_cr, uid, context)
+            self.pool.get('msf.instance.cloud').send_backup(new_cr, uid, progress=wiz_id, context=context)
         except Exception, e:
             self._error = e
         finally:
@@ -100,14 +100,28 @@ class BackupConfig(osv.osv):
 
     def send_to_cloud(self, cr, uid, ids, context=None):
         self._error = ''
+        wiz_id = self.pool.get('msf.instance.cloud.progress').create(cr, uid, {}, context=context)
         new_thread = threading.Thread(
             target=self._send_to_cloud_bg,
-            args=(cr, uid, context)
+            args=(cr, uid, wiz_id, context)
         )
         new_thread.start()
-        new_thread.join(10.0)
+        new_thread.join(3.0)
         if new_thread.isAlive():
-            raise osv.except_osv(_('OK'), _('Process to send backup is in progress ... please check Version Instances Monitor'))
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'upload_backup_form')[1]
+            return {
+                'name':_("Upload in progress"),
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'view_type': 'form',
+                'res_model': 'msf.instance.cloud.progress',
+                'res_id': wiz_id,
+                'type': 'ir.actions.act_window',
+                'target': 'new',
+                'context': context,
+            }
+
+            #raise osv.except_osv(_('OK'), _('Process to send backup is in progress ... please check Version Instances Monitor'))
         if self._error:
             raise self._error
         return True
@@ -334,3 +348,23 @@ class backup_download(osv.osv):
         }
 
 backup_download()
+
+class msf_instance_cloud_progress(osv.osv_memory):
+    _name = 'msf.instance.cloud.progress'
+    _description = 'Upload backup'
+
+    _columns = {
+        'name': fields.float('Progress', readonly='1'),
+        'state': fields.char('State', size=64, readonly='1'),
+        'start': fields.datetime('Start Time', readonly='1'),
+        'message': fields.text('Message', readonly='1'),
+    }
+
+    _defaults = {
+        'state': 'In Progress',
+        'name': 0,
+        'start': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'message': '',
+    }
+msf_instance_cloud_progress()
+

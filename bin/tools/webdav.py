@@ -9,6 +9,8 @@ from office365.runtime.utilities.request_options import RequestOptions
 from office365.runtime.utilities.http_method import HttpMethod
 import cgi
 import uuid
+import logging
+import os
 
 class ConnectionFailed(Exception):
     pass
@@ -51,11 +53,22 @@ class Client(object):
             raise Exception(result.content)
         return True
 
-    def upload(self, fileobj, remote_path):
+    def upload(self, fileobj, remote_path, buffer_size=None, log=False, progress_obj=False):
         iid = uuid.uuid1()
 
+        if progress_obj:
+            log = True
+
+        if log:
+            logger = logging.getLogger('cloud.backup')
+            try:
+                size = os.path.getsize(fileobj.name)
+            except:
+                size = None
+
         offset = -1
-        buffer_size = 1024 * 1024
+        if not buffer_size:
+            buffer_size = 10* 1024 * 1024
         x = ""
         webUri = '%s%s' % (self.path, remote_path)
         while True:
@@ -81,6 +94,17 @@ class Client(object):
             result = requests.post(url=request_url, data=x, headers=options.headers, auth=options.auth)
             if result.status_code not in (200, 201):
                 raise Exception(result.content)
+
+            if logger and offset and offset % buffer_size*10 == 0:
+                percent_txt = ''
+                if size:
+                    percent = round(offset*100/size)
+                    percent_txt = '%d%%' % percent
+                    if progress_obj:
+                        progress_obj.write({'name': percent})
+
+                logger.info('OneDrive: %d bytes sent on %s bytes %s' % (offset, size or 'unknown', percent_txt))
+
             x = fileobj.read(buffer_size)
             if not x:
                 break
