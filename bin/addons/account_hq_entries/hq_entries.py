@@ -475,6 +475,7 @@ class hq_entries(osv.osv):
             for line in self.browse(cr, uid, ids):
                 if line.account_id_first_value and line.account_id_first_value.is_not_hq_correctible and not account.is_not_hq_correctible:
                     raise osv.except_osv(_('Warning'), _('Change Expat salary account is not allowed!'))
+        self.check_ad_change_allowed(cr, uid, ids, vals, context=context)
         return super(hq_entries, self).write(cr, uid, ids, vals, context)
 
     def unlink(self, cr, uid, ids, context=None):
@@ -541,6 +542,29 @@ class hq_entries(osv.osv):
                     raise mission_closed_except
                 elif p.number == 12 and not self._is_dec_period_open(cr, uid, context):
                     raise mission_closed_except
+
+    def check_ad_change_allowed(self, cr, uid, ids, vals, context=None):
+        """
+        Raises a warning if the HQ entry Analytic Distribution is about to be modified although the general account is
+        set as "is_not_ad_correctable"
+        :param ids: ids of the HQ Entries
+        :param vals: new values about to be written
+        """
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            account_obj = self.pool.get('account.account')
+            fields_list = ['account_id', 'cost_center_id', 'free_1_id', 'free_2_id', 'destination_id', 'analytic_id']
+            for hq_entry in self.browse(cr, uid, ids, fields_to_fetch=fields_list, context=context):
+                account_id = vals.get('account_id') and account_obj.browse(cr, uid, vals['account_id'], fields_to_fetch=['is_not_ad_correctable'], context=context)
+                hq_account = account_id or hq_entry.account_id
+                if hq_account.is_not_ad_correctable:
+                    for field in ['cost_center_id', 'destination_id', 'analytic_id', 'free_1_id', 'free_2_id']:
+                        value_changed = vals.get(field) and (not getattr(hq_entry, field) or getattr(hq_entry, field).id != vals[field])
+                        value_removed = getattr(hq_entry, field) and field in vals and not vals[field]
+                        if value_changed or value_removed:
+                            raise osv.except_osv(_('Warning'), _('The account %s - %s is set as \"Prevent correction on'
+                                                                 ' analytic accounts\".') % (hq_account.code, hq_account.name))
 
     def auto_import(self, cr, uid, file_to_import):
         import base64

@@ -31,7 +31,7 @@ class account_account(osv.osv):
     _columns = {
         'is_not_hq_correctible': fields.boolean("Prevent correction on account codes",
                                                 help="If checked, this attribute will prevent the user from correcting the account on the entries"),
-        'is_not_ad_correctable': fields.boolean("Prevent correction on analytic distribution",
+        'is_not_ad_correctable': fields.boolean("Prevent correction on analytic accounts",
                                                 help="If this option is checked AD correction on this account will be prevented in the HQ entries and via the correction wizard.")
     }
 

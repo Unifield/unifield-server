@@ -53,6 +53,7 @@ class hq_entries_split_lines(osv.osv_memory):
         'ref': fields.char("Reference", size=255),
         'account_id': fields.many2one("account.account", "Account", domain=[('type', '!=', 'view')], required=True),
         'account_hq_correctible': fields.boolean("Is HQ correctible?"),
+        'is_not_ad_correctable': fields.boolean("Prevent correction on analytic accounts", readonly=True),
         'amount': fields.float('Amount', required=True),
         'destination_id': fields.many2one('account.analytic.account', "Destination", domain=[('category', '=', 'DEST'), ('type', '!=', 'view')], required=True),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", domain=[('category', '=', 'OC'), ('type', '!=', 'view')], required=True),
@@ -112,6 +113,17 @@ class hq_entries_split_lines(osv.osv_memory):
         account = original_line and getattr(original_line, 'account_id', False) or False
         if account:
             res = getattr(account, 'is_not_hq_correctible', False)
+        return res
+
+    def onchange_hq_entry_account(self, cr, uid, ids, account_id):
+        """
+        Blocks AD correction if the account used is set as 'Prevent correction on analytic accounts'
+        """
+        account_obj = self.pool.get('account.account')
+        res = {}
+        if account_id:
+            account = account_obj.browse(cr, uid, account_id, fields_to_fetch=['is_not_ad_correctable'])
+            res['value'] = {'is_not_ad_correctable': account.is_not_ad_correctable}
         return res
 
     _defaults = {

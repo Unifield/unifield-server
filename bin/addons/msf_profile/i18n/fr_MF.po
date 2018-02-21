@@ -101192,10 +101192,17 @@ msgstr "Import en cours"
 
 #. module: account_hq_entries
 #: field:account.account,is_not_ad_correctable:0
-msgid "Prevent correction on analytic distribution"
-msgstr "Empêcher la correction sur la distribution analytique"
+#: field:hq.entries.split.lines,is_not_ad_correctable:0
+msgid "Prevent correction on analytic accounts"
+msgstr "Empêcher la correction sur les comptes analytiques"
 
 #. module: account_hq_entries
 #: help:account.account,is_not_ad_correctable:0
 msgid "If this option is checked AD correction on this account will be prevented in the HQ entries and via the correction wizard."
 msgstr "Si cette option est cochée la correction de la Distribution Analytique sur ce compte sera empêchée dans les Écritures HQ et via l'assistant de correction."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:566
+#, python-format
+msgid "The account %s - %s is set as \"Prevent correction on analytic accounts\"."
+msgstr "Le compte %s - %s est défini comme \"Empêcher la correction sur les comptes analytiques\"."
