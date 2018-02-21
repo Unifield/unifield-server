@@ -379,10 +379,8 @@ class msf_import_export(osv.osv_memory):
         parent_model = False
         if model == 'supplier.catalogue.line':
             parent_model = 'supplier.catalogue'
-            selected_object = wiz.supplier_catalogue_id.name
         elif model == 'product.list.line':
             parent_model = 'product.list'
-            selected_object = wiz.product_list_id.name
 
         # get displayble name with technical name in order to be able to check the import file:
         fields_needed = MODEL_DATA_DICT[wiz.model_list_selection].get('header_info') # technical name
@@ -397,20 +395,27 @@ class msf_import_export(osv.osv_memory):
             if len(row.cells) > 2:
                 context['row'] = row
                 break # header info end
+
             # check if the selected catalogue or product list match with the one we are trying to import:
-            if wiz.model_list_selection in id_check:
-                for field in id_check[wiz.model_list_selection]:
-                    if row.cells[0].data == self.get_displayable_name(cr, uid, parent_model, field, context=context) and \
-                    row.cells[1].data == selected_object:
-                        id_check[wiz.model_list_selection][field] = True
+            if wiz.model_list_selection == 'product_list_update':
+                if row.cells[0].data == self.get_displayable_name(cr, uid, parent_model, 'name', context=context) and row.cells[1].data == wiz.product_list_id.name:
+                    id_check[wiz.model_list_selection]['name'] = True
+            elif wiz.model_list_selection == 'supplier_catalogue_update':
+                if row.cells[0].data == self.get_displayable_name(cr, uid, parent_model, 'name', context=context) and row.cells[1].data == wiz.supplier_catalogue_id.name:
+                    id_check[wiz.model_list_selection]['name'] = True
+                elif row.cells[0].data == self.get_displayable_name(cr, uid, parent_model, 'partner_id', context=context) and \
+                row.cells[1].data == wiz.supplier_catalogue_id.partner_id.name:
+                    id_check[wiz.model_list_selection]['partner_id'] = True
+             
             fields_gotten.append(row.cells[0].data)
 
         if not all([id_check[wiz.model_list_selection][x] for x in id_check[wiz.model_list_selection]]):
             raise osv.except_osv(
                 _('Error'), 
-                _("%s selected (%s) doesn't match with the one you are trying to import." % (
-                    'Product list' if wiz.model_list_selection == 'product_list_update' else 'Supplier catalogue',
-                    selected_object, 
+                _("%s selected (%s) doesn't match with the one you are trying to import. Please check following header fields: %s." % (
+                    _('Product list') if wiz.model_list_selection == 'product_list_update' else _('Supplier catalogue'),
+                    wiz.product_list_id.name if wiz.model_list_selection == 'product_list_update' else wiz.supplier_catalogue_id.name, 
+                    ', '.join([self.get_displayable_name(cr, uid, parent_model, x, context=context) for x in id_check[wiz.model_list_selection].keys()]).strip(' ,')
                 ))
             )
 
