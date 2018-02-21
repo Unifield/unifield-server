@@ -277,7 +277,6 @@ MODEL_DATA_DICT = {
         ],
         'required_field_list': [
             'name.default_code',
-            'name.name',
         ],
     },
     'product_list': {

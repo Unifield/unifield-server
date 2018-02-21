@@ -832,12 +832,12 @@ WHERE n3.level = 3)
                     ], context=context)
                 if import_brw.model_list_selection == 'product_list_update':
                     data['list_id'] = import_brw.product_list_id.id
-                    ids_to_update = impobj.search(cr, uid, [('list_id', '=', import_brw.product_list_id.id), ('name', '=', data['name']), ], context=context)
                     new_product_id = self.pool.get('product.product').search(cr, uid, [('default_code', '=', line_data[0].strip())], context=context)
+                    if new_product_id:
+                        ids_to_update = impobj.search(cr, uid, [('list_id', '=', import_brw.product_list_id.id), ('name', '=', new_product_id[0])], context=context)
                     data['name'] = new_product_id and new_product_id[0] or False
 
                 if ids_to_update:
-                    #UF-2170: remove the standard price value from the list for update product case
                     if 'standard_price' in data:
                         del data['standard_price']
                     if import_brw.model_list_selection == 'product_list_update' and 'name' in data:
