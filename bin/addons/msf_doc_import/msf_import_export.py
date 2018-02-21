@@ -23,6 +23,7 @@ import base64
 import time
 import threading
 import logging
+import re
 
 import pooler
 import tools
@@ -829,16 +830,24 @@ WHERE n3.level = 3)
                         ('catalogue_id', '=', import_brw.supplier_catalogue_id.id), 
                         ('line_number', '=', data['line_number']),
                     ], context=context)
+                if import_brw.model_list_selection == 'product_list_update':
+                    data['list_id'] = import_brw.product_list_id.id
+                    ids_to_update = impobj.search(cr, uid, [('list_id', '=', import_brw.product_list_id.id), ('name', '=', data['name']), ], context=context)
+                    new_product_id = self.pool.get('product.product').search(cr, uid, [('default_code', '=', line_data[0].strip())], context=context)
+                    data['name'] = new_product_id and new_product_id[0] or False
 
                 if ids_to_update:
                     #UF-2170: remove the standard price value from the list for update product case
                     if 'standard_price' in data:
                         del data['standard_price']
-                    impobj.write(cr, uid, ids_to_update, data)
+                    if import_brw.model_list_selection == 'product_list_update' and 'name' in data:
+                        del data['name']
+                    impobj.write(cr, uid, ids_to_update, data, context=context)
                     nb_update_success += 1
 
                 else:
-                    impobj.create(cr, uid, data, context={'from_import_menu': True})
+                    context['from_import_menu']=  True
+                    impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
             except osv.except_osv, e:
                 logging.getLogger('import data').info('Error %s' % e.value)

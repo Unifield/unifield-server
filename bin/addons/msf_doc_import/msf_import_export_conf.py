@@ -272,11 +272,12 @@ MODEL_DATA_DICT = {
         ],
         'header_list': [
             'name.default_code',
-            'name',
+            'name.name',
             'comment',
         ],
         'required_field_list': [
-            'name',
+            'name.default_code',
+            'name.name',
         ],
     },
     'product_list': {
