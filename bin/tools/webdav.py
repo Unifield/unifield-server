@@ -95,7 +95,7 @@ class Client(object):
             if result.status_code not in (200, 201):
                 raise Exception(result.content)
 
-            if log and offset and offset % buffer_size*10 == 0:
+            if log and offset and offset % (buffer_size*5) == 0:
                 percent_txt = ''
                 if size:
                     percent = round(offset*100/size)
