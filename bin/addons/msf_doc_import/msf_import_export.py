@@ -533,6 +533,7 @@ class msf_import_export(osv.osv_memory):
             }, context=context)
             wiz.total_lines_to_import = nb_rows - len(MODEL_DATA_DICT[selection].get('header_info', []))
 
+            # set rows' iterator to the good index:
             if MODEL_DATA_DICT[selection].get('header_info'):
                 for row in rows:
                     if len(row.cells) > 2:
@@ -715,6 +716,7 @@ WHERE n3.level = 3)
         nb_update_success = 0
         col_datas = {}
         nb_imported_lines = 0
+        nb_lines_deleted = 0
         header_codes = [x[3] for x in headers]
         if import_data_obj.pre_hook.get(impobj._name):
             # for headers mod.
@@ -839,6 +841,7 @@ WHERE n3.level = 3)
 
                 if data.get('comment') == '[DELETE]':
                     impobj.unlink(cr, uid, ids_to_update, context=context)
+                    nb_lines_deleted += len(ids_to_update)
                 elif ids_to_update:
                     if 'standard_price' in data:
                         del data['standard_price']
@@ -888,6 +891,7 @@ WHERE n3.level = 3)
         info_msg = _('''Processing of file completed in %s second(s)!
 - Total lines to import: %s
 - Total lines %s: %s %s
+- Total lines deleted: %s
 - Total lines with errors: %s %s
 %s
         ''') % (
@@ -898,6 +902,7 @@ WHERE n3.level = 3)
             warn_msg and _('(%s line(s) with warning - see warning messages below)') % (
                 len(import_warnings.keys()) or '',
             ),
+            nb_lines_deleted,
             err_msg and len(import_errors.keys()) or 0,
             err_msg and _('(see error messages below)'),
             err_msg and _("no data will be imported until all the error messages are corrected") or '',
