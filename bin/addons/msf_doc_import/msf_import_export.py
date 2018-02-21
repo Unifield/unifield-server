@@ -388,6 +388,15 @@ class msf_import_export(osv.osv_memory):
 
         fields_gotten = []
         for index, row in enumerate(rows):
+            if wiz.model_list_selection == 'product_list_update':
+                if row.cells[0].data == self.get_displayable_name(cr, uid, 'product.list', 'name', context=context) and row.cells[1].data != wiz.product_list_id.name:
+                    raise osv.except_osv(
+                        _('Error'), 
+                        _("Product list selected (%s) doesn't match with the one you are trying to import (%s)" % (wiz.product_list_id.name, row.cells[1].data))
+                    )
+            elif wiz.model_list_selection == 'supplier_catalogue_update':
+                pass
+
             if len(row.cells) > 2:
                 context['row'] = row
                 break # header info end
