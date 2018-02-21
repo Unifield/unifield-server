@@ -146,7 +146,7 @@ class sale_order_line(osv.osv):
         new_sol_id = False
         for sol in self.browse(cr, uid, ids, context=context):
             new_sol_id = self.copy(cr, uid, sol.id, {
-                'resourced_original_line': sol.id, 
+                'resourced_original_line': sol.id,
                 'resourced_original_remote_line': sol.sync_linked_pol,
                 'resourced_at_state': sol.state,
                 'is_line_split': False,
@@ -197,7 +197,7 @@ class sale_order_line(osv.osv):
         # generate sync message manually :
         return_info = {}
         for sol_id in ids:
-            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info,
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
@@ -217,7 +217,7 @@ class sale_order_line(osv.osv):
         # generate sync message manually :
         return_info = {}
         for sol_id in ids:
-            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info,
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
@@ -237,7 +237,7 @@ class sale_order_line(osv.osv):
         # generate sync message
         return_info = {}
         for sol_id in ids:
-            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info,
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
@@ -271,7 +271,7 @@ class sale_order_line(osv.osv):
         # generate sync message manually :
         return_info = {}
         for sol_id in ids:
-            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info,
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
@@ -368,7 +368,7 @@ class sale_order_line(osv.osv):
 
         for sol in self.browse(cr, uid, ids, context=context):
             out_moves_to_cancel = self.pool.get('stock.move').search(cr, uid, [
-                ('sale_line_id', '=', sol.id), 
+                ('sale_line_id', '=', sol.id),
                 ('type', '=', 'out'),
                 ('state', 'in', ['assigned', 'confirmed']),
             ], context=context)
@@ -465,16 +465,18 @@ class sale_order_line(osv.osv):
                     self.pool.get('stock.picking').draft_force_assign(cr, uid, [pick_to_use], context=context)
                 # run check availability on PICK/OUT:
                 if picking_data['type'] == 'out' and picking_data['subtype'] in ['picking', 'standard']:
-                    self.pool.get('stock.picking').action_assign(cr, uid, [pick_to_use], context=context)
+                    self.pool.get('stock.move').action_assign(cr, uid, [move_id])
+                    self.pool.get('stock.move').fefo_update(cr, uid, [move_id], context=context)
+                #    self.pool.get('stock.picking').action_assign(cr, uid, [pick_to_use], context=context)
                 if picking_data['type'] == 'internal' and sol.type == 'make_to_stock' and sol.order_id.procurement_request:
-                    wf_service.trg_validate(uid, 'stock.picking', pick_to_use, 'button_confirm', cr)                    
+                    wf_service.trg_validate(uid, 'stock.picking', pick_to_use, 'button_confirm', cr)
 
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
 
         # generate sync message:
         return_info = {}
         for sol_id in ids:
-            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info,
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
         return True
 
@@ -486,7 +488,7 @@ class sale_order_line(osv.osv):
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
-            ids = [ids] 
+            ids = [ids]
 
         for sol in self.browse(cr, uid, ids, context=context):
             to_write = {}
@@ -522,7 +524,7 @@ class sale_order_line(osv.osv):
         # generate sync message:
         return_info = {}
         for sol in self.browse(cr, uid, ids, context=context):
-            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol.id, return_info, 
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol.id, return_info,
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
@@ -560,7 +562,7 @@ class sale_order_line(osv.osv):
         # generate sync message:
         return_info = {}
         for sol_id in ids:
-            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info,
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
@@ -585,11 +587,11 @@ class sale_order_line(osv.osv):
         # generate sync message for original FO line:
         return_info = {}
         for sol_id in ids:
-            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info, 
+            self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', sol_id, return_info,
                                                                                   'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         # generate sync message for resourced line:
-        self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', resourced_sol, return_info, 
+        self.pool.get('sync.client.message_rule')._manual_create_sync_message(cr, uid, 'sale.order.line', resourced_sol, return_info,
                                                                               'purchase.order.line.sol_update_original_pol', self._logger, check_identifier=False, context=context)
 
         return True
