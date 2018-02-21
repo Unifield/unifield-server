@@ -837,7 +837,9 @@ WHERE n3.level = 3)
                         ids_to_update = impobj.search(cr, uid, [('list_id', '=', import_brw.product_list_id.id), ('name', '=', new_product_id[0])], context=context)
                     data['name'] = new_product_id and new_product_id[0] or False
 
-                if ids_to_update:
+                if data.get('comment') == '[DELETE]':
+                    impobj.unlink(cr, uid, ids_to_update, context=context)
+                elif ids_to_update:
                     if 'standard_price' in data:
                         del data['standard_price']
                     if import_brw.model_list_selection == 'product_list_update' and 'name' in data:
