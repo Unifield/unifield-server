@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <!-- UF7.2 -->
+        <record id="send_instance_uuid" model="patch.scripts">
+            <field name="method">send_instance_uuid</field>
+        </record>
+
         <!-- UF7.1 -->
         <record id="compute_amount" model="patch.scripts">
             <field name="method">recompute_amount</field>
