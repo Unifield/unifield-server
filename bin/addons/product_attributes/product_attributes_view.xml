@@ -70,7 +70,9 @@
                         </group>
                         <group colspan="4" col="2">
                             <separator string="Description" colspan="2"/>
-                            <field name="name" string="Description"/>
+                            <field name="description_translatable" invisible="1" />
+                            <field name="name" string="Description"
+                                   attrs="{'readonly':[('description_translatable', '=', False)]}" />
                             <field name="old_code"/>
                             <field name="sale_ok" invisible="1" />
                             <field name="purchase_ok" invisible="1" />
