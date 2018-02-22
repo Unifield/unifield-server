@@ -432,7 +432,7 @@ class PhysicalInventory(osv.osv):
         create_discrepancy_lines = [ (0,0,discrepancy) for discrepancy in new_discrepancies ]
 
         # Do the actual write
-        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': create_discrepancy_lines, 'discrepancies_generated': True, 'has_bad_stock': False}, context=context)
+        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': create_discrepancy_lines, 'discrepancies_generated': False, 'has_bad_stock': False}, context=context)
 
 
         self._update_total_product(cr, uid, inventory_id,
@@ -485,8 +485,9 @@ class PhysicalInventory(osv.osv):
                                   "line_id": line["id"]})
 
         if anomalies:
-            return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Warning', anomalies)
+            return self.pool.get('physical.inventory.import.wizard').action_box(cr, uid, 'Warning', anomalies, inventory_id=inventory_id)
         else:
+            self.write(cr, uid, inventory_id, {'discrepancies_generated': True}, context=context)
             return {}
 
 

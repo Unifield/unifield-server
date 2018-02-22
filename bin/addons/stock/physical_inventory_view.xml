@@ -117,7 +117,7 @@
                                     <field name="discrepancy_lines_percent_absvalue" nolabel="1" />
                                 </group>
                             </group>
-                            <group col="4" colspan="4" attrs="{'invisible': [('state', 'not in', ['counted', 'validated'])]}">
+                            <group col="4" colspan="4" attrs="{'invisible': [('discrepancies_generated', '=', False)]}">
                                 <button name="export_xls_discrepancy_report" string="Export XLS discrepancy report"
                                     type="object" icon="gtk-print" colspan="4"/>
                                 <field name="file_to_import2" colspan="2"/>

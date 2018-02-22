@@ -9,7 +9,8 @@ class PhysicalInventoryImportWizard(osv.osv_memory):
 
     _columns = {
         'message': fields.text('Message', readonly=True),
-        'line_ids': fields.one2many('physical.inventory.import.line.wizard', 'parent_id', string='Details')
+        'line_ids': fields.one2many('physical.inventory.import.line.wizard', 'parent_id', string='Details'),
+        'inventory_id': fields.many2one('physical.inventory', 'PI', readonly=1),
     }
 
     def action_close(self, cr, uid, ids, context=None):
@@ -52,7 +53,9 @@ class PhysicalInventoryImportWizard(osv.osv_memory):
                 break
         else:
             # Not found, all actions are defined
-            self.pool.get('physical.inventory').pre_process_discrepancies(cr, uid, items, context=context)
+            inventory_obj = self.pool.get('physical.inventory')
+            inventory_obj.write(cr, uid, {'discrepancies_generated': True}, context=context)
+            inventory_obj.pre_process_discrepancies(cr, uid, items, context=context)
             return self.close_action()
         # Found, an action is missing on a line
         return self.no_action()
@@ -68,14 +71,14 @@ class PhysicalInventoryImportWizard(osv.osv_memory):
     def get_view_by_name(self, cr, uid, name):
         return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', name)[1]
 
-    def action_box(self, cr, button_uid, title, items=None, context=None):
+    def action_box(self, cr, button_uid, title, items=None, inventory_id=False, context=None):
         uid = hasattr(button_uid, 'realUid') and button_uid.realUid or button_uid
         result = {
             'name': title,
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': self._name,
-            'res_id': self.create(cr, uid, {'line_ids': [(0, 0, item) for item in items or []]}, context=context),
+            'res_id': self.create(cr, uid, {'line_ids': [(0, 0, item) for item in items or []], 'inventory_id': inventory_id}, context=context),
             'type': 'ir.actions.act_window',
             'view_id': [self.get_view_by_name(cr, uid, 'physical_inventory_action_box_wizard_view')],
             'target': 'new',
