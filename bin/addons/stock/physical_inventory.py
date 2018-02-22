@@ -1352,7 +1352,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
         'location_id': fields.related('inventory_id', 'location_id', type='many2one', relation='stock.location',  string='location_id', readonly=True),
 
         # Product
-        'product_id': fields.many2one('product.product', 'Product', required=True),
+        'product_id': fields.many2one('product.product', 'Product', required=True, readonly=True),
         'default_code': fields.related('product_id', 'default_code',  type='char', size=64, readonly=True, select=True, write_relate=False, store=True),
 
         'product_uom_id': fields.many2one('product.uom', 'UOM', required=True, readonly=True),
@@ -1365,7 +1365,7 @@ class PhysicalInventoryDiscrepancy(osv.osv):
 
         # BN / ED
         'batch_number': fields.char(_('Batch number'), size=64, readonly=True),
-        'expiry_date': fields.date(string=_('Expiry date')),
+        'expiry_date': fields.date(string=_('Expiry date'), readonly=True),
 
         # Count
         'line_no': fields.integer(string=_('Line #'), readonly=True, select=1),
