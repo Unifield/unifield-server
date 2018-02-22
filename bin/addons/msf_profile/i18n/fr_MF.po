@@ -101206,3 +101206,9 @@ msgstr "Si cette option est cochée la correction de la Distribution Analytique 
 #, python-format
 msgid "The account %s - %s is set as \"Prevent correction on analytic accounts\"."
 msgstr "Le compte %s - %s est défini comme \"Empêcher la correction sur les comptes analytiques\"."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:150
+#, python-format
+msgid "The AD of the original entry is incomplete."
+msgstr "La Distribution Analytique de l'écriture d'origine est incomplète."

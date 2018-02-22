@@ -53,7 +53,7 @@ class hq_entries_split_lines(osv.osv_memory):
         'ref': fields.char("Reference", size=255),
         'account_id': fields.many2one("account.account", "Account", domain=[('type', '!=', 'view')], required=True),
         'account_hq_correctible': fields.boolean("Is HQ correctible?"),
-        'is_not_ad_correctable': fields.boolean("Prevent correction on analytic accounts", readonly=True),
+        'is_not_ad_correctable': fields.boolean("Prevent correction on analytic accounts"),
         'amount': fields.float('Amount', required=True),
         'destination_id': fields.many2one('account.analytic.account', "Destination", domain=[('category', '=', 'DEST'), ('type', '!=', 'view')], required=True),
         'cost_center_id': fields.many2one('account.analytic.account', "Cost Center", domain=[('category', '=', 'OC'), ('type', '!=', 'view')], required=True),
@@ -137,6 +137,19 @@ class hq_entries_split_lines(osv.osv_memory):
         'account_hq_correctible': lambda obj, cr, uid, c: obj._get_hq_correctible(cr, uid, context=c)
     }
 
+    def _update_ad(self, wizard, vals):
+        """
+        Updates vals dictionary with the AD to use IF it is not retrieved from the wizard because it is readonly.
+        If so the AD is taken from the original entry (use case: account set as is_not_ad_correctable).
+        """
+        if wizard:
+            for field in ['destination_id', 'cost_center_id', 'analytic_id']:  # analytic_id = FP
+                if not vals.get(field):
+                    value = getattr(wizard.original_id, field) and getattr(wizard.original_id, field).id or False
+                    if not value:
+                        raise osv.except_osv(_('Error'), _('The AD of the original entry is incomplete.'))
+                    vals[field] = value
+
     def create(self, cr, uid, vals, context=None):
         """
         Check that:
@@ -165,6 +178,7 @@ class hq_entries_split_lines(osv.osv_memory):
             if not account:
                 raise osv.except_osv(_('Error'), _('Account is required!'))
             vals['account_id'] = account.id
+        self._update_ad(wiz, vals)
         # US-672/2
         hq_entry = self._get_original_line(cr, uid, context=context,
                                            wizard_id=vals.get('wizard_id', False))
@@ -211,7 +225,9 @@ class hq_entries_split_lines(osv.osv_memory):
                 raise osv.except_osv(_('Error'), _('Negative value is not allowed!'))
             elif original_amount < 0 and vals.get('amount') > 0.0:
                 raise osv.except_osv(_('Error'), _('Positive value is not allowed!'))
-        # Prepare some values
+
+        wizard = self.browse(cr, uid, ids[0], context=context).wizard_id
+        self._update_ad(wizard, vals)
 
         # US-672/2
         for line in self.browse(cr, uid, ids, context=context):
