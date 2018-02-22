@@ -6,6 +6,11 @@
             <field name="method">set_sequence_main_nomen</field>
         </record>
 
+        <!-- UF7.3 -->
+        <record id="send_instance_uuid" model="patch.scripts">
+            <field name="method">send_instance_uuid</field>
+        </record>
+
         <!-- UF7.1 -->
         <record id="compute_amount" model="patch.scripts">
             <field name="method">recompute_amount</field>
