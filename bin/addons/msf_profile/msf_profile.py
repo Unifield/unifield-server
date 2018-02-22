@@ -56,7 +56,6 @@ class patch_scripts(osv.osv):
         nom = ['MED', 'LOG', 'LIB', 'SRV']
         nom_obj = self.pool.get('product.nomenclature')
         seq = 0
-
         for name in nom:
             seq += 10
             nom_ids = nom_obj.search(cr, uid, [('level', '=', 0), ('name', '=', name)])
@@ -66,6 +65,26 @@ class patch_scripts(osv.osv):
         return True
 
     # UF7.3
+    def flag_pi(self, cr, uid, *a, **b):
+        cr.execute('''select distinct i.id, p.default_code from
+            physical_inventory_discrepancy d,
+            physical_inventory i,
+            product_product p,
+            stock_move m
+            left join stock_production_lot lot on lot.id=m.prodlot_id
+            where d.inventory_id=i.id and d.product_id = p.id and m.product_id=d.product_id and
+                m.location_id=i.location_id and m.location_dest_id=i.location_id and
+                m.state='done' and coalesce(m.expired_date, '2999-01-01')=coalesce(d.expiry_date, '2999-01-01') and coalesce(lot.name,'')=coalesce(d.batch_number,'') and d.ignored='f'
+        ''')
+        pi = {}
+        for x in cr.fetchall():
+            pi.setdefault(x[0], []).append(x[1])
+
+        for pi_id in pi:
+            cr.execute('''update physical_inventory set bad_stock_msg=%s, has_bad_stock='t' where id=%s''', ('\n'.join(pi[pi_id]), pi_id))
+
+        return True
+
     def send_instance_uuid(self, cr, uid, *a, **b):
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
         if instance_id and not instance_id.instance_identifier and instance_id.state == 'active':

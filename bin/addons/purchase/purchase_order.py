@@ -471,6 +471,7 @@ class purchase_order(osv.osv):
         if context is None:
             context =  {}
 
+        old_value = context.get('procurement_request', False)
         context['procurement_request'] = True
 
         res = {}
@@ -497,6 +498,7 @@ class purchase_order(osv.osv):
             else:
                 res[po.id] = json.dumps([x[0] for x in ORDER_TYPES_SELECTION])
 
+        context['procurement_request'] = old_value
         return res
 
     def _order_line_order_type(self, cr, uid, ids, context=None):

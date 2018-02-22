@@ -41,6 +41,7 @@ import tools
 import netsvc
 from tools.misc import UpdateableStr
 from tools.misc import SKIPPED_ELEMENT_TYPES
+from tools.safe_eval import safe_eval
 
 _LOCALE2WIN32 = {
     'af_ZA': 'Afrikaans_South Africa',
@@ -561,6 +562,14 @@ def trans_parse_view(de):
         res.append(de.get('confirm').encode("utf8"))
     if de.get("help"):
         res.append(de.get('help').encode("utf8"))
+    if de.get("filter_selector"):
+        try:
+            eval_filter = safe_eval(de.get('filter_selector'))
+            if eval_filter:
+                for x in eval_filter:
+                    res.append(x[0].encode("utf8"))
+        except Exception:
+            logger.warning('Unable to translate filter_selector: %s' % de.get('filter_selector').encode("utf8"))
     if de.tag == 'translate':
         text_to_translate = ''
         if de.text:

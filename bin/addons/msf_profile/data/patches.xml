@@ -11,6 +11,10 @@
             <field name="method">send_instance_uuid</field>
         </record>
 
+        <record id="flag_pi" model="patch.scripts">
+            <field name="method">flag_pi</field>
+        </record>
+
         <!-- UF7.1 -->
         <record id="compute_amount" model="patch.scripts">
             <field name="method">recompute_amount</field>
