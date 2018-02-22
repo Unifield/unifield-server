@@ -20461,11 +20461,6 @@ msgstr "Canada / Eastern"
 msgid "If you have more than one shop reselling your company products, you can create and manage that from here. Whenever you will record a new quotation or sales order, it has to be linked to a shop. The shop also defines the warehouse from which the products will be delivered for each particular sales."
 msgstr "Si hay más de una tienda que vende los productos de su empresa, puede crearlas y administrarlas desde aquí. Cada vez que registre un nuevo presupuesto o pedido de venta, deberá vincularlo a la tienda correspondiente. La tienda también define el almacén desde el que se enviarán los productos para cada venta concreta."
 
-#. module: register_accounting
-#: field:wizard.cash.return,display_invoice:0
-msgid "Display Invoice"
-msgstr "Mostrar factura"
-
 #. modules: account, register_accounting
 #: view:account.bank.statement:0
 #: field:account.bank.statement.line,statement_id:0
