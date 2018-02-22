@@ -94,8 +94,8 @@ class MonitorLogger(object):
             self.monitor.last_status = (status, self.info['end'], self.info['nb_data_not_run'], self.info['nb_msg_not_run'])
 
     def update_sale_purchase_logger(self):
-        # UTP-1200: Moved to this method and call this right after the message pull is done, not need to wait until 
-        # the end of sync since it's not relevant to the push but also to avoid unnecessary error caused by the 
+        # UTP-1200: Moved to this method and call this right after the message pull is done, not need to wait until
+        # the end of sync since it's not relevant to the push but also to avoid unnecessary error caused by the
         # "in progress" issue (fixed but better to avoid)
         for model, column, res_id in self.link_to:
             # if a message failed, a rollback is made so the log message doesn't exist anymore
@@ -315,12 +315,17 @@ class sync_version_instance_monitor(osv.osv):
         'backup_path': fields.char('Backup Location', size=128),
         'backup_date': fields.datetime("Backup Date", readonly=True,
                                        required=True),
+        'backup_size': fields.integer('Backup Size', readonly=True),
         'instance_state': fields.related('instance_id', 'state', type='selection',
                                          selection=[('draft', 'Draft'),
                                                     ('active', 'Active'),
                                                     ('inactive', 'Inactive')],
                                          string='Instance State',
-                                         readonly=True, store=True)
+                                         readonly=True, store=True),
+        'cloud_date': fields.datetime('Cloud Date', readonly=True),
+        'cloud_backup': fields.char('Cloud Dump', size=256, readonly=True),
+        'cloud_error': fields.text('Cloud last error', readonly=True),
+        'cloud_size': fields.integer('Cloud Size Zipped', readonly=True),
     }
 
     _defaults = {
@@ -341,9 +346,6 @@ class sync_version_instance_monitor(osv.osv):
         # look for existing entrie for this instance
         ids = self.search(cr, uid, [('instance_id', '=', instance_id)], limit=1)
         if ids:
-            # update existing
-            if 'backup_date' not in vals:
-                vals.update({'backup_date': fields.datetime.now()})
             super(osv.osv, self).write(cr, uid, ids[0], vals)
             return ids[0]
         else:

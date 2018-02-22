@@ -29,14 +29,36 @@ from updater import get_server_version
 import release
 import time
 import logging
+import pooler
+import threading
 
 class BackupConfig(osv.osv):
     """ Backup configurations """
     _name = "backup.config"
     _description = "Backup configuration"
     _pg_psw_env_var_is_set = False
-
+    _error = ''
     _logger = logging.getLogger('sync.client')
+
+    def _get_bck_info(self, cr, uid, ids, field_name, args, context=None):
+        ret = {}
+        for _id in ids:
+            ret[_id] = {'cloud_date': False, 'cloud_backup': False, 'cloud_url': False, 'cloud_error': False, 'backup_date': False, 'backup_path': False, 'backup_size': False}
+
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        if local_instance:
+            cl = self.pool.get('msf.instance.cloud').read(cr, uid, local_instance.id, ['cloud_url'], context=context)
+            for _id in ids:
+                ret[_id]['cloud_url'] = cl['cloud_url']
+
+            verion_obj = self.pool.get('sync.version.instance.monitor')
+            v_id = verion_obj.search(cr, uid, [('instance_id', '=', local_instance.id)], context=context)
+            if v_id:
+                v_info = verion_obj.read(cr, uid, v_id[0], ['backup_path', 'backup_date', 'cloud_date', 'cloud_backup', 'cloud_error', 'backup_size', 'cloud_size'], context=context)
+                for _id in ids:
+                    del(v_info['id'])
+                    ret[_id].update(v_info)
+        return ret
 
     _columns = {
         'name' : fields.char('Path to backup to', size=254),
@@ -46,6 +68,14 @@ class BackupConfig(osv.osv):
         'afterautomaticsync':fields.boolean('Backup after automatic sync'),
         'scheduledbackup':fields.boolean('Scheduled backup'),
         'beforepatching': fields.boolean('Before patching'),
+        'cloud_date': fields.function(_get_bck_info, type='datetime', string='Last Cloud Date', method=True, multi='cloud'),
+        'cloud_backup': fields.function(_get_bck_info, type='char', string='Last Cloud', method=True, multi='cloud'),
+        'cloud_url': fields.function(_get_bck_info, type='char', string='Cloud URL', method=True, multi='cloud'),
+        'cloud_size': fields.function(_get_bck_info, type='float', string='Cloud Size Zipped', method=True, multi='cloud'),
+        'cloud_error': fields.function(_get_bck_info, type='text', string='Cloud Error', method=True, multi='cloud'),
+        'backup_date': fields.function(_get_bck_info, type='datetime', string='Last Backup Date', method=True, multi='cloud'),
+        'backup_path': fields.function(_get_bck_info, type='char', string='Last Backup', method=True, multi='cloud'),
+        'backup_size': fields.function(_get_bck_info, type='float', string='Backup Size', method=True, multi='cloud'),
     }
 
     _defaults = {
@@ -56,6 +86,50 @@ class BackupConfig(osv.osv):
         'afterautomaticsync' : True,
         'beforepatching': False,
     }
+
+    def _send_to_cloud_bg(self, cr, uid, wiz_id, context=None):
+        new_cr = pooler.get_db(cr.dbname).cursor()
+        try:
+            self.pool.get('msf.instance.cloud').send_backup(new_cr, uid, progress=wiz_id, context=context)
+        except Exception, e:
+            self._error = e
+        finally:
+            new_cr.commit()
+            new_cr.close(True)
+        return True
+
+    def send_to_cloud(self, cr, uid, ids, context=None):
+        self._error = ''
+        wiz_id = self.pool.get('msf.instance.cloud.progress').create(cr, uid, {}, context=context)
+        new_thread = threading.Thread(
+            target=self._send_to_cloud_bg,
+            args=(cr, uid, wiz_id, context)
+        )
+        new_thread.start()
+        new_thread.join(3.0)
+        if new_thread.isAlive():
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'upload_backup_form')[1]
+            return {
+                'name':_("Upload in progress"),
+                'view_mode': 'form',
+                'view_id': [view_id],
+                'view_type': 'form',
+                'res_model': 'msf.instance.cloud.progress',
+                'res_id': wiz_id,
+                'type': 'ir.actions.act_window',
+                'target': 'new',
+                'context': context,
+            }
+
+            #raise osv.except_osv(_('OK'), _('Process to send backup is in progress ... please check Version Instances Monitor'))
+        if self._error:
+            raise self._error
+        return True
+
+
+    def test_cloud(self, cr, uid, ids, context=None):
+        local_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
+        return self.pool.get('msf.instance.cloud').test_connection(cr, uid, [local_instance.id], context)
 
     def get_server_version(self, cr, uid, context=None):
         revisions = self.pool.get('sync_client.version')
@@ -125,10 +199,8 @@ class BackupConfig(osv.osv):
                                        (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"),
                                         suffix, version))
                 version_instance_module = self.pool.get('sync.version.instance.monitor')
-                vals = {'version': version,
-                        'backup_path': outfile}
 
-                version_instance_module.create(cr, uid, vals, context=context)
+                version_instance_module.create(cr, uid, {'version': version}, context=context)
 
                 bkpfile = open(outfile,"wb")
                 bkpfile.close()
@@ -144,6 +216,7 @@ class BackupConfig(osv.osv):
                 cr.commit()
 
             res = tools.pg_dump(cr.dbname, outfile)
+            version_instance_module.create(cr, uid, {'backup_path': outfile, 'backup_size': os.path.getsize(outfile), 'backup_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")}, context=context)
 
             # check the backup file
             error = None
@@ -275,3 +348,23 @@ class backup_download(osv.osv):
         }
 
 backup_download()
+
+class msf_instance_cloud_progress(osv.osv_memory):
+    _name = 'msf.instance.cloud.progress'
+    _description = 'Upload backup'
+
+    _columns = {
+        'name': fields.float('Progress', readonly='1'),
+        'state': fields.char('State', size=64, readonly='1'),
+        'start': fields.datetime('Start Time', readonly='1'),
+        'message': fields.text('Message', readonly='1'),
+    }
+
+    _defaults = {
+        'state': 'In Progress',
+        'name': 0,
+        'start': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+        'message': '',
+    }
+msf_instance_cloud_progress()
+

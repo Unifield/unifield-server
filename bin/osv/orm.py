@@ -1865,7 +1865,7 @@ class orm_template(object):
                 data_menu = self.pool.get('ir.ui.menu').browse(cr, user, context['active_id'], context).action
                 if data_menu:
                     act_id = data_menu.id
-                    if act_id:
+                    if act_id and data_menu._name == 'ir.actions.act_window':
                         data_action = self.pool.get('ir.actions.act_window').browse(cr, user, [act_id], context)[0]
                         result['submenu'] = getattr(data_action, 'menus', False)
         if toolbar:

@@ -34,14 +34,14 @@ import glob
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 from distutils.sysconfig import get_python_lib
-from setup_py2exe_custom import custom_py2exe, fixup_data_pytz_zoneinfo
+from setup_py2exe_custom import custom_py2exe, fixup_data_pytz_zoneinfo, extra_files
 
 py2exe_keywords = {}
 if os.name == 'nt':
     py2exe_keywords['console'] = [
-        { "script": join("bin", "openerp-server.py"),
-          "icon_resources": [(1, join("pixmaps","openerp-icon.ico"))]
-          }]
+        {"script": join("bin", "openerp-server.py"),
+         "icon_resources": [(1, join("pixmaps", "openerp-icon.ico"))]
+         }]
     py2exe_keywords['options'] = {
         "py2exe": {
             "compressed": 0,
@@ -55,15 +55,16 @@ if os.name == 'nt':
                 "lxml", "lxml.builder", "lxml._elementpath", "lxml.etree",
                 "lxml.objectify", "decimal", "xml", "xml", "xml.dom",
                 "encodings", "dateutil", "wizard", "pychart", "PIL", "pyparsing",
-                "pydot", "asyncore","asynchat", "reportlab",
+                "pydot", "asyncore", "asynchat", "reportlab",
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml",
                 "uuid", "commands", "mx.DateTime", "json",
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
-                "psutil", "formencode",
+                "psutil", "formencode", "cryptography", "requests",
+                "office365", "certifi", "chardet", "ipaddress", "urllib3"
             ],
             'dist_dir': 'dist',
-            'excludes' : ["Tkconstants","Tkinter","tcl"],
+            'excludes': ["Tkconstants", "Tkinter", "tcl"],
             'dll_excludes': [
                 'w9xpopen.exe', 'PSAPI.dll', 'CRYPT32.dll', 'MPR.dll',
                 'Secur32.dll', 'SHFOLDER.dll',
@@ -98,7 +99,7 @@ def find_addons():
     for root, _, names in os.walk(join('bin', 'addons'), followlinks=True):
         if '__openerp__.py' in names or '__terp__.py' in names:
             yield basename(root), root
-    #look for extra modules
+    # look for extra modules
     try:
         empath = os.getenv('EXTRA_MODULES_PATH', '../addons/')
         for mname in open(join(empath, 'server_modules.list')):
@@ -125,19 +126,21 @@ def data_files():
         files.append(('.', [join('bin', 'unifield-version.txt')]))
         files.append(('tools', [join('bin', 'tools', 'import_po.dtd')]))
         files.append(('tools', [join('bin', 'tools', 'validators.py')]))
+        files.append(('tools', [join('bin', 'tools', 'webdav.py')]))
         files.append(('fonts', filter(isfile, glob.glob('bin/fonts/*'))))
         os.chdir('bin')
         for (dp, dn, names) in os.walk('addons'):
             files.append((dp, map(lambda x: join('bin', dp, x), names)))
         os.chdir('..')
-        #for root, _, names in os.walk(join('bin','addons')):
+        # for root, _, names in os.walk(join('bin','addons')):
         #    files.append((root, [join(root, name) for name in names]))
         for root, _, names in os.walk('doc'):
             files.append((root, [join(root, name) for name in names]))
-        #for root, _, names in os.walk('pixmaps'):
+        # for root, _, names in os.walk('pixmaps'):
         #    files.append((root, [join(root, name) for name in names]))
-        files.append(('.', [join('bin', 'import_xml.rng'),]))
+        files.append(('.', [join('bin', 'import_xml.rng'), ]))
         files.extend(fixup_data_pytz_zoneinfo())
+        files.extend(extra_files())
     else:
         man_directory = join('share', 'man')
         files.append((join(man_directory, 'man1'), ['man/openerp-server.1']))
@@ -152,10 +155,10 @@ def data_files():
 
         openerp_site_packages = join(get_python_lib(prefix=''), 'openerp-server')
 
-        files.append((openerp_site_packages, [join('bin', 'import_xml.rng'),]))
+        files.append((openerp_site_packages, [join('bin', 'import_xml.rng'), ]))
 
         for addonname, add_path in find_addons():
-            addon_path = join(get_python_lib(prefix=''), 'openerp-server','addons', addonname)
+            addon_path = join(get_python_lib(prefix=''), 'openerp-server', 'addons', addonname)
             for root, dirs, innerfiles in os.walk(add_path):
                 innerfiles = filter(lambda fil: os.path.splitext(fil)[1] not in ('.pyc', '.pyd', '.pyo'), innerfiles)
                 if innerfiles:
@@ -165,7 +168,7 @@ def data_files():
 
     return files
 
-f = file('openerp-server','w')
+f = file('openerp-server', 'w')
 f.write("""#!/bin/sh
 echo "Error: the content of this file should have been replaced during "
 echo "installation\n"
@@ -191,32 +194,32 @@ class openerp_server_install(install):
         install.run(self)
 
 
-setup(name             = name,
-      version          = version,
-      description      = description,
-      long_description = long_desc,
-      url              = url,
-      author           = author,
-      author_email     = author_email,
-      classifiers      = filter(None, classifiers.split("\n")),
-      license          = license,
-      data_files       = data_files(),
-      cmdclass         = {
-          'install' : openerp_server_install,
+setup(name=name,
+      version=version,
+      description=description,
+      long_description=long_desc,
+      url=url,
+      author=author,
+      author_email=author_email,
+      classifiers=filter(None, classifiers.split("\n")),
+      license=license,
+      data_files=data_files(),
+      cmdclass={
+          'install': openerp_server_install,
           'py2exe': custom_py2exe,
       },
-      scripts          = ['openerp-server'],
-      packages = [
+      scripts=['openerp-server'],
+      packages=[
           '.'.join(['openerp-server'] + package.split('.')[1:])
           for package in find_packages()
       ],
-      include_package_data = True,
-      package_data = {
+      include_package_data=True,
+      package_data={
           '': ['*.yml', '*.xml', '*.po', '*.pot', '*.csv'],
       },
-      package_dir      = find_package_dirs(),
-      python_requires = ">=2.7.12",
-      install_requires = [
+      package_dir=find_package_dirs(),
+      python_requires=">=2.7.12",
+      install_requires=[
           'cffi==1.11.4',
           'MarkupSafe==1.0',
           'pycparser==2.18',
@@ -239,6 +242,16 @@ setup(name             = name,
           'xlwt==1.2.0',
           'psutil==5.2.2',
           'bsdiff4==1.1.4',
+          'Office365-REST-Python-Client==2.0.0',
+          'asn1crypto==0.24.0',
+          'cryptography==2.1.4',
+          'enum34==1.1.6',
+          'urllib3==1.22',
+          'idna==2.6',
+          'ipaddress==1.0.19',
+          'certifi==2018.1.18',
+          'chardet==3.0.4',
+          'requests==2.18.4',
       ],
       **py2exe_keywords
       )

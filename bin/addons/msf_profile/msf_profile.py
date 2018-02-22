@@ -51,6 +51,7 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF7.3 patches
     def flag_pi(self, cr, uid, *a, **b):
         cr.execute('''select distinct i.id, p.default_code from
             physical_inventory_discrepancy d,
@@ -70,6 +71,18 @@ class patch_scripts(osv.osv):
             cr.execute('''update physical_inventory set bad_stock_msg=%s, has_bad_stock='t' where id=%s''', ('\n'.join(pi[pi_id]), pi_id))
 
         return True
+
+    def send_instance_uuid(self, cr, uid, *a, **b):
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance_id and not instance_id.instance_identifier and instance_id.state == 'active':
+            entity = self.pool.get('sync.client.entity')
+            if entity:
+                identifier = entity.get_uuid(cr, uid)
+                self._logger.warn('missing instance_identifier, set to %s' % (identifier,))
+                self.pool.get('msf.instance').write(cr, uid, [instance_id.id], {'instance_identifier': identifier})
+
+        return True
+
     # UF7.1 patches
     def recompute_amount(self, cr, uid, *a, **b):
         cr.execute("select min(id) from purchase_order_line where state in ('cancel', 'cancel_r') group by order_id")
