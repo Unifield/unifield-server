@@ -56,7 +56,7 @@ class PhysicalInventoryImportWizard(osv.osv_memory):
             iv_ids = []
             for x in  self.read(cr, uid, ids, ['inventory_id'], context=context):
                 if x['inventory_id']:
-                    iv_ids.append(x['inventory_id'][0])
+                    iv_ids.append(x['inventory_id'])
             inventory_obj = self.pool.get('physical.inventory')
             if iv_ids:
                 inventory_obj.write(cr, uid, iv_ids, {'discrepancies_generated': True}, context=context)

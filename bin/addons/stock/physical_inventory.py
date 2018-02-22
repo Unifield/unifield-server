@@ -984,6 +984,9 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
     def action_validate(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+
+        if self.search_exist(cr, uid, [('id', 'in', ids), '|', ('state', '!=', 'counted'), ('discrepancies_generated', '=', False)], context=context):
+            raise osv.except_osv(_('Error'), _('Inconsistent state, please refresh the screen'))
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         return {}
 
