@@ -53,8 +53,13 @@ class PhysicalInventoryImportWizard(osv.osv_memory):
                 break
         else:
             # Not found, all actions are defined
+            iv_ids = []
+            for x in  self.read(cr, uid, ids, ['inventory_id'], context=context):
+                if x['inventory_id']:
+                    iv_ids.append(x['inventory_id'][0])
             inventory_obj = self.pool.get('physical.inventory')
-            inventory_obj.write(cr, uid, {'discrepancies_generated': True}, context=context)
+            if iv_ids:
+                inventory_obj.write(cr, uid, iv_ids, {'discrepancies_generated': True}, context=context)
             inventory_obj.pre_process_discrepancies(cr, uid, items, context=context)
             return self.close_action()
         # Found, an action is missing on a line

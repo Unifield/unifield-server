@@ -26,7 +26,7 @@
                     <field name="responsible"/>
                     <field name="date_done"/>
                     <field name="full_inventory"/>
-                    <field name="discrepancies_generated" invisible="1"/>
+                    <field name="discrepancies_generated" invisible="1" readonly="1"/>
                     <button colspan="2" name="set_full_inventory" states="draft" string="Set as full inventory" type="object"
                         icon="gtk-about" 
                         confirm="Setting as 'full inventory' is irreversible. Do you confirm ?" 
@@ -56,9 +56,9 @@
                                         type="object" colspan="2" icon="gtk-print"/>
                                 <button name="export_xls_counting_sheet" string="Export xls counting sheet"
                                         type="object" colspan="2" icon="gtk-print"/>
-                                <field name="file_to_import" colspan="2" attrs="{'invisible': [('discrepancies_generated', '=', True)]}"/>
+                                <field name="file_to_import" colspan="2" attrs="{'invisible': [('state', 'in', ['counted', 'validated'])]}"/>
                                 <button name="import_counting_sheet" string="Import xls counting sheet" type="object" colspan="2" icon="gtk-save"
-                                        attrs="{'invisible': [('discrepancies_generated', '=', True)]}"/>
+                                        attrs="{'invisible': [('state', 'in', ['counted', 'validated'])]}"/>
                             </group>
                             <field colspan="4" name="counting_line_ids" nolabel="1" widget="one2many_list"
                                 attrs="{'readonly': ['|', ('state', 'not in', ['counting', 'counted', 'validated']), ('discrepancies_generated', '=', True)]}">
@@ -90,7 +90,7 @@
                                 </form>
                             </field>
                         </page>
-                        <page string="Discrepancy report" attrs="{'invisible': [('state', 'in', ['draft','counting'])], 'readonly': [('state', 'not in', ['counted', 'validated', 'confirmed'])]}">
+						<page string="Discrepancy report" attrs="{'invisible': [('discrepancies_generated', '=', False)], 'readonly': [('state', 'not in', ['counted', 'validated', 'confirmed'])]}">
                             <group col="4" colspan="4">
                                 <group col="4" colspan="4">
                                     <label string="" />
@@ -117,7 +117,7 @@
                                     <field name="discrepancy_lines_percent_absvalue" nolabel="1" />
                                 </group>
                             </group>
-                            <group col="4" colspan="4" attrs="{'invisible': [('discrepancies_generated', '=', False)]}">
+                            <group col="4" colspan="4" attrs="{'invisible': [('state', 'not in', ['counted', 'validated'])]}">
                                 <button name="export_xls_discrepancy_report" string="Export XLS discrepancy report"
                                     type="object" icon="gtk-print" colspan="4"/>
                                 <field name="file_to_import2" colspan="2"/>
