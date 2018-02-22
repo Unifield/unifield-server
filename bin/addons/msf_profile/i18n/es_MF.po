@@ -36434,11 +36434,6 @@ msgstr "Recibir un informe"
 msgid "Need Sourcing"
 msgstr "Requiere abastecimiento"
 
-#. module: analytic_distribution
-#: view:mass.reallocation.wizard:0
-msgid "- Free 1 / Free 2 items"
-msgstr "- Free 1 / Free 2 items"
-
 #. modules: account, msf_outgoing, analytic_distribution_supply, register_accounting, purchase_allocation_report, analytic_distribution_invoice, account_subscription, analytic_distribution
 #: selection:account.journal.column,field:0
 #: field:account.model.line,analytic_distribution_state_recap:0
