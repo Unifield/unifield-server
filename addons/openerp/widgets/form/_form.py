@@ -30,7 +30,7 @@ import xml.dom.minidom
 import cherrypy
 import simplejson
 from openerp import validators
-from openerp.utils import rpc, icons, common, TinyDict, node_attributes, get_node_xpath, expr_eval
+from openerp.utils import rpc, icons, common, TinyDict, node_attributes, get_node_xpath, expr_eval, get_size
 from openerp.widgets import TinyWidget, TinyInputWidget, InputWidgetLabel, ConcurrencyInfo, get_widget, register_widget
 
 from _binary import Image
@@ -365,6 +365,13 @@ class Char(TinyInputWidget):
         self.default = value
 
 register_widget(Char, ["char"])
+
+
+class HumanSize(Char):
+
+    def set_value(self, value):
+        self.default = get_size(value or 0.0) 
+register_widget(HumanSize, ["human_size"])
 
 
 class Email(TinyInputWidget):
