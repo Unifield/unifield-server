@@ -101298,8 +101298,8 @@ msgstr "Erreur ! Impossible d'effectuer la sauvegarde"
 #. module: sync_client
 #: field:backup.config,cloud_size:0
 #: field:sync.version.instance.monitor,cloud_size:0
-msgid "Cloud Size"
-msgstr "Taille Cloud"
+msgid "Cloud Size Zipped"
+msgstr "Taille Zip Cloud"
 
 #. module: sync_client
 #: field:backup.config,cloud_date:0

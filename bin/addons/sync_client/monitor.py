@@ -94,8 +94,8 @@ class MonitorLogger(object):
             self.monitor.last_status = (status, self.info['end'], self.info['nb_data_not_run'], self.info['nb_msg_not_run'])
 
     def update_sale_purchase_logger(self):
-        # UTP-1200: Moved to this method and call this right after the message pull is done, not need to wait until 
-        # the end of sync since it's not relevant to the push but also to avoid unnecessary error caused by the 
+        # UTP-1200: Moved to this method and call this right after the message pull is done, not need to wait until
+        # the end of sync since it's not relevant to the push but also to avoid unnecessary error caused by the
         # "in progress" issue (fixed but better to avoid)
         for model, column, res_id in self.link_to:
             # if a message failed, a rollback is made so the log message doesn't exist anymore
@@ -325,7 +325,7 @@ class sync_version_instance_monitor(osv.osv):
         'cloud_date': fields.datetime('Cloud Date', readonly=True),
         'cloud_backup': fields.char('Cloud Dump', size=256, readonly=True),
         'cloud_error': fields.text('Cloud last error', readonly=True),
-        'cloud_size': fields.integer('Cloud Size', readonly=True),
+        'cloud_size': fields.integer('Cloud Size Zipped', readonly=True),
     }
 
     _defaults = {

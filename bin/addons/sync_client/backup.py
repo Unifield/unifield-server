@@ -71,7 +71,7 @@ class BackupConfig(osv.osv):
         'cloud_date': fields.function(_get_bck_info, type='datetime', string='Last Cloud Date', method=True, multi='cloud'),
         'cloud_backup': fields.function(_get_bck_info, type='char', string='Last Cloud', method=True, multi='cloud'),
         'cloud_url': fields.function(_get_bck_info, type='char', string='Cloud URL', method=True, multi='cloud'),
-        'cloud_size': fields.function(_get_bck_info, type='float', string='Cloud Size', method=True, multi='cloud'),
+        'cloud_size': fields.function(_get_bck_info, type='float', string='Cloud Size Zipped', method=True, multi='cloud'),
         'cloud_error': fields.function(_get_bck_info, type='text', string='Cloud Error', method=True, multi='cloud'),
         'backup_date': fields.function(_get_bck_info, type='datetime', string='Last Backup Date', method=True, multi='cloud'),
         'backup_path': fields.function(_get_bck_info, type='char', string='Last Backup', method=True, multi='cloud'),
