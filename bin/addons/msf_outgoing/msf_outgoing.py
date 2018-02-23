@@ -1144,7 +1144,6 @@ class shipment(osv.osv):
                     selected_number = family.return_to - family.return_from + 1
                     # Quantity to return
                     new_qty = selected_number * move.qty_per_pack
-                    print new_qty, selected_number, move.qty_per_pack
                     # values
                     move_values = {
                         'from_pack': family.return_from,
