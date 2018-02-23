@@ -1171,7 +1171,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         """ Cancels the stock move and change inventory state to draft."""
         for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
             self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
-        self.write(cr, uid, ids, {'state': 'draft'}, context=context)
+        self.write(cr, uid, ids, {'state': 'draft', 'discrepancies_generated': False}, context=context)
         return {}
 
     def action_cancel_inventary(self, cr, uid, ids, context=None):
