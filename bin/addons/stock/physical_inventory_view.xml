@@ -49,19 +49,19 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Counting sheet" attrs="{'invisible': [('state', 'in', ['draft'])], 'readonly': ['|', ('state', 'not in', ['counting']), ('discrepancies_generated', '=', True)]}">
+                        <page string="Counting sheet" attrs="{'invisible': [('state', 'in', ['draft'])], 'readonly': ['|', ('state', 'not in', ['counting', 'counted']), ('discrepancies_generated', '=', True)]}">
                             <group col="4" colspan="4"
                                 attrs="{'invisible': [('state', 'not in', ['counting', 'counted', 'validated'])]}">
                                 <button name="export_pdf_counting_sheet" string="Export pdf counting sheet"
                                         type="object" colspan="2" icon="gtk-print"/>
                                 <button name="export_xls_counting_sheet" string="Export xls counting sheet"
                                         type="object" colspan="2" icon="gtk-print"/>
-                                <field name="file_to_import" colspan="2" attrs="{'invisible': [('state', 'in', ['counted', 'validated'])]}"/>
+                                <field name="file_to_import" colspan="2" attrs="{'invisible':[('discrepancies_generated', '=', True)]}"/>
                                 <button name="import_counting_sheet" string="Import xls counting sheet" type="object" colspan="2" icon="gtk-save"
-                                        attrs="{'invisible': [('state', 'in', ['counted', 'validated'])]}"/>
+                                        attrs="{'invisible': [('discrepancies_generated', '=', True)]}"/>
                             </group>
                             <field colspan="4" name="counting_line_ids" nolabel="1" widget="one2many_list"
-                                attrs="{'readonly': ['|', ('state', 'not in', ['counting']), ('discrepancies_generated', '=', True)]}">
+                                attrs="{'readonly': ['|', ('state', 'not in', ['counting', 'counted']), ('discrepancies_generated', '=', True)]}">
                                 <tree string="Counting lines" editable="bottom">
                                     <field name="line_no"/>
                                     <field name="product_id" on_change="on_change_product_id(product_id,product_uom)"/>
@@ -90,7 +90,7 @@
                                 </form>
                             </field>
                         </page>
-						<page string="Discrepancy report" attrs="{'invisible': [('discrepancies_generated', '=', False)], 'readonly': [('state', 'not in', ['counted', 'validated'])]}">
+                        <page string="Discrepancy report" attrs="{'invisible': [('discrepancies_generated', '=', False)], 'readonly': [('state', 'not in', ['counted', 'validated'])]}">
                             <group col="4" colspan="4">
                                 <group col="4" colspan="4">
                                     <label string="" />
@@ -117,15 +117,15 @@
                                     <field name="discrepancy_lines_percent_absvalue" nolabel="1" />
                                 </group>
                             </group>
-                            <group col="4" colspan="4" attrs="{'invisible': [('state', 'not in', ['counted'])]}">
+                            <group col="4" colspan="4" attrs="{'invisible': [('state', 'not in', ['counted', 'validated'])]}">
                                 <button name="export_xls_discrepancy_report" string="Export XLS discrepancy report"
                                     type="object" icon="gtk-print" colspan="4"/>
                                 <field name="file_to_import2" colspan="2"/>
                                 <button name="import_xls_discrepancy_report" string="Import XLS discrepancy report"
                                     type="object" icon="gtk-save" colspan="2"/>
                             </group>
-							<field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
-								   attrs="{ 'readonly': [('state', 'not in', ['counted', 'validated'])]}"
+                                <field colspan="4" name="discrepancy_line_ids" nolabel="1" widget="one2many_list"
+                                   attrs="{ 'readonly': [('state', 'not in', ['counted', 'validated'])]}"
                                    filter_selector="[('Hide ignored', ('ignored', '!=', True)), ('Show all', ''), ('Show ignored only', ('ignored', '=', True))]">
                                <tree string="Discrepancies" editable="bottom" hide_delete_button="True" hide_new_button="True"
                                      colors="grey:ignored==True">
@@ -206,11 +206,11 @@
                         <button name="action_counted" states="counting" string="Finish Counting"
                                 type="object" icon="gtk-paste-v"/>
 
-						<button name="generate_discrepancies" attrs="{'invisible': ['|', ('state', 'not in', ['counted', 'validated']), ('discrepancies_generated', '=', True)]}" string="Generate discrepancies"
+                        <button name="generate_discrepancies" attrs="{'invisible': ['|', ('state', 'not in', ['counted', 'validated']), ('discrepancies_generated', '=', True)]}" string="Generate discrepancies"
                                 type="object" icon="gtk-refresh"/>
-							
-						<button name="re_generate_discrepancies" attrs="{'invisible': ['|', ('state', 'not in', ['counted', 'validated']), ('discrepancies_generated', '=', False)]}" string="Re-Generate discrepancies"
-								confirm="Do you confirm that you want to delete and recreate Discrepancies ?"
+
+                        <button name="re_generate_discrepancies" attrs="{'invisible': ['|', ('state', 'not in', ['counted', 'validated']), ('discrepancies_generated', '=', False)]}" string="Re-Generate discrepancies"
+                                confirm="Do you confirm that you want to delete and recreate Discrepancies ?"
                                 type="object" icon="gtk-refresh"/>
 
                         <button name="action_validate" states="counted" string="Finished"
