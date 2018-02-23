@@ -442,6 +442,9 @@ class PhysicalInventory(osv.osv):
 
         return self.resolve_discrepancies_anomalies(cr, uid, inventory_id, context=context)
 
+    def re_generate_discrepancies(self, cr, uid, inventory_ids, context=None):
+        return self.generate_discrepancies(cr, uid, inventory_ids, context=context)
+
 
     def resolve_discrepancies_anomalies(self, cr, uid, inventory_id, context=None):
         context = context if context else {}
@@ -1009,6 +1012,9 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
 
         product_dict = {}
         product_tmpl_dict = {}
+        
+        if self.search_exist(cr, uid, [('id', 'in', ids), '|', ('state', '!=', 'validated'), ('discrepancies_generated', '=', False)], context=context):
+            raise osv.except_osv(_('Error'), _('Inconsistent state, please refresh the screen'))
 
         for inv in self.read(cr, uid, ids, ['counting_line_ids',
                                             'discrepancy_line_ids',
