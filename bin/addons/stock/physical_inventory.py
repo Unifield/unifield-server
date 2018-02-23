@@ -937,6 +937,9 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         return result
 
     def export_xls_discrepancy_report(self, cr, uid, ids, context=None):
+        if self.search_exist(cr, uid, [('id', 'in', ids), ('discrepancies_generated', '=', False)]):
+            raise osv.except_osv(_('Error'), _('Inconsistent state, please refresh the screen'))
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'physical_inventory_discrepancies_report_xls',
@@ -1003,7 +1006,6 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         # location, never recursively, so we use a special context
         product_context = dict(context, compute_child=False)
 
-        # location_obj = self.pool.get('stock.location')
         product_obj = self.pool.get('product.product')
         product_tmpl_obj = self.pool.get('product.template')
         prod_lot_obj = self.pool.get('stock.production.lot')
@@ -1012,7 +1014,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
 
         product_dict = {}
         product_tmpl_dict = {}
-        
+
         if self.search_exist(cr, uid, [('id', 'in', ids), '|', ('state', '!=', 'validated'), ('discrepancies_generated', '=', False)], context=context):
             raise osv.except_osv(_('Error'), _('Inconsistent state, please refresh the screen'))
 
