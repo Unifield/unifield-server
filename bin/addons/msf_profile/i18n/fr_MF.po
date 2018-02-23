@@ -107028,11 +107028,13 @@ msgstr "Erreur durant l'envoi:\n"
 "%s"
 
 #. module: stock
-#: code:addons/stock/physical_inventory.py:992
-#: code:addons/stock/physical_inventory.py:1017
+#: code:addons/stock/physical_inventory.py:876
+#: code:addons/stock/physical_inventory.py:941
+#: code:addons/stock/physical_inventory.py:995
+#: code:addons/stock/physical_inventory.py:1019
 #, python-format
 msgid "Page need to be refreshed - please press \"F5\""
-msgstr "La page doit être rafraîchit, veuillez cliquer sur \"F5\""
+msgstr "La page doit être rafraîchie, veuillez cliquer sur \"F5\""
 
 
 
