@@ -87,7 +87,6 @@ class account_invoice_refund(osv.osv_memory):
 
     _defaults = {
         'document_date': _get_document_date,
-        'date': lambda *a: time.strftime('%Y-%m-%d'),
         #UTP-961: refund DI: only refund option is available
         'filter_refund': 'refund',
         'journal_id': _get_journal,  # US-193
