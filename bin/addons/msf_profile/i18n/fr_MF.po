@@ -8748,6 +8748,16 @@ msgstr "Créer Menu Tableau"
 msgid "Generate discrepancies"
 msgstr "Générer les écarts"
 
+#. module: stock
+#: view:physical.inventory:0
+msgid "Re-Generate discrepancies"
+msgstr "Re-Générer les écarts"
+
+#. module: stock
+#: view:physical.inventory:0
+msgid "Do you confirm that you want to delete and recreate Discrepancies ?"
+msgstr "Voulez-vous supprimer et re-créer les écarts ?"
+
 #. modules: purchase, account, msf_outgoing, finance, purchase_override, procurement, procurement_request, tender_flow, product, specific_rules, kit, stock_forecast, analytic, stock_batch_recall, register_accounting, stock_override, msf_supply_doc_export, mission_stock, msf_doc_import, sale, stock
 #: report:account.analytic.account.balance:0
 #: report:account.analytic.account.inverted.balance:0
@@ -107096,4 +107106,15 @@ msgid "Error during upload:\n"
 "%s"
 msgstr "Erreur durant l'envoi:\n"
 "%s"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:876
+#: code:addons/stock/physical_inventory.py:941
+#: code:addons/stock/physical_inventory.py:995
+#: code:addons/stock/physical_inventory.py:1019
+#, python-format
+msgid "Page need to be refreshed - please press \"F5\""
+msgstr "La page doit être rafraîchie, veuillez cliquer sur \"F5\""
+
+
 
