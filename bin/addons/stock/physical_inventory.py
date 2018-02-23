@@ -872,11 +872,11 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
         if not inventory_rec.file_to_import2:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
+        if not inventory_rec.discrepancies_generated:
+            raise osv.except_osv(_('Error'), _('Inconsistent state, please refresh the screen'))
+
         discrepancy_report_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import2))
 
-        # product_obj = self.pool.get('product.product')
-        # product_uom_obj = self.pool.get('product.uom')
-        # counting_obj = self.pool.get('physical.inventory.counting')
         reason_type_obj = self.pool.get('stock.reason.type')
         discrepancy_obj = self.pool.get('physical.inventory.discrepancy')
 
