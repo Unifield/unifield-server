@@ -74,7 +74,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                                 WHERE j.type = 'cheque'
                                 AND aml.date < %s
                                 AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
-                                AND (reconcile_id IS NULL OR reconcile_date >= %s)
+                                AND ((reconcile_id IS NULL AND reconcile_partial_id IS NULL) OR reconcile_date >= %s)
                                 GROUP BY aml.journal_id, aml.account_id
                             )
                         UNION
@@ -86,7 +86,7 @@ class account_liquidity_balance(report_sxw.rml_parse, common_report_header):
                                 WHERE j.type = 'cheque'
                                 AND aml.date <= %s
                                 AND aml.account_id IN (j.default_debit_account_id, j.default_credit_account_id)
-                                AND (reconcile_id IS NULL OR reconcile_date > %s)
+                                AND ((reconcile_id IS NULL AND reconcile_partial_id IS NULL) OR reconcile_date > %s)
                                 GROUP BY aml.journal_id, aml.account_id
                             )
                         ) AS ssreq
