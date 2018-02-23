@@ -873,7 +873,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
 
         if not inventory_rec.discrepancies_generated:
-            raise osv.except_osv(_('Error'), _('Inconsistent state, please refresh the screen'))
+            raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
 
         discrepancy_report_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import2))
 
@@ -938,7 +938,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
 
     def export_xls_discrepancy_report(self, cr, uid, ids, context=None):
         if self.search_exist(cr, uid, [('id', 'in', ids), ('discrepancies_generated', '=', False)]):
-            raise osv.except_osv(_('Error'), _('Inconsistent state, please refresh the screen'))
+            raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
 
         return {
             'type': 'ir.actions.report.xml',
@@ -992,7 +992,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
             context = {}
 
         if self.search_exist(cr, uid, [('id', 'in', ids), '|', ('state', '!=', 'counted'), ('discrepancies_generated', '=', False)], context=context):
-            raise osv.except_osv(_('Error'), _('Inconsistent state, please refresh the screen'))
+            raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         return {}
 
@@ -1016,7 +1016,7 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
         product_tmpl_dict = {}
 
         if self.search_exist(cr, uid, [('id', 'in', ids), '|', ('state', '!=', 'validated'), ('discrepancies_generated', '=', False)], context=context):
-            raise osv.except_osv(_('Error'), _('Inconsistent state, please refresh the screen'))
+            raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
 
         for inv in self.read(cr, uid, ids, ['counting_line_ids',
                                             'discrepancy_line_ids',
