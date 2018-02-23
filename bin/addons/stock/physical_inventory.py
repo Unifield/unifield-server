@@ -292,7 +292,7 @@ class PhysicalInventory(osv.osv):
         counting_obj = self.pool.get('physical.inventory.counting')
 
         # delete all previous discepancies
-        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': [(6, 0, [])]}, context=context)
+        physical_inventory_obj.write(cr, uid, inventory_id, {'discrepancy_line_ids': [(6, 0, [])], 'file_to_import2': False}, context=context)
 
         # Get the location and counting lines
         inventory = physical_inventory_obj.read(cr, uid, [inventory_id], [ "location_id",
