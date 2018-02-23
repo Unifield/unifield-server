@@ -3287,7 +3287,7 @@ class stock_inventory(osv.osv):
                                                  _('You can not cancel inventory which has any account move with posted state.'))
                         account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
             line_ids = [x.id for x in inv.inventory_line_id]
-            if line_ids:
+            if line_ids and self._name != 'initial.stock.inventory':
                 self.pool.get('stock.inventory.line').write(cr, uid, line_ids, {'dont_move': False}, context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
             if self._name == 'initial.stock.inventory':
