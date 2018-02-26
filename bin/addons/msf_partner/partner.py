@@ -27,7 +27,7 @@ from msf_field_access_rights.osv_override import _get_instance_level
 import time
 from tools.translate import _
 from lxml import etree
-
+from msf_field_access_rights.osv_override import _record_matches_domain
 
 class res_partner(osv.osv):
     _name = 'res.partner'
@@ -133,18 +133,12 @@ class res_partner(osv.osv):
                     partner_currency_id = pricelist.currency_id.id
                     price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, partner_currency_id, info_price.price, round=False, context=context)
                     currency = partner_currency_id
-                    # Uncomment the following 2 lines if you want the price in currency of the pricelist.partnerinfo instead of partner default currency
-#                    currency = info_price.currency_id.id
-#                    price = info_price.price
                     res[partner.id] = {'price_currency': currency,
                                        'price_unit': price,
                                        'valide_until_date': info_price.valid_till}
 
         return res
 
-## QT : Remove _get_price_unit
-
-## QT : Remove _get_valide_until_date
 
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -633,25 +627,6 @@ class res_partner(osv.osv):
 
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
-    def _record_matches_domain(self, cr, record_id, domain):
-        """
-        Make a search with domain + id = id. If we get the ID in the result, the domain matches the record
-        """
-        # convert domain from string to list
-        if isinstance(domain, (str, unicode)):
-            domain = eval(domain)
-
-        # if domain is True or False or empty list, no domain specified, therefore record matches all domains
-        if isinstance(domain, bool) or not domain:
-            return True
-
-        # add id = record_id to domain
-        domain.insert(0, ('id', '=', record_id))
-        domain.insert(0, '&')
-
-        # perform search and return bool based on whether or not the record_id was in the
-        return record_id in self.search(cr, 1, domain)
-
     def create(self, cr, uid, vals, context=None):
         fields_to_create = vals.keys()
 
@@ -686,7 +661,6 @@ class res_partner(osv.osv):
 
         # US-3945: checking user's rights
         if not context.get('sync_update_execution') and uid != 1:
-            access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
             instance_level = _get_instance_level(self, cr, uid)
 
             if instance_level:  # get rules for this model, instance and user
@@ -703,19 +677,11 @@ class res_partner(osv.osv):
 
                 # do we have rules that apply to this user and model?
                 if rules_search:
-                    line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search)])
-                    if not line_ids:
-                        return new_id
-                    rules_search = rules_pool.search(cr, 1, [('field_access_rule_line_ids', 'in', line_ids)])
-                    rules = rules_pool.browse(cr, 1, rules_search)
-
                     # for each rule, check the record against the rule domain.
                     rules_to_check = []
-                    for rule in rules:
-                        if self._record_matches_domain(cr, new_id, rule.domain_text):
-                            rules_to_check.append(rule.id)
-
-                    no_write_access_fields = []
+                    for rule in rules_pool.read(cr, uid, rules_search, ['domain_text']):
+                        if _record_matches_domain(self, cr, new_id, rule['domain_text']):
+                            rules_to_check.append(rule['id'])
                     if rules_to_check:
                         # get the fields with write_access=False
                         cr.execute("""SELECT DISTINCT field_name
@@ -723,21 +689,18 @@ class res_partner(osv.osv):
                               WHERE write_access='f' AND
                               field_access_rule in %s AND
                               field_name in %s
+                              limit 1
                         """, (tuple(rules_to_check), tuple(fields_to_create)))
-                        no_write_access_fields = [x[0] for x in cr.fetchall()]
 
-                    if no_write_access_fields:
-                        # throw access denied error
-                        raise osv.except_osv(_('Access Denied'),
-                                             _('You can not create this document (res.partner) ! Be sure your user belongs to one of these groups: Administration / Access Rights, Sup_Demand_Manager, Sup_Purchase_Manager, Sup_Supply_Config, Sup_Supply_System_Administrator, Fin_Config_Coordo, Fin_Config_Project, Fin_Config_Full, Sup_Purchase_Sup.'))
-                    else:
-                        return new_id
-                else:
-                    return new_id
-            else:
-                return new_id
-        else:
-            return new_id
+                        x = cr.fetchone()
+                        print x
+                        if x:
+                            # throw access denied error
+                            raise osv.except_osv(_('Access Denied'),
+                                                 _('You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % (x[0], ))
+                            )
+
+        return new_id
 
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''
