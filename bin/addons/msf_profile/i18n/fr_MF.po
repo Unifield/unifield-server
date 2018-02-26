@@ -107116,5 +107116,7 @@ msgstr "Erreur durant l'envoi:\n"
 msgid "Page need to be refreshed - please press \"F5\""
 msgstr "La page doit être rafraîchie, veuillez cliquer sur \"F5\""
 
-
-
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:476
+msgid "Code:"
+msgstr "Code :"
