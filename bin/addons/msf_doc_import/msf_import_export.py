@@ -529,6 +529,7 @@ class msf_import_export(osv.osv_memory):
 
         self.check_import(cr, uid, ids, context=context)
 
+        res = (False, False, False)
         for wiz in self.browse(cr, uid, ids, context=context):
             rows, nb_rows = self.read_file(wiz, context=context)
             if context.get('row'):
@@ -564,16 +565,18 @@ class msf_import_export(osv.osv_memory):
                 for row in rows:
                     if len(row.cells) > 2:
                         break
-            thread = threading.Thread(
-                target=self.bg_import,
-                args=(cr.dbname, uid, wiz, expected_headers, rows, context),
-            )
-            thread.start()
-            # for now we don't want background but foreground
-            # in case background is needed, just set a value to wait time
-            wait_time = None
-            thread.join(wait_time)
-        return True
+
+            res = self.bg_import(cr.dbname, uid, wiz, expected_headers, rows, context)
+            # thread = threading.Thread(
+            #     target=self.bg_import,
+            #     args=(cr.dbname, uid, wiz, expected_headers, rows, context),
+            # )
+            # thread.start()
+            # # for now we don't want background but foreground
+            # # in case background is needed, just set a value to wait time
+            # wait_time = None
+            # thread.join(wait_time)
+        return res
 
     def bg_import(self, dbname, uid, import_brw, headers, rows, context=None):
         """
@@ -748,6 +751,8 @@ WHERE n3.level = 3)
             # for headers mod.
             col_datas = import_data_obj.pre_hook[impobj._name](impobj, cr, uid, header_codes, {}, col_datas)
 
+        processed = []
+        rejected = []
         for row_index, row in enumerate(rows):
             res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers, context=context)
             if res < 0:
@@ -875,21 +880,24 @@ WHERE n3.level = 3)
                         del data['name']
                     impobj.write(cr, uid, ids_to_update, data, context=context)
                     nb_update_success += 1
-
+                    processed.append((row_index, line_data))
                 else:
                     context['from_import_menu']=  True
                     impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
+                    processed.append((row_index, line_data))
             except osv.except_osv, e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 cr.rollback()
                 save_error(e.value, row_index)
                 nb_error += 1
+                rejected.append((row_index, data, e.value))
             except Exception, e:
                 cr.rollback()
                 logging.getLogger('import data').info('Error %s' % e)
                 save_error(e, row_index)
                 nb_error += 1
+                rejected.append((row_index, data, e))
             else:
                 nb_imported_lines += 1
 
@@ -956,7 +964,7 @@ WHERE n3.level = 3)
         cr.commit()
         cr.close()
 
-        return True
+        return (processed, rejected, [tu[0] for tu in headers])
 
 msf_import_export()
 

@@ -61,6 +61,7 @@ class supplier_catalogue(osv.osv):
         elif catalogue_name:
             catalogue_id = self.search(cr, uid, [('name', '=', catalogue_name)], context=context)
 
+        res = (False, False, False)
         if catalogue_id:
             wiz_id = self.pool.get('msf.import.export').create(cr, uid, {
                 'model_list_selection': 'supplier_catalogue_update',
@@ -68,9 +69,9 @@ class supplier_catalogue(osv.osv):
                 'import_file': base64.encodestring(xmlstring),
             }, context=context)
 
-            self.pool.get('msf.import.export').import_xml(cr, uid, wiz_id, context=context)
+            res = self.pool.get('msf.import.export').import_xml(cr, uid, wiz_id, context=context)
 
-        return False, False, False
+        return res
 
 
     def wizard_import_supplier_catalogue_line(self, cr, uid, ids, context=None):
