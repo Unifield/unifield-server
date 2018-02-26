@@ -594,6 +594,37 @@ class res_partner(osv.osv):
             +[_('%s (Journal Item)') % (aml['move_id'] and aml['move_id'][1] or '') for aml in aml_obj.read(cr, uid, aml_ids, ['move_id'])]
         )
 
+    def check_partner_unicity(self, cr, uid, partner_id, context=None):
+        """
+        If the partner name is already used, check that the city is not empty AND not used by another partner with the
+        same name. Checks are case insensitive, done with active and inactive partners, and NOT done at synchro time.
+        """
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            partner = self.browse(cr, uid, partner_id, fields_to_fetch=['name', 'city'], context=context)
+            partner_name = partner.name
+            city = partner.city or ''
+            partner_domain = [('id', '!=', partner_id), ('name', '=ilike', partner_name), ('active', 'in', ['t', 'f'])]
+            duplicate_partner_ids = self.search(cr, uid, partner_domain, order='NO_ORDER', context=context)
+            if duplicate_partner_ids:
+                if not city or self.search_exist(cr, uid, [('id', 'in', duplicate_partner_ids), ('city', '=ilike', city)], context=context):
+                    raise osv.except_osv(_('Warning'),
+                                         _("The partner can't be saved because already exists under the same name for "
+                                           "the same city. Please change the partner name or city or use the existing partner."))
+
+    def write_web(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        ret = self.write(cr, uid, ids, vals, context=context)
+        for partner_id in ids:
+            self.check_partner_unicity(cr, uid, partner_id=partner_id, context=context)
+
+        return ret
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -619,7 +650,7 @@ class res_partner(osv.osv):
                     del vals[field]
         # [utp-315] avoid deactivating partner that have still open document linked to them
         if 'active' in vals and vals.get('active') == False:
-            # UTP-1214: only show error message if it is really a "deactivate partner" action, if not, just ignore 
+            # UTP-1214: only show error message if it is really a "deactivate partner" action, if not, just ignore
             oldValue = self.read(cr, uid, ids[0], ['active'], context=context)['active']
             if oldValue == True: # from active to inactive ---> check if any ref to it
                 objects_linked_to_partner = self.get_objects_for_partner(cr, uid, ids, context)
@@ -630,7 +661,6 @@ class res_partner(osv.osv):
 
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
-
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
@@ -660,8 +690,9 @@ class res_partner(osv.osv):
 
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
-
-        return super(res_partner, self).create(cr, uid, vals, context=context)
+        new_id = super(res_partner, self).create(cr, uid, vals, context=context)
+        self.check_partner_unicity(cr, uid, partner_id=new_id, context=context)
+        return new_id
 
 
     def copy_data(self, cr, uid, id, default=None, context=None):

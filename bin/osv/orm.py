@@ -1237,6 +1237,13 @@ class orm_template(object):
     def write(self, cr, user, ids, vals, context=None):
         raise NotImplementedError(_('The write method is not implemented on this object !'))
 
+    def write_web(self, cr, user, ids, vals, context=None):
+        """
+        Method called by the Web on write
+        """
+        return self.write(cr, user, ids, vals, context=context)
+
+
     def create(self, cr, user, vals, context=None):
         raise NotImplementedError(_('The create method is not implemented on this object !'))
 
