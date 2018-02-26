@@ -26,6 +26,8 @@ from osv import osv
 from tools.translate import _
 
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+
 
 from msf_doc_import import GENERIC_MESSAGE
 from msf_doc_import.wizard import SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT as sup_cat_columns_header
@@ -34,6 +36,42 @@ from msf_doc_import.wizard import SUPPLIER_CATALOG_COLUMNS_FOR_IMPORT as sup_cat
 
 class supplier_catalogue(osv.osv):
     _inherit = 'supplier.catalogue'
+
+    def auto_import(self, cr, uid, file_path, context=None):
+        if context is None:
+            context = {}
+
+        xmlstring = open(file_path).read()
+        file_obj = SpreadsheetXML(xmlstring=xmlstring)
+        displayable_name = self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'supplier.catalogue', 'name', context=context)
+        displayable_partner = self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'supplier.catalogue', 'partner_id', context=context)
+
+        catalogue_name = ''
+        partner_name = ''
+        for row in file_obj.getRows():
+            if row.cells[0].data == displayable_name:
+                catalogue_name = row.cells[1].data
+            elif row.cells[0].data == displayable_partner:
+                partner_name = row.cells[1].data
+            if catalogue_name and partner_name:
+                break
+
+        if catalogue_name and partner_name:
+            catalogue_id = self.search(cr, uid, [('name', '=', catalogue_name), ('partner_id.name', '=', partner_name)], context=context)
+        elif catalogue_name:
+            catalogue_id = self.search(cr, uid, [('name', '=', catalogue_name)], context=context)
+
+        if catalogue_id:
+            wiz_id = self.pool.get('msf.import.export').create(cr, uid, {
+                'model_list_selection': 'supplier_catalogue_update',
+                'supplier_catalogue_id': catalogue_id[0],
+                'import_file': base64.encodestring(xmlstring),
+            }, context=context)
+
+            self.pool.get('msf.import.export').import_xml(cr, uid, wiz_id, context=context)
+
+        return False, False, False
+
 
     def wizard_import_supplier_catalogue_line(self, cr, uid, ids, context=None):
         """
