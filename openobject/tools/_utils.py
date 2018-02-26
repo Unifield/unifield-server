@@ -41,6 +41,8 @@ def url(_cppath, _cpparams=None, **kw):
                 v = v.encode('utf-8')
             k = urllib.quote_plus(k)
             v = urllib.quote_plus(v)
+        elif isinstance(v, dict):
+            v = urllib.quote_plus('%s'%v)
 
         kv.append("%s=%s" % (k, v))
 
