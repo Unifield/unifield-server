@@ -880,24 +880,24 @@ WHERE n3.level = 3)
                         del data['name']
                     impobj.write(cr, uid, ids_to_update, data, context=context)
                     nb_update_success += 1
-                    processed.append((row_index, line_data))
+                    processed.append((row_index+1, line_data))
                 else:
                     context['from_import_menu']=  True
                     impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
-                    processed.append((row_index, line_data))
+                    processed.append((row_index+1, line_data))
             except osv.except_osv, e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 cr.rollback()
                 save_error(e.value, row_index)
                 nb_error += 1
-                rejected.append((row_index, data, e.value))
+                rejected.append((row_index+1, data, e.value))
             except Exception, e:
                 cr.rollback()
                 logging.getLogger('import data').info('Error %s' % e)
                 save_error(e, row_index)
                 nb_error += 1
-                rejected.append((row_index, data, e))
+                rejected.append((row_index+1, data, e))
             else:
                 nb_imported_lines += 1
 
