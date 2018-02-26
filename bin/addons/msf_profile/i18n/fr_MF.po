@@ -107144,3 +107144,36 @@ msgstr "Le compte %s - %s est défini comme \"Empêcher la correction sur les co
 #, python-format
 msgid "The AD of the original entry is incomplete."
 msgstr "La Distribution Analytique de l'écriture d'origine est incomplète."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:933
+#, python-format
+msgid "Please remove non-stockable product from the discrepancy report to validate:"
+"%s"
+msgstr "Veuillez supprimer le produit non stockable depuis le rapport de divergence pour pouvoir valider:"
+"%s"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:938
+#, python-format
+msgid "Please remove non-stockable product %s from the counting sheet to validate."
+msgstr "Veuillez supprimer le produit non stockable %s depuis la feuille de comptage pour pouvoir valider."
+
+#. modules: specific_rules, stock
+#: code:addons/specific_rules/stock.py:137
+#: code:addons/stock/physical_inventory.py:928
+#, python-format
+msgid "Please remove non-stockable product %s to validate."
+msgstr "Veuillez supprimer le produit non stockable %s pour pouvoir valider."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:699
+#, python-format
+msgid "Impossible to import non-stockable products."
+msgstr "Impossible d'importer des produits non stockables."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:845
+#, python-format
+msgid "Impossible to import non-stockable product %s"
+msgstr "Impossible d'importer le produit non stockable %s"
