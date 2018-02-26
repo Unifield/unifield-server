@@ -693,7 +693,6 @@ class res_partner(osv.osv):
                         """, (tuple(rules_to_check), tuple(fields_to_create)))
 
                         x = cr.fetchone()
-                        print x
                         if x:
                             # throw access denied error
                             raise osv.except_osv(_('Access Denied'),
