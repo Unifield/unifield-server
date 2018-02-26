@@ -513,7 +513,7 @@ class Form(SecuredController):
                 #    Model.write([params.id], modified, ctx)
                 #else:
                 #    Model.write([params.id], data, ctx)
-                Model.write([params.id], data, ctx)
+                Model.write_web([params.id], data, ctx)
 
             tw.ConcurrencyInfo.update(
                 params.model, Model.read([params.id], ['__last_update'], ctx)
