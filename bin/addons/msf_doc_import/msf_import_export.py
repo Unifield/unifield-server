@@ -757,6 +757,7 @@ WHERE n3.level = 3)
             res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers, context=context)
             if res < 0:
                 save_error(errors, row_index)
+                rejected.append((row_index+1, line_data, '\n'.join(errors)))
                 continue
 
             if all(not x for x in line_data):
@@ -827,6 +828,7 @@ WHERE n3.level = 3)
                         elif fields_def[points[0]]['type'] == 'many2many' and line_data[n]:
                             data.setdefault(points[0], []).append((4, _get_obj(h, line_data[n], fields_def)))
                 if not line_ok:
+                    rejected.append((row_index+1, line_data, ''))
                     continue
                 if newo2m and o2mdatas:
                     data.setdefault(newo2m, []).append((0, 0, o2mdatas.copy()))
@@ -891,13 +893,13 @@ WHERE n3.level = 3)
                 cr.rollback()
                 save_error(e.value, row_index)
                 nb_error += 1
-                rejected.append((row_index+1, data, e.value))
+                rejected.append((row_index+1, line_data, e.value))
             except Exception, e:
                 cr.rollback()
                 logging.getLogger('import data').info('Error %s' % e)
                 save_error(e, row_index)
                 nb_error += 1
-                rejected.append((row_index+1, data, e))
+                rejected.append((row_index+1, line_data, e))
             else:
                 nb_imported_lines += 1
 
@@ -963,6 +965,8 @@ WHERE n3.level = 3)
 
         cr.commit()
         cr.close()
+
+        print rejected
 
         return (processed, rejected, [tu[0] for tu in headers])
 
