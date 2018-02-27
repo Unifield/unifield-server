@@ -115,15 +115,17 @@ class hq_entries_split_lines(osv.osv_memory):
             res = getattr(account, 'is_not_hq_correctible', False)
         return res
 
-    def onchange_hq_entry_account(self, cr, uid, ids, account_id):
+    def _get_is_not_ad_correctable(self, cr, uid, context=None):
         """
-        Blocks AD correction if the account used is set as 'Prevent correction on analytic accounts'
+        Returns True if the account of the original entry to split is set as 'is_not_ad_correctable'
         """
-        account_obj = self.pool.get('account.account')
-        res = {}
-        if account_id:
-            account = account_obj.browse(cr, uid, account_id, fields_to_fetch=['is_not_ad_correctable'])
-            res['value'] = {'is_not_ad_correctable': account.is_not_ad_correctable}
+        res = False
+        if not context:
+            return res
+        original_line = self._get_original_line(cr, uid, context=context)
+        account = original_line and getattr(original_line, 'account_id', False) or False
+        if account:
+            res = getattr(account, 'is_not_ad_correctable', False)
         return res
 
     _defaults = {
@@ -134,7 +136,8 @@ class hq_entries_split_lines(osv.osv_memory):
         'destination_id': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'destination_id', field_type='m2o', context=c),
         'cost_center_id': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'cost_center_id', field_type='m2o', context=c),
         'analytic_id': lambda obj, cr, uid, c: obj._get_field(cr, uid, 'analytic_id', field_type='m2o', context=c),
-        'account_hq_correctible': lambda obj, cr, uid, c: obj._get_hq_correctible(cr, uid, context=c)
+        'account_hq_correctible': lambda obj, cr, uid, c: obj._get_hq_correctible(cr, uid, context=c),
+        'is_not_ad_correctable': lambda obj, cr, uid, c: obj._get_is_not_ad_correctable(cr, uid, context=c)
     }
 
     def _update_ad(self, wizard, vals):
