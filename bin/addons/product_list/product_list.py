@@ -21,7 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
-from . import PRODUCT_LIST_TYPE
+from msf_doc_import import PRODUCT_LIST_TYPE
 
 import time
 

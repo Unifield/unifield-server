@@ -28,9 +28,7 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_product_list_import
 from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_FOR_IMPORT as columns_for_product_list_import
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-
-PRODUCT_LIST_TYPE = [('list', 'List'), ('sublist', 'Sublist')]
-
+from . import PRODUCT_LIST_TYPE
 
 
 

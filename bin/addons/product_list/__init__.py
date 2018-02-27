@@ -19,8 +19,6 @@
 #
 ##############################################################################
 
-PRODUCT_LIST_TYPE = [('list', 'List'), ('sublist', 'Sublist')]
-
 import product_list
 import report
 import wizard
