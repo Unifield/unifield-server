@@ -76,6 +76,7 @@ class product_list(osv.osv):
                 location_id = self.pool.get('stock.location').search(cr, uid, [('name', '=', row.cells[1].data)], context=context)
                 data['location_id'] = location_id[0] if location_id else False
 
+        list_id = False
         if data['name']:
             list_id = self.search(cr, uid, [('name', '=', data['name'])], context=context)
         if not list_id:
