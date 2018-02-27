@@ -338,7 +338,6 @@ MODEL_DATA_DICT = {
             'period_to',
         ],
         'header_list': [
-            'line_number',
             'product_id.code',
             'product_id.name',
             'product_code',

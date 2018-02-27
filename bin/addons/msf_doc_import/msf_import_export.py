@@ -753,6 +753,8 @@ WHERE n3.level = 3)
 
         processed = []
         rejected = []
+        product_already_updated = [] # ids of the lines already updated
+        forbid_creation_of = [] # list of product ids that will not be created
         for row_index, row in enumerate(rows):
             res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers, context=context)
             if res < 0:
@@ -863,8 +865,14 @@ WHERE n3.level = 3)
                     data['catalogue_id'] = import_brw.supplier_catalogue_id.id
                     ids_to_update = impobj.search(cr, uid, [
                         ('catalogue_id', '=', import_brw.supplier_catalogue_id.id), 
-                        ('line_number', '=', data['line_number']),
+                        ('product_id', '=', data['product_id']),
                     ], context=context)
+                    ids_to_update = [x for x in ids_to_update if x not in product_already_updated]
+                    if data.get('comment') != '[DELETE]':
+                        ids_to_update = [ids_to_update[0]] if ids_to_update else []
+                    else:
+                        forbid_creation_of.append(data['product_id'])
+                    product_already_updated += ids_to_update
                 if import_brw.model_list_selection == 'product_list_update':
                     data['list_id'] = import_brw.product_list_id.id
                     new_product_id = self.pool.get('product.product').search(cr, uid, [('default_code', '=', line_data[0].strip())], context=context)
@@ -885,7 +893,8 @@ WHERE n3.level = 3)
                     processed.append((row_index+1, line_data))
                 else:
                     context['from_import_menu']=  True
-                    impobj.create(cr, uid, data, context=context)
+                    if data.get('product_id') and data['product_id'] not in forbid_creation_of:
+                        impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
                     processed.append((row_index+1, line_data))
             except osv.except_osv, e:
