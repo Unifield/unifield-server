@@ -45,7 +45,7 @@ class supplier_catalogue(osv.osv):
         if context is None:
             context = {}
 
-        def get_well_formatted_date(content):
+        def get_well_formed_date(content):
             if not content:
                 return False
             elif type(content) == type(mx.DateTime.DateTime(1)):
@@ -74,9 +74,9 @@ class supplier_catalogue(osv.osv):
                 currency_id = self.pool.get('res.currency').search(cr, uid, [('name', '=', row.cells[1].data)], context=context) 
                 data['currency_id'] = currency_id[0] if currency_id else False
             elif row.cells[0].data == displayable['period_from']:
-                data['period_from'] = get_well_formatted_date(row.cells[1].data)
+                data['period_from'] = get_well_formed_date(row.cells[1].data)
             elif row.cells[0].data == displayable['period_to']:
-                data['period_to'] = get_well_formatted_date(row.cells[1].data)
+                data['period_to'] = get_well_formed_date(row.cells[1].data)
 
         catalogue_id = False
         if data['name'] and data['partner_id']:
