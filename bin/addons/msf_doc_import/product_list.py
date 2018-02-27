@@ -29,6 +29,9 @@ from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT as colu
 from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_FOR_IMPORT as columns_for_product_list_import
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
+PRODUCT_LIST_TYPE = [('list', 'List'), ('sublist', 'Sublist')]
+
+
 
 
 class product_list(osv.osv):
@@ -44,16 +47,43 @@ class product_list(osv.osv):
 
         xmlstring = open(file_path).read()
         file_obj = SpreadsheetXML(xmlstring=xmlstring)
-        displayable_name = self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'product.list', 'name', context=context)
 
-        list_name = ''
+        displayable = {}
+        for field in ['type', 'ref', 'name', 'description', 'standard_list_ok', 'order_list_print_ok',  'warehouse_id', 'location_id']:
+            displayable[field] = self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'product.list', field, context=context)
+
+        # get header data:
+        data = {}
         for row in file_obj.getRows():
-            if row.cells[0].data == displayable_name:
-                list_name = row.cells[1].data
-                break
+            if len(row.cells) > 2:
+                break # header end
+            if row.cells[0].data == displayable['type']:
+                for tu in PRODUCT_LIST_TYPE:
+                    if row.cells[1].data == self.pool.get('ir.model.fields').get_selection(cr, uid, 'product.list', 'type', tu[0], context=context):
+                        data['type'] = tu[0]
+            elif row.cells[0].data == displayable['ref']:
+                data['ref'] = row.cells[1].data
+            elif row.cells[0].data == displayable['name']:
+                data['name'] = row.cells[1].data
+            elif row.cells[0].data == displayable['description']:
+                data['description'] = row.cells[1].data
+            elif row.cells[0].data == displayable['standard_list_ok']:
+                data['standard_list_ok'] = True if row.cells[1].data.lower().strip() in ['yes', 'oui'] else False
+            elif row.cells[0].data == displayable['order_list_print_ok']:
+                data['order_list_print_ok'] = True if row.cells[1].data.lower().strip() in ['yes', 'oui'] else False
+            elif row.cells[0].data == displayable['warehouse_id']:
+                warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [('name', '=', row.cells[1].data)], context=context)
+                data['warehouse_id'] = warehouse_id[0] if warehouse_id else False
+            elif row.cells[0].data == displayable['location_id']:
+                location_id = self.pool.get('stock.location').search(cr, uid, [('name', '=', row.cells[1].data)], context=context)
+                data['location_id'] = location_id[0] if location_id else False
 
-        if list_name:
-            list_id = self.search(cr, uid, [('name', '=', list_name)], context=context)
+        if data['name']:
+            list_id = self.search(cr, uid, [('name', '=', data['name'])], context=context)
+        if not list_id:
+            list_id = self.create(cr, uid, data, context=context)
+            list_id = [list_id]
+            cr.commit()
 
         res = (False, False, False)
         if list_id:
