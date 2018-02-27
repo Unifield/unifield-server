@@ -966,8 +966,6 @@ WHERE n3.level = 3)
         cr.commit()
         cr.close()
 
-        print rejected
-
         return (processed, rejected, [tu[0] for tu in headers])
 
 msf_import_export()

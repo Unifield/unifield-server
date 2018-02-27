@@ -38,6 +38,10 @@ class supplier_catalogue(osv.osv):
     _inherit = 'supplier.catalogue'
 
     def auto_import(self, cr, uid, file_path, context=None):
+        '''
+        Method called in case of automated import
+        Tools > Automated import 
+        '''
         if context is None:
             context = {}
 

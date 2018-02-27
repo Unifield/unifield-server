@@ -27,9 +27,45 @@ from msf_doc_import import GENERIC_MESSAGE
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_product_list_import
 from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_FOR_IMPORT as columns_for_product_list_import
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+
+
 
 class product_list(osv.osv):
     _inherit = 'product.list'
+
+    def auto_import(self, cr, uid, file_path, context=None):
+        '''
+        Method called in case of automated import
+        Tools > Automated import 
+        '''
+        if context is None:
+            context = {}
+
+        xmlstring = open(file_path).read()
+        file_obj = SpreadsheetXML(xmlstring=xmlstring)
+        displayable_name = self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'product.list', 'name', context=context)
+
+        list_name = ''
+        for row in file_obj.getRows():
+            if row.cells[0].data == displayable_name:
+                list_name = row.cells[1].data
+                break
+
+        if list_name:
+            list_id = self.search(cr, uid, [('name', '=', list_name)], context=context)
+
+        res = (False, False, False)
+        if list_id:
+            wiz_id = self.pool.get('msf.import.export').create(cr, uid, {
+                'model_list_selection': 'product_list_update',
+                'product_list_id': list_id[0],
+                'import_file': base64.encodestring(xmlstring),
+            }, context=context)
+
+            res = self.pool.get('msf.import.export').import_xml(cr, uid, wiz_id, context=context)
+
+        return res
 
     def wizard_import_product_list_line(self, cr, uid, ids, context=None):
         '''
