@@ -42689,12 +42689,6 @@ msgstr "ir.default"
 msgid "Pricelists Types"
 msgstr "Type de Liste de Prix"
 
-#. module: account_hq_entries
-#: code:addons/account_hq_entries/wizard/hq_entries_split.py:154
-#, python-format
-msgid "Account is required!"
-msgstr "Account is required!"
-
 #. module: sale
 #: report:msf.report_reception_in:0
 msgid "KC"
@@ -101210,5 +101204,5 @@ msgstr "Le compte %s - %s est défini comme \"Empêcher la correction sur les co
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/wizard/hq_entries_split.py:150
 #, python-format
-msgid "The AD of the original entry is incomplete."
-msgstr "La Distribution Analytique de l'écriture d'origine est incomplète."
+msgid "The account or AD of the original entry is missing or incomplete."
+msgstr "Le compte ou la Distribution Analytique de l'écriture d'origine est manquant(e) ou incomplet(e)."
