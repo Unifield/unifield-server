@@ -125,6 +125,14 @@ class automated_import(osv.osv):
             help="""Defines the priority of the automated import processing because some of them needs other data
 to import well some data (e.g: Product Categories needs Product nomenclatures)."""
         ),
+        'ftp_ok': fields.boolean(string='Enable FTP server', help='Enable FTP server if you want to read or write from a remote FTP server'),
+        'ftp_url': fields.char(string='FTP server address', size=256),
+        'ftp_port': fields.char(string='FTP server port', size=56),
+        'ftp_login': fields.char(string='FTP login', size=256),
+        'ftp_password': fields.char(string='FTP password', size=256),
+        'ftp_source_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
+        'ftp_dest_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
+        'ftp_report_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
     }
 
     _defaults = {
@@ -156,6 +164,13 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
     _constraints = [
         (_check_paths, _('There is a problem with paths'), ['active', 'src_path', 'dest_path', 'report_path']),
     ]
+
+    def onchange_ftp_ok(self, cr, uid, ids, ftp_ok, context=None):
+        if context is None:
+            context = {}
+        if ftp_ok == False:
+            return {'value': {'ftp_source_ok': False, 'ftp_dest_ok': False, 'ftp_report_ok': False}}
+        return {}
 
     def job_in_progress(self, cr, uid, ids, context=None):
         """
