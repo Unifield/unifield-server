@@ -62,22 +62,40 @@ class Translator(SecuredController):
         names = view_fields.keys()
         names.sort(lambda x,y: cmp(view_fields[x].get('string', ''), view_fields[y].get('string', '')))
 
-        if translate == 'fields' and params.id:
-            for name in names:
-                attrs = view_fields[name]
+        if translate == 'fields' and params.id and params.get('_terp_clicked_field', False):
+            # US-3071 : single field translation only for product.product
+            if params.get('_terp_model', False) and params['_terp_model'] == 'product.product':
+                clicked_field = params['_terp_clicked_field']
+                attrs = view_fields[clicked_field]
                 if attrs.get('translate'):
                     value = {}
                     for lang in langs:
                         context = copy.copy(ctx)
                         context['lang'] = adapt_context(lang['code'])
 
-                        val = proxy.read([params.id], [name], context)
+                        val = proxy.read([params.id], [clicked_field], context)
                         val = val[0] if isinstance(val,list) and len(val) > 0 else None
 
-                        value[lang['code']] = val[name] if isinstance(val,dict) \
-                            and name in val else None
+                        value[lang['code']] = val[clicked_field] if isinstance(val,dict) \
+                            and clicked_field in val else None
 
-                    data += [(name, value, None, attrs.get('string'))]
+                    data += [(clicked_field, value, None, attrs.get('string'))]
+            else:
+                for name in names:
+                    attrs = view_fields[name]
+                    if attrs.get('translate'):
+                        value = {}
+                        for lang in langs:
+                            context = copy.copy(ctx)
+                            context['lang'] = adapt_context(lang['code'])
+
+                            val = proxy.read([params.id], [name], context)
+                            val = val[0] if isinstance(val, list) and len(val) > 0 else None
+
+                            value[lang['code']] = val[name] if isinstance(val, dict) \
+                                                               and name in val else None
+
+                        data += [(name, value, None, attrs.get('string'))]
 
         if translate == 'labels':
             for name in names:

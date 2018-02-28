@@ -31,7 +31,7 @@
                              onclick="jQuery.frame_dialog({src:openobject.http.getURL('/openerp/translator', {
                                         _terp_model: '${screen.model}',
                                         _terp_id: ${screen.id},
-                                        _terp_context: $('_terp_context').value
+                                        _terp_context: $('_terp_context').value,
                                       })});"/>
                         % endif
                     </td>

@@ -1309,7 +1309,8 @@ function translate_fields(src, params){
     jQuery.frame_dialog({src:openobject.http.getURL('/openerp/translator',{
         _terp_model: (src ? $src.attr('relation') : params['relation']),
         _terp_id: (src ? $src.attr('id') : params['id']),
-        _terp_context: (src ? $src.attr('data') : params['data'])
+        _terp_context: (src ? $src.attr('data') : params['data']),
+        _terp_clicked_field: (src ? $src.attr('clicked_field') : params['clicked_field'])
     })}, null, {
         height: 400
     });
