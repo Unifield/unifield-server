@@ -893,7 +893,10 @@ WHERE n3.level = 3)
                     processed.append((row_index+1, line_data))
                 else:
                     context['from_import_menu']=  True
-                    if data.get('product_id') and data['product_id'] not in forbid_creation_of:
+                    if import_brw.model_list_selection == 'supplier_catalogue_update':
+                        if data.get('product_id') and data['product_id'] not in forbid_creation_of:
+                            impobj.create(cr, uid, data, context=context)
+                    else:
                         impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
                     processed.append((row_index+1, line_data))
