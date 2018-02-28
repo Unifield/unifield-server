@@ -867,8 +867,8 @@ WHERE n3.level = 3)
                         ('catalogue_id', '=', import_brw.supplier_catalogue_id.id), 
                         ('product_id', '=', data['product_id']),
                     ], context=context)
-                    ids_to_update = [x for x in ids_to_update if x not in product_already_updated]
                     if data.get('comment') != '[DELETE]':
+                        ids_to_update = [x for x in ids_to_update if x not in product_already_updated]
                         ids_to_update = [ids_to_update[0]] if ids_to_update else []
                     else:
                         forbid_creation_of.append(data['product_id'])
