@@ -42,7 +42,7 @@ def all_files_under(path):
             yield os.path.join(cur_path, filename)
 
 
-def move_to_process_path(file, src_path, dest_path):
+def move_to_process_path(import_brw, file, src_path, dest_path):
     """
     Move the file `file` from `src_path` to `dest_path`
     :param file: Name of the file to move
@@ -50,9 +50,21 @@ def move_to_process_path(file, src_path, dest_path):
     :param dest_path: Destination folder
     :return: return True
     """
-    srcname = os.path.join(src_path, file)
-    renamed = os.path.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
-    shutil.move(srcname, renamed)
+    if import_brw.ftp_source_ok and import_brw.ftp_dest_ok:
+        # from FTP to FTP
+        pass 
+    elif not import_brw.ftp_source_ok and import_brw.ftp_dest_ok:
+        # from local to FTP
+        pass
+    elif import_brw.ftp_source_ok and not import_brw.ftp_dest_ok:
+        # from FTP to local
+        pass
+    else:
+        # from local to local
+        srcname = os.path.join(src_path, file)
+        renamed = os.path.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
+        shutil.move(srcname, renamed)
+
     return True
 
 
@@ -176,6 +188,11 @@ class automated_import_job(osv.osv):
             data64 = None
             filename = False
 
+            if job.import_id.ftp_ok:
+                context.update({'no_raise_if_ok': True})
+                self.pool.get('automated.import').ftp_test_connection(cr, uid, job.import_id.id, context=context)
+
+
             try:
                 for path in [('src_path', 'r'), ('dest_path', 'w'), ('report_path', 'w')]:
                     import_obj.path_is_accessible(job.import_id[path[0]], path[1])
@@ -199,7 +216,7 @@ class automated_import_job(osv.osv):
                         error = _('No file to import in %s !') % job.import_id.src_path
                     elif md5 and self.search_exist(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], context=context):
                         error = _('A file with same checksum has been already imported !')
-                        move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
+                        move_to_process_path(job.import_id, filename, job.import_id.src_path, job.import_id.dest_path)
 
                 if error:
                     self.write(cr, uid, [job.id], {
@@ -281,7 +298,7 @@ class automated_import_job(osv.osv):
                     'state': 'error',
                 }, context=context)
             finally:
-                move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
+                move_to_process_path(job.import_id, filename, job.import_id.src_path, job.import_id.dest_path)
 
         return {
             'type': 'ir.actions.act_window',

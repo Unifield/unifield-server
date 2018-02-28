@@ -26,6 +26,7 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
+from ftplib import FTP
 
 
 class automated_import(osv.osv):
@@ -171,6 +172,28 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         if ftp_ok == False:
             return {'value': {'ftp_source_ok': False, 'ftp_dest_ok': False, 'ftp_report_ok': False}}
         return {}
+
+    def ftp_test_connection(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        for obj in self.browse(cr, uid, ids, context=context):
+            ftp = FTP()
+            try:
+                ftp.connect(host=obj.ftp_url, port=obj.ftp_port or 0) # '220 (vsFTPd 3.0.2)'
+            except:
+                raise osv.except_osv(_('Error'), _('Not able to connect to FTP server at location %s') % obj.ftp_url)
+            try:
+                ftp.login(user=obj.ftp_login, passwd=obj.ftp_password) # '230 Login successful.'
+            except:
+                raise osv.except_osv(_('Error'), _('Unable to connect with given login and password'))
+
+        if not context.get('no_raise_if_ok'):
+            raise osv.except_osv(_('Info'), _('Connection succeeded'))
+            
+        return True
 
     def job_in_progress(self, cr, uid, ids, context=None):
         """
