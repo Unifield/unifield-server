@@ -538,13 +538,6 @@ class module(osv.osv):
             if not mod.description:
                 logger.warn('module %s: description is empty !', mod.name)
 
-            if not mod.certificate or not mod.certificate.isdigit():
-                logger.info('module %s: no quality certificate', mod.name)
-            else:
-                val = long(mod.certificate[2:]) % 97 == 29
-                if not val:
-                    logger.critical('module %s: invalid quality certificate: %s', mod.name, mod.certificate)
-                    raise osv.except_osv(_('Error'), _('Module %s: Invalid Quality Certificate') % (mod.name,))
 
     def list_web(self, cr, uid, context=None):
         """ list_web(cr, uid, context) -> [(module_name, module_version)]

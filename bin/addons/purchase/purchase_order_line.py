@@ -392,6 +392,7 @@ class purchase_order_line(osv.osv):
 
 
     _columns = {
+        'block_resourced_line_creation': fields.boolean(string='Block resourced line creation', help='Set as true to block resourced line creation in case of cancelled-r line'),
         'set_as_sourced_n': fields.boolean(string='Set as Sourced-n', help='Line has been created further and has to be created back in preceding documents'),
         'set_as_validated_n': fields.boolean(string='Created when PO validated', help='Usefull for workflow transition to set the validated-n state'),
         'is_line_split': fields.boolean(string='This line is a split line?'),
@@ -506,6 +507,7 @@ class purchase_order_line(osv.osv):
     _defaults = {
         'set_as_sourced_n': lambda *a: False,
         'set_as_validated_n': lambda *a: False,
+        'block_resourced_line_creation': lambda *a: False,
         'change_price_manually': lambda *a: False,
         'product_qty': lambda *a: 0.00,
         'price_unit': lambda *a: 0.00,

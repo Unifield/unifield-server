@@ -2435,10 +2435,9 @@ class sale_order_line(osv.osv):
         @param resource: is the line cancel and resourced ? usefull to set the 'cancel_r' state
         '''
         # Documents
-        move_obj = self.pool.get('stock.move')
-        pick_obj = self.pool.get('stock.picking')
         so_obj = self.pool.get('sale.order')
-
+        wf_service = netsvc.LocalService("workflow")
+        signal = 'cancel_r' if resource else 'cancel'
 
         if context is None:
             context = {}
@@ -2449,29 +2448,7 @@ class sale_order_line(osv.osv):
         order = line.order_id and line.order_id.id
 
         if qty_diff >= line.product_uom_qty:
-            # Delete the line and the procurement
-            if not (context.get('picking_type', '') == 'incoming_shipment' and context.get('split_line')):
-                self.write(cr, uid, [line.id], {'state': 'cancel_r' if resource else 'cancel'}, context=context)
-
-            # Cancel OUT line when IR line has been canceled:
-            picking_ids = set()
-            out_moves = move_obj.search(cr, uid, [('sale_line_id', '=', line.id), ('state', 'not in', ['done', 'cancel']), ('in_out_updated', '=', False)], context=context)
-            for move in move_obj.read(cr, uid, out_moves, ['picking_id'], context=context):
-                if move['picking_id']:
-                    picking_ids.add(move['picking_id'][0])
-            if not context.get('no_cancel_out'):
-                move_obj.write(cr, uid, out_moves, {'state': 'cancel'}, context=context)
-                move_obj.action_cancel(cr, uid, out_moves, context=context)
-
-            for pick in pick_obj.browse(cr, uid, list(picking_ids), context=context):
-                if not len(pick.move_lines) or (pick.subtype == 'standard' and all(m.state == 'cancel' for m in pick.move_lines)):
-                    pick_obj.action_cancel(cr, uid, [pick.id])
-                elif pick.subtype == 'picking' and pick.state == 'draft':
-                    pick_obj.validate(cr, uid, [pick.id])
-
-            if line.original_line_id:
-                cancel_split_qty = line.original_line_id.cancel_split_ok + line.product_uom_qty
-                self.write(cr, uid, [line.original_line_id.id], {'cancel_split_ok': cancel_split_qty}, context=context)
+            wf_service.trg_validate(uid, 'sale.order.line', line.id, signal, cr)
         else:
             # Update the line and the procurement
             self.cancel_partial_qty(cr, uid, [line.id], qty_diff, resource, context=context)

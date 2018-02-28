@@ -541,6 +541,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_extra_ids = j_obj.search(cr, uid, [('type', '=', 'extra'),
                                              ('is_current_instance', '=', True)])
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
+        j_ana_extra_ids = ana_j_obj.search(cr, uid, [('type', '=', 'extra'), ('is_current_instance', '=', True)], context=context)
+        j_ana_extra_id = j_ana_extra_ids and j_ana_extra_ids[0] or False
+
         # Search attached period
         period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)], context=context,
                                                             limit=1, order='date_start, name')
@@ -569,8 +572,13 @@ receivable, item have not been corrected, item have not been reversed and accoun
             journal_id = j_corr_id
             if is_inkind:
                 journal_id = j_extra_id
-            if not journal_id and is_inkind:
-                raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
+                j_ana_corr_id = j_ana_extra_id
+
+            if is_inkind:
+                if not journal_id:
+                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Journal found!'))
+                elif not j_ana_extra_id:
+                    raise osv.except_osv(_('Error'), _('No OD-Extra Accounting Analytic Journal found!'))
             elif not journal_id:
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
 
