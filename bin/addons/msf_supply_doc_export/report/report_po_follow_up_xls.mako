@@ -107,6 +107,8 @@
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
     # Delivery Confirmed (order)
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
+    # Status (line)
+    <Columns ss:AutoFitWidth="1" ss:Width="95" />
     # Status (order)
     <Columns ss:AutoFitWidth="1" ss:Width="95" />
     # Destination
@@ -148,6 +150,7 @@
         <Cell ss:StyleID="line"><Data ss:Type="Number">${(line['in_unit_price'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_created'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_confirmed_date'])|x}</Data></Cell>
+        <Cell ss:StyleID="line"><Data ss:Type="String">${(line['line_status'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['order_status'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['destination'])|x}</Data></Cell>
         <Cell ss:StyleID="line"><Data ss:Type="String">${(line['cost_centre'])|x}</Data></Cell>

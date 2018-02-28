@@ -427,6 +427,7 @@ class po_follow_up_mixin(object):
             report_line['order_ref'] = ''
             report_line['order_created'] = ''
             report_line['order_confirmed_date'] = ''
+            report_line['line_status'] = ''
             report_line['order_status'] = ''
             report_line['item'] = ''
             report_line['code'] = ''
@@ -456,6 +457,7 @@ class po_follow_up_mixin(object):
         pol_obj = self.pool.get('purchase.order.line')
         prod_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
+        get_sel = self.pool.get('ir.model.fields').get_selection
         po_line_ids = pol_obj.search(self.cr, self.uid, [('order_id','=',po_id)], order='line_number')
         report_lines = []
         order = po_obj.browse(self.cr, self.uid, po_id)
@@ -481,6 +483,7 @@ class po_follow_up_mixin(object):
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
                     'order_confirmed_date': order.delivery_confirmed_date or '',
+                    'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
                     'order_status': self._get_states().get(order.state, ''),
                     'item': line.line_number or '',
                     'code': line.product_id.default_code or '',
@@ -505,6 +508,7 @@ class po_follow_up_mixin(object):
                     'order_created': order.date_order or '',
                     'order_confirmed_date': order.delivery_confirmed_date or '',
                     'order_status': self._get_states().get(order.state, ''),
+                    'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
                     'item': first_line and line.line_number or '',
                     'code': first_line and line.product_id.default_code or '',
                     'description': first_line and line.product_id.name or '',
@@ -534,6 +538,7 @@ class po_follow_up_mixin(object):
                     'order_created': order.date_order or '',
                     'order_confirmed_date': order.delivery_confirmed_date or '',
                     'order_status': self._get_states().get(order.state, ''),
+                    'line_status': first_line and get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
                     'item': first_line and line.line_number or '',
                     'code': first_line and line.product_id.default_code or '',
                     'description': first_line and line.product_id.name or '',
@@ -563,6 +568,7 @@ class po_follow_up_mixin(object):
                     'order_created': order.date_order or '',
                     'order_confirmed_date': order.delivery_confirmed_date or '',
                     'order_status': self._get_states().get(order.state, ''),
+                    'line_status': get_sel(self.cr, self.uid, 'purchase.order.line', 'state', line.state, {}) or '',
                     'item': line.line_number or '',
                     'code': prod_brw.default_code or '',
                     'description': prod_brw.name or '',
@@ -621,7 +627,7 @@ class po_follow_up_mixin(object):
         return self.datas.get('report_header')[1]
 
     def getPOLineHeaders(self):
-        return ['Order Ref', 'Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price', 'Created', 'Confirmed Delivery', 'Status', 'Destination','Cost Center']
+        return ['Order Ref', 'Item','Code','Description','Qty ordered','UoM','Qty received','IN','Qty backorder','Unit Price','IN unit price', 'Created', 'Confirmed Delivery', 'Line State', 'Order State', 'Destination','Cost Center']
 
 
 
