@@ -271,30 +271,6 @@ class product_template(osv.osv):
                 result[product.id]['seller_id'] = main_supplier and main_supplier.name.id or False
         return result
 
-    def _is_description_translatable(self, cr, uid, ids, fields, arg, context=None):
-        if context is None:
-            context = {}
-
-        lang_obj = self.pool.get('res.lang')
-        ir_tr_obj = self.pool.get('ir.translation')
-
-        product_description_translatable = {}.fromkeys(ids, True)
-        langs_code = []
-        active_lang_ids = lang_obj.search(cr, uid, [('active', '=', True), ('translatable', '=', True),
-                                                    ('code', '!=', 'en_MF')], context=context)
-        if not active_lang_ids:
-            return product_description_translatable
-
-        for lang in lang_obj.browse(cr, uid, active_lang_ids, fields_to_fetch=['code'], context=context):
-            langs_code.append(lang['code'])
-
-        for product_id in ids:
-            if ir_tr_obj.search_exist(cr, uid, [('lang', 'in', langs_code), ('name', '=', 'product.template,name'),
-                                                ('res_id', '=', product_id)], context=context):
-                product_description_translatable[product_id] = False
-
-        return product_description_translatable
-
     _columns = {
         'name': fields.char('Name', size=128, required=True, translate=True, select=True),
         'product_manager': fields.many2one('res.users','Product Manager',help="This is use as task responsible"),
@@ -335,8 +311,6 @@ class product_template(osv.osv):
         'loc_row': fields.char('Row', size=16),
         'loc_case': fields.char('Case', size=16),
         'company_id': fields.many2one('res.company', 'Company',select=1),
-        'description_translatable': fields.function(_is_description_translatable, method=True, type='boolean',
-                                                    string='Is the product\'s description translatable ?', store=False),
     }
 
     def _get_uom_id(self, cr, uid, *args):
@@ -728,6 +702,42 @@ class product_product(osv.osv):
         else:
             return super(product_product, self).copy(cr, uid, id, default=default,
                                                      context=context)
+
+    def is_field_translatable(self, cr, uid, product_id, field_name, field_value, context=None):
+        if context is None:
+            context = {}
+
+        lang_obj = self.pool.get('res.lang')
+        ir_tr_obj = self.pool.get('ir.translation')
+
+        product_field_translatable = True
+        langs_code = []
+        active_lang_ids = lang_obj.search(cr, uid, [('active', '=', True), ('translatable', '=', True),
+                                                    ('code', '!=', 'en_MF')], context=context)
+        if not active_lang_ids:
+            return product_field_translatable
+
+        for lang in lang_obj.browse(cr, uid, active_lang_ids, fields_to_fetch=['code'], context=context):
+            langs_code.append(lang['code'])
+
+        # search for field's model to look for the correct field
+        if self._inherits and field_name in self._inherit_fields:
+            model = self._inherit_fields[field_name][0]
+        else:
+            model = self._name
+        current_field = model + ',' + str(field_name)
+
+        tr_ids = ir_tr_obj.search(cr, uid, [('lang', 'in', langs_code), ('name', '=', current_field),
+                                            ('res_id', '=', product_id)], context=context)
+        if tr_ids:
+            for field_trad in ir_tr_obj.browse(cr, uid, tr_ids, fields_to_fetch=['value'], context=context):
+                if field_trad.value != field_value:
+                    product_field_translatable = False
+                    break
+
+        return product_field_translatable
+
+
 product_product()
 
 class product_packaging(osv.osv):
