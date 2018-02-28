@@ -192,8 +192,8 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
 
         if not context.get('no_raise_if_ok'):
             raise osv.except_osv(_('Info'), _('Connection succeeded'))
-            
-        return True
+
+        return ftp
 
     def job_in_progress(self, cr, uid, ids, context=None):
         """
