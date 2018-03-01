@@ -186,10 +186,12 @@ class purchase_order_line(osv.osv):
                 sol_values['modification_comment'] = pol.modification_comment
 
             # update analytic distribution if PO line has one
-            if pol.linked_sol_id and not pol.linked_sol_id.analytic_distribution_id and pol.analytic_distribution_id:
+            if pol.linked_sol_id and not pol.linked_sol_id.analytic_distribution_id and pol.analytic_distribution_id \
+                    and not sale_order.procurement_request:
                 sol_values.update({
                     'analytic_distribution_id': self.pool.get('analytic.distribution').
-                        copy(cr, uid, pol.analytic_distribution_id.id, {}, context=context)
+                        copy(cr, uid, pol.analytic_distribution_id.id, {'partner_type': sale_order.partner_type},
+                             context=context)
                 })
 
             if create_line:
@@ -298,10 +300,11 @@ class purchase_order_line(osv.osv):
             }
 
             # if PO line has an analytic distribution, we copy it
-            if pol.analytic_distribution_id:
+            if pol.analytic_distribution_id and not sale_order.procurement_request:
                 sol_values.update({
                     'analytic_distribution_id': self.pool.get('analytic.distribution').
-                        copy(cr, uid, pol.analytic_distribution_id.id, {}, context=context)
+                        copy(cr, uid, pol.analytic_distribution_id.id, {'partner_type': sale_order.partner_type},
+                             context=context)
                 })
 
             # create FO line:
