@@ -48,8 +48,8 @@ class automated_import(osv.osv):
             ids = [ids]
 
         for imp_brw in self.browse(cr, uid, ids, context=context):
-            for path in [('src_path', 'r'), ('dest_path', 'w'), ('report_path', 'w')]:
-                if imp_brw[path[0]]:
+            for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('report_path', 'w', 'ftp_report_ok')]:
+                if imp_brw[path[0]] and not imp_brw[path[2]]:
                     self.path_is_accessible(imp_brw[path[0]], path[1])
 
             if imp_brw.src_path:

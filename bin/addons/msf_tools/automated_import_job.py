@@ -61,7 +61,7 @@ def get_oldest_filename(job, ftp_connec=None):
             dt = ftp_connec.sendcmd('MDTM %s' % file).split(' ')[-1]
             dt = time.strptime(dt, '%Y%m%d%H%M%S') # '20180228170748'
             res.append((dt, file))
-        return min(res, key=lambda x:x[1]) if res else False
+        return min(res, key=lambda x:x[1])[1] if res else False
 
 
 def get_file_content(file, from_ftp=False, ftp_connec=None):
@@ -69,15 +69,14 @@ def get_file_content(file, from_ftp=False, ftp_connec=None):
     get file content from local of FTP
     If ftp_connec is given then we try to retrieve line from FTP server
     '''
-    def add_line(ch2):
-        global ch
-        ch += ch2 + '\n'
+    def add_line(line):
+        ch.write('%s\n' % line)
     if not from_ftp:
         return open(file).read()
     else:
-        ch = ''
-        ftp_connec.retrlines('RETR %s', add_line)
-        return ch
+        ch = StringIO()
+        ftp_connec.retrlines('RETR %s' % file, add_line)
+        return ch.getvalue()
 
 
 def move_to_process_path(import_brw, ftp_connec, file, src_path, dest_path):
@@ -249,8 +248,9 @@ class automated_import_job(osv.osv):
                 ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, job.import_id.id, context=context)
 
             try:
-                for path in [('src_path', 'r'), ('dest_path', 'w'), ('report_path', 'w')]:
-                    import_obj.path_is_accessible(job.import_id[path[0]], path[1])
+                for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('report_path', 'w', 'ftp_report_ok')]:
+                    if not job.import_id[path[2]]:
+                        import_obj.path_is_accessible(job.import_id[path[0]], path[1])
             except osv.except_osv as e:
                 error = str(e)
                 # In case of manual processing, raise the error
