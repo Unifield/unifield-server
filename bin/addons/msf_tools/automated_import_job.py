@@ -30,6 +30,7 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
+from StringIO import StringIO
 
 
 def all_files_under(path):
@@ -40,6 +41,43 @@ def all_files_under(path):
     for cur_path, dirnames, filenames in os.walk(path):
         for filename in filenames:
             yield os.path.join(cur_path, filename)
+
+def get_oldest_filename(job, ftp_connec=None):
+    '''
+    Get the oldest file in local or on FTP server
+    '''
+    if not job.import_id.ftp_source_ok:
+        return min(all_files_under(job.import_id.src_path), key=os.path.getmtime)
+    else:
+        files = []
+        ftp_connec.dir(job.import_id.src_path, files.append)
+        file_names = []
+        for file in files:
+            if file.startswith('d'): # directory
+                continue
+            file_names.append( os.path.join(job.import_id.src_path, file.split(' ')[-1]) )
+        res = []
+        for file in file_names:
+            dt = ftp_connec.sendcmd('MDTM %s' % file).split(' ')[-1]
+            dt = time.strptime(dt, '%Y%m%d%H%M%S') # '20180228170748'
+            res.append((dt, file))
+        return min(res, key=lambda x:x[1]) if res else False
+
+
+def get_file_content(file, from_ftp=False, ftp_connec=None):
+    '''
+    get file content from local of FTP
+    If ftp_connec is given then we try to retrieve line from FTP server
+    '''
+    def add_line(ch2):
+        global ch
+        ch += ch2 + '\n'
+    if not from_ftp:
+        return open(file).read()
+    else:
+        ch = ''
+        ftp_connec.retrlines('RETR %s', add_line)
+        return ch
 
 
 def move_to_process_path(import_brw, ftp_connec, file, src_path, dest_path):
@@ -221,10 +259,10 @@ class automated_import_job(osv.osv):
 
             if not job.file_to_import:
                 try:
-                    oldest_file = min(all_files_under(job.import_id.src_path), key=os.path.getmtime)
+                    oldest_file = get_oldest_filename(job, ftp_connec)
                     filename = os.path.split(oldest_file)[1]
-                    md5 = hashlib.md5(open(oldest_file).read()).hexdigest()
-                    data64 = base64.encodestring(open(oldest_file).read())
+                    md5 = hashlib.md5(get_file_content(oldest_file, job.import_id.ftp_source_ok, ftp_connec)).hexdigest()
+                    data64 = base64.encodestring(get_file_content(oldest_file, job.import_id.ftp_source_ok, ftp_connec))
                 except ValueError:
                     no_file = True
 
@@ -248,7 +286,7 @@ class automated_import_job(osv.osv):
                         'state': 'error',
                     }, context=context)
                     continue
-            else:
+            else: # file to import given
                 oldest_file = open(os.path.join(job.import_id.src_path, job.filename), 'wb+')
                 oldest_file.write(base64.decodestring(job.file_to_import))
                 oldest_file.close()
