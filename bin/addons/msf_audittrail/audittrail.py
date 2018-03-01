@@ -1098,7 +1098,7 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 if len(values) and values[0] != '' and relation_model_pool:
                     # int() failed if value '167L'
                     res = relation_model_pool.name_get(cr, uid,
-                                                       [long(values[0])])[0][1]
+                                                       [long(values[0])], context={'from_track_changes': True})[0][1]
             return res
 
         elif field['ttype'] in ('many2many', 'one2many'):
