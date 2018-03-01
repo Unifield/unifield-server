@@ -66,7 +66,7 @@ var One2Many = function(name, inline) {
 
     // If no "before-redisplay" binding already exist for this list,
     // add one
-    if (!("events" in $list.data()) || !("before-redisplay" in $list.data().events))
+    if (!$list.data("events") || !("before-redisplay" in $list.data('events')))
     {
         $list.bind('before-redisplay.o2m', function () {
             onChange(name);
