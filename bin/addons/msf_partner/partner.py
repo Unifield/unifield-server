@@ -27,7 +27,7 @@ from msf_field_access_rights.osv_override import _get_instance_level
 import time
 from tools.translate import _
 from lxml import etree
-
+from msf_field_access_rights.osv_override import _record_matches_domain
 
 class res_partner(osv.osv):
     _name = 'res.partner'
@@ -133,18 +133,12 @@ class res_partner(osv.osv):
                     partner_currency_id = pricelist.currency_id.id
                     price = self.pool.get('res.currency').compute(cr, uid, info_price.currency_id.id, partner_currency_id, info_price.price, round=False, context=context)
                     currency = partner_currency_id
-                    # Uncomment the following 2 lines if you want the price in currency of the pricelist.partnerinfo instead of partner default currency
-#                    currency = info_price.currency_id.id
-#                    price = info_price.price
                     res[partner.id] = {'price_currency': currency,
                                        'price_unit': price,
                                        'valide_until_date': info_price.valid_till}
 
         return res
 
-## QT : Remove _get_price_unit
-
-## QT : Remove _get_valide_until_date
 
     def _get_vat_ok(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -664,6 +658,8 @@ class res_partner(osv.osv):
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
+        fields_to_create = vals.keys()
+
         if context is None:
             context = {}
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
@@ -690,8 +686,50 @@ class res_partner(osv.osv):
 
         if vals.get('name'):
             vals['name'] = vals['name'].strip()
+
         new_id = super(res_partner, self).create(cr, uid, vals, context=context)
         self.check_partner_unicity(cr, uid, partner_id=new_id, context=context)
+
+        # US-3945: checking user's rights
+        if not context.get('sync_update_execution') and uid != 1:
+            instance_level = _get_instance_level(self, cr, uid)
+
+            if instance_level:  # get rules for this model, instance and user
+                model_name = self._name
+                groups = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'], context=context)['groups_id']
+
+                rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
+                if not rules_pool:
+                    return new_id
+
+                rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name),
+                                                         ('instance_level', '=', instance_level), '|',
+                                                         ('group_ids', 'in', groups), ('group_ids', '=', False)])
+
+                # do we have rules that apply to this user and model?
+                if rules_search:
+                    # for each rule, check the record against the rule domain.
+                    rules_to_check = []
+                    for rule in rules_pool.read(cr, uid, rules_search, ['domain_text']):
+                        if _record_matches_domain(self, cr, new_id, rule['domain_text']):
+                            rules_to_check.append(rule['id'])
+                    if rules_to_check:
+                        # get the fields with write_access=False
+                        cr.execute("""SELECT DISTINCT field_name
+                              FROM msf_field_access_rights_field_access_rule_line
+                              WHERE write_access='f' AND
+                              field_access_rule in %s AND
+                              field_name in %s
+                              limit 1
+                        """, (tuple(rules_to_check), tuple(fields_to_create)))
+
+                        x = cr.fetchone()
+                        if x:
+                            # throw access denied error
+                            raise osv.except_osv(_('Access Denied'),
+                                                 _('You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % (x[0], ))
+                                                 )
+
         return new_id
 
 

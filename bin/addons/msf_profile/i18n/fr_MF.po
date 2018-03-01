@@ -107188,3 +107188,10 @@ msgstr "Le compte ou la Distribution Analytique de l'écriture d'origine est man
 #: report:addons/register_accounting/report/fully_report_xls.mako:476
 msgid "Code:"
 msgstr "Code :"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:731
+#, python-format
+msgid "Access Denied"
+msgstr "Accès Refusé"
+
