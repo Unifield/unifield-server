@@ -44,8 +44,7 @@
                             <field name="account_hq_correctible" invisible="1"/>
                             <field name="is_not_ad_correctable" invisible="1"/>
                             <field name="account_id" attrs="{'readonly': [('account_hq_correctible', '=', True)]}"
-                                   domain="[('type', '!=', 'view'), ('restricted_area', '=', 'hq_lines'), ('is_not_hq_correctible', '=', False)]"
-                                   on_change="onchange_hq_entry_account(account_id)"/>
+                                   domain="[('type', '!=', 'view'), ('restricted_area', '=', 'hq_lines'), ('is_not_hq_correctible', '=', False)]"/>
                             <field name="amount"/>
                             <field name="destination_id" attrs="{'readonly': [('is_not_ad_correctable', '=', True)]}"/>
                             <field name="cost_center_id" attrs="{'readonly': [('is_not_ad_correctable', '=', True)]}"/>

@@ -80315,7 +80315,7 @@ msgstr " Ignorer la ligne ou la calculer comme étant à 0 ?"
 #: field:physical.inventory.counting,is_kc:0
 #: view:physical.inventory.select.products:0
 msgid "KC"
-msgstr "KC"
+msgstr "GF"
 
 #. module: return_claim
 #: view:res.partner:0
@@ -107177,3 +107177,9 @@ msgstr "Impossible d'importer des produits non stockables."
 #, python-format
 msgid "Impossible to import non-stockable product %s"
 msgstr "Impossible d'importer le produit non stockable %s"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:150
+#, python-format
+msgid "The account or AD of the original entry is missing or incomplete."
+msgstr "Le compte ou la Distribution Analytique de l'écriture d'origine est manquant(e) ou incomplet(e)."
