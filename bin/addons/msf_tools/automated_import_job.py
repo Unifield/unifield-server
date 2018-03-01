@@ -25,6 +25,7 @@ import time
 import shutil
 import base64
 import hashlib
+import tempfile
 
 from osv import osv
 from osv import fields
@@ -260,6 +261,8 @@ class automated_import_job(osv.osv):
             if not job.file_to_import:
                 try:
                     oldest_file = get_oldest_filename(job, ftp_connec)
+                    if not oldest_file:
+                        raise ValueError()
                     filename = os.path.split(oldest_file)[1]
                     md5 = hashlib.md5(get_file_content(oldest_file, job.import_id.ftp_source_ok, ftp_connec)).hexdigest()
                     data64 = base64.encodestring(get_file_content(oldest_file, job.import_id.ftp_source_ok, ftp_connec))
@@ -316,6 +319,11 @@ class automated_import_job(osv.osv):
             error_message = []
             state = 'done'
             try:
+                if job.import_id.ftp_source_ok:
+                    temp_file = tempfile.NamedTemporaryFile(delete=False)
+                    ftp_connec.retrbinary('RETR %s' % oldest_file, temp_file.write)
+                    temp_file.close()
+                    oldest_file = temp_file.name
                 processed, rejected, headers = getattr(
                     self.pool.get(job.import_id.function_id.model_id.model),
                     job.import_id.function_id.method_to_call
