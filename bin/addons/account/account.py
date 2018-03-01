@@ -709,7 +709,7 @@ class account_journal(osv.osv):
                 journal_code = journal.code or ''
                 currency_id = None
                 # check on analytic journal
-                if journal_type not in ['situation', 'stock']:
+                if journal_type not in ['situation', 'stock', 'system']:
                     if not journal.analytic_journal_id:
                         raise osv.except_osv(_('Warning'),
                                              _('The Analytic Journal is mandatory for the journal %s.') % journal_code)

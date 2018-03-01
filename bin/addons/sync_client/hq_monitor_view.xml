@@ -62,6 +62,10 @@
                     <field name="version" />
                     <field name="backup_date" />
                     <field name="backup_path" />
+                    <field name="backup_size" widget="human_size" />
+                    <field name="cloud_date" />
+                    <field name="cloud_backup" />
+                    <field name="cloud_size" widget="human_size" />
                     <field name="postgresql_disk_space" />
                     <field name="unifield_disk_space" />
                     <field name="instance_state" />
@@ -74,7 +78,7 @@
             <field name="res_model">sync.version.instance.monitor</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree</field>
-            <field name="domain">[('my_instance', '=', False)]</field>
+            <field name="domain">[('instance_id', '!=', False)]</field>
             <field name="view_id" ref="sync_hq_instance_version_tree" />
         </record>
 

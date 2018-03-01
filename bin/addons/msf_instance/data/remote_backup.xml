@@ -1,20 +1,6 @@
 <openerp>
     <data noupdate="1">
 
-        <!-- Parent Instance -->
-        <record model="msf.instance" id="instance_section">
-            <field name="code">OCG</field>
-            <field name="name">Geneva</field>
-            <field name="level">section</field>
-            <field name="state">draft</field>
-            <field name="move_prefix">SO120</field>
-            <field name="reconcile_prefix">A1</field>
-        </record>
-
-        <record model="res.company" id="base.main_company">
-            <field name="instance_id" ref="instance_section" />
-        </record>
-
         <record id="ir_cron_remote_backup" model="ir.cron" forcecreate="1">
             <field name="function">send_backup</field>
             <field name="user_id">1</field>
@@ -25,7 +11,7 @@
             <field eval="0" name="doall"/>
             <field eval="0" name="active"/>
             <field eval="1" name="interval_number"/>
-            <field name="model">msf.instance</field>
+            <field name="model">msf.instance.cloud</field>
         </record>
 
     </data>
