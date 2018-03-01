@@ -48,8 +48,8 @@ class automated_import(osv.osv):
             ids = [ids]
 
         for imp_brw in self.browse(cr, uid, ids, context=context):
-            for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('report_path', 'w', 'ftp_report_ok')]:
-                if imp_brw[path[0]] and not imp_brw[path[2]]:
+            for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('report_path', 'w', None)]:
+                if imp_brw[path[0]] and path[2] and not imp_brw[path[2]]:
                     self.path_is_accessible(imp_brw[path[0]], path[1])
 
             if imp_brw.src_path:
@@ -133,7 +133,6 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         'ftp_password': fields.char(string='FTP password', size=256),
         'ftp_source_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_dest_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
-        'ftp_report_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
     }
 
     _defaults = {
@@ -170,7 +169,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         if context is None:
             context = {}
         if ftp_ok == False:
-            return {'value': {'ftp_source_ok': False, 'ftp_dest_ok': False, 'ftp_report_ok': False}}
+            return {'value': {'ftp_source_ok': False, 'ftp_dest_ok': False}}
         return {}
 
     def ftp_test_connection(self, cr, uid, ids, context=None):

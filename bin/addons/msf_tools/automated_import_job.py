@@ -249,8 +249,8 @@ class automated_import_job(osv.osv):
                 ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, job.import_id.id, context=context)
 
             try:
-                for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('report_path', 'w', 'ftp_report_ok')]:
-                    if not job.import_id[path[2]]:
+                for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('report_path', 'w', None)]:
+                    if path[2] and not job.import_id[path[2]]:
                         import_obj.path_is_accessible(job.import_id[path[0]], path[1])
             except osv.except_osv as e:
                 error = str(e)
