@@ -107183,3 +107183,8 @@ msgstr "Impossible d'importer le produit non stockable %s"
 #, python-format
 msgid "The account or AD of the original entry is missing or incomplete."
 msgstr "Le compte ou la Distribution Analytique de l'écriture d'origine est manquant(e) ou incomplet(e)."
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:476
+msgid "Code:"
+msgstr "Code :"
