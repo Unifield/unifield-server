@@ -160,6 +160,8 @@ def revprox(redir_port):
         return False
 
     cmd = [ rbin, '-server', https_name, '-redir', str(redir_port) ]
+    if cherrypy.config.get('server.https_port'):
+        cmd += ['-listen-port', str(cherrypy.config.get('server.https_port'))]
     proc = subprocess.Popen(cmd,
                             stderr=subprocess.STDOUT,  # Merge stdout and stderr
                             stdout=subprocess.PIPE)
