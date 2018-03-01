@@ -107116,5 +107116,14 @@ msgstr "Erreur durant l'envoi:\n"
 msgid "Page need to be refreshed - please press \"F5\""
 msgstr "La page doit être rafraîchie, veuillez cliquer sur \"F5\""
 
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:611
+#, python-format
+msgid "The account %s - %s cannot be used as Account Receivable."
+msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Client."
 
-
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:617
+#, python-format
+msgid "The account %s - %s cannot be used as Account Payable."
+msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Fournisseur."

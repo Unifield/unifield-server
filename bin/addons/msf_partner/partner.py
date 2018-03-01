@@ -23,6 +23,7 @@
 from osv import osv
 from osv import fields
 from msf_partner import PARTNER_TYPE
+from account_override import ACCOUNT_RESTRICTED_AREA
 from msf_field_access_rights.osv_override import _get_instance_level
 import time
 from tools.translate import _
@@ -594,6 +595,27 @@ class res_partner(osv.osv):
             +[_('%s (Journal Item)') % (aml['move_id'] and aml['move_id'][1] or '') for aml in aml_obj.read(cr, uid, aml_ids, ['move_id'])]
         )
 
+    def _check_default_accounts(self, cr, uid, vals, context=None):
+        """
+        Checks if the property_account_receivable and property_account_payable in vals are allowed based on the domains
+        stored in ACCOUNT_RESTRICTED_AREA. If not raises a warning.
+        """
+        if context is None:
+            context = {}
+        account_obj = self.pool.get('account.account')
+        if vals.get('property_account_receivable'):
+            receivable_domain = [('id', '=', vals['property_account_receivable'])]
+            receivable_domain.extend(ACCOUNT_RESTRICTED_AREA['partner_receivable'])
+            if not account_obj.search_exist(cr, uid, receivable_domain, context=context):
+                receivable_acc = account_obj.browse(cr, uid, vals['property_account_receivable'], fields_to_fetch=['code', 'name'], context=context)
+                raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Receivable.') % (receivable_acc.code, receivable_acc.name))
+        if vals.get('property_account_payable'):
+            payable_domain = [('id', '=', vals['property_account_payable'])]
+            payable_domain.extend(ACCOUNT_RESTRICTED_AREA['partner_payable'])
+            if not account_obj.search_exist(cr, uid, payable_domain, context=context):
+                payable_acc = account_obj.browse(cr, uid, vals['property_account_payable'], fields_to_fetch=['code', 'name'], context=context)
+                raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Payable.') % (payable_acc.code, payable_acc.name))
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -608,6 +630,7 @@ class res_partner(osv.osv):
             del vals['active']
 
         self._check_main_partner(cr, uid, ids, vals, context=context)
+        self._check_default_accounts(cr, uid, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
         bro = bro_uid.company_id
         res =  bro and bro.partner_id and bro.partner_id.id
@@ -637,6 +660,7 @@ class res_partner(osv.osv):
         if context is None:
             context = {}
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
+        self._check_default_accounts(cr, uid, vals, context=context)
         if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
