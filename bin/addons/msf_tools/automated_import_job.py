@@ -287,6 +287,8 @@ class automated_import_job(osv.osv):
                     }, context=context)
                     continue
             else: # file to import given
+                if job.import_id.ftp_source_ok:
+                    raise osv.except_osv(_('Error'), _('You cannot manually select a file to import if given source path is set on FTP server'))
                 oldest_file = open(os.path.join(job.import_id.src_path, job.filename), 'wb+')
                 oldest_file.write(base64.decodestring(job.file_to_import))
                 oldest_file.close()
