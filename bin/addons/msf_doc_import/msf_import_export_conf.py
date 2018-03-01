@@ -372,7 +372,7 @@ MODEL_DATA_DICT = {
     'supplier_catalogues_lines': {
         'header_list': [
             'catalogue_id.name',
-            'product_id.code',
+            'product_id.default_code',
             'product_id.name',
             'line_uom_id.name',
             'min_qty',
@@ -383,11 +383,14 @@ MODEL_DATA_DICT = {
         ],
         'required_field_list': [
             'catalogue_id.name',
-            'product_id.code',
+            'product_id.default_code',
             'line_uom_id.name',
             'min_qty',
             'unit_price',
         ],
+        'ignore_field': [
+            'product_id.name',
+        ]
     },
 
 

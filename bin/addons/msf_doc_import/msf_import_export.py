@@ -757,15 +757,14 @@ WHERE n3.level = 3)
         forbid_creation_of = [] # list of product ids that will not be created
         for row_index, row in enumerate(rows):
             res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers, context=context)
-            if res < 0:
-                save_error(errors, row_index)
-                rejected.append((row_index+1, line_data, '\n'.join(errors)))
-                continue
-
             if all(not x for x in line_data):
                 save_warnings(
                     _('Line seemed empty, so this line was ignored')
                 )
+                continue
+            if res < 0:
+                save_error(errors, row_index)
+                rejected.append((row_index+1, line_data, '\n'.join(errors)))
                 continue
 
             newo2m = False
@@ -785,6 +784,8 @@ WHERE n3.level = 3)
                     import_data_obj.pre_hook[impobj._name](impobj, cr, uid, header_codes, line_data, col_datas)
 
                 for n, h in enumerate(header_codes):
+                    if h in MODEL_DATA_DICT[import_brw.model_list_selection].get('ignore_field', []):
+                        continue
                     if isinstance(line_data[n], basestring):
                         line_data[n] = line_data[n].rstrip()
 
