@@ -712,8 +712,7 @@ class product_product(osv.osv):
 
         product_field_translatable = True
         langs_code = []
-        active_lang_ids = lang_obj.search(cr, uid, [('active', '=', True), ('translatable', '=', True),
-                                                    ('code', '!=', 'en_MF')], context=context)
+        active_lang_ids = lang_obj.search(cr, uid, [('active', '=', True), ('translatable', '=', True)], context=context)
         if not active_lang_ids:
             return product_field_translatable
 
