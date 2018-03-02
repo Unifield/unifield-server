@@ -71,6 +71,7 @@
         <paraStyle name="HeaderRight" fontName="Helvetica-Bold" fontSize="8.0" alignment="RIGHT" />
         <paraStyle name="LHeader" fontName="Helvetica-Bold" fontSize="7.0" alignement="CENTER" />
         <paraStyle name="Line" fontName="Helvetica" fontSize="7.0" alignement="LEFT" />
+        <paraStyle name="LineGrey" textColor="#747474" fontName="Helvetica" fontSize="7.0" alignement="LEFT" />
         <paraStyle name="LFooter" fontName="Helvetica-Bold" fontSize="7.0" alignement="LEFT" />
         <paraStyle name="LFooterBig" fontName="Helvetica-Bold" fontSize="7.5" alignement="LEFT" />
         <paraStyle name="LFooterEnd" fontName="Helvetica" fontSize="7.0" alignement="LEFT" />
@@ -218,32 +219,42 @@
             <tr>
             [[ repeatIn(req.order_line, 'line', 'tr') ]]
                 <td>
-                    <para style="Line">[[ line.line_number ]]</para>
+                    <para style="LineGrey">[[ line.state == 'cancel' and line.line_number or removeParentNode('para') ]]</para>
+                    <para style="Line">[[ line.state != 'cancel' and line.line_number or removeParentNode('para') ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ line.product_id.default_code ]]</para>
+                    <para style="LineGrey">[[ line.state == 'cancel' and line.product_id.default_code or removeParentNode('para') ]]</para>
+                    <para style="Line">[[ line.state != 'cancel' and line.product_id.default_code or removeParentNode('para') ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ line.product_id and line.product_id.name or removeParentNode('para') ]]</para>
-                    <para style="Line">[[ not line.product_id and '%s (%s)' % (line.comment, line.nomenclature_description) or removeParentNode('para') ]]</para>
+                    <para style="LineGrey">[[ line.state == 'cancel' and line.product_id and line.product_id.name or removeParentNode('para') ]]</para>
+                    <para style="Line">[[ line.state != 'cancel' and line.product_id and line.product_id.name or removeParentNode('para') ]]</para>
+                    <para style="LineGrey">[[ line.state == 'cancel' and not line.product_id and '%s (%s)' % (line.comment, line.nomenclature_description) or removeParentNode('para') ]]</para>
+                    <para style="Line">[[ line.state != 'cancel' and not line.product_id and '%s (%s)' % (line.comment, line.nomenclature_description) or removeParentNode('para') ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ line.notes ]]</para>
+                    <para style="LineGrey">[[ line.state == 'cancel' and line.notes or removeParentNode('para') ]]</para>
+                    <para style="Line">[[ line.state != 'cancel' and line.notes or removeParentNode('para') ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ formatLang(line.product_uom_qty) ]]</para>
+                    <para style="LineGrey">[[ line.state == 'cancel' and formatLang(line.product_uom_qty) or removeParentNode('para') ]]</para>
+                    <para style="Line">[[ line.state != 'cancel' and formatLang(line.product_uom_qty) or removeParentNode('para') ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ formatLang(line.cost_price) ]]</para>
+                    <para style="LineGrey">[[ line.state == 'cancel' and formatLang(line.price_unit) or removeParentNode('para') ]]</para>
+                    <para style="Line">[[ line.state != 'cancel' and formatLang(line.price_unit) or removeParentNode('para') ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ line.product_uom and get_name('product.uom', line.product_uom.id) or '' ]]</para>
+                    <para style="LineGrey">[[ line.state == 'cancel' and (line.product_uom and get_name('product.uom', line.product_uom.id) or '') or removeParentNode('para') ]]</para>
+                    <para style="Line">[[ line.state != 'cancel' and (line.product_uom and get_name('product.uom', line.product_uom.id) or '') or removeParentNode('para') ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ getSel(line, 'type') ]]</para>
+                    <para style="LineGrey">[[ line.state == 'cancel' and getSel(line, 'type') or removeParentNode('para') ]]</para>
+                    <para style="Line">[[ line.state != 'cancel' and getSel(line, 'type') or removeParentNode('para') ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ formatLang(line.price_subtotal) ]]</para>
+                    <para style="LineGrey">[[ line.state == 'cancel' and formatLang(line.price_subtotal) or removeParentNode('para') ]]</para>
+                    <para style="Line">[[ line.state != 'cancel' and formatLang(line.price_subtotal) or removeParentNode('para') ]]</para>
                 </td>
             </tr>
         </blockTable>
