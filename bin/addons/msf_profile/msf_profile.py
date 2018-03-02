@@ -64,6 +64,29 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_3734_rename_partners_with_new_lines(self, cr, uid, *a, **b):
+        """
+        Remove the "new line character" from the name of the partners, as well as in the related JIs and AJIs
+        """
+        update_partner = """
+            UPDATE res_partner 
+            SET name = regexp_replace(name, E'[\\n\\r]+', ' ', 'g' ) 
+            WHERE name like '%' || chr(10) || '%';
+            """
+        update_ji = """
+            UPDATE account_move_line 
+            SET partner_txt = regexp_replace(partner_txt, E'[\\n\\r]+', ' ', 'g' ) 
+            WHERE partner_txt like '%' || chr(10) || '%';
+        """
+        update_aji = """
+            UPDATE account_analytic_line 
+            SET partner_txt = regexp_replace(partner_txt, E'[\\n\\r]+', ' ', 'g' ) 
+            WHERE partner_txt like '%' || chr(10) || '%';
+        """
+        cr.execute(update_partner)
+        cr.execute(update_ji)
+        cr.execute(update_aji)
+
     # UF7.3
     def flag_pi(self, cr, uid, *a, **b):
         cr.execute('''select distinct i.id, p.default_code from
