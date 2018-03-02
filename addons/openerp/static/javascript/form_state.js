@@ -238,9 +238,8 @@ function form_addAttrChangeBindings(elem) {
         // Otherwise, exprs is a list of expressions like :
         //   'state', 'not in', ['draft', 'validated']
         //   'shipped', '=', 1 
-        //forEach(exprs, function(expr){
-        for (var i = 0, len = exprs.length; i < len; i++){
-            expr = exprs[i];
+        forEach(exprs, function(expr){
+
             // If the relation is just a number, e.g. {'invisible': [1]}
             // Don't create any 'onAttrChange' binding (there's no field
             // to bind to), just apply it
@@ -268,7 +267,7 @@ function form_addAttrChangeBindings(elem) {
                 var $related_field = jQuery(related_field).bind('onAttrChange', partial(form_onAttrChange, elem, widgetName, attr, exprs, $elem, {}));
                 $related_field.change(partial(form_onAttrChange, elem, widgetName, attr, exprs, $elem, {}));
             }
-        }
+        });
     }
 
     return related_fields;
