@@ -56,7 +56,7 @@
                         	<td class="grid-cell" width="${100 / len(langs)}%">${lang['name']}</td>
                         % endfor
                     </tr>
-                    % for n, v, x, s in data:
+                    % for n, v, x, s, t in data:
                     <tr class="grid-row">
                         % if x:
                         	<input type="hidden" name="_terp_models/${n}" value="${x}"/>
@@ -66,7 +66,11 @@
                         % endif
                         % for lang in langs:
 	                        <td class="grid-cell item">
+	                            % if lang['code'] == 'en_MF' and t:
+	                            <input type="text" fld_readonly="1" disabled="disabled" name="${lang['code']}/${n}" value="${v[lang['code']]}" style="width: 100%; background-color: #EEEEEE;"/>
+	                            % else:
 	                            <input type="text" name="${lang['code']}/${n}" value="${v[lang['code']]}" style="width: 100%;"/>
+	                            % endif
 	                        </td>
                         % endfor
                     </tr>

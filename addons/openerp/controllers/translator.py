@@ -19,6 +19,7 @@
 #
 ###############################################################################
 import copy
+import actions
 
 from openerp.controllers import SecuredController
 from openerp.utils import rpc, cache, common, TinyDict
@@ -62,9 +63,10 @@ class Translator(SecuredController):
         names = view_fields.keys()
         names.sort(lambda x,y: cmp(view_fields[x].get('string', ''), view_fields[y].get('string', '')))
 
-        if translate == 'fields' and params.id and params.get('_terp_clicked_field', False):
+        if translate == 'fields' and params.id:
             # US-3071 : single field translation only for product.product
-            if params.get('_terp_model', False) and params['_terp_model'] == 'product.product':
+            if params.get('_terp_clicked_field', False) and params.get('_terp_model', False) \
+                    and params['_terp_model'] == 'product.product':
                 clicked_field = params['_terp_clicked_field']
                 attrs = view_fields[clicked_field]
                 if attrs.get('translate'):
@@ -79,7 +81,7 @@ class Translator(SecuredController):
                         value[lang['code']] = val[clicked_field] if isinstance(val,dict) \
                             and clicked_field in val else None
 
-                    data += [(clicked_field, value, None, attrs.get('string'))]
+                    data += [(clicked_field, value, None, attrs.get('string'), params.get('_terp_field_translated', None))]
             else:
                 for name in names:
                     attrs = view_fields[name]
@@ -95,7 +97,14 @@ class Translator(SecuredController):
                             value[lang['code']] = val[name] if isinstance(val, dict) \
                                                                and name in val else None
 
-                        data += [(name, value, None, attrs.get('string'))]
+                        # Compare strings for product's translated fields
+                        field_translated = None
+                        if len(value) and params.get('_terp_model', False) and params['_terp_model'] == 'product.product':
+                            for field_translation in value:
+                                if context.get('lang', False) and value[field_translation] != value[context.get('lang')]:
+                                    field_translated = True
+                                    break
+                        data += [(name, value, None, attrs.get('string'), field_translated)]
 
         if translate == 'labels':
             for name in names:
@@ -109,7 +118,7 @@ class Translator(SecuredController):
                         if name in val[code]:
                             value[code] = val[code][name] or None
 
-                    if value: data += [(name, value, None, None)]
+                    if value: data += [(name, value, None, None, None)]
 
         if translate == 'relates' and view_relates:
             for bar, tools in view_relates.items():
@@ -122,7 +131,7 @@ class Translator(SecuredController):
 
                         value[code] = val[0]['name'] or None
 
-                    data += [(tool['id'], value, tool['type'], None)]
+                    data += [(tool['id'], value, tool['type'], None, None)]
 
         if translate == 'view':
             for lang in langs:
@@ -177,6 +186,6 @@ class Translator(SecuredController):
                 for id, val in value.items():
                     rpc.session.execute('object', 'execute', 'ir.translation', 'write', [int(id)], {'value': val})
 
-        return self.index(translate=translate, _terp_model=params.model, _terp_id=params.id, ctx=params.context)
+        return actions.close_popup()
 
 # vim: ts=4 sts=4 sw=4 si et
