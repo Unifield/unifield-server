@@ -81,7 +81,7 @@ class Translator(SecuredController):
                         value[lang['code']] = val[clicked_field] if isinstance(val,dict) \
                             and clicked_field in val else None
 
-                    data += [(clicked_field, value, None, attrs.get('string'), params.get('_terp_field_translated', None))]
+                    data += [(clicked_field, value, None, attrs.get('string'))]
             else:
                 for name in names:
                     attrs = view_fields[name]
@@ -97,14 +97,7 @@ class Translator(SecuredController):
                             value[lang['code']] = val[name] if isinstance(val, dict) \
                                                                and name in val else None
 
-                        # Compare strings for product's translated fields
-                        field_translated = None
-                        if len(value) and params.get('_terp_model', False) and params['_terp_model'] == 'product.product':
-                            for field_translation in value:
-                                if context.get('lang', False) and value[field_translation] != value[context.get('lang')]:
-                                    field_translated = True
-                                    break
-                        data += [(name, value, None, attrs.get('string'), field_translated)]
+                        data += [(name, value, None, attrs.get('string'))]
 
         if translate == 'labels':
             for name in names:
@@ -118,7 +111,7 @@ class Translator(SecuredController):
                         if name in val[code]:
                             value[code] = val[code][name] or None
 
-                    if value: data += [(name, value, None, None, None)]
+                    if value: data += [(name, value, None, None)]
 
         if translate == 'relates' and view_relates:
             for bar, tools in view_relates.items():
@@ -131,7 +124,7 @@ class Translator(SecuredController):
 
                         value[code] = val[0]['name'] or None
 
-                    data += [(tool['id'], value, tool['type'], None, None)]
+                    data += [(tool['id'], value, tool['type'], None)]
 
         if translate == 'view':
             for lang in langs:
@@ -148,7 +141,7 @@ class Translator(SecuredController):
 
         return dict(translate=translate, langs=langs, data=data, view=view, model=params.model, id=params.id, ctx=params.context)
 
-    @expose()
+    @expose(template="/openerp/controllers/templates/translator.mako")
     def save(self, translate='fields', **kw):
         params, data = TinyDict.split(kw)
         
@@ -186,6 +179,6 @@ class Translator(SecuredController):
                 for id, val in value.items():
                     rpc.session.execute('object', 'execute', 'ir.translation', 'write', [int(id)], {'value': val})
 
-        return actions.close_popup()
+        return dict(close_popup=True)
 
 # vim: ts=4 sts=4 sw=4 si et

@@ -5,6 +5,15 @@
 </%def>
 
 <%def name="content()">
+
+% if close_popup:
+<script type="text/javascript">
+window.parent.location.reload();
+jQuery(document).ready(function () {
+    window.frameElement.close();
+})
+</script>
+% else:
 <form action="/openerp/translator/save" method="post" enctype="multipart/form-data">
     <input type="hidden" id="_terp_model" name="_terp_model" value="${model}"/>
     <input type="hidden" id="_terp_id" name="_terp_id" value="${id}"/>
@@ -56,7 +65,7 @@
                         	<td class="grid-cell" width="${100 / len(langs)}%">${lang['name']}</td>
                         % endfor
                     </tr>
-                    % for n, v, x, s, t in data:
+                    % for n, v, x, s in data:
                     <tr class="grid-row">
                         % if x:
                         	<input type="hidden" name="_terp_models/${n}" value="${x}"/>
@@ -66,11 +75,7 @@
                         % endif
                         % for lang in langs:
 	                        <td class="grid-cell item">
-	                            % if lang['code'] == 'en_MF' and t:
-	                            <input type="text" fld_readonly="1" disabled="disabled" name="${lang['code']}/${n}" value="${v[lang['code']]}" style="width: 100%; background-color: #EEEEEE;"/>
-	                            % else:
 	                            <input type="text" name="${lang['code']}/${n}" value="${v[lang['code']]}" style="width: 100%;"/>
-	                            % endif
 	                        </td>
                         % endfor
                     </tr>
@@ -119,4 +124,5 @@
         % endif
     </table>
 </form>
+% endif
 </%def>

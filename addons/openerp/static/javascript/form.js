@@ -1310,8 +1310,7 @@ function translate_fields(src, params){
         _terp_model: (src ? $src.attr('relation') : params['relation']),
         _terp_id: (src ? $src.attr('id') : params['id']),
         _terp_context: (src ? $src.attr('data') : params['data']),
-        _terp_clicked_field: (src ? $src.attr('clicked_field') : params['clicked_field']),
-        _terp_field_translated: (src ? $src.attr('field_translated') : params['field_translated'])
+        _terp_clicked_field: (src ? $src.attr('clicked_field') : params['clicked_field'])
     })}, null, {
         height: 400
     });

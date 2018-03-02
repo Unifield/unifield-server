@@ -11,8 +11,7 @@
                         'relation': '${model}',
                         'id': jQuery('#_terp_id').attr('value'),
                         'data': jQuery('#_terp_context').attr('value'),
-                        'clicked_field': '${name}',
-                        'field_translated': '${readonly_before_state}'
+                        'clicked_field': '${name}'
                     };
                     translate_fields(null, params);
                 });
