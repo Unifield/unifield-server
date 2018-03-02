@@ -753,7 +753,7 @@ WHERE n3.level = 3)
 
         processed = []
         rejected = []
-        product_already_updated = [] # ids of the lines already updated
+        lines_already_updated = [] # ids of the lines already updated
         forbid_creation_of = [] # list of product ids that will not be created
         for row_index, row in enumerate(rows):
             res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers, context=context)
@@ -870,11 +870,11 @@ WHERE n3.level = 3)
                         ('product_id', '=', data['product_id']),
                     ], context=context)
                     if data.get('comment') != '[DELETE]':
-                        ids_to_update = [x for x in ids_to_update if x not in product_already_updated]
+                        ids_to_update = [x for x in ids_to_update if x not in lines_already_updated]
                         ids_to_update = [ids_to_update[0]] if ids_to_update else []
                     else:
                         forbid_creation_of.append(data['product_id'])
-                    product_already_updated += ids_to_update
+                    lines_already_updated += ids_to_update
                 if import_brw.model_list_selection == 'product_list_update':
                     data['list_id'] = import_brw.product_list_id.id
                     new_product_id = self.pool.get('product.product').search(cr, uid, [('default_code', '=', line_data[0].strip())], context=context)
@@ -897,7 +897,8 @@ WHERE n3.level = 3)
                     context['from_import_menu']=  True
                     if import_brw.model_list_selection == 'supplier_catalogue_update':
                         if data.get('product_id') and data['product_id'] not in forbid_creation_of:
-                            impobj.create(cr, uid, data, context=context)
+                            line_created = impobj.create(cr, uid, data, context=context)
+                            lines_already_updated.append(line_created)
                     else:
                         impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
