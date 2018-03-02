@@ -8,9 +8,8 @@
 
 % if close_popup:
 <script type="text/javascript">
-window.parent.location.reload();
 jQuery(document).ready(function () {
-    window.frameElement.close();
+    window.parent.location.reload();
 })
 </script>
 % else:
