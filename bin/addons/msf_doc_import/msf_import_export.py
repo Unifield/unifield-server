@@ -389,7 +389,12 @@ class msf_import_export(osv.osv_memory):
 
         # get displayble name with technical name in order to be able to check the import file:
         fields_needed = MODEL_DATA_DICT[wiz.model_list_selection].get('header_info') # technical name
-        fields_needed_name = [self.get_displayable_name(cr, uid, parent_model, x, context=context) for x in fields_needed]
+        fields_needed_name = []
+        for field in fields_needed:
+            fields_needed_name.append(
+                MODEL_DATA_DICT[wiz.model_list_selection].get('custom_field_name', {}).get(field) or \
+                    self.get_displayable_name(cr, uid, parent_model, field, context=context)
+            )
 
         fields_gotten = []
         id_check = {
@@ -403,13 +408,18 @@ class msf_import_export(osv.osv_memory):
 
             # check if the selected catalogue or product list match with the one we are trying to import:
             if wiz.model_list_selection == 'product_list_update':
-                if row.cells[0].data == self.get_displayable_name(cr, uid, parent_model, 'name', context=context) and row.cells[1].data == wiz.product_list_id.name:
+                expected_name = MODEL_DATA_DICT['product_list_update'].get('custom_field_name', {}).get('name') or \
+                    self.get_displayable_name(cr, uid, parent_model, 'name', context=context)
+                if row.cells[0].data == expected_name and row.cells[1].data == wiz.product_list_id.name:
                     id_check[wiz.model_list_selection]['name'] = True
             elif wiz.model_list_selection == 'supplier_catalogue_update':
-                if row.cells[0].data == self.get_displayable_name(cr, uid, parent_model, 'name', context=context) and row.cells[1].data == wiz.supplier_catalogue_id.name:
+                expected_name = MODEL_DATA_DICT['supplier_catalogue_update'].get('custom_field_name', {}).get('name') or \
+                                                self.get_displayable_name(cr, uid, parent_model, 'name', context=context)
+                expected_partner = MODEL_DATA_DICT['supplier_catalogue_update'].get('custom_field_name', {}).get('partner_id') or \
+                                                self.get_displayable_name(cr, uid, parent_model, 'partner_id', context=context)
+                if row.cells[0].data == expected_name and row.cells[1].data == wiz.supplier_catalogue_id.name:
                     id_check[wiz.model_list_selection]['name'] = True
-                elif row.cells[0].data == self.get_displayable_name(cr, uid, parent_model, 'partner_id', context=context) and \
-                row.cells[1].data == wiz.supplier_catalogue_id.partner_id.name:
+                elif row.cells[0].data == expected_partner and row.cells[1].data == wiz.supplier_catalogue_id.partner_id.name:
                     id_check[wiz.model_list_selection]['partner_id'] = True
              
             fields_gotten.append(row.cells[0].data)
@@ -462,21 +472,25 @@ class msf_import_export(osv.osv_memory):
             child_field, child_model = self.get_child_field(cr, uid, field, model,
                     fields_get_dict, context=context)
             first_part = field.split('.')[0]
-            if child_field == 'id':
-                column_name = '%s / XMLID' % fields_get_dict[model][first_part]['string']
-            elif first_part not in fields_get_dict[model]:
-                raise osv.except_osv(_('Error'),
-                        _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                        % (first_part, model))
-            elif first_part != child_field:
-                if child_field not in fields_get_dict[child_model]:
+            custom_name = MODEL_DATA_DICT[selection].get('custom_field_name', {}).get(field)
+            if custom_name:
+                column_name = custom_name
+            else:
+                if child_field == 'id':
+                    column_name = '%s / XMLID' % fields_get_dict[model][first_part]['string']
+                elif first_part not in fields_get_dict[model]:
                     raise osv.except_osv(_('Error'),
                             _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                            % (child_field, child_model))
-                column_name = '%s / %s' % (fields_get_dict[model][first_part]['string'],
-                        fields_get_dict[child_model][child_field]['string'])
-            else:
-                column_name = fields_get_dict[model][first_part]['string']
+                            % (first_part, model))
+                elif first_part != child_field:
+                    if child_field not in fields_get_dict[child_model]:
+                        raise osv.except_osv(_('Error'),
+                                _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                                % (child_field, child_model))
+                    column_name = '%s / %s' % (fields_get_dict[model][first_part]['string'],
+                            fields_get_dict[child_model][child_field]['string'])
+                else:
+                    column_name = fields_get_dict[model][first_part]['string']
 
             if column_name.upper() != header_columns[field_index].upper():
                 missing_columns.append(_('Column %s: get \'%s\' expected \'%s\'.')
