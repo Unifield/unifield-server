@@ -195,7 +195,7 @@ class purchase_order_line(osv.osv):
                 sol_values.update(self.get_split_info(cr, uid, pol, context))
                 # update analytic distribution if PO line has one
                 if pol.analytic_distribution_id and not sale_order.procurement_request:
-                    sol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, 
+                    sol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid,
                          pol.analytic_distribution_id.id, {'partner_type': sale_order.partner_type}, context=context)
                 new_sol = self.pool.get('sale.order.line').create(cr, uid, sol_values, context=context)
                 self.write(cr, uid, [pol.id], {'linked_sol_id': new_sol}, context=context)
@@ -217,6 +217,9 @@ class purchase_order_line(osv.osv):
                             if out_move.state in ('assigned', 'confirmed') and out_move.product_qty == sol_values['product_uom_qty']:
                                 self.pool.get('stock.move').write(cr, uid, [out_move.id], {'sale_line_id': new_sol}, context=context)
             else: # update FO line
+                if pol.linked_sol_id and not pol.linked_sol_id.analytic_distribution_id and pol.analytic_distribution_id and not sale_order.procurement_request:
+                    sol_values['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid,
+                            pol.analytic_distribution_id.id, {'partner_type': sale_order.partner_type}, context=context)
                 self.pool.get('sale.order.line').write(cr, uid, [pol.linked_sol_id.id], sol_values, context=context)
 
 
