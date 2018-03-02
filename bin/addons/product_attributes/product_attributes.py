@@ -1239,7 +1239,7 @@ class product_attributes(osv.osv):
                     )
                 if any(char.islower() for char in vals['default_code']):
                     vals['default_code'] = vals['default_code'].upper()
-        
+
         if vals.get('xmlid_code'):
             if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
                 raise osv.except_osv(
@@ -1319,6 +1319,8 @@ class product_attributes(osv.osv):
                             _('Error'),
                             _('White spaces are not allowed in product code'),
                         )
+            if any(char.islower() for char in vals['default_code']):
+                vals['default_code'] = vals['default_code'].upper()
 
         # update local stock mission report lines :
         if 'state' in vals:
