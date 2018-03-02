@@ -1237,12 +1237,17 @@ class product_attributes(osv.osv):
                         _('Error'),
                         _('White spaces are not allowed in product code'),
                     )
+                if any(char.islower() for char in vals['default_code']):
+                    vals['default_code'] = vals['default_code'].upper()
+
         if vals.get('xmlid_code'):
             if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
                 raise osv.except_osv(
                     _('Error'),
                     _('White spaces are not allowed in XML ID code'),
                 )
+            if any(char.islower() for char in vals['xmlid_code']):
+                vals['xmlid_code'] = vals['xmlid_code'].upper()
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
@@ -1314,6 +1319,8 @@ class product_attributes(osv.osv):
                             _('Error'),
                             _('White spaces are not allowed in product code'),
                         )
+            if any(char.islower() for char in vals['default_code']):
+                vals['default_code'] = vals['default_code'].upper()
 
         # update local stock mission report lines :
         if 'state' in vals:
@@ -2042,7 +2049,7 @@ class product_uom(osv.osv):
                 uom_id = data_obj.get_object_reference(
                     cr, uid, 'msf_doc_import', data_id)[1]
                 if uom_id in ids:
-                    uom_name = self.read(cr, uid, uom_id, ['name'])['name'] 
+                    uom_name = self.read(cr, uid, uom_id, ['name'])['name']
                     raise osv.except_osv(
                         _('Error'),
                         _('''The UoM '%s' is an Unifield internal
