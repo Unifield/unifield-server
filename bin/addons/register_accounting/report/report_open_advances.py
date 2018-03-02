@@ -92,7 +92,7 @@ class report_open_advances2(report_sxw.rml_parse):
         if obj.journal_id and obj.journal_id.currency:
             domain.append(('statement_id.journal_id.currency', '=', obj.journal_id.currency.id))
         ids = obj_line.search(self.cr, self.uid, domain)
-        for line in obj_line.browse(self.cr, self.uid,ids):
+        for line in obj_line.browse(self.cr, self.uid, ids, context={'lang': self.localcontext.get('lang')}):
             ret.append(line)
         return ret
 
