@@ -23,6 +23,7 @@
 from osv import osv
 from osv import fields
 from msf_partner import PARTNER_TYPE
+from account_override import ACCOUNT_RESTRICTED_AREA
 from msf_field_access_rights.osv_override import _get_instance_level
 import time
 from tools.translate import _
@@ -593,6 +594,7 @@ class res_partner(osv.osv):
         If the partner name is already used, check that the city is not empty AND not used by another partner with the
         same name. Checks are case insensitive, done with active and inactive partners, and NOT done at synchro time.
         """
+
         if context is None:
             context = {}
         if not context.get('sync_update_execution'):
@@ -606,6 +608,29 @@ class res_partner(osv.osv):
                     raise osv.except_osv(_('Warning'),
                                          _("The partner can't be saved because already exists under the same name for "
                                            "the same city. Please change the partner name or city or use the existing partner."))
+
+
+    def _check_default_accounts(self, cr, uid, vals, context=None):
+        """
+        Checks if the property_account_receivable and property_account_payable in vals are allowed based on the domains
+        stored in ACCOUNT_RESTRICTED_AREA. If not raises a warning.
+        """
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            account_obj = self.pool.get('account.account')
+            if vals.get('property_account_receivable'):
+                receivable_domain = [('id', '=', vals['property_account_receivable'])]
+                receivable_domain.extend(ACCOUNT_RESTRICTED_AREA['partner_receivable'])
+                if not account_obj.search_exist(cr, uid, receivable_domain, context=context):
+                    receivable_acc = account_obj.browse(cr, uid, vals['property_account_receivable'], fields_to_fetch=['code', 'name'], context=context)
+                    raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Receivable.') % (receivable_acc.code, receivable_acc.name))
+            if vals.get('property_account_payable'):
+                payable_domain = [('id', '=', vals['property_account_payable'])]
+                payable_domain.extend(ACCOUNT_RESTRICTED_AREA['partner_payable'])
+                if not account_obj.search_exist(cr, uid, payable_domain, context=context):
+                    payable_acc = account_obj.browse(cr, uid, vals['property_account_payable'], fields_to_fetch=['code', 'name'], context=context)
+                    raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Payable.') % (payable_acc.code, payable_acc.name))
 
     def write_web(self, cr, uid, ids, vals, context=None):
         if not ids:
@@ -664,6 +689,7 @@ class res_partner(osv.osv):
         if context is None:
             context = {}
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
+        self._check_default_accounts(cr, uid, vals, context=context)
         if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
             msf_supplier = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_suppliers')
