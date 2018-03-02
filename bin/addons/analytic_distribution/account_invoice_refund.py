@@ -92,15 +92,6 @@ class account_invoice_refund(osv.osv_memory):
         'journal_id': _get_journal,  # US-193
     }
 
-    def onchange_date(self, cr, uid, ids, date, context=None):
-        res = {}
-        # Some verifications
-        if not context:
-            context = {}
-        if date:
-            res.update({'value': {'document_date' : date}})
-        return res
-
     def _hook_fields_for_modify_refund(self, cr, uid, *args):
         """
         Add analytic_distribution_id field in result
