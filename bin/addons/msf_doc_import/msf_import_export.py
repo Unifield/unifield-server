@@ -239,21 +239,26 @@ class msf_import_export(osv.osv_memory):
             child_field, child_model = self.get_child_field(cr, uid, field, model,
                     fields_get_dict, context=context)
             first_part = field.split('.')[0]
-            if child_field == 'id':
-                res['name'] = '%s / XMLID' % fields_get_dict[model][first_part]['string']
-            elif first_part not in fields_get_dict[model]:
-                raise osv.except_osv(_('Error'),
-                        _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                        % (first_part, model))
-            elif first_part != child_field:
-                if child_field not in fields_get_dict[child_model]:
+
+            custom_name = MODEL_DATA_DICT[selection].get('custom_field_name', {}).get(field)
+            if custom_name:
+                res['name'] = custom_name
+            else:
+                if child_field == 'id':
+                    res['name'] = '%s / XMLID' % fields_get_dict[model][first_part]['string']
+                elif first_part not in fields_get_dict[model]:
                     raise osv.except_osv(_('Error'),
                             _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                            % (child_field, child_model))
-                res['name'] = '%s / %s' % (fields_get_dict[model][first_part]['string'],
-                        fields_get_dict[child_model][child_field]['string'])
-            else:
-                res['name'] = fields_get_dict[model][first_part]['string']
+                            % (first_part, model))
+                elif first_part != child_field:
+                    if child_field not in fields_get_dict[child_model]:
+                        raise osv.except_osv(_('Error'),
+                                _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                                % (child_field, child_model))
+                    res['name'] = '%s / %s' % (fields_get_dict[model][first_part]['string'],
+                            fields_get_dict[child_model][child_field]['string'])
+                else:
+                    res['name'] = fields_get_dict[model][first_part]['string']
 
 
             if child_field == 'id':

@@ -357,6 +357,13 @@ MODEL_DATA_DICT = {
         'ignore_field': [
             'product_id.name',
         ],
+        'custom_field_name': {
+            'partner_id': 'Partner Name',
+            'product_id.default_code': 'Product Code',
+            'product_id.name': 'Product Description',
+            'line_uom_id.name': 'UoM',
+            'min_order_qty': 'Min. Order Qty.',
+        },
     },
     'supplier_catalogues': {
         'header_list': [
