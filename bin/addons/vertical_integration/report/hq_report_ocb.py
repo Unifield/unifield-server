@@ -173,12 +173,12 @@ class finance_archive(finance_export.finance_archive):
         cr.execute(sqlmark, (seq, tuple(ids),))
         # Do right request
         sqltwo = """SELECT req.concat AS "DB ID", i.code, j.code, j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS "entry_sequence", 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", 
-CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit", 
-CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", 
-c.name AS "booking_currency", 
-CASE WHEN req.func_total > 0 THEN req.func_total ELSE 0.0 END AS "func_debit", 
-CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_credit",
-j.type AS "journal_type"
+            CASE WHEN req.total > 0 THEN ROUND(req.total, 2) ELSE 0.0 END AS "debit", 
+            CASE WHEN req.total < 0 THEN ABS(ROUND(req.total, 2)) ELSE 0.0 END as "credit", 
+            c.name AS "booking_currency", 
+            CASE WHEN req.func_total > 0 THEN ROUND(req.func_total, 2) ELSE 0.0 END AS "func_debit", 
+            CASE WHEN req.func_total < 0 THEN ABS(ROUND(req.func_total, 2)) ELSE 0.0 END AS "func_credit",
+            j.type AS "journal_type"
             FROM (
                 SELECT aml.instance_id, aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, 
                        SUM(amount_currency) AS total, 
