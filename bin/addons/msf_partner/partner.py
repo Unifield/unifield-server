@@ -602,19 +602,20 @@ class res_partner(osv.osv):
         """
         if context is None:
             context = {}
-        account_obj = self.pool.get('account.account')
-        if vals.get('property_account_receivable'):
-            receivable_domain = [('id', '=', vals['property_account_receivable'])]
-            receivable_domain.extend(ACCOUNT_RESTRICTED_AREA['partner_receivable'])
-            if not account_obj.search_exist(cr, uid, receivable_domain, context=context):
-                receivable_acc = account_obj.browse(cr, uid, vals['property_account_receivable'], fields_to_fetch=['code', 'name'], context=context)
-                raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Receivable.') % (receivable_acc.code, receivable_acc.name))
-        if vals.get('property_account_payable'):
-            payable_domain = [('id', '=', vals['property_account_payable'])]
-            payable_domain.extend(ACCOUNT_RESTRICTED_AREA['partner_payable'])
-            if not account_obj.search_exist(cr, uid, payable_domain, context=context):
-                payable_acc = account_obj.browse(cr, uid, vals['property_account_payable'], fields_to_fetch=['code', 'name'], context=context)
-                raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Payable.') % (payable_acc.code, payable_acc.name))
+        if not context.get('sync_update_execution'):
+            account_obj = self.pool.get('account.account')
+            if vals.get('property_account_receivable'):
+                receivable_domain = [('id', '=', vals['property_account_receivable'])]
+                receivable_domain.extend(ACCOUNT_RESTRICTED_AREA['partner_receivable'])
+                if not account_obj.search_exist(cr, uid, receivable_domain, context=context):
+                    receivable_acc = account_obj.browse(cr, uid, vals['property_account_receivable'], fields_to_fetch=['code', 'name'], context=context)
+                    raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Receivable.') % (receivable_acc.code, receivable_acc.name))
+            if vals.get('property_account_payable'):
+                payable_domain = [('id', '=', vals['property_account_payable'])]
+                payable_domain.extend(ACCOUNT_RESTRICTED_AREA['partner_payable'])
+                if not account_obj.search_exist(cr, uid, payable_domain, context=context):
+                    payable_acc = account_obj.browse(cr, uid, vals['property_account_payable'], fields_to_fetch=['code', 'name'], context=context)
+                    raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Payable.') % (payable_acc.code, payable_acc.name))
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
@@ -630,7 +631,6 @@ class res_partner(osv.osv):
             del vals['active']
 
         self._check_main_partner(cr, uid, ids, vals, context=context)
-        self._check_default_accounts(cr, uid, vals, context=context)
         bro_uid = self.pool.get('res.users').browse(cr,uid,uid)
         bro = bro_uid.company_id
         res =  bro and bro.partner_id and bro.partner_id.id
