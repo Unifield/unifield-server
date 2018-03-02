@@ -338,7 +338,7 @@ MODEL_DATA_DICT = {
             'period_to',
         ],
         'header_list': [
-            'product_id.code',
+            'product_id.default_code',
             'product_id.name',
             'product_code',
             'line_uom_id.name',
@@ -349,10 +349,13 @@ MODEL_DATA_DICT = {
             'comment',
         ],
         'required_field_list': [
-            'product_id.code',
+            'product_id.default_code',
             'line_uom_id.name',
             'min_qty',
             'unit_price',
+        ],
+        'ignore_field': [
+            'product_id.name',
         ],
     },
     'supplier_catalogues': {
@@ -390,7 +393,7 @@ MODEL_DATA_DICT = {
         ],
         'ignore_field': [
             'product_id.name',
-        ]
+        ],
     },
 
 

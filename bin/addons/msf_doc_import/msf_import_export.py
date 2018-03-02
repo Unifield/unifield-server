@@ -830,6 +830,7 @@ WHERE n3.level = 3)
                                 data[points[0]] = _get_obj(h, line_data[n], fields_def) or False
                         elif fields_def[points[0]]['type'] == 'many2many' and line_data[n]:
                             data.setdefault(points[0], []).append((4, _get_obj(h, line_data[n], fields_def)))
+
                 if not line_ok:
                     rejected.append((row_index+1, line_data, ''))
                     continue
