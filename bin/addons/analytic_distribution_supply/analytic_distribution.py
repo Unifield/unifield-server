@@ -52,7 +52,27 @@ class analytic_distribution(osv.osv):
             'sale_order_ids': False,
             'sale_order_line_ids': False,
         })
-        return super(analytic_distribution, self).copy(cr, uid, d_id, default, context)
+        if default.get('partner_type'):
+            context['set_copy_partner_type'] = default.get('partner_type')
+        new_id = super(analytic_distribution, self).copy(cr, uid, d_id, default, context)
+        if context.get('set_copy_partner_type'):
+            del context['set_copy_partner_type']
+        return new_id
 
 analytic_distribution()
+
+class cost_center_distribution_line(osv.osv):
+    _name = 'cost.center.distribution.line'
+    _inherit = 'cost.center.distribution.line'
+
+    def copy_data(self, cr, uid, id, default=None, context=None):
+        if default is None:
+            default = {}
+        if context is None:
+            context = {}
+        if context.get('set_copy_partner_type'):
+            default['partner_type'] = context.get('set_copy_partner_type')
+        return super(cost_center_distribution_line, self).copy_data(cr, uid, id, default=default, context=None)
+
+cost_center_distribution_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
