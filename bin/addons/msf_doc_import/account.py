@@ -32,7 +32,7 @@ import threading
 import pooler
 import mx
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
-from addons.spreadsheet_xml import UNIT_SEPARATOR
+from spreadsheet_xml import UNIT_SEPARATOR
 
 class msf_doc_import_accounting(osv.osv_memory):
     _name = 'msf.doc.import.accounting'

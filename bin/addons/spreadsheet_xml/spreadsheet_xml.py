@@ -5,7 +5,7 @@ from mx import DateTime
 from tools.translate import _
 from osv import osv
 import csv
-from addons.spreadsheet_xml import UNIT_SEPARATOR
+from . import UNIT_SEPARATOR
 import fileinput
 
 
