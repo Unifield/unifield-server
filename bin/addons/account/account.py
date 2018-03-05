@@ -703,7 +703,7 @@ class account_journal(osv.osv):
         res_obj = self.pool.get('res.users')
         if not context.get('sync_update_execution'):
             fields_list = ['type', 'analytic_journal_id', 'default_debit_account_id', 'default_credit_account_id',
-                           'bank_journal_id', 'code', 'currency']
+                           'bank_journal_id', 'code', 'currency', 'instance_id']
             for journal in self.browse(cr, uid, journal_ids, fields_to_fetch=fields_list, context=context):
                 journal_type = journal.type or ''
                 journal_code = journal.code or ''
