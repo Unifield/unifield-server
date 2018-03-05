@@ -303,7 +303,8 @@ class product_list_line(osv.osv):
         # check if product already exists in the product list:
         if self._name != 'old.product.list.line' and not context.get('sync_update_execution') and vals.get('name', False):
             for line in self.browse(cr, uid, ids, context=context):
-                if self.search_exist(cr, uid, [('name', '=', vals['name']), ('list_id', '=', line.list_id.id)], context=context):
+                if self.search_exist(cr, uid, [('name', '=', vals['name']), ('list_id', '=', line.list_id.id)], context=context) and \
+                        line.name.id != vals.get('name'):
                     raise osv.except_osv(
                         _('Warning'),
                         _('This product cannot be added as it already exists in this list.')
@@ -315,7 +316,8 @@ class product_list_line(osv.osv):
         if context is None:
             context = {}
         # check if product already exists in the product list:
-        if self._name != 'old.product.list.line' and not context.get('sync_update_execution') and self.search_exist(cr, uid, [('list_id', '=', vals['list_id']), ('name', '=', vals['name'])], context=context):
+        if self._name != 'old.product.list.line' and not context.get('sync_update_execution') and \
+                self.search_exist(cr, uid, [('list_id', '=', vals['list_id']), ('name', '=', vals['name'])], context=context):
             raise osv.except_osv(
                 _('Warning'),
                 _('This product cannot be added as it already exists in this list.')

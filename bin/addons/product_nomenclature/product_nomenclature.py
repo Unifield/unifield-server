@@ -835,7 +835,7 @@ class product_product(osv.osv):
          4. duplication from GUI: the default code XXX is saved, then modify in the write
         '''
         # The first 2 cases: dup of default_code/xmlid_code not allow
-        if context.get('from_import_menu') or context.get('sync_update_execution', False):
+        if context.get('sync_update_execution', False):
             if not default_code or not vals.get('xmlid_code', False):
                 raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
         if not vals.get('xmlid_code'):

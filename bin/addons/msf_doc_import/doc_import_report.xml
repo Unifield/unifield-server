@@ -45,5 +45,16 @@
             auto="False"
             string="Import Generic template" />
 
+        <report
+            id="wizard_export_generic"
+            model="msf.import.export"
+            name="wizard.export.generic"
+            file="msf_doc_import/report/export_generic.mako"
+            report_type="webkit"
+            header="False"
+            menu="False"
+            auto="False"
+            string="Generic Export" />
+
     </data>
 </openerp>

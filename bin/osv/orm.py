@@ -675,10 +675,18 @@ class orm_template(object):
                         elif f[i] in self._inherit_fields.keys():
                             cols = selection_field(self._inherits)
                         if cols and cols._type == 'selection' and not sync_context:
-                            sel_list = cols.selection
-                            if r and type(sel_list) == type([]):
-                                r = [x[1] for x in sel_list if r==x[0]]
-                                r = r and r[0] or False
+                            # if requested, translate the fields.selection values
+                            translated_selection = False
+                            if context.get('translate_selection_field', False) and r and f:
+                                fields_get_res = self.fields_get(cr, uid, f, context=context)
+                                if f[0] in fields_get_res and 'selection' in fields_get_res[f[0]]:
+                                    r = dict(fields_get_res[f[0]]['selection'])[r]
+                                    translated_selection = True
+                            if not translated_selection:
+                                sel_list = cols.selection
+                                if r and type(sel_list) == type([]):
+                                    r = [x[1] for x in sel_list if r==x[0]]
+                                    r = r and r[0] or False
                     if not r:
                         if f[i] in self._columns:
                             r = check_type(self._columns[f[i]]._type)
