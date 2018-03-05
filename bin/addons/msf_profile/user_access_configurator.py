@@ -164,6 +164,8 @@ class user_access_configurator(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        data_obj = self.pool.get('ir.model.data')
+
         # data structure returned with processed data from file
         data_structure = {}
 
@@ -212,7 +214,7 @@ class user_access_configurator(osv.osv_memory):
                 else:
                     # information rows
                     try:
-                        menu_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, row.cells[0], row.cells[1])[1]
+                        menu_id = data_obj.get_object_reference(cr, uid, row.cells[0], row.cells[1])[1]
                     except ValueError:
                         # menu is in the file but not in the database
                         data_structure[obj.id]['menu']['error'].append('The menu %s (%s.%s) is defined in the file but is missing in the database.'%(row.cells[3], row.cells[0], row.cells[1]))
@@ -459,6 +461,7 @@ class user_access_configurator(osv.osv_memory):
             self._set_active_user_ids(cr, uid, ids, context=context, user_ids=user_ids_list, active_value=True)
             # get admin group id
             group_ids_list.append(self._get_admin_user_rights_group_id(cr, uid, context=context))
+            group_ids_list = list(set(group_ids_list))  # remove duplicates
             # for admin user, set all unifield groups + admin group (only user to have this group)
             user_obj.write(cr, uid, admin_ids, {'groups_id': [(6, 0, group_ids_list)]}, context=context)
 

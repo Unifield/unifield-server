@@ -65,6 +65,7 @@ class msf_import_export(osv.osv_memory):
         'display_file_export': fields.boolean('File Export'),
         'model_list_selection': fields.selection(selection=_get_model_list, string='Object to Import/Export', required=True),
         'import_file': fields.binary('File to import .xml'),
+        'hide_download_template': fields.boolean('Hide download template'),
         'hide_download_3_entries': fields.boolean('Hide export 3 entries button'),
         'hide_download_all_entries': fields.boolean('Hide export all entries button'),
         'display_import_buttons': fields.boolean('Display import buttons'),
@@ -76,6 +77,7 @@ class msf_import_export(osv.osv_memory):
     _default = {
         'display_file_import': lambda *a: False,
         'display_file_export': lambda *a: False,
+        'hide_download_template': lambda *a: False,
         'hide_download_3_entries': lambda *a: False,
         'hide_download_all_entries': lambda *a: False,
         'display_import_buttons': lambda *a: False,
@@ -128,9 +130,14 @@ class msf_import_export(osv.osv_memory):
             'supp_cata_id': wiz.supplier_catalogue_id.id,
             'selection': wiz.model_list_selection,
         }
+
+        if model == 'user.access.configurator':
+            report_name = 'wizard.export.user.access'
+        else:
+            report_name = 'wizard.export.generic'
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'wizard.export.generic',
+            'report_name': report_name,
             'datas': data,
             'context': context,
         }
@@ -297,6 +304,7 @@ class msf_import_export(osv.osv_memory):
             if model_list_selection and model_list_selection in MODEL_DATA_DICT:
                 hide_export = MODEL_DATA_DICT[model_list_selection].get('hide_export', False)
                 result['value']['display_file_export'] = not hide_export
+                result['value']['hide_download_template'] = MODEL_DATA_DICT[model_list_selection].get('hide_download_template', False)
                 hide_3 = MODEL_DATA_DICT[model_list_selection].get('hide_download_3_entries', False)
                 result['value']['hide_download_3_entries'] = hide_3
                 hide_all = MODEL_DATA_DICT[model_list_selection].get('hide_download_all_entries', False)
@@ -304,6 +312,7 @@ class msf_import_export(osv.osv_memory):
                 csv_button = MODEL_DATA_DICT[model_list_selection].get('csv_button', False)
                 result['value']['csv_button'] = csv_button
             else:
+                result['value']['hide_download_template'] = False
                 result['value']['hide_download_3_entries'] = False
                 result['value']['hide_download_all_entries'] = False
         return result

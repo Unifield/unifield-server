@@ -56,5 +56,16 @@
             auto="False"
             string="Generic Export" />
 
+        <report
+            id="wizard_export_user_access"
+            model="msf.import.export"
+            name="wizard.export.user.access"
+            file="msf_doc_import/report/export_user_access.mako"
+            report_type="webkit"
+            header="False"
+            menu="False"
+            auto="False"
+            string="Export User Access" />
+
     </data>
 </openerp>
