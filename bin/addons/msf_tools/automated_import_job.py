@@ -39,9 +39,11 @@ def all_files_under(path):
     Iterates through all files that are under the given path.
     :param path: Path on which we want to iterate
     """
+    res = []
     for cur_path, dirnames, filenames in os.walk(path):
         for filename in filenames:
-            yield os.path.join(cur_path, filename)
+            res.append( (cur_path, filename) )
+        break # don't parse children
 
 def get_oldest_filename(job, ftp_connec=None):
     '''
