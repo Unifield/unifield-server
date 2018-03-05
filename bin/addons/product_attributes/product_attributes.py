@@ -1246,7 +1246,7 @@ class product_attributes(osv.osv):
                     _('Error'),
                     _('White spaces are not allowed in XML ID code'),
                 )
-            if any(char.islower() for char in vals['xmlid_code']):
+            if not context.get('sync_update_execution') and any(char.islower() for char in vals['xmlid_code']):
                 vals['xmlid_code'] = vals['xmlid_code'].upper()
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
@@ -1319,8 +1319,8 @@ class product_attributes(osv.osv):
                             _('Error'),
                             _('White spaces are not allowed in product code'),
                         )
-            if any(char.islower() for char in vals['default_code']):
-                vals['default_code'] = vals['default_code'].upper()
+                if any(char.islower() for char in vals['default_code']):
+                    vals['default_code'] = vals['default_code'].upper()
 
         # update local stock mission report lines :
         if 'state' in vals:
