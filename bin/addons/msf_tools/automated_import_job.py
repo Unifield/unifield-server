@@ -43,6 +43,7 @@ def all_files_under(path):
     for cur_path, dirnames, filenames in os.walk(path):
         res.extend([os.path.join(cur_path, fn) for fn in filenames])
         break # don't parse children
+    return res
 
 def get_oldest_filename(job, ftp_connec=None):
     '''
