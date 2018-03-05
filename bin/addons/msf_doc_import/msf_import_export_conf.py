@@ -278,6 +278,9 @@ MODEL_DATA_DICT = {
         'required_field_list': [
             'name.default_code',
         ],
+        'ignore_field': [
+            'name.name',
+        ],
         'custom_field_name': {
             'name.default_code': 'Product Code',
             'ref': 'Ref',
