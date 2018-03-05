@@ -55,6 +55,10 @@ class report_generic_export_parser(report_sxw.rml_parse):
                 res = MODEL_DATA_DICT.get('supplier_catalogue_update').get('custom_field_name', {}).get(field)
                 if res:
                     return res
+            if selection == 'product_list_update':
+                res = MODEL_DATA_DICT.get('product_list_update').get('custom_field_name', {}).get(field)
+                if res:
+                    return res
             field_id = self.pool.get('ir.model.fields').search(self.cr, self.uid, [('model', '=', model), ('name', '=', field)], context=context)
             field_desc = field
             if field_id:
