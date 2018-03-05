@@ -5,6 +5,14 @@
 </%def>
 
 <%def name="content()">
+
+% if close_popup:
+<script type="text/javascript">
+jQuery(document).ready(function () {
+    window.parent.location.reload();
+})
+</script>
+% else:
 <form action="/openerp/translator/save" method="post" enctype="multipart/form-data">
     <input type="hidden" id="_terp_model" name="_terp_model" value="${model}"/>
     <input type="hidden" id="_terp_id" name="_terp_id" value="${id}"/>
@@ -115,4 +123,5 @@
         % endif
     </table>
 </form>
+% endif
 </%def>

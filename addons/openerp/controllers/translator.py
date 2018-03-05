@@ -63,21 +63,40 @@ class Translator(SecuredController):
         names.sort(lambda x,y: cmp(view_fields[x].get('string', ''), view_fields[y].get('string', '')))
 
         if translate == 'fields' and params.id:
-            for name in names:
-                attrs = view_fields[name]
+            # US-3071 : single field translation only for product.product
+            if params.get('_terp_clicked_field', False) and params.get('_terp_model', False) \
+                    and params['_terp_model'] == 'product.product':
+                clicked_field = params['_terp_clicked_field']
+                attrs = view_fields[clicked_field]
                 if attrs.get('translate'):
                     value = {}
                     for lang in langs:
                         context = copy.copy(ctx)
                         context['lang'] = adapt_context(lang['code'])
 
-                        val = proxy.read([params.id], [name], context)
+                        val = proxy.read([params.id], [clicked_field], context)
                         val = val[0] if isinstance(val,list) and len(val) > 0 else None
 
-                        value[lang['code']] = val[name] if isinstance(val,dict) \
-                            and name in val else None
+                        value[lang['code']] = val[clicked_field] if isinstance(val,dict) \
+                            and clicked_field in val else None
 
-                    data += [(name, value, None, attrs.get('string'))]
+                    data += [(clicked_field, value, None, attrs.get('string'))]
+            else:
+                for name in names:
+                    attrs = view_fields[name]
+                    if attrs.get('translate'):
+                        value = {}
+                        for lang in langs:
+                            context = copy.copy(ctx)
+                            context['lang'] = adapt_context(lang['code'])
+
+                            val = proxy.read([params.id], [name], context)
+                            val = val[0] if isinstance(val, list) and len(val) > 0 else None
+
+                            value[lang['code']] = val[name] if isinstance(val, dict) \
+                                                               and name in val else None
+
+                        data += [(name, value, None, attrs.get('string'))]
 
         if translate == 'labels':
             for name in names:
@@ -121,7 +140,7 @@ class Translator(SecuredController):
 
         return dict(translate=translate, langs=langs, data=data, view=view, model=params.model, id=params.id, ctx=params.context)
 
-    @expose()
+    @expose(template="/openerp/controllers/templates/translator.mako")
     def save(self, translate='fields', **kw):
         params, data = TinyDict.split(kw)
         
@@ -159,6 +178,6 @@ class Translator(SecuredController):
                 for id, val in value.items():
                     rpc.session.execute('object', 'execute', 'ir.translation', 'write', [int(id)], {'value': val})
 
-        return self.index(translate=translate, _terp_model=params.model, _terp_id=params.id, ctx=params.context)
+        return dict(close_popup=True)
 
 # vim: ts=4 sts=4 sw=4 si et
