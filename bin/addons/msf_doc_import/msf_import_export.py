@@ -27,7 +27,7 @@ import pooler
 import tools
 
 from osv import fields
-from osv import osv
+from osv import osv, orm
 from tools.translate import _
 
 from tempfile import TemporaryFile
@@ -910,7 +910,7 @@ class msf_import_export(osv.osv_memory):
                         impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
                     processed.append((row_index+1, line_data))
-            except osv.except_osv, e:
+            except (osv.except_osv, orm.except_orm) , e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 cr.rollback()
                 save_error(e.value, row_index)
