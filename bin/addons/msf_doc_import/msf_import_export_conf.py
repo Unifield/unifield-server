@@ -280,6 +280,8 @@ MODEL_DATA_DICT = {
         ],
         'custom_field_name': {
             'name.default_code': 'Product Code',
+            'ref': 'Ref',
+            'order_list_print_ok': 'Order List print',
         },
     },
     'product_list': {

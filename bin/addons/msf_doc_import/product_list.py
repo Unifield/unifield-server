@@ -28,6 +28,7 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_product_list_import
 from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_FOR_IMPORT as columns_for_product_list_import
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from msf_doc_import.msf_import_export_conf import MODEL_DATA_DICT
 from . import PRODUCT_LIST_TYPE
 
 
@@ -52,8 +53,8 @@ class product_list(osv.osv):
 
         # get header data:
         data = {}
-        for row in file_obj.getRows():
-            if len(row.cells) > 2:
+        for index, row in enumerate(file_obj.getRows()):
+            if index > len(MODEL_DATA_DICT['product_list_update'].get('header_info')) - 1:
                 break # header end
             if row.cells[0].data == displayable['type']:
                 for tu in PRODUCT_LIST_TYPE:

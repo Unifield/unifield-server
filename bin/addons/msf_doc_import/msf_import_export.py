@@ -402,7 +402,7 @@ class msf_import_export(osv.osv_memory):
             'supplier_catalogue_update': {'name': False, 'partner_id': False},
         }
         for index, row in enumerate(rows):
-            if len(row.cells) > 2:
+            if index > len(fields_needed) - 1:
                 context['row'] = row
                 break # header info end
 
@@ -581,8 +581,8 @@ class msf_import_export(osv.osv_memory):
 
             # set rows' iterator to the good index:
             if MODEL_DATA_DICT[selection].get('header_info'):
-                for row in rows:
-                    if len(row.cells) > 2:
+                for index, row in enumerate(rows):
+                    if index > len(MODEL_DATA_DICT[selection].get('header_info')) - 1:
                         break
 
             res = self.bg_import(cr.dbname, uid, wiz, expected_headers, rows, context)

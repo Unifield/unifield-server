@@ -31,6 +31,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from msf_doc_import import GENERIC_MESSAGE
 from msf_doc_import.wizard import SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT as sup_cat_columns_header
 from msf_doc_import.wizard import SUPPLIER_CATALOG_COLUMNS_FOR_IMPORT as sup_cat_columns
+from msf_doc_import.msf_import_export_conf import MODEL_DATA_DICT
 import mx.DateTime.DateTime
 
 
@@ -62,8 +63,8 @@ class supplier_catalogue(osv.osv):
             displayable[field] = self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'supplier.catalogue', field, context=context)
 
         data = {}
-        for row in file_obj.getRows():
-            if len(row.cells) > 2:
+        for index, row in enumerate(file_obj.getRows()):
+            if index > len(MODEL_DATA_DICT['supplier_catalogue_update'].get('header_info')) -1 :
                 break
             if row.cells[0].data == displayable['name']:
                 data['name'] = row.cells[1].data
