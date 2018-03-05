@@ -732,6 +732,15 @@ The starting balance will be proposed automatically and the closing balance is t
         self.update_xml_id_register(cr, uid, reg_id, context)
         return True
 
+    def button_open_cash_register(self, cr, uid, ids, context=None):
+        return self.button_open_register(cr, uid, ids, context=context)
+
+    def button_open_cheque_register(self, cr, uid, ids, context=None):
+        return self.button_open_register(cr, uid, ids, context=context)
+
+    def button_open_bank_register(self, cr, uid, ids, context=None):
+        return self.button_open_register(cr, uid, ids, context=context)
+
     def button_open_register(self, cr, uid, ids, context=None):
         """
         Opens the "Register Opening Confirmation" wizard if it is the first register of the journal,

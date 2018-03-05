@@ -185,7 +185,7 @@
                         <group col="8" colspan="4">
                             <field name="state" readonly="1"/>
                             <button name="button_dummy" states="draft,open" string="Compute" type="object" icon="terp-stock_format-scientific"/>
-                            <button name="button_open_register" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
+                            <button name="button_open_bank_register" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
                             <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                         </group>
                     </form>
@@ -401,7 +401,7 @@
                         <group name="state" colspan="4">
                             <field name="state" colspan="4" readonly="True"/>
                         </group>
-                        <button name="button_open_register" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
+                        <button name="button_open_cash_register" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
                         <group name="open_state" colspan="4">
                             <button name="button_confirm_cash" states="open" string="Close Register" icon="gtk-ok" type="object" colspan="2" />
                         </group>
@@ -629,7 +629,7 @@
                     <field name="balance_end" />
                     <field name="balance_end_real"/>
                     <field name="state"/>
-                    <button name="button_open_register" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
+                    <button name="button_open_bank_register" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                 </tree>
             </field>
@@ -673,7 +673,7 @@
                     <field name="msf_calculated_balance"/>
                     <field name="balance_end_cash" string="Cashbox balance" />
                     <field name="state"/>
-                    <button type="object" string="Open" name="button_open_register" states="draft" icon="terp-gtk-go-back-rtl"/>
+                    <button type="object" string="Open" name="button_open_cash_register" states="draft" icon="terp-gtk-go-back-rtl"/>
                     <button type="object" string="Close Register" name="button_confirm_cash" states="open" icon="terp-camera_test"/>
                 </tree>
             </field>
@@ -924,7 +924,7 @@
                     </notebook>
                     <group col="8" colspan="4">
                         <field name="state" readonly="1"/>
-                        <button name="button_open_register" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
+                        <button name="button_open_cheque_register" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
                         <button name="button_confirm_cheque" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
                     </group>
                 </form>
@@ -945,7 +945,7 @@
                     <field name="currency"/>
                     <field name="journal_id"/>
                     <field name="state"/>
-                    <button name="button_open_register" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
+                    <button name="button_open_cheque_register" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
                     <button name="button_confirm_cheque" states="open" string="Close Register" type="object"  icon="terp-camera_test"/>
                 </tree>
             </field>
