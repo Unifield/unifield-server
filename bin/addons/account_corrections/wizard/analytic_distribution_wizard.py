@@ -519,6 +519,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             to_create = []
             to_delete = []
             to_override = []
+            old_line_ok = []
             old_line_ids = self.pool.get(obj_name).search(cr, uid, [('distribution_id', '=', distrib_id)])
             wiz_line_ids = self.pool.get(corr_name).search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', free[0])])
             # To create OR to override
