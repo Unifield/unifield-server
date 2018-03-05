@@ -85282,7 +85282,6 @@ msgstr "Paramétrage du domaine"
 #: selection:wizard.import.batch,state:0
 #: code:addons/msf_tools/automated_import_job.py:81
 #: code:addons/mission_stock/wizard/mission_stock_wizard.py:97
-#: code:addons/msf_tools/automated_import_job.py:81
 #: selection:msf.import.export,state:0
 #, python-format
 msgid "Not started"

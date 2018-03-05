@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 from tools.translate import _
+from msf_doc_import import PRODUCT_LIST_TYPE
 
 import time
 
@@ -83,10 +84,7 @@ class product_list(osv.osv):
             string='Ref.',
         ),
         'type': fields.selection(
-            selection=[
-                ('list', 'List'),
-                ('sublist', 'Sublist'),
-            ],
+            selection=PRODUCT_LIST_TYPE,
             string='Type',
             required=True,
         ),

@@ -44,13 +44,21 @@ class report_generic_export_parser(report_sxw.rml_parse):
         })
         return
 
-    def getHeaderInfo(self, model, prod_list_id=False, supp_cata_id=False, context=None):
+    def getHeaderInfo(self, model, selection, prod_list_id=False, supp_cata_id=False, context=None):
         '''
         Get header info which are located at the very top of export template. 
         Only available for some models (product.list or supplier.catalogue)
         '''
         def get_field_name(model, field):
             ''' get displayable name for the given field '''
+            if selection == 'supplier_catalogue_update':
+                res = MODEL_DATA_DICT.get('supplier_catalogue_update').get('custom_field_name', {}).get(field)
+                if res:
+                    return res
+            if selection == 'product_list_update':
+                res = MODEL_DATA_DICT.get('product_list_update').get('custom_field_name', {}).get(field)
+                if res:
+                    return res
             field_id = self.pool.get('ir.model.fields').search(self.cr, self.uid, [('model', '=', model), ('name', '=', field)], context=context)
             field_desc = field
             if field_id:
@@ -84,13 +92,13 @@ class report_generic_export_parser(report_sxw.rml_parse):
             context = {}
 
         header_rows = []
-        if model == 'product.list.line' and prod_list_id:
+        if selection == 'product_list_update':
             prod_list = self.pool.get('product.list').browse(self.cr, self.uid, prod_list_id, context=context)
             for field in MODEL_DATA_DICT['product_list_update'].get('header_info', []):
                 header_rows.append(
                     (get_field_name('product.list', field), get_attr_name(prod_list,field)) # (name, value)
                 )
-        elif model == 'supplier.catalogue.line' and supp_cata_id:
+        elif selection == 'supplier_catalogue_update':
             supp_cata = self.pool.get('supplier.catalogue').browse(self.cr, self.uid, supp_cata_id, context=context)
             for field in MODEL_DATA_DICT['supplier_catalogue_update'].get('header_info', []):
                 header_rows.append(
@@ -100,14 +108,14 @@ class report_generic_export_parser(report_sxw.rml_parse):
         return header_rows
 
 
-    def getHeaders(self, model, field_list, rows, context=None):
+    def getHeaders(self, model, field_list, rows, selection, context=None):
         '''
         get the column names of the table. Set the type of the column and the
         size of it.
         '''
         import_export_obj = self.pool.get('msf.import.export')
         return import_export_obj._get_headers(self.cr, self.uid, model,
-                                              selection=None, field_list=field_list, rows=rows, context=context)
+                                              selection=selection, field_list=field_list, rows=rows, context=context)
 
     def getRows(self, data):
         """

@@ -276,6 +276,11 @@ MODEL_DATA_DICT = {
         'required_field_list': [
             'name.default_code',
         ],
+        'custom_field_name': {
+            'name.default_code': 'Product Code',
+            'ref': 'Ref',
+            'order_list_print_ok': 'Order List print',
+        },
     },
     'product_list': {
         'header_list': [
@@ -336,8 +341,7 @@ MODEL_DATA_DICT = {
             'period_to',
         ],
         'header_list': [
-            'line_number',
-            'product_id.code',
+            'product_id.default_code',
             'product_id.name',
             'product_code',
             'line_uom_id.name',
@@ -348,11 +352,21 @@ MODEL_DATA_DICT = {
             'comment',
         ],
         'required_field_list': [
-            'product_id.code',
+            'product_id.default_code',
             'line_uom_id.name',
             'min_qty',
             'unit_price',
         ],
+        'ignore_field': [
+            'product_id.name',
+        ],
+        'custom_field_name': {
+            'partner_id': 'Partner Name',
+            'product_id.default_code': 'Product Code',
+            'product_id.name': 'Product Description',
+            'line_uom_id.name': 'UoM',
+            'min_order_qty': 'Min. Order Qty.',
+        },
     },
     'supplier_catalogues': {
         'header_list': [
@@ -371,7 +385,7 @@ MODEL_DATA_DICT = {
     'supplier_catalogues_lines': {
         'header_list': [
             'catalogue_id.name',
-            'product_id.code',
+            'product_id.default_code',
             'product_id.name',
             'line_uom_id.name',
             'min_qty',
@@ -382,10 +396,13 @@ MODEL_DATA_DICT = {
         ],
         'required_field_list': [
             'catalogue_id.name',
-            'product_id.code',
+            'product_id.default_code',
             'line_uom_id.name',
             'min_qty',
             'unit_price',
+        ],
+        'ignore_field': [
+            'product_id.name',
         ],
     },
 
