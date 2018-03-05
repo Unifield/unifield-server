@@ -1211,6 +1211,9 @@ class purchase_order_line(osv.osv):
             # if not context.get('update_merge'):
             #     new_vals.update(self._update_merged_line(cr, uid, line.id, vals, context=dict(context, skipResequencing=True, noraise=True)))
 
+            if line.state == 'draft' and 'price_unit' in new_vals:
+                new_vals['original_price'] = new_vals.get('price_unit')
+
             res = super(purchase_order_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
             if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('linked_sol_id', line.linked_sol_id):
@@ -1523,6 +1526,12 @@ class purchase_order_line(osv.osv):
             res['value'].update({'price_unit': 0.00, 'old_price_unit': 0.00})
         elif not product and not comment and not nomen_manda_0:
             res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})
+
+        if state == 'draft':
+            if name != res['value'].get('name', False) and res['value'].get('price_unit', False):
+                res['value']['original_price'] = res['value']['price_unit']
+            else:
+                res['value']['original_price'] = 0.00
 
         if context and context.get('categ') and product:
             # Check consistency of product

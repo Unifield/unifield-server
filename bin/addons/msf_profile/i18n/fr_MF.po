@@ -107206,3 +107206,13 @@ msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Client."
 #, python-format
 msgid "The account %s - %s cannot be used as Account Payable."
 msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Fournisseur."
+
+#. module: purchase_followup
+#: view:po.track.changes.wizard:0
+msgid "PURCHASE ORDER Track Changes"
+msgstr "Suivi des Changements des BONS DE COMMANDE"
+
+#. module: sales_followup
+#: view:ir.track.changes.wizard:0
+msgid "INTERNAL REQUEST Track Changes"
+msgstr "Suivi des Changements des REQUÊTES INTERNES"

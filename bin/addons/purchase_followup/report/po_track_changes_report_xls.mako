@@ -166,7 +166,7 @@
         <Column ss:AutoFitWidth="1" ss:Width="209.25" />
 
         <Row ss:Height="18">
-            <Cell ss:StyleID="big_header"><Data ss:Type="String">INTERNAL REQUEST Track Changes report</Data><NamedCell ss:Name="Print_Area"/></Cell>
+            <Cell ss:StyleID="big_header"><Data ss:Type="String">PURCHASE ORDER Track Changes report</Data><NamedCell ss:Name="Print_Area"/></Cell>
         </Row>
 
         <Row ss:Height="10"></Row>
