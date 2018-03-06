@@ -215,6 +215,8 @@ class automated_import_job(osv.osv):
         'state': lambda *a: 'draft',
     }
 
+    _order = 'id desc'
+
     def process_import(self, cr, uid, ids, context=None):
         """
         First, browse the source path, then select the oldest file and run import on this file.
