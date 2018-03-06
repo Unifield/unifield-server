@@ -82,30 +82,29 @@ def get_file_content(file, from_ftp=False, ftp_connec=None):
         return ch.getvalue()
 
 
-def move_to_process_path(import_brw, ftp_connec, file, src_path, dest_path):
+def move_to_process_path(import_brw, ftp_connec, file, success):
     """
     Move the file `file` from `src_path` to `dest_path`
-    :param file: Name of the file to move
-    :param src_path: Source folder
-    :param dest_path: Destination folder
     :return: return True
     """
-    srcname = os.path.join(src_path, file)
-    destname = os.path.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
+    srcname = os.path.join(import_brw.src_path, file)
+    destname = os.path.join(import_brw.dest_path if success else import_brw.dest_path_failure, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
 
-    if import_brw.ftp_source_ok and import_brw.ftp_dest_ok:
+    dest_on_ftp = import_brw.ftp_dest_ok if success else import_brw.ftp_dest_fail_ok
+
+    if import_brw.ftp_source_ok and dest_on_ftp:
         # from FTP to FTP
         rep = ftp_connec.rename(srcname, destname)
         if not rep.startswith('2'):
             raise osv.except_osv(_('Error'), ('Unable to move file to destination location on FTP server'))
-    elif not import_brw.ftp_source_ok and import_brw.ftp_dest_ok:
+    elif not import_brw.ftp_source_ok and dest_on_ftp:
         # from local to FTP
         rep = ftp_connec.storbinary('STOR %s' % destname, open(srcname, 'rb'))
         if not rep.startswith('2'):
             raise osv.except_osv(_('Error'), ('Unable to move local file to destination location on FTP server'))
         else:
             os.remove(srcname)
-    elif import_brw.ftp_source_ok and not import_brw.ftp_dest_ok:
+    elif import_brw.ftp_source_ok and not dest_on_ftp:
         # from FTP to local
         rep = ''
         with open(destname, 'wb') as f:
@@ -253,7 +252,7 @@ class automated_import_job(osv.osv):
                 ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, job.import_id.id, context=context)
 
             try:
-                for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('report_path', 'w', None)]:
+                for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('dest_path_failure', 'w', 'ftp_dest_fail_ok'), ('report_path', 'w', None)]:
                     if path[2] and not job.import_id[path[2]]:
                         import_obj.path_is_accessible(job.import_id[path[0]], path[1])
             except osv.except_osv as e:
@@ -278,7 +277,7 @@ class automated_import_job(osv.osv):
                         error = _('No file to import in %s !') % job.import_id.src_path
                     elif md5 and self.search_exist(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], context=context):
                         error = _('A file with same checksum has been already imported !')
-                        move_to_process_path(job.import_id, ftp_connec, filename, job.import_id.src_path, job.import_id.dest_path)
+                        move_to_process_path(job.import_id, ftp_connec, filename, success=False)
 
                 if error:
                     self.write(cr, uid, [job.id], {
@@ -354,6 +353,8 @@ class automated_import_job(osv.osv):
                     'file_to_import': data64,
                     'state': state,
                 }, context=context)
+                is_success = True if not rejected else False
+                move_to_process_path(job.import_id, ftp_connec, filename, success=is_success)
             except Exception as e:
                 self.write(cr, uid, [job.id], {
                     'filename': False,
@@ -366,8 +367,7 @@ class automated_import_job(osv.osv):
                     'file_to_import': data64,
                     'state': 'error',
                 }, context=context)
-            finally:
-                move_to_process_path(job.import_id, ftp_connec, filename, job.import_id.src_path, job.import_id.dest_path)
+                move_to_process_path(job.import_id, ftp_connec, filename, success=False)
 
         return {
             'type': 'ir.actions.act_window',

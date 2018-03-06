@@ -48,12 +48,12 @@ class automated_import(osv.osv):
             ids = [ids]
 
         for imp_brw in self.browse(cr, uid, ids, context=context):
-            for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('report_path', 'w', None)]:
+            for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('dest_path_failure', 'w', 'ftp_dest_fail_ok'), ('report_path', 'w', None)]:
                 if imp_brw[path[0]] and path[2] and not imp_brw[path[2]]:
                     self.path_is_accessible(imp_brw[path[0]], path[1])
 
             if imp_brw.src_path:
-                if imp_brw.src_path == imp_brw.dest_path:
+                if imp_brw.src_path == imp_brw.dest_path or imp_brw.src_path == imp_brw.dest_path_failure:
                     raise osv.except_osv(
                         _('Error'),
                         _('You cannot have same directory for \'Source Path\' and \'Destination Path\''),
@@ -63,7 +63,7 @@ class automated_import(osv.osv):
                         _('Error'),
                         _('You cannot have same directory for \'Source Path\' and \'Report Path\''),
                     )
-            if imp_brw.active and not (imp_brw.src_path and imp_brw.dest_path and imp_brw.report_path):
+            if imp_brw.active and not (imp_brw.src_path and imp_brw.dest_path and imp_brw.dest_path_failure and imp_brw.report_path):
                 raise osv.except_osv(
                     _('Error'),
                     _('Before activation, the different paths should be set.')
@@ -83,7 +83,11 @@ class automated_import(osv.osv):
         ),
         'dest_path': fields.char(
             size=512,
-            string='Destination Path',
+            string='Destination Path (success)',
+        ),
+        'dest_path_failure': fields.char(
+            size=512,
+            string='Destination Path (failure)',
         ),
         'report_path': fields.char(
             size=512,
@@ -133,6 +137,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         'ftp_password': fields.char(string='FTP password', size=256),
         'ftp_source_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
         'ftp_dest_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
+        'ftp_dest_fail_ok': fields.boolean(string='on FTP server', help='Is given path is located on FTP server ?'),
     }
 
     _defaults = {
@@ -162,14 +167,14 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
     ]
 
     _constraints = [
-        (_check_paths, _('There is a problem with paths'), ['active', 'src_path', 'dest_path', 'report_path']),
+        (_check_paths, _('There is a problem with paths'), ['active', 'src_path', 'dest_path', 'report_path', 'dest_path_failure']),
     ]
 
     def onchange_ftp_ok(self, cr, uid, ids, ftp_ok, context=None):
         if context is None:
             context = {}
         if ftp_ok == False:
-            return {'value': {'ftp_source_ok': False, 'ftp_dest_ok': False}}
+            return {'value': {'ftp_source_ok': False, 'ftp_dest_ok': False, 'ftp_dest_fail_ok': False}}
         return {}
 
     def ftp_test_connection(self, cr, uid, ids, context=None):
@@ -259,7 +264,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
             params = {}
 
         for import_brw in self.browse(cr, uid, ids, context=context):
-            if not import_brw.src_path or not import_brw.dest_path or not import_brw.report_path:
+            if not import_brw.src_path or not import_brw.dest_path or not import_brw.report_path or not import_brw.dest_path_failure:
                 raise osv.except_osv(
                     _('Error'),
                     _('You should define all paths before run manually this job !'),
@@ -393,6 +398,7 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
                 vals.update({
                     'ftp_source_ok': False,
                     'ftp_dest_ok': False,
+                    'ftp_dest_fail_ok': False,
                 })
 
         res = super(automated_import, self).write(cr, uid, ids, vals, context=context)

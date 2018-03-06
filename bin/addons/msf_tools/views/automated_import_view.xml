@@ -56,6 +56,8 @@
                         <field name="ftp_source_ok" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
                         <field name="dest_path" attrs="{'required': [('active', '=', True)]}" />
                         <field name="ftp_dest_ok" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
+                        <field name="dest_path_failure" attrs="{'required': [('active', '=', True)]}" />
+                        <field name="ftp_dest_fail_ok" attrs="{'readonly': [('ftp_ok', '=', False)]}"/>
                         <field name="report_path" attrs="{'required': [('active', '=', True)]}" />
                     </group>
                     <separator colspan="4" string="Scheduler configuration" />
