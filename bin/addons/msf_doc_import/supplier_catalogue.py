@@ -60,7 +60,8 @@ class supplier_catalogue(osv.osv):
 
         displayable = {}
         for field in ['name', 'partner_id', 'currency_id', 'period_from',  'period_to']:
-            displayable[field] = self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'supplier.catalogue', field, context=context)
+            displayable[field] = MODEL_DATA_DICT['supplier_catalogue_update'].get('custom_field_name', {}).get(field) or \
+                self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'supplier.catalogue', field, context=context)
 
         data = {}
         for index, row in enumerate(file_obj.getRows()):

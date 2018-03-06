@@ -49,6 +49,7 @@ class product_list(osv.osv):
 
         displayable = {}
         for field in ['type', 'ref', 'name', 'description', 'standard_list_ok', 'order_list_print_ok',  'warehouse_id', 'location_id']:
+            # TODO search for custom fields
             displayable[field] = self.pool.get('msf.import.export').get_displayable_name(cr, uid, 'product.list', field, context=context)
 
         # get header data:
