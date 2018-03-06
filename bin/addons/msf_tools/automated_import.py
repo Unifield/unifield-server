@@ -71,20 +71,6 @@ class automated_import(osv.osv):
 
         return True
 
-    def _check_ftp_integrity(self, cr, uid, ids, context=None):
-        context = context or {}
-        if isinstance(ids, (int,long)):
-            ids = [ids]
-
-        for auto_imp in self.browse(cr, uid, ids, context=context):
-            if auto_imp.ftp_ok and (auto_imp.ftp_source_ok or auto_imp.ftp_dest_ok):
-                raise osv.except_osv(
-                    _('Error'),
-                    _('You cannot set a source or destination path on FTP server if feature is not enable')
-                )
-
-        return True
-
     _columns = {
         'name': fields.char(
             size=128,
@@ -177,7 +163,6 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
 
     _constraints = [
         (_check_paths, _('There is a problem with paths'), ['active', 'src_path', 'dest_path', 'report_path']),
-        (_check_ftp_integrity, _('FTP field values integrity error'), ['ftp_ok', 'ftp_source_ok', 'ftp_dest_ok'])
     ]
 
     def onchange_ftp_ok(self, cr, uid, ids, ftp_ok, context=None):
