@@ -87,6 +87,7 @@ class supplier_catalogue(osv.osv):
             catalogue_id = self.create(cr, uid, data, context=context)
             catalogue_id = [catalogue_id]
             cr.commit()
+            self.button_confirm(cr, uid, catalogue_id, context=context)
 
         res = (False, False, False)
         if catalogue_id:
