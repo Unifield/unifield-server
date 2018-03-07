@@ -35,16 +35,8 @@
             % else:
             <field name="delivery_address">${getInstanceName()|x}</field>
             % endif
-            % if o.order_type == 'direct':
             <field name="customer_name">${getInstanceAddress() or ''|x}</field>
-            % else:
-            <field name="customer_name">${o.customer_id and getCustomerAddress(o.customer_id.id) or ''|x}</field>
-            % endif
-            % if o.order_type == 'direct':
             <field name="customer_address">${getInstanceName()|x}</field>
-            % else:
-            <field name="customer_address">${o.customer_id and o.customer_id.name or ''|x}</field>
-            % endif
         </field>
         % if o.shipment_date and o.shipment_date not in (False, 'False'):
         <field name="shipment_date">${o.shipment_date|n}</field>
