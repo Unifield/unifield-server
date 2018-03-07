@@ -948,7 +948,7 @@ class orm_template(object):
                                       'integer', 'boolean', 'float', 'selection',
                                       'reference'):
                     if not context.get('sync_update_execution', False) and field_type == 'char' and isinstance(value, basestring) \
-                            and len(value.splitlines()) > 1:
+                            and len(value.splitlines()) > 1 and (field[len(prefix)]!='name' or model_name != 'res.partner'):
                         # US-2661 do not allowed newline character in char fields
                         res = False
                         warning += [_("New line characters in the field '%s' not allowed. Please fix entry :\n'%s'") % (field[len(prefix)], tools.ustr(value))]
