@@ -8,12 +8,28 @@
             <field name="kind">function</field>
             <field name="action">set_manually_done()</field>
         </record>
-
         <record id="act_shipped" model="workflow.activity">
             <field name="wkf_id" ref="stock.wkf_picking"/>
             <field name="name">shipped</field>
             <field name="kind">function</field>
             <field name="action">action_shipped_wkf()</field>
+        </record>
+        <record id="act_updated" model="workflow.activity">
+            <field name="wkf_id" ref="stock.wkf_picking"/>
+            <field name="name">updated</field>
+            <field name="kind">function</field>
+            <field name="action">action_updated_wkf()</field>
+        </record>
+
+        <record id="trans_assigned_updated" model="workflow.transition">
+            <field name="act_from" ref="stock.act_assigned" />
+            <field name="act_to" ref="act_updated" />
+            <field name="signal">available_updated</field>
+        </record>
+        <record id="trans_shipped_updated" model="workflow.transition">
+            <field name="act_from" ref="act_shipped" />
+            <field name="act_to" ref="act_updated" />
+            <field name="signal">available_updated</field>
         </record>
 
         <record id="trans_draft_manual_done" model="workflow.transition">
@@ -31,9 +47,13 @@
             <field name="act_to" ref="act_manually_done" />
             <field name="signal">manually_done</field>
         </record>
-        
         <record id="trans_shipped_manual_done" model="workflow.transition">
             <field name="act_from" ref="act_shipped" />
+            <field name="act_to" ref="act_manually_done" />
+            <field name="signal">manually_done</field>
+        </record>
+        <record id="trans_updated_manual_done" model="workflow.transition">
+            <field name="act_from" ref="act_updated" />
             <field name="act_to" ref="act_manually_done" />
             <field name="signal">manually_done</field>
         </record>
@@ -53,12 +73,6 @@
             <field name="act_to" ref="act_shipped"/>
             <field name="signal">button_shipped</field>
         </record>
-		
-        <record id="trans_shipped_done" model="workflow.transition">
-            <field name="act_from" ref="act_shipped"/>
-            <field name="act_to" ref="stock.act_move"/>
-            <field name="signal">button_done</field>
-        </record>
 
         <record id="act_return_cancel" model="workflow.activity">
             <field name="wkf_id" ref="stock.wkf_picking"/>
@@ -74,6 +88,11 @@
             <field name="signal">return_cancel</field>
         </record>
 
+        <record id="trans_shipped_done" model="workflow.transition">
+            <field name="act_from" ref="act_shipped"/>
+            <field name="act_to" ref="stock.act_move"/>
+            <field name="signal">button_done</field>
+        </record>
         <record id="trans_shipped_move_done" model="workflow.transition">
             <field name="act_from" ref="act_shipped"/>
             <field name="act_to" ref="stock.act_move"/>
@@ -84,25 +103,44 @@
             <field name="act_to" ref="stock.act_move"/>
             <field name="condition">auto_picking and test_auto_picking()</field>
         </record>
+
+        <record id="trans_updated_done" model="workflow.transition">
+            <field name="act_from" ref="act_updated"/>
+            <field name="act_to" ref="stock.act_move"/>
+            <field name="signal">button_done</field>
+        </record>
+        <record id="trans_updated_move_done" model="workflow.transition">
+            <field name="act_from" ref="act_updated"/>
+            <field name="act_to" ref="stock.act_move"/>
+            <field name="condition">test_done()</field>
+        </record>
+        <record id="trans_updated_move" model="workflow.transition">
+            <field name="act_from" ref="act_updated"/>
+            <field name="act_to" ref="stock.act_move"/>
+            <field name="condition">auto_picking and test_auto_picking()</field>
+        </record>
         
+        <record id="trans_updated_cancel" model="workflow.transition">
+            <field name="act_from" ref="act_updated"/>
+            <field name="act_to" ref="stock.act_cancel"/>
+            <field name="condition">allow_cancel()</field>
+            <field name="signal">button_cancel</field>
+        </record>
+        <record id="trans_updated_cancel_auto" model="workflow.transition">
+            <field name="act_from" ref="act_updated"/>
+            <field name="act_to" ref="stock.act_cancel"/>
+            <field name="condition">test_cancel()</field>
+        </record>
         <record id="trans_shipped_cancel" model="workflow.transition">
             <field name="act_from" ref="act_shipped"/>
             <field name="act_to" ref="stock.act_cancel"/>
 			 <field name="condition">allow_cancel()</field>
             <field name="signal">button_cancel</field>
         </record>
-
         <record id="trans_shipped_cancel_auto" model="workflow.transition">
             <field name="act_from" ref="act_shipped"/>
             <field name="act_to" ref="stock.act_cancel"/>
             <field name="condition">test_cancel()</field>
         </record>
-
-        <record id="trans_shipped_cancel_auto" model="workflow.transition">
-            <field name="act_from" ref="act_shipped"/>
-            <field name="act_to" ref="stock.act_cancel"/>
-            <field name="condition">test_cancel()</field>
-        </record>
-
     </data>
 </openerp>

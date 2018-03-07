@@ -303,6 +303,7 @@ class stock_picking(osv.osv):
             ('confirmed', 'Confirmed'),
             ('assigned', 'Available'),
             ('shipped', 'Available Shipped'),  # UF-1617: new state of IN for partial shipment
+            ('updated', 'Available Updated'),
             ('done', 'Closed'),
             ('cancel', 'Cancelled'),
             ('import', 'Import in progress'),
