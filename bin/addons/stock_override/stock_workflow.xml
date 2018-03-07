@@ -24,12 +24,12 @@
         <record id="trans_assigned_updated" model="workflow.transition">
             <field name="act_from" ref="stock.act_assigned" />
             <field name="act_to" ref="act_updated" />
-            <field name="signal">available_updated</field>
+            <field name="condition">import_update_ok</field>
         </record>
         <record id="trans_shipped_updated" model="workflow.transition">
             <field name="act_from" ref="act_shipped" />
             <field name="act_to" ref="act_updated" />
-            <field name="signal">available_updated</field>
+            <field name="condition">import_update_ok</field>
         </record>
 
         <record id="trans_draft_manual_done" model="workflow.transition">

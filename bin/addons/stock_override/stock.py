@@ -363,6 +363,7 @@ class stock_picking(osv.osv):
             }
         ),
         'incoming_id': fields.many2one('stock.picking', string='Incoming ref', readonly=True),
+        'import_update_ok': fields.boolean('Updated with import', readonly=True),
     }
 
     _defaults = {
