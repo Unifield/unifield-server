@@ -113,7 +113,7 @@ class PhysicalInventory(osv.osv):
         'date_done': fields.datetime('Date done', readonly=True),
         'date_confirmed': fields.datetime('Date confirmed', readonly=True),
         'product_ids': fields.many2many('product.product', 'physical_inventory_product_rel',
-                                        'product_id', 'inventory_id', string="Product selection", order_by="default_code"),
+                                        'product_id', 'inventory_id', string="Product selection", domain=[('type', 'not in', ['service_recep', 'consu'])], order_by="default_code"),
         'discrepancy_line_ids': fields.one2many('physical.inventory.discrepancy', 'inventory_id', 'Discrepancy lines',
                                                 states={'closed': [('readonly', True)]}),
         'counting_line_ids': fields.one2many('physical.inventory.counting', 'inventory_id', 'Counting lines',
@@ -725,12 +725,15 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
                     line_no = None
                     add_error(_("""Invalid line number"""), row_index, 0)
 
-            # Check product_code
+            # Check product_code and type
             product_code = row.cells[1].data
             product_ids = product_obj.search(cr, uid, [('default_code', '=like', product_code)], context=context)
             product_id = False
             if len(product_ids) == 1:
                 product_id = product_ids[0]
+                # Check if product is non-stockable
+                if product_obj.search_exist(cr, uid, [('id', '=', product_id), ('type', 'in', ['service_recep', 'consu'])]):
+                    add_error("""Impossible to import non-stockable product %s""" % product_code, row_index, 1)
             else:
                 add_error(_("""Product %s not found""") % product_code, row_index, 1)
 
@@ -877,6 +880,7 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 
         discrepancy_report_file = SpreadsheetXML(xmlstring=base64.decodestring(inventory_rec.file_to_import2))
 
+        product_obj = self.pool.get('product.product')
         reason_type_obj = self.pool.get('stock.reason.type')
         discrepancy_obj = self.pool.get('physical.inventory.discrepancy')
 
@@ -888,6 +892,14 @@ Line #, Item Code, Description, UoM, Quantity counted, Batch number, Expiry date
 Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), Quantity Theorical, Quantity counted, Batch no, Expiry Date, Discrepancy, Discrepancy value, Total QTY before INV, Total QTY after INV, Total Value after INV, Discrepancy, Discrepancy Value, Adjustement type, Comments / actions (in case of discrepancy)"""),
                           row_index, len(row))
                 break
+
+            # Check if product is non-stockable
+            product_code = row.cells[2].data
+            if product_obj.search_exist(cr, uid, [('default_code', '=like', product_code),
+                                                  ('type', 'in', ['service_recep', 'consu'])],
+                                        context=context):
+                add_error(_("""Impossible to import non-stockable product %s""") % product_code, row_index, 2)
+
             adjustment_type = row.cells[18].data
             if adjustment_type:
                 adjustement_split = adjustment_type.split(' ')
@@ -993,6 +1005,17 @@ Line #, Family, Item Code, Description, UoM, Unit Price, currency (functional), 
 
         if self.search_exist(cr, uid, [('id', 'in', ids), '|', ('state', '!=', 'counted'), ('discrepancies_generated', '=', False)], context=context):
             raise osv.except_osv(_('Error'), _('Page need to be refreshed - please press "F5"'))
+
+        # Check if a line contains a non-stockable product
+        dids = self.pool.get('physical.inventory.discrepancy').search(cr, uid, [('inventory_id', 'in', ids), ('product_id.type', 'in', ['service_recep', 'consu']), ('ignored', '!=', True)])
+        if dids:
+            error = []
+            for disc in self.pool.get('physical.inventory.discrepancy').read(cr, uid, dids, ['line_no', 'product_id'], context=context):
+                error.append('Line %s, product %s' % (disc['line_no'], disc['product_id'][1]))
+            raise osv.except_osv(_('Error'),
+                                 _("Please remove non-stockable from the discrepancy report to validate:\n%s") % ("\n".join(error),)
+                                 )
+
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
         return {}
 
@@ -1207,7 +1230,7 @@ class PhysicalInventoryCounting(osv.osv):
 
         # Product
         'product_id': fields.many2one('product.product', _('Product'), required=True, select=True,
-                                      domain=[('type', '<>', 'service')]),
+                                      domain=[('type', 'not in', ['service_recep', 'consu'])]),
         'default_code': fields.related('product_id', 'default_code',  type='char', size=64, readonly=True, select=True, write_relate=False, store=True),
         'product_uom_id': fields.many2one('product.uom', _('Product UOM'), required=True),
         'standard_price': fields.float(_("Unit Price"), readonly=True),

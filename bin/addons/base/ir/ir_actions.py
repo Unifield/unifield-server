@@ -209,7 +209,7 @@ class act_window(osv.osv):
             if act.search_view_id:
                 search_view_id = act.search_view_id.id
             else:
-                res_view = self.pool.get('ir.ui.view').search(cr, uid, 
+                res_view = self.pool.get('ir.ui.view').search(cr, uid,
                                                               [('model','=',act.res_model),('type','=','search'),
                                                                ('inherit_id','=',False)], context=context)
                 if res_view:

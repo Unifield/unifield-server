@@ -19,8 +19,6 @@
 #
 ##############################################################################
 
-from tools.translate import _
-
 MODEL_DICT = {
     # SUPPLY
     'products': {
@@ -58,7 +56,7 @@ MODEL_DICT = {
         'domain_type': 'supply',
         'model': 'res.partner',
         'domain': [('supplier', '=', True)],
-        },
+    },
     'supplier_catalogue_update': {
         'name': 'Supplier Catalogue Update',
         'domain_type': 'supply',
@@ -559,7 +557,8 @@ MODEL_DATA_DICT = {
         ],
         'required_field_list': [
         ],
-        'hide_export': True,
+        'hide_download_template': True,
+        'hide_download_3_entries': True,
     },
     'record_rules': {
         'header_list': [

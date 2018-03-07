@@ -253,7 +253,7 @@ class product_nomenclature(osv.osv):
     def _search_complete_name(self, cr, uid, obj, name, args, context=None):
         if not args:
             return []
-        if args[0][1] != "=":
+        if args[0][1] not in ('=', '=ilike'):
             raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % (name,))
 
         parent_ids = None

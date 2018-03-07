@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import osv
-from osv import fields
 from tools.translate import _
 import base64
 from msf_doc_import import GENERIC_MESSAGE

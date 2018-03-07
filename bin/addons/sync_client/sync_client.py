@@ -1239,8 +1239,11 @@ class Entity(osv.osv):
         return False
 
     def get_status(self, cr, uid, context=None):
-        if not self.pool.get('sync.client.sync_server_connection').is_connected:
-            return "Not Connected"
+        connection_obj = self.pool.get('sync.client.sync_server_connection')
+        if not connection_obj.is_connected:
+            login, password = connection_obj._info_connection_from_config_file(cr)
+            if login == -1 or not login or not password:
+                return "Not Connected"
 
         if self.is_syncing():
             if self.aborting:
@@ -1493,6 +1496,13 @@ class Connection(osv.osv):
             raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
         return connector
 
+    def _info_connection_from_config_file(self, cr):
+        login = tools.config.get('sync_user_login')
+        if login == 'admin':
+            if not self.search_exist(cr, 1, [('host', 'in', ['127.0.0.1', 'localhost'])]):
+                login = -1
+        return (login, tools.config.get('sync_user_password'))
+
     def get_connection_from_config_file(self, cr, uid, ids=None, context=None):
         '''
         get credentials from config file if any and try to connect to the sync
@@ -1501,10 +1511,9 @@ class Connection(osv.osv):
         '''
         logger = logging.getLogger('sync.client')
         if not self.is_connected:
-            login = tools.config.get('sync_user_login')
-            if login == 'admin':
+            login, password = self._info_connection_from_config_file(cr)
+            if login == -1:
                 raise AdminLoginException
-            password = tools.config.get('sync_user_password')
             if login and password:
                 # write this credentials in the connection manager to be
                 # consistent with the credentials used for the current

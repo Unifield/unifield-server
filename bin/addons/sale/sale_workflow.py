@@ -374,9 +374,7 @@ class sale_order_line(osv.osv):
             ], context=context)
 
             if out_moves_to_cancel:
-                context.update({'not_resource_move': out_moves_to_cancel})
                 self.pool.get('stock.move').action_cancel(cr, uid, out_moves_to_cancel, context=context)
-                context.pop('not_resource_move')
 
         return True
 

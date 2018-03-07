@@ -66,7 +66,7 @@ class supplier_catalogue(osv.osv):
         if partner_obj.search(cr, uid, [('id', '=', ids[0]), ('partner_type', '=', 'esc')], context=context):
             user = self.pool.get('res.users').browse(cr, uid, uid,context=context)
             level = user and user.company_id and user.company_id.instance_id and user.company_id.instance_id.level or False
-            if level != 'section':
+            if level == 'coordo':
                 raise osv.except_osv(
                     _('Error'),
                     'For an ESC Supplier you must create the catalogue on a HQ instance.'
@@ -866,7 +866,7 @@ class supplier_catalogue(osv.osv):
                             user = users[0]
                             if user.company_id and user.company_id.instance_id:
                                 if user.company_id.instance_id.level and \
-                                        user.company_id.instance_id.level !=  'section':
+                                        user.company_id.instance_id.level ==  'coordo':
                                     raise osv.except_osv(
                                         _('Error'),
                                         'For an ESC Supplier you must create the catalogue on a HQ instance.'

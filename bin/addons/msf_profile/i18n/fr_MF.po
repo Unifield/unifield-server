@@ -17134,37 +17134,6 @@ msgstr "Nouvelle-Zélande"
 msgid "Expiry Date"
 msgstr "Date d'expiration"
 
-#. modules: account, msf_outgoing, register_accounting, account_override, purchase_compare_rfq, msf_doc_import, return_claim, analytic_distribution
-#: code:addons/account/report/account_general_ledger.py:550
-#: view:account.chart:0
-#: field:account.chart,currency_id:0
-#: view:account.analytic.chart:0
-#: field:account.analytic.chart,currency_id:0
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:63
-#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:70
-#: field:wizard.import.po.simulation.screen,in_currency:0
-#: field:wizard.import.po.simulation.screen.line,imp_currency:0
-#: field:wizard.import.po.simulation.screen.line,in_currency:0
-#: field:wizard.simu.import.po.line,currency_id:0
-#: field:wizard.simu.import.po.line,initial_currency:0
-#: field:create.picking.move.processor,currency:0
-#: field:internal.move.processor,currency:0
-#: field:outgoing.delivery.move.processor,currency:0
-#: field:ppl.move.processor,currency:0
-#: field:return.ppl.move.processor,currency:0
-#: field:stock.move.in.processor,currency:0
-#: field:stock.move.processor,currency:0
-#: field:validate.move.processor,currency:0
-#: field:wizard.compare.rfq,currency_id:0
-#: field:account.direct.invoice.wizard,currency_id:0
-#: field:wizard.account.invoice,fake_currency_id:0
-#: field:wizard.account.invoice,virtual_currency_id:0
-#: field:claim.product.line,price_currency_claim_product_line:0
-#: field:claim.product.line,price_unit_claim_product_line:0
-#, python-format
-msgid "Currency"
-msgstr "Devise"
-
 #. module: sale
 #: help:sale.order.line,delay:0
 msgid "Number of days between the order confirmation the shipping of the products to the customer"
@@ -29055,8 +29024,8 @@ msgstr "Total Général dans la Devise du Registre"
 
 #. module: account_hq_entries
 #: field:account.account,is_not_hq_correctible:0
-msgid "Can not be corrected on HQ entries"
-msgstr "Impossible à corriger dans les entrées HQ"
+msgid "Prevent correction on account codes"
+msgstr "Empêcher toutes corrections sur ce code comptable"
 
 #. module: base_setup
 #: help:base.setup.installer,auction:0
@@ -35137,8 +35106,8 @@ msgstr "Nom Entrepôt"
 
 #. module: account_hq_entries
 #: help:account.account,is_not_hq_correctible:0
-msgid "If checked, this attribute will prevent user from correcting the account on the entry imported from HQ system"
-msgstr "If checked, this attribute will prevent user from correcting the account on the entry imported from HQ system"
+msgid "If checked, this attribute will prevent the user from correcting the account on the entries"
+msgstr "Si cet attribut est coché, il empêchera l'utilisateur de corriger le compte sur les écritures"
 
 #. module: account_payment
 #: selection:payment.line,state:0
@@ -62571,11 +62540,6 @@ msgstr "Parent Droit"
 msgid "Specific partner"
 msgstr "Partenaire spécifique"
 
-#. module: sale_override
-#: field:stock.warehouse.orderpoint.line,supply_id:0
-msgid "Supply"
-msgstr "Supply"
-
 #. module: sale
 #: view:sale.order.line:0
 msgid "This button shouldn't be use from form view. Please use the red cross on list view."
@@ -65314,28 +65278,6 @@ msgstr "Une erreur est survenue %s: %s"
 #: field:product.uom,category_id:0
 msgid "UoM Category"
 msgstr "UdM - Catégorie"
-
-#. modules: msf_doc_import, delivery_mechanism, mission_stock, msf_tools, sale_override, kit
-#: selection:abstract.wizard.import,state:0
-#: selection:wizard.import.batch,state:0
-#: code:addons/delivery_mechanism/delivery_mechanism.py:80
-#: code:addons/delivery_mechanism/delivery_mechanism.py:81
-#: code:addons/delivery_mechanism/delivery_mechanism.py:82
-#: code:addons/delivery_mechanism/delivery_mechanism.py:83
-#: code:addons/delivery_mechanism/delivery_mechanism.py:84
-#: selection:kit.mass.import,state:0
-#: code:addons/mission_stock/wizard/mission_stock_wizard.py:97
-#: selection:mission.stock.wizard,processed_state:0
-#: code:addons/msf_tools/automated_import_job.py:81
-#: code:addons/sale_override/sale.py:149
-#: code:addons/sale_override/sale.py:150
-#: code:addons/sale_override/sale.py:364
-#: code:addons/sale_override/sale.py:365
-#: code:addons/sale_override/sale.py:366
-#: selection:msf.import.export,state:0
-#, python-format
-msgid "Not started"
-msgstr "Non démarré"
 
 #. module: msf_doc_import
 #: field:wizard.import.in.line.simulation.screen,line_number_ok:0
@@ -73034,6 +72976,12 @@ msgstr "Merged line"
 msgid "Expenses"
 msgstr "Frais"
 
+#. modules: account, register_accounting
+#: report:addons/account/report/account_liquidity_balance.mako:174
+#: report:cash.inventory:0
+msgid "Closing balance"
+msgstr "Solde de clôture"
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:286
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:292
@@ -73042,12 +72990,6 @@ msgstr "Frais"
 #, python-format
 msgid "Line %s: %s"
 msgstr "Ligne %s : %s"
-
-#. modules: account, register_accounting
-#: report:addons/account/report/account_liquidity_balance.mako:174
-#: report:cash.inventory:0
-msgid "Closing balance"
-msgstr "Solde de clôture"
 
 #. modules: account, finance, register_accounting, account_voucher, analytic, msf_doc_import
 #: field:account.account,debit:0
@@ -80436,7 +80378,7 @@ msgstr " Ignorer la ligne ou la calculer comme étant à 0 ?"
 #: field:physical.inventory.counting,is_kc:0
 #: view:physical.inventory.select.products:0
 msgid "KC"
-msgstr "KC"
+msgstr "GF"
 
 #. module: return_claim
 #: view:res.partner:0
@@ -85339,6 +85281,8 @@ msgstr "Paramétrage du domaine"
 #: selection:abstract.wizard.import,state:0
 #: selection:wizard.import.batch,state:0
 #: code:addons/msf_tools/automated_import_job.py:81
+#: code:addons/mission_stock/wizard/mission_stock_wizard.py:97
+#: selection:msf.import.export,state:0
 #, python-format
 msgid "Not started"
 msgstr "Non démarré"
@@ -85755,7 +85699,7 @@ msgstr "Les écritures de Paiement sont la deuxième partie du lettrage."
 msgid "Select a supplier"
 msgstr "Sélectionner un fournisseur"
 
-#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, base, register_accounting, msf_doc_import, return_claim, stock, analytic_distribution, delivery_mechanism, sales_followup, sync_client, tender_flow, sale_override, msf_tools, mission_stock, msf_homere_interface
+#. modules: msf_budget, purchase, account, msf_outgoing, account_payment, purchase_override, specific_rules, sale, base, register_accounting, msf_doc_import, return_claim, stock, analytic_distribution, delivery_mechanism, sales_followup, sync_client, tender_flow, msf_tools, mission_stock, msf_homere_interface
 #: selection:account.invoice.report,state:0
 #: selection:account.journal.period,state:0
 #: selection:account.subscription,state:0
@@ -96586,16 +96530,6 @@ msgstr "America/Anguilla"
 #: model:ir.model,name:res_currency_tables.model_res_currency
 #: model:ir.model,name:supplier_catalogue.model_res_currency
 #: model:ir.model,name:sync_so.model_res_currency
-#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:551
-#: field:pricelist.partnerinfo,currency_id:0
-#: view:purchase.order:0
-#: field:purchase.report,currency_id:0
-#: field:international.transport.cost.report,transport_currency_id:0
-#: field:local.transport.cost.report,func_currency_id:0
-#: field:local.transport.cost.report,transport_currency_id:0
-#: field:purchase.order,transport_currency_id:0
-#: code:addons/msf_doc_import/msf_import_export_conf.py:86
-#: report:allocation.invoices.report:0
 #: report:account.analytic.account.journal:0
 #: report:account.bank.statement.line:0
 #: report:account.bank.statement.line_csv:0
@@ -96612,6 +96546,7 @@ msgstr "America/Anguilla"
 #: report:addons/account/report/account_partner_ledger.mako:281
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:0
 #: report:addons/finance/report/account_partner_balance_tree_xls.mako:368
+#: code:addons/msf_doc_import/msf_import_export_conf.py:86
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:238
 #: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:245
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:108
@@ -104417,13 +104352,13 @@ msgstr "Ligne %s. Le compte %s est de type 'Donations' ce qui est interdit."
 #, python-format
 msgid "Line %s: Some restrictions prevent account %s to be used to import this line:\n"
 "- the account cannot be of type 'View' or 'Liquidity'\n"
-"- account can not be corrected on HQ entries\n"
+"- account can not be set as 'Prevent correction on account codes'\n"
 "- 'Type for specific treatment' cannot be 'Donations'\n"
 "- 'Internal Type' should be different from 'Regular' OR 'Account Type' should be different from 'Stock'\n"
 "- 'Account Type' should be different from 'Expense' OR 'P&L / BS Category' not None."
 msgstr "Ligne %s: Des restrictions empêchent le compte %s d'être utilisé pour importer cette ligne :\n"
 "- le compte ne peut pas être de type 'Vue' ou 'Liquidités'\n"
-"- compte impossible à corriger dans les entrées HQ\n"
+"- le compte ne peut pas être défini comme 'Empêcher toutes corrections sur ce code comptable'\n"
 "- 'Type pour traitement spécifique' ne peut pas être 'Donations'\n"
 "- 'Type Interne' doit être différent de 'Normal' OU 'Type de Compte' doit être différent de 'Stock'\n"
 "- 'Type de Compte' doit être différent de 'Expense' OU 'Catégorie Bilan/Cte de Résultat' ne doit pas être vide."
@@ -104439,12 +104374,12 @@ msgstr "Le template d'import n'est pas reconnu, merci d'utiliser le même que le
 #, python-format
 msgid "Line %s: Some restrictions prevent account %s to be used to import this line:\n"
 "- the account cannot be of type 'View'\n"
-"- account can not be corrected on HQ entries\n"
+"- account can not be set as 'Prevent correction on account codes'\n"
 "- 'Account Type' should be in ('expense', 'income', 'receivables')\n"
 "- 'P&L / BS Category' cannot be None."
 msgstr "Ligne %s: Des restrictions empêchent le compte %s d'être utilisé pour importer cette ligne :\n"
 "- le compte ne peut pas être de type 'Vue'\n"
-"- compte impossible à corriger dans les entrées HQ\n"
+"- le compte ne peut pas être défini comme 'Empêcher toutes corrections sur ce code comptable'\n"
 "- 'Type de Compte' doit être de type 'expense', 'income' ou 'receivables'\n"
 "- 'Catégorie Bilan/Cte de Résultat' ne doit pas être vide."
 
@@ -105692,8 +105627,8 @@ msgstr "Vous ne pouvez pas supprimer ce taux de change car la période \"%s\" n'
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:383
 #, python-format
-msgid "Line %s. The account \"%s - %s\" cannot be used because it is set as \"Can not be corrected on HQ entries\"."
-msgstr "Ligne %s. Le compte \"%s - %s\" ne peut pas être utilisé car il est défini comme \"Impossible à corriger dans les entrées HQ\"."
+msgid "Line %s. The account \"%s - %s\" cannot be used because it is set as \"Prevent correction on account codes\"."
+msgstr "Ligne %s. Le compte \"%s - %s\" ne peut pas être utilisé car il est défini comme \"Empêcher toutes corrections sur ce code comptable\"."
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_validation.py:147
@@ -107470,5 +107405,93 @@ msgstr "Erreur durant l'envoi:\n"
 msgid "Page need to be refreshed - please press \"F5\""
 msgstr "La page doit être rafraîchie, veuillez cliquer sur \"F5\""
 
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:623
+#, python-format
+msgid "The partner can't be saved because already exists under the same name for the same city. Please change the partner name or city or use the existing partner."
+msgstr "Le partenaire ne peut pas être enregistré car il existe déjà sous le même nom pour la même ville. Veuillez changer le nom du partenaire ou la ville, ou bien utiliser le partenaire existant."
 
+#. module: account_hq_entries
+#: field:account.account,is_not_ad_correctable:0
+#: field:hq.entries.split.lines,is_not_ad_correctable:0
+msgid "Prevent correction on analytic accounts"
+msgstr "Empêcher la correction sur les comptes analytiques"
 
+#. module: account_hq_entries
+#: help:account.account,is_not_ad_correctable:0
+msgid "If this option is checked AD correction on this account will be prevented in the HQ entries and via the correction wizard."
+msgstr "Si cette option est cochée la correction de la Distribution Analytique sur ce compte sera empêchée dans les Écritures HQ et via l'assistant de correction."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/hq_entries.py:566
+#, python-format
+msgid "The account %s - %s is set as \"Prevent correction on analytic accounts\"."
+msgstr "Le compte %s - %s est défini comme \"Empêcher la correction sur les comptes analytiques\"."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:150
+#, python-format
+msgid "The AD of the original entry is incomplete."
+msgstr "La Distribution Analytique de l'écriture d'origine est incomplète."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:933
+#, python-format
+msgid "Please remove non-stockable product from the discrepancy report to validate:"
+"%s"
+msgstr "Veuillez supprimer le produit non stockable depuis le rapport de divergence pour pouvoir valider:"
+"%s"
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:938
+#, python-format
+msgid "Please remove non-stockable product %s from the counting sheet to validate."
+msgstr "Veuillez supprimer le produit non stockable %s depuis la feuille de comptage pour pouvoir valider."
+
+#. modules: specific_rules, stock
+#: code:addons/specific_rules/stock.py:137
+#: code:addons/stock/physical_inventory.py:928
+#, python-format
+msgid "Please remove non-stockable product %s to validate."
+msgstr "Veuillez supprimer le produit non stockable %s pour pouvoir valider."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:699
+#, python-format
+msgid "Impossible to import non-stockable products."
+msgstr "Impossible d'importer des produits non stockables."
+
+#. module: stock
+#: code:addons/stock/physical_inventory.py:845
+#, python-format
+msgid "Impossible to import non-stockable product %s"
+msgstr "Impossible d'importer le produit non stockable %s"
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:150
+#, python-format
+msgid "The account or AD of the original entry is missing or incomplete."
+msgstr "Le compte ou la Distribution Analytique de l'écriture d'origine est manquant(e) ou incomplet(e)."
+
+#. module: register_accounting
+#: report:addons/register_accounting/report/fully_report_xls.mako:476
+msgid "Code:"
+msgstr "Code :"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:731
+#, python-format
+msgid "Access Denied"
+msgstr "Accès Refusé"
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:611
+#, python-format
+msgid "The account %s - %s cannot be used as Account Receivable."
+msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Client."
+
+#. module: msf_partner
+#: code:addons/msf_partner/partner.py:617
+#, python-format
+msgid "The account %s - %s cannot be used as Account Payable."
+msgstr "Le compte %s - %s ne peut pas être utilisé comme Compte Fournisseur."

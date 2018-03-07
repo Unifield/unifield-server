@@ -70,10 +70,10 @@ class supplier_catalogue(osv.osv):
             if row.cells[0].data == displayable['name']:
                 data['name'] = row.cells[1].data
             elif row.cells[0].data == displayable['partner_id']:
-                partner_id = self.pool.get('res.partner').search(cr, uid, [('name', '=', row.cells[1].data)], context=context) 
+                partner_id = self.pool.get('res.partner').search(cr, uid, [('name', '=', row.cells[1].data)], context=context)
                 data['partner_id'] = partner_id[0] if partner_id else False
             elif row.cells[0].data == displayable['currency_id']:
-                currency_id = self.pool.get('res.currency').search(cr, uid, [('name', '=', row.cells[1].data)], context=context) 
+                currency_id = self.pool.get('res.currency').search(cr, uid, [('name', '=', row.cells[1].data)], context=context)
                 data['currency_id'] = currency_id[0] if currency_id else False
             elif row.cells[0].data == displayable['period_from']:
                 data['period_from'] = get_well_formed_date(row.cells[1].data)

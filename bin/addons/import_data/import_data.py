@@ -271,10 +271,10 @@ class import_data(osv.osv_memory):
                 if nv['parent_id'] and temp_nomen_by_id.get(nv['parent_id'], False):
                     temp_full_name = temp_nomen_by_id[nv['parent_id']] + ' | ' + nv['coalesce']
                     temp_nomen_by_id.update({nv['id']: temp_full_name})
-                    self._cache[dbname]['product.nomenclature']['complete_name'].update({temp_full_name: nv['id']})
+                    self._cache[dbname]['product.nomenclature']['complete_name'].update({temp_full_name.lower(): nv['id']})
                 else:
                     temp_nomen_by_id.update({nv['id']: nv['coalesce']})
-                    self._cache[dbname]['product.nomenclature']['complete_name'].update({nv['coalesce']: nv['id']})
+                    self._cache[dbname]['product.nomenclature']['complete_name'].update({nv['coalesce'].lower(): nv['id']})
             # Product category
             cr.execute('SELECT id, family_id FROM product_category;')
             for pc in cr.dictfetchall():
@@ -308,10 +308,10 @@ class import_data(osv.osv_memory):
         def _get_obj(header, value, fields_def):
             list_obj = header.split('.')
             relation = fields_def[list_obj[0]]['relation']
-            if impobj._name == 'product.product' and value in self._cache.get(dbname, {}).get(relation, {}).get(list_obj[1], {}):
-                return self._cache[dbname][relation][list_obj[1]][value]
+            if impobj._name == 'product.product' and value.lower() in self._cache.get(dbname, {}).get(relation, {}).get(list_obj[1], {}):
+                return self._cache[dbname][relation][list_obj[1]][value.lower()]
             new_obj = self.pool.get(relation)
-            newids = new_obj.search(cr, uid, [(list_obj[1], '=', value)], limit=1)
+            newids = new_obj.search(cr, uid, [(list_obj[1], '=ilike', value)], limit=1)
             if not newids:
                 # no obj
                 raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))

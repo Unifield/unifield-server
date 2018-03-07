@@ -21,15 +21,13 @@
 
 import base64
 import time
-import threading
 import logging
-import re
 
 import pooler
 import tools
 
 from osv import fields
-from osv import osv
+from osv import osv, orm
 from tools.translate import _
 
 from tempfile import TemporaryFile
@@ -66,6 +64,7 @@ class msf_import_export(osv.osv_memory):
         'display_file_export': fields.boolean('File Export'),
         'model_list_selection': fields.selection(selection=_get_model_list, string='Object to Import/Export', required=True),
         'import_file': fields.binary('File to import .xml'),
+        'hide_download_template': fields.boolean('Hide download template'),
         'hide_download_3_entries': fields.boolean('Hide export 3 entries button'),
         'hide_download_all_entries': fields.boolean('Hide export all entries button'),
         'display_import_buttons': fields.boolean('Display import buttons'),
@@ -77,6 +76,7 @@ class msf_import_export(osv.osv_memory):
     _default = {
         'display_file_import': lambda *a: False,
         'display_file_export': lambda *a: False,
+        'hide_download_template': lambda *a: False,
         'hide_download_3_entries': lambda *a: False,
         'hide_download_all_entries': lambda *a: False,
         'display_import_buttons': lambda *a: False,
@@ -86,7 +86,6 @@ class msf_import_export(osv.osv_memory):
     def get_filename(self, cr, uid, model, selection, template_only=False, context=None):
         """Generate a filename for the import/export
         """
-        model_obj = self.pool.get(model)
         file_name = _(MODEL_DICT[selection]['name'])
         file_name = file_name.replace(' ', '_')
         if template_only:
@@ -96,7 +95,7 @@ class msf_import_export(osv.osv_memory):
         return file_name
 
     def generic_download(self, cr, uid, ids, template_only=False,
-            nb_lines=None, context=None):
+                         nb_lines=None, context=None):
         """Mutualise the code of all download buttons in one place
         """
         if context is None:
@@ -109,13 +108,13 @@ class msf_import_export(osv.osv_memory):
         model = MODEL_DICT[selection]['model']
         if selection not in MODEL_DATA_DICT:
             raise osv.except_osv(_('Error'),
-                    _('Selection \'%s\' not found. '
-                    'Please contact the support team.') % (selection))
+                                 _('Selection \'%s\' not found. '
+                                   'Please contact the support team.') % (selection))
 
         if 'header_list' not in MODEL_DATA_DICT[selection]:
             raise osv.except_osv(_('Error'),
-                    _('The header_list for report \'%s\' is not'
-                    ' defined. Please contact the support team.') % (selection))
+                                 _('The header_list for report \'%s\' is not'
+                                   ' defined. Please contact the support team.') % (selection))
         fields = MODEL_DATA_DICT[selection]['header_list']
         domain = MODEL_DICT[selection].get('domain', [])
         context['translate_selection_field'] = True
@@ -130,9 +129,14 @@ class msf_import_export(osv.osv_memory):
             'supp_cata_id': wiz.supplier_catalogue_id.id,
             'selection': wiz.model_list_selection,
         }
+
+        if model == 'user.access.configurator':
+            report_name = 'wizard.export.user.access'
+        else:
+            report_name = 'wizard.export.generic'
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'wizard.export.generic',
+            'report_name': report_name,
             'datas': data,
             'context': context,
         }
@@ -151,7 +155,7 @@ class msf_import_export(osv.osv_memory):
         """Download the template file (without any data)
         """
         return self.generic_download(cr, uid, ids, template_only=True,
-                context=context)
+                                     context=context)
 
     def get_excel_size_from_string(self, string):
         """Compute the string to get the size of it in a excel
@@ -176,7 +180,7 @@ class msf_import_export(osv.osv_memory):
         return size
 
     def get_child_field(self, cr, uid, field, model, fields_get_dict,
-            context=None):
+                        context=None):
         if context is None:
             context = {}
         if '.' in field:
@@ -195,8 +199,8 @@ class msf_import_export(osv.osv_memory):
 
             if child_field not in fields_get_res:
                 raise osv.except_osv(_('Error'),
-                        _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                        % (child_field, model))
+                                     _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                                     % (child_field, model))
 
             #if child and child !='id' and fields_get_res[child_field].get('relation'):
             child_model = fields_get_res[child_field]['relation']
@@ -205,7 +209,7 @@ class msf_import_export(osv.osv_memory):
                 fields_get_res = model_obj.fields_get(cr, uid, context=context)
                 fields_get_dict[child_model] = fields_get_res
             return self.get_child_field(cr, uid, rest, child_model, fields_get_dict,
-                    context=context)
+                                        context=context)
         else:
             return field, model
 
@@ -237,7 +241,7 @@ class msf_import_export(osv.osv_memory):
             if selection and field in MODEL_DATA_DICT[selection]['required_field_list']:
                 res['required'] = True
             child_field, child_model = self.get_child_field(cr, uid, field, model,
-                    fields_get_dict, context=context)
+                                                            fields_get_dict, context=context)
             first_part = field.split('.')[0]
 
             custom_name = MODEL_DATA_DICT[selection].get('custom_field_name', {}).get(field)
@@ -248,15 +252,15 @@ class msf_import_export(osv.osv_memory):
                     res['name'] = '%s / XMLID' % fields_get_dict[model][first_part]['string']
                 elif first_part not in fields_get_dict[model]:
                     raise osv.except_osv(_('Error'),
-                            _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                            % (first_part, model))
+                                         _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                                         % (first_part, model))
                 elif first_part != child_field:
                     if child_field not in fields_get_dict[child_model]:
                         raise osv.except_osv(_('Error'),
-                                _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                                % (child_field, child_model))
+                                             _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                                             % (child_field, child_model))
                     res['name'] = '%s / %s' % (fields_get_dict[model][first_part]['string'],
-                            fields_get_dict[child_model][child_field]['string'])
+                                               fields_get_dict[child_model][child_field]['string'])
                 else:
                     res['name'] = fields_get_dict[model][first_part]['string']
 
@@ -304,6 +308,7 @@ class msf_import_export(osv.osv_memory):
             if model_list_selection and model_list_selection in MODEL_DATA_DICT:
                 hide_export = MODEL_DATA_DICT[model_list_selection].get('hide_export', False)
                 result['value']['display_file_export'] = not hide_export
+                result['value']['hide_download_template'] = MODEL_DATA_DICT[model_list_selection].get('hide_download_template', False)
                 hide_3 = MODEL_DATA_DICT[model_list_selection].get('hide_download_3_entries', False)
                 result['value']['hide_download_3_entries'] = hide_3
                 hide_all = MODEL_DATA_DICT[model_list_selection].get('hide_download_all_entries', False)
@@ -311,6 +316,7 @@ class msf_import_export(osv.osv_memory):
                 csv_button = MODEL_DATA_DICT[model_list_selection].get('csv_button', False)
                 result['value']['csv_button'] = csv_button
             else:
+                result['value']['hide_download_template'] = False
                 result['value']['hide_download_3_entries'] = False
                 result['value']['hide_download_all_entries'] = False
         return result
@@ -329,11 +335,11 @@ class msf_import_export(osv.osv_memory):
         """Try to parse the xml file and raise if there is an error
         """
         try:
-            file_dom = etree.fromstring(xml_string)
-        except XMLSyntaxError as e:
+            etree.fromstring(xml_string)
+        except XMLSyntaxError:
             raise osv.except_osv(_('Error'), _('File structure is incorrect, '
-                'please correct. You may generate a template with the File '
-                'export functionality.'))
+                                               'please correct. You may generate a template with the File '
+                                               'export functionality.'))
 
     def test_import(self, cr, uid, ids, context=None):
         """Warn if file structure is correct
@@ -393,7 +399,7 @@ class msf_import_export(osv.osv_memory):
         for field in fields_needed:
             fields_needed_name.append(
                 MODEL_DATA_DICT[wiz.model_list_selection].get('custom_field_name', {}).get(field) or \
-                    self.get_displayable_name(cr, uid, parent_model, field, context=context)
+                self.get_displayable_name(cr, uid, parent_model, field, context=context)
             )
 
         fields_gotten = []
@@ -414,22 +420,21 @@ class msf_import_export(osv.osv_memory):
                     id_check[wiz.model_list_selection]['name'] = True
             elif wiz.model_list_selection == 'supplier_catalogue_update':
                 expected_name = MODEL_DATA_DICT['supplier_catalogue_update'].get('custom_field_name', {}).get('name') or \
-                                                self.get_displayable_name(cr, uid, parent_model, 'name', context=context)
+                    self.get_displayable_name(cr, uid, parent_model, 'name', context=context)
                 expected_partner = MODEL_DATA_DICT['supplier_catalogue_update'].get('custom_field_name', {}).get('partner_id') or \
-                                                self.get_displayable_name(cr, uid, parent_model, 'partner_id', context=context)
+                    self.get_displayable_name(cr, uid, parent_model, 'partner_id', context=context)
                 if row.cells[0].data == expected_name and row.cells[1].data == wiz.supplier_catalogue_id.name:
                     id_check[wiz.model_list_selection]['name'] = True
                 elif row.cells[0].data == expected_partner and row.cells[1].data == wiz.supplier_catalogue_id.partner_id.name:
                     id_check[wiz.model_list_selection]['partner_id'] = True
-             
             fields_gotten.append(row.cells[0].data)
 
         if not all([id_check[wiz.model_list_selection][x] for x in id_check[wiz.model_list_selection]]):
             raise osv.except_osv(
-                _('Error'), 
+                _('Error'),
                 _("%s selected (%s) doesn't match with the one you are trying to import. Please check following header fields: %s." % (
                     _('Product list') if wiz.model_list_selection == 'product_list_update' else _('Supplier catalogue'),
-                    wiz.product_list_id.name if wiz.model_list_selection == 'product_list_update' else wiz.supplier_catalogue_id.name, 
+                    wiz.product_list_id.name if wiz.model_list_selection == 'product_list_update' else wiz.supplier_catalogue_id.name,
                     ', '.join([self.get_displayable_name(cr, uid, parent_model, x, context=context) for x in id_check[wiz.model_list_selection].keys()]).strip(' ,')
                 ))
             )
@@ -461,16 +466,14 @@ class msf_import_export(osv.osv_memory):
 
         fields_get_dict = {}  # keep fields_get result in cache
         fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
-        fields_get_res = model_obj.fields_get(cr, uid,
-                [x.split('.')[0] for x in field_list], context=context)
         if len(field_list) != len(header_columns):
             raise osv.except_osv(_('Info'), _('The number of column is not same ' \
-                'than expected (get %s, expected %s). Check your import file and ' \
-                'the Object to import/export.') % (len(header_columns), len(field_list)))
+                                              'than expected (get %s, expected %s). Check your import file and ' \
+                                              'the Object to import/export.') % (len(header_columns), len(field_list)))
 
         for field_index, field in enumerate(field_list):
             child_field, child_model = self.get_child_field(cr, uid, field, model,
-                    fields_get_dict, context=context)
+                                                            fields_get_dict, context=context)
             first_part = field.split('.')[0]
             custom_name = MODEL_DATA_DICT[selection].get('custom_field_name', {}).get(field)
             if custom_name:
@@ -480,24 +483,24 @@ class msf_import_export(osv.osv_memory):
                     column_name = '%s / XMLID' % fields_get_dict[model][first_part]['string']
                 elif first_part not in fields_get_dict[model]:
                     raise osv.except_osv(_('Error'),
-                            _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                            % (first_part, model))
+                                         _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                                         % (first_part, model))
                 elif first_part != child_field:
                     if child_field not in fields_get_dict[child_model]:
                         raise osv.except_osv(_('Error'),
-                                _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                                % (child_field, child_model))
+                                             _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                                             % (child_field, child_model))
                     column_name = '%s / %s' % (fields_get_dict[model][first_part]['string'],
-                            fields_get_dict[child_model][child_field]['string'])
+                                               fields_get_dict[child_model][child_field]['string'])
                 else:
                     column_name = fields_get_dict[model][first_part]['string']
 
             if column_name.upper() != header_columns[field_index].upper():
                 missing_columns.append(_('Column %s: get \'%s\' expected \'%s\'.')
-                        % (self.excel_col(field_index+1), header_columns[field_index], column_name))
+                                       % (self.excel_col(field_index+1), header_columns[field_index], column_name))
         if missing_columns and model not in MODEL_HEADER_NOT_CHECKED:
             raise osv.except_osv(_('Info'), _('The following columns '
-                'are missing in the imported file:\n%s') % ',\n'.join(missing_columns))
+                                              'are missing in the imported file:\n%s') % ',\n'.join(missing_columns))
 
     def import_csv(self, cr, uid, ids, context=None):
         if context is None:
@@ -519,18 +522,18 @@ class msf_import_export(osv.osv_memory):
                     'info_message': _('Import in progress in the specific wizard.'),
                 }, context=context)
                 res = hq_import.button_validate(cr, uid, wizard_id,
-                        context=context)
+                                                context=context)
             elif model == 'msf.budget':
                 budget_import = self.pool.get('wizard.budget.import')
                 vals = {'import_file': wiz.import_file}
                 wizard_id = budget_import.create(cr, uid, vals, context=context)
                 res = budget_import.button_import(cr, uid, wizard_id,
-                        context=context)
+                                                  context=context)
 
             else:
                 raise osv.except_osv(_('Error'),
-                    _('The model \'%s\' is not made to be imported in CSV file.\n'
-                        'Please contact the support team.') % (model))
+                                     _('The model \'%s\' is not made to be imported in CSV file.\n'
+                                       'Please contact the support team.') % (model))
             self.write(cr, uid, [wiz.id], {
                 'state': 'done',
                 'start_date': time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -563,7 +566,7 @@ class msf_import_export(osv.osv_memory):
                 model_obj = self.pool.get(model)
                 wizard_id = model_obj.create(cr, uid, {}, context)
                 model_obj.write(cr, uid, [wizard_id], {'file_to_import_uac':
-                    wiz.import_file}, context=context)
+                                                       wiz.import_file}, context=context)
                 return model_obj.do_process_uac(cr, uid, [wizard_id], context=context)
 
             expected_headers = self._get_headers(cr, uid, model, selection=selection, context=context)
@@ -643,9 +646,9 @@ class msf_import_export(osv.osv_memory):
                 self._cache = {}
             self._cache.setdefault(dbname, {})
 
-            if not hasattr(prod_nomenclature_obj, '_cache'):
-                prod_nomenclature_obj._cache = {}
-            prod_nomenclature_obj._cache.setdefault(dbname, {})
+            if not hasattr(self.pool.get('product.nomenclature'), '_cache'):
+                self.pool.get('product.nomenclature')._cache = {}
+            self.pool.get('product.nomenclature')._cache.setdefault(dbname, {})
 
             # Clear the cache
             self._cache[dbname] = {'product.nomenclature': {'name': {}, 'complete_name': {}},
@@ -653,42 +656,27 @@ class msf_import_export(osv.osv_memory):
                                    'product.asset.type': {'name': {}},
                                    'product.international.status': {'name': {}},
                                    }
-            # Product nomenclature
-            cr.execute('SELECT name, id FROM product_nomenclature;')
+            # Product nomenclature and complete name
+            temp_nomen_by_id = {}
+            cr.execute('''
+                SELECT n.id, coalesce(t.value,n.name), n.parent_id 
+                FROM product_nomenclature n 
+                LEFT JOIN ir_translation t ON t.lang='en_MF' AND t.name='product.nomenclature,name' AND t.res_id=n.id 
+                ORDER BY n.level;
+            ''')
             for nv in cr.dictfetchall():
-                self._cache[dbname]['product.nomenclature']['name'].update({nv['name']: nv['id']})
+                self._cache[dbname]['product.nomenclature']['name'].update({nv['coalesce']: nv['id']})
+                if nv['parent_id'] and temp_nomen_by_id.get(nv['parent_id'], False):
+                    temp_full_name = temp_nomen_by_id[nv['parent_id']] + ' | ' + nv['coalesce']
+                    temp_nomen_by_id.update({nv['id']: temp_full_name})
+                    self._cache[dbname]['product.nomenclature']['complete_name'].update({temp_full_name.lower(): nv['id']})
+                else:
+                    temp_nomen_by_id.update({nv['id']: nv['coalesce']})
+                    self._cache[dbname]['product.nomenclature']['complete_name'].update({nv['coalesce'].lower(): nv['id']})
             # Product category
             cr.execute('SELECT id, family_id FROM product_category;')
             for pc in cr.dictfetchall():
-                prod_nomenclature_obj._cache[dbname].update({pc['family_id']: pc['id']})
-            # Product nomenclature complete name
-            cr.execute('''SELECT id, name FROM
-(
-(SELECT
-    n0.id, n0.name AS name
-FROM product_nomenclature n0
-WHERE n0.level = 0)
-UNION
-(SELECT n1.id, n0.name ||' | '|| n1.name AS name
-FROM product_nomenclature n1
-  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
-WHERE n1.level = 1)
-UNION
-(SELECT n2.id, n0.name ||' | '|| n1.name ||' | '|| n2.name AS name
-FROM product_nomenclature n1
-  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
-  LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id
-WHERE n2.level = 2)
-UNION
-(SELECT n3.id, n0.name ||' | '|| n1.name ||' | '|| n2.name ||' | '|| n3.name AS name
-FROM product_nomenclature n1
-  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
-  LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id
-  LEFT JOIN product_nomenclature n3 ON n3.parent_id = n2.id
-WHERE n3.level = 3)
-) AS cn''')
-            for cnv in cr.dictfetchall():
-                self._cache[dbname]['product.nomenclature']['complete_name'].update({cnv['name']: cnv['id']})
+                self.pool.get('product.nomenclature')._cache[dbname].update({pc['family_id']: pc['id']})
             # Product UoM
             cr.execute('SELECT name, id FROM product_uom;')
             for uv in cr.dictfetchall():
@@ -724,7 +712,7 @@ WHERE n3.level = 3)
                     raise ValueError('No references to %s.%s' % (module, xml_id))
                 newids = [ir_model_data[0]['res_id']]
             else:
-                newids = new_obj.search(cr, uid, [(list_obj[1], '=', value)], limit=1)
+                newids = new_obj.search(cr, uid, [(list_obj[1], '=ilike', value)], limit=1)
             if not newids:
                 # no obj
                 raise osv.except_osv(_('Warning !'), _('%s \'%s\' does not exist') % (new_obj._description, value,))
@@ -866,16 +854,16 @@ WHERE n3.level = 3)
                     # Allow to update the product, use xmlid_code or default_code
                     if 'xmlid_code' in data:
                         ids_to_update = impobj.search(cr, uid, [('xmlid_code',
-                            '=', data['xmlid_code'])], order='NO_ORDER')
+                                                                 '=', data['xmlid_code'])], order='NO_ORDER')
                     if 'default_code' in data:
                         ids_to_update = impobj.search(cr, uid, [('default_code',
-                            '=', data['default_code'])], order='NO_ORDER')
+                                                                 '=', data['default_code'])], order='NO_ORDER')
                 elif impobj._name == 'product.nomenclature':
                     ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                        data['msfid'])], order='NO_ORDER')
+                                                             data['msfid'])], order='NO_ORDER')
                 elif impobj._name == 'product.category':
                     ids_to_update = impobj.search(cr, uid, [('msfid', '=',
-                        data['msfid'])], order='NO_ORDER')
+                                                             data['msfid'])], order='NO_ORDER')
                 elif impobj._name == 'supplier.catalogue':
                     ids_to_update = impobj.search(cr, uid, [
                         ('name', '=', data['name']),
@@ -885,7 +873,7 @@ WHERE n3.level = 3)
                 if import_brw.model_list_selection == 'supplier_catalogue_update':
                     data['catalogue_id'] = import_brw.supplier_catalogue_id.id
                     ids_to_update = impobj.search(cr, uid, [
-                        ('catalogue_id', '=', import_brw.supplier_catalogue_id.id), 
+                        ('catalogue_id', '=', import_brw.supplier_catalogue_id.id),
                         ('product_id', '=', data['product_id']),
                     ], context=context)
                     if data.get('comment') != '[DELETE]':
@@ -922,7 +910,7 @@ WHERE n3.level = 3)
                         impobj.create(cr, uid, data, context=context)
                     nb_succes += 1
                     processed.append((row_index+1, line_data))
-            except osv.except_osv, e:
+            except (osv.except_osv, orm.except_orm) , e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 cr.rollback()
                 save_error(e.value, row_index)

@@ -25,6 +25,7 @@ import time
 import shutil
 import base64
 import hashlib
+import tools
 import tempfile
 
 from osv import osv
@@ -256,7 +257,7 @@ class automated_import_job(osv.osv):
                     if path[2] and not job.import_id[path[2]]:
                         import_obj.path_is_accessible(job.import_id[path[0]], path[1])
             except osv.except_osv as e:
-                error = str(e)
+                error = tools.ustr(e)
                 # In case of manual processing, raise the error
                 if job.file_to_import:
                     raise e
@@ -362,7 +363,7 @@ class automated_import_job(osv.osv):
                     'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'nb_processed_records': 0,
                     'nb_rejected_records': 0,
-                    'comment': str(e),
+                    'comment': tools.ustr(e),
                     'file_sum': md5,
                     'file_to_import': data64,
                     'state': 'error',

@@ -106,7 +106,7 @@ class automated_import(osv.osv):
                 ('work_days', 'Work Days'),
                 ('days', 'Days'),
                 ('weeks', 'Weeks'),
-               ('months', 'Months'),
+                ('months', 'Months'),
             ],
             string='Interval Unit',
         ),

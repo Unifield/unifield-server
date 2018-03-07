@@ -816,19 +816,21 @@ class orm_template(object):
         for d in list_data:
             i += 1
             try:
-                res = self.import_data(cr, uid, headers, [d])
+                res = self.import_data(cr, uid, headers, [d], has_header=True)
                 if res[0] == -1:
                     rejected.append((i, d, res[2]))
                 else:
                     processed.append((i, d))
                 cr.commit()
             except Exception as e:
-                rejected.append((i, d, str(e)))
+                rejected.append((i, d, tools.ustr(e)))
                 cr.commit()
 
         return processed, rejected, headers
 
-    def import_data(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None, filename=None):
+    def import_data(self, cr, uid, fields, datas, mode='init',
+                    current_module='', noupdate=False, context=None, filename=None,
+                    display_all_errors=False, has_header=False):
         """
         Import given data in given module
 
@@ -841,6 +843,8 @@ class orm_template(object):
         :param noupdate: flag for record creation
         :param context: context arguments, like lang, time zone,
         :param filename: optional file to store partial import state for recovery
+        :param display_all_errors: display only the first error by default
+        :param has_header: flag to add 1 to the total line in error message
         :rtype: tuple
 
         This method is used when importing data via client menu.
@@ -943,7 +947,13 @@ class orm_template(object):
                 if field_type not in ('one2many', 'many2one', 'many2many',
                                       'integer', 'boolean', 'float', 'selection',
                                       'reference'):
-                    res = value
+                    if not context.get('sync_update_execution', False) and field_type == 'char' and isinstance(value, basestring) \
+                            and len(value.splitlines()) > 1:
+                        # US-2661 do not allowed newline character in char fields
+                        res = False
+                        warning += [_("New line characters in the field '%s' not allowed. Please fix entry :\n'%s'") % (field[len(prefix)], tools.ustr(value))]
+                    else:
+                        res = value
                 elif field_type == 'one2many':
                     if field[len(prefix)] in done:
                         continue
@@ -1041,14 +1051,30 @@ class orm_template(object):
 
         from osv import except_osv
         position = 0
+        error_list = []
         while position<len(datas):
             res = {}
-
-            (res, position, warning, res_id, xml_id) = \
-                process_liness(self, datas, [], current_module, self._name, fields_def, position=position)
+            try:
+                (res, position, warning, res_id, xml_id) = \
+                    process_liness(self, datas, [], current_module, self._name, fields_def, position=position)
+            except Exception as e:
+                if display_all_errors:
+                    res = None
+                    position += 1
+                    warning = [tools.ustr(e)]
+                    res_id = False
+                    xml_id = False
+                else:
+                    raise
             if len(warning):
-                cr.rollback()
-                return (-1, res, 'Line ' + str(position) +' : ' + '!\n'.join(warning), '')
+                if display_all_errors:
+                    error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
+                                                          '\n'.join(warning)))
+                    cr.rollback()
+                    continue
+                else:
+                    cr.rollback()
+                    return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + '!\n'.join(warning), '')
 
             try:
                 context.update({'from_import_data': True})
@@ -1056,21 +1082,36 @@ class orm_template(object):
                                           current_module, res, mode=mode, xml_id=xml_id,
                                           noupdate=noupdate, res_id=res_id, context=context)
             except except_osv, e:
-                cr.rollback()
-                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
+                if display_all_errors:
+                    error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
+                                                          tools.ustr(e.value)))
+                    cr.rollback()
+                    continue
+                else:
+                    cr.rollback()
+                    return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e.value), '')
             except Exception, e:
                 #US-88: If this from an import account analytic, and there is sql error, AND not sync context, then just clear the cache
                 if 'account.analytic.account' in self._name and not context.get('sync_update_execution', False):
                     cache.clean_caches_for_db(cr.dbname)
-                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
+                if display_all_errors:
+                    error_list.append(_('Line %s: %s') % (str(position + (has_header and 1 or 0)),
+                                                          tools.ustr(e) + "\n" +
+                                                          tools.ustr(traceback.format_exc())))
+                    continue
+                else:
+                    return (-1, res, 'Line ' + str(position + (has_header and 1 or 0)) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
 
-            if config.get('import_partial', False) and filename and (not (position%100)):
+            if not error_list and config.get('import_partial', False) and filename and (not (position%100)):
                 data = pickle.load(file(config.get('import_partial')))
                 data[filename] = position
                 pickle.dump(data, file(config.get('import_partial'), 'wb'))
                 if context.get('defer_parent_store_computation'):
                     self._parent_store_compute(cr)
                 cr.commit()
+
+        if error_list:
+            return (-1, {}, '\n'.join(error_list), '')
 
         if context.get('defer_parent_store_computation'):
             self._parent_store_compute(cr)
@@ -1244,6 +1285,13 @@ class orm_template(object):
 
     def write(self, cr, user, ids, vals, context=None):
         raise NotImplementedError(_('The write method is not implemented on this object !'))
+
+    def write_web(self, cr, user, ids, vals, context=None):
+        """
+        Method called by the Web on write
+        """
+        return self.write(cr, user, ids, vals, context=context)
+
 
     def create(self, cr, user, vals, context=None):
         raise NotImplementedError(_('The create method is not implemented on this object !'))
