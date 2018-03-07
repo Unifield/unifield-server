@@ -488,14 +488,15 @@ MODEL_DATA_DICT = {
     },
     'record_rules': {
         'header_list': [
-            'model_id.model',
-            'name',
-            'global',
-            'domain_force',
             'perm_read',
-            'perm_write',
             'perm_create',
             'perm_unlink',
+            'perm_write',
+            'domain_force',
+            'groups',
+            'id',
+            'name',
+            'model_id.model',
         ],
         'required_field_list': [
             'model_id.model',
@@ -505,12 +506,13 @@ MODEL_DATA_DICT = {
     'access_control_list': {
         'header_list': [
             'name',
-            'model_id.model',
             'group_id.name',
-            'perm_read',
-            'perm_write',
+            'id',
             'perm_create',
             'perm_unlink',
+            'perm_read',
+            'perm_write',
+            'model_id.model',
         ],
         'required_field_list': [
             'name',
@@ -519,46 +521,57 @@ MODEL_DATA_DICT = {
     },
     'field_access_rules': {
         'header_list': [
+            'active',
+            'comment',
+            'domain_text',
+            'group_ids',
+            'id',
+            'instance_level',
             'name',
             'model_id.model',
-            'instance_level',
-            'domain_text',
             'status',
         ],
         'required_field_list': [
-            'name',
-            'model_id.model',
             'instance_level',
+            'model_id.model',
+            'name',
         ],
     },
     'field_access_rule_lines': {
         'header_list': [
             'field_access_rule.name',
-            'field_access_rule_model_id',
             'field.name',
-            'field_name',
+            'field.field_description',
             'write_access',
-            'value_not_synchronized_on_create',
-            'value_not_synchronized_on_write',
+            'id',
         ],
         'required_field_list': [
-            'field_access_rule',
-            'field',
+            'field_access_rule.name',
+            'field.name',
+        ],
+        'ignore_field': [
+            'field.field_description',
         ],
     },
     'button_access_rules': {
         'header_list': [
-            'model_id.model',
-            'view_id.name',
-            'label',
             'name',
-            'group_names',
-            'type',
+            'label',
+            'active',
+            'comment',
+            'id',
+            'group_ids',
+            'model_id.model',
+            'view_id.name'
         ],
         'required_field_list': [
+            'id',
+        ],
+        'ignore_field': [
+            'name',
+            'label',
             'model_id.model',
             'view_id.name',
-            'name',
         ],
     },
     'window_actions': {
@@ -567,14 +580,17 @@ MODEL_DATA_DICT = {
             'res_model',
             'view_type',
             'view_id.name',
-            'domain',
             'groups_id',
+            'id',
         ],
         'required_field_list': [
-            'name',
-            'res_model',
-            'view_type',
+            'id',
         ],
+        'ignore_field': [
+            'res_model.model',
+            'view_type',
+            'view_id.name',
+        ]
     },
 }
 

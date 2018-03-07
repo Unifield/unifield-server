@@ -249,7 +249,10 @@ class msf_import_export(osv.osv_memory):
                 res['name'] = custom_name
             else:
                 if child_field == 'id':
-                    res['name'] = '%s / XMLID' % fields_get_dict[model][first_part]['string']
+                    if first_part != 'id':
+                        res['name'] = '%s / XMLID' % fields_get_dict[model][first_part]['string']
+                    else:
+                        res['name'] = 'id'
                 elif first_part not in fields_get_dict[model]:
                     raise osv.except_osv(_('Error'),
                                          _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
@@ -480,7 +483,10 @@ class msf_import_export(osv.osv_memory):
                 column_name = custom_name
             else:
                 if child_field == 'id':
-                    column_name = '%s / XMLID' % fields_get_dict[model][first_part]['string']
+                    if first_part != 'id':
+                        column_name = '%s / XMLID' % fields_get_dict[model][first_part]['string']
+                    else:
+                        column_name = 'id'
                 elif first_part not in fields_get_dict[model]:
                     raise osv.except_osv(_('Error'),
                                          _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
@@ -754,6 +760,7 @@ class msf_import_export(osv.osv_memory):
         nb_imported_lines = 0
         nb_lines_deleted = 0
         header_codes = [x[3] for x in headers]
+
         if import_data_obj.pre_hook.get(impobj._name):
             # for headers mod.
             col_datas = import_data_obj.pre_hook[impobj._name](impobj, cr, uid, header_codes, {}, col_datas)
@@ -790,6 +797,8 @@ class msf_import_export(osv.osv_memory):
                 if import_data_obj.pre_hook.get(impobj._name):
                     import_data_obj.pre_hook[impobj._name](impobj, cr, uid, header_codes, line_data, col_datas)
 
+                # Search if an object already exist. If not, create it.
+                ids_to_update = []
                 for n, h in enumerate(header_codes):
                     if h in MODEL_DATA_DICT[import_brw.model_list_selection].get('ignore_field', []):
                         continue
@@ -818,7 +827,10 @@ class msf_import_export(osv.osv_memory):
                         o2mdatas = {}
                         delimiter = False
                         newo2m = False
-                    if '.' not in h:
+                    if h == 'id' and line_data[n]:
+                        ids_to_update = _get_obj('id.id', line_data[n], {'id': {'relation': impobj._name}})
+
+                    elif '.' not in h:
                         # type datetime, date, bool, int, float
                         value = process_data(h, line_data[n], fields_def)
                         if value is not None:
@@ -848,8 +860,6 @@ class msf_import_export(osv.osv_memory):
                     import_data_obj.post_hook[impobj._name](impobj, cr, uid, data, line_data, header_codes)
 
 
-                # Search if an object already exist. If not, create it.
-                ids_to_update = []
                 if impobj._name == 'product.product':
                     # Allow to update the product, use xmlid_code or default_code
                     if 'xmlid_code' in data:
@@ -869,7 +879,6 @@ class msf_import_export(osv.osv_memory):
                         ('name', '=', data['name']),
                         ('partner_id', '=', data['partner_id']),
                     ], order='NO_ORDER')
-
                 if import_brw.model_list_selection == 'supplier_catalogue_update':
                     data['catalogue_id'] = import_brw.supplier_catalogue_id.id
                     ids_to_update = impobj.search(cr, uid, [
