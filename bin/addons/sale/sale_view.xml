@@ -404,7 +404,7 @@
                         <button name="invoice_cancel" states="invoice_except" string="Cancel Order" icon="gtk-cancel"/>
                         <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply" invisible="True"/>
                         <button name="do_order_confirm_method" type="object" states="validated" string="Confirm Order" icon="gtk-apply" confirm="You are about to confirm the Field Order without going through the sourcing tool. Are you sure?" attrs="{'readonly': [('no_line', '=', True)]}"/>
-                        <button name="validate_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('no_line', '=', True)], 'invisible': [('draft_cancelled', '=', True)]}"/>
+                        <button name="validate_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" attrs="{'readonly': ['|', ('no_line', '=', True), ('draft_cancelled', '=', True)]}"/>
                     </group>
                 </form>
             </field>
