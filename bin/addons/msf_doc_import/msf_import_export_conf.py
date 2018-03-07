@@ -46,21 +46,11 @@ MODEL_DICT = {
         'domain_type': 'supply',
         'model': 'product.list.line',
     },
-    'product_list_update': {
-        'name': 'Products Lists Update',
-        'domain_type': 'supply',
-        'model': 'product.list.line',
-    },
     'suppliers': {
         'name': 'Suppliers',
         'domain_type': 'supply',
         'model': 'res.partner',
         'domain': [('supplier', '=', True)],
-    },
-    'supplier_catalogue_update': {
-        'name': 'Supplier Catalogue Update',
-        'domain_type': 'supply',
-        'model': 'supplier.catalogue.line',
     },
     'supplier_catalogues': {
         'name': 'Supplier Catalogues',
@@ -257,31 +247,6 @@ MODEL_DATA_DICT = {
             'msfid',
         ],
     },
-    'product_list_update': {
-        'header_info': [
-            'type',
-            'ref',
-            'name',
-            'description',
-            'standard_list_ok',
-            'order_list_print_ok',
-            'warehouse_id',
-            'location_id',
-        ],
-        'header_list': [
-            'name.default_code',
-            'name.name',
-            'comment',
-        ],
-        'required_field_list': [
-            'name.default_code',
-        ],
-        'custom_field_name': {
-            'name.default_code': 'Product Code',
-            'ref': 'Ref',
-            'order_list_print_ok': 'Order List print',
-        },
-    },
     'product_list': {
         'header_list': [
             'name',
@@ -331,42 +296,6 @@ MODEL_DATA_DICT = {
             'property_account_receivable.code',
             'name',
         ],
-    },
-    'supplier_catalogue_update': {
-        'header_info': [
-            'name',
-            'partner_id',
-            'currency_id',
-            'period_from',
-            'period_to',
-        ],
-        'header_list': [
-            'product_id.default_code',
-            'product_id.name',
-            'product_code',
-            'line_uom_id.name',
-            'min_qty',
-            'unit_price',
-            'rounding',
-            'min_order_qty',
-            'comment',
-        ],
-        'required_field_list': [
-            'product_id.default_code',
-            'line_uom_id.name',
-            'min_qty',
-            'unit_price',
-        ],
-        'ignore_field': [
-            'product_id.name',
-        ],
-        'custom_field_name': {
-            'partner_id': 'Partner Name',
-            'product_id.default_code': 'Product Code',
-            'product_id.name': 'Product Description',
-            'line_uom_id.name': 'UoM',
-            'min_order_qty': 'Min. Order Qty.',
-        },
     },
     'supplier_catalogues': {
         'header_list': [
