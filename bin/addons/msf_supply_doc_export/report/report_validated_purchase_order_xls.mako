@@ -144,19 +144,11 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Customer address name')}</Data></Cell>
-        % if o.order_type == 'direct':
         <Cell ss:StyleID="line" ><Data ss:Type="String">${getInstanceAddress() or ''|x}</Data></Cell>
-        % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.customer_id and getCustomerAddress(o.customer_id.id) or ''|x}</Data></Cell>
-        % endif
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Customer address')}</Data></Cell>
-        % if o.order_type == 'direct':
         <Cell ss:StyleID="line" ><Data ss:Type="String">${getInstanceName()|x}</Data></Cell>
-        % else:
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${o.customer_id and o.customer_id.name or ''|x}</Data></Cell>
-        % endif
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Shipment Date')}</Data></Cell>
