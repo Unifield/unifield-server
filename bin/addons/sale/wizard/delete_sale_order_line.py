@@ -145,4 +145,5 @@ class delete_sale_order_line_wizard(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
+
 delete_sale_order_line_wizard()

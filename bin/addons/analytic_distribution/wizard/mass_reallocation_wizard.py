@@ -4,7 +4,7 @@
 #
 #    OpenERP, Open Source Management Solution
 #    Copyright (C) 2011 TeMPO Consulting, MSF. All Rights Reserved
-#    Developer: Olivier DOSSMANN
+#    Developer: TeMPO Consulting
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -27,7 +27,6 @@ from tools.translate import _
 from collections import defaultdict
 from time import strftime
 from lxml import etree
-from datetime import datetime
 import threading
 import pooler
 
@@ -155,11 +154,11 @@ class mass_reallocation_wizard(osv.osv_memory):
         'account_id': fields.many2one('account.analytic.account', string="Analytic Account", required=True),
         'date': fields.date('Posting date', required=True),
         'line_ids': fields.many2many('account.analytic.line', 'mass_reallocation_rel', 'wizard_id', 'analytic_line_id',
-            string="Analytic Journal Items", required=True),
+                                     string="Analytic Journal Items", required=True),
         'state': fields.selection([('normal', 'Normal'), ('blocked', 'Blocked')], string="State", readonly=True),
         'display_fp': fields.boolean('Display FP'),
         'other_ids': fields.many2many('account.analytic.line', 'mass_reallocation_other_rel', 'wizard_id', 'analytic_line_id',
-            string="Non eligible analytic journal items", required=False, readonly=True),
+                                      string="Non eligible analytic journal items", required=False, readonly=True),
         'is_process_in_progress': fields.boolean(string="Is process is in progress"),
     }
 
@@ -179,8 +178,12 @@ class mass_reallocation_wizard(osv.osv_memory):
         view = super(mass_reallocation_wizard, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
 
         if view_type == 'form' and context and context.get('search_domain', False):
+            # account.analytic.line: as soon as a search has been made the search_domain contains the criteria selected
+            # and the original_domain contains the filter on account category (FUNDING, FREE1...)
             aal_obj = self.pool.get('account.analytic.line')
-            args = context.get('search_domain')
+            args = context.get('search_domain', [])
+            if context.get('original_domain'):
+                args.extend(context['original_domain'])
             ids = aal_obj.search(cr, uid, args, context=context)
             context['active_ids'] = ids
         elif view_type == 'form' and context and context.get('active_ids', False):
@@ -214,8 +217,12 @@ class mass_reallocation_wizard(osv.osv_memory):
         res = super(mass_reallocation_wizard, self).default_get(cr, uid, fields, context=context)
 
         if context.get('search_domain', False):
+            # account.analytic.line: as soon as a search has been made the search_domain contains the criteria selected
+            # and the original_domain contains the filter on account category (FUNDING, FREE1...)
             aal_obj = self.pool.get('account.analytic.line')
-            args = context.get('search_domain')
+            args = context.get('search_domain', [])
+            if context.get('original_domain'):
+                args.extend(context['original_domain'])
             ids = aal_obj.search(cr, uid, args, context=context)
             context['active_ids'] = ids
 
@@ -227,25 +234,23 @@ class mass_reallocation_wizard(osv.osv_memory):
             res['line_ids'] = context.get('active_ids')
             # Search which lines are eligible (add another criteria if we come from project)
             search_args = [
-                ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|',
+                ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|',
                 ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                 ('is_reversal', '=', True),
                 ('journal_id.type', 'in', ['engagement', 'revaluation']),
                 ('from_write_off', '=', True),
                 ('move_state', '=', 'draft'),
-                ('account_id.category', 'in', ['FREE1', 'FREE2'])
             ]
             company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
             if company and company.instance_id and company.instance_id.level == 'project':
                 search_args = [
-                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|', '|',
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
                     ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                     ('is_reversal', '=', True),
                     ('journal_id.type', 'in', ['engagement', 'revaluation']),
                     ('from_write_off', '=', True),
                     ('move_state', '=', 'draft'),
                     ('move_id', '=', False),
-                    ('account_id.category', 'in', ['FREE1', 'FREE2']),
                     ('move_id.corrected_upstream', '=', True)
                 ]
 
@@ -291,7 +296,7 @@ class mass_reallocation_wizard(osv.osv_memory):
         # US-192 posting date regarding max doc date
         msg = _('Posting date should be later than all Document Dates. Please change it to be greater than or equal to %s') % (dd,)
         self.pool.get('finance.tools').check_document_date(cr, uid,
-            dd, date, custom_msg=msg, context=context)
+                                                           dd, date, custom_msg=msg, context=context)
 
         if date < pd:
             raise osv.except_osv(_('Warning'), _('Posting date should be later than all Posting Dates. You cannot post lines before the earliest one. Please change it to be greater than or equal to %s') % (pd,))
@@ -340,25 +345,23 @@ class mass_reallocation_wizard(osv.osv_memory):
             if wiz.account_id.category == 'OC':
                 account_field_name = 'cost_center_id'
             search_args = [
-                ('id', 'in', to_process), '|', '|', '|', '|', '|', '|', '|',
+                ('id', 'in', to_process), '|', '|', '|', '|', '|', '|',
                 (account_field_name, '=', account_id),
                 ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                 ('is_reversal', '=', True),
                 ('journal_id.type', '=', 'engagement'),
                 ('from_write_off', '=', True),
                 ('move_state', '=', 'draft'),
-                ('account_id.category', 'in', ['FREE1', 'FREE2'])
             ]
             if level == 'project':
                 search_args = [
-                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|', '|',
+                    ('id', 'in', context.get('active_ids')), '|', '|', '|', '|', '|', '|', '|',
                     ('commitment_line_id', '!=', False), ('is_reallocated', '=', True),
                     ('is_reversal', '=', True),
                     ('journal_id.type', 'in', ['engagement', 'revaluation']),
                     ('from_write_off', '=', True),
                     ('move_state', '=', 'draft'),
                     ('move_id', '=', False),
-                    ('account_id.category', 'in', ['FREE1', 'FREE2']),
                     ('move_id.corrected_upstream', '=', True)
                 ]
             search_ns_ids = self.pool.get('account.analytic.line').search(cr, uid, search_args)
@@ -383,14 +386,14 @@ class mass_reallocation_wizard(osv.osv_memory):
         verif_id = self.pool.get('mass.reallocation.verification.wizard').create(cr, uid, vals, context=context)
         # Create Mass Reallocation Verification Wizard
         return {
-                'name': "Verification Result",
-                'type': 'ir.actions.act_window',
-                'res_model': 'mass.reallocation.verification.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [verif_id],
-                'context': context,
+            'name': "Verification Result",
+            'type': 'ir.actions.act_window',
+            'res_model': 'mass.reallocation.verification.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [verif_id],
+            'context': context,
         }
 
 mass_reallocation_wizard()

@@ -374,9 +374,7 @@ class sale_order_line(osv.osv):
             ], context=context)
 
             if out_moves_to_cancel:
-                context.update({'not_resource_move': out_moves_to_cancel})
                 self.pool.get('stock.move').action_cancel(cr, uid, out_moves_to_cancel, context=context)
-                context.pop('not_resource_move')
 
         return True
 
@@ -467,7 +465,9 @@ class sale_order_line(osv.osv):
                     self.pool.get('stock.picking').draft_force_assign(cr, uid, [pick_to_use], context=context)
                 # run check availability on PICK/OUT:
                 if picking_data['type'] == 'out' and picking_data['subtype'] in ['picking', 'standard']:
-                    self.pool.get('stock.picking').action_assign(cr, uid, [pick_to_use], context=context)
+                    self.pool.get('stock.move').action_assign(cr, uid, [move_id])
+                    self.pool.get('stock.move').fefo_update(cr, uid, [move_id], context=context)
+                #    self.pool.get('stock.picking').action_assign(cr, uid, [pick_to_use], context=context)
                 if picking_data['type'] == 'internal' and sol.type == 'make_to_stock' and sol.order_id.procurement_request:
                     wf_service.trg_validate(uid, 'stock.picking', pick_to_use, 'button_confirm', cr)
 

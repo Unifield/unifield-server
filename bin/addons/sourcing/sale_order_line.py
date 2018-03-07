@@ -1380,7 +1380,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 'origin': sourcing_line.order_id.name,
                 'partner_id': sourcing_line.supplier.id,
                 'partner_address_id': self.pool.get('res.partner').address_get(cr, uid, [sourcing_line.supplier.id], ['default'])['default'],
-                'customer_id': sourcing_line.order_id.partner_id.id,    
+                'customer_id': sourcing_line.order_id.partner_id.id,
                 'location_id': self.pool.get('stock.location').search(cr, uid, [('input_ok', '=', True)], context=context)[0],
                 'cross_docking_ok': False if (sourcing_line.order_id.procurement_request and sourcing_line.order_id.location_requestor_id.usage != 'customer') else True,
                 'pricelist_id': sourcing_line.supplier.property_product_pricelist_purchase.id,
@@ -1395,11 +1395,11 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             }
             if sourcing_line.po_cft == 'po': # Purchase Order
                 po_values.update({
-                    'order_type': 'regular',    
+                    'order_type': 'regular',
                 })
             elif sourcing_line.po_cft == 'dpo': # Direct Purchase Order
                 po_values.update({
-                    'order_type': 'direct',    
+                    'order_type': 'direct',
                     'dest_partner_id': sourcing_line.order_id.partner_id.id,
                 })
 

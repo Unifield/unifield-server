@@ -691,6 +691,82 @@ class account_journal(osv.osv):
         default['name'] = (journal['name'] or '') + '(copy)'
         return super(account_journal, self).copy(cr, uid, id, default, context=context)
 
+    def _check_journal_constraints(self, cr, uid, journal_ids, context=None):
+        """
+        Checks the consistency of the journal created if not in a context of synchro
+        Raises a warning if one required condition isn't met.
+        """
+        if context is None:
+            context = {}
+        if isinstance(journal_ids, (int, long)):
+            journal_ids = [journal_ids]
+        res_obj = self.pool.get('res.users')
+        if not context.get('sync_update_execution'):
+            fields_list = ['type', 'analytic_journal_id', 'default_debit_account_id', 'default_credit_account_id',
+                           'bank_journal_id', 'code', 'currency', 'instance_id']
+            for journal in self.browse(cr, uid, journal_ids, fields_to_fetch=fields_list, context=context):
+                journal_type = journal.type or ''
+                journal_code = journal.code or ''
+                currency_id = None
+                # check on analytic journal
+                if journal_type not in ['situation', 'stock', 'system']:
+                    if not journal.analytic_journal_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('The Analytic Journal is mandatory for the journal %s.') % journal_code)
+                # check on default debit/credit accounts
+                if journal_type in ['bank', 'cash', 'cheque', 'cur_adj']:
+                    if not journal.default_debit_account_id or not journal.default_credit_account_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('Default Debit and Credit Accounts are mandatory for the journal %s.') % journal_code)
+                # check on currency
+                if journal_type in ['bank', 'cash', 'cheque']:
+                    currency_id = journal.currency and journal.currency.id or False
+                    if not currency_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('The currency is mandatory for the journal %s.') % journal_code)
+                # check on corresponding bank journal for a cheque journal
+                if journal_type == 'cheque':
+                    if not journal.bank_journal_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('The corresponding Bank Journal is mandatory for the journal %s.') % journal_code)
+                    else:
+                        bank_currency = journal.bank_journal_id.currency
+                        bank_currency_id = bank_currency and bank_currency.id or False
+                        if not bank_currency_id or currency_id != bank_currency_id:
+                            raise osv.except_osv(_('Warning'),
+                                                 _('The Corresponding Bank Journal must have the same currency as the journal %s.') % journal_code)
+
+                # check on Proprietary Instance at import time
+                if context.get('from_import_data', False):
+                    company = res_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
+                    current_instance_id = company.instance_id and company.instance_id.id
+
+                    if journal.instance_id.id != current_instance_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('The current instance should be used as Proprietary Instance for the journal %s.') % journal_code)
+
+    def _remove_unnecessary_links(self, cr, uid, vals, journal_id=None, context=None):
+        """
+        Remove the irrelevant links from the dict vals. Ex: create a Cheque journal, and then change its type
+        to Purchase => the link to the Corresponding bank journal should be removed.
+        """
+        if context is None:
+            context = {}
+        if not context.get('sync_update_execution'):
+            journal_type = ''
+            if 'type' in vals:
+                journal_type = vals.get('type', '')
+            elif journal_id:
+                journal_type = self.browse(cr, uid, journal_id, fields_to_fetch=['type'], context=context).type or ''
+            if journal_type != 'cheque':
+                vals['bank_journal_id'] = False
+            if journal_type != 'bank':
+                vals.update({'bank_account_name': '',
+                             'bank_account_number': '',
+                             'bank_swift_code': '',
+                             'bank_address': '',
+                             })
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -703,7 +779,10 @@ class account_journal(osv.osv):
                     raise osv.except_osv(_('Warning !'), _('You cannot modify company of this journal as its related record exist in Entry Lines'))
             if not journal.is_current_instance and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Warning'), _("You can't edit a Journal that doesn't belong to the current instance."))
-        return super(account_journal, self).write(cr, uid, ids, vals, context=context)
+            self._remove_unnecessary_links(cr, uid, vals, journal_id=journal.id, context=context)
+        ret = super(account_journal, self).write(cr, uid, ids, vals, context=context)
+        self._check_journal_constraints(cr, uid, ids, context=context)
+        return ret
 
     def create_sequence(self, cr, uid, vals, context=None):
         """
@@ -739,7 +818,10 @@ class account_journal(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if not 'sequence_id' in vals or not vals['sequence_id']:
             vals.update({'sequence_id': self.create_sequence(cr, uid, vals, context)})
-        return super(account_journal, self).create(cr, uid, vals, context)
+        self._remove_unnecessary_links(cr, uid, vals, context=context)
+        journal_id = super(account_journal, self).create(cr, uid, vals, context)
+        self._check_journal_constraints(cr, uid, [journal_id], context=context)
+        return journal_id
 
     def name_get(self, cr, user, ids, context=None):
         """

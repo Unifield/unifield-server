@@ -66,8 +66,6 @@ class enter_reason(osv.osv_memory):
             # set the reason
             obj.write({'change_reason': change_reason}, context=context)
 
-            if context.get('do_resource', False):
-                self.pool.get('stock.move').write(cr, uid, [move.id for move in obj.move_lines], {'has_to_be_resourced': True}, context=context)
             self.pool.get('stock.move').action_cancel(cr, uid, [move.id for move in obj.move_lines], context=context)
 
             # cancel the IN

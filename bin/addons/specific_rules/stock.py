@@ -30,7 +30,7 @@ class initial_stock_inventory(osv.osv):
     _name = 'initial.stock.inventory'
     _description = "Initial Stock Inventory"
     _inherit = 'stock.inventory'
-    
+
     def unlink(self, cr, uid, ids, context=None):
         '''
         Prevent the deletion of a non-draft/cancel initial inventory
@@ -38,9 +38,9 @@ class initial_stock_inventory(osv.osv):
         for inv in self.browse(cr, uid, ids, context=context):
             if inv.state not in ('draft', 'cancel'):
                 raise osv.except_osv(_('Error'), _('You cannot remove an initial inventory which is done'))
-            
+
         return super(initial_stock_inventory, self).unlink(cr, uid, ids, context=context)
-    
+
     _columns = {
         'inventory_line_id': fields.one2many('initial.stock.inventory.line', 'inventory_id', string='Inventory lines'),
         'move_ids': fields.many2many('stock.move', 'initial_stock_inventory_move_rel', 'inventory_id', 'move_id', 'Created Moves'),
@@ -50,7 +50,7 @@ class initial_stock_inventory(osv.osv):
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', ondelete='set null'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
     }
-    
+
     def _inventory_line_hook(self, cr, uid, inventory_line, move_vals):
         '''
         Add the price in the stock move
@@ -58,20 +58,20 @@ class initial_stock_inventory(osv.osv):
         if inventory_line:
             move_vals['price_unit'] = inventory_line.average_cost
         return super(initial_stock_inventory, self)._inventory_line_hook(cr, uid, inventory_line, move_vals)
-    
+
     def action_confirm(self, cr, uid, ids, context=None):
         '''
         Override the action_confirm method to check the batch mgmt/perishable data
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         product_dict = {}
         prodlot_obj = self.pool.get('stock.production.lot')
         product_obj = self.pool.get('product.product')
 
         self.check_integrity(cr, uid, ids, context=context)
-        
+
         for inventory in self.browse(cr, uid, ids, context=context):
             # Prevent confirmation with no lines
             if len(inventory.inventory_line_id) == 0:
@@ -92,13 +92,13 @@ class initial_stock_inventory(osv.osv):
                     product_dict.update({inventory_line.product_id.id: inventory_line.average_cost})
                 elif product_dict[inventory_line.product_id.id] != inventory_line.average_cost:
                     raise osv.except_osv(_('Error'), _('You cannot have two lines for the product %s with different average cost.') % product_obj.name_get(cr, uid, [inventory_line.product_id.id], context=context)[0][1])
-                
+
                 # Returns error if the line is batch mandatory or perishable without prodlot
                 if inventory_line.product_id.batch_management and not inventory_line.prodlot_name:
                     raise osv.except_osv(_('Error'), _('You must assign a Batch Number on the product %s.') % product_obj.name_get(cr, uid, [inventory_line.product_id.id])[0][1])
                 elif inventory_line.product_id.perishable and not inventory_line.expiry_date:
                     raise osv.except_osv(_('Error'), _('You must assign an Expiry Date on the product %s.') % product_obj.name_get(cr, uid, [inventory_line.product_id.id])[0][1])
-                        
+
                 if inventory_line.product_id.batch_management:
                     # if no production lot, we create a new one
                     prodlot_ids = prodlot_obj.search(cr, uid, [('name', '=', inventory_line.prodlot_name),
@@ -131,21 +131,26 @@ class initial_stock_inventory(osv.osv):
                             self.pool.get('initial.stock.inventory.line').write(cr, uid, [inventory_line.id], {
                                 'prodlot_name': prodlot_obj.read(cr, uid, prodlot_ids[0], ['name'], context=context)['name'],
                             }, context=context)
-        
+
+                # Check if product is non-stockable
+                if inventory_line.product_id.product_tmpl_id.type in ('service_recep', 'consu'):
+                    raise osv.except_osv(_('Error'), _('Please remove non-stockable product %s to validate.')
+                                         % (inventory_line.product_id.default_code,))
+
         return super(initial_stock_inventory, self).action_confirm(cr, uid, ids, context=context)
-    
+
     def action_done(self, cr, uid, ids, context=None):
         """ Finish the inventory
         @return: True
         """
         if context is None:
             context = {}
-            
+
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         self.check_integrity(cr, uid, ids, context=context)
-        
+
         move_obj = self.pool.get('stock.move')
         prod_obj = self.pool.get('product.product')
         sptc_obj = self.pool.get('standard.price.track.changes')
@@ -173,17 +178,17 @@ class initial_stock_inventory(osv.osv):
             ))
 
         return True
-    
+
     def fill_lines(self, cr, uid, ids, context=None):
         '''
         Fill all lines according to defined nomenclature level and sublist
         '''
         if context is None:
             context = {}
-            
+
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         location_id = False
         wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
         if wh_ids:
@@ -245,7 +250,7 @@ class initial_stock_inventory(osv.osv):
                     if date_mandatory:
                         values.update({'err_msg': 'You must assign an expiry date'})
                     self.pool.get('initial.stock.inventory.line').create(cr, uid, values)
-        
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'initial.stock.inventory',
                 'view_type': 'form',
@@ -253,13 +258,13 @@ class initial_stock_inventory(osv.osv):
                 'res_id': ids[0],
                 'target': 'dummy',
                 'context': context}
-        
+
     def get_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
 
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
-    
+
 initial_stock_inventory()
 
 
@@ -267,12 +272,12 @@ class initial_stock_inventory_line(osv.osv):
     _name = 'initial.stock.inventory.line'
     _description = "Initial Stock Inventory Line"
     _inherit = 'stock.inventory.line'
-    
+
     def _get_error_msg(self, cr, uid, ids, field_name, args, context=None):
         prodlot_obj = self.pool.get('stock.production.lot')
         dt_obj = self.pool.get('date.tools')
         res = {}
-        
+
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = ''
             if not line.location_id:
@@ -313,7 +318,7 @@ class initial_stock_inventory_line(osv.osv):
             ('inventory_id', 'in', inv_ids),
             ('product_id', 'in', ids),
         ], context=context)
-    
+
     _columns = {
         'inventory_id': fields.many2one('initial.stock.inventory', string='Inventory', ondelete='cascade'),
         'prodlot_name': fields.char(size=64, string='Batch'),
@@ -343,14 +348,14 @@ class initial_stock_inventory_line(osv.osv):
             },
         ),
     }
-    
+
     _defaults = {
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'average_cost': lambda *a: 0.00,
         'product_qty': lambda *a: 0.00,
         'reason_type_id': lambda obj, cr, uid, c: obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_stock_initialization')[1],
     }
-    
+
     def _check_batch_management(self, cr, uid, ids, context=None):
         '''
         check for batch management
@@ -360,7 +365,7 @@ class initial_stock_inventory_line(osv.osv):
                 if not obj.prod_lot_id or obj.prod_lot_id.type != 'standard':
                     return False
         return True
-    
+
     def _check_perishable(self, cr, uid, ids, context=None):
         """
         check for perishable ONLY
@@ -370,7 +375,7 @@ class initial_stock_inventory_line(osv.osv):
                 if (not obj.prod_lot_id and not obj.expiry_date) or (obj.prod_lot_id and obj.prod_lot_id.type != 'internal'):
                     return False
         return True
-    
+
     def _check_prodlot_need(self, cr, uid, ids, context=None):
         """
         If the inv line has a prodlot but does not need one, return False.
@@ -380,7 +385,7 @@ class initial_stock_inventory_line(osv.osv):
                 if not obj.product_id.perishable and not obj.product_id.batch_management:
                     return False
         return True
-    
+
     def _check_same_cost(self, cr, uid, ids, context=None):
         '''
         If the inv line has a different average cost than the other lines with the same product
@@ -392,9 +397,9 @@ class initial_stock_inventory_line(osv.osv):
                 if cost != obj.average_cost:
                     raise osv.except_osv(_('Error'), _('You cannot have two lines with the product %s and different average cost.') % self.pool.get('product.product').name_get(cr, uid, [obj.product_id.id])[0][1])
                     return False
-                
+
         return True
-    
+
     _constraints = [(_check_batch_management,
                      'You must assign a Batch Number which corresponds to Batch Number Mandatory Products.',
                      ['prod_lot_id']),
@@ -408,7 +413,7 @@ class initial_stock_inventory_line(osv.osv):
                      'You cannot have two lines with the same product and different average cost.',
                      ['product_id', 'average_cost'])
                     ]
-    
+
     def product_change(self, cr, uid, ids, product_id, location_id, field_change, change_price=False, prodlot_id=False):
         '''
         Set the UoM with the default UoM of the product
@@ -416,7 +421,7 @@ class initial_stock_inventory_line(osv.osv):
         value = {'product_uom': False,
                  'hidden_perishable_mandatory': False,
                  'hidden_batch_management_mandatory': False,}
-        
+
         if product_id:
             product_obj = self.pool.get('product.product')
             context = {}
@@ -438,9 +443,9 @@ class initial_stock_inventory_line(osv.osv):
             # Don't recompute the product qty according to batch because no selection of batch
 #            if location_id:
 #                value.update({'product_qty': product.qty_available})
-            
+
         return {'value': value}
-    
+
     def change_lot(self, cr, uid, ids, location_id, product, prod_lot_id, uom=False, to_date=False,):
         res = super(initial_stock_inventory_line, self).change_lot(cr, uid, ids, location_id, product, prod_lot_id, uom=uom, to_date=to_date)
         if 'warning' not in res:
@@ -515,7 +520,7 @@ initial_stock_inventory_line()
 class stock_cost_reevaluation(osv.osv):
     _name = 'stock.cost.reevaluation'
     _description = 'Cost reevaluation'
-    
+
     _columns = {
         'name': fields.char(size=64, string='Reference', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'date': fields.date(string='Creation date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
@@ -529,7 +534,7 @@ class stock_cost_reevaluation(osv.osv):
         'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', ondelete='set null'),
         'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', ondelete='set null'),
     }
-    
+
     _defaults = {
         'state': lambda *a: 'draft',
         'date': lambda *a: time.strftime('%Y-%m-%d'),
@@ -557,7 +562,7 @@ class stock_cost_reevaluation(osv.osv):
 
         default.update({'date': time.strftime('%Y-%m-%d'),
                         'name': new_name})
-            
+
         return super(stock_cost_reevaluation, self).copy(cr, uid, ids, default=default, context=context)
 
     def action_confirm(self, cr, uid, ids, context=None):
@@ -566,12 +571,12 @@ class stock_cost_reevaluation(osv.osv):
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             # Prevent confirmation without lines
             if len(obj.reevaluation_line_ids) == 0:
                 raise osv.except_osv(_('Error'), _('Please enter at least one revaluation line before confirm it.'))
-        
+
             # Check if there are two lines with the same product
             products = []
             for line in obj.reevaluation_line_ids:
@@ -579,9 +584,9 @@ class stock_cost_reevaluation(osv.osv):
                     products.append(line.product_id.id)
                 else:
                     raise osv.except_osv(_('Error'), _('You cannot have two lines with the same product. (Product : [%s] %s)') % (line.product_id.default_code, line.product_id.name))
-        
+
         return self.write(cr, uid, ids, {'state': 'confirm'}, context=context)
-        
+
     def action_done(self, cr, uid, ids, context=None):
         '''
         Change the price of the products in the lines
@@ -590,7 +595,7 @@ class stock_cost_reevaluation(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.reevaluation_line_ids:
                 sptc_obj.track_change(cr,
@@ -602,37 +607,37 @@ class stock_cost_reevaluation(osv.osv):
                                           'old_price': line.product_id.standard_price,
                                       }, context=context)
                 self.pool.get('product.product').write(cr, uid, line.product_id.id, {'standard_price': line.average_cost})
-        
+
         return self.write(cr, uid, ids, {'state': 'done'}, context=context)
-    
+
     def action_cancel(self, cr, uid, ids, context=None):
         '''
         Change the state of the document to cancel
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         return self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
-    
+
     def action_cancel_draft(self, cr, uid, ids, context=None):
         '''
         Change the state of the document to draft
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        
+
         return self.write(cr, uid, ids, {'state': 'draft'}, context=context)
-    
+
     def fill_lines(self, cr, uid, ids, context=None):
         '''
         Fill all lines according to defined nomenclature level and sublist
         '''
         if context is None:
             context = {}
-            
+
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         for inventory in self.browse(cr, uid, ids, context=context):
             product_ids = []
             products = []
@@ -674,7 +679,7 @@ class stock_cost_reevaluation(osv.osv):
                               'average_cost': product.standard_price,
                               'reevaluation_id': inventory.id, }
                     self.pool.get('stock.cost.reevaluation.line').create(cr, uid, values)
-        
+
         return {'type': 'ir.actions.act_window',
                 'res_model': 'stock.cost.reevaluation',
                 'view_type': 'form',
@@ -682,31 +687,31 @@ class stock_cost_reevaluation(osv.osv):
                 'res_id': ids[0],
                 'target': 'dummy',
                 'context': context}
-        
+
     def get_nomen(self, cr, uid, id, field):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
 
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
-    
+
 stock_cost_reevaluation()
 
 class stock_cost_reevaluation_line(osv.osv):
     _name = 'stock.cost.reevaluation.line'
     _description = 'Cost reevaluation line'
     _rec_name = 'product_id'
-    
+
     _columns = {
         'product_id': fields.many2one('product.product', string='Product', required=True),
         'average_cost': fields.float(string='Average cost', digits_compute=dp.get_precision('Sale Price Computation'), required=True),
         'currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
         'reevaluation_id': fields.many2one('stock.cost.reevaluation', string='Header'),
     }
-    
+
     _defaults = {
         'currency_id': lambda obj, cr, uid, c = {}: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
     }
-    
+
     def product_id_change(self, cr, uid, ids, product_id, context=None):
         '''
         Change the average price with the cost price of the product
@@ -714,9 +719,9 @@ class stock_cost_reevaluation_line(osv.osv):
         if product_id:
             cost_price = self.pool.get('product.product').browse(cr, uid, product_id, context=context).standard_price
             return {'value': {'average_cost': cost_price}}
-        
+
         return {'value': {'average_cost': 0.00}}
-    
+
 stock_cost_reevaluation_line()
 
 class stock_move(osv.osv):

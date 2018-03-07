@@ -246,7 +246,7 @@ class purchase_order(osv.osv):
         if context is None:
             context = {}
         if isinstance(ids, (int,long)):
-            ids = [ids]    
+            ids = [ids]
 
         res = {}
         for po in self.browse(cr, uid, ids, context=context):
@@ -471,6 +471,7 @@ class purchase_order(osv.osv):
         if context is None:
             context =  {}
 
+        old_value = context.get('procurement_request', False)
         context['procurement_request'] = True
 
         res = {}
@@ -497,6 +498,7 @@ class purchase_order(osv.osv):
             else:
                 res[po.id] = json.dumps([x[0] for x in ORDER_TYPES_SELECTION])
 
+        context['procurement_request'] = old_value
         return res
 
     def _order_line_order_type(self, cr, uid, ids, context=None):
@@ -654,7 +656,7 @@ class purchase_order(osv.osv):
         'pricelist_id': fields.many2one('product.pricelist', 'Pricelist', required=True, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
         'state': fields.function(_get_less_advanced_pol_state, string='Order State', method=True, type='selection', selection=PURCHASE_ORDER_STATE_SELECTION, readonly=True,
                                  store = {
-                                     'purchase.order.line': (_get_order, ['state'], 10), 
+                                     'purchase.order.line': (_get_order, ['state'], 10),
                                  },
                                  select=True,
                                  help="The state of the purchase order or the quotation request. A quotation is a purchase order in a 'Draft' state. Then the order has to be confirmed by the user, the state switch to 'Confirmed'. Then the supplier must confirm the order to change the state to 'Approved'. When the purchase order is paid and received, the state becomes 'Done'. If a cancel action occurs in the invoice or in the reception of goods, the state becomes in exception.",
@@ -967,7 +969,7 @@ class purchase_order(osv.osv):
                 customer_ids = self.pool.get('res.partner').search(cr, uid,
                                                                    [('name', operator, name)], context=context)
                 if customer_ids:
-                    # search for m2o 'dest_partner_id' dest_customer in PO (direct PO) 
+                    # search for m2o 'dest_partner_id' dest_customer in PO (direct PO)
                     po1_ids = ids.extend(self.search(cr, uid,
                                                      [('dest_partner_id', 'in', customer_ids)],
                                                      context=context))
@@ -1326,7 +1328,7 @@ class purchase_order(osv.osv):
         return True
 
     def _hook_o_line_value(self, cr, uid, *args, **kwargs):
-        o_line = super(purchase_order, self)._hook_o_line_value(cr, uid, *args, **kwargs)
+        o_line = kwargs['o_line']
         order_line = kwargs['order_line']
 
         # Copy all fields except order_id and analytic_distribution_id
@@ -1367,7 +1369,7 @@ class purchase_order(osv.osv):
         '''
         Hook to change the values of the PO
         '''
-        order_infos = super(purchase_order, self)._hook_order_infos(cr, uid, *args, **kwargs)
+        order_infos = kwargs['order_infos']
         order_id = kwargs['order_id']
 
         fields = ['invoice_method', 'minimum_planned_date', 'order_type',
@@ -1414,7 +1416,6 @@ class purchase_order(osv.osv):
          @return: new purchase order id
 
         """
-        line_obj = self.pool.get('purchase.order.line')
         wf_service = netsvc.LocalService("workflow")
         def make_key(br, fields):
             list_key = []
@@ -1464,7 +1465,6 @@ class purchase_order(osv.osv):
                     order_infos['origin'] = (order_infos['origin'] or '') + ' ' + porder.origin
             order_infos = self._hook_order_infos(cr, uid, order_infos=order_infos, order_id=porder)
 
-            no_proc_ids = []
             for order_line in porder.order_line:
                 line_key = make_key(order_line, ('id', 'order_id', 'name', 'date_planned', 'taxes_id', 'price_unit', 'notes', 'product_id', 'move_dest_id', 'account_analytic_id'))
                 o_line = order_infos['order_line'].setdefault(line_key, {})
@@ -1481,11 +1481,6 @@ class purchase_order(osv.osv):
                         o_line[field] = field_val
                     o_line['uom_factor'] = order_line.product_uom and order_line.product_uom.factor or 1.0
                     o_line = self._hook_o_line_value(cr, uid, o_line=o_line, order_line=order_line)
-                if order_line.linked_sol_id:
-                    no_proc_ids.append(order_line.id)
-
-            if no_proc_ids:
-                line_obj.write(cr, uid, no_proc_ids, {'linked_sol_id': False}, context=context)
 
         allorders = []
         orders_info = {}
@@ -1507,9 +1502,14 @@ class purchase_order(osv.osv):
             allorders.append(neworder_id)
 
             # make triggers pointing to the old orders point to the new order
-            for old_id in old_ids:
-                wf_service.trg_redirect(uid, 'purchase.order', old_id, neworder_id, cr)
-                wf_service.trg_validate(uid, 'purchase.order', old_id, 'purchase_cancel', cr)
+            for old_po in self.pool.get('purchase.order').browse(cr, uid, old_ids, fields_to_fetch=['order_line'], context=context):
+                for old_pol in old_po.order_line:
+                    # if pol has a linked sol, then we set it to null before cancelling in order not to cancel the sol (because sol will be
+                    # linked to newly created PO line):
+                    if old_pol.linked_sol_id:
+                        self.pool.get('purchase.order.line').write(cr, uid, [old_pol.id], {'linked_sol_id': False}, context=context)
+                    wf_service.trg_validate(uid, 'purchase.order.line', old_pol.id, 'cancel', cr)
+
         return orders_info
 
     def purchase_cancel(self, cr, uid, ids, context=None):

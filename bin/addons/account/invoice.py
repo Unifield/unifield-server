@@ -24,7 +24,6 @@ from lxml import etree
 import decimal_precision as dp
 
 import netsvc
-import pooler
 from osv import fields, osv, orm
 from tools.translate import _
 
@@ -59,12 +58,6 @@ class account_invoice(osv.osv):
                                            ('refund_journal', '=', refund_journal.get(type_inv, False))],
                                  limit=1)
         return res and res[0] or False
-
-    def _get_currency(self, cr, uid, context=None):
-        user = pooler.get_pool(cr.dbname).get('res.users').browse(cr, uid, [uid], context=context)[0]
-        if user.company_id:
-            return user.company_id.currency_id.id
-        return pooler.get_pool(cr.dbname).get('res.currency').search(cr, uid, [('rate','=', 1.0)])[0]
 
     def _get_journal_analytic(self, cr, uid, type_inv, context=None):
         type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale', 'in_refund': 'purchase'}
@@ -365,7 +358,6 @@ class account_invoice(osv.osv):
         'type': _get_type,
         'state': 'draft',
         'journal_id': _get_journal,
-        'currency_id': _get_currency,
         'company_id': lambda self,cr,uid,c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.invoice', context=c),
         'reference_type': 'none',
         'check_total': 0.0,
@@ -425,7 +417,11 @@ class account_invoice(osv.osv):
     def get_log_context(self, cr, uid, context=None):
         if context is None:
             context = {}
-        res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
+        is_intermission = context.get('is_intermission', False)
+        if is_intermission:
+            res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'view_intermission_form')
+        else:
+            res = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'invoice_form')
         view_id = res and res[1] or False
         context.update({'view_id': view_id})
         return context
@@ -437,10 +433,14 @@ class account_invoice(osv.osv):
             res = super(account_invoice, self).create(cr, uid, vals, context)
             for inv_id, name in self.name_get(cr, uid, [res], context=context):
                 ctx = context.copy()
+                if 'is_intermission' in vals:
+                    ctx.update({'is_intermission': vals['is_intermission']})
                 if vals.get('type', 'in_invoice') in ('out_invoice', 'out_refund'):
                     ctx = self.get_log_context(cr, uid, context=ctx)
                 if 'type' in vals:
                     ctx.update({'type': vals['type']})
+                if '_terp_view_name' in ctx:
+                    del ctx['_terp_view_name']
                 message = _("Invoice '%s' is waiting for validation.") % name
                 self.log(cr, uid, inv_id, message, context=ctx)
             return res
@@ -546,17 +546,6 @@ class account_invoice(osv.osv):
         if partner_bank_id != bank_id:
             to_update = self.onchange_partner_bank(cr, uid, ids, bank_id)
             result['value'].update(to_update['value'])
-        return result
-
-    def onchange_journal_id(self, cr, uid, ids, journal_id=False):
-        result = {}
-        if journal_id:
-            journal = self.pool.get('account.journal').browse(cr, uid, journal_id)
-            currency_id = journal.currency and journal.currency.id or journal.company_id.currency_id.id
-            result = {'value': {
-                'currency_id': currency_id,
-            }
-            }
         return result
 
     def get_due_date(self, cr, uid, payment_term_id, date_invoice, context=None):
@@ -671,12 +660,6 @@ class account_invoice(osv.osv):
                 val['currency_id'] = False
             else:
                 val['currency_id'] = currency.id
-        if company_id:
-            company = self.pool.get('res.company').browse(cr, uid, company_id)
-            if company.currency_id.company_id and company.currency_id.company_id.id != company_id:
-                val['currency_id'] = False
-            else:
-                val['currency_id'] = company.currency_id.id
         return {'value': val, 'domain': dom}
 
     # go from canceled state to draft state
@@ -1265,8 +1248,20 @@ class account_invoice(osv.osv):
             ids = self.search(cr, user, [('name',operator,name)] + args, limit=limit, context=context)
         return self.name_get(cr, user, ids, context)
 
-    def _refund_cleanup_lines(self, cr, uid, lines):
+    def _refund_cleanup_lines(self, cr, uid, lines, is_account_inv_line=False, context=None):
+        if context is None:
+            context = {}
+        account_obj = self.pool.get('account.account')
         for line in lines:
+            # in case of a refund cancel/modify, mark each SR line as reversal of the corresponding SI line IF it's an
+            # account.invoice.line with an account having the type Income or Expense (EXCLUDE Extra-accounting expenses)
+            if is_account_inv_line and context.get('refund_mode', '') in ['cancel', 'modify'] and line['account_id']:
+                account_id = type(line['account_id']) == tuple and line['account_id'][0] or line['account_id']
+                account = account_obj.browse(cr, uid, account_id,
+                                             fields_to_fetch=['user_type_code', 'user_type_report_type'], context=context)
+                if account.user_type_code == 'income' or \
+                        (account.user_type_code == 'expense' and account.user_type_report_type != 'none'):
+                    line['reversed_invoice_line_id'] = line['id']  # store a link to the original invoice line
             del line['id']
             del line['invoice_id']
             for field in ('company_id', 'partner_id', 'account_id', 'product_id',
@@ -1301,7 +1296,9 @@ class account_invoice(osv.osv):
             return False
         return data
 
-    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None):
+    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None, context=None):
+        if context is None:
+            context = {}
         invoices = self.read(cr, uid, ids, self._hook_fields_for_refund(cr, uid))
         obj_invoice_line = self.pool.get('account.invoice.line')
         obj_invoice_tax = self.pool.get('account.invoice.tax')
@@ -1318,10 +1315,10 @@ class account_invoice(osv.osv):
             }
 
             invoice_lines = obj_invoice_line.read(cr, uid, invoice['invoice_line'])
-            invoice_lines = self._refund_cleanup_lines(cr, uid, invoice_lines)
+            invoice_lines = self._refund_cleanup_lines(cr, uid, invoice_lines, is_account_inv_line=True, context=context)
 
             tax_lines = obj_invoice_tax.read(cr, uid, invoice['tax_line'])
-            tax_lines = self._refund_cleanup_lines(cr, uid, tax_lines)
+            tax_lines = self._refund_cleanup_lines(cr, uid, tax_lines, context=context)
             if journal_id:
                 refund_journal_ids = [journal_id]
             elif invoice['type'] == 'in_invoice':
@@ -1740,16 +1737,6 @@ class account_invoice_line(osv.osv):
             'account_analytic_id':line.account_analytic_id.id,
             'taxes':line.invoice_line_tax_id,
         }
-    #
-    # Set the tax field according to the account and the fiscal position
-    #
-    def onchange_account_id(self, cr, uid, ids, fposition_id, account_id):
-        if not account_id:
-            return {}
-        taxes = self.pool.get('account.account').browse(cr, uid, account_id).tax_ids
-        fpos = fposition_id and self.pool.get('account.fiscal.position').browse(cr, uid, fposition_id) or False
-        res = self.pool.get('account.fiscal.position').map_tax(cr, uid, fpos, taxes)
-        return {'value':{'invoice_line_tax_id': res}}
 
 account_invoice_line()
 

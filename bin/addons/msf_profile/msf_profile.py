@@ -51,6 +51,74 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    # UF8.0
+    def set_sequence_main_nomen(self, cr, uid, *a, **b):
+        nom = ['MED', 'LOG', 'LIB', 'SRV']
+        nom_obj = self.pool.get('product.nomenclature')
+        seq = 0
+        for name in nom:
+            seq += 10
+            nom_ids = nom_obj.search(cr, uid, [('level', '=', 0), ('name', '=', name)])
+            if nom_ids:
+                nom_obj.write(cr, uid, nom_ids, {'sequence': seq})
+
+        return True
+
+    def us_3734_rename_partners_with_new_lines(self, cr, uid, *a, **b):
+        """
+        Remove the "new line character" from the name of the partners, as well as in the related JIs and AJIs
+        """
+        update_partner = """
+            UPDATE res_partner 
+            SET name = regexp_replace(name, E'[\\n\\r]+', ' ', 'g' ) 
+            WHERE name like '%' || chr(10) || '%';
+            """
+        update_ji = """
+            UPDATE account_move_line 
+            SET partner_txt = regexp_replace(partner_txt, E'[\\n\\r]+', ' ', 'g' ) 
+            WHERE partner_txt like '%' || chr(10) || '%';
+        """
+        update_aji = """
+            UPDATE account_analytic_line 
+            SET partner_txt = regexp_replace(partner_txt, E'[\\n\\r]+', ' ', 'g' ) 
+            WHERE partner_txt like '%' || chr(10) || '%';
+        """
+        cr.execute(update_partner)
+        cr.execute(update_ji)
+        cr.execute(update_aji)
+
+    # UF7.3
+    def flag_pi(self, cr, uid, *a, **b):
+        cr.execute('''select distinct i.id, p.default_code from
+            physical_inventory_discrepancy d,
+            physical_inventory i,
+            product_product p,
+            stock_move m
+            left join stock_production_lot lot on lot.id=m.prodlot_id
+            where d.inventory_id=i.id and d.product_id = p.id and m.product_id=d.product_id and
+                m.location_id=i.location_id and m.location_dest_id=i.location_id and
+                m.state='done' and coalesce(m.expired_date, '2999-01-01')=coalesce(d.expiry_date, '2999-01-01') and coalesce(lot.name,'')=coalesce(d.batch_number,'') and d.ignored='f'
+        ''')
+        pi = {}
+        for x in cr.fetchall():
+            pi.setdefault(x[0], []).append(x[1])
+
+        for pi_id in pi:
+            cr.execute('''update physical_inventory set bad_stock_msg=%s, has_bad_stock='t' where id=%s''', ('\n'.join(pi[pi_id]), pi_id))
+
+        return True
+
+    def send_instance_uuid(self, cr, uid, *a, **b):
+        instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance_id and not instance_id.instance_identifier and instance_id.state == 'active':
+            entity = self.pool.get('sync.client.entity')
+            if entity:
+                identifier = entity.get_uuid(cr, uid)
+                self._logger.warn('missing instance_identifier, set to %s' % (identifier,))
+                self.pool.get('msf.instance').write(cr, uid, [instance_id.id], {'instance_identifier': identifier})
+
+        return True
+
     # UF7.1 patches
     def recompute_amount(self, cr, uid, *a, **b):
         cr.execute("select min(id) from purchase_order_line where state in ('cancel', 'cancel_r') group by order_id")
