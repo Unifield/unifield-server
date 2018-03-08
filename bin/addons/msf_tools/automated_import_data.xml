@@ -56,7 +56,6 @@
             <field name="method_to_call">import_data_with_wizard</field>
         </record>
 
-<!--
         <record id="auto_import_fnct_supplier_catalogue" model="automated.import.function">
             <field name="name">Import Supplier Catalogues</field>
             <field name="model_id" model="ir.model" search="[('model', '=', 'supplier.catalogue')]" />
@@ -68,7 +67,6 @@
             <field name="model_id" model="ir.model" search="[('model', '=', 'product.list')]" />
             <field name="method_to_call">auto_import</field>
         </record>
--->
 
         <record id="auto_import_fnct_product_categories" model="automated.import.function">
             <field name="name">Import Product Categories</field>
