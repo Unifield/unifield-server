@@ -74,7 +74,11 @@ jQuery(document).ready(function () {
                         % endif
                         % for lang in langs:
 	                        <td class="grid-cell item">
-	                            <input type="text" name="${lang['code']}/${n}" value="${v[lang['code']]}" style="width: 100%;"/>
+                            % if fields_type.get(n) == 'text':
+                                <textarea name="${lang['code']}/${n}">${v[lang['code']] or ''}</textarea>
+                            % else:
+	                            <input type="text" name="${lang['code']}/${n}" value="${v[lang['code']] or ''}" style="width: 100%;"/>
+                            % endif
 	                        </td>
                         % endfor
                     </tr>

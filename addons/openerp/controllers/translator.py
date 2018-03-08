@@ -54,6 +54,7 @@ class Translator(SecuredController):
         data = []
         view = []
 
+        fields_type = {}
         view_view = cache.fields_view_get(params.model, False, 'form', ctx, True)
 
         view_fields = view_view['fields']
@@ -69,6 +70,7 @@ class Translator(SecuredController):
                 clicked_field = params['_terp_clicked_field']
                 attrs = view_fields[clicked_field]
                 if attrs.get('translate'):
+                    fields_type[clicked_field] = attrs.get('type')
                     value = {}
                     for lang in langs:
                         context = copy.copy(ctx)
@@ -138,7 +140,7 @@ class Translator(SecuredController):
                 if values:
                     view += [(code, values)]
 
-        return dict(translate=translate, langs=langs, data=data, view=view, model=params.model, id=params.id, ctx=params.context)
+        return dict(translate=translate, langs=langs, data=data, view=view, model=params.model, id=params.id, fields_type=fields_type, ctx=params.context)
 
     @expose(template="/openerp/controllers/templates/translator.mako")
     def save(self, translate='fields', **kw):
