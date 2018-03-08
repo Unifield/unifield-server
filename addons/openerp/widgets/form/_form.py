@@ -390,6 +390,7 @@ register_widget(Email, ["email"])
 
 class Text(TinyInputWidget):
     template = "/openerp/widgets/form/templates/text.mako"
+    params = ['ro_by_trans']
 
     def __init__(self, **attrs):
         super(Text, self).__init__(**attrs)
