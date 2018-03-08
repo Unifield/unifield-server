@@ -34,6 +34,8 @@ from msf_doc_import.wizard import IN_LINE_COLUMNS_FOR_IMPORT as columns_for_inco
 from msf_doc_import.wizard import OUT_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_delivery_import
 from msf_doc_import.wizard import OUT_LINE_COLUMNS_FOR_IMPORT as columns_for_delivery_import
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+import xml.etree.ElementTree as ET
 
 
 class stock_picking(osv.osv):
@@ -47,6 +49,85 @@ class stock_picking(osv.osv):
                                       ('xml', 'XML file')], string='Type of file',),
         'last_imported_filename': fields.char(size=128, string='Filename'),
     }
+
+    def get_import_filetype(self, cr, uid, file_path, context=None):
+        context = context is None and {} or context
+
+        if '.' not in file_path:
+            raise osv.except_osv(_('Error'), _('Wrong extension for given import file')  )
+
+        if file_path.endswith('.xml'):
+            return 'xml'      
+        elif file_path.endswith('.xls'):
+            return 'excel'
+        else:
+            raise osv.except_osv(_('Error'), _('Import file extension should end with .xml or .xls'))
+
+
+    def get_available_incoming_from_po_name(self, cr, uid, po_name, context=None):
+        context = context is None and {} or context
+
+        po_id = self.pool.get('purchase.order').search(cr, uid, [('name', '=', po_name)], context=context)
+        if not po_id:
+            raise osv.except_osv(_('Error'), _('PO with name %s not found'))
+        in_id = self.pool.get('stock.picking').search(cr, uid, [
+            ('purchase_id', '=', po_id[0]),
+            ('type', '=', 'in'),
+            ('state', 'in', ['assigned', 'shipped', 'updated']),
+        ], context=context)
+        if not in_id:
+            raise osv.except_osv(_('Error'), _('No available IN found for the given PO %s' % po_name))
+        return in_id[0]
+
+
+    def get_incoming_id_from_file(self, cr, uid, file_path, context=None):
+        context = context is None and {} or context
+
+        filetype = self.get_import_filetype(cr, uid, file_path, context)
+        xmlstring = open(file_path).read()
+
+        incoming_id = False
+        if filetype == 'excel':
+            file_obj = SpreadsheetXML(xmlstring=xmlstring)
+            po_name = False
+            for index, row in enumerate(file_obj.getRows()):
+                if row.cells[0].data == 'Origin':
+                    po_name = row.cells[1].data
+                    break
+            else:
+                raise osv.except_osv(_('Error'), _('Header field "Origin" not found in the given XLS file'))
+            incoming_id = self.get_available_incoming_from_po_name(cr, uid, po_name, context=context)
+
+        elif filetype == 'xml':
+            root = ET.fromstring(xmlstring)
+            orig = root.findall('.//field[@name="origin"]')
+            if orig:
+                po_name = orig[0].text
+            else:
+                raise osv.except_osv(_('Error'), _('No field with name "origin" was found in the XML file'))
+            incoming_id = self.get_available_incoming_from_po_name(cr, uid, po_name, context=context)
+
+        return incoming_id
+
+
+    def auto_import_incoming_shipment(self, cr, uid, file_path, context=None):
+        simu_obj = self.pool.get('wizard.import.in.simulation.screen')
+        line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
+
+        context = context is None and {} or context
+
+        # get ID of the IN:
+        in_id = self.get_incoming_id_from_file(cr, uid, file_path, context)
+
+        # create stock.incoming.processor:
+        pass
+        # create stock.move.in.processor:
+        pass
+        # run method do_incoming_shipment:
+        pass
+
+        return True
+
 
     def export_template_file(self, cr, uid, ids, context=None):
         '''

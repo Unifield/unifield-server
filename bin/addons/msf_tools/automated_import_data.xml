@@ -68,6 +68,12 @@
             <field name="method_to_call">auto_import</field>
         </record>
 
+        <record id="auto_import_fnct_incoming_shipment" model="automated.import.function">
+            <field name="name">Import Incoming Shipment</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'stock.picking')]" />
+            <field name="method_to_call">auto_import_incoming_shipment</field>
+        </record>
+
         <record id="auto_import_fnct_product_categories" model="automated.import.function">
             <field name="name">Import Product Categories</field>
             <field name="model_id" model="ir.model" search="[('model', '=', 'product.category')]" />
