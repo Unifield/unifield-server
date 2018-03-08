@@ -81,7 +81,7 @@
             <field name="type">tree</field>
             <field name="priority">2</field>
             <field name="arch" type="xml">
-                <tree string="Sales Orders" colors="grey:state=='cancel' or draft_cancelled == True;blue:state in ('waiting_date','manual');red:state in ('invoice_except','shipping_except')">
+                <tree string="Sales Orders" colors="grey:state=='cancel';blue:state in ('waiting_date','manual');red:state in ('invoice_except','shipping_except')">
                     <field name="name"/>
                     <field name="order_type" />
                     <field name="priority" />
@@ -94,7 +94,6 @@
                     <!-- <field name="invoiced_rate" widget="progressbar"/> -->
                     <field name="amount_total" sum="Total Tax Included"/>
                     <field name="currency_id" />
-                    <field name="draft_cancelled" invisible="True" />
                     <field name="state" invisible="True" />
                     <field name="state_hidden_sale_order" />
                 </tree>
@@ -392,7 +391,6 @@
                         <field name="functional_amount_total"/>
                     </group>
                     <group col="14" colspan="4">
-                        <field name="draft_cancelled" invisible="True"/>
                         <field name="state" invisible="True"/>
                         <field name="state_hidden_sale_order"/>
                         <button name="invoice_recreate" states="invoice_except" string="Recreate Invoice" icon="gtk-go-forward"/>
@@ -404,7 +402,7 @@
                         <button name="invoice_cancel" states="invoice_except" string="Cancel Order" icon="gtk-cancel"/>
                         <button name="order_confirm" states="validated" string="Confirm Order" icon="gtk-apply" invisible="True"/>
                         <button name="do_order_confirm_method" type="object" states="validated" string="Confirm Order" icon="gtk-apply" confirm="You are about to confirm the Field Order without going through the sourcing tool. Are you sure?" attrs="{'readonly': [('no_line', '=', True)]}"/>
-                        <button name="validate_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" attrs="{'readonly': ['|', ('no_line', '=', True), ('draft_cancelled', '=', True)]}"/>
+                        <button name="validate_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('no_line', '=', True)]}"/>
                     </group>
                 </form>
             </field>

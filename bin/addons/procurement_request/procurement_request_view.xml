@@ -110,10 +110,9 @@
                                 </form>
                             </field>
                             <group colspan="4" col="6">
-                                <field name="draft_cancelled" invisible="True" />
                                 <field name="state" />
-                                <button name="ask_resource_lines" type="object" icon="gtk-cancel" string="Cancel" states="draft" context="{'noraise': True}" attrs="{'invisible': ['|', ('draft_cancelled', '=', True), ('state', '!=', 'draft')]}" />
-                                <button name="validate_ir_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" attrs="{'readonly': [('draft_cancelled', '=', True)]}" />
+                                <button name="ask_resource_lines" type="object" icon="gtk-cancel" string="Cancel" states="draft,draft_p,validated" context="{'noraise': True}" />
+                                <button name="validate_ir_lines" type="object" string="Validate Lines" icon="terp-check" states="draft,draft_p" />
                             </group>
                         </page>
                         <page string="Sourcing Documents">
