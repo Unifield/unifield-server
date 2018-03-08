@@ -4,7 +4,25 @@
             ${py.attrs(attrs, kind=kind, value=value)}/>
     % else:
         <textarea rows="6" id ="${name}" name="${name}" class="${css_class}"
-            ${py.attrs(attrs, kind=kind)} style="width: 100%;">${value}</textarea>
+            ${py.attrs(attrs, kind=kind)} style="width: 100%;"
+    % if translatable:
+        translatable="1"
+    % endif
+        >${value}</textarea>
+        % if translatable:
+            <img src="/openerp/static/images/stock/stock_translate.png" id="${name}_translatable"/>
+            <script type="text/javascript">
+                jQuery('#${name}_translatable').click(function() {
+                var params = {
+                    'relation': '${model}',
+                    'id': jQuery('#_terp_id').attr('value'),
+                    'data': jQuery('#_terp_context').attr('value'),
+                    'clicked_field': '${name}'
+                    };
+                translate_fields(null, params);
+                });
+            </script>
+        % endif
         <script type="text/javascript">
             if (!window.browser.isWebKit) {
                 new openerp.ui.TextArea('${name}');
