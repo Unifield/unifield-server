@@ -126,7 +126,8 @@ MODEL_DICT = {
     'access_control_list': {
         'name': 'Access Controls List',
         'domain_type': 'non_functionnal',
-        'model': 'ir.model.access'
+        'model': 'ir.model.access',
+        'domain': [('name', '!=', 'admin')],
     },
     'field_access_rules': {
         'name': 'Field Access Rules',
@@ -488,15 +489,14 @@ MODEL_DATA_DICT = {
     },
     'record_rules': {
         'header_list': [
+            'name',
+            'model_id.model',
+            'groups',
+            'domain_force',
             'perm_read',
             'perm_create',
             'perm_unlink',
             'perm_write',
-            'domain_force',
-            'groups',
-            'id',
-            'name',
-            'model_id.model',
         ],
         'required_field_list': [
             'model_id.model',
@@ -507,16 +507,15 @@ MODEL_DATA_DICT = {
         'header_list': [
             'name',
             'group_id.name',
-            'id',
             'perm_create',
             'perm_unlink',
             'perm_read',
             'perm_write',
-            'model_id.model',
+            'model_id.id',
         ],
         'required_field_list': [
             'name',
-            'model_id.model',
+            'model_id.id',
         ],
     },
     'field_access_rules': {
@@ -525,7 +524,6 @@ MODEL_DATA_DICT = {
             'comment',
             'domain_text',
             'group_ids',
-            'id',
             'instance_level',
             'name',
             'model_id.model',
@@ -540,17 +538,18 @@ MODEL_DATA_DICT = {
     'field_access_rule_lines': {
         'header_list': [
             'field_access_rule.name',
+            'field.id',
             'field.name',
             'field.field_description',
             'write_access',
-            'id',
         ],
         'required_field_list': [
             'field_access_rule.name',
-            'field.name',
+            'field.id',
         ],
         'ignore_field': [
             'field.field_description',
+            'field.name',
         ],
     },
     'button_access_rules': {
@@ -587,7 +586,8 @@ MODEL_DATA_DICT = {
             'id',
         ],
         'ignore_field': [
-            'res_model.model',
+            'name',
+            'res_model',
             'view_type',
             'view_id.name',
         ]

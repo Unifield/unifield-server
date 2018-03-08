@@ -898,6 +898,39 @@ class msf_import_export(osv.osv_memory):
                         ids_to_update = impobj.search(cr, uid, [('list_id', '=', import_brw.product_list_id.id), ('name', '=', new_product_id[0])], context=context)
                     data['name'] = new_product_id and new_product_id[0] or False
 
+                if import_brw.model_list_selection == 'access_control_list':
+                    ids_to_update = self.pool.get('ir.model.access').search(cr, uid, [('model_id', '=', data.get('model_id')), ('name', '=', data.get('name'))])
+                    if len(ids_to_update) > 1:
+                        raise Exception('%d records found for model=%s, name=%s' % (len(ids_to_update), data.get('model_id'), data.get('name')))
+
+                if import_brw.model_list_selection == 'field_access_rule_lines':
+                    ids_to_update = self.pool.get('msf_field_access_rights.field_access_rule_line').search(cr, uid, [('field_access_rule', '=', data.get('field_access_rule')), ('field', '=', data.get('field'))], context=context)
+                    if len(ids_to_update) > 1:
+                        raise Exception('%d records found for rule=%s, field=%s' % (len(ids_to_update), data.get('field_access_rule'), data.get('field')))
+
+                if import_brw.model_list_selection == 'field_access_rules':
+                    if not data.get('group_ids'):
+                        data['group_ids'] = [(6, 0, [])]
+                    ids_to_update = self.pool.get('msf_field_access_rights.field_access_rule').search(cr, uid, [('name', '=', data.get('name')), ('model_id', '=', data.get('model_id')), ('active', 'in', ['t', 'f'])], context=context)
+                    if len(ids_to_update) > 1:
+                        raise Exception('%d records found for rule=%s, model=%s' % (len(ids_to_update), data.get('name'), data.get('model_id')))
+
+                if import_brw.model_list_selection == 'record_rules':
+                    if not data.get('groups'):
+                        data['groups'] = [(6, 0, [])]
+
+                    ids_to_update = self.pool.get('ir.rule').search(cr, uid, [('name', '=', data.get('name')), ('model_id', '=', data.get('model_id'))], context=context)
+                    if len(ids_to_update) > 1:
+                        raise Exception('%d records found for rule=%s, model=%s' % (len(ids_to_update), data.get('name'), data.get('model_id')))
+
+                if import_brw.model_list_selection == 'button_access_rules':
+                    if not data.get('group_ids'):
+                        data['group_ids'] = [(6, 0, [])]
+
+                if import_brw.model_list_selection == 'window_actions':
+                    if not data.get('groups_id'):
+                        data['groups_id'] = [(6, 0, [])]
+
                 if data.get('comment') == '[DELETE]':
                     impobj.unlink(cr, uid, ids_to_update, context=context)
                     nb_lines_deleted += len(ids_to_update)
