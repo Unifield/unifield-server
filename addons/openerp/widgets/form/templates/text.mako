@@ -9,8 +9,8 @@
         translatable="1"
     % endif
         >${value}</textarea>
-        % if translatable:
-            <img src="/openerp/static/images/stock/stock_translate.png" id="${name}_translatable"/>
+        % if translatable and ( not readonly_before_state or ro_by_trans ):
+            <img src="/openerp/static/images/stock/stock_translate.png" id="${name}_translatable" class="area_translatable" />
             <script type="text/javascript">
                 jQuery('#${name}_translatable').click(function() {
                 var params = {

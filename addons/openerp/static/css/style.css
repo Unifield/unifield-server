@@ -1077,6 +1077,12 @@ span.char {
     top: 0px;
 }
 
+.area_translatable {
+    position: relative;
+    top: -25px;
+    left: 2px;
+}
+
 img.translatable {
     cursor: pointer;
     vertical-align: middle;
