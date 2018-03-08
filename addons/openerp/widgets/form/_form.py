@@ -351,7 +351,7 @@ register_widget(Label, ["label"])
 class Char(TinyInputWidget):
 
     template = "/openerp/widgets/form/templates/char.mako"
-    params = ['password', 'size', 'readonly_before_state']
+    params = ['password', 'size', 'readonly_before_state', 'ro_by_trans']
 
     def __init__(self, **attrs):
 
@@ -910,13 +910,14 @@ class Form(TinyInputWidget):
 
             attrs = node_attributes(node)
             # US-3071 : Check if product.product field is not readonly and translatable
-            if not self.noteditable and node.localName == ustr('field') and self.model == 'product.product' \
-                    and attrs.get('name', False) and fields[attrs.get('name', False)].get('translate', False):
+            if not attrs.get('readonly') and not self.noteditable and node.localName == ustr('field') \
+                    and self.model == 'product.product' and attrs.get('name', False) \
+                    and fields[attrs.get('name', False)].get('translate', False):
                 product_proxy = rpc.RPCProxy(self.model)
-                if not product_proxy.is_field_translatable(self.id, attrs.get('name', False),
-                                                           values.get('name', False), self.context):
+                if not product_proxy.is_field_translatable(self.context):
                     attrs['readonly'] = True
                     attrs['force_readonly'] = True
+                    attrs['ro_by_trans'] = True
 
             if self.noteditable:
                 attrs['readonly'] = True
