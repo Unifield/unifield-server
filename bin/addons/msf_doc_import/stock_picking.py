@@ -111,20 +111,23 @@ class stock_picking(osv.osv):
 
 
     def auto_import_incoming_shipment(self, cr, uid, file_path, context=None):
-        simu_obj = self.pool.get('wizard.import.in.simulation.screen')
-        line_obj = self.pool.get('wizard.import.in.line.simulation.screen')
-
         context = context is None and {} or context
 
         # get ID of the IN:
         in_id = self.get_incoming_id_from_file(cr, uid, file_path, context)
 
-        # create stock.incoming.processor:
+        # create stock.incoming.processor and its stock.move.in.processor:
+        in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
+        self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context)
+
+        # get imported moves and its qty:
         pass
-        # create stock.move.in.processor:
+        
+        # for each move imported, update qty in the stock.incoming.processor:
         pass
+
         # run method do_incoming_shipment:
-        pass
+        new_picking = self.do_incoming_shipment(cr, uid, in_processor, context)
 
         return True
 
