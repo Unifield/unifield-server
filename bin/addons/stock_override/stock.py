@@ -369,6 +369,7 @@ class stock_picking(osv.osv):
     _defaults = {
         'from_wkf': lambda *a: False,
         'from_wkf_sourcing': lambda *a: False,
+        'import_update_ok': lambda *a: False,
         'update_version_from_in_stock_picking': 0,
         'fake_type': 'in',
         'shipment_ref':False,
