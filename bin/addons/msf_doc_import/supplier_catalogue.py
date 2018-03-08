@@ -80,9 +80,12 @@ class supplier_catalogue(osv.osv):
             elif row.cells[0].data == displayable['period_to']:
                 data['period_to'] = get_well_formed_date(row.cells[1].data)
 
+
         catalogue_id = False
-        if data['name'] and data['partner_id']:
+        if data.get('name') and data.get('partner_id'):
             catalogue_id = self.search(cr, uid, [('name', '=', data['name']), ('partner_id', '=', data['partner_id'])], context=context)
+        else:
+            raise osv.except_osv(_('Error'), ('Given partner not found'))
         if not catalogue_id:
             catalogue_id = self.create(cr, uid, data, context=context)
             catalogue_id = [catalogue_id]

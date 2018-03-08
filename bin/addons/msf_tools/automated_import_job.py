@@ -253,7 +253,7 @@ class automated_import_job(osv.osv):
                 ftp_connec = self.pool.get('automated.import').ftp_test_connection(cr, uid, job.import_id.id, context=context)
 
             try:
-                for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('dest_path_failure', 'w', 'ftp_dest_fail_ok'), ('report_path', 'w', None)]:
+                for path in [('src_path', 'r', 'ftp_source_ok'), ('dest_path', 'w', 'ftp_dest_ok'), ('dest_path_failure', 'w', 'ftp_dest_fail_ok'), ('report_path', 'w', 'ftp_report_ok')]:
                     if path[2] and not job.import_id[path[2]]:
                         import_obj.path_is_accessible(job.import_id[path[0]], path[1])
             except osv.except_osv as e:
@@ -333,10 +333,10 @@ class automated_import_job(osv.osv):
                     job.import_id.function_id.method_to_call
                 )(cr, uid, oldest_file)
                 if processed:
-                    nb_processed = self.generate_file_report(cr, uid, job, processed, headers)
+                    nb_processed = self.generate_file_report(cr, uid, job, processed, headers, ftp_connec=ftp_connec)
 
                 if rejected:
-                    nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True)
+                    nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True, ftp_connec=ftp_connec)
                     state = 'error'
                     for resjected_line in rejected:
                         line_message = _('Line %s: ' % resjected_line[0])
@@ -363,7 +363,7 @@ class automated_import_job(osv.osv):
                     'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'nb_processed_records': 0,
                     'nb_rejected_records': 0,
-                    'comment': tools.ustr(e),
+                    'comment': str(e),
                     'file_sum': md5,
                     'file_to_import': data64,
                     'state': 'error',
@@ -381,7 +381,7 @@ class automated_import_job(osv.osv):
         }
 
 
-    def generate_file_report(self, cr, uid, job_brw, data_lines, headers, rejected=False):
+    def generate_file_report(self, cr, uid, job_brw, data_lines, headers, rejected=False, ftp_connec=None):
         """
         Create a csv file that contains the processed lines and put this csv file
         on the report_path directory and attach it to the automated.import.job.
@@ -403,20 +403,31 @@ class automated_import_job(osv.osv):
         pth_filename = os.path.join(job_brw.import_id.report_path, filename)
         delimiter = ','
         quotechar = '"'
+        on_ftp = job_brw.import_id.ftp_report_ok
+        assert not on_ftp or (on_ftp and ftp_connec), _('FTP connection issue')
 
-        with open(pth_filename, 'wb') as csvfile:
-            spamwriter = csv.writer(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=csv.QUOTE_MINIMAL)
-            headers_row = [_('Line number')] + headers
+        csvfile = tempfile.NamedTemporaryFile(mode='wb', delete=False) if on_ftp else open(pth_filename, 'wb')
+        if on_ftp:
+            temp_path = csvfile.name
+        spamwriter = csv.writer(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=csv.QUOTE_MINIMAL)
+        headers_row = [_('Line number')] + headers
+        if rejected:
+            headers_row += [_('Error')]
+        spamwriter.writerow(headers_row)
+        for pl in data_lines:
+            pl_row = [pl[0]] + pl[1]
             if rejected:
-                headers_row += [_('Error')]
-            spamwriter.writerow(headers_row)
-            for pl in data_lines:
-                pl_row = [pl[0]] + pl[1]
-                if rejected:
-                    pl_row += [pl[2]]
-                spamwriter.writerow(pl_row)
+                pl_row += [pl[2]]
+            spamwriter.writerow(pl_row)
+        csvfile.close()
 
-        csvfile = open(pth_filename, 'r')
+        if on_ftp:
+            with open(temp_path, 'rb') as temp_file:
+                rep = ftp_connec.storbinary('STOR %s' % pth_filename, temp_file)
+                if not rep.startswith('2'):
+                    raise osv.except_osv(_('Error'), ('Unable to move local file to destination location on FTP server'))
+
+        csvfile = open(on_ftp and temp_path or pth_filename, 'r')
         att_obj.create(cr, uid, {
             'name': filename,
             'datas_fname': filename,
