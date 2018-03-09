@@ -306,7 +306,7 @@ class wizard_import_in_simulation_screen(osv.osv):
 
             return self.go_to_simulation(cr, uid, ids, context=context)
 
-    def get_values_from_xml(self, cr, uid, file_to_import, with_pack, context=None):
+    def get_values_from_xml(self, cr, uid, file_to_import, with_pack=False, context=None):
         '''
         Read the XML file and put data in values
         '''
@@ -394,13 +394,13 @@ class wizard_import_in_simulation_screen(osv.osv):
 
         return values, nb_line, error
 
-    def get_values_from_excel(self, cr, uid, file_to_import, with_pack, context=None):
+    def get_values_from_excel(self, cr, uid, file_to_import, with_pack=False, context=None):
         '''
         Read the Excel XML file and put data in values
         '''
         values = {}
         # Read the XML Excel file
-        xml_file = base64.decodestring(file_to_import)
+        xml_file = context.get('xml_is_string', False) and file_to_import or base64.decodestring(file_to_import)
         fileobj = SpreadsheetXML(xmlstring=xml_file)
 
         # Read all lines

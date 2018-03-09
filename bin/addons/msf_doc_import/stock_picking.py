@@ -51,7 +51,8 @@ class stock_picking(osv.osv):
     }
 
     def get_import_filetype(self, cr, uid, file_path, context=None):
-        context = context is None and {} or context
+        if context is None:
+            context = {}
 
         if '.' not in file_path:
             raise osv.except_osv(_('Error'), _('Wrong extension for given import file')  )
@@ -65,7 +66,8 @@ class stock_picking(osv.osv):
 
 
     def get_available_incoming_from_po_name(self, cr, uid, po_name, context=None):
-        context = context is None and {} or context
+        if context is None:
+            context = {}
 
         po_id = self.pool.get('purchase.order').search(cr, uid, [('name', '=', po_name)], context=context)
         if not po_id:
@@ -81,7 +83,8 @@ class stock_picking(osv.osv):
 
 
     def get_incoming_id_from_file(self, cr, uid, file_path, context=None):
-        context = context is None and {} or context
+        if context is None:
+            context = {}
 
         filetype = self.get_import_filetype(cr, uid, file_path, context)
         xmlstring = open(file_path).read()
@@ -110,21 +113,56 @@ class stock_picking(osv.osv):
         return incoming_id
 
 
+    def get_file_content(self, cr, uid, file_path, context=None):
+        if context is None:
+            context = {}
+        res = ''
+        with open(file_path) as fich:
+            res = fich.read()
+        return res
+
+
     def auto_import_incoming_shipment(self, cr, uid, file_path, context=None):
-        context = context is None and {} or context
+        if context is None:
+            context = {}
+        filetype = self.get_import_filetype(cr, uid, file_path, context=context)
+        file_content = self.get_file_content(cr, uid, file_path, context=context)
+        LINE_START = 11
 
         # get ID of the IN:
         in_id = self.get_incoming_id_from_file(cr, uid, file_path, context)
 
         # create stock.incoming.processor and its stock.move.in.processor:
         in_processor = self.pool.get('stock.incoming.processor').create(cr, uid, {'picking_id': in_id}, context=context)
-        self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context)
+        self.pool.get('stock.incoming.processor').create_lines(cr, uid, in_processor, context=context) # import all lines and set qty to zero
 
         # get imported moves and its qty:
-        pass
-        
+        context.update({'xml_is_string': True})
+        if filetype == 'excel':
+            values, nb_file_lines, file_parse_errors = self.pool.get('wizard.import.in.simulation.screen').get_values_from_excel(cr, uid, file_content, context=context)
+        else:
+            values, nb_file_lines, file_parse_errors = self.pool.get('wizard.import.in.simulation.screen').get_values_from_xml(cr, uid, file_content, context=context)
+
         # for each move imported, update qty in the stock.incoming.processor:
-        pass
+        for index in range(LINE_START, LINE_START+nb_file_lines):
+            row = values[index]
+            move_id = self.pool.get('stock.move').search(cr, uid, [
+                ('picking_id', '=', in_id),
+                ('line_number', '=', row.get('line_number')),
+            ], context=context)
+            if move_id:
+                move = self.pool.get('stock.move').browse(cr, uid, move_id[0], context=context)
+                move_proc_ids = self.pool.get('stock.move.in.processor').search(cr, uid, [
+                    ('wizard_id', '=', in_processor),
+                    ('move_id', '=', move.id),
+                    ('quantity', '=', 0.00),
+                ], context=context)
+                if move_proc_ids:
+                    self.pool.get('stock.move.in.processor').write(cr, uid, move_proc_ids, {
+                        'quantity': row.get('product_qty', 0.00),
+                    }, context=context)
+            else:
+                raise osv.except_osv(_('Error'), _('No matching stock move found for line %s') % index)
 
         # run method do_incoming_shipment:
         new_picking = self.do_incoming_shipment(cr, uid, in_processor, context)
@@ -160,7 +198,8 @@ class stock_picking(osv.osv):
         # Objects
         wiz_obj = self.pool.get('wizard.import.pick.line')
 
-        context = context is None and {} or context
+        if context is None:
+            context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
