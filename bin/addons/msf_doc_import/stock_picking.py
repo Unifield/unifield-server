@@ -151,8 +151,10 @@ class stock_picking(osv.osv):
             values, nb_file_lines, file_parse_errors = self.pool.get('wizard.import.in.simulation.screen').get_values_from_xml(cr, uid, file_content, context=context)
 
         # for each move imported, update qty in the stock.incoming.processor:
+        processed, rejected, headers = [], [], values[LINE_START-1]
         for index in range(LINE_START, LINE_START+nb_file_lines):
             row = values[index]
+            line_data = [row.get(x) for x in headers]
             move_id = self.pool.get('stock.move').search(cr, uid, [
                 ('picking_id', '=', in_id),
                 ('line_number', '=', row.get('line_number')),
@@ -168,14 +170,19 @@ class stock_picking(osv.osv):
                     self.pool.get('stock.move.in.processor').write(cr, uid, move_proc_ids, {
                         'quantity': row.get('product_qty', 0.00),
                     }, context=context)
+                    processed.append( (index,line_data) )
+                else:
+                    rejected.append( (index,line_data) )
+                    raise osv.except_osv(_('Error'), _('No matching IN move processor found for line %s') % index)
             else:
+                rejected.append( (index,line_data) )
                 raise osv.except_osv(_('Error'), _('No matching stock move found for line %s') % index)
 
         # run method do_incoming_shipment:
         context.update({'do_not_process_incoming': True})
         new_picking = self.do_incoming_shipment(cr, uid, in_processor, context=context)
 
-        return True # TODO processed, rejected, headers
+        return processed, rejected, headers
 
 
     def export_template_file(self, cr, uid, ids, context=None):
