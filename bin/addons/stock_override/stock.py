@@ -1018,6 +1018,18 @@ You cannot choose this supplier because some destination locations are not avail
 
         return True
 
+
+    def action_updated_wkf(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int,long)):
+            ids = [ids]
+
+        self.write(cr, uid, ids, {'state': 'updated'}, context=context)
+
+        return True
+        
+
     @check_cp_rw
     def change_all_location(self, cr, uid, ids, context=None):
         '''

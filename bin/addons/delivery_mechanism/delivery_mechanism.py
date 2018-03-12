@@ -1311,7 +1311,9 @@ class stock_picking(osv.osv):
                         wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_confirm', cr)
                     else:
                         wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'button_shipped', cr)
-
+                    return backorder_id
+                elif picking_dict['type'] == 'in' and context.get('do_not_process_incoming'):
+                    wf_service.trg_validate(uid, 'stock.picking', backorder_id, 'updated', cr)
                     return backorder_id
 
                 self.write(cr, uid, [picking_id], {'backorder_id': backorder_id, 'cd_from_bo': values.get('cd_from_bo', False)},
@@ -1364,11 +1366,15 @@ class stock_picking(osv.osv):
                 # Claim specific code
                 self._claim_registration(cr, uid, wizard, picking_id, context=context)
 
+
                 if sync_in:  # If it's from sync, then we just send the pick to become Available Shippde, not completely close!
                     if context.get('for_dpo', False):
                         self.write(cr, uid, [picking_id], {'in_dpo': True}, context=context)
                     else:
                         self.write(cr, uid, [picking_id], {'state': 'shipped'}, context=context)
+                    return picking_id
+                elif picking_dict['type'] == 'in' and context.get('do_not_process_incoming'):
+                    wf_service.trg_validate(uid, 'stock.picking', picking_id, 'updated', cr)
                     return picking_id
                 else:
                     # Cancel missing IN instead of processing

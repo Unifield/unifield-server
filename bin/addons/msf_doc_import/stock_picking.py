@@ -172,9 +172,10 @@ class stock_picking(osv.osv):
                 raise osv.except_osv(_('Error'), _('No matching stock move found for line %s') % index)
 
         # run method do_incoming_shipment:
-        new_picking = self.do_incoming_shipment(cr, uid, in_processor, context)
+        context.update({'do_not_process_incoming': True})
+        new_picking = self.do_incoming_shipment(cr, uid, in_processor, context=context)
 
-        return True
+        return True # TODO processed, rejected, headers
 
 
     def export_template_file(self, cr, uid, ids, context=None):
