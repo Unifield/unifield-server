@@ -71,7 +71,7 @@ class stock_picking(osv.osv):
 
         po_id = self.pool.get('purchase.order').search(cr, uid, [('name', '=', po_name)], context=context)
         if not po_id:
-            raise osv.except_osv(_('Error'), _('PO with name %s not found') % po_name)
+            raise osv.except_osv(_('Error'), _('PO with name "%s" not found') % po_name or '')
         in_id = self.pool.get('stock.picking').search(cr, uid, [
             ('purchase_id', '=', po_id[0]),
             ('type', '=', 'in'),
