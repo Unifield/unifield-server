@@ -310,10 +310,9 @@ class wizard_import_in_simulation_screen(osv.osv):
         '''
         Read the XML file and put data in values
         '''
-
         values = {}
         # Read the XML file
-        xml_file = base64.decodestring(file_to_import)
+        xml_file = context.get('xml_is_string', False) and file_to_import or base64.decodestring(file_to_import)
         error = []
 
         root = ET.fromstring(xml_file)
