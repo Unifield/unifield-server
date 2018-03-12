@@ -21,12 +21,6 @@
             <field name="action">action_updated_wkf()</field>
         </record>
 
-        <record id="trans_assigned_updated" model="workflow.transition">
-            <field name="act_from" ref="stock.act_assigned" />
-            <field name="act_to" ref="act_updated" />
-            <field name="condition">import_update_ok</field>
-        </record>
-
         <record id="trans_draft_manual_done" model="workflow.transition">
             <field name="act_from" ref="stock.act_draft" />
             <field name="act_to" ref="act_manually_done" />
