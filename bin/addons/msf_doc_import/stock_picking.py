@@ -71,7 +71,7 @@ class stock_picking(osv.osv):
 
         po_id = self.pool.get('purchase.order').search(cr, uid, [('name', '=', po_name)], context=context)
         if not po_id:
-            raise osv.except_osv(_('Error'), _('PO with name "%s" not found') % po_name or '')
+            raise osv.except_osv(_('Error'), _('PO with name %s not found') % po_name)
         in_id = self.pool.get('stock.picking').search(cr, uid, [
             ('purchase_id', '=', po_id[0]),
             ('type', '=', 'in'),
@@ -95,7 +95,11 @@ class stock_picking(osv.osv):
             po_name = False
             for index, row in enumerate(file_obj.getRows()):
                 if row.cells[0].data == 'Origin':
-                    po_name = row.cells[1].data
+                    po_name = row.cells[1].data or ''
+                    if isinstance(po_name, (str,unicode)):
+                        po_name = po_name.strip()
+                    if not po_name:
+                        raise osv.except_osv(_('Error'), _('Field "Origin" shouldn\'t be empty'))
                     break
             else:
                 raise osv.except_osv(_('Error'), _('Header field "Origin" not found in the given XLS file'))
@@ -105,9 +109,12 @@ class stock_picking(osv.osv):
             root = ET.fromstring(xmlstring)
             orig = root.findall('.//field[@name="origin"]')
             if orig:
-                po_name = orig[0].text
+                po_name = orig[0].text or ''
+                po_name = po_name.strip()
+                if not po_name:
+                    raise osv.except_osv(_('Error'), _('Field "Origin" shouldn\'t be empty'))
             else:
-                raise osv.except_osv(_('Error'), _('No field with name "origin" was found in the XML file'))
+                raise osv.except_osv(_('Error'), _('No field with name "Origin" was found in the XML file'))
             incoming_id = self.get_available_incoming_from_po_name(cr, uid, po_name, context=context)
 
         return incoming_id
