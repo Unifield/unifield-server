@@ -363,13 +363,11 @@ class stock_picking(osv.osv):
             }
         ),
         'incoming_id': fields.many2one('stock.picking', string='Incoming ref', readonly=True),
-        'import_update_ok': fields.boolean('Updated with import', readonly=True),
     }
 
     _defaults = {
         'from_wkf': lambda *a: False,
         'from_wkf_sourcing': lambda *a: False,
-        'import_update_ok': lambda *a: False,
         'update_version_from_in_stock_picking': 0,
         'fake_type': 'in',
         'shipment_ref':False,
