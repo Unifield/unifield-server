@@ -592,23 +592,27 @@ class res_partner(osv.osv):
     def check_partner_unicity(self, cr, uid, partner_id, context=None):
         """
         If the partner name is already used, check that the city is not empty AND not used by another partner with the
-        same name. Checks are case insensitive, done with active and inactive partners, and NOT done at synchro time.
+        same name. Checks are case insensitive, done with active and inactive External partners, and NOT done at synchro time.
         """
 
         if context is None:
             context = {}
         if not context.get('sync_update_execution'):
-            partner = self.browse(cr, uid, partner_id, fields_to_fetch=['name', 'city'], context=context)
-            partner_name = partner.name
-            city = partner.city or ''
-            partner_domain = [('id', '!=', partner_id), ('name', '=ilike', partner_name), ('active', 'in', ['t', 'f'])]
-            duplicate_partner_ids = self.search(cr, uid, partner_domain, order='NO_ORDER', context=context)
-            if duplicate_partner_ids:
-                if not city or self.search_exist(cr, uid, [('id', 'in', duplicate_partner_ids), ('city', '=ilike', city)], context=context):
-                    raise osv.except_osv(_('Warning'),
-                                         _("The partner can't be saved because already exists under the same name for "
-                                           "the same city. Please change the partner name or city or use the existing partner."))
-
+            address_obj = self.pool.get('res.partner.address')
+            partner = self.browse(cr, uid, partner_id, fields_to_fetch=['partner_type', 'name', 'city'], context=context)
+            if partner.partner_type == 'external':
+                city = partner.city or ''  # city of the first address created for this partner
+                partner_domain = [('id', '!=', partner_id), ('name', '=ilike', partner.name),
+                                  ('partner_type', '=', 'external'), ('active', 'in', ['t', 'f'])]
+                duplicate_partner_ids = self.search(cr, uid, partner_domain, order='NO_ORDER', context=context)
+                if duplicate_partner_ids:
+                    address_ids = address_obj.search(cr, uid, [('partner_id', 'in', duplicate_partner_ids)],
+                                                     context=context, order='NO_ORDER')
+                    if not city or address_obj.search_exist(cr, uid, [('id', 'in', address_ids),
+                                                                      ('city', '=ilike', city)], context=context):
+                        raise osv.except_osv(_('Warning'),
+                                             _("The partner can't be saved because already exists under the same name for "
+                                               "the same city. Please change the partner name or city or use the existing partner."))
 
     def _check_default_accounts(self, cr, uid, vals, context=None):
         """
@@ -631,18 +635,6 @@ class res_partner(osv.osv):
                 if not account_obj.search_exist(cr, uid, payable_domain, context=context):
                     payable_acc = account_obj.browse(cr, uid, vals['property_account_payable'], fields_to_fetch=['code', 'name'], context=context)
                     raise osv.except_osv(_('Error'), _('The account %s - %s cannot be used as Account Payable.') % (payable_acc.code, payable_acc.name))
-
-    def write_web(self, cr, uid, ids, vals, context=None):
-        if not ids:
-            return True
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        ret = self.write(cr, uid, ids, vals, context=context)
-        for partner_id in ids:
-            self.check_partner_unicity(cr, uid, partner_id=partner_id, context=context)
-
-        return ret
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
