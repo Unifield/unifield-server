@@ -8,8 +8,13 @@
 
 % if close_popup:
 <script type="text/javascript">
+var fields_values = JSON.parse(window.atob("${fields_values}"));
 jQuery(document).ready(function () {
-    window.parent.location.reload();
+    for (var i = 0; i < fields_values.length; i++) {
+        field_id = "#" + fields_values[i].id;
+        $(field_id, window.parent.document).val(fields_values[i].value);
+    }
+    window.frameElement.close();
 })
 </script>
 % else:
