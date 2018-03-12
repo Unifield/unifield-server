@@ -501,9 +501,9 @@ class Database(BaseController):
                 }
                 return
 
-            if not server_rpc.execute('object', 'execute', 'sync.server.update', 'search', [('model', '=', 'msf.instance'), ('values', 'like', "'%s'" % config.get('instance', 'instance_name'))]):
+            if not server_rpc.execute('object', 'execute', 'sync.server.update', 'search', [('model', '=', 'msf.instance'), ('values', 'like', "'%s'" % config.get('instance', 'prop_instance_code'))]):
                 self.msg = {
-                    'message': _('No update found for %s. Did you create and sync. the new prop. instance at HQ ?') % (config.get('instance', 'instance_name'), ),
+                    'message': _('No update found for %s. Did you create and sync. the new prop. instance at HQ ?') % (config.get('instance', 'prop_instance_code'), ),
                     'title': _('HQ creation'),
                 }
                 return
