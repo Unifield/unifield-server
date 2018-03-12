@@ -75,7 +75,7 @@ class stock_picking(osv.osv):
         in_id = self.pool.get('stock.picking').search(cr, uid, [
             ('purchase_id', '=', po_id[0]),
             ('type', '=', 'in'),
-            ('state', 'in', ['assigned', 'shipped', 'updated']),
+            ('state', '=', 'assigned'),
         ], context=context)
         if not in_id:
             raise osv.except_osv(_('Error'), _('No available IN found for the given PO %s' % po_name))
