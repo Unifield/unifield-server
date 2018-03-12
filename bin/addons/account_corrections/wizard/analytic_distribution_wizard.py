@@ -148,7 +148,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         ml = wizard.move_line_id
         orig_date = ml.source_date or ml.date
         orig_document_date = ml.document_date
-        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
+
+        jtype = 'correction'
+        if wizard.move_line_id.account_id and wizard.move_line_id.account_id.type_for_register == 'donation':
+            jtype = 'extra'
+        correction_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', jtype), ('is_current_instance', '=', True)])
         correction_journal_id = correction_journal_ids and correction_journal_ids[0] or False
         if not correction_journal_id:
             raise osv.except_osv(_('Error'), _('No analytic journal found for corrections!'))
@@ -160,7 +164,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         any_reverse = False
         ana_obj = self.pool.get('account.analytic.line')
         # Prepare journal and period information for entry sequences
-        cr.execute("select id, code from account_journal where type = 'correction' and is_current_instance = true")
+        cr.execute("select id, code from account_journal where type = %s and is_current_instance = true", (jtype,))
         for row in cr.dictfetchall():
             journal_id = row['id']
             code = row['code']
@@ -519,6 +523,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             to_create = []
             to_delete = []
             to_override = []
+            old_line_ok = []
             old_line_ids = self.pool.get(obj_name).search(cr, uid, [('distribution_id', '=', distrib_id)])
             wiz_line_ids = self.pool.get(corr_name).search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', free[0])])
             # To create OR to override

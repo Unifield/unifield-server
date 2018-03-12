@@ -46,21 +46,11 @@ MODEL_DICT = {
         'domain_type': 'supply',
         'model': 'product.list.line',
     },
-    'product_list_update': {
-        'name': 'Products Lists Update',
-        'domain_type': 'supply',
-        'model': 'product.list.line',
-    },
     'suppliers': {
         'name': 'Suppliers',
         'domain_type': 'supply',
         'model': 'res.partner',
         'domain': [('supplier', '=', True)],
-    },
-    'supplier_catalogue_update': {
-        'name': 'Supplier Catalogue Update',
-        'domain_type': 'supply',
-        'model': 'supplier.catalogue.line',
     },
     'supplier_catalogues': {
         'name': 'Supplier Catalogues',
@@ -136,7 +126,8 @@ MODEL_DICT = {
     'access_control_list': {
         'name': 'Access Controls List',
         'domain_type': 'non_functionnal',
-        'model': 'ir.model.access'
+        'model': 'ir.model.access',
+        'domain': [('name', '!=', 'admin')],
     },
     'field_access_rules': {
         'name': 'Field Access Rules',
@@ -257,31 +248,6 @@ MODEL_DATA_DICT = {
             'msfid',
         ],
     },
-    'product_list_update': {
-        'header_info': [
-            'type',
-            'ref',
-            'name',
-            'description',
-            'standard_list_ok',
-            'order_list_print_ok',
-            'warehouse_id',
-            'location_id',
-        ],
-        'header_list': [
-            'name.default_code',
-            'name.name',
-            'comment',
-        ],
-        'required_field_list': [
-            'name.default_code',
-        ],
-        'custom_field_name': {
-            'name.default_code': 'Product Code',
-            'ref': 'Ref',
-            'order_list_print_ok': 'Order List print',
-        },
-    },
     'product_list': {
         'header_list': [
             'name',
@@ -331,42 +297,6 @@ MODEL_DATA_DICT = {
             'property_account_receivable.code',
             'name',
         ],
-    },
-    'supplier_catalogue_update': {
-        'header_info': [
-            'name',
-            'partner_id',
-            'currency_id',
-            'period_from',
-            'period_to',
-        ],
-        'header_list': [
-            'product_id.default_code',
-            'product_id.name',
-            'product_code',
-            'line_uom_id.name',
-            'min_qty',
-            'unit_price',
-            'rounding',
-            'min_order_qty',
-            'comment',
-        ],
-        'required_field_list': [
-            'product_id.default_code',
-            'line_uom_id.name',
-            'min_qty',
-            'unit_price',
-        ],
-        'ignore_field': [
-            'product_id.name',
-        ],
-        'custom_field_name': {
-            'partner_id': 'Partner Name',
-            'product_id.default_code': 'Product Code',
-            'product_id.name': 'Product Description',
-            'line_uom_id.name': 'UoM',
-            'min_order_qty': 'Min. Order Qty.',
-        },
     },
     'supplier_catalogues': {
         'header_list': [
@@ -559,14 +489,14 @@ MODEL_DATA_DICT = {
     },
     'record_rules': {
         'header_list': [
-            'model_id.model',
             'name',
-            'global',
+            'model_id.model',
+            'groups',
             'domain_force',
             'perm_read',
-            'perm_write',
             'perm_create',
             'perm_unlink',
+            'perm_write',
         ],
         'required_field_list': [
             'model_id.model',
@@ -576,60 +506,71 @@ MODEL_DATA_DICT = {
     'access_control_list': {
         'header_list': [
             'name',
-            'model_id.model',
             'group_id.name',
-            'perm_read',
-            'perm_write',
             'perm_create',
             'perm_unlink',
+            'perm_read',
+            'perm_write',
+            'model_id.id',
         ],
         'required_field_list': [
             'name',
-            'model_id.model',
+            'model_id.id',
         ],
     },
     'field_access_rules': {
         'header_list': [
+            'active',
+            'comment',
+            'domain_text',
+            'group_ids',
+            'instance_level',
             'name',
             'model_id.model',
-            'instance_level',
-            'domain_text',
             'status',
         ],
         'required_field_list': [
-            'name',
-            'model_id.model',
             'instance_level',
+            'model_id.model',
+            'name',
         ],
     },
     'field_access_rule_lines': {
         'header_list': [
             'field_access_rule.name',
-            'field_access_rule_model_id',
+            'field.id',
             'field.name',
-            'field_name',
+            'field.field_description',
             'write_access',
-            'value_not_synchronized_on_create',
-            'value_not_synchronized_on_write',
         ],
         'required_field_list': [
-            'field_access_rule',
-            'field',
+            'field_access_rule.name',
+            'field.id',
+        ],
+        'ignore_field': [
+            'field.field_description',
+            'field.name',
         ],
     },
     'button_access_rules': {
         'header_list': [
-            'model_id.model',
-            'view_id.name',
-            'label',
             'name',
-            'group_names',
-            'type',
+            'label',
+            'active',
+            'comment',
+            'id',
+            'group_ids',
+            'model_id.model',
+            'view_id.name'
         ],
         'required_field_list': [
+            'id',
+        ],
+        'ignore_field': [
+            'name',
+            'label',
             'model_id.model',
             'view_id.name',
-            'name',
         ],
     },
     'window_actions': {
@@ -638,14 +579,18 @@ MODEL_DATA_DICT = {
             'res_model',
             'view_type',
             'view_id.name',
-            'domain',
             'groups_id',
+            'id',
         ],
         'required_field_list': [
+            'id',
+        ],
+        'ignore_field': [
             'name',
             'res_model',
             'view_type',
-        ],
+            'view_id.name',
+        ]
     },
 }
 
