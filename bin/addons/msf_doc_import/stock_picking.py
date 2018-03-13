@@ -157,8 +157,11 @@ class stock_picking(osv.osv):
                     'external_ref': move.purchase_line_id and move.purchase_line_id.external_ref or False,
                 }, context=context)
 
-        # generate report:
+        # launch simulation
         cr.commit()
+        self.pool.get('wizard.import.in.simulation.screen').simulate(cr.dbname, uid, [simu_id], context=context)
+
+        # generate report:
         datas = {'ids': [simu_id]}
         rp_spool = report_spool()
         result = rp_spool.exp_report(cr.dbname, uid, 'in.simulation.screen.xls', [simu_id], datas, context=context)
@@ -167,17 +170,7 @@ class stock_picking(osv.osv):
             file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
             time.sleep(0.5)
 
-        # attach report to new IN:
-        self.pool.get('ir.attachment').create(cr, uid, {
-            'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-            'datas_fname': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
-            'description': 'IN simulation screen',
-            'res_model': 'stock.picking',
-            'res_id': in_id,
-            'datas': file_res.get('result'),
-        })
-
-        return True
+        return file_res
 
 
     def auto_import_incoming_shipment(self, cr, uid, file_path, context=None):
@@ -203,6 +196,10 @@ class stock_picking(osv.osv):
             values, nb_file_lines, file_parse_errors = self.pool.get('wizard.import.in.simulation.screen').get_values_from_excel(cr, uid, file_content, context=context)
         else:
             values, nb_file_lines, file_parse_errors = self.pool.get('wizard.import.in.simulation.screen').get_values_from_xml(cr, uid, file_content, context=context)
+        context.pop('xml_is_string')
+
+        # create simulation screen to get the simulation report:
+        file_res = self.generate_simulation_screen_report(cr, uid, in_id, filetype, file_content, context=context)
 
         # for each move imported, update qty in the stock.incoming.processor:
         processed, rejected, headers = [], [], values[LINE_START-1]
@@ -236,8 +233,15 @@ class stock_picking(osv.osv):
         context.update({'do_not_process_incoming': True})
         new_picking = self.do_incoming_shipment(cr, uid, in_processor, context=context)
 
-        # create simulation screen to get the simulation report and then attach it to the newly created IN (available updated)
-        self.generate_simulation_screen_report(cr, uid, new_picking, filetype, file_content, context=context)
+        # attach simulation report to new IN:
+        self.pool.get('ir.attachment').create(cr, uid, {
+            'name': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+            'datas_fname': 'simulation_screen_%s.xls' % time.strftime('%Y_%m_%d_%H_%M'),
+            'description': 'IN simulation screen',
+            'res_model': 'stock.picking',
+            'res_id': new_picking,
+            'datas': file_res.get('result'),
+        })
 
         return processed, rejected, headers
 
